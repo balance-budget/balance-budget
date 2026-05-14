@@ -45,6 +45,16 @@ h1,h2,h3,h4,h5,h6 {
     font-weight: 400;
 }
 
+.btn {
+    text-decoration: none;
+    color: var(--color-text);
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+}
+
 .stats {
     font-family: monospace;
     font-size: 0.8rem;

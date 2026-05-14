@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fe8923"/>
+      <stop offset="100%" stop-color="#c25a0a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded square background with gradient -->
+  <rect width="512" height="512" rx="112" ry="112" fill="url(#bgGradient)"/>
+
+  <!-- Percent sign -->
+  <g stroke="white" stroke-linecap="round" fill="none">
+    <!-- Diagonal slash -->
+    <line x1="170" y1="360" x2="342" y2="152" stroke-width="28"/>
+
+    <!-- Top-left circle -->
+    <circle cx="178" cy="178" r="42" stroke-width="28"/>
+
+    <!-- Bottom-right circle -->
+    <circle cx="334" cy="334" r="42" stroke-width="28"/>
+  </g>
+</svg>
+ 
