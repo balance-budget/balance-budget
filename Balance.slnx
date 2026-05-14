@@ -7,6 +7,16 @@
     <File Path="global.json" />
     <File Path="README.md" />
   </Folder>
-  <Folder Name="/src/"></Folder>
-  <Folder Name="/tests/"></Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Balance.Configuration/Balance.Configuration.csproj" />
+    <Project Path="src/Balance.Console/Balance.Console.csproj" />
+    <Project Path="src/Balance.Data.PostgreSql/Balance.Data.PostgreSql.csproj" />
+    <Project Path="src/Balance.Data.Sqlite/Balance.Data.Sqlite.csproj" />
+    <Project Path="src/Balance.Data/Balance.Data.csproj" />
+    <Project Path="src/Balance.Services/Balance.Services.csproj" />
+    <Project Path="src/Balance.Web/Balance.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Balance.Tests/Balance.Tests.csproj" />
+  </Folder>
 </Solution>
