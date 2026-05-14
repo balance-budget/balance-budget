@@ -1,0 +1,11 @@
+using Quartz;
+
+namespace Balance.Services.Jobs;
+
+internal static class TriggerConfiguratorExtensions
+{
+    public static ITriggerConfigurator StartNow(
+        this ITriggerConfigurator configurator,
+        bool start
+    ) => start ? configurator.StartNow() : configurator;
+}
