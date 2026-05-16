@@ -5,13 +5,12 @@ using Balance.Tests.Api.Helpers;
 
 namespace Balance.Tests.Api;
 
-internal sealed class AccountEndpointsTests : EndpointsTestBase
+internal sealed class AccountEndpointsTests : EndpointsTestsBase
 {
     [Test]
     public async Task ListAccounts_returns_seeded_opening_balances()
     {
-        await using var factory = new WebApplicationFactory();
-        using var client = factory.CreateClient();
+        using var client = Factory.CreateClient();
 
         using var response = await client.GetAsync(new Uri("/accounts", UriKind.Relative));
 
@@ -28,8 +27,7 @@ internal sealed class AccountEndpointsTests : EndpointsTestBase
     [Test]
     public async Task CreateAccount_round_trips()
     {
-        await using var factory = new WebApplicationFactory();
-        using var client = factory.CreateClient();
+        using var client = Factory.CreateClient();
 
         var request = new CreateAccountRequestDto("ABN AMRO Checking", "Asset", "EUR");
         using var createResponse = await client.PostAsJsonAsync(
@@ -56,8 +54,7 @@ internal sealed class AccountEndpointsTests : EndpointsTestBase
     [Test]
     public async Task CreateAccount_duplicate_name_case_insensitive_returns_409()
     {
-        await using var factory = new WebApplicationFactory();
-        using var client = factory.CreateClient();
+        using var client = Factory.CreateClient();
 
         var first = new CreateAccountRequestDto("Groceries", "Expense", "EUR");
         using var firstResponse = await client.PostAsJsonAsync(
@@ -78,8 +75,7 @@ internal sealed class AccountEndpointsTests : EndpointsTestBase
     [Test]
     public async Task GetAccount_returns_404_when_unknown()
     {
-        await using var factory = new WebApplicationFactory();
-        using var client = factory.CreateClient();
+        using var client = Factory.CreateClient();
 
         var unknownId = Guid.NewGuid();
         using var response = await client.GetAsync(
@@ -92,8 +88,7 @@ internal sealed class AccountEndpointsTests : EndpointsTestBase
     [Test]
     public async Task CreateAccount_unknown_currency_returns_404()
     {
-        await using var factory = new WebApplicationFactory();
-        using var client = factory.CreateClient();
+        using var client = Factory.CreateClient();
 
         var request = new CreateAccountRequestDto("Mystery", "Asset", "XYZ");
         using var response = await client.PostAsJsonAsync(
@@ -107,8 +102,7 @@ internal sealed class AccountEndpointsTests : EndpointsTestBase
     [Test]
     public async Task UpdateAccount_renames()
     {
-        await using var factory = new WebApplicationFactory();
-        using var client = factory.CreateClient();
+        using var client = Factory.CreateClient();
 
         var request = new CreateAccountRequestDto("Old Name", "Asset", "EUR");
         using var createResponse = await client.PostAsJsonAsync(
@@ -131,8 +125,7 @@ internal sealed class AccountEndpointsTests : EndpointsTestBase
     [Test]
     public async Task DeleteAccount_removes_the_row()
     {
-        await using var factory = new WebApplicationFactory();
-        using var client = factory.CreateClient();
+        using var client = Factory.CreateClient();
 
         var request = new CreateAccountRequestDto("Temporary", "Asset", "EUR");
         using var createResponse = await client.PostAsJsonAsync(

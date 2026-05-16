@@ -1,5 +1,11 @@
 root = true
 
-# Consider calling ConfigureAwait on the awaited task
 [*.cs]
-dotnet_diagnostic.CA2007.severity = none
+dotnet_diagnostic.CA2007.severity = none # Consider calling ConfigureAwait on the awaited task
+dotnet_diagnostic.CA1812.severity = none # Uninstantiated internal classes should be removed
+
+# Disable checks in generated migrations
+[{src/Balance.Data.Sqlite/Migrations/*.cs,src/Balance.Data.PostgreSql/Migrations/*.cs}]
+dotnet_diagnostic.CA1062.severity = none
+dotnet_diagnostic.CA1861.severity = none
+dotnet_diagnostic.CA1825.severity = none
