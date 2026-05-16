@@ -1,7 +1,9 @@
-﻿using Balance.Configuration;
+using Balance.Configuration;
 using Balance.Data;
 using Balance.Services.Contracts;
+using Balance.Services.Currencies;
 using Balance.Services.Jobs;
+using FluentValidation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -21,6 +23,11 @@ public static class ServiceCollectionExtensions
             .AddBalanceConfiguration(configuration)
             .AddBalanceData(configuration)
             .AddBalanceJobs(configuration, startJobs)
+            .AddValidatorsFromAssemblyContaining<IServicesAssemblyMarker>(
+                ServiceLifetime.Singleton,
+                includeInternalTypes: true
+            )
+            .AddScoped<ICurrencyService, CurrencyService>()
             .AddSingleton<IApplicationVersionService, ApplicationVersionService>();
     }
 }

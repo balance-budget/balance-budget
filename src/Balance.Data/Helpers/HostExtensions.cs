@@ -1,8 +1,8 @@
+using Balance.Data.Logging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Balance.Data.Logging;
 
 namespace Balance.Data.Helpers;
 

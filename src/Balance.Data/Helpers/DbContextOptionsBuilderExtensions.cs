@@ -1,7 +1,7 @@
+using Balance.Configuration.Options;
 using Microsoft.EntityFrameworkCore;
 using PhenX.EntityFrameworkCore.BulkInsert.PostgreSql;
 using PhenX.EntityFrameworkCore.BulkInsert.Sqlite;
-using Balance.Configuration.Options;
 
 namespace Balance.Data.Helpers;
 
@@ -15,7 +15,9 @@ internal static class DbContextOptionsBuilderExtensions
         {
             DatabaseProvider.Sqlite => builder
                 .UseSqlite(
-                    $"Data Source={DbPathHelper.GetDbPath()}",
+                    string.IsNullOrWhiteSpace(options.ConnectionString)
+                        ? $"Data Source={DbPathHelper.GetDbPath()}"
+                        : options.ConnectionString,
                     x => x.MigrationsAssembly("Balance.Data.Sqlite")
                 )
                 .UseBulkInsertSqlite(),
