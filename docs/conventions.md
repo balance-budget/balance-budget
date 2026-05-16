@@ -1,0 +1,161 @@
+# Conventions
+
+Patterns the codebase enforces. Follow them when adding new code so that everything composes consistently.
+
+## DI composition
+
+Every project that has services to register exposes a `ServiceCollectionExtensions` with a single `AddBalance<LayerName>` extension method. A layer composes its dependencies by calling the lower layer's extension inside its own — the host only ever calls the top-most one.
+
+```csharp
+// Balance.Services/ServiceCollectionExtensions.cs
+public static IServiceCollection AddBalanceServices(
+    this IServiceCollection services,
+    IConfiguration configuration,
+    bool startJobs = true) =>
+    services
+        .AddBalanceConfiguration(configuration)
+        .AddBalanceData(configuration)
+        .AddBalanceJobs(configuration, startJobs)
+        .AddSingleton<IApplicationVersionService, ApplicationVersionService>();
+```
+
+The entry points compose at most two layers:
+
+```csharp
+builder.Services.AddBalanceServices(builder.Configuration);
+builder.Services.AddBalanceWeb();   // Web only
+```
+
+When adding a new feature module within a layer, prefer a private `Add<Feature>` extension in a sub-namespace (e.g. `Balance.Services/Jobs/JobsServiceCollectionExtensions.AddBalanceJobs`) and call it from the layer's top-level `AddBalance<LayerName>`.
+
+## Options pattern
+
+All options classes implement `IOptionsSection`:
+
+```csharp
+public sealed class DatabaseOptions : IOptionsSection
+{
+    public static string Section => "Database";
+    public required DatabaseProvider Provider { get; init; }
+    public required string ConnectionString { get; init; }
+}
+```
+
+Register them through the private `AddSettings<T>` helper in `Balance.Configuration.ServiceCollectionExtensions`. Use `IOptions<T>` in constructors; never read from `IConfiguration` directly in business code.
+
+## Entities
+
+Domain entities derive from `BaseEntity`:
+
+```csharp
+public abstract class BaseEntity
+{
+    public int Id { get; set; }
+    public DateTime CreatedAt { get; init; }
+    public DateTime UpdatedAt { get; set; }
+}
+```
+
+- Use `int` PKs for now.
+- Set `CreatedAt` once on insert (`init`-only); update `UpdatedAt` on every save.
+- Store all times in UTC. Apply `DateConverters.UtcConverter` (or `UtcNullableConverter`) so EF returns `DateTime` values with `Kind = Utc` instead of `Unspecified`.
+- Place entity classes under `Balance.Data/Entities/` and entity configurations (`IEntityTypeConfiguration<T>`) under `Balance.Data/Configurations/`.
+
+## Database provider abstraction
+
+`BalanceDbContext` is provider-agnostic. The provider switch lives in `DbContextOptionsBuilderExtensions.UseProvider`:
+
+```csharp
+options.Provider switch
+{
+    DatabaseProvider.Sqlite   => builder.UseSqlite(...).UseBulkInsertSqlite(),
+    DatabaseProvider.Postgres => builder.UseNpgsql(...).UseBulkInsertPostgreSql(),
+    _ => throw new InvalidOperationException(...),
+};
+```
+
+If you need to branch on the dialect in domain code, prefer reading `BalanceDbContext.Provider` over inspecting the EF provider name.
+
+Migrations live in `Balance.Data.Sqlite` and `Balance.Data.PostgreSql`. Add them with:
+
+```bash
+dotnet ef migrations add <Name> \
+  --project src/Balance.Data.Sqlite \
+  --startup-project src/Balance.Web \
+  -- --Database:Provider Sqlite
+
+dotnet ef migrations add <Name> \
+  --project src/Balance.Data.PostgreSql \
+  --startup-project src/Balance.Web \
+  -- --Database:Provider Postgres
+```
+
+(The `-- --Database:Provider <X>` block forwards configuration to the runtime so `UseProvider` picks the right branch when EF builds the design-time model.)
+
+## Logging
+
+Use the source-generator `LoggerMessage` pattern. Each project has a `Logging/LoggerExtensions.cs`:
+
+```csharp
+internal static partial class LoggerExtensions
+{
+    [LoggerMessage(Level = LogLevel.Information, Message = "Database migration started.")]
+    public static partial void DatabaseMigrationStarted(this ILogger logger);
+}
+```
+
+Call them as `logger.DatabaseMigrationStarted()`. Avoid `logger.LogInformation(...)` with string interpolation — it allocates and bypasses the analyzers.
+
+## Visibility
+
+- Default to `internal`.
+- Make a type `public` only when another project legitimately references it (e.g. options classes consumed by other layers, host extensions called from `Program.cs`).
+- For test access, the relevant project already declares `InternalsVisibleTo("Balance.Tests")` (currently `Balance.Web` and `Balance.Services`). Add the same on `Balance.Data` and others if/when tests need it.
+
+## Minimal APIs and HTMX
+
+- JSON endpoints: register through a feature-specific `MapXxxEndpoints` extension method called from `Program.cs`, with a clear route group. They are picked up automatically by `AddOpenApi` / Scalar.
+- HTMX fragment endpoints: register inside `HtmxEndpoints.MapHtmx`, group under `/htmx`, call `.ExcludeFromDescription()` so they don't appear in the OpenAPI document, and return `HtmlResult`.
+
+```csharp
+group.MapGet("/stats", async (IApplicationVersionService versionService, CancellationToken ct) =>
+    new HtmlResult($"<p class=\"stats\">Version: {versionService.Version}</p>"));
+```
+
+## Background jobs
+
+Use the Quartz helpers:
+
+```csharp
+configurator.ScheduleJob<MyJob>(
+    key:     new JobKey("MyJob"),
+    schedule: "0 0 * * * ?",   // cron
+    start:   startJobs);       // honour the AddBalanceServices flag
+```
+
+`ScheduleJob<TJob>` applies `DisallowConcurrentExecution` for you. Wire job scheduling inside `AddBalanceJobs`, not in `Program.cs`.
+
+## Formatting & build hygiene
+
+- CSharpier is the formatter. CI fails on any deviation — run `dotnet csharpier format .` before committing.
+- `TreatWarningsAsErrors=true` with `AnalysisMode=All`. Fix warnings; don't suppress unless there's a deliberate reason (and document why).
+- Centralised package versions: edit `Directory.Packages.props`, never put a `Version="…"` attribute on a `PackageReference`.
+- The repo targets `net10.0`. Don't introduce multi-targeting unless there's a clear reason.
+
+## Testing
+
+- TUnit (not xUnit/NUnit/MSTest) — note the `await Assert.That(value).IsTrue();` style.
+- Use `Microsoft.Testing.Platform` (configured in `global.json`); `dotnet test` runs through it automatically.
+- Coverage is collected automatically in CI; locally you can run `dotnet test --coverage` if you want it.
+
+## Configuration sources
+
+- The shared `appsettings.json` lives at the **solution root** and is copied into each host's output by the SDK.
+- `MapConfigurationSources` (web only) re-points JSON providers at `AppContext.BaseDirectory` when running from source in dev or container-fast-mode. Don't bypass it — if you add a new JSON source, make sure it goes through the same path so dev runs find it.
+- Environment variables override JSON values via the standard ASP.NET binding rules (`Database__Provider=Postgres`, etc.).
+
+## Naming and namespaces
+
+- Namespaces mirror the folder structure: `Balance.<Project>[.<SubFolder>]`.
+- Static helper classes that extend a framework type follow the `<TypeName>Extensions` convention (e.g. `HostExtensions`, `DbContextOptionsBuilderExtensions`).
+- DI registration classes are always called `ServiceCollectionExtensions` (one per layer) or `<Feature>ServiceCollectionExtensions` (within a layer).
