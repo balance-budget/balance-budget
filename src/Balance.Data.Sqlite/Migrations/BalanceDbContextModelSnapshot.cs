@@ -66,6 +66,72 @@ namespace Balance.Data.Sqlite.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Balance.Data.Entities.BankAccount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AccountHolderName")
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("AccountId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AccountNumber")
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("BankName")
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Bic")
+                        .HasMaxLength(11)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("CounterpartyId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CurrencyCode")
+                        .HasMaxLength(8)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Iban")
+                        .HasMaxLength(34)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_BankAccounts_AccountId")
+                        .HasFilter("\"AccountId\" IS NOT NULL");
+
+                    b.HasIndex("CounterpartyId")
+                        .HasDatabaseName("IX_BankAccounts_CounterpartyId");
+
+                    b.HasIndex("CurrencyCode");
+
+                    b.HasIndex("Iban")
+                        .IsUnique()
+                        .HasDatabaseName("IX_BankAccounts_Iban")
+                        .HasFilter("\"Iban\" IS NOT NULL");
+
+                    b.ToTable("BankAccounts", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_BankAccounts_IbanOrAccountNumber", "\"Iban\" IS NOT NULL OR \"AccountNumber\" IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_BankAccounts_OwnershipXor", "(\"AccountId\" IS NULL) <> (\"CounterpartyId\" IS NULL)");
+                        });
+                });
+
             modelBuilder.Entity("Balance.Data.Entities.Counterparty", b =>
                 {
                     b.Property<Guid>("Id")
@@ -190,6 +256,24 @@ namespace Balance.Data.Sqlite.Migrations
                         .HasForeignKey("CurrencyCode")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Balance.Data.Entities.BankAccount", b =>
+                {
+                    b.HasOne("Balance.Data.Entities.Account", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Balance.Data.Entities.Counterparty", null)
+                        .WithMany()
+                        .HasForeignKey("CounterpartyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Balance.Data.Entities.Currency", null)
+                        .WithMany()
+                        .HasForeignKey("CurrencyCode")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 #pragma warning restore 612, 618
         }
