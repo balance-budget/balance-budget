@@ -12,8 +12,13 @@ internal static class JobsServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration,
         bool start
-    ) =>
-        services
+    )
+    {
+        var options = configuration.GetSection<JobsOptions>();
+        if (!options.RunJobs)
+            return services;
+
+        return services
             .AddQuartz(c =>
             {
                 c.SchedulerName = "Balance Scheduler";
@@ -23,4 +28,5 @@ internal static class JobsServiceCollectionExtensions
                 c.WaitForJobsToComplete = true;
                 c.AwaitApplicationStarted = true;
             });
+    }
 }

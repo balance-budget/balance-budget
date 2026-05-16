@@ -24,6 +24,7 @@ internal sealed class BalanceWebApplicationFactory : WebApplicationFactory<Progr
                     {
                         ["Database:Provider"] = "Sqlite",
                         ["Database:ConnectionString"] = $"Data Source={_databasePath}",
+                        ["Jobs:RunJobs"] = "false",
                     }
                 );
             }
