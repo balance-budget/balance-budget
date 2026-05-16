@@ -2,8 +2,10 @@ using Balance.Data.Helpers;
 using Balance.Services;
 using Balance.Web;
 using Balance.Web.Endpoints;
+using Balance.Web.Endpoints.Currencies;
 using Balance.Web.Helpers;
 using Balance.Web.Logging;
+using Balance.Web.Middleware;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateSlimBuilder(args);
@@ -33,5 +35,10 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
+app.UseMiddleware<DomainExceptionMiddleware>();
+
+app.MapCurrencies();
 
 await app.RunAsync(lifetime.ApplicationStopping);
+
+internal partial class Program;

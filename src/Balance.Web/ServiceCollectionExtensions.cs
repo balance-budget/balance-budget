@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.AspNetCore.HttpOverrides;
 
 namespace Balance.Web;
@@ -32,6 +33,11 @@ internal static class ServiceCollectionExtensions
             c.AddDefaultPolicy(p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader())
         );
         services.AddHealthChecks();
+
+        services.AddValidatorsFromAssemblyContaining<IWebAssemblyMarker>(
+            ServiceLifetime.Singleton,
+            includeInternalTypes: true
+        );
 
         return services;
     }
