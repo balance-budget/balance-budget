@@ -33,7 +33,7 @@ Explore the repo.
 
 # IMPLEMENTATION
 
-Use TDD to complete the task
+Use /tdd to complete the task
 
 # FEEDBACK LOOPS
 
