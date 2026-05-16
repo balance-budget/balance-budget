@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using FluentValidation;
 using Microsoft.AspNetCore.HttpOverrides;
 
@@ -8,6 +9,11 @@ internal static class ServiceCollectionExtensions
     public static IServiceCollection AddBalanceWeb(this IServiceCollection services)
     {
         services.AddOpenApi();
+
+        services.ConfigureHttpJsonOptions(options =>
+        {
+            options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        });
 
         services.Configure<RouteOptions>(options =>
         {
