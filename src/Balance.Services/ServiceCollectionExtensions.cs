@@ -2,6 +2,7 @@ using Balance.Configuration;
 using Balance.Data;
 using Balance.Services.Accounts;
 using Balance.Services.Contracts;
+using Balance.Services.Counterparties;
 using Balance.Services.Currencies;
 using Balance.Services.Jobs;
 using FluentValidation;
@@ -30,6 +31,7 @@ public static class ServiceCollectionExtensions
             )
             .AddScoped<ICurrencyService, CurrencyService>()
             .AddScoped<IAccountService, AccountService>()
+            .AddScoped<ICounterpartyService, CounterpartyService>()
             .AddSingleton(TimeProvider.System)
             .AddSingleton<IApplicationVersionService, ApplicationVersionService>();
     }
