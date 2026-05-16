@@ -1,5 +1,6 @@
 using Balance.Configuration;
 using Balance.Data;
+using Balance.Services.Accounts;
 using Balance.Services.Contracts;
 using Balance.Services.Currencies;
 using Balance.Services.Jobs;
@@ -28,6 +29,8 @@ public static class ServiceCollectionExtensions
                 includeInternalTypes: true
             )
             .AddScoped<ICurrencyService, CurrencyService>()
+            .AddScoped<IAccountService, AccountService>()
+            .AddSingleton(TimeProvider.System)
             .AddSingleton<IApplicationVersionService, ApplicationVersionService>();
     }
 }

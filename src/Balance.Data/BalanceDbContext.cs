@@ -19,6 +19,8 @@ public sealed class BalanceDbContext : DbContext, IDataProtectionKeyContext
 
     public DbSet<Currency> Currencies { get; set; } = null!;
 
+    public DbSet<Account> Accounts { get; set; } = null!;
+
     public DatabaseProvider Provider => _options.Provider;
 
     public BalanceDbContext(
@@ -48,5 +50,10 @@ public sealed class BalanceDbContext : DbContext, IDataProtectionKeyContext
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(BalanceDbContext).Assembly);
+
+        if (_options.Provider == DatabaseProvider.Sqlite)
+        {
+            modelBuilder.Entity<Account>().Property(a => a.Name).UseCollation("NOCASE");
+        }
     }
 }
