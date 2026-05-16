@@ -9,4 +9,7 @@ public static class HostEnvironmentExtensions
 
     public static bool IsContainerFastMode(this IHostEnvironment hostEnvironment) =>
         Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER_FAST_MODE") == "true";
+
+    public static bool IsTesting(this IHostEnvironment hostEnvironment) =>
+        hostEnvironment.IsEnvironment("Testing");
 }

@@ -24,7 +24,6 @@ internal sealed class WebApplicationFactory : TestWebApplicationFactory<Program>
                     {
                         ["Database:Provider"] = "Sqlite",
                         ["Database:ConnectionString"] = $"Data Source={_databasePath}",
-                        ["Jobs:RunJobs"] = "false",
                     }
                 );
             }

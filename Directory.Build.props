@@ -20,5 +20,10 @@
       Link="appsettings.json"
       CopyToOutputDirectory="PreserveNewest"
     />
+    <Content
+      Include="$(SolutionDir)appsettings.Testing.json"
+      Link="appsettings.Testing.json"
+      CopyToOutputDirectory="PreserveNewest"
+    />
   </ItemGroup>
 </Project>
