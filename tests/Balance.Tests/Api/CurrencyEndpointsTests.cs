@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Http.Json;
+using Balance.Tests.Api.Helpers;
 
 namespace Balance.Tests.Api;
 
@@ -9,7 +10,7 @@ internal sealed class CurrencyEndpointsTests
     [Test]
     public async Task ListCurrencies_returns_seeded_currencies()
     {
-        await using var factory = new BalanceWebApplicationFactory();
+        await using var factory = new WebApplicationFactory();
         using var client = factory.CreateClient();
 
         using var response = await client.GetAsync(new Uri("/currencies", UriKind.Relative));
@@ -33,7 +34,7 @@ internal sealed class CurrencyEndpointsTests
     [Test]
     public async Task GetCurrency_returns_seeded_currency()
     {
-        await using var factory = new BalanceWebApplicationFactory();
+        await using var factory = new WebApplicationFactory();
         using var client = factory.CreateClient();
 
         using var response = await client.GetAsync(new Uri("/currencies/EUR", UriKind.Relative));
@@ -50,7 +51,7 @@ internal sealed class CurrencyEndpointsTests
     [Test]
     public async Task GetCurrency_returns_404_when_unknown()
     {
-        await using var factory = new BalanceWebApplicationFactory();
+        await using var factory = new WebApplicationFactory();
         using var client = factory.CreateClient();
 
         using var response = await client.GetAsync(new Uri("/currencies/XYZ", UriKind.Relative));

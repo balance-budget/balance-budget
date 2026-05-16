@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using TUnit.AspNetCore;
 
-namespace Balance.Tests.Api;
+namespace Balance.Tests.Api.Helpers;
 
-internal sealed class BalanceWebApplicationFactory : WebApplicationFactory<Program>
+internal sealed class WebApplicationFactory : TestWebApplicationFactory<Program>
 {
     private readonly string _databasePath = Path.Combine(
         Path.GetTempPath(),
