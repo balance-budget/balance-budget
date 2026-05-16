@@ -10,4 +10,20 @@
     <TargetFramework>net10.0</TargetFramework>
     <UseArtifactsOutput>true</UseArtifactsOutput>
   </PropertyGroup>
+
+  <!--
+    Automatically add the appsettings file to all entry point projects
+  -->
+  <ItemGroup Condition="$(OutputType) == 'Exe' And $(MSBuildProjectExtension) == '.csproj'">
+    <Content
+      Include="$(SolutionDir)appsettings.json"
+      Link="appsettings.json"
+      CopyToOutputDirectory="PreserveNewest"
+    />
+    <Content
+      Include="$(SolutionDir)appsettings.Testing.json"
+      Link="appsettings.Testing.json"
+      CopyToOutputDirectory="PreserveNewest"
+    />
+  </ItemGroup>
 </Project>

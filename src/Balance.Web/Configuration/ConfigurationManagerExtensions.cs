@@ -2,7 +2,7 @@ using Balance.Configuration.Helpers;
 using Microsoft.Extensions.Configuration.Json;
 using Microsoft.Extensions.FileProviders;
 
-namespace Balance.Web.Helpers;
+namespace Balance.Web.Configuration;
 
 internal static class ConfigurationManagerExtensions
 {
@@ -11,7 +11,11 @@ internal static class ConfigurationManagerExtensions
         IHostEnvironment environment
     )
     {
-        if (!environment.IsDevelopment() && !environment.IsContainerFastMode())
+        if (
+            !environment.IsTesting()
+            && !environment.IsDevelopment()
+            && !environment.IsContainerFastMode()
+        )
             return;
 
         // ASP.NET expects the configuration files to be in the root of the project when running an app from source.

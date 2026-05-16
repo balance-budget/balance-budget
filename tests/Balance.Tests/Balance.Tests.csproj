@@ -6,8 +6,9 @@
 
   <ItemGroup>
     <PackageReference Include="GitHubActionsTestLogger" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="TUnit.AspNetCore" />
     <PackageReference Include="TUnit" />
+    <PackageReference Include="TUnit.Mocks" />
   </ItemGroup>
 
   <ItemGroup>

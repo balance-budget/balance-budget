@@ -26,4 +26,10 @@ public sealed class DomainException : Exception
     {
         Kind = DomainExceptionKind.Invariant;
     }
+
+    public DomainException(DomainExceptionKind kind, string message, Exception innerException)
+        : base(message, innerException)
+    {
+        Kind = kind;
+    }
 }
