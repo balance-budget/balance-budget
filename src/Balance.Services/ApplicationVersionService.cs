@@ -1,6 +1,6 @@
 using System.Reflection;
-using Microsoft.Extensions.Hosting;
 using Balance.Services.Contracts;
+using Microsoft.Extensions.Hosting;
 
 namespace Balance.Services;
 

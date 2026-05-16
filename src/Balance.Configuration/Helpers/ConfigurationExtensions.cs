@@ -1,5 +1,5 @@
-using Microsoft.Extensions.Configuration;
 using Balance.Configuration.Contracts;
+using Microsoft.Extensions.Configuration;
 
 namespace Balance.Configuration.Helpers;
 

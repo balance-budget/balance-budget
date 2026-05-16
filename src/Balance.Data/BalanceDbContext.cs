@@ -1,4 +1,5 @@
-﻿using Balance.Configuration.Options;
+using Balance.Configuration.Options;
+using Balance.Data.Entities;
 using Balance.Data.Helpers;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,8 @@ public sealed class BalanceDbContext : DbContext, IDataProtectionKeyContext
     private readonly DatabaseOptions _options;
 
     public DbSet<DataProtectionKey> DataProtectionKeys { get; set; } = null!;
+
+    public DbSet<Currency> Currencies { get; set; } = null!;
 
     public DatabaseProvider Provider => _options.Provider;
 
@@ -44,5 +47,6 @@ public sealed class BalanceDbContext : DbContext, IDataProtectionKeyContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(BalanceDbContext).Assembly);
     }
 }
