@@ -1,10 +1,10 @@
 using Balance.Data.Helpers;
 using Balance.Services;
 using Balance.Web;
+using Balance.Web.Configuration;
 using Balance.Web.Endpoints;
 using Balance.Web.Endpoints.Accounts;
 using Balance.Web.Endpoints.Currencies;
-using Balance.Web.Helpers;
 using Balance.Web.Logging;
 using Balance.Web.Middleware;
 using Scalar.AspNetCore;

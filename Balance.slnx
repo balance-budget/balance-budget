@@ -2,6 +2,8 @@
   <Folder Name="/solution/">
     <File Path=".editorconfig" />
     <File Path=".gitignore" />
+    <File Path="appsettings.json" />
+    <File Path="appsettings.Testing.json" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
     <File Path="global.json" />
