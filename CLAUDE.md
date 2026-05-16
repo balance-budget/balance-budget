@@ -106,3 +106,17 @@ Order matters and is shared by both entry points:
 - **Don't pin package versions in `.csproj`** — add or update the `PackageVersion` entry in `Directory.Packages.props`.
 - **EF Core migrations** must be generated against the provider-specific assembly: `dotnet ef migrations add <Name> --project src/Balance.Data.Sqlite --startup-project src/Balance.Web` (and equivalently for PostgreSql). The migrations assembly is wired up in `DbContextOptionsBuilderExtensions.UseProvider`.
 - **The domain model is intentionally empty.** This repo is at "basic layout" stage — the personal finance domain (accounts, transactions, budgets, categories, …) has not been designed yet. New entities, services, and endpoints should be added following the conventions above.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live on GitHub at `christiaanderidder/balance-budget`, managed via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout: `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
