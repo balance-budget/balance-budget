@@ -23,6 +23,8 @@ public sealed class BalanceDbContext : DbContext, IDataProtectionKeyContext
 
     public DbSet<Counterparty> Counterparties { get; set; } = null!;
 
+    public DbSet<BankAccount> BankAccounts { get; set; } = null!;
+
     public DatabaseProvider Provider => _options.Provider;
 
     public BalanceDbContext(
