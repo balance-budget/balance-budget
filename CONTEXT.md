@@ -1,0 +1,110 @@
+# Personal Finance Bookkeeping
+
+A headless personal-finance tool backed by a rigorous **double-entry ledger**. The domain is the bookkeeping core — accounts, journal entries, postings. Budgets, labels, imports, and reporting are deliberately deferred and will sit *on top* of this ledger later.
+
+## Language
+
+**Account**:
+A ledger account in the double-entry accounting sense (e.g. "Groceries Expense", "ABN AMRO Checking", "Visa Credit Card"). Every Account has exactly one **AccountType**.
+_Avoid_: bucket, category, envelope, payee (those are different concepts).
+
+**AccountType**:
+The accounting classification of an **Account**, one of the five standard types: **Asset**, **Liability**, **Equity**, **Income**, **Expense**. Determines normal balance (debit-normal for Asset/Expense; credit-normal for Liability/Equity/Income) and how the account contributes to reports.
+
+**Asset**:
+An **Account** representing something owned or money owed to you. Examples: ABN AMRO Checking, Cash, Savings, Investments, "Owed by Alice" (informal receivable).
+
+**Liability**:
+An **Account** representing money you owe. Examples: Visa Credit Card (yes — a credit card is a liability, not an asset), Mortgage, Personal Loan, "Owed to Bob" (informal payable).
+
+**Equity**:
+An **Account** representing net worth or capital. In personal-finance use, primarily holds opening balances when accounts are onboarded with non-zero starting balances. The seeded `Opening Balances` **Equity** account is the canonical home for these.
+
+**Opening balance**:
+The starting balance of an **Asset** or **Liability** **Account** at onboarding. Recorded as a normal **JournalEntry** with one line on the account itself and an offsetting line on the seeded `Opening Balances` **Equity** account. Avoids the Firefly-III hack of using a fake "Initial balance" income account (which permanently pollutes income reports).
+
+**Income**:
+An **Account** representing where money comes from. Examples: Salary, Interest Received, Dividends, Cashback. Distinct from **Expense** (not just sign-flipped) so reports can answer "where did money come from?" directly.
+
+**Expense**:
+An **Account** representing where money goes. Examples: Groceries, Rent, Utilities, Dining Out. Refunds reduce the expense by being credited on the same **Expense** account (expenses can be credited — it just lowers the balance).
+
+**JournalEntry**:
+One bookkeeping event in the double-entry ledger — a header record carrying date, description, and optional **Counterparty**, owning two or more **JournalLines** whose amounts net to zero. The unit of "I bought groceries", "I got paid", "I transferred money".
+_Avoid_: Transaction (reserved for the import-side concept — see below), posting, document.
+
+**JournalLine**:
+One side of a **JournalEntry** — a signed **Money** amount against exactly one **Account**, with a **ReconciliationStatus**. A **JournalEntry** has at least two **JournalLines**; their amounts must sum to zero (per **Currency**, once multi-currency lands).
+_Avoid_: posting, split, entry, line item.
+
+**ReconciliationStatus**:
+Per-**JournalLine** state tracking how well a recorded line matches the bank's record. One of `Uncleared` (recorded but not yet seen on a statement — default), `Cleared` (seen on a statement / matched on import), `Reconciled` (explicitly confirmed during a reconciliation pass).
+
+**Money**:
+A value object pairing an integer amount of minor units with a **Currency**. Stored as `(Amount: long, CurrencyCode: string)`. Wraps parsing, formatting, and same-currency arithmetic; cross-currency arithmetic is a compile error.
+_Avoid_: decimal, BigDecimal, raw long, "amount in cents".
+
+**Currency**:
+An ISO-4217 (or ISO-4217-like, for crypto) currency identified by its **CurrencyCode**, carrying a **MinorUnitScale** that determines how many minor units make one major unit.
+_Avoid_: "currency type", "denomination".
+
+**MinorUnitScale**:
+The exponent for converting a **Money** amount to/from its display value. EUR → 2 (100 minor units = €1.00); JPY → 0; BTC → 8; ETH → 18. The only place rounding happens is at the input boundary when parsing a major-unit value into minor units. Stored as a column on the **Currency** reference table.
+
+**Currency** (entity):
+A reference-data row in the `Currency` table: `(Code: string PK, Name: string, MinorUnitScale: int, Symbol?: string)`. Seeded on migration with common ISO 4217 currencies. **Accounts** and **BankAccounts** reference currencies by code (FK). New currencies (incl. crypto) are added by inserting a row, not by changing code.
+
+**Sign convention** (for **JournalLine.Amount**):
+Positive = **debit**, negative = **credit**. The zero-sum invariant on a **JournalEntry** is therefore `SUM(Amount) = 0` per **Currency**. Per-**Account** running balance:
+- **Asset** / **Expense** (debit-normal): balance = `SUM(Amount)`.
+- **Liability** / **Equity** / **Income** (credit-normal): balance = `-SUM(Amount)`.
+
+**Counterparty**:
+The real-world party on the other side of a transaction (e.g. "Albert Heijn", "Employer X", a friend you split a bill with). Distinct from **Account** — counterparties are *not* ledger accounts; they are metadata on a **JournalEntry** that records "who".
+_Avoid_: payee account, vendor account, expense account (those conflate counterparty with **Account**).
+
+**BankAccount**:
+A real-world bank account known to the system, identified by IBAN *and/or* a bank-internal account number. Carries optional `Iban`, optional `AccountNumber`, optional `Bic` / `BankName` / `AccountHolderName` / `CurrencyCode` — with a CHECK constraint that at least one of `Iban` or `AccountNumber` is set (a **BankAccount** without any identifier is meaningless). Owned by exactly one of: an **Account** (`BankAccount.AccountId` set — this is one of yours) or a **Counterparty** (`BankAccount.CounterpartyId` set — this belongs to a counterparty). The XOR is enforced as a single-table CHECK constraint. Used during imports to resolve "the IBAN or account number on the other side of this statement row" to either a self-transfer or a known **Counterparty**.
+_Avoid_: bank account details, IBAN entry, payment instrument.
+
+**BankTransaction**:
+An immutable record of one imported bank-statement row, tied to the user's own **BankAccount** that the row belongs to. Carries the **BookingDate**, signed **Amount** (positive = money in, negative = money out, from the bank's perspective), and **Currency**. The other side of the transaction is left as free-form data on the row when import logic lands (counterparty name/IBAN/raw description, hash for idempotency) — out of scope for v1. The name matches ISO 20022 vocabulary and is intentionally distinct from a **JournalEntry** — a **BankTransaction** is *what the bank told us*; a **JournalEntry** is *what we did about it*. A **JournalEntry** *may* reference a **BankTransaction** via `JournalEntry.BankTransactionId?`; cash entries leave it null.
+_Avoid_: Transaction (overloaded with DB transactions and Plaid/Stripe types), import row, statement line.
+
+## Relationships
+
+- A **JournalEntry** owns two or more **JournalLines** whose amounts net to zero.
+- Each **JournalLine** references exactly one **Account**.
+- A **JournalEntry** *may* reference one **Counterparty**; **JournalLines** do not reference **Counterparties**.
+- A **Counterparty** is never an **Account** (this is an explicit departure from Firefly III, which models each payee as an expense/revenue account).
+- Each **Account** has exactly one **AccountType**.
+- Every **JournalLine** carries a **Money** amount; its **Currency** is inherited from its **Account**.
+- A **BankAccount** belongs to *exactly one* of: one **Account** (via `BankAccount.AccountId`) or one **Counterparty** (via `BankAccount.CounterpartyId`) — never both, never neither, enforced by CHECK constraint.
+- An **Account** has at most one **BankAccount** (enforced by `UNIQUE(AccountId)` on **BankAccount** where non-null).
+- A **JournalEntry** *may* reference a **BankTransaction** (when imported) and *may* reference a **Counterparty** (when one is identified). Cash entries have neither **BankTransaction** nor (necessarily) a **BankAccount**-bearing side; they always have at least a **Counterparty** or a free-text description.
+- A **BankTransaction** is immutable once stored; the **JournalEntry** derived from it is editable. Re-imports are deduplicated by hash.
+
+## Example dialogue
+
+> **Dev:** "I bought groceries at Albert Heijn — is Albert Heijn an **Account**?"
+> **Domain expert:** "No. Albert Heijn is a **Counterparty**. The **Accounts** involved are 'Groceries Expense' (debited) and your bank account (credited)."
+
+## Flagged ambiguities
+
+- "account" is used in everyday speech to mean both a ledger **Account** and a bank account. Inside the domain, **Account** always means the ledger account (debit-normal or credit-normal, with an **AccountType**); the banking product is a **BankAccount** (carries IBAN / account number / bank metadata). An **Account** may be linked to a **BankAccount** when it represents a real bank product.
+- "transaction" is overloaded in everyday speech (DB transactions, bank-statement rows, payment-API events). Inside the domain, the bookkeeping event is a **JournalEntry**; the immutable record of a bank-statement row is a **BankTransaction**. "Transaction" as a bare term is avoided.
+
+## Editing policy (v1)
+
+- **JournalEntries** are editable. After-the-fact corrections are made by editing, not by posting reversing entries. This deviates from strict accounting and is consciously chosen for personal-finance ergonomics; revisit (and lock down to append-only with reversing entries) if the use case demands it.
+- **BankTransactions** remain immutable regardless of `JournalEntry` editability.
+
+## Deletion policy (v1)
+
+- **BankTransaction** is immutable — never deleted.
+- **JournalEntry** is deletable (its **JournalLines** cascade). Editing is preferred for corrections.
+- **Account**, **Counterparty**, **BankAccount** are hard-deletable; FK constraints block the delete when they're still referenced. No archival / `IsArchived` flag in v1 — add later if UI clutter becomes a real problem.
+
+## Open questions
+
+_(none — foundational design complete)_
