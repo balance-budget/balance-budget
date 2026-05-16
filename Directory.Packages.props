@@ -35,8 +35,8 @@
     <PackageVersion Include="PhenX.EntityFrameworkCore.BulkInsert.PostgreSql" Version="0.5.0" />
     <PackageVersion Include="PhenX.EntityFrameworkCore.BulkInsert.Sqlite" Version="0.5.0" />
     <PackageVersion Include="Quartz.Extensions.Hosting" Version="3.18.1" />
-    <PackageVersion Include="Scalar.AspNetCore" Version="2.14.11" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.14.14" />
     <PackageVersion Include="StronglyTypedId" Version="1.0.0-beta08" />
-    <PackageVersion Include="TUnit" Version="1.43.41" />
+    <PackageVersion Include="TUnit" Version="1.44.39" />
   </ItemGroup>
 </Project>
