@@ -70,6 +70,31 @@ namespace Balance.Data.PostgreSql.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Balance.Data.Entities.Counterparty", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Counterparties_Name");
+
+                    b.ToTable("Counterparties", (string)null);
+                });
+
             modelBuilder.Entity("Balance.Data.Entities.Currency", b =>
                 {
                     b.Property<string>("Code")

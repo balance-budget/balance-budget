@@ -4,6 +4,7 @@ using Balance.Web;
 using Balance.Web.Configuration;
 using Balance.Web.Endpoints;
 using Balance.Web.Endpoints.Accounts;
+using Balance.Web.Endpoints.Counterparties;
 using Balance.Web.Endpoints.Currencies;
 using Balance.Web.Logging;
 using Balance.Web.Middleware;
@@ -40,6 +41,7 @@ app.UseMiddleware<DomainExceptionMiddleware>();
 
 app.MapCurrencies();
 app.MapAccounts();
+app.MapCounterparties();
 
 await app.RunAsync(lifetime.ApplicationStopping);
 
