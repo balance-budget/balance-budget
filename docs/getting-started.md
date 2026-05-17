@@ -90,7 +90,8 @@ The migrations assembly is wired through `UseProvider` in `Balance.Data/Helpers/
 | `/scalar/`   | Scalar API reference UI                                       |
 | `/openapi/*` | OpenAPI document (consumed by Scalar)                         |
 | `/htmx/*`    | HTMX fragment endpoints (excluded from OpenAPI)               |
-| `/healthz`   | Health-check probe                                            |
+| `/healthz/live`  | Liveness probe (always 200 while the process is up)       |
+| `/healthz/ready` | Readiness probe (200 when the DB is reachable, else 503)  |
 
 Launch profiles (`src/Balance.Web/Properties/launchSettings.json`):
 - `http` → `http://*:5248`
