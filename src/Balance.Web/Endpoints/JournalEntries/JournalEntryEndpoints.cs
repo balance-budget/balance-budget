@@ -13,47 +13,45 @@ internal static class JournalEntryEndpoints
     public static void MapJournalEntries(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup(PathPrefix).WithTags("JournalEntries");
-        group.MapGet("", ListAsync).WithName("ListJournalEntries");
-        group.MapGet("/{id:guid}", GetAsync).WithName("GetJournalEntry");
+        group
+            .MapGet("", ListAsync)
+            .WithValidation<ListJournalEntriesRequest>()
+            .WithName("ListJournalEntries");
+        group.MapGet("/{id}", GetAsync).WithName("GetJournalEntry");
         group
             .MapPost("", CreateAsync)
             .WithValidation<CreateJournalEntryRequest>()
             .WithName("CreateJournalEntry");
         group
-            .MapPatch("/{id:guid}", UpdateAsync)
+            .MapPatch("/{id}", UpdateAsync)
             .WithValidation<UpdateJournalEntryRequest>()
             .WithName("UpdateJournalEntry");
-        group.MapDelete("/{id:guid}", DeleteAsync).WithName("DeleteJournalEntry");
+        group.MapDelete("/{id}", DeleteAsync).WithName("DeleteJournalEntry");
     }
 
-    private static async Task<Ok<IReadOnlyList<JournalEntryResponse>>> ListAsync(
-        [FromServices] IJournalEntryService journalEntryService,
-        [FromQuery] int? skip,
-        [FromQuery] int? take,
-        CancellationToken cancellationToken
-    )
-    {
-        var entries = await journalEntryService.ListAsync(skip ?? 0, take ?? 0, cancellationToken);
-        IReadOnlyList<JournalEntryResponse> responses =
-        [
-            .. entries.Select(JournalEntryResponse.From),
-        ];
-        return TypedResults.Ok(responses);
-    }
-
-    private static async Task<Results<Ok<JournalEntryResponse>, NotFound>> GetAsync(
-        [FromRoute] Guid id,
+    private static async Task<Ok<IReadOnlyList<JournalEntryOutput>>> ListAsync(
+        [AsParameters] ListJournalEntriesRequest request,
         [FromServices] IJournalEntryService journalEntryService,
         CancellationToken cancellationToken
     )
     {
-        var entry = await journalEntryService.GetAsync(new JournalEntryId(id), cancellationToken);
-        return entry is null
-            ? TypedResults.NotFound()
-            : TypedResults.Ok(JournalEntryResponse.From(entry));
+        var skip = request.Skip ?? 0;
+        var take = request.Take ?? ListJournalEntriesRequest.DefaultPageSize;
+        var entries = await journalEntryService.ListAsync(skip, take, cancellationToken);
+        return TypedResults.Ok(entries);
     }
 
-    private static async Task<Created<JournalEntryResponse>> CreateAsync(
+    private static async Task<Results<Ok<JournalEntryOutput>, NotFound>> GetAsync(
+        [FromRoute] JournalEntryId id,
+        [FromServices] IJournalEntryService journalEntryService,
+        CancellationToken cancellationToken
+    )
+    {
+        var entry = await journalEntryService.GetAsync(id, cancellationToken);
+        return entry is null ? TypedResults.NotFound() : TypedResults.Ok(entry);
+    }
+
+    private static async Task<Created<JournalEntryOutput>> CreateAsync(
         [FromBody] CreateJournalEntryRequest request,
         [FromServices] IJournalEntryService journalEntryService,
         CancellationToken cancellationToken
@@ -79,12 +77,11 @@ internal static class JournalEntryEndpoints
             cancellationToken
         );
 
-        var response = JournalEntryResponse.From(entry);
-        return TypedResults.Created($"{PathPrefix}/{entry.Id.Value}", response);
+        return TypedResults.Created($"{PathPrefix}/{entry.Id.Value}", entry);
     }
 
-    private static async Task<Ok<JournalEntryResponse>> UpdateAsync(
-        [FromRoute] Guid id,
+    private static async Task<Ok<JournalEntryOutput>> UpdateAsync(
+        [FromRoute] JournalEntryId id,
         [FromBody] UpdateJournalEntryRequest request,
         [FromServices] IJournalEntryService journalEntryService,
         CancellationToken cancellationToken
@@ -102,7 +99,7 @@ internal static class JournalEntryEndpoints
             ];
 
         var entry = await journalEntryService.UpdateAsync(
-            new JournalEntryId(id),
+            id,
             new UpdateJournalEntryInput(
                 request.Date,
                 request.Description,
@@ -113,16 +110,16 @@ internal static class JournalEntryEndpoints
             cancellationToken
         );
 
-        return TypedResults.Ok(JournalEntryResponse.From(entry));
+        return TypedResults.Ok(entry);
     }
 
     private static async Task<NoContent> DeleteAsync(
-        [FromRoute] Guid id,
+        [FromRoute] JournalEntryId id,
         [FromServices] IJournalEntryService journalEntryService,
         CancellationToken cancellationToken
     )
     {
-        await journalEntryService.DeleteAsync(new JournalEntryId(id), cancellationToken);
+        await journalEntryService.DeleteAsync(id, cancellationToken);
         return TypedResults.NoContent();
     }
 }

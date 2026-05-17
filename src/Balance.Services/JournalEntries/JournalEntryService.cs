@@ -2,6 +2,7 @@ using Balance.Data;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
 using Balance.Data.Exceptions;
+using Balance.Data.Helpers;
 using Balance.Services.Contracts;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,9 +10,6 @@ namespace Balance.Services.JournalEntries;
 
 internal sealed class JournalEntryService : IJournalEntryService
 {
-    private const int DefaultPageSize = 50;
-    private const int MaxPageSize = 200;
-
     private readonly BalanceDbContext _dbContext;
     private readonly TimeProvider _timeProvider;
 
@@ -21,32 +19,63 @@ internal sealed class JournalEntryService : IJournalEntryService
         _timeProvider = timeProvider;
     }
 
-    public async Task<IReadOnlyList<JournalEntry>> ListAsync(
+    public async Task<IReadOnlyList<JournalEntryOutput>> ListAsync(
         int skip,
         int take,
         CancellationToken cancellationToken
     )
     {
-        var clampedSkip = skip < 0 ? 0 : skip;
-        var clampedTake = take <= 0 ? DefaultPageSize : Math.Min(take, MaxPageSize);
-
         return await _dbContext
-            .JournalEntries.AsNoTracking()
-            .Include(e => e.Lines)
-            .OrderByDescending(e => e.Date)
+            .JournalEntries.OrderByDescending(e => e.Date)
             .ThenByDescending(e => e.CreatedAt)
-            .Skip(clampedSkip)
-            .Take(clampedTake)
+            .Skip(skip)
+            .Take(take)
+            .Select(e => new JournalEntryOutput(
+                e.Id,
+                e.Date,
+                e.Description,
+                e.BankTransactionId,
+                e.CounterpartyId,
+                e.Lines.Select(l => new JournalLineOutput(
+                        l.Id,
+                        l.AccountId,
+                        l.Amount,
+                        l.ReconciliationStatus,
+                        l.Description
+                    ))
+                    .ToList(),
+                e.CreatedAt,
+                e.UpdatedAt
+            ))
             .ToListAsync(cancellationToken);
     }
 
-    public Task<JournalEntry?> GetAsync(JournalEntryId id, CancellationToken cancellationToken) =>
+    public Task<JournalEntryOutput?> GetAsync(
+        JournalEntryId id,
+        CancellationToken cancellationToken
+    ) =>
         _dbContext
-            .JournalEntries.AsNoTracking()
-            .Include(e => e.Lines)
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+            .JournalEntries.Where(e => e.Id == id)
+            .Select(e => new JournalEntryOutput(
+                e.Id,
+                e.Date,
+                e.Description,
+                e.BankTransactionId,
+                e.CounterpartyId,
+                e.Lines.Select(l => new JournalLineOutput(
+                        l.Id,
+                        l.AccountId,
+                        l.Amount,
+                        l.ReconciliationStatus,
+                        l.Description
+                    ))
+                    .ToList(),
+                e.CreatedAt,
+                e.UpdatedAt
+            ))
+            .FirstOrDefaultAsync(cancellationToken);
 
-    public async Task<JournalEntry> CreateAsync(
+    public async Task<JournalEntryOutput> CreateAsync(
         CreateJournalEntryInput input,
         CancellationToken cancellationToken
     )
@@ -68,7 +97,7 @@ internal sealed class JournalEntryService : IJournalEntryService
         {
             Id = new JournalEntryId(Guid.CreateVersion7()),
             Date = input.Date,
-            Description = Normalize(input.Description),
+            Description = input.Description.TrimToNull(),
             BankTransactionId = input.BankTransactionId,
             CounterpartyId = input.CounterpartyId,
             CreatedAt = now,
@@ -84,7 +113,7 @@ internal sealed class JournalEntryService : IJournalEntryService
                     JournalEntryId = entry.Id,
                     AccountId = line.AccountId,
                     Amount = line.Amount,
-                    Description = Normalize(line.Description),
+                    Description = line.Description.TrimToNull(),
                     CreatedAt = now,
                     UpdatedAt = now,
                 }
@@ -93,10 +122,10 @@ internal sealed class JournalEntryService : IJournalEntryService
 
         _dbContext.JournalEntries.Add(entry);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return entry;
+        return ToOutput(entry);
     }
 
-    public async Task<JournalEntry> UpdateAsync(
+    public async Task<JournalEntryOutput> UpdateAsync(
         JournalEntryId id,
         UpdateJournalEntryInput input,
         CancellationToken cancellationToken
@@ -116,7 +145,7 @@ internal sealed class JournalEntryService : IJournalEntryService
         if (input.Date is not null)
             entry.Date = input.Date.Value;
         if (input.Description is not null)
-            entry.Description = Normalize(input.Description);
+            entry.Description = input.Description.TrimToNull();
         if (input.BankTransactionId is not null)
             entry.BankTransactionId = input.BankTransactionId;
         if (input.CounterpartyId is not null)
@@ -141,7 +170,7 @@ internal sealed class JournalEntryService : IJournalEntryService
                         JournalEntryId = entry.Id,
                         AccountId = line.AccountId,
                         Amount = line.Amount,
-                        Description = Normalize(line.Description),
+                        Description = line.Description.TrimToNull(),
                         CreatedAt = now,
                         UpdatedAt = now,
                     }
@@ -157,7 +186,7 @@ internal sealed class JournalEntryService : IJournalEntryService
 
         entry.UpdatedAt = now;
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return entry;
+        return ToOutput(entry);
     }
 
     public async Task DeleteAsync(JournalEntryId id, CancellationToken cancellationToken)
@@ -172,6 +201,26 @@ internal sealed class JournalEntryService : IJournalEntryService
         _dbContext.JournalEntries.Remove(entry);
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
+
+    private static JournalEntryOutput ToOutput(JournalEntry entry) =>
+        new(
+            entry.Id,
+            entry.Date,
+            entry.Description,
+            entry.BankTransactionId,
+            entry.CounterpartyId,
+            [
+                .. entry.Lines.Select(l => new JournalLineOutput(
+                    l.Id,
+                    l.AccountId,
+                    l.Amount,
+                    l.ReconciliationStatus,
+                    l.Description
+                )),
+            ],
+            entry.CreatedAt,
+            entry.UpdatedAt
+        );
 
     private async Task<IReadOnlyList<JournalLineDraft>> BuildDraftsAsync(
         IReadOnlyList<CreateJournalLineInput> lines,
@@ -239,13 +288,5 @@ internal sealed class JournalEntryService : IJournalEntryService
                 );
             }
         }
-    }
-
-    private static string? Normalize(string? value)
-    {
-        if (value is null)
-            return null;
-        var trimmed = value.Trim();
-        return trimmed.Length == 0 ? null : trimmed;
     }
 }

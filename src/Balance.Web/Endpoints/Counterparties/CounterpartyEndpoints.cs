@@ -14,79 +14,69 @@ internal static class CounterpartyEndpoints
     {
         var group = app.MapGroup(PathPrefix).WithTags("Counterparties");
         group.MapGet("", ListAsync).WithName("ListCounterparties");
-        group.MapGet("/{id:guid}", GetAsync).WithName("GetCounterparty");
+        group.MapGet("/{id}", GetAsync).WithName("GetCounterparty");
         group
             .MapPost("", CreateAsync)
             .WithValidation<CreateCounterpartyRequest>()
             .WithName("CreateCounterparty");
         group
-            .MapPatch("/{id:guid}", UpdateAsync)
+            .MapPatch("/{id}", UpdateAsync)
             .WithValidation<UpdateCounterpartyRequest>()
             .WithName("UpdateCounterparty");
-        group.MapDelete("/{id:guid}", DeleteAsync).WithName("DeleteCounterparty");
+        group.MapDelete("/{id}", DeleteAsync).WithName("DeleteCounterparty");
     }
 
-    private static async Task<Ok<IReadOnlyList<CounterpartyResponse>>> ListAsync(
+    private static async Task<Ok<IReadOnlyList<CounterpartyOutput>>> ListAsync(
         [FromServices] ICounterpartyService counterpartyService,
         CancellationToken cancellationToken
     )
     {
         var counterparties = await counterpartyService.ListAsync(cancellationToken);
-        IReadOnlyList<CounterpartyResponse> responses =
-        [
-            .. counterparties.Select(CounterpartyResponse.From),
-        ];
-        return TypedResults.Ok(responses);
+        return TypedResults.Ok(counterparties);
     }
 
-    private static async Task<Results<Ok<CounterpartyResponse>, NotFound>> GetAsync(
-        [FromRoute] Guid id,
+    private static async Task<Results<Ok<CounterpartyOutput>, NotFound>> GetAsync(
+        [FromRoute] CounterpartyId id,
         [FromServices] ICounterpartyService counterpartyService,
         CancellationToken cancellationToken
     )
     {
-        var counterparty = await counterpartyService.GetAsync(
-            new CounterpartyId(id),
-            cancellationToken
-        );
-        return counterparty is null
-            ? TypedResults.NotFound()
-            : TypedResults.Ok(CounterpartyResponse.From(counterparty));
+        var counterparty = await counterpartyService.GetAsync(id, cancellationToken);
+        return counterparty is null ? TypedResults.NotFound() : TypedResults.Ok(counterparty);
     }
 
-    private static async Task<Created<CounterpartyResponse>> CreateAsync(
+    private static async Task<Created<CounterpartyOutput>> CreateAsync(
         [FromBody] CreateCounterpartyRequest request,
         [FromServices] ICounterpartyService counterpartyService,
         CancellationToken cancellationToken
     )
     {
         var counterparty = await counterpartyService.CreateAsync(request.Name, cancellationToken);
-        var response = CounterpartyResponse.From(counterparty);
-        return TypedResults.Created($"{PathPrefix}/{counterparty.Id.Value}", response);
+        return TypedResults.Created($"{PathPrefix}/{counterparty.Id.Value}", counterparty);
     }
 
-    private static async Task<Ok<CounterpartyResponse>> UpdateAsync(
-        [FromRoute] Guid id,
+    private static async Task<Ok<CounterpartyOutput>> UpdateAsync(
+        [FromRoute] CounterpartyId id,
         [FromBody] UpdateCounterpartyRequest request,
         [FromServices] ICounterpartyService counterpartyService,
         CancellationToken cancellationToken
     )
     {
         var counterparty = await counterpartyService.UpdateAsync(
-            new CounterpartyId(id),
+            id,
             request.Name,
             cancellationToken
         );
-        return TypedResults.Ok(CounterpartyResponse.From(counterparty));
+        return TypedResults.Ok(counterparty);
     }
 
     private static async Task<NoContent> DeleteAsync(
-        [FromRoute] Guid id,
+        [FromRoute] CounterpartyId id,
         [FromServices] ICounterpartyService counterpartyService,
         CancellationToken cancellationToken
     )
     {
-        await counterpartyService.DeleteAsync(new CounterpartyId(id), cancellationToken);
+        await counterpartyService.DeleteAsync(id, cancellationToken);
         return TypedResults.NoContent();
     }
 }

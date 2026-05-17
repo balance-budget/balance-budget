@@ -2,6 +2,7 @@ using Balance.Data;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
 using Balance.Data.Exceptions;
+using Balance.Data.Helpers;
 using Balance.Services.Contracts;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,29 +25,59 @@ internal sealed class BankAccountService : IBankAccountService
         _timeProvider = timeProvider;
     }
 
-    public async Task<IReadOnlyList<BankAccount>> ListAsync(CancellationToken cancellationToken) =>
+    public async Task<IReadOnlyList<BankAccountOutput>> ListAsync(
+        CancellationToken cancellationToken
+    ) =>
         await _dbContext
-            .BankAccounts.AsNoTracking()
-            .OrderBy(b => b.CreatedAt)
+            .BankAccounts.OrderBy(b => b.CreatedAt)
+            .Select(b => new BankAccountOutput(
+                b.Id,
+                b.Iban,
+                b.AccountNumber,
+                b.Bic,
+                b.BankName,
+                b.AccountHolderName,
+                b.CurrencyCode,
+                b.AccountId,
+                b.CounterpartyId,
+                b.CreatedAt,
+                b.UpdatedAt
+            ))
             .ToListAsync(cancellationToken);
 
-    public Task<BankAccount?> GetAsync(BankAccountId id, CancellationToken cancellationToken) =>
+    public Task<BankAccountOutput?> GetAsync(
+        BankAccountId id,
+        CancellationToken cancellationToken
+    ) =>
         _dbContext
-            .BankAccounts.AsNoTracking()
-            .FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
+            .BankAccounts.Where(b => b.Id == id)
+            .Select(b => new BankAccountOutput(
+                b.Id,
+                b.Iban,
+                b.AccountNumber,
+                b.Bic,
+                b.BankName,
+                b.AccountHolderName,
+                b.CurrencyCode,
+                b.AccountId,
+                b.CounterpartyId,
+                b.CreatedAt,
+                b.UpdatedAt
+            ))
+            .FirstOrDefaultAsync(cancellationToken);
 
-    public async Task<BankAccount> CreateAsync(
+    public async Task<BankAccountOutput> CreateAsync(
         CreateBankAccountInput input,
         CancellationToken cancellationToken
     )
     {
         ArgumentNullException.ThrowIfNull(input);
 
-        var iban = Normalize(input.Iban);
-        var accountNumber = Normalize(input.AccountNumber);
-        var bic = Normalize(input.Bic);
-        var bankName = Normalize(input.BankName);
-        var accountHolderName = Normalize(input.AccountHolderName);
+        var iban = input.Iban.TrimToNull();
+        var accountNumber = input.AccountNumber.TrimToNull();
+        var bic = input.Bic.TrimToNull();
+        var bankName = input.BankName.TrimToNull();
+        var accountHolderName = input.AccountHolderName.TrimToNull();
 
         EnsureOwnershipXor(input.AccountId, input.CounterpartyId);
         EnsureIbanOrAccountNumber(iban, accountNumber);
@@ -83,10 +114,10 @@ internal sealed class BankAccountService : IBankAccountService
 
         _dbContext.BankAccounts.Add(bankAccount);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return bankAccount;
+        return ToOutput(bankAccount);
     }
 
-    public async Task<BankAccount> UpdateAsync(
+    public async Task<BankAccountOutput> UpdateAsync(
         BankAccountId id,
         UpdateBankAccountInput input,
         CancellationToken cancellationToken
@@ -102,15 +133,15 @@ internal sealed class BankAccountService : IBankAccountService
             );
 
         if (input.Iban is not null)
-            bankAccount.Iban = Normalize(input.Iban);
+            bankAccount.Iban = input.Iban.TrimToNull();
         if (input.AccountNumber is not null)
-            bankAccount.AccountNumber = Normalize(input.AccountNumber);
+            bankAccount.AccountNumber = input.AccountNumber.TrimToNull();
         if (input.Bic is not null)
-            bankAccount.Bic = Normalize(input.Bic);
+            bankAccount.Bic = input.Bic.TrimToNull();
         if (input.BankName is not null)
-            bankAccount.BankName = Normalize(input.BankName);
+            bankAccount.BankName = input.BankName.TrimToNull();
         if (input.AccountHolderName is not null)
-            bankAccount.AccountHolderName = Normalize(input.AccountHolderName);
+            bankAccount.AccountHolderName = input.AccountHolderName.TrimToNull();
         if (input.CurrencyCode is not null)
             bankAccount.CurrencyCode = input.CurrencyCode;
         if (input.AccountId is not null)
@@ -143,7 +174,7 @@ internal sealed class BankAccountService : IBankAccountService
 
         bankAccount.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return bankAccount;
+        return ToOutput(bankAccount);
     }
 
     public async Task DeleteAsync(BankAccountId id, CancellationToken cancellationToken)
@@ -170,13 +201,20 @@ internal sealed class BankAccountService : IBankAccountService
         }
     }
 
-    private static string? Normalize(string? value)
-    {
-        if (value is null)
-            return null;
-        var trimmed = value.Trim();
-        return trimmed.Length == 0 ? null : trimmed;
-    }
+    private static BankAccountOutput ToOutput(BankAccount bankAccount) =>
+        new(
+            bankAccount.Id,
+            bankAccount.Iban,
+            bankAccount.AccountNumber,
+            bankAccount.Bic,
+            bankAccount.BankName,
+            bankAccount.AccountHolderName,
+            bankAccount.CurrencyCode,
+            bankAccount.AccountId,
+            bankAccount.CounterpartyId,
+            bankAccount.CreatedAt,
+            bankAccount.UpdatedAt
+        );
 
     private static void EnsureOwnershipXor(AccountId? accountId, CounterpartyId? counterpartyId)
     {

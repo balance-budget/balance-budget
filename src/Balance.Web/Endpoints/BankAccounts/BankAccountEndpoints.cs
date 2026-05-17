@@ -14,47 +14,38 @@ internal static class BankAccountEndpoints
     {
         var group = app.MapGroup(PathPrefix).WithTags("BankAccounts");
         group.MapGet("", ListAsync).WithName("ListBankAccounts");
-        group.MapGet("/{id:guid}", GetAsync).WithName("GetBankAccount");
+        group.MapGet("/{id}", GetAsync).WithName("GetBankAccount");
         group
             .MapPost("", CreateAsync)
             .WithValidation<CreateBankAccountRequest>()
             .WithName("CreateBankAccount");
         group
-            .MapPatch("/{id:guid}", UpdateAsync)
+            .MapPatch("/{id}", UpdateAsync)
             .WithValidation<UpdateBankAccountRequest>()
             .WithName("UpdateBankAccount");
-        group.MapDelete("/{id:guid}", DeleteAsync).WithName("DeleteBankAccount");
+        group.MapDelete("/{id}", DeleteAsync).WithName("DeleteBankAccount");
     }
 
-    private static async Task<Ok<IReadOnlyList<BankAccountResponse>>> ListAsync(
+    private static async Task<Ok<IReadOnlyList<BankAccountOutput>>> ListAsync(
         [FromServices] IBankAccountService bankAccountService,
         CancellationToken cancellationToken
     )
     {
         var bankAccounts = await bankAccountService.ListAsync(cancellationToken);
-        IReadOnlyList<BankAccountResponse> responses =
-        [
-            .. bankAccounts.Select(BankAccountResponse.From),
-        ];
-        return TypedResults.Ok(responses);
+        return TypedResults.Ok(bankAccounts);
     }
 
-    private static async Task<Results<Ok<BankAccountResponse>, NotFound>> GetAsync(
-        [FromRoute] Guid id,
+    private static async Task<Results<Ok<BankAccountOutput>, NotFound>> GetAsync(
+        [FromRoute] BankAccountId id,
         [FromServices] IBankAccountService bankAccountService,
         CancellationToken cancellationToken
     )
     {
-        var bankAccount = await bankAccountService.GetAsync(
-            new BankAccountId(id),
-            cancellationToken
-        );
-        return bankAccount is null
-            ? TypedResults.NotFound()
-            : TypedResults.Ok(BankAccountResponse.From(bankAccount));
+        var bankAccount = await bankAccountService.GetAsync(id, cancellationToken);
+        return bankAccount is null ? TypedResults.NotFound() : TypedResults.Ok(bankAccount);
     }
 
-    private static async Task<Created<BankAccountResponse>> CreateAsync(
+    private static async Task<Created<BankAccountOutput>> CreateAsync(
         [FromBody] CreateBankAccountRequest request,
         [FromServices] IBankAccountService bankAccountService,
         CancellationToken cancellationToken
@@ -73,19 +64,18 @@ internal static class BankAccountEndpoints
             ),
             cancellationToken
         );
-        var response = BankAccountResponse.From(bankAccount);
-        return TypedResults.Created($"{PathPrefix}/{bankAccount.Id.Value}", response);
+        return TypedResults.Created($"{PathPrefix}/{bankAccount.Id.Value}", bankAccount);
     }
 
-    private static async Task<Ok<BankAccountResponse>> UpdateAsync(
-        [FromRoute] Guid id,
+    private static async Task<Ok<BankAccountOutput>> UpdateAsync(
+        [FromRoute] BankAccountId id,
         [FromBody] UpdateBankAccountRequest request,
         [FromServices] IBankAccountService bankAccountService,
         CancellationToken cancellationToken
     )
     {
         var bankAccount = await bankAccountService.UpdateAsync(
-            new BankAccountId(id),
+            id,
             new UpdateBankAccountInput(
                 request.Iban,
                 request.AccountNumber,
@@ -98,16 +88,16 @@ internal static class BankAccountEndpoints
             ),
             cancellationToken
         );
-        return TypedResults.Ok(BankAccountResponse.From(bankAccount));
+        return TypedResults.Ok(bankAccount);
     }
 
     private static async Task<NoContent> DeleteAsync(
-        [FromRoute] Guid id,
+        [FromRoute] BankAccountId id,
         [FromServices] IBankAccountService bankAccountService,
         CancellationToken cancellationToken
     )
     {
-        await bankAccountService.DeleteAsync(new BankAccountId(id), cancellationToken);
+        await bankAccountService.DeleteAsync(id, cancellationToken);
         return TypedResults.NoContent();
     }
 }

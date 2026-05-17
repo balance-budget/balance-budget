@@ -14,43 +14,34 @@ internal static class BankTransactionEndpoints
     {
         var group = app.MapGroup(PathPrefix).WithTags("BankTransactions");
         group.MapGet("", ListAsync).WithName("ListBankTransactions");
-        group.MapGet("/{id:guid}", GetAsync).WithName("GetBankTransaction");
+        group.MapGet("/{id}", GetAsync).WithName("GetBankTransaction");
         group
             .MapPost("", CreateAsync)
             .WithValidation<CreateBankTransactionRequest>()
             .WithName("CreateBankTransaction");
-        group.MapDelete("/{id:guid}", DeleteAsync).WithName("DeleteBankTransaction");
+        group.MapDelete("/{id}", DeleteAsync).WithName("DeleteBankTransaction");
     }
 
-    private static async Task<Ok<IReadOnlyList<BankTransactionResponse>>> ListAsync(
+    private static async Task<Ok<IReadOnlyList<BankTransactionOutput>>> ListAsync(
         [FromServices] IBankTransactionService bankTransactionService,
         CancellationToken cancellationToken
     )
     {
         var bankTransactions = await bankTransactionService.ListAsync(cancellationToken);
-        IReadOnlyList<BankTransactionResponse> responses =
-        [
-            .. bankTransactions.Select(BankTransactionResponse.From),
-        ];
-        return TypedResults.Ok(responses);
+        return TypedResults.Ok(bankTransactions);
     }
 
-    private static async Task<Results<Ok<BankTransactionResponse>, NotFound>> GetAsync(
-        [FromRoute] Guid id,
+    private static async Task<Results<Ok<BankTransactionOutput>, NotFound>> GetAsync(
+        [FromRoute] BankTransactionId id,
         [FromServices] IBankTransactionService bankTransactionService,
         CancellationToken cancellationToken
     )
     {
-        var bankTransaction = await bankTransactionService.GetAsync(
-            new BankTransactionId(id),
-            cancellationToken
-        );
-        return bankTransaction is null
-            ? TypedResults.NotFound()
-            : TypedResults.Ok(BankTransactionResponse.From(bankTransaction));
+        var bankTransaction = await bankTransactionService.GetAsync(id, cancellationToken);
+        return bankTransaction is null ? TypedResults.NotFound() : TypedResults.Ok(bankTransaction);
     }
 
-    private static async Task<Created<BankTransactionResponse>> CreateAsync(
+    private static async Task<Created<BankTransactionOutput>> CreateAsync(
         [FromBody] CreateBankTransactionRequest request,
         [FromServices] IBankTransactionService bankTransactionService,
         CancellationToken cancellationToken
@@ -65,17 +56,16 @@ internal static class BankTransactionEndpoints
             ),
             cancellationToken
         );
-        var response = BankTransactionResponse.From(bankTransaction);
-        return TypedResults.Created($"{PathPrefix}/{bankTransaction.Id.Value}", response);
+        return TypedResults.Created($"{PathPrefix}/{bankTransaction.Id.Value}", bankTransaction);
     }
 
     private static async Task<NoContent> DeleteAsync(
-        [FromRoute] Guid id,
+        [FromRoute] BankTransactionId id,
         [FromServices] IBankTransactionService bankTransactionService,
         CancellationToken cancellationToken
     )
     {
-        await bankTransactionService.DeleteAsync(new BankTransactionId(id), cancellationToken);
+        await bankTransactionService.DeleteAsync(id, cancellationToken);
         return TypedResults.NoContent();
     }
 }
