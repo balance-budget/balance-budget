@@ -8,6 +8,7 @@ using Balance.Web.Endpoints.BankAccounts;
 using Balance.Web.Endpoints.BankTransactions;
 using Balance.Web.Endpoints.Counterparties;
 using Balance.Web.Endpoints.Currencies;
+using Balance.Web.Endpoints.JournalEntries;
 using Balance.Web.Logging;
 using Balance.Web.Middleware;
 using Scalar.AspNetCore;
@@ -46,6 +47,7 @@ app.MapAccounts();
 app.MapCounterparties();
 app.MapBankAccounts();
 app.MapBankTransactions();
+app.MapJournalEntries();
 
 await app.RunAsync(lifetime.ApplicationStopping);
 
