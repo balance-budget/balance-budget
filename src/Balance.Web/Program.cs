@@ -10,7 +10,6 @@ using Balance.Web.Endpoints.Counterparties;
 using Balance.Web.Endpoints.Currencies;
 using Balance.Web.Endpoints.JournalEntries;
 using Balance.Web.Logging;
-using Balance.Web.Middleware;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateSlimBuilder(args);
@@ -33,6 +32,8 @@ app.MapOpenApi();
 app.MapScalarApiReference();
 
 // Middleware pipeline, order matters here
+app.UseExceptionHandler();
+app.UseStatusCodePages();
 app.UseForwardedHeaders();
 app.UseDefaultFiles();
 app.UseRouting();
@@ -40,7 +41,6 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
-app.UseMiddleware<DomainExceptionMiddleware>();
 
 app.MapCurrencies();
 app.MapAccounts();

@@ -1,4 +1,7 @@
+using System.Diagnostics;
 using System.Text.Json.Serialization;
+using Balance.Web.Middleware;
+using Balance.Web.OpenApi;
 using FluentValidation;
 using Microsoft.AspNetCore.HttpOverrides;
 
@@ -8,7 +11,25 @@ internal static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddBalanceWeb(this IServiceCollection services)
     {
-        services.AddOpenApi();
+        services.AddOpenApi(options =>
+        {
+            options.AddOperationTransformer<ProblemDetailsOperationTransformer>();
+        });
+
+        services.AddProblemDetails(options =>
+        {
+            options.CustomizeProblemDetails = context =>
+            {
+                context.ProblemDetails.Instance ??=
+                    Activity.Current?.Id ?? context.HttpContext.TraceIdentifier;
+                if (context.ProblemDetails.Status is int status)
+                {
+                    context.ProblemDetails.Type ??= $"https://httpstatuses.com/{status}";
+                }
+            };
+        });
+
+        services.AddExceptionHandler<DomainExceptionHandler>();
 
         services.ConfigureHttpJsonOptions(options =>
         {
