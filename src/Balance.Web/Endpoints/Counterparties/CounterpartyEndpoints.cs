@@ -1,7 +1,6 @@
 using Balance.Data.Entities.Ids;
-using Balance.Data.Exceptions;
 using Balance.Services.Contracts;
-using FluentValidation;
+using Balance.Web.Filters;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,8 +15,14 @@ internal static class CounterpartyEndpoints
         var group = app.MapGroup(PathPrefix).WithTags("Counterparties");
         group.MapGet("", ListAsync).WithName("ListCounterparties");
         group.MapGet("/{id:guid}", GetAsync).WithName("GetCounterparty");
-        group.MapPost("", CreateAsync).WithName("CreateCounterparty");
-        group.MapPatch("/{id:guid}", UpdateAsync).WithName("UpdateCounterparty");
+        group
+            .MapPost("", CreateAsync)
+            .WithValidation<CreateCounterpartyRequest>()
+            .WithName("CreateCounterparty");
+        group
+            .MapPatch("/{id:guid}", UpdateAsync)
+            .WithValidation<UpdateCounterpartyRequest>()
+            .WithName("UpdateCounterparty");
         group.MapDelete("/{id:guid}", DeleteAsync).WithName("DeleteCounterparty");
     }
 
@@ -52,12 +57,9 @@ internal static class CounterpartyEndpoints
     private static async Task<Created<CounterpartyResponse>> CreateAsync(
         [FromBody] CreateCounterpartyRequest request,
         [FromServices] ICounterpartyService counterpartyService,
-        [FromServices] IValidator<CreateCounterpartyRequest> validator,
         CancellationToken cancellationToken
     )
     {
-        await ValidateAsync(validator, request, cancellationToken);
-
         var counterparty = await counterpartyService.CreateAsync(request.Name, cancellationToken);
         var response = CounterpartyResponse.From(counterparty);
         return TypedResults.Created($"{PathPrefix}/{counterparty.Id.Value}", response);
@@ -67,12 +69,9 @@ internal static class CounterpartyEndpoints
         [FromRoute] Guid id,
         [FromBody] UpdateCounterpartyRequest request,
         [FromServices] ICounterpartyService counterpartyService,
-        [FromServices] IValidator<UpdateCounterpartyRequest> validator,
         CancellationToken cancellationToken
     )
     {
-        await ValidateAsync(validator, request, cancellationToken);
-
         var counterparty = await counterpartyService.UpdateAsync(
             new CounterpartyId(id),
             request.Name,
@@ -89,24 +88,5 @@ internal static class CounterpartyEndpoints
     {
         await counterpartyService.DeleteAsync(new CounterpartyId(id), cancellationToken);
         return TypedResults.NoContent();
-    }
-
-    private static async Task ValidateAsync<T>(
-        IValidator<T> validator,
-        T request,
-        CancellationToken cancellationToken
-    )
-    {
-        var result = await validator.ValidateAsync(request, cancellationToken);
-        if (!result.IsValid)
-        {
-            throw new DomainException(
-                DomainExceptionKind.Validation,
-                string.Join("; ", result.Errors.Select(e => e.ErrorMessage)),
-                result
-                    .Errors.GroupBy(e => e.PropertyName)
-                    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())
-            );
-        }
     }
 }

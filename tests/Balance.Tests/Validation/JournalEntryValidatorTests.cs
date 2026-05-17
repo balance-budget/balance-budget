@@ -1,4 +1,5 @@
 using Balance.Data.Entities.Ids;
+using Balance.Data.Exceptions;
 using Balance.Services.JournalEntries;
 
 namespace Balance.Tests.Validation;
@@ -13,9 +14,12 @@ internal sealed class JournalEntryValidatorTests
     {
         var lines = new List<JournalLineDraft> { new(100, Eur) };
 
-        await Assert
+        var ex = await Assert
             .That(() => JournalEntryValidator.Validate(lines))
-            .Throws<JournalEntryTooFewLinesException>();
+            .Throws<DomainException>();
+
+        await Assert.That(ex!.Kind).IsEqualTo(DomainExceptionKind.Invariant);
+        await Assert.That(ex.Message).Contains(JournalEntryValidator.TooFewLinesMessage);
     }
 
     [Test]
@@ -23,9 +27,12 @@ internal sealed class JournalEntryValidatorTests
     {
         var lines = new List<JournalLineDraft>();
 
-        await Assert
+        var ex = await Assert
             .That(() => JournalEntryValidator.Validate(lines))
-            .Throws<JournalEntryTooFewLinesException>();
+            .Throws<DomainException>();
+
+        await Assert.That(ex!.Kind).IsEqualTo(DomainExceptionKind.Invariant);
+        await Assert.That(ex.Message).Contains(JournalEntryValidator.TooFewLinesMessage);
     }
 
     [Test]
@@ -41,9 +48,12 @@ internal sealed class JournalEntryValidatorTests
     {
         var lines = new List<JournalLineDraft> { new(4000, Eur), new(-3000, Eur) };
 
-        await Assert
+        var ex = await Assert
             .That(() => JournalEntryValidator.Validate(lines))
-            .Throws<JournalEntryUnbalancedException>();
+            .Throws<DomainException>();
+
+        await Assert.That(ex!.Kind).IsEqualTo(DomainExceptionKind.Invariant);
+        await Assert.That(ex.Message).Contains(JournalEntryValidator.UnbalancedMessage);
     }
 
     [Test]
@@ -59,9 +69,12 @@ internal sealed class JournalEntryValidatorTests
     {
         var lines = new List<JournalLineDraft> { new(4000, Eur), new(-4000, Usd) };
 
-        await Assert
+        var ex = await Assert
             .That(() => JournalEntryValidator.Validate(lines))
-            .Throws<JournalEntryCurrencyMismatchException>();
+            .Throws<DomainException>();
+
+        await Assert.That(ex!.Kind).IsEqualTo(DomainExceptionKind.Invariant);
+        await Assert.That(ex.Message).Contains(JournalEntryValidator.CurrencyMismatchMessage);
     }
 
     [Test]
@@ -69,9 +82,12 @@ internal sealed class JournalEntryValidatorTests
     {
         var lines = new List<JournalLineDraft> { new(4000, Eur), new(0, Eur), new(-4000, Eur) };
 
-        await Assert
+        var ex = await Assert
             .That(() => JournalEntryValidator.Validate(lines))
-            .Throws<JournalEntryZeroAmountLineException>();
+            .Throws<DomainException>();
+
+        await Assert.That(ex!.Kind).IsEqualTo(DomainExceptionKind.Invariant);
+        await Assert.That(ex.Message).Contains(JournalEntryValidator.ZeroAmountLineMessage);
     }
 
     [Test]
@@ -79,9 +95,12 @@ internal sealed class JournalEntryValidatorTests
     {
         var lines = new List<JournalLineDraft> { new(4000, Eur), new(4000, Eur) };
 
-        await Assert
+        var ex = await Assert
             .That(() => JournalEntryValidator.Validate(lines))
-            .Throws<JournalEntryUnbalancedException>();
+            .Throws<DomainException>();
+
+        await Assert.That(ex!.Kind).IsEqualTo(DomainExceptionKind.Invariant);
+        await Assert.That(ex.Message).Contains(JournalEntryValidator.UnbalancedMessage);
     }
 
     [Test]
