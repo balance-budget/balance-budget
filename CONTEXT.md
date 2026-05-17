@@ -1,6 +1,6 @@
 # Personal Finance Bookkeeping
 
-A headless personal-finance tool backed by a rigorous **double-entry ledger**. The domain is the bookkeeping core — accounts, journal entries, postings. Budgets, labels, imports, and reporting are deliberately deferred and will sit *on top* of this ledger later.
+A personal-finance tool backed by a rigorous **double-entry ledger**. The domain is the bookkeeping core — accounts, journal entries, postings. Budgets, labels, imports, and reporting are deliberately deferred and will sit *on top* of this ledger later.
 
 ## Language
 
