@@ -25,9 +25,9 @@ dotnet build --no-restore -v:minimal --nologo
 
 # Generate EF core migrations (without build)
 # Add migration for PostgreSQL
-dotnet ef migrations add <name> --no-build --project src/Balance.Data.PostgreSql/Balance.Data.PostgreSql.csproj --startup-project src/Balance.Console/Balance.Console.csproj -- --Database:Provider=Postgres
+dotnet ef migrations add <name> --no-build --project src/Balance.Data.PostgreSql/Balance.Data.PostgreSql.csproj --startup-project src/Balance.Web/Balance.Web.csproj -- --Database:Provider=Postgres
 # Add migration for SQLite
-dotnet ef migrations add <name> --no-build --project src/Balance.Data.Sqlite/Balance.Data.Sqlite.csproj --startup-project src/Balance.Console/Balance.Console.csproj -- --Database:Provider=Sqlite
+dotnet ef migrations add <name> --no-build --project src/Balance.Data.Sqlite/Balance.Data.Sqlite.csproj --startup-project src/Balance.Web/Balance.Web.csproj -- --Database:Provider=Sqlite
 
 # Format
 # CI check
