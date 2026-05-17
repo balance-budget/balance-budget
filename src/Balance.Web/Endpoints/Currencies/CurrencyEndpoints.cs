@@ -16,9 +16,7 @@ internal static class CurrencyEndpoints
         group.MapGet("", ListAsync).WithName("ListCurrencies");
         group
             .MapGet("/{code}", GetAsync)
-            .WithValidation(static ctx => new GetCurrencyRequest(
-                new CurrencyCode((string)ctx.Arguments[0]!)
-            ))
+            .WithValidation(static ctx => new GetCurrencyRequest((CurrencyCode)ctx.Arguments[0]!))
             .WithName("GetCurrency");
     }
 
@@ -32,12 +30,12 @@ internal static class CurrencyEndpoints
     }
 
     private static async Task<Results<Ok<CurrencyOutput>, NotFound>> GetAsync(
-        [FromRoute] string code,
+        [FromRoute] CurrencyCode code,
         [FromServices] ICurrencyService currencyService,
         CancellationToken cancellationToken
     )
     {
-        var currency = await currencyService.GetAsync(new CurrencyCode(code), cancellationToken);
+        var currency = await currencyService.GetAsync(code, cancellationToken);
         return currency is null ? TypedResults.NotFound() : TypedResults.Ok(currency);
     }
 }

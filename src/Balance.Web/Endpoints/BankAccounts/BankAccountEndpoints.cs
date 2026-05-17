@@ -14,16 +14,16 @@ internal static class BankAccountEndpoints
     {
         var group = app.MapGroup(PathPrefix).WithTags("BankAccounts");
         group.MapGet("", ListAsync).WithName("ListBankAccounts");
-        group.MapGet("/{id:guid}", GetAsync).WithName("GetBankAccount");
+        group.MapGet("/{id}", GetAsync).WithName("GetBankAccount");
         group
             .MapPost("", CreateAsync)
             .WithValidation<CreateBankAccountRequest>()
             .WithName("CreateBankAccount");
         group
-            .MapPatch("/{id:guid}", UpdateAsync)
+            .MapPatch("/{id}", UpdateAsync)
             .WithValidation<UpdateBankAccountRequest>()
             .WithName("UpdateBankAccount");
-        group.MapDelete("/{id:guid}", DeleteAsync).WithName("DeleteBankAccount");
+        group.MapDelete("/{id}", DeleteAsync).WithName("DeleteBankAccount");
     }
 
     private static async Task<Ok<IReadOnlyList<BankAccountOutput>>> ListAsync(
@@ -36,15 +36,12 @@ internal static class BankAccountEndpoints
     }
 
     private static async Task<Results<Ok<BankAccountOutput>, NotFound>> GetAsync(
-        [FromRoute] Guid id,
+        [FromRoute] BankAccountId id,
         [FromServices] IBankAccountService bankAccountService,
         CancellationToken cancellationToken
     )
     {
-        var bankAccount = await bankAccountService.GetAsync(
-            new BankAccountId(id),
-            cancellationToken
-        );
+        var bankAccount = await bankAccountService.GetAsync(id, cancellationToken);
         return bankAccount is null ? TypedResults.NotFound() : TypedResults.Ok(bankAccount);
     }
 
@@ -71,14 +68,14 @@ internal static class BankAccountEndpoints
     }
 
     private static async Task<Ok<BankAccountOutput>> UpdateAsync(
-        [FromRoute] Guid id,
+        [FromRoute] BankAccountId id,
         [FromBody] UpdateBankAccountRequest request,
         [FromServices] IBankAccountService bankAccountService,
         CancellationToken cancellationToken
     )
     {
         var bankAccount = await bankAccountService.UpdateAsync(
-            new BankAccountId(id),
+            id,
             new UpdateBankAccountInput(
                 request.Iban,
                 request.AccountNumber,
@@ -95,12 +92,12 @@ internal static class BankAccountEndpoints
     }
 
     private static async Task<NoContent> DeleteAsync(
-        [FromRoute] Guid id,
+        [FromRoute] BankAccountId id,
         [FromServices] IBankAccountService bankAccountService,
         CancellationToken cancellationToken
     )
     {
-        await bankAccountService.DeleteAsync(new BankAccountId(id), cancellationToken);
+        await bankAccountService.DeleteAsync(id, cancellationToken);
         return TypedResults.NoContent();
     }
 }
