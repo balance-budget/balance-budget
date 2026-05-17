@@ -49,12 +49,7 @@ internal sealed class JournalEntryValidatorTests
     [Test]
     public async Task Three_line_balanced_split_entry_succeeds()
     {
-        var lines = new List<JournalLineDraft>
-        {
-            new(6000, Eur),
-            new(4000, Eur),
-            new(-10000, Eur),
-        };
+        var lines = new List<JournalLineDraft> { new(6000, Eur), new(4000, Eur), new(-10000, Eur) };
 
         await Assert.That(() => JournalEntryValidator.Validate(lines)).ThrowsNothing();
     }
@@ -72,12 +67,7 @@ internal sealed class JournalEntryValidatorTests
     [Test]
     public async Task Zero_amount_line_throws_ZeroAmount()
     {
-        var lines = new List<JournalLineDraft>
-        {
-            new(4000, Eur),
-            new(0, Eur),
-            new(-4000, Eur),
-        };
+        var lines = new List<JournalLineDraft> { new(4000, Eur), new(0, Eur), new(-4000, Eur) };
 
         await Assert
             .That(() => JournalEntryValidator.Validate(lines))

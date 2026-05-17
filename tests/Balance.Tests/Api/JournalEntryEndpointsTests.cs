@@ -269,7 +269,11 @@ internal sealed record CreateJournalEntryRequestDto(
     IReadOnlyList<CreateJournalLineRequestDto> Lines
 );
 
-internal sealed record CreateJournalLineRequestDto(Guid AccountId, long Amount, string? Description);
+internal sealed record CreateJournalLineRequestDto(
+    Guid AccountId,
+    long Amount,
+    string? Description
+);
 
 internal sealed record UpdateJournalEntryRequestDto(
     DateOnly? Date,

@@ -35,11 +35,7 @@ public sealed record CreateJournalEntryInput(
     IReadOnlyList<CreateJournalLineInput> Lines
 );
 
-public sealed record CreateJournalLineInput(
-    AccountId AccountId,
-    long Amount,
-    string? Description
-);
+public sealed record CreateJournalLineInput(AccountId AccountId, long Amount, string? Description);
 
 public sealed record UpdateJournalEntryInput(
     DateOnly? Date,
