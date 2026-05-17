@@ -1,4 +1,3 @@
-using System.Globalization;
 using Balance.Data.Entities.Ids;
 using Balance.Data.Exceptions;
 
@@ -7,6 +6,7 @@ namespace Balance.Data.Entities;
 /// <summary>
 /// A value object pairing an integer amount of minor units (cents, satoshi, etc.) with a Currency.
 /// Same-currency arithmetic is type-checked; cross-currency arithmetic throws DomainException.
+/// Human-readable formatting/parsing lives in <see cref="MoneyExtensions"/> and requires a Currency.
 /// </summary>
 public readonly record struct Money(long Amount, CurrencyCode CurrencyCode)
 {
@@ -41,39 +41,6 @@ public readonly record struct Money(long Amount, CurrencyCode CurrencyCode)
 
     public static Money Multiply(Money money, long factor) => money * factor;
 
-    public string Format(Currency currency, IFormatProvider? formatProvider = null)
-    {
-        ArgumentNullException.ThrowIfNull(currency);
-        EnsureCurrencyMatches(currency);
-        return FormatMinorUnits(Amount, currency.MinorUnitScale, formatProvider)
-            + " "
-            + CurrencyCode.Value;
-    }
-
-    public static Money Parse(
-        string majorUnits,
-        Currency currency,
-        IFormatProvider? formatProvider = null
-    )
-    {
-        ArgumentNullException.ThrowIfNull(majorUnits);
-        ArgumentNullException.ThrowIfNull(currency);
-        var amount = ParseMinorUnits(majorUnits, currency.MinorUnitScale, formatProvider);
-        return new Money(amount, currency.Code);
-    }
-
-    private void EnsureCurrencyMatches(Currency currency)
-    {
-        if (currency.Code != CurrencyCode)
-        {
-            throw new DomainException(
-                DomainExceptionKind.Invariant,
-                $"Currency mismatch: Money is {CurrencyCode.Value}, "
-                    + $"caller supplied {currency.Code.Value}."
-            );
-        }
-    }
-
     private static void EnsureSameCurrency(Money left, Money right)
     {
         if (left.CurrencyCode != right.CurrencyCode)
@@ -84,122 +51,5 @@ public readonly record struct Money(long Amount, CurrencyCode CurrencyCode)
                     + $"{left.CurrencyCode.Value} and {right.CurrencyCode.Value}."
             );
         }
-    }
-
-    private static string FormatMinorUnits(long amount, int scale, IFormatProvider? formatProvider)
-    {
-        if (scale < 0)
-        {
-            throw new DomainException(
-                DomainExceptionKind.Invariant,
-                $"MinorUnitScale must be non-negative; got {scale}."
-            );
-        }
-
-        formatProvider ??= CultureInfo.InvariantCulture;
-        if (scale == 0)
-        {
-            return amount.ToString(formatProvider);
-        }
-
-        var info = NumberFormatInfo.GetInstance(formatProvider);
-        var separator = info.NumberDecimalSeparator;
-
-        var isNegative = amount < 0;
-        var absolute = isNegative ? unchecked((ulong)-amount) : (ulong)amount;
-        var asString = absolute.ToString(CultureInfo.InvariantCulture);
-        if (asString.Length <= scale)
-        {
-            asString = asString.PadLeft(scale + 1, '0');
-        }
-
-        var integerPart = asString[..^scale];
-        var fractionalPart = asString[^scale..];
-        var sign = isNegative ? "-" : string.Empty;
-        return sign + integerPart + separator + fractionalPart;
-    }
-
-    private static long ParseMinorUnits(string text, int scale, IFormatProvider? formatProvider)
-    {
-        if (scale < 0)
-        {
-            throw new DomainException(
-                DomainExceptionKind.Invariant,
-                $"MinorUnitScale must be non-negative; got {scale}."
-            );
-        }
-
-        formatProvider ??= CultureInfo.InvariantCulture;
-        var info = NumberFormatInfo.GetInstance(formatProvider);
-        var separator = info.NumberDecimalSeparator;
-
-        var trimmed = text.Trim();
-        if (trimmed.Length == 0)
-        {
-            throw new DomainException(
-                DomainExceptionKind.Validation,
-                "Money value cannot be empty."
-            );
-        }
-
-        var isNegative = false;
-        var start = 0;
-        if (trimmed[0] == '-')
-        {
-            isNegative = true;
-            start = 1;
-        }
-        else if (trimmed[0] == '+')
-        {
-            start = 1;
-        }
-
-        var body = trimmed[start..];
-        var separatorIndex = body.IndexOf(separator, StringComparison.Ordinal);
-        string integerPart;
-        string fractionalPart;
-        if (separatorIndex < 0)
-        {
-            integerPart = body;
-            fractionalPart = string.Empty;
-        }
-        else
-        {
-            integerPart = body[..separatorIndex];
-            fractionalPart = body[(separatorIndex + separator.Length)..];
-        }
-
-        if (integerPart.Length == 0 && fractionalPart.Length == 0)
-        {
-            throw new DomainException(
-                DomainExceptionKind.Validation,
-                $"'{text}' is not a valid money value."
-            );
-        }
-
-        if (fractionalPart.Length > scale)
-        {
-            throw new DomainException(
-                DomainExceptionKind.Validation,
-                $"'{text}' has more fractional digits than the currency allows ({scale})."
-            );
-        }
-
-        var paddedFractional = fractionalPart.PadRight(scale, '0');
-        var combined =
-            (integerPart.Length == 0 ? "0" : integerPart)
-            + (scale == 0 ? string.Empty : paddedFractional);
-
-        if (
-            !long.TryParse(combined, NumberStyles.None, CultureInfo.InvariantCulture, out var value)
-        )
-        {
-            throw new DomainException(
-                DomainExceptionKind.Validation,
-                $"'{text}' is not a valid money value."
-            );
-        }
-
-        return isNegative ? checked(-value) : value;
     }
 }
