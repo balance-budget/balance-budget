@@ -1,27 +1,33 @@
 using Balance.Data.Entities.Ids;
+using Balance.Data.Exceptions;
 
 namespace Balance.Services.JournalEntries;
 
-/// <summary>
-/// Pure validator for a draft <c>JournalEntry</c>. Throws a specific
-/// <see cref="JournalEntryValidationException"/> subtype on invariant violation.
-/// </summary>
 internal static class JournalEntryValidator
 {
+    internal const string TooFewLinesMessage = "A JournalEntry requires at least 2 JournalLines";
+    internal const string ZeroAmountLineMessage = "JournalLine.Amount must be non-zero.";
+    internal const string CurrencyMismatchMessage =
+        "All JournalLines in a single JournalEntry must share the same CurrencyCode in v1.";
+    internal const string UnbalancedMessage = "JournalEntry lines must net to zero per currency";
+
     public static void Validate(IReadOnlyList<JournalLineDraft> lines)
     {
         ArgumentNullException.ThrowIfNull(lines);
 
         if (lines.Count < 2)
         {
-            throw new JournalEntryTooFewLinesException(lines.Count);
+            throw new DomainException(
+                DomainExceptionKind.Invariant,
+                $"{TooFewLinesMessage}; got {lines.Count}."
+            );
         }
 
         foreach (var line in lines)
         {
             if (line.Amount == 0)
             {
-                throw new JournalEntryZeroAmountLineException();
+                throw new DomainException(DomainExceptionKind.Invariant, ZeroAmountLineMessage);
             }
         }
 
@@ -30,7 +36,7 @@ internal static class JournalEntryValidator
         {
             if (lines[i].AccountCurrencyCode != firstCurrency)
             {
-                throw new JournalEntryCurrencyMismatchException();
+                throw new DomainException(DomainExceptionKind.Invariant, CurrencyMismatchMessage);
             }
         }
 
@@ -41,7 +47,10 @@ internal static class JournalEntryValidator
         }
         if (sum != 0L)
         {
-            throw new JournalEntryUnbalancedException(firstCurrency.Value, sum);
+            throw new DomainException(
+                DomainExceptionKind.Invariant,
+                $"{UnbalancedMessage}; sum for {firstCurrency.Value} is {sum}."
+            );
         }
     }
 }

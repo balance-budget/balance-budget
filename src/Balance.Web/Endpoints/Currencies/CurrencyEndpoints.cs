@@ -1,7 +1,6 @@
 using Balance.Data.Entities.Ids;
-using Balance.Data.Exceptions;
 using Balance.Services.Contracts;
-using FluentValidation;
+using Balance.Web.Filters;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,7 +14,12 @@ internal static class CurrencyEndpoints
     {
         var group = app.MapGroup(PathPrefix).WithTags("Currencies");
         group.MapGet("", ListAsync).WithName("ListCurrencies");
-        group.MapGet("/{code}", GetAsync).WithName("GetCurrency");
+        group
+            .MapGet("/{code}", GetAsync)
+            .WithValidation(static ctx => new GetCurrencyRequest(
+                new CurrencyCode((string)ctx.Arguments[0]!)
+            ))
+            .WithName("GetCurrency");
     }
 
     private static async Task<Ok<IReadOnlyList<CurrencyResponse>>> ListAsync(
@@ -31,24 +35,10 @@ internal static class CurrencyEndpoints
     private static async Task<Results<Ok<CurrencyResponse>, NotFound>> GetAsync(
         [FromRoute] string code,
         [FromServices] ICurrencyService currencyService,
-        [FromServices] IValidator<GetCurrencyRequest> validator,
         CancellationToken cancellationToken
     )
     {
-        var request = new GetCurrencyRequest(new CurrencyCode(code));
-        var result = await validator.ValidateAsync(request, cancellationToken);
-        if (!result.IsValid)
-        {
-            throw new DomainException(
-                DomainExceptionKind.Validation,
-                string.Join("; ", result.Errors.Select(e => e.ErrorMessage)),
-                result
-                    .Errors.GroupBy(e => e.PropertyName)
-                    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())
-            );
-        }
-
-        var currency = await currencyService.GetAsync(request.Code, cancellationToken);
+        var currency = await currencyService.GetAsync(new CurrencyCode(code), cancellationToken);
         return currency is null
             ? TypedResults.NotFound()
             : TypedResults.Ok(CurrencyResponse.From(currency));

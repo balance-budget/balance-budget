@@ -1,7 +1,6 @@
 using Balance.Data.Entities.Ids;
-using Balance.Data.Exceptions;
 using Balance.Services.Contracts;
-using FluentValidation;
+using Balance.Web.Filters;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,7 +15,10 @@ internal static class BankTransactionEndpoints
         var group = app.MapGroup(PathPrefix).WithTags("BankTransactions");
         group.MapGet("", ListAsync).WithName("ListBankTransactions");
         group.MapGet("/{id:guid}", GetAsync).WithName("GetBankTransaction");
-        group.MapPost("", CreateAsync).WithName("CreateBankTransaction");
+        group
+            .MapPost("", CreateAsync)
+            .WithValidation<CreateBankTransactionRequest>()
+            .WithName("CreateBankTransaction");
         group.MapDelete("/{id:guid}", DeleteAsync).WithName("DeleteBankTransaction");
     }
 
@@ -51,12 +53,9 @@ internal static class BankTransactionEndpoints
     private static async Task<Created<BankTransactionResponse>> CreateAsync(
         [FromBody] CreateBankTransactionRequest request,
         [FromServices] IBankTransactionService bankTransactionService,
-        [FromServices] IValidator<CreateBankTransactionRequest> validator,
         CancellationToken cancellationToken
     )
     {
-        await ValidateAsync(validator, request, cancellationToken);
-
         var bankTransaction = await bankTransactionService.CreateAsync(
             new CreateBankTransactionInput(
                 request.BankAccountId,
@@ -78,24 +77,5 @@ internal static class BankTransactionEndpoints
     {
         await bankTransactionService.DeleteAsync(new BankTransactionId(id), cancellationToken);
         return TypedResults.NoContent();
-    }
-
-    private static async Task ValidateAsync<T>(
-        IValidator<T> validator,
-        T request,
-        CancellationToken cancellationToken
-    )
-    {
-        var result = await validator.ValidateAsync(request, cancellationToken);
-        if (!result.IsValid)
-        {
-            throw new DomainException(
-                DomainExceptionKind.Validation,
-                string.Join("; ", result.Errors.Select(e => e.ErrorMessage)),
-                result
-                    .Errors.GroupBy(e => e.PropertyName)
-                    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())
-            );
-        }
     }
 }
