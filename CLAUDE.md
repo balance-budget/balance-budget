@@ -21,7 +21,7 @@ dotnet tool restore
 dotnet restore
 
 # Build (without restore)
-dotnet build --no-restore -v:minimal --nologo
+dotnet build --no-restore -v:minimal
 
 # Generate EF core migrations (without build)
 # Add migration for PostgreSQL
@@ -37,7 +37,9 @@ dotnet csharpier format .
 
 # Test (without build)
 # TUnit suite, runs with coverage in CI
-dotnet test --no-build -v:minimal --nologo  
+dotnet test --no-build -v:minimal
+# Single TUnit test
+dotnet test --no-build -v:minimal --treenode-filter "/Balance.Tests/Balance.Tests.Domain/MoneyTests/Equality_uses_amount_and_currency"
 
 # Run
 dotnet run --project src/Balance.Web/Balance.Web.csproj
