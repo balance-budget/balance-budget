@@ -9,8 +9,6 @@ namespace Balance.Services.Counterparties;
 
 internal sealed class CounterpartyService : ICounterpartyService
 {
-    private const string NameUniqueIndex = "IX_Counterparties_Name";
-
     private readonly BalanceDbContext _dbContext;
     private readonly TimeProvider _timeProvider;
 
@@ -44,6 +42,8 @@ internal sealed class CounterpartyService : ICounterpartyService
             );
         }
 
+        await EnsureNameAvailableAsync(trimmed, excludingId: null, cancellationToken);
+
         var now = _timeProvider.GetUtcNow().UtcDateTime;
         var counterparty = new Counterparty
         {
@@ -54,7 +54,7 @@ internal sealed class CounterpartyService : ICounterpartyService
         };
 
         _dbContext.Counterparties.Add(counterparty);
-        await SaveChangesHandlingUniqueAsync(trimmed, cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
         return counterparty;
     }
 
@@ -71,7 +71,6 @@ internal sealed class CounterpartyService : ICounterpartyService
                 $"Counterparty {id} not found."
             );
 
-        string? renamedTo = null;
         if (name is not null)
         {
             var trimmed = name.Trim();
@@ -82,12 +81,15 @@ internal sealed class CounterpartyService : ICounterpartyService
                     "Counterparty name cannot be empty."
                 );
             }
+            if (!string.Equals(trimmed, counterparty.Name, StringComparison.Ordinal))
+            {
+                await EnsureNameAvailableAsync(trimmed, excludingId: id, cancellationToken);
+            }
             counterparty.Name = trimmed;
-            renamedTo = trimmed;
         }
 
         counterparty.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
-        await SaveChangesHandlingUniqueAsync(renamedTo ?? counterparty.Name, cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
         return counterparty;
     }
 
@@ -115,37 +117,22 @@ internal sealed class CounterpartyService : ICounterpartyService
         }
     }
 
-    private async Task SaveChangesHandlingUniqueAsync(
-        string conflictingName,
+    private async Task EnsureNameAvailableAsync(
+        string name,
+        CounterpartyId? excludingId,
         CancellationToken cancellationToken
     )
     {
-        try
-        {
-            await _dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateException ex) when (IsNameUniqueViolation(ex))
+        var taken = await _dbContext.Counterparties.AnyAsync(
+            c => c.Name == name && (excludingId == null || c.Id != excludingId),
+            cancellationToken
+        );
+        if (taken)
         {
             throw new DomainException(
                 DomainExceptionKind.Conflict,
-                $"A counterparty named '{conflictingName}' already exists.",
-                ex
+                $"A counterparty named '{name}' already exists."
             );
         }
-    }
-
-    private static bool IsNameUniqueViolation(DbUpdateException ex)
-    {
-        for (var current = ex.InnerException; current is not null; current = current.InnerException)
-        {
-            if (
-                current.Message.Contains(NameUniqueIndex, StringComparison.Ordinal)
-                || current.Message.Contains("Counterparties.Name", StringComparison.Ordinal)
-            )
-            {
-                return true;
-            }
-        }
-        return false;
     }
 }
