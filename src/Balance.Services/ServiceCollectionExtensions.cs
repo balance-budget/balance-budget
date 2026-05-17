@@ -1,6 +1,5 @@
 using Balance.Configuration;
 using Balance.Data;
-using Balance.Data.Currencies;
 using Balance.Services.Accounts;
 using Balance.Services.BankAccounts;
 using Balance.Services.BankTransactions;
@@ -29,8 +28,9 @@ public static class ServiceCollectionExtensions
             .AddBalanceConfiguration(configuration)
             .AddBalanceData(configuration)
             .AddBalanceJobs(configuration, startJobs)
+            .AddMemoryCache()
             .AddValidatorsFromAssemblyContaining<IServicesAssemblyMarker>(
-                ServiceLifetime.Singleton,
+                ServiceLifetime.Scoped,
                 includeInternalTypes: true
             )
             .AddScoped<ICurrencyService, CurrencyService>()
@@ -40,9 +40,6 @@ public static class ServiceCollectionExtensions
             .AddScoped<IBankAccountService, BankAccountService>()
             .AddScoped<IBankTransactionService, BankTransactionService>()
             .AddScoped<IJournalEntryService, JournalEntryService>()
-            .AddSingleton<CurrencyLookup>()
-            .AddSingleton<ICurrencyLookup>(sp => sp.GetRequiredService<CurrencyLookup>())
-            .AddHostedService<CurrencyLookupWarmer>()
             .AddSingleton(TimeProvider.System)
             .AddSingleton<IApplicationVersionService, ApplicationVersionService>();
     }

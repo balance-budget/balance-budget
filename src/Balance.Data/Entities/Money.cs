@@ -1,5 +1,4 @@
 using System.Globalization;
-using Balance.Data.Currencies;
 using Balance.Data.Entities.Ids;
 using Balance.Data.Exceptions;
 
@@ -42,10 +41,10 @@ public readonly record struct Money(long Amount, CurrencyCode CurrencyCode)
 
     public static Money Multiply(Money money, long factor) => money * factor;
 
-    public string Format(ICurrencyLookup lookup, IFormatProvider? formatProvider = null)
+    public string Format(Currency currency, IFormatProvider? formatProvider = null)
     {
-        ArgumentNullException.ThrowIfNull(lookup);
-        var currency = lookup.GetByCode(CurrencyCode);
+        ArgumentNullException.ThrowIfNull(currency);
+        EnsureCurrencyMatches(currency);
         return FormatMinorUnits(Amount, currency.MinorUnitScale, formatProvider)
             + " "
             + CurrencyCode.Value;
@@ -53,16 +52,26 @@ public readonly record struct Money(long Amount, CurrencyCode CurrencyCode)
 
     public static Money Parse(
         string majorUnits,
-        CurrencyCode currencyCode,
-        ICurrencyLookup lookup,
+        Currency currency,
         IFormatProvider? formatProvider = null
     )
     {
         ArgumentNullException.ThrowIfNull(majorUnits);
-        ArgumentNullException.ThrowIfNull(lookup);
-        var currency = lookup.GetByCode(currencyCode);
+        ArgumentNullException.ThrowIfNull(currency);
         var amount = ParseMinorUnits(majorUnits, currency.MinorUnitScale, formatProvider);
-        return new Money(amount, currencyCode);
+        return new Money(amount, currency.Code);
+    }
+
+    private void EnsureCurrencyMatches(Currency currency)
+    {
+        if (currency.Code != CurrencyCode)
+        {
+            throw new DomainException(
+                DomainExceptionKind.Invariant,
+                $"Currency mismatch: Money is {CurrencyCode.Value}, "
+                    + $"caller supplied {currency.Code.Value}."
+            );
+        }
     }
 
     private static void EnsureSameCurrency(Money left, Money right)
