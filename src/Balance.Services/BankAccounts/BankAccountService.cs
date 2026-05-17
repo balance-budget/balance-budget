@@ -9,11 +9,6 @@ namespace Balance.Services.BankAccounts;
 
 internal sealed class BankAccountService : IBankAccountService
 {
-    private const string IbanUniqueIndex = "IX_BankAccounts_Iban";
-    private const string IbanQualifiedColumn = "BankAccounts.Iban";
-    private const string AccountIdUniqueIndex = "IX_BankAccounts_AccountId";
-    private const string AccountIdQualifiedColumn = "BankAccounts.AccountId";
-
     private readonly BalanceDbContext _dbContext;
     private readonly TimeProvider _timeProvider;
 
@@ -57,6 +52,13 @@ internal sealed class BankAccountService : IBankAccountService
             cancellationToken
         );
 
+        await EnsureIbanAvailableAsync(iban, excludingId: null, cancellationToken);
+        await EnsureAccountSlotAvailableAsync(
+            input.AccountId,
+            excludingId: null,
+            cancellationToken
+        );
+
         var now = _timeProvider.GetUtcNow().UtcDateTime;
         var bankAccount = new BankAccount
         {
@@ -74,7 +76,7 @@ internal sealed class BankAccountService : IBankAccountService
         };
 
         _dbContext.BankAccounts.Add(bankAccount);
-        await SaveChangesHandlingUniqueAsync(iban, cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
         return bankAccount;
     }
 
@@ -126,8 +128,15 @@ internal sealed class BankAccountService : IBankAccountService
             cancellationToken
         );
 
+        await EnsureIbanAvailableAsync(bankAccount.Iban, excludingId: id, cancellationToken);
+        await EnsureAccountSlotAvailableAsync(
+            bankAccount.AccountId,
+            excludingId: id,
+            cancellationToken
+        );
+
         bankAccount.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
-        await SaveChangesHandlingUniqueAsync(bankAccount.Iban, cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
         return bankAccount;
     }
 
@@ -237,51 +246,47 @@ internal sealed class BankAccountService : IBankAccountService
         }
     }
 
-    private async Task SaveChangesHandlingUniqueAsync(
+    private async Task EnsureIbanAvailableAsync(
         string? iban,
+        BankAccountId? excludingId,
         CancellationToken cancellationToken
     )
     {
-        try
-        {
-            await _dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateException ex)
-            when (IsUniqueViolation(ex, IbanUniqueIndex, IbanQualifiedColumn))
-        {
-            throw new DomainException(
-                DomainExceptionKind.Conflict,
-                $"A BankAccount with IBAN '{iban}' already exists.",
-                ex
-            );
-        }
-        catch (DbUpdateException ex)
-            when (IsUniqueViolation(ex, AccountIdUniqueIndex, AccountIdQualifiedColumn))
+        if (iban is null)
+            return;
+
+        var taken = await _dbContext.BankAccounts.AnyAsync(
+            b => b.Iban == iban && (excludingId == null || b.Id != excludingId),
+            cancellationToken
+        );
+        if (taken)
         {
             throw new DomainException(
                 DomainExceptionKind.Conflict,
-                "A BankAccount for that Account already exists.",
-                ex
+                $"A BankAccount with IBAN '{iban}' already exists."
             );
         }
     }
 
-    private static bool IsUniqueViolation(
-        DbUpdateException ex,
-        string indexName,
-        string qualifiedColumn
+    private async Task EnsureAccountSlotAvailableAsync(
+        AccountId? accountId,
+        BankAccountId? excludingId,
+        CancellationToken cancellationToken
     )
     {
-        for (var current = ex.InnerException; current is not null; current = current.InnerException)
+        if (accountId is null)
+            return;
+
+        var taken = await _dbContext.BankAccounts.AnyAsync(
+            b => b.AccountId == accountId && (excludingId == null || b.Id != excludingId),
+            cancellationToken
+        );
+        if (taken)
         {
-            if (
-                current.Message.Contains(indexName, StringComparison.Ordinal)
-                || current.Message.Contains(qualifiedColumn, StringComparison.Ordinal)
-            )
-            {
-                return true;
-            }
+            throw new DomainException(
+                DomainExceptionKind.Conflict,
+                "A BankAccount for that Account already exists."
+            );
         }
-        return false;
     }
 }
