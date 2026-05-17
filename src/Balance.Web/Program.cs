@@ -19,31 +19,40 @@ builder.Logging.AddConsole(builder.Environment);
 builder.Configuration.MapConfigurationSources(builder.Environment);
 builder.Services.AddBalanceServices(builder.Configuration);
 builder.Services.AddBalanceWeb();
-builder.WebHost.UseStaticWebAssets();
 
 var app = builder.Build();
 var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
 
 await app.MigrateDatabase(lifetime.ApplicationStopping);
 
-app.UsePathBase("/api");
-app.MapHealthChecks("/healthz/live", new HealthCheckOptions { Predicate = _ => false });
-app.MapHealthChecks(
+// Serve Balance.Web.Client SPA
+app.MapStaticAssets();
+app.MapFallbackToFile("index.html");
+
+// Prefix all Balance.Web endpoints with /api
+var api = app.MapGroup("/api");
+api.MapHealthChecks("/healthz/live", new HealthCheckOptions { Predicate = _ => false });
+api.MapHealthChecks(
     "/healthz/ready",
     new HealthCheckOptions { Predicate = static c => c.Tags.Contains("readiness") }
 );
-app.MapStaticAssets();
-app.MapOpenApi();
-app.MapScalarApiReference();
 
-app.MapCurrencies();
-app.MapAccounts();
-app.MapCounterparties();
-app.MapBankAccounts();
-app.MapBankTransactions();
-app.MapJournalEntries();
+api.MapOpenApi();
+api.MapScalarApiReference(
+    "/docs",
+    options =>
+    {
+        options.WithOpenApiRoutePattern("/api/openapi/{documentName}.json");
+        options.WithTitle("Balance API");
+    }
+);
 
-app.MapFallbackToFile("index.html");
+api.MapCurrencies();
+api.MapAccounts();
+api.MapCounterparties();
+api.MapBankAccounts();
+api.MapBankTransactions();
+api.MapJournalEntries();
 
 // Middleware pipeline, order matters here
 app.UseExceptionHandler();
