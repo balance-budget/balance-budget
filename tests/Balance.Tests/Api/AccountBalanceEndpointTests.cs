@@ -68,11 +68,7 @@ internal sealed class AccountBalanceEndpointTests : EndpointsTestsBase
     public async Task GetBalance_credit_normal_account_returns_negated_sum()
     {
         using var client = Factory.CreateClient();
-        var salary = await CreateAccountAsync(
-            client,
-            $"Salary-{Guid.NewGuid():N}",
-            "Income"
-        );
+        var salary = await CreateAccountAsync(client, $"Salary-{Guid.NewGuid():N}", "Income");
         var checking = await CreateAccountAsync(
             client,
             $"Salary-Checking-{Guid.NewGuid():N}",
