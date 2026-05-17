@@ -1,5 +1,4 @@
 using Balance.Data;
-using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
 using Microsoft.EntityFrameworkCore;
@@ -15,14 +14,17 @@ internal sealed class CurrencyService : ICurrencyService
         _dbContext = dbContext;
     }
 
-    public async Task<IReadOnlyList<Currency>> ListAsync(CancellationToken cancellationToken) =>
+    public async Task<IReadOnlyList<CurrencyOutput>> ListAsync(
+        CancellationToken cancellationToken
+    ) =>
         await _dbContext
-            .Currencies.AsNoTracking()
-            .OrderBy(c => c.Code)
+            .Currencies.OrderBy(c => c.Code)
+            .Select(c => new CurrencyOutput(c.Code, c.Name, c.MinorUnitScale, c.Symbol))
             .ToListAsync(cancellationToken);
 
-    public Task<Currency?> GetAsync(CurrencyCode code, CancellationToken cancellationToken) =>
+    public Task<CurrencyOutput?> GetAsync(CurrencyCode code, CancellationToken cancellationToken) =>
         _dbContext
-            .Currencies.AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Code == code, cancellationToken);
+            .Currencies.Where(c => c.Code == code)
+            .Select(c => new CurrencyOutput(c.Code, c.Name, c.MinorUnitScale, c.Symbol))
+            .FirstOrDefaultAsync(cancellationToken);
 }

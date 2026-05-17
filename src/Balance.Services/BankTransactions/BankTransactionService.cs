@@ -25,24 +25,39 @@ internal sealed class BankTransactionService : IBankTransactionService
         _timeProvider = timeProvider;
     }
 
-    public async Task<IReadOnlyList<BankTransaction>> ListAsync(
+    public async Task<IReadOnlyList<BankTransactionOutput>> ListAsync(
         CancellationToken cancellationToken
     ) =>
         await _dbContext
-            .BankTransactions.AsNoTracking()
-            .OrderByDescending(b => b.BookingDate)
+            .BankTransactions.OrderByDescending(b => b.BookingDate)
             .ThenBy(b => b.CreatedAt)
+            .Select(b => new BankTransactionOutput(
+                b.Id,
+                b.BankAccountId,
+                b.BookingDate,
+                b.Money,
+                b.CreatedAt,
+                b.UpdatedAt
+            ))
             .ToListAsync(cancellationToken);
 
-    public Task<BankTransaction?> GetAsync(
+    public Task<BankTransactionOutput?> GetAsync(
         BankTransactionId id,
         CancellationToken cancellationToken
     ) =>
         _dbContext
-            .BankTransactions.AsNoTracking()
-            .FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
+            .BankTransactions.Where(b => b.Id == id)
+            .Select(b => new BankTransactionOutput(
+                b.Id,
+                b.BankAccountId,
+                b.BookingDate,
+                b.Money,
+                b.CreatedAt,
+                b.UpdatedAt
+            ))
+            .FirstOrDefaultAsync(cancellationToken);
 
-    public async Task<BankTransaction> CreateAsync(
+    public async Task<BankTransactionOutput> CreateAsync(
         CreateBankTransactionInput input,
         CancellationToken cancellationToken
     )
@@ -98,7 +113,7 @@ internal sealed class BankTransactionService : IBankTransactionService
 
         _dbContext.BankTransactions.Add(bankTransaction);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return bankTransaction;
+        return ToOutput(bankTransaction);
     }
 
     public async Task DeleteAsync(BankTransactionId id, CancellationToken cancellationToken)
@@ -127,4 +142,14 @@ internal sealed class BankTransactionService : IBankTransactionService
             );
         }
     }
+
+    private static BankTransactionOutput ToOutput(BankTransaction bankTransaction) =>
+        new(
+            bankTransaction.Id,
+            bankTransaction.BankAccountId,
+            bankTransaction.BookingDate,
+            bankTransaction.Money,
+            bankTransaction.CreatedAt,
+            bankTransaction.UpdatedAt
+        );
 }

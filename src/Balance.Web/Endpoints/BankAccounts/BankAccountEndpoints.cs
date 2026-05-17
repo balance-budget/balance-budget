@@ -26,20 +26,16 @@ internal static class BankAccountEndpoints
         group.MapDelete("/{id:guid}", DeleteAsync).WithName("DeleteBankAccount");
     }
 
-    private static async Task<Ok<IReadOnlyList<BankAccountResponse>>> ListAsync(
+    private static async Task<Ok<IReadOnlyList<BankAccountOutput>>> ListAsync(
         [FromServices] IBankAccountService bankAccountService,
         CancellationToken cancellationToken
     )
     {
         var bankAccounts = await bankAccountService.ListAsync(cancellationToken);
-        IReadOnlyList<BankAccountResponse> responses =
-        [
-            .. bankAccounts.Select(BankAccountResponse.From),
-        ];
-        return TypedResults.Ok(responses);
+        return TypedResults.Ok(bankAccounts);
     }
 
-    private static async Task<Results<Ok<BankAccountResponse>, NotFound>> GetAsync(
+    private static async Task<Results<Ok<BankAccountOutput>, NotFound>> GetAsync(
         [FromRoute] Guid id,
         [FromServices] IBankAccountService bankAccountService,
         CancellationToken cancellationToken
@@ -49,12 +45,10 @@ internal static class BankAccountEndpoints
             new BankAccountId(id),
             cancellationToken
         );
-        return bankAccount is null
-            ? TypedResults.NotFound()
-            : TypedResults.Ok(BankAccountResponse.From(bankAccount));
+        return bankAccount is null ? TypedResults.NotFound() : TypedResults.Ok(bankAccount);
     }
 
-    private static async Task<Created<BankAccountResponse>> CreateAsync(
+    private static async Task<Created<BankAccountOutput>> CreateAsync(
         [FromBody] CreateBankAccountRequest request,
         [FromServices] IBankAccountService bankAccountService,
         CancellationToken cancellationToken
@@ -73,11 +67,10 @@ internal static class BankAccountEndpoints
             ),
             cancellationToken
         );
-        var response = BankAccountResponse.From(bankAccount);
-        return TypedResults.Created($"{PathPrefix}/{bankAccount.Id.Value}", response);
+        return TypedResults.Created($"{PathPrefix}/{bankAccount.Id.Value}", bankAccount);
     }
 
-    private static async Task<Ok<BankAccountResponse>> UpdateAsync(
+    private static async Task<Ok<BankAccountOutput>> UpdateAsync(
         [FromRoute] Guid id,
         [FromBody] UpdateBankAccountRequest request,
         [FromServices] IBankAccountService bankAccountService,
@@ -98,7 +91,7 @@ internal static class BankAccountEndpoints
             ),
             cancellationToken
         );
-        return TypedResults.Ok(BankAccountResponse.From(bankAccount));
+        return TypedResults.Ok(bankAccount);
     }
 
     private static async Task<NoContent> DeleteAsync(

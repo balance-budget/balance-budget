@@ -18,18 +18,27 @@ internal sealed class CounterpartyService : ICounterpartyService
         _timeProvider = timeProvider;
     }
 
-    public async Task<IReadOnlyList<Counterparty>> ListAsync(CancellationToken cancellationToken) =>
+    public async Task<IReadOnlyList<CounterpartyOutput>> ListAsync(
+        CancellationToken cancellationToken
+    ) =>
         await _dbContext
-            .Counterparties.AsNoTracking()
-            .OrderBy(c => c.Name)
+            .Counterparties.OrderBy(c => c.Name)
+            .Select(c => new CounterpartyOutput(c.Id, c.Name, c.CreatedAt, c.UpdatedAt))
             .ToListAsync(cancellationToken);
 
-    public Task<Counterparty?> GetAsync(CounterpartyId id, CancellationToken cancellationToken) =>
+    public Task<CounterpartyOutput?> GetAsync(
+        CounterpartyId id,
+        CancellationToken cancellationToken
+    ) =>
         _dbContext
-            .Counterparties.AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+            .Counterparties.Where(c => c.Id == id)
+            .Select(c => new CounterpartyOutput(c.Id, c.Name, c.CreatedAt, c.UpdatedAt))
+            .FirstOrDefaultAsync(cancellationToken);
 
-    public async Task<Counterparty> CreateAsync(string name, CancellationToken cancellationToken)
+    public async Task<CounterpartyOutput> CreateAsync(
+        string name,
+        CancellationToken cancellationToken
+    )
     {
         ArgumentNullException.ThrowIfNull(name);
 
@@ -55,10 +64,10 @@ internal sealed class CounterpartyService : ICounterpartyService
 
         _dbContext.Counterparties.Add(counterparty);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return counterparty;
+        return ToOutput(counterparty);
     }
 
-    public async Task<Counterparty> UpdateAsync(
+    public async Task<CounterpartyOutput> UpdateAsync(
         CounterpartyId id,
         string? name,
         CancellationToken cancellationToken
@@ -90,7 +99,7 @@ internal sealed class CounterpartyService : ICounterpartyService
 
         counterparty.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return counterparty;
+        return ToOutput(counterparty);
     }
 
     public async Task DeleteAsync(CounterpartyId id, CancellationToken cancellationToken)
@@ -116,6 +125,9 @@ internal sealed class CounterpartyService : ICounterpartyService
             );
         }
     }
+
+    private static CounterpartyOutput ToOutput(Counterparty counterparty) =>
+        new(counterparty.Id, counterparty.Name, counterparty.CreatedAt, counterparty.UpdatedAt);
 
     private async Task EnsureNameAvailableAsync(
         string name,

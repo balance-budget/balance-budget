@@ -19,16 +19,35 @@ internal sealed class AccountService : IAccountService
         _timeProvider = timeProvider;
     }
 
-    public async Task<IReadOnlyList<Account>> ListAsync(CancellationToken cancellationToken) =>
+    public async Task<IReadOnlyList<AccountOutput>> ListAsync(
+        CancellationToken cancellationToken
+    ) =>
         await _dbContext
-            .Accounts.AsNoTracking()
-            .OrderBy(a => a.Name)
+            .Accounts.OrderBy(a => a.Name)
+            .Select(a => new AccountOutput(
+                a.Id,
+                a.Name,
+                a.AccountType,
+                a.CurrencyCode,
+                a.CreatedAt,
+                a.UpdatedAt
+            ))
             .ToListAsync(cancellationToken);
 
-    public Task<Account?> GetAsync(AccountId id, CancellationToken cancellationToken) =>
-        _dbContext.Accounts.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+    public Task<AccountOutput?> GetAsync(AccountId id, CancellationToken cancellationToken) =>
+        _dbContext
+            .Accounts.Where(a => a.Id == id)
+            .Select(a => new AccountOutput(
+                a.Id,
+                a.Name,
+                a.AccountType,
+                a.CurrencyCode,
+                a.CreatedAt,
+                a.UpdatedAt
+            ))
+            .FirstOrDefaultAsync(cancellationToken);
 
-    public async Task<Account> CreateAsync(
+    public async Task<AccountOutput> CreateAsync(
         string name,
         AccountType accountType,
         CurrencyCode currencyCode,
@@ -59,10 +78,10 @@ internal sealed class AccountService : IAccountService
 
         _dbContext.Accounts.Add(account);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return account;
+        return ToOutput(account);
     }
 
-    public async Task<Account> UpdateAsync(
+    public async Task<AccountOutput> UpdateAsync(
         AccountId id,
         string? name,
         AccountType? accountType,
@@ -104,7 +123,7 @@ internal sealed class AccountService : IAccountService
 
         account.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return account;
+        return ToOutput(account);
     }
 
     public async Task DeleteAsync(AccountId id, CancellationToken cancellationToken)
@@ -127,6 +146,16 @@ internal sealed class AccountService : IAccountService
             );
         }
     }
+
+    private static AccountOutput ToOutput(Account account) =>
+        new(
+            account.Id,
+            account.Name,
+            account.AccountType,
+            account.CurrencyCode,
+            account.CreatedAt,
+            account.UpdatedAt
+        );
 
     private async Task EnsureCurrencyExistsAsync(
         CurrencyCode code,
