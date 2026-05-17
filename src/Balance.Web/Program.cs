@@ -26,15 +26,24 @@ var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
 
 await app.MigrateDatabase(lifetime.ApplicationStopping);
 
+app.UsePathBase("/api");
 app.MapHealthChecks("/healthz/live", new HealthCheckOptions { Predicate = _ => false });
 app.MapHealthChecks(
     "/healthz/ready",
     new HealthCheckOptions { Predicate = static c => c.Tags.Contains("readiness") }
 );
 app.MapStaticAssets();
-app.MapHtmx();
 app.MapOpenApi();
 app.MapScalarApiReference();
+
+app.MapCurrencies();
+app.MapAccounts();
+app.MapCounterparties();
+app.MapBankAccounts();
+app.MapBankTransactions();
+app.MapJournalEntries();
+
+app.MapFallbackToFile("index.html");
 
 // Middleware pipeline, order matters here
 app.UseExceptionHandler();
@@ -46,13 +55,6 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
-
-app.MapCurrencies();
-app.MapAccounts();
-app.MapCounterparties();
-app.MapBankAccounts();
-app.MapBankTransactions();
-app.MapJournalEntries();
 
 await app.RunAsync(lifetime.ApplicationStopping);
 
