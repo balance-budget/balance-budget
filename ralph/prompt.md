@@ -7,7 +7,7 @@ You will work on the AFK tasks only, not the HITL ones.
 You've also been passed a file containing the last few commits.
 Review these to understand what work has been done.
 
-If all AFK tasks are complete, output <promise>NO MORE TASKS</promise>
+If all AFK tasks are complete, output <promise>NO MORE ISSUES</promise>
 
 # TASK SELECTION
 
@@ -52,6 +52,6 @@ Make a git commit. The commit message must:
 
 # THE ISSUE
 
-If the task is complete **create a PR**
+If the task is complete **create a PR** and output <promise>ISSUE COMPLETED</promise>
 
 If the task is not complete, **comment on the issue** with any blockers
