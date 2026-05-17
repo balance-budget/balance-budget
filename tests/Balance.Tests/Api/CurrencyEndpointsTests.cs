@@ -57,9 +57,4 @@ internal sealed class CurrencyEndpointsTests : EndpointsTestsBase
     }
 }
 
-[SuppressMessage(
-    "Performance",
-    "CA1812:Avoid uninstantiated internal classes",
-    Justification = "Instantiated by System.Text.Json deserialization."
-)]
 internal sealed record CurrencyDto(string Code, string Name, int MinorUnitScale, string? Symbol);

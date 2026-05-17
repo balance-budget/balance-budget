@@ -20,14 +20,14 @@ internal sealed class CurrencyLookup : ICurrencyLookup
         _scopeFactory = scopeFactory;
     }
 
-    public Currency Get(CurrencyCode code) =>
-        TryGet(code)
+    public Currency GetByCode(CurrencyCode code) =>
+        TryGetByCode(code)
         ?? throw new DomainException(
             DomainExceptionKind.NotFound,
             $"Currency '{code.Value}' is not defined."
         );
 
-    public Currency? TryGet(CurrencyCode code)
+    public Currency? TryGetByCode(CurrencyCode code)
     {
         EnsureWarmed();
         return _cache!.GetValueOrDefault(code);
