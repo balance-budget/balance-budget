@@ -1,11 +1,23 @@
-using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
 
 namespace Balance.Services.Contracts;
 
 public interface ICurrencyService
 {
-    Task<IReadOnlyList<Currency>> ListAsync(CancellationToken cancellationToken);
+    Task<IReadOnlyList<CurrencyOutput>> ListAsync(CancellationToken cancellationToken);
 
-    Task<Currency?> GetAsync(CurrencyCode code, CancellationToken cancellationToken);
+    Task<CurrencyOutput?> GetAsync(CurrencyCode code, CancellationToken cancellationToken);
+
+    Task<CurrencyOutput> CreateAsync(
+        CreateCurrencyInput input,
+        CancellationToken cancellationToken
+    );
+
+    Task<CurrencyOutput> UpdateAsync(
+        CurrencyCode code,
+        UpdateCurrencyInput input,
+        CancellationToken cancellationToken
+    );
+
+    Task DeleteAsync(CurrencyCode code, CancellationToken cancellationToken);
 }

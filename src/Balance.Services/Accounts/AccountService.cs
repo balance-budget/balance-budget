@@ -11,11 +11,17 @@ namespace Balance.Services.Accounts;
 internal sealed class AccountService : IAccountService
 {
     private readonly BalanceDbContext _dbContext;
+    private readonly ICurrencyService _currencyService;
     private readonly TimeProvider _timeProvider;
 
-    public AccountService(BalanceDbContext dbContext, TimeProvider timeProvider)
+    public AccountService(
+        BalanceDbContext dbContext,
+        ICurrencyService currencyService,
+        TimeProvider timeProvider
+    )
     {
         _dbContext = dbContext;
+        _currencyService = currencyService;
         _timeProvider = timeProvider;
     }
 
@@ -133,8 +139,7 @@ internal sealed class AccountService : IAccountService
         CancellationToken cancellationToken
     )
     {
-        var exists = await _dbContext.Currencies.AnyAsync(c => c.Code == code, cancellationToken);
-        if (!exists)
+        if (await _currencyService.GetAsync(code, cancellationToken) is null)
         {
             throw new DomainException(
                 DomainExceptionKind.NotFound,
