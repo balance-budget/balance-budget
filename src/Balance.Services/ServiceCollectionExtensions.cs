@@ -8,6 +8,7 @@ using Balance.Services.Contracts;
 using Balance.Services.Counterparties;
 using Balance.Services.Currencies;
 using Balance.Services.Jobs;
+using Balance.Services.JournalEntries;
 using FluentValidation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,6 +38,7 @@ public static class ServiceCollectionExtensions
             .AddScoped<ICounterpartyService, CounterpartyService>()
             .AddScoped<IBankAccountService, BankAccountService>()
             .AddScoped<IBankTransactionService, BankTransactionService>()
+            .AddScoped<IJournalEntryService, JournalEntryService>()
             .AddSingleton<CurrencyLookup>()
             .AddSingleton<ICurrencyLookup>(sp => sp.GetRequiredService<CurrencyLookup>())
             .AddHostedService<CurrencyLookupWarmer>()
