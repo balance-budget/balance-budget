@@ -1,3 +1,4 @@
+using System.Globalization;
 using Balance.Data;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
@@ -75,6 +76,40 @@ internal sealed class JournalEntryService : IJournalEntryService
             ))
             .FirstOrDefaultAsync(cancellationToken);
 
+    public async Task<UpdateJournalEntryInput?> GetSnapshotAsync(
+        JournalEntryId id,
+        CancellationToken cancellationToken
+    )
+    {
+        var snapshot = await _dbContext
+            .JournalEntries.AsNoTracking()
+            .Where(e => e.Id == id)
+            .Select(e => new
+            {
+                e.Date,
+                e.Description,
+                e.CounterpartyId,
+                Lines = e.Lines.Select(l => new { l.Id, l.Description }).ToList(),
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (snapshot is null)
+        {
+            return null;
+        }
+
+        return new UpdateJournalEntryInput
+        {
+            Date = snapshot.Date,
+            Description = snapshot.Description,
+            CounterpartyId = snapshot.CounterpartyId,
+            Lines = snapshot.Lines.ToDictionary(
+                l => l.Id.Value.ToString("D", CultureInfo.InvariantCulture),
+                l => new UpdateJournalLineInput { Description = l.Description }
+            ),
+        };
+    }
+
     public async Task<JournalEntryOutput> CreateAsync(
         CreateJournalEntryInput input,
         CancellationToken cancellationToken
@@ -132,6 +167,7 @@ internal sealed class JournalEntryService : IJournalEntryService
     )
     {
         ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(input.Lines);
 
         var entry =
             await _dbContext
@@ -142,49 +178,55 @@ internal sealed class JournalEntryService : IJournalEntryService
                 $"JournalEntry {id} not found."
             );
 
-        if (input.Date is not null)
-            entry.Date = input.Date.Value;
-        if (input.Description is not null)
-            entry.Description = input.Description.TrimToNull();
-        if (input.BankTransactionId is not null)
-            entry.BankTransactionId = input.BankTransactionId;
-        if (input.CounterpartyId is not null)
-            entry.CounterpartyId = input.CounterpartyId;
-
-        var now = _timeProvider.GetUtcNow().UtcDateTime;
-
-        if (input.Lines is not null)
+        // Parse the dictionary keys back to typed IDs and enforce key-set equality. Adds /
+        // removals / reorders are explicitly rejected — corrections to the *set* of lines
+        // go through delete-and-recreate (or a future reversing-entry flow), preserving
+        // each line's ReconciliationStatus across edits.
+        var existingIds = entry.Lines.Select(l => l.Id).ToHashSet();
+        var parsedKeys = new Dictionary<JournalLineId, UpdateJournalLineInput>(existingIds.Count);
+        foreach (var (key, lineInput) in input.Lines)
         {
-            var drafts = await BuildDraftsAsync(input.Lines, cancellationToken);
-            JournalEntryValidator.Validate(drafts);
-
-            _dbContext.JournalLines.RemoveRange(entry.Lines);
-            entry.Lines.Clear();
-
-            foreach (var line in input.Lines)
+            if (
+                !Guid.TryParseExact(key, "D", out var guid)
+                && !Guid.TryParse(key, CultureInfo.InvariantCulture, out guid)
+            )
             {
-                entry.Lines.Add(
-                    new JournalLine
-                    {
-                        Id = new JournalLineId(Guid.CreateVersion7()),
-                        JournalEntryId = entry.Id,
-                        AccountId = line.AccountId,
-                        Amount = line.Amount,
-                        Description = line.Description.TrimToNull(),
-                        CreatedAt = now,
-                        UpdatedAt = now,
-                    }
+                throw new DomainException(
+                    DomainExceptionKind.Invariant,
+                    $"JournalLine key '{key}' is not a valid identifier."
                 );
             }
+            parsedKeys[new JournalLineId(guid)] = lineInput;
         }
 
-        await EnsureOptionalReferencesExistAsync(
-            input.BankTransactionId,
-            input.CounterpartyId,
-            cancellationToken
-        );
+        if (!parsedKeys.Keys.ToHashSet().SetEquals(existingIds))
+        {
+            throw new DomainException(
+                DomainExceptionKind.Invariant,
+                "JournalLines cannot be added or removed via PATCH; use a reversing entry."
+            );
+        }
 
-        entry.UpdatedAt = now;
+        if (input.CounterpartyId != entry.CounterpartyId)
+        {
+            await EnsureOptionalReferencesExistAsync(
+                bankTransactionId: null,
+                input.CounterpartyId,
+                cancellationToken
+            );
+        }
+
+        entry.Date = input.Date;
+        entry.Description = input.Description.TrimToNull();
+        entry.CounterpartyId = input.CounterpartyId;
+
+        foreach (var line in entry.Lines)
+        {
+            var lineInput = parsedKeys[line.Id];
+            line.Description = lineInput.Description.TrimToNull();
+        }
+
+        entry.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
         await _dbContext.SaveChangesAsync(cancellationToken);
         return ToOutput(entry);
     }

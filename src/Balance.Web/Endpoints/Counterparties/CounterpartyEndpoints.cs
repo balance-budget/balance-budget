@@ -2,6 +2,7 @@ using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
 using Balance.Web.Filters;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Balance.Web.Endpoints.Counterparties;
@@ -21,7 +22,7 @@ internal static class CounterpartyEndpoints
             .WithName("CreateCounterparty");
         group
             .MapPatch("/{id}", UpdateAsync)
-            .WithValidation<UpdateCounterpartyRequest>()
+            .WithJsonPatch<UpdateCounterpartyInput>(LoadCounterpartySnapshotAsync)
             .WithName("UpdateCounterparty");
         group.MapDelete("/{id}", DeleteAsync).WithName("DeleteCounterparty");
     }
@@ -57,16 +58,15 @@ internal static class CounterpartyEndpoints
 
     private static async Task<Ok<CounterpartyOutput>> UpdateAsync(
         [FromRoute] CounterpartyId id,
-        [FromBody] UpdateCounterpartyRequest request,
+        [FromBody] JsonPatchDocument<UpdateCounterpartyInput> patch,
+        HttpContext httpContext,
         [FromServices] ICounterpartyService counterpartyService,
         CancellationToken cancellationToken
     )
     {
-        var counterparty = await counterpartyService.UpdateAsync(
-            id,
-            request.Name,
-            cancellationToken
-        );
+        _ = patch;
+        var input = JsonPatchEndpointFilter.GetSnapshot<UpdateCounterpartyInput>(httpContext);
+        var counterparty = await counterpartyService.UpdateAsync(id, input, cancellationToken);
         return TypedResults.Ok(counterparty);
     }
 
@@ -78,5 +78,16 @@ internal static class CounterpartyEndpoints
     {
         await counterpartyService.DeleteAsync(id, cancellationToken);
         return TypedResults.NoContent();
+    }
+
+    private static async Task<UpdateCounterpartyInput?> LoadCounterpartySnapshotAsync(
+        EndpointFilterInvocationContext context,
+        CancellationToken cancellationToken
+    )
+    {
+        var id = context.Arguments.OfType<CounterpartyId>().FirstOrDefault();
+        var service =
+            context.HttpContext.RequestServices.GetRequiredService<ICounterpartyService>();
+        return await service.GetSnapshotAsync(id, cancellationToken);
     }
 }

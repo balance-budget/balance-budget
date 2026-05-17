@@ -3,6 +3,7 @@ using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
 using Balance.Web.Filters;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Balance.Web.Endpoints.Accounts;
@@ -23,7 +24,7 @@ internal static class AccountEndpoints
             .WithName("CreateAccount");
         group
             .MapPatch("/{id}", UpdateAsync)
-            .WithValidation<UpdateAccountRequest>()
+            .WithJsonPatch<UpdateAccountInput>(LoadAccountSnapshotAsync)
             .WithName("UpdateAccount");
         group.MapDelete("/{id}", DeleteAsync).WithName("DeleteAccount");
     }
@@ -74,18 +75,15 @@ internal static class AccountEndpoints
 
     private static async Task<Ok<AccountOutput>> UpdateAsync(
         [FromRoute] AccountId id,
-        [FromBody] UpdateAccountRequest request,
+        [FromBody] JsonPatchDocument<UpdateAccountInput> patch,
+        HttpContext httpContext,
         [FromServices] IAccountService accountService,
         CancellationToken cancellationToken
     )
     {
-        var account = await accountService.UpdateAsync(
-            id,
-            request.Name,
-            request.AccountType,
-            request.CurrencyCode,
-            cancellationToken
-        );
+        _ = patch;
+        var input = JsonPatchEndpointFilter.GetSnapshot<UpdateAccountInput>(httpContext);
+        var account = await accountService.UpdateAsync(id, input, cancellationToken);
         return TypedResults.Ok(account);
     }
 
@@ -97,5 +95,15 @@ internal static class AccountEndpoints
     {
         await accountService.DeleteAsync(id, cancellationToken);
         return TypedResults.NoContent();
+    }
+
+    private static async Task<UpdateAccountInput?> LoadAccountSnapshotAsync(
+        EndpointFilterInvocationContext context,
+        CancellationToken cancellationToken
+    )
+    {
+        var id = context.Arguments.OfType<AccountId>().FirstOrDefault();
+        var service = context.HttpContext.RequestServices.GetRequiredService<IAccountService>();
+        return await service.GetSnapshotAsync(id, cancellationToken);
     }
 }

@@ -53,6 +53,21 @@ internal sealed class AccountService : IAccountService
             ))
             .FirstOrDefaultAsync(cancellationToken);
 
+    public Task<UpdateAccountInput?> GetSnapshotAsync(
+        AccountId id,
+        CancellationToken cancellationToken
+    ) =>
+        _dbContext
+            .Accounts.AsNoTracking()
+            .Where(a => a.Id == id)
+            .Select(a => new UpdateAccountInput
+            {
+                Name = a.Name,
+                AccountType = a.AccountType,
+                CurrencyCode = a.CurrencyCode,
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
     public async Task<AccountOutput> CreateAsync(
         string name,
         AccountType accountType,
@@ -89,44 +104,38 @@ internal sealed class AccountService : IAccountService
 
     public async Task<AccountOutput> UpdateAsync(
         AccountId id,
-        string? name,
-        AccountType? accountType,
-        CurrencyCode? currencyCode,
+        UpdateAccountInput input,
         CancellationToken cancellationToken
     )
     {
+        ArgumentNullException.ThrowIfNull(input);
+
         var account =
             await _dbContext.Accounts.FirstOrDefaultAsync(a => a.Id == id, cancellationToken)
             ?? throw new DomainException(DomainExceptionKind.NotFound, $"Account {id} not found.");
 
-        if (name is not null)
+        var trimmed = input.Name?.Trim() ?? string.Empty;
+        if (trimmed.Length == 0)
         {
-            var trimmed = name.Trim();
-            if (trimmed.Length == 0)
-            {
-                throw new DomainException(
-                    DomainExceptionKind.Validation,
-                    "Account name cannot be empty."
-                );
-            }
-            if (!string.Equals(trimmed, account.Name, StringComparison.Ordinal))
-            {
-                await EnsureNameAvailableAsync(trimmed, excludingId: id, cancellationToken);
-            }
-            account.Name = trimmed;
+            throw new DomainException(
+                DomainExceptionKind.Validation,
+                "Account name cannot be empty."
+            );
         }
 
-        if (accountType is not null)
+        if (!string.Equals(trimmed, account.Name, StringComparison.Ordinal))
         {
-            account.AccountType = accountType.Value;
+            await EnsureNameAvailableAsync(trimmed, excludingId: id, cancellationToken);
         }
 
-        if (currencyCode is not null)
+        if (input.CurrencyCode != account.CurrencyCode)
         {
-            await EnsureCurrencyExistsAsync(currencyCode.Value, cancellationToken);
-            account.CurrencyCode = currencyCode.Value;
+            await EnsureCurrencyExistsAsync(input.CurrencyCode, cancellationToken);
         }
 
+        account.Name = trimmed;
+        account.AccountType = input.AccountType;
+        account.CurrencyCode = input.CurrencyCode;
         account.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
         await _dbContext.SaveChangesAsync(cancellationToken);
         return ToOutput(account);

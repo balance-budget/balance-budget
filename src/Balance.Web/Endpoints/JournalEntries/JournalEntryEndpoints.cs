@@ -2,6 +2,7 @@ using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
 using Balance.Web.Filters;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Balance.Web.Endpoints.JournalEntries;
@@ -24,7 +25,7 @@ internal static class JournalEntryEndpoints
             .WithName("CreateJournalEntry");
         group
             .MapPatch("/{id}", UpdateAsync)
-            .WithValidation<UpdateJournalEntryRequest>()
+            .WithJsonPatch<UpdateJournalEntryInput>(LoadJournalEntrySnapshotAsync)
             .WithName("UpdateJournalEntry");
         group.MapDelete("/{id}", DeleteAsync).WithName("DeleteJournalEntry");
     }
@@ -82,34 +83,15 @@ internal static class JournalEntryEndpoints
 
     private static async Task<Ok<JournalEntryOutput>> UpdateAsync(
         [FromRoute] JournalEntryId id,
-        [FromBody] UpdateJournalEntryRequest request,
+        [FromBody] JsonPatchDocument<UpdateJournalEntryInput> patch,
+        HttpContext httpContext,
         [FromServices] IJournalEntryService journalEntryService,
         CancellationToken cancellationToken
     )
     {
-        IReadOnlyList<CreateJournalLineInput>? lineInputs = request.Lines is null
-            ? null
-            :
-            [
-                .. request.Lines.Select(l => new CreateJournalLineInput(
-                    l.AccountId,
-                    l.Amount,
-                    l.Description
-                )),
-            ];
-
-        var entry = await journalEntryService.UpdateAsync(
-            id,
-            new UpdateJournalEntryInput(
-                request.Date,
-                request.Description,
-                request.BankTransactionId,
-                request.CounterpartyId,
-                lineInputs
-            ),
-            cancellationToken
-        );
-
+        _ = patch;
+        var input = JsonPatchEndpointFilter.GetSnapshot<UpdateJournalEntryInput>(httpContext);
+        var entry = await journalEntryService.UpdateAsync(id, input, cancellationToken);
         return TypedResults.Ok(entry);
     }
 
@@ -121,5 +103,16 @@ internal static class JournalEntryEndpoints
     {
         await journalEntryService.DeleteAsync(id, cancellationToken);
         return TypedResults.NoContent();
+    }
+
+    private static async Task<UpdateJournalEntryInput?> LoadJournalEntrySnapshotAsync(
+        EndpointFilterInvocationContext context,
+        CancellationToken cancellationToken
+    )
+    {
+        var id = context.Arguments.OfType<JournalEntryId>().FirstOrDefault();
+        var service =
+            context.HttpContext.RequestServices.GetRequiredService<IJournalEntryService>();
+        return await service.GetSnapshotAsync(id, cancellationToken);
     }
 }

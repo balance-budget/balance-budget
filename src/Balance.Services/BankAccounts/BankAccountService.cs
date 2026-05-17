@@ -66,6 +66,26 @@ internal sealed class BankAccountService : IBankAccountService
             ))
             .FirstOrDefaultAsync(cancellationToken);
 
+    public Task<UpdateBankAccountInput?> GetSnapshotAsync(
+        BankAccountId id,
+        CancellationToken cancellationToken
+    ) =>
+        _dbContext
+            .BankAccounts.AsNoTracking()
+            .Where(b => b.Id == id)
+            .Select(b => new UpdateBankAccountInput
+            {
+                Iban = b.Iban,
+                AccountNumber = b.AccountNumber,
+                Bic = b.Bic,
+                BankName = b.BankName,
+                AccountHolderName = b.AccountHolderName,
+                CurrencyCode = b.CurrencyCode,
+                AccountId = b.AccountId,
+                CounterpartyId = b.CounterpartyId,
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
     public async Task<BankAccountOutput> CreateAsync(
         CreateBankAccountInput input,
         CancellationToken cancellationToken
@@ -132,31 +152,14 @@ internal sealed class BankAccountService : IBankAccountService
                 $"BankAccount {id} not found."
             );
 
-        if (input.Iban is not null)
-            bankAccount.Iban = input.Iban.TrimToNull();
-        if (input.AccountNumber is not null)
-            bankAccount.AccountNumber = input.AccountNumber.TrimToNull();
-        if (input.Bic is not null)
-            bankAccount.Bic = input.Bic.TrimToNull();
-        if (input.BankName is not null)
-            bankAccount.BankName = input.BankName.TrimToNull();
-        if (input.AccountHolderName is not null)
-            bankAccount.AccountHolderName = input.AccountHolderName.TrimToNull();
-        if (input.CurrencyCode is not null)
-            bankAccount.CurrencyCode = input.CurrencyCode;
-        if (input.AccountId is not null)
-        {
-            bankAccount.AccountId = input.AccountId;
-            bankAccount.CounterpartyId = null;
-        }
-        if (input.CounterpartyId is not null)
-        {
-            bankAccount.CounterpartyId = input.CounterpartyId;
-            bankAccount.AccountId = null;
-        }
+        var iban = input.Iban.TrimToNull();
+        var accountNumber = input.AccountNumber.TrimToNull();
+        var bic = input.Bic.TrimToNull();
+        var bankName = input.BankName.TrimToNull();
+        var accountHolderName = input.AccountHolderName.TrimToNull();
 
-        EnsureOwnershipXor(bankAccount.AccountId, bankAccount.CounterpartyId);
-        EnsureIbanOrAccountNumber(bankAccount.Iban, bankAccount.AccountNumber);
+        EnsureOwnershipXor(input.AccountId, input.CounterpartyId);
+        EnsureIbanOrAccountNumber(iban, accountNumber);
 
         await EnsureReferencedRowsExistAsync(
             input.CurrencyCode,
@@ -165,13 +168,17 @@ internal sealed class BankAccountService : IBankAccountService
             cancellationToken
         );
 
-        await EnsureIbanAvailableAsync(bankAccount.Iban, excludingId: id, cancellationToken);
-        await EnsureAccountSlotAvailableAsync(
-            bankAccount.AccountId,
-            excludingId: id,
-            cancellationToken
-        );
+        await EnsureIbanAvailableAsync(iban, excludingId: id, cancellationToken);
+        await EnsureAccountSlotAvailableAsync(input.AccountId, excludingId: id, cancellationToken);
 
+        bankAccount.Iban = iban;
+        bankAccount.AccountNumber = accountNumber;
+        bankAccount.Bic = bic;
+        bankAccount.BankName = bankName;
+        bankAccount.AccountHolderName = accountHolderName;
+        bankAccount.CurrencyCode = input.CurrencyCode;
+        bankAccount.AccountId = input.AccountId;
+        bankAccount.CounterpartyId = input.CounterpartyId;
         bankAccount.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
         await _dbContext.SaveChangesAsync(cancellationToken);
         return ToOutput(bankAccount);
