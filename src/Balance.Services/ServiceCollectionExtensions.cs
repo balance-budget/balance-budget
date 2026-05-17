@@ -11,7 +11,6 @@ using Balance.Services.Jobs;
 using FluentValidation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 namespace Balance.Services;
 
