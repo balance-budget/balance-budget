@@ -10,8 +10,6 @@ namespace Balance.Services.Accounts;
 
 internal sealed class AccountService : IAccountService
 {
-    private const string NameUniqueIndex = "IX_Accounts_Name";
-
     private readonly BalanceDbContext _dbContext;
     private readonly TimeProvider _timeProvider;
 
@@ -46,6 +44,7 @@ internal sealed class AccountService : IAccountService
         }
 
         await EnsureCurrencyExistsAsync(currencyCode, cancellationToken);
+        await EnsureNameAvailableAsync(trimmed, excludingId: null, cancellationToken);
 
         var now = _timeProvider.GetUtcNow().UtcDateTime;
         var account = new Account
@@ -59,7 +58,7 @@ internal sealed class AccountService : IAccountService
         };
 
         _dbContext.Accounts.Add(account);
-        await SaveChangesHandlingUniqueAsync(trimmed, cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
         return account;
     }
 
@@ -75,7 +74,6 @@ internal sealed class AccountService : IAccountService
             await _dbContext.Accounts.FirstOrDefaultAsync(a => a.Id == id, cancellationToken)
             ?? throw new DomainException(DomainExceptionKind.NotFound, $"Account {id} not found.");
 
-        string? renamedTo = null;
         if (name is not null)
         {
             var trimmed = name.Trim();
@@ -86,8 +84,11 @@ internal sealed class AccountService : IAccountService
                     "Account name cannot be empty."
                 );
             }
+            if (!string.Equals(trimmed, account.Name, StringComparison.Ordinal))
+            {
+                await EnsureNameAvailableAsync(trimmed, excludingId: id, cancellationToken);
+            }
             account.Name = trimmed;
-            renamedTo = trimmed;
         }
 
         if (accountType is not null)
@@ -102,7 +103,7 @@ internal sealed class AccountService : IAccountService
         }
 
         account.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
-        await SaveChangesHandlingUniqueAsync(renamedTo ?? account.Name, cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
         return account;
     }
 
@@ -142,37 +143,22 @@ internal sealed class AccountService : IAccountService
         }
     }
 
-    private async Task SaveChangesHandlingUniqueAsync(
-        string conflictingName,
+    private async Task EnsureNameAvailableAsync(
+        string name,
+        AccountId? excludingId,
         CancellationToken cancellationToken
     )
     {
-        try
-        {
-            await _dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateException ex) when (IsNameUniqueViolation(ex))
+        var taken = await _dbContext.Accounts.AnyAsync(
+            a => a.Name == name && (excludingId == null || a.Id != excludingId),
+            cancellationToken
+        );
+        if (taken)
         {
             throw new DomainException(
                 DomainExceptionKind.Conflict,
-                $"An account named '{conflictingName}' already exists.",
-                ex
+                $"An account named '{name}' already exists."
             );
         }
-    }
-
-    private static bool IsNameUniqueViolation(DbUpdateException ex)
-    {
-        for (var current = ex.InnerException; current is not null; current = current.InnerException)
-        {
-            if (
-                current.Message.Contains(NameUniqueIndex, StringComparison.Ordinal)
-                || current.Message.Contains("Accounts.Name", StringComparison.Ordinal)
-            )
-            {
-                return true;
-            }
-        }
-        return false;
     }
 }
