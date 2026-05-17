@@ -96,7 +96,13 @@ _Avoid_: Transaction (overloaded with DB transactions and Plaid/Stripe types), i
 
 ## Editing policy (v1)
 
-- **JournalEntries** are editable. After-the-fact corrections are made by editing, not by posting reversing entries. This deviates from strict accounting and is consciously chosen for personal-finance ergonomics; revisit (and lock down to append-only with reversing entries) if the use case demands it.
+- **JournalEntries** are editable, but the editable surface is intentionally narrow to avoid silently rewriting books:
+  - **Entry-level (editable):** `Date`, `Description`, `CounterpartyId`.
+  - **Entry-level (not editable):** `BankTransactionId`. Once an entry references a **BankTransaction**, that link is part of the audit trail and is not changed via edit — correct misattributions by deleting and recreating the entry.
+  - **Line-level (editable):** `JournalLine.Description` only.
+  - **Line-level (not editable):** `Amount`, `AccountId`, and the *set* of lines (no additions, no removals, no reordering). Correct these by deleting the **JournalEntry** and recreating.
+  - **Preserved across edits:** every **JournalLine**'s `Id`, `CreatedAt`, and `ReconciliationStatus` survive a **JournalEntry** edit — editing the entry's description never resets a line's `Cleared`/`Reconciled` state.
+  - **Trajectory:** this scope may tighten further to fully append-only with reversing entries; today's surface is the smallest set of edits that supports common typo-fixing without rewriting bookkeeping state.
 - **BankTransactions** remain immutable regardless of `JournalEntry` editability.
 
 ## Deletion policy (v1)
