@@ -1,3 +1,4 @@
+using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
 using Balance.Data.Exceptions;
 using Balance.Services.Contracts;
@@ -16,6 +17,7 @@ internal static class AccountEndpoints
         var group = app.MapGroup(PathPrefix).WithTags("Accounts");
         group.MapGet("", ListAsync).WithName("ListAccounts");
         group.MapGet("/{id:guid}", GetAsync).WithName("GetAccount");
+        group.MapGet("/{id:guid}/balance", GetBalanceAsync).WithName("GetAccountBalance");
         group.MapPost("", CreateAsync).WithName("CreateAccount");
         group.MapPatch("/{id:guid}", UpdateAsync).WithName("UpdateAccount");
         group.MapDelete("/{id:guid}", DeleteAsync).WithName("DeleteAccount");
@@ -41,6 +43,19 @@ internal static class AccountEndpoints
         return account is null
             ? TypedResults.NotFound()
             : TypedResults.Ok(AccountResponse.From(account));
+    }
+
+    private static async Task<Results<Ok<Money>, NotFound>> GetBalanceAsync(
+        [FromRoute] Guid id,
+        [FromServices] IAccountBalanceService accountBalanceService,
+        CancellationToken cancellationToken
+    )
+    {
+        var balance = await accountBalanceService.GetBalanceAsync(
+            new AccountId(id),
+            cancellationToken
+        );
+        return balance is null ? TypedResults.NotFound() : TypedResults.Ok(balance.Value);
     }
 
     private static async Task<Created<AccountResponse>> CreateAsync(
