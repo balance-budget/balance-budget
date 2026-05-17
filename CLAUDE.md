@@ -31,9 +31,9 @@ dotnet ef migrations add <name> --no-build --project src/Balance.Data.Sqlite/Bal
 
 # Format
 # CI check
-dotnet csharpier check .
+dotnet csharpier check . --ignore-path .csharpierignore
 # Auto-format
-dotnet csharpier format .
+dotnet csharpier format . --ignore-path .csharpierignore
 
 # Test (without build)
 # TUnit suite, runs with coverage in CI
