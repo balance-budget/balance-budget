@@ -1,7 +1,6 @@
 using Balance.Data.Entities.Ids;
-using Balance.Data.Exceptions;
 using Balance.Services.Contracts;
-using FluentValidation;
+using Balance.Web.Filters;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,8 +15,14 @@ internal static class JournalEntryEndpoints
         var group = app.MapGroup(PathPrefix).WithTags("JournalEntries");
         group.MapGet("", ListAsync).WithName("ListJournalEntries");
         group.MapGet("/{id:guid}", GetAsync).WithName("GetJournalEntry");
-        group.MapPost("", CreateAsync).WithName("CreateJournalEntry");
-        group.MapPatch("/{id:guid}", UpdateAsync).WithName("UpdateJournalEntry");
+        group
+            .MapPost("", CreateAsync)
+            .WithValidation<CreateJournalEntryRequest>()
+            .WithName("CreateJournalEntry");
+        group
+            .MapPatch("/{id:guid}", UpdateAsync)
+            .WithValidation<UpdateJournalEntryRequest>()
+            .WithName("UpdateJournalEntry");
         group.MapDelete("/{id:guid}", DeleteAsync).WithName("DeleteJournalEntry");
     }
 
@@ -51,12 +56,9 @@ internal static class JournalEntryEndpoints
     private static async Task<Created<JournalEntryResponse>> CreateAsync(
         [FromBody] CreateJournalEntryRequest request,
         [FromServices] IJournalEntryService journalEntryService,
-        [FromServices] IValidator<CreateJournalEntryRequest> validator,
         CancellationToken cancellationToken
     )
     {
-        await ValidateAsync(validator, request, cancellationToken);
-
         IReadOnlyList<CreateJournalLineInput> lineInputs =
         [
             .. request.Lines.Select(l => new CreateJournalLineInput(
@@ -85,12 +87,9 @@ internal static class JournalEntryEndpoints
         [FromRoute] Guid id,
         [FromBody] UpdateJournalEntryRequest request,
         [FromServices] IJournalEntryService journalEntryService,
-        [FromServices] IValidator<UpdateJournalEntryRequest> validator,
         CancellationToken cancellationToken
     )
     {
-        await ValidateAsync(validator, request, cancellationToken);
-
         IReadOnlyList<CreateJournalLineInput>? lineInputs = request.Lines is null
             ? null
             :
@@ -125,24 +124,5 @@ internal static class JournalEntryEndpoints
     {
         await journalEntryService.DeleteAsync(new JournalEntryId(id), cancellationToken);
         return TypedResults.NoContent();
-    }
-
-    private static async Task ValidateAsync<T>(
-        IValidator<T> validator,
-        T request,
-        CancellationToken cancellationToken
-    )
-    {
-        var result = await validator.ValidateAsync(request, cancellationToken);
-        if (!result.IsValid)
-        {
-            throw new DomainException(
-                DomainExceptionKind.Validation,
-                string.Join("; ", result.Errors.Select(e => e.ErrorMessage)),
-                result
-                    .Errors.GroupBy(e => e.PropertyName)
-                    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())
-            );
-        }
     }
 }

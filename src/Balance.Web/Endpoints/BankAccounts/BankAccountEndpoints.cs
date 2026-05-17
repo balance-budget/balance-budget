@@ -1,7 +1,6 @@
 using Balance.Data.Entities.Ids;
-using Balance.Data.Exceptions;
 using Balance.Services.Contracts;
-using FluentValidation;
+using Balance.Web.Filters;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,8 +15,14 @@ internal static class BankAccountEndpoints
         var group = app.MapGroup(PathPrefix).WithTags("BankAccounts");
         group.MapGet("", ListAsync).WithName("ListBankAccounts");
         group.MapGet("/{id:guid}", GetAsync).WithName("GetBankAccount");
-        group.MapPost("", CreateAsync).WithName("CreateBankAccount");
-        group.MapPatch("/{id:guid}", UpdateAsync).WithName("UpdateBankAccount");
+        group
+            .MapPost("", CreateAsync)
+            .WithValidation<CreateBankAccountRequest>()
+            .WithName("CreateBankAccount");
+        group
+            .MapPatch("/{id:guid}", UpdateAsync)
+            .WithValidation<UpdateBankAccountRequest>()
+            .WithName("UpdateBankAccount");
         group.MapDelete("/{id:guid}", DeleteAsync).WithName("DeleteBankAccount");
     }
 
@@ -52,12 +57,9 @@ internal static class BankAccountEndpoints
     private static async Task<Created<BankAccountResponse>> CreateAsync(
         [FromBody] CreateBankAccountRequest request,
         [FromServices] IBankAccountService bankAccountService,
-        [FromServices] IValidator<CreateBankAccountRequest> validator,
         CancellationToken cancellationToken
     )
     {
-        await ValidateAsync(validator, request, cancellationToken);
-
         var bankAccount = await bankAccountService.CreateAsync(
             new CreateBankAccountInput(
                 request.Iban,
@@ -79,12 +81,9 @@ internal static class BankAccountEndpoints
         [FromRoute] Guid id,
         [FromBody] UpdateBankAccountRequest request,
         [FromServices] IBankAccountService bankAccountService,
-        [FromServices] IValidator<UpdateBankAccountRequest> validator,
         CancellationToken cancellationToken
     )
     {
-        await ValidateAsync(validator, request, cancellationToken);
-
         var bankAccount = await bankAccountService.UpdateAsync(
             new BankAccountId(id),
             new UpdateBankAccountInput(
@@ -110,24 +109,5 @@ internal static class BankAccountEndpoints
     {
         await bankAccountService.DeleteAsync(new BankAccountId(id), cancellationToken);
         return TypedResults.NoContent();
-    }
-
-    private static async Task ValidateAsync<T>(
-        IValidator<T> validator,
-        T request,
-        CancellationToken cancellationToken
-    )
-    {
-        var result = await validator.ValidateAsync(request, cancellationToken);
-        if (!result.IsValid)
-        {
-            throw new DomainException(
-                DomainExceptionKind.Validation,
-                string.Join("; ", result.Errors.Select(e => e.ErrorMessage)),
-                result
-                    .Errors.GroupBy(e => e.PropertyName)
-                    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())
-            );
-        }
     }
 }

@@ -1,8 +1,7 @@
 using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
-using Balance.Data.Exceptions;
 using Balance.Services.Contracts;
-using FluentValidation;
+using Balance.Web.Filters;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,8 +17,14 @@ internal static class AccountEndpoints
         group.MapGet("", ListAsync).WithName("ListAccounts");
         group.MapGet("/{id:guid}", GetAsync).WithName("GetAccount");
         group.MapGet("/{id:guid}/balance", GetBalanceAsync).WithName("GetAccountBalance");
-        group.MapPost("", CreateAsync).WithName("CreateAccount");
-        group.MapPatch("/{id:guid}", UpdateAsync).WithName("UpdateAccount");
+        group
+            .MapPost("", CreateAsync)
+            .WithValidation<CreateAccountRequest>()
+            .WithName("CreateAccount");
+        group
+            .MapPatch("/{id:guid}", UpdateAsync)
+            .WithValidation<UpdateAccountRequest>()
+            .WithName("UpdateAccount");
         group.MapDelete("/{id:guid}", DeleteAsync).WithName("DeleteAccount");
     }
 
@@ -61,12 +66,9 @@ internal static class AccountEndpoints
     private static async Task<Created<AccountResponse>> CreateAsync(
         [FromBody] CreateAccountRequest request,
         [FromServices] IAccountService accountService,
-        [FromServices] IValidator<CreateAccountRequest> validator,
         CancellationToken cancellationToken
     )
     {
-        await ValidateAsync(validator, request, cancellationToken);
-
         var account = await accountService.CreateAsync(
             request.Name,
             request.AccountType,
@@ -81,12 +83,9 @@ internal static class AccountEndpoints
         [FromRoute] Guid id,
         [FromBody] UpdateAccountRequest request,
         [FromServices] IAccountService accountService,
-        [FromServices] IValidator<UpdateAccountRequest> validator,
         CancellationToken cancellationToken
     )
     {
-        await ValidateAsync(validator, request, cancellationToken);
-
         var account = await accountService.UpdateAsync(
             new AccountId(id),
             request.Name,
@@ -105,24 +104,5 @@ internal static class AccountEndpoints
     {
         await accountService.DeleteAsync(new AccountId(id), cancellationToken);
         return TypedResults.NoContent();
-    }
-
-    private static async Task ValidateAsync<T>(
-        IValidator<T> validator,
-        T request,
-        CancellationToken cancellationToken
-    )
-    {
-        var result = await validator.ValidateAsync(request, cancellationToken);
-        if (!result.IsValid)
-        {
-            throw new DomainException(
-                DomainExceptionKind.Validation,
-                string.Join("; ", result.Errors.Select(e => e.ErrorMessage)),
-                result
-                    .Errors.GroupBy(e => e.PropertyName)
-                    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())
-            );
-        }
     }
 }
