@@ -25,6 +25,8 @@ public sealed class BalanceDbContext : DbContext, IDataProtectionKeyContext
 
     public DbSet<BankAccount> BankAccounts { get; set; } = null!;
 
+    public DbSet<BankTransaction> BankTransactions { get; set; } = null!;
+
     public DatabaseProvider Provider => _options.Provider;
 
     public BalanceDbContext(

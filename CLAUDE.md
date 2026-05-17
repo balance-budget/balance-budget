@@ -15,18 +15,29 @@ If you are adding documentation, prefer extending the files under `docs/` and up
 
 ```bash
 # Restore
-dotnet tool restore          # CLI tools (CSharpier)
-dotnet restore               # NuGet packages
+# CLI tools (CSharpier)
+dotnet tool restore
+# NuGet packages      
+dotnet restore
 
-# Build
-dotnet build --no-restore
+# Build (without restore)
+dotnet build --no-restore -v:minimal --nologo
+
+# Generate EF core migrations (without build)
+# Add migration for PostgreSQL
+dotnet ef migrations add <name> --no-build --project src/Balance.Data.PostgreSql/Balance.Data.PostgreSql.csproj --startup-project src/Balance.Web/Balance.Web.csproj -- --Database:Provider=Postgres
+# Add migration for SQLite
+dotnet ef migrations add <name> --no-build --project src/Balance.Data.Sqlite/Balance.Data.Sqlite.csproj --startup-project src/Balance.Web/Balance.Web.csproj -- --Database:Provider=Sqlite
 
 # Format
-dotnet csharpier check .     # CI check
-dotnet csharpier format .    # Auto-format
+# CI check
+dotnet csharpier check .
+# Auto-format
+dotnet csharpier format .
 
-# Test
-dotnet test                  # TUnit suite, runs with coverage in CI
+# Test (without build)
+# TUnit suite, runs with coverage in CI
+dotnet test --no-build -v:minimal --nologo  
 
 # Run
 dotnet run --project src/Balance.Web/Balance.Web.csproj

@@ -1,6 +1,6 @@
 using Balance.Data.Entities.Ids;
+using Balance.Data.Exceptions;
 using Balance.Services.Contracts;
-using Balance.Services.Exceptions;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;

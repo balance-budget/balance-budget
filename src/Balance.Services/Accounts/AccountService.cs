@@ -2,8 +2,8 @@ using Balance.Data;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
+using Balance.Data.Exceptions;
 using Balance.Services.Contracts;
-using Balance.Services.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Balance.Services.Accounts;

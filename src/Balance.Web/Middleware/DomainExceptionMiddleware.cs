@@ -1,4 +1,4 @@
-using Balance.Services.Exceptions;
+using Balance.Data.Exceptions;
 using Balance.Web.Logging;
 using Microsoft.AspNetCore.Mvc;
 
