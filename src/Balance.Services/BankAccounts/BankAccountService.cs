@@ -2,6 +2,7 @@ using Balance.Data;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
 using Balance.Data.Exceptions;
+using Balance.Data.Helpers;
 using Balance.Services.Contracts;
 using Microsoft.EntityFrameworkCore;
 
@@ -72,11 +73,11 @@ internal sealed class BankAccountService : IBankAccountService
     {
         ArgumentNullException.ThrowIfNull(input);
 
-        var iban = Normalize(input.Iban);
-        var accountNumber = Normalize(input.AccountNumber);
-        var bic = Normalize(input.Bic);
-        var bankName = Normalize(input.BankName);
-        var accountHolderName = Normalize(input.AccountHolderName);
+        var iban = input.Iban.TrimToNull();
+        var accountNumber = input.AccountNumber.TrimToNull();
+        var bic = input.Bic.TrimToNull();
+        var bankName = input.BankName.TrimToNull();
+        var accountHolderName = input.AccountHolderName.TrimToNull();
 
         EnsureOwnershipXor(input.AccountId, input.CounterpartyId);
         EnsureIbanOrAccountNumber(iban, accountNumber);
@@ -132,15 +133,15 @@ internal sealed class BankAccountService : IBankAccountService
             );
 
         if (input.Iban is not null)
-            bankAccount.Iban = Normalize(input.Iban);
+            bankAccount.Iban = input.Iban.TrimToNull();
         if (input.AccountNumber is not null)
-            bankAccount.AccountNumber = Normalize(input.AccountNumber);
+            bankAccount.AccountNumber = input.AccountNumber.TrimToNull();
         if (input.Bic is not null)
-            bankAccount.Bic = Normalize(input.Bic);
+            bankAccount.Bic = input.Bic.TrimToNull();
         if (input.BankName is not null)
-            bankAccount.BankName = Normalize(input.BankName);
+            bankAccount.BankName = input.BankName.TrimToNull();
         if (input.AccountHolderName is not null)
-            bankAccount.AccountHolderName = Normalize(input.AccountHolderName);
+            bankAccount.AccountHolderName = input.AccountHolderName.TrimToNull();
         if (input.CurrencyCode is not null)
             bankAccount.CurrencyCode = input.CurrencyCode;
         if (input.AccountId is not null)
@@ -214,14 +215,6 @@ internal sealed class BankAccountService : IBankAccountService
             bankAccount.CreatedAt,
             bankAccount.UpdatedAt
         );
-
-    private static string? Normalize(string? value)
-    {
-        if (value is null)
-            return null;
-        var trimmed = value.Trim();
-        return trimmed.Length == 0 ? null : trimmed;
-    }
 
     private static void EnsureOwnershipXor(AccountId? accountId, CounterpartyId? counterpartyId)
     {
