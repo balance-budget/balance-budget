@@ -1,23 +1,11 @@
-using Balance.Data.Entities.Ids;
+using Balance.Services.Contracts;
 using FluentValidation;
 
 namespace Balance.Web.Endpoints.BankAccounts;
 
-internal sealed record UpdateBankAccountRequest(
-    string? Iban,
-    string? AccountNumber,
-    string? Bic,
-    string? BankName,
-    string? AccountHolderName,
-    CurrencyCode? CurrencyCode,
-    AccountId? AccountId,
-    CounterpartyId? CounterpartyId
-);
-
-internal sealed class UpdateBankAccountRequestValidator
-    : AbstractValidator<UpdateBankAccountRequest>
+internal sealed class UpdateBankAccountInputValidator : AbstractValidator<UpdateBankAccountInput>
 {
-    public UpdateBankAccountRequestValidator()
+    public UpdateBankAccountInputValidator()
     {
         RuleFor(x => x.Iban!)
             .Matches(CreateBankAccountRequestValidator.IbanRegex())

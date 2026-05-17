@@ -321,24 +321,89 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
         );
         var created = await createResponse.Content.ReadFromJsonAsync<BankAccountDto>();
 
-        var update = new UpdateBankAccountRequestDto(
-            Iban: null,
-            AccountNumber: null,
-            Bic: null,
-            BankName: "NewBank",
-            AccountHolderName: null,
-            CurrencyCode: null,
-            AccountId: null,
-            CounterpartyId: null
-        );
-        using var patchResponse = await client.PatchAsJsonAsync(
+        using var patchResponse = await client.PatchAsJsonPatchAsync(
             new Uri($"/bank-accounts/{created!.Id}", UriKind.Relative),
-            update
+            [JsonPatchHelpers.Replace("/bankName", "NewBank")]
         );
 
         await Assert.That(patchResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
         var updated = await patchResponse.Content.ReadFromJsonAsync<BankAccountDto>();
         await Assert.That(updated!.BankName).IsEqualTo("NewBank");
+    }
+
+    [Test]
+    public async Task UpdateBankAccount_can_clear_optional_fields()
+    {
+        using var client = Factory.CreateClient();
+        var account = await CreateAccountAsync(client, "To-Clear");
+
+        var request = new CreateBankAccountRequestDto(
+            Iban: "NL77RABO0700070007",
+            AccountNumber: "1234567",
+            Bic: "RABONL2U",
+            BankName: "OldBank",
+            AccountHolderName: "Old Holder",
+            CurrencyCode: "EUR",
+            AccountId: account.Id,
+            CounterpartyId: null
+        );
+        using var createResponse = await client.PostAsJsonAsync(
+            new Uri("/bank-accounts", UriKind.Relative),
+            request
+        );
+        var created = await createResponse.Content.ReadFromJsonAsync<BankAccountDto>();
+
+        // Iban stays set so the IBAN-or-AccountNumber invariant holds; everything else
+        // becomes genuinely null via JSON Patch replace-to-null.
+        using var patchResponse = await client.PatchAsJsonPatchAsync(
+            new Uri($"/bank-accounts/{created!.Id}", UriKind.Relative),
+            [
+                JsonPatchHelpers.Replace("/bic", null),
+                JsonPatchHelpers.Replace("/bankName", null),
+                JsonPatchHelpers.Replace("/accountHolderName", null),
+                JsonPatchHelpers.Replace("/currencyCode", null),
+                JsonPatchHelpers.Replace("/accountNumber", null),
+            ]
+        );
+
+        await Assert.That(patchResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var updated = await patchResponse.Content.ReadFromJsonAsync<BankAccountDto>();
+        await Assert.That(updated!.Bic).IsNull();
+        await Assert.That(updated.BankName).IsNull();
+        await Assert.That(updated.AccountHolderName).IsNull();
+        await Assert.That(updated.CurrencyCode).IsNull();
+        await Assert.That(updated.AccountNumber).IsNull();
+        await Assert.That(updated.Iban).IsEqualTo("NL77RABO0700070007");
+    }
+
+    [Test]
+    public async Task UpdateBankAccount_clearing_last_identifier_returns_422()
+    {
+        using var client = Factory.CreateClient();
+        var account = await CreateAccountAsync(client, "Strip-Identifier");
+
+        var request = new CreateBankAccountRequestDto(
+            Iban: "NL88RABO0800080008",
+            AccountNumber: null,
+            Bic: null,
+            BankName: null,
+            AccountHolderName: null,
+            CurrencyCode: null,
+            AccountId: account.Id,
+            CounterpartyId: null
+        );
+        using var createResponse = await client.PostAsJsonAsync(
+            new Uri("/bank-accounts", UriKind.Relative),
+            request
+        );
+        var created = await createResponse.Content.ReadFromJsonAsync<BankAccountDto>();
+
+        using var patchResponse = await client.PatchAsJsonPatchAsync(
+            new Uri($"/bank-accounts/{created!.Id}", UriKind.Relative),
+            [JsonPatchHelpers.Replace("/iban", null)]
+        );
+
+        await Assert.That(patchResponse.StatusCode).IsEqualTo(HttpStatusCode.UnprocessableEntity);
     }
 
     [Test]
@@ -415,17 +480,6 @@ internal sealed record BankAccountDto(
 );
 
 internal sealed record CreateBankAccountRequestDto(
-    string? Iban,
-    string? AccountNumber,
-    string? Bic,
-    string? BankName,
-    string? AccountHolderName,
-    string? CurrencyCode,
-    Guid? AccountId,
-    Guid? CounterpartyId
-);
-
-internal sealed record UpdateBankAccountRequestDto(
     string? Iban,
     string? AccountNumber,
     string? Bic,

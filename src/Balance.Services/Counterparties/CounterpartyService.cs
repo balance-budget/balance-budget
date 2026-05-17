@@ -35,6 +35,16 @@ internal sealed class CounterpartyService : ICounterpartyService
             .Select(c => new CounterpartyOutput(c.Id, c.Name, c.CreatedAt, c.UpdatedAt))
             .FirstOrDefaultAsync(cancellationToken);
 
+    public Task<UpdateCounterpartyInput?> GetSnapshotAsync(
+        CounterpartyId id,
+        CancellationToken cancellationToken
+    ) =>
+        _dbContext
+            .Counterparties.AsNoTracking()
+            .Where(c => c.Id == id)
+            .Select(c => new UpdateCounterpartyInput { Name = c.Name })
+            .FirstOrDefaultAsync(cancellationToken);
+
     public async Task<CounterpartyOutput> CreateAsync(
         string name,
         CancellationToken cancellationToken
@@ -69,10 +79,12 @@ internal sealed class CounterpartyService : ICounterpartyService
 
     public async Task<CounterpartyOutput> UpdateAsync(
         CounterpartyId id,
-        string? name,
+        UpdateCounterpartyInput input,
         CancellationToken cancellationToken
     )
     {
+        ArgumentNullException.ThrowIfNull(input);
+
         var counterparty =
             await _dbContext.Counterparties.FirstOrDefaultAsync(c => c.Id == id, cancellationToken)
             ?? throw new DomainException(
@@ -80,23 +92,21 @@ internal sealed class CounterpartyService : ICounterpartyService
                 $"Counterparty {id} not found."
             );
 
-        if (name is not null)
+        var trimmed = input.Name?.Trim() ?? string.Empty;
+        if (trimmed.Length == 0)
         {
-            var trimmed = name.Trim();
-            if (trimmed.Length == 0)
-            {
-                throw new DomainException(
-                    DomainExceptionKind.Validation,
-                    "Counterparty name cannot be empty."
-                );
-            }
-            if (!string.Equals(trimmed, counterparty.Name, StringComparison.Ordinal))
-            {
-                await EnsureNameAvailableAsync(trimmed, excludingId: id, cancellationToken);
-            }
-            counterparty.Name = trimmed;
+            throw new DomainException(
+                DomainExceptionKind.Validation,
+                "Counterparty name cannot be empty."
+            );
         }
 
+        if (!string.Equals(trimmed, counterparty.Name, StringComparison.Ordinal))
+        {
+            await EnsureNameAvailableAsync(trimmed, excludingId: id, cancellationToken);
+        }
+
+        counterparty.Name = trimmed;
         counterparty.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
         await _dbContext.SaveChangesAsync(cancellationToken);
         return ToOutput(counterparty);
