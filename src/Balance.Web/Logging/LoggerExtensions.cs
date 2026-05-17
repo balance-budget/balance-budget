@@ -1,4 +1,4 @@
-using Balance.Services.Exceptions;
+using Balance.Data.Exceptions;
 using Microsoft.Extensions.Logging;
 
 namespace Balance.Web.Logging;

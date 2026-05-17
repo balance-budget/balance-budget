@@ -1,4 +1,4 @@
-namespace Balance.Services.Exceptions;
+namespace Balance.Data.Exceptions;
 
 public sealed class DomainException : Exception
 {

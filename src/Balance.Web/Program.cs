@@ -5,6 +5,7 @@ using Balance.Web.Configuration;
 using Balance.Web.Endpoints;
 using Balance.Web.Endpoints.Accounts;
 using Balance.Web.Endpoints.BankAccounts;
+using Balance.Web.Endpoints.BankTransactions;
 using Balance.Web.Endpoints.Counterparties;
 using Balance.Web.Endpoints.Currencies;
 using Balance.Web.Logging;
@@ -44,6 +45,7 @@ app.MapCurrencies();
 app.MapAccounts();
 app.MapCounterparties();
 app.MapBankAccounts();
+app.MapBankTransactions();
 
 await app.RunAsync(lifetime.ApplicationStopping);
 
