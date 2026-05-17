@@ -56,13 +56,14 @@ internal sealed class JournalEntryServiceTests : EndpointsTestsBase
         await Assert.That(reloaded.Description).IsEqualTo("svc round-trip");
         await Assert.That(reloaded.Lines).Count().IsEqualTo(2);
         await Assert.That(reloaded.Lines.Sum(l => l.Amount)).IsEqualTo(0L);
-        await Assert.That(reloaded.Lines.Single(l => l.AccountId == groceries.Id).Amount)
+        await Assert
+            .That(reloaded.Lines.Single(l => l.AccountId == groceries.Id).Amount)
             .IsEqualTo(4000L);
-        await Assert.That(reloaded.Lines.Single(l => l.AccountId == checking.Id).Amount)
+        await Assert
+            .That(reloaded.Lines.Single(l => l.AccountId == checking.Id).Amount)
             .IsEqualTo(-4000L);
-        await Assert.That(reloaded.Lines.All(l =>
-                l.ReconciliationStatus == ReconciliationStatus.Uncleared
-            ))
+        await Assert
+            .That(reloaded.Lines.All(l => l.ReconciliationStatus == ReconciliationStatus.Uncleared))
             .IsTrue();
     }
 }

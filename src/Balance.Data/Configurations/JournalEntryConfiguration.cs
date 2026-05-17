@@ -26,7 +26,9 @@ internal sealed class JournalEntryConfiguration : IEntityTypeConfiguration<Journ
             .Property(e => e.BankTransactionId)
             .HasConversion<BankTransactionId.EfCoreValueConverter>();
 
-        builder.Property(e => e.CounterpartyId).HasConversion<CounterpartyId.EfCoreValueConverter>();
+        builder
+            .Property(e => e.CounterpartyId)
+            .HasConversion<CounterpartyId.EfCoreValueConverter>();
 
         builder.Property(e => e.CreatedAt).HasConversion(DateConverters.UtcConverter);
         builder.Property(e => e.UpdatedAt).HasConversion(DateConverters.UtcConverter);
@@ -53,8 +55,6 @@ internal sealed class JournalEntryConfiguration : IEntityTypeConfiguration<Journ
         builder
             .HasIndex(e => e.BankTransactionId)
             .HasDatabaseName("IX_JournalEntries_BankTransactionId");
-        builder
-            .HasIndex(e => e.CounterpartyId)
-            .HasDatabaseName("IX_JournalEntries_CounterpartyId");
+        builder.HasIndex(e => e.CounterpartyId).HasDatabaseName("IX_JournalEntries_CounterpartyId");
     }
 }

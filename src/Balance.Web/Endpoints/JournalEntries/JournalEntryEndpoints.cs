@@ -28,11 +28,7 @@ internal static class JournalEntryEndpoints
         CancellationToken cancellationToken
     )
     {
-        var entries = await journalEntryService.ListAsync(
-            skip ?? 0,
-            take ?? 0,
-            cancellationToken
-        );
+        var entries = await journalEntryService.ListAsync(skip ?? 0, take ?? 0, cancellationToken);
         IReadOnlyList<JournalEntryResponse> responses =
         [
             .. entries.Select(JournalEntryResponse.From),
@@ -46,10 +42,7 @@ internal static class JournalEntryEndpoints
         CancellationToken cancellationToken
     )
     {
-        var entry = await journalEntryService.GetAsync(
-            new JournalEntryId(id),
-            cancellationToken
-        );
+        var entry = await journalEntryService.GetAsync(new JournalEntryId(id), cancellationToken);
         return entry is null
             ? TypedResults.NotFound()
             : TypedResults.Ok(JournalEntryResponse.From(entry));

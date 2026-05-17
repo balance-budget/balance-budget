@@ -163,10 +163,7 @@ internal sealed class JournalEntryService : IJournalEntryService
     public async Task DeleteAsync(JournalEntryId id, CancellationToken cancellationToken)
     {
         var entry =
-            await _dbContext.JournalEntries.FirstOrDefaultAsync(
-                e => e.Id == id,
-                cancellationToken
-            )
+            await _dbContext.JournalEntries.FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
             ?? throw new DomainException(
                 DomainExceptionKind.NotFound,
                 $"JournalEntry {id} not found."

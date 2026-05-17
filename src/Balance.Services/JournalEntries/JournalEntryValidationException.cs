@@ -24,9 +24,7 @@ internal sealed class JournalEntryTooFewLinesException : JournalEntryValidationE
         : base(message, innerException) { }
 
     public JournalEntryTooFewLinesException(int actualLineCount)
-        : base(
-            $"A JournalEntry requires at least 2 JournalLines; got {actualLineCount}."
-        ) { }
+        : base($"A JournalEntry requires at least 2 JournalLines; got {actualLineCount}.") { }
 }
 
 internal sealed class JournalEntryUnbalancedException : JournalEntryValidationException
@@ -49,9 +47,8 @@ internal sealed class JournalEntryUnbalancedException : JournalEntryValidationEx
 internal sealed class JournalEntryCurrencyMismatchException : JournalEntryValidationException
 {
     public JournalEntryCurrencyMismatchException()
-        : base(
-            "All JournalLines in a single JournalEntry must share the same CurrencyCode in v1."
-        ) { }
+        : base("All JournalLines in a single JournalEntry must share the same CurrencyCode in v1.")
+    { }
 
     public JournalEntryCurrencyMismatchException(string message)
         : base(message) { }
