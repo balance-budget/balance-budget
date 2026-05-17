@@ -118,7 +118,10 @@ internal static class AccountEndpoints
         {
             throw new DomainException(
                 DomainExceptionKind.Validation,
-                string.Join("; ", result.Errors.Select(e => e.ErrorMessage))
+                string.Join("; ", result.Errors.Select(e => e.ErrorMessage)),
+                result
+                    .Errors.GroupBy(e => e.PropertyName)
+                    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())
             );
         }
     }
