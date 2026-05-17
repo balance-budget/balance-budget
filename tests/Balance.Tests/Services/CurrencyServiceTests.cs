@@ -13,7 +13,7 @@ namespace Balance.Tests.Services;
 internal sealed class CurrencyServiceTests : EndpointsTestsBase
 {
     [Test]
-    public async Task GetAsync_caches_subsequent_reads()
+    public async Task GetAsync_caches_subsequent_reads(CancellationToken cancellationToken)
     {
         var code = UniqueCode("X");
 
@@ -22,7 +22,7 @@ internal sealed class CurrencyServiceTests : EndpointsTestsBase
             var service = scope.ServiceProvider.GetRequiredService<ICurrencyService>();
             await service.CreateAsync(
                 new CreateCurrencyInput(code, "Test", 2, null),
-                CancellationToken.None
+                cancellationToken
             );
         }
 
@@ -30,7 +30,7 @@ internal sealed class CurrencyServiceTests : EndpointsTestsBase
         using (var primeScope = Factory.Services.CreateScope())
         {
             var service = primeScope.ServiceProvider.GetRequiredService<ICurrencyService>();
-            var primed = await service.GetAsync(code, CancellationToken.None);
+            var primed = await service.GetAsync(code, cancellationToken);
             await Assert.That(primed).IsNotNull();
         }
 
@@ -41,16 +41,13 @@ internal sealed class CurrencyServiceTests : EndpointsTestsBase
             var dbContext = mutateScope.ServiceProvider.GetRequiredService<BalanceDbContext>();
             await dbContext
                 .Currencies.Where(c => c.Code == code)
-                .ExecuteUpdateAsync(
-                    s => s.SetProperty(c => c.Name, "Mutated"),
-                    CancellationToken.None
-                );
+                .ExecuteUpdateAsync(s => s.SetProperty(c => c.Name, "Mutated"), cancellationToken);
         }
 
         using (var readScope = Factory.Services.CreateScope())
         {
             var service = readScope.ServiceProvider.GetRequiredService<ICurrencyService>();
-            var stillCached = await service.GetAsync(code, CancellationToken.None);
+            var stillCached = await service.GetAsync(code, cancellationToken);
             await Assert.That(stillCached).IsNotNull();
             await Assert.That(stillCached!.Name).IsEqualTo("Test"); // served from cache
         }
@@ -62,13 +59,13 @@ internal sealed class CurrencyServiceTests : EndpointsTestsBase
         using (var afterEvict = Factory.Services.CreateScope())
         {
             var service = afterEvict.ServiceProvider.GetRequiredService<ICurrencyService>();
-            var fresh = await service.GetAsync(code, CancellationToken.None);
+            var fresh = await service.GetAsync(code, cancellationToken);
             await Assert.That(fresh!.Name).IsEqualTo("Mutated");
         }
     }
 
     [Test]
-    public async Task UpdateAsync_invalidates_cache()
+    public async Task UpdateAsync_invalidates_cache(CancellationToken cancellationToken)
     {
         var code = UniqueCode("Y");
 
@@ -77,24 +74,24 @@ internal sealed class CurrencyServiceTests : EndpointsTestsBase
 
         await service.CreateAsync(
             new CreateCurrencyInput(code, "Initial", 2, null),
-            CancellationToken.None
+            cancellationToken
         );
-        var initial = await service.GetAsync(code, CancellationToken.None);
+        var initial = await service.GetAsync(code, cancellationToken);
         await Assert.That(initial!.Name).IsEqualTo("Initial");
 
         await service.UpdateAsync(
             code,
             new UpdateCurrencyInput("Updated", null),
-            CancellationToken.None
+            cancellationToken
         );
 
         // Without invalidation we would still see "Initial" — the previous GetAsync cached it.
-        var afterUpdate = await service.GetAsync(code, CancellationToken.None);
+        var afterUpdate = await service.GetAsync(code, cancellationToken);
         await Assert.That(afterUpdate!.Name).IsEqualTo("Updated");
     }
 
     [Test]
-    public async Task DeleteAsync_invalidates_cache()
+    public async Task DeleteAsync_invalidates_cache(CancellationToken cancellationToken)
     {
         var code = UniqueCode("Z");
 
@@ -103,19 +100,21 @@ internal sealed class CurrencyServiceTests : EndpointsTestsBase
 
         await service.CreateAsync(
             new CreateCurrencyInput(code, "Temp", 2, null),
-            CancellationToken.None
+            cancellationToken
         );
-        var fetched = await service.GetAsync(code, CancellationToken.None);
+        var fetched = await service.GetAsync(code, cancellationToken);
         await Assert.That(fetched).IsNotNull();
 
-        await service.DeleteAsync(code, CancellationToken.None);
+        await service.DeleteAsync(code, cancellationToken);
 
-        var afterDelete = await service.GetAsync(code, CancellationToken.None);
+        var afterDelete = await service.GetAsync(code, cancellationToken);
         await Assert.That(afterDelete).IsNull();
     }
 
     [Test]
-    public async Task ListAsync_returns_added_currency_after_invalidation()
+    public async Task ListAsync_returns_added_currency_after_invalidation(
+        CancellationToken cancellationToken
+    )
     {
         var code = UniqueCode("L");
 
@@ -123,15 +122,15 @@ internal sealed class CurrencyServiceTests : EndpointsTestsBase
         var service = scope.ServiceProvider.GetRequiredService<ICurrencyService>();
 
         // Prime list cache.
-        var listBefore = await service.ListAsync(CancellationToken.None);
+        var listBefore = await service.ListAsync(cancellationToken);
         await Assert.That(listBefore.Any(c => c.Code == code)).IsFalse();
 
         await service.CreateAsync(
             new CreateCurrencyInput(code, "Listed", 2, null),
-            CancellationToken.None
+            cancellationToken
         );
 
-        var listAfter = await service.ListAsync(CancellationToken.None);
+        var listAfter = await service.ListAsync(cancellationToken);
         await Assert.That(listAfter.Any(c => c.Code == code)).IsTrue();
     }
 

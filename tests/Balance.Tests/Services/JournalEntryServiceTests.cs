@@ -11,7 +11,9 @@ namespace Balance.Tests.Services;
 internal sealed class JournalEntryServiceTests : EndpointsTestsBase
 {
     [Test]
-    public async Task CreateAsync_round_trips_through_fresh_DbContext()
+    public async Task CreateAsync_round_trips_through_fresh_DbContext(
+        CancellationToken cancellationToken
+    )
     {
         using var scope = Factory.Services.CreateScope();
         var accountService = scope.ServiceProvider.GetRequiredService<IAccountService>();
@@ -21,13 +23,13 @@ internal sealed class JournalEntryServiceTests : EndpointsTestsBase
             $"Groceries-svc-{Guid.NewGuid():N}",
             AccountType.Expense,
             new CurrencyCode("EUR"),
-            CancellationToken.None
+            cancellationToken
         );
         var checking = await accountService.CreateAsync(
             $"Checking-svc-{Guid.NewGuid():N}",
             AccountType.Asset,
             new CurrencyCode("EUR"),
-            CancellationToken.None
+            cancellationToken
         );
 
         var created = await journalEntryService.CreateAsync(
@@ -42,7 +44,7 @@ internal sealed class JournalEntryServiceTests : EndpointsTestsBase
                     new CreateJournalLineInput(checking.Id, -4000, null),
                 ]
             ),
-            CancellationToken.None
+            cancellationToken
         );
 
         using var verifyScope = Factory.Services.CreateScope();
@@ -50,7 +52,7 @@ internal sealed class JournalEntryServiceTests : EndpointsTestsBase
         var reloaded = await dbContext
             .JournalEntries.AsNoTracking()
             .Include(e => e.Lines)
-            .SingleAsync(e => e.Id == created.Id, CancellationToken.None);
+            .SingleAsync(e => e.Id == created.Id, cancellationToken);
 
         await Assert.That(reloaded.Date).IsEqualTo(new DateOnly(2026, 5, 17));
         await Assert.That(reloaded.Description).IsEqualTo("svc round-trip");
