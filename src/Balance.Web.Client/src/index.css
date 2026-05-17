@@ -1,70 +1,142 @@
-:root {
-    --color-body-bg: #1b1b1b;
-    --color-body-bg-dark: #373737;
-    --color-text: #fff;
-    --color-text-muted: #777;
-    --color-primary: #fe8923;
-    --color-primary-dark: #c25a0a;
+@import "tailwindcss";
+
+/*
+ * Design tokens — Balance Design System.
+ * Exposed both as CSS variables (use in arbitrary CSS) and as Tailwind v4
+ * theme tokens (use as utilities, e.g. bg-surface-1, text-fg-2, rounded-xl).
+ */
+@theme {
+    /* Brand */
+    --color-brand-primary: #fe8923;
+    --color-brand-primary-dark: #c25a0a;
+    --color-brand-primary-soft: rgba(254, 137, 35, 0.12);
+
+    /* Surfaces (dark, default) */
+    --color-bg-0: #1b1b1b;
+    --color-bg-1: #373737;
+    --color-surface-1: rgba(0, 0, 0, 0.3);
+    --color-surface-2: rgba(255, 255, 255, 0.04);
+    --color-surface-3: rgba(255, 255, 255, 0.08);
+    --color-surface-overlay: rgba(0, 0, 0, 0.6);
+
+    /* Borders */
+    --color-border-soft: rgba(255, 255, 255, 0.08);
+    --color-border-strong: rgba(255, 255, 255, 0.18);
+
+    /* Foreground */
+    --color-fg-1: #ffffff;
+    --color-fg-2: #c8c8c8;
+    --color-fg-3: #777777;
+    --color-fg-4: #4a4a4a;
+
+    /* Semantic */
+    --color-success: #34c87a;
+    --color-success-soft: rgba(52, 200, 122, 0.14);
+    --color-danger: #ff5d5d;
+    --color-danger-strong: #ff2d2d;
+    --color-danger-soft: rgba(255, 93, 93, 0.14);
+    --color-warning: #f5b942;
+    --color-warning-soft: rgba(245, 185, 66, 0.14);
+    --color-info: #5aa9ff;
+    --color-info-soft: rgba(90, 169, 255, 0.14);
+
+    /* Category hues (charts / per-account accents) */
+    --color-cat-food: #fe8923;
+    --color-cat-transport: #5aa9ff;
+    --color-cat-housing: #a07cff;
+    --color-cat-shopping: #ff6fa8;
+    --color-cat-entertain: #34c87a;
+    --color-cat-bills: #f5b942;
+    --color-cat-savings: #2dd4bf;
+    --color-cat-food-soft: rgba(254, 137, 35, 0.12);
+    --color-cat-transport-soft: rgba(90, 169, 255, 0.12);
+    --color-cat-housing-soft: rgba(160, 124, 255, 0.12);
+    --color-cat-shopping-soft: rgba(255, 111, 168, 0.12);
+    --color-cat-entertain-soft: rgba(52, 200, 122, 0.12);
+    --color-cat-bills-soft: rgba(245, 185, 66, 0.12);
+    --color-cat-savings-soft: rgba(45, 212, 191, 0.12);
+
+    /* Type families */
+    --font-sans: "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    /* Type scale */
+    --text-12: 0.75rem;
+    --text-14: 0.875rem;
+    --text-16: 1rem;
+    --text-18: 1.125rem;
+    --text-22: 1.375rem;
+    --text-28: 1.75rem;
+    --text-34: 2.125rem;
+    --text-44: 2.75rem;
+    --text-56: 3.5rem;
+
+    /* Tracking */
+    --tracking-tight: -0.02em;
+    --tracking-caps: 0.12em;
+
+    /* Spacing (4pt base — Tailwind v4 derives p-1=4px, p-2=8px, ... from --spacing) */
+    --spacing: 4px;
+
+    /* Radii */
+    --radius-xs: 4px;
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --radius-xl: 32px;
+
+    /* Blur */
+    --blur-card: 20px;
+    --blur-soft: 10px;
+
+    /* Shadows — Balance avoids drop shadows except for floating overlays. */
+    --shadow-overlay: 0 12px 40px rgba(0, 0, 0, 0.45);
+
+    /* Motion */
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    --default-transition-timing-function: var(--ease-out);
+    --duration-fast: 120ms;
+    --duration-base: 220ms;
+    --duration-slow: 420ms;
+    --default-transition-duration: var(--duration-base);
 }
 
+/*
+ * Base styles. Body carries the page gradient + Poppins. Tabular numerics
+ * are mandatory on amount-bearing displays — handled by .tabular utility
+ * applied in components.
+ */
 html {
-    box-sizing: border-box;
     font-size: 16px;
 }
 
-*, *:before, *:after {
-    box-sizing: inherit;
-}
-
 body {
-    background: linear-gradient(135deg, var(--color-body-bg), var(--color-body-bg-dark));
-    color: var(--color-text);
-    font-family: "Poppins", sans-serif;
-    font-weight: 400;
-    font-style: normal;
     margin: 0;
-    padding: 0;
-}
-
-#main {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-}
-
-#main #content {
-    text-align: center;
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(20px);
-    border-radius: 2rem;
-    padding: 2.5rem;
-}
-
-h1,h2,h3,h4,h5,h6 {
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--color-bg-0), var(--color-bg-1));
+    background-attachment: fixed;
+    color: var(--color-fg-1);
+    font-family: var(--font-sans);
     font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
 }
 
-.btn {
-    text-decoration: none;
-    color: var(--color-text);
-    display: inline-block;
-    padding: 0.5rem 1rem;
-    margin-bottom: 1rem;
-    border-radius: 0.5rem;
-    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+#root {
+    min-height: 100vh;
 }
 
-.stats {
-    font-family: monospace;
-    font-size: 0.8rem;
-    color: var(--color-text-muted);
+/* Tabular numerics — for amounts, dates, percentages. */
+.tabular {
+    font-variant-numeric: tabular-nums;
 }
 
-.github {
-    fill: var(--color-text-muted);
-
-    &:hover {
-        fill: var(--color-text);
-    }
+/* Eyebrow / uppercase micro label. */
+.eyebrow {
+    font-size: var(--text-12);
+    font-weight: 500;
+    color: var(--color-fg-3);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
 }
