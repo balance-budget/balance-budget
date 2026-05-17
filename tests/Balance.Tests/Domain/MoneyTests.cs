@@ -175,10 +175,8 @@ internal sealed class MoneyTests
     [Test]
     public async Task Format_uses_minor_unit_scale_for_eur()
     {
-        var lookup = new FakeCurrencyLookup(("EUR", 2));
-
         var formatted = new Money(12345, Eur).Format(
-            lookup,
+            CurrencyOf(Eur, 2),
             System.Globalization.CultureInfo.InvariantCulture
         );
 
@@ -188,10 +186,8 @@ internal sealed class MoneyTests
     [Test]
     public async Task Format_handles_zero_scale_jpy()
     {
-        var lookup = new FakeCurrencyLookup(("JPY", 0));
-
         var formatted = new Money(7500, Jpy).Format(
-            lookup,
+            CurrencyOf(Jpy, 0),
             System.Globalization.CultureInfo.InvariantCulture
         );
 
@@ -201,10 +197,8 @@ internal sealed class MoneyTests
     [Test]
     public async Task Format_handles_large_scale_btc()
     {
-        var lookup = new FakeCurrencyLookup(("BTC", 8));
-
         var formatted = new Money(123_456_789, Btc).Format(
-            lookup,
+            CurrencyOf(Btc, 8),
             System.Globalization.CultureInfo.InvariantCulture
         );
 
@@ -214,10 +208,8 @@ internal sealed class MoneyTests
     [Test]
     public async Task Format_handles_negative()
     {
-        var lookup = new FakeCurrencyLookup(("EUR", 2));
-
         var formatted = new Money(-12345, Eur).Format(
-            lookup,
+            CurrencyOf(Eur, 2),
             System.Globalization.CultureInfo.InvariantCulture
         );
 
@@ -225,14 +217,24 @@ internal sealed class MoneyTests
     }
 
     [Test]
+    public async Task Format_throws_when_currency_mismatches()
+    {
+        var act = () =>
+            _ = new Money(100, Eur).Format(
+                CurrencyOf(Usd, 2),
+                System.Globalization.CultureInfo.InvariantCulture
+            );
+
+        var ex = await Assert.That(act).Throws<DomainException>();
+        await Assert.That(ex!.Kind).IsEqualTo(DomainExceptionKind.Invariant);
+    }
+
+    [Test]
     public async Task Parse_uses_minor_unit_scale_for_eur()
     {
-        var lookup = new FakeCurrencyLookup(("EUR", 2));
-
         var parsed = Money.Parse(
             "123.45",
-            Eur,
-            lookup,
+            CurrencyOf(Eur, 2),
             System.Globalization.CultureInfo.InvariantCulture
         );
 
@@ -242,12 +244,9 @@ internal sealed class MoneyTests
     [Test]
     public async Task Parse_handles_zero_scale_jpy()
     {
-        var lookup = new FakeCurrencyLookup(("JPY", 0));
-
         var parsed = Money.Parse(
             "7500",
-            Jpy,
-            lookup,
+            CurrencyOf(Jpy, 0),
             System.Globalization.CultureInfo.InvariantCulture
         );
 
@@ -257,12 +256,9 @@ internal sealed class MoneyTests
     [Test]
     public async Task Parse_handles_large_scale_btc()
     {
-        var lookup = new FakeCurrencyLookup(("BTC", 8));
-
         var parsed = Money.Parse(
             "1.23456789",
-            Btc,
-            lookup,
+            CurrencyOf(Btc, 8),
             System.Globalization.CultureInfo.InvariantCulture
         );
 
@@ -270,57 +266,26 @@ internal sealed class MoneyTests
     }
 
     [Test]
-    public async Task Parse_throws_when_currency_is_unknown()
-    {
-        var lookup = new FakeCurrencyLookup();
-        var act = () =>
-            _ = Money.Parse("1", Eur, lookup, System.Globalization.CultureInfo.InvariantCulture);
-
-        await Assert.That(act).Throws<DomainException>();
-    }
-
-    [Test]
     public async Task Parse_round_trips_through_Format_for_eur()
     {
-        var lookup = new FakeCurrencyLookup(("EUR", 2));
+        var currency = CurrencyOf(Eur, 2);
         var original = new Money(-9876543, Eur);
 
-        var text = original.Format(lookup, System.Globalization.CultureInfo.InvariantCulture);
+        var text = original.Format(currency, System.Globalization.CultureInfo.InvariantCulture);
         var parsed = Money.Parse(
             text.Replace(" EUR", "", StringComparison.Ordinal),
-            Eur,
-            lookup,
+            currency,
             System.Globalization.CultureInfo.InvariantCulture
         );
 
         await Assert.That(parsed).IsEqualTo(original);
     }
 
-    private sealed class FakeCurrencyLookup : Balance.Data.Currencies.ICurrencyLookup
-    {
-        private readonly Dictionary<CurrencyCode, Balance.Data.Entities.Currency> _byCode;
-
-        public FakeCurrencyLookup(params (string Code, int Scale)[] currencies)
+    private static Currency CurrencyOf(CurrencyCode code, int scale) =>
+        new()
         {
-            _byCode = currencies.ToDictionary(
-                c => new CurrencyCode(c.Code),
-                c => new Balance.Data.Entities.Currency
-                {
-                    Code = new CurrencyCode(c.Code),
-                    Name = c.Code,
-                    MinorUnitScale = c.Scale,
-                }
-            );
-        }
-
-        public Balance.Data.Entities.Currency GetByCode(CurrencyCode code) =>
-            TryGetByCode(code)
-            ?? throw new DomainException(
-                DomainExceptionKind.NotFound,
-                $"Currency '{code.Value}' is not defined."
-            );
-
-        public Balance.Data.Entities.Currency? TryGetByCode(CurrencyCode code) =>
-            _byCode.GetValueOrDefault(code);
-    }
+            Code = code,
+            Name = code.Value,
+            MinorUnitScale = scale,
+        };
 }

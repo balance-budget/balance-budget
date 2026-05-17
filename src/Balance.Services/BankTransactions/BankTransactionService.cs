@@ -1,5 +1,4 @@
 using Balance.Data;
-using Balance.Data.Currencies;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
 using Balance.Data.Exceptions;
@@ -11,17 +10,17 @@ namespace Balance.Services.BankTransactions;
 internal sealed class BankTransactionService : IBankTransactionService
 {
     private readonly BalanceDbContext _dbContext;
-    private readonly ICurrencyLookup _currencyLookup;
+    private readonly ICurrencyService _currencyService;
     private readonly TimeProvider _timeProvider;
 
     public BankTransactionService(
         BalanceDbContext dbContext,
-        ICurrencyLookup currencyLookup,
+        ICurrencyService currencyService,
         TimeProvider timeProvider
     )
     {
         _dbContext = dbContext;
-        _currencyLookup = currencyLookup;
+        _currencyService = currencyService;
         _timeProvider = timeProvider;
     }
 
@@ -72,7 +71,7 @@ internal sealed class BankTransactionService : IBankTransactionService
             );
         }
 
-        if (_currencyLookup.TryGetByCode(input.CurrencyCode) is null)
+        if (await _currencyService.GetAsync(input.CurrencyCode, cancellationToken) is null)
         {
             throw new DomainException(
                 DomainExceptionKind.NotFound,

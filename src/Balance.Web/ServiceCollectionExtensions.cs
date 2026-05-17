@@ -64,7 +64,7 @@ internal static class ServiceCollectionExtensions
         services.AddHealthChecks().AddDbContextCheck<BalanceDbContext>(tags: ["readiness"]);
 
         services.AddValidatorsFromAssemblyContaining<IWebAssemblyMarker>(
-            ServiceLifetime.Singleton,
+            ServiceLifetime.Scoped,
             includeInternalTypes: true
         );
 
