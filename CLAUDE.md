@@ -115,8 +115,8 @@ Order matters and is shared by both entry points:
 - **Always run CSharpier** (`dotnet csharpier format .`) after writing C# — CI fails otherwise and `TreatWarningsAsErrors=true` will catch a lot too.
 - **Match the existing DI pattern** when adding a new layer or feature module: a single `AddBalance*` extension that internally composes its dependencies.
 - **Don't pin package versions in `.csproj`** — add or update the `PackageVersion` entry in `Directory.Packages.props`.
-- **EF Core migrations** must be generated against the provider-specific assembly: `dotnet ef migrations add <Name> --project src/Balance.Data.Sqlite --startup-project src/Balance.Web` (and equivalently for PostgreSql). The migrations assembly is wired up in `DbContextOptionsBuilderExtensions.UseProvider`.
-- **The domain model is intentionally empty.** This repo is at "basic layout" stage — the personal finance domain (accounts, transactions, budgets, categories, …) has not been designed yet. New entities, services, and endpoints should be added following the conventions above.
+- **EF Core migrations** must be generated against the provider-specific assembly: The migrations assembly is wired up in `DbContextOptionsBuilderExtensions.UseProvider`.
+-- **Don't suppress warnings.** Don't use #pragma or SuppressMessageAttribute. Only use .editorconfig and only for global rules. Always try to fix the issue in code first.  
 
 ## Agent skills
 
