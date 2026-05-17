@@ -10,6 +10,7 @@ using Balance.Web.Endpoints.Counterparties;
 using Balance.Web.Endpoints.Currencies;
 using Balance.Web.Endpoints.JournalEntries;
 using Balance.Web.Logging;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateSlimBuilder(args);
@@ -25,7 +26,11 @@ var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
 
 await app.MigrateDatabase(lifetime.ApplicationStopping);
 
-app.MapHealthChecks("/healthz");
+app.MapHealthChecks("/healthz/live", new HealthCheckOptions { Predicate = _ => false });
+app.MapHealthChecks(
+    "/healthz/ready",
+    new HealthCheckOptions { Predicate = static c => c.Tags.Contains("readiness") }
+);
 app.MapStaticAssets();
 app.MapHtmx();
 app.MapOpenApi();

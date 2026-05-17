@@ -91,7 +91,7 @@ Empty class libraries that exist solely to host provider-specific EF Core migrat
 
 Built with `WebApplication.CreateSlimBuilder` for fast startup and minimal default services. Uses workstation GC (`<ServerGarbageCollection>false</ServerGarbageCollection>`) because the app is expected to run in resource-constrained containers.
 
-- `Program.cs` — startup, in this order: configure logging, remap config sources, compose services, build, run database migrations, map endpoints (`/healthz`, static assets, HTMX, OpenAPI, Scalar), then the middleware pipeline.
+- `Program.cs` — startup, in this order: configure logging, remap config sources, compose services, build, run database migrations, map endpoints (`/healthz/live`, `/healthz/ready`, static assets, HTMX, OpenAPI, Scalar), then the middleware pipeline.
 - `Endpoints/HtmxEndpoints` — HTMX fragment routes under `/htmx/*`. Each is excluded from OpenAPI and returns `HtmlResult`.
 - `EndpointResults/HtmlResult` — `IResult` that writes raw HTML with `text/html` content type and a correct `Content-Length`.
 - `Configuration/ConfigurationManagerExtensions.MapConfigurationSources` — in development and container-fast-mode, points JSON config providers at `AppContext.BaseDirectory` so the solution-root `appsettings.json` is found when running from source.

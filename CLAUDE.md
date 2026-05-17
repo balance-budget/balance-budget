@@ -45,7 +45,7 @@ dotnet test --no-build -v:minimal --treenode-filter "/Balance.Tests/Balance.Test
 dotnet run --project src/Balance.Web/Balance.Web.csproj
 ```
 
-The web app listens on `http://*:5248` (and `https://*:7189` via the `https` launch profile). Scalar UI is mounted at `/scalar/`, HTMX fragments at `/htmx/*`, health probe at `/healthz`.
+The web app listens on `http://*:5248` (and `https://*:7189` via the `https` launch profile). Scalar UI is mounted at `/scalar/`, HTMX fragments at `/htmx/*`, liveness probe at `/healthz/live` and readiness probe at `/healthz/ready`.
 
 ## Architecture at a glance
 
