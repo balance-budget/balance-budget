@@ -232,7 +232,7 @@ internal sealed class MoneyTests
     [Test]
     public async Task Parse_uses_minor_unit_scale_for_eur()
     {
-        var parsed = Money.Parse(
+        var parsed = MoneyExtensions.Parse(
             "123.45",
             CurrencyOf(Eur, 2),
             System.Globalization.CultureInfo.InvariantCulture
@@ -244,7 +244,7 @@ internal sealed class MoneyTests
     [Test]
     public async Task Parse_handles_zero_scale_jpy()
     {
-        var parsed = Money.Parse(
+        var parsed = MoneyExtensions.Parse(
             "7500",
             CurrencyOf(Jpy, 0),
             System.Globalization.CultureInfo.InvariantCulture
@@ -256,7 +256,7 @@ internal sealed class MoneyTests
     [Test]
     public async Task Parse_handles_large_scale_btc()
     {
-        var parsed = Money.Parse(
+        var parsed = MoneyExtensions.Parse(
             "1.23456789",
             CurrencyOf(Btc, 8),
             System.Globalization.CultureInfo.InvariantCulture
@@ -272,7 +272,7 @@ internal sealed class MoneyTests
         var original = new Money(-9876543, Eur);
 
         var text = original.Format(currency, System.Globalization.CultureInfo.InvariantCulture);
-        var parsed = Money.Parse(
+        var parsed = MoneyExtensions.Parse(
             text.Replace(" EUR", "", StringComparison.Ordinal),
             currency,
             System.Globalization.CultureInfo.InvariantCulture
