@@ -9,7 +9,7 @@ function App() {
             <div id="content">
                 <img src={logo} width="200" height="200" alt="Balance"/>
                 <h1>Balance</h1>
-                <a className="btn" href="/api/scalar/">API</a>
+                <a className="btn" href="/api/docs/">API</a>
                 <br />
                 <a href="https://github.com/christiaanderidder/balance-budget" target="_blank" className="github">
                     <svg height="32" aria-hidden="true" viewBox="0 0 24 24" width="32" data-view-component="true" className="github-icon">
