@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# esproj creates obj directory with a backslash in the name
+obj\
