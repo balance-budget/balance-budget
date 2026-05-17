@@ -45,7 +45,7 @@ public readonly record struct Money(long Amount, CurrencyCode CurrencyCode)
     public string Format(ICurrencyLookup lookup, IFormatProvider? formatProvider = null)
     {
         ArgumentNullException.ThrowIfNull(lookup);
-        var currency = lookup.Get(CurrencyCode);
+        var currency = lookup.GetByCode(CurrencyCode);
         return FormatMinorUnits(Amount, currency.MinorUnitScale, formatProvider)
             + " "
             + CurrencyCode.Value;
@@ -60,7 +60,7 @@ public readonly record struct Money(long Amount, CurrencyCode CurrencyCode)
     {
         ArgumentNullException.ThrowIfNull(majorUnits);
         ArgumentNullException.ThrowIfNull(lookup);
-        var currency = lookup.Get(currencyCode);
+        var currency = lookup.GetByCode(currencyCode);
         var amount = ParseMinorUnits(majorUnits, currency.MinorUnitScale, formatProvider);
         return new Money(amount, currencyCode);
     }

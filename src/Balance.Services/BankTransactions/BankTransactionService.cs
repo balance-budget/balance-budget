@@ -57,7 +57,7 @@ internal sealed class BankTransactionService : IBankTransactionService
             );
         }
 
-        if (_currencyLookup.TryGet(input.CurrencyCode) is null)
+        if (_currencyLookup.TryGetByCode(input.CurrencyCode) is null)
         {
             throw new DomainException(
                 DomainExceptionKind.NotFound,

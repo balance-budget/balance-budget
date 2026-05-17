@@ -147,11 +147,6 @@ internal sealed class AccountEndpointsTests : EndpointsTestsBase
     }
 }
 
-[SuppressMessage(
-    "Performance",
-    "CA1812:Avoid uninstantiated internal classes",
-    Justification = "Instantiated by System.Text.Json deserialization."
-)]
 internal sealed record AccountDto(Guid Id, string Name, string AccountType, string CurrencyCode);
 
 internal sealed record CreateAccountRequestDto(

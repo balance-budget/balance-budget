@@ -313,14 +313,14 @@ internal sealed class MoneyTests
             );
         }
 
-        public Balance.Data.Entities.Currency Get(CurrencyCode code) =>
-            TryGet(code)
+        public Balance.Data.Entities.Currency GetByCode(CurrencyCode code) =>
+            TryGetByCode(code)
             ?? throw new DomainException(
                 DomainExceptionKind.NotFound,
                 $"Currency '{code.Value}' is not defined."
             );
 
-        public Balance.Data.Entities.Currency? TryGet(CurrencyCode code) =>
+        public Balance.Data.Entities.Currency? TryGetByCode(CurrencyCode code) =>
             _byCode.GetValueOrDefault(code);
     }
 }

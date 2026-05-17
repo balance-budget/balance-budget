@@ -276,11 +276,6 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
     }
 }
 
-[SuppressMessage(
-    "Performance",
-    "CA1812:Avoid uninstantiated internal classes",
-    Justification = "Instantiated by System.Text.Json deserialization."
-)]
 internal sealed record BankTransactionDto(
     Guid Id,
     Guid BankAccountId,
