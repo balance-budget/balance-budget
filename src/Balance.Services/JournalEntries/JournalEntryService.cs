@@ -2,6 +2,7 @@ using Balance.Data;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
 using Balance.Data.Exceptions;
+using Balance.Data.Helpers;
 using Balance.Services.Contracts;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,9 +10,6 @@ namespace Balance.Services.JournalEntries;
 
 internal sealed class JournalEntryService : IJournalEntryService
 {
-    private const int DefaultPageSize = 50;
-    private const int MaxPageSize = 200;
-
     private readonly BalanceDbContext _dbContext;
     private readonly TimeProvider _timeProvider;
 
@@ -27,14 +25,11 @@ internal sealed class JournalEntryService : IJournalEntryService
         CancellationToken cancellationToken
     )
     {
-        var clampedSkip = skip < 0 ? 0 : skip;
-        var clampedTake = take <= 0 ? DefaultPageSize : Math.Min(take, MaxPageSize);
-
         return await _dbContext
             .JournalEntries.OrderByDescending(e => e.Date)
             .ThenByDescending(e => e.CreatedAt)
-            .Skip(clampedSkip)
-            .Take(clampedTake)
+            .Skip(skip)
+            .Take(take)
             .Select(e => new JournalEntryOutput(
                 e.Id,
                 e.Date,
@@ -102,7 +97,7 @@ internal sealed class JournalEntryService : IJournalEntryService
         {
             Id = new JournalEntryId(Guid.CreateVersion7()),
             Date = input.Date,
-            Description = Normalize(input.Description),
+            Description = input.Description.TrimToNull(),
             BankTransactionId = input.BankTransactionId,
             CounterpartyId = input.CounterpartyId,
             CreatedAt = now,
@@ -118,7 +113,7 @@ internal sealed class JournalEntryService : IJournalEntryService
                     JournalEntryId = entry.Id,
                     AccountId = line.AccountId,
                     Amount = line.Amount,
-                    Description = Normalize(line.Description),
+                    Description = line.Description.TrimToNull(),
                     CreatedAt = now,
                     UpdatedAt = now,
                 }
@@ -150,7 +145,7 @@ internal sealed class JournalEntryService : IJournalEntryService
         if (input.Date is not null)
             entry.Date = input.Date.Value;
         if (input.Description is not null)
-            entry.Description = Normalize(input.Description);
+            entry.Description = input.Description.TrimToNull();
         if (input.BankTransactionId is not null)
             entry.BankTransactionId = input.BankTransactionId;
         if (input.CounterpartyId is not null)
@@ -175,7 +170,7 @@ internal sealed class JournalEntryService : IJournalEntryService
                         JournalEntryId = entry.Id,
                         AccountId = line.AccountId,
                         Amount = line.Amount,
-                        Description = Normalize(line.Description),
+                        Description = line.Description.TrimToNull(),
                         CreatedAt = now,
                         UpdatedAt = now,
                     }
@@ -293,13 +288,5 @@ internal sealed class JournalEntryService : IJournalEntryService
                 );
             }
         }
-    }
-
-    private static string? Normalize(string? value)
-    {
-        if (value is null)
-            return null;
-        var trimmed = value.Trim();
-        return trimmed.Length == 0 ? null : trimmed;
     }
 }

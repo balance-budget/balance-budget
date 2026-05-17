@@ -14,12 +14,12 @@ internal static class BankTransactionEndpoints
     {
         var group = app.MapGroup(PathPrefix).WithTags("BankTransactions");
         group.MapGet("", ListAsync).WithName("ListBankTransactions");
-        group.MapGet("/{id:guid}", GetAsync).WithName("GetBankTransaction");
+        group.MapGet("/{id}", GetAsync).WithName("GetBankTransaction");
         group
             .MapPost("", CreateAsync)
             .WithValidation<CreateBankTransactionRequest>()
             .WithName("CreateBankTransaction");
-        group.MapDelete("/{id:guid}", DeleteAsync).WithName("DeleteBankTransaction");
+        group.MapDelete("/{id}", DeleteAsync).WithName("DeleteBankTransaction");
     }
 
     private static async Task<Ok<IReadOnlyList<BankTransactionOutput>>> ListAsync(
@@ -32,15 +32,12 @@ internal static class BankTransactionEndpoints
     }
 
     private static async Task<Results<Ok<BankTransactionOutput>, NotFound>> GetAsync(
-        [FromRoute] Guid id,
+        [FromRoute] BankTransactionId id,
         [FromServices] IBankTransactionService bankTransactionService,
         CancellationToken cancellationToken
     )
     {
-        var bankTransaction = await bankTransactionService.GetAsync(
-            new BankTransactionId(id),
-            cancellationToken
-        );
+        var bankTransaction = await bankTransactionService.GetAsync(id, cancellationToken);
         return bankTransaction is null ? TypedResults.NotFound() : TypedResults.Ok(bankTransaction);
     }
 
@@ -63,12 +60,12 @@ internal static class BankTransactionEndpoints
     }
 
     private static async Task<NoContent> DeleteAsync(
-        [FromRoute] Guid id,
+        [FromRoute] BankTransactionId id,
         [FromServices] IBankTransactionService bankTransactionService,
         CancellationToken cancellationToken
     )
     {
-        await bankTransactionService.DeleteAsync(new BankTransactionId(id), cancellationToken);
+        await bankTransactionService.DeleteAsync(id, cancellationToken);
         return TypedResults.NoContent();
     }
 }

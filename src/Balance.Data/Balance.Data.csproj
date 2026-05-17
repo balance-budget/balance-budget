@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <InternalsVisibleTo Include="Balance.Services" />
     <InternalsVisibleTo Include="Balance.Tests" />
   </ItemGroup>
 
