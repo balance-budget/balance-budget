@@ -1,3 +1,4 @@
+using Balance.Data.Entities;
 using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
 
@@ -9,6 +10,8 @@ public interface IAccountService
 
     Task<AccountOutput?> GetAsync(AccountId id, CancellationToken cancellationToken);
 
+    Task<UpdateAccountInput?> GetSnapshotAsync(AccountId id, CancellationToken cancellationToken);
+
     Task<AccountOutput> CreateAsync(
         string name,
         AccountType accountType,
@@ -18,11 +21,27 @@ public interface IAccountService
 
     Task<AccountOutput> UpdateAsync(
         AccountId id,
-        string? name,
-        AccountType? accountType,
-        CurrencyCode? currencyCode,
+        UpdateAccountInput input,
         CancellationToken cancellationToken
     );
 
     Task DeleteAsync(AccountId id, CancellationToken cancellationToken);
+}
+
+public sealed record UpdateAccountInput
+{
+    public required string Name { get; set; }
+    public required AccountType AccountType { get; set; }
+    public required CurrencyCode CurrencyCode { get; set; }
+
+    public static UpdateAccountInput FromEntity(Account account)
+    {
+        ArgumentNullException.ThrowIfNull(account);
+        return new UpdateAccountInput
+        {
+            Name = account.Name,
+            AccountType = account.AccountType,
+            CurrencyCode = account.CurrencyCode,
+        };
+    }
 }

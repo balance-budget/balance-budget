@@ -110,15 +110,47 @@ internal sealed class AccountEndpointsTests : EndpointsTestsBase
         );
         var created = await createResponse.Content.ReadFromJsonAsync<AccountDto>();
 
-        var update = new UpdateAccountRequestDto("New Name", null, null);
-        using var patchResponse = await client.PatchAsJsonAsync(
+        using var patchResponse = await client.PatchAsJsonPatchAsync(
             new Uri($"/accounts/{created!.Id}", UriKind.Relative),
-            update
+            [JsonPatchHelpers.Replace("/name", "New Name")]
         );
 
         await Assert.That(patchResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
         var updated = await patchResponse.Content.ReadFromJsonAsync<AccountDto>();
         await Assert.That(updated!.Name).IsEqualTo("New Name");
+    }
+
+    [Test]
+    public async Task UpdateAccount_returns_404_when_unknown()
+    {
+        using var client = Factory.CreateClient();
+
+        using var patchResponse = await client.PatchAsJsonPatchAsync(
+            new Uri($"/accounts/{Guid.NewGuid()}", UriKind.Relative),
+            [JsonPatchHelpers.Replace("/name", "Anything")]
+        );
+
+        await Assert.That(patchResponse.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
+    }
+
+    [Test]
+    public async Task UpdateAccount_with_invalid_path_returns_400()
+    {
+        using var client = Factory.CreateClient();
+
+        var request = new CreateAccountRequestDto("Patch-Errors", "Asset", "EUR");
+        using var createResponse = await client.PostAsJsonAsync(
+            new Uri("/accounts", UriKind.Relative),
+            request
+        );
+        var created = await createResponse.Content.ReadFromJsonAsync<AccountDto>();
+
+        using var patchResponse = await client.PatchAsJsonPatchAsync(
+            new Uri($"/accounts/{created!.Id}", UriKind.Relative),
+            [JsonPatchHelpers.Replace("/doesNotExist", "x")]
+        );
+
+        await Assert.That(patchResponse.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
     }
 
     [Test]
@@ -152,10 +184,4 @@ internal sealed record CreateAccountRequestDto(
     string Name,
     string AccountType,
     string CurrencyCode
-);
-
-internal sealed record UpdateAccountRequestDto(
-    string? Name,
-    string? AccountType,
-    string? CurrencyCode
 );

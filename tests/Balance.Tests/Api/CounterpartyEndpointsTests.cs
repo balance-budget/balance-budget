@@ -111,10 +111,9 @@ internal sealed class CounterpartyEndpointsTests : EndpointsTestsBase
         );
         var created = await createResponse.Content.ReadFromJsonAsync<CounterpartyDto>();
 
-        var update = new UpdateCounterpartyRequestDto("Renamed Counterparty");
-        using var patchResponse = await client.PatchAsJsonAsync(
+        using var patchResponse = await client.PatchAsJsonPatchAsync(
             new Uri($"/counterparties/{created!.Id}", UriKind.Relative),
-            update
+            [JsonPatchHelpers.Replace("/name", "Renamed Counterparty")]
         );
 
         await Assert.That(patchResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
@@ -127,10 +126,9 @@ internal sealed class CounterpartyEndpointsTests : EndpointsTestsBase
     {
         using var client = Factory.CreateClient();
 
-        var update = new UpdateCounterpartyRequestDto("Whatever");
-        using var response = await client.PatchAsJsonAsync(
+        using var response = await client.PatchAsJsonPatchAsync(
             new Uri($"/counterparties/{Guid.NewGuid()}", UriKind.Relative),
-            update
+            [JsonPatchHelpers.Replace("/name", "Whatever")]
         );
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
@@ -164,5 +162,3 @@ internal sealed class CounterpartyEndpointsTests : EndpointsTestsBase
 internal sealed record CounterpartyDto(Guid Id, string Name);
 
 internal sealed record CreateCounterpartyRequestDto(string Name);
-
-internal sealed record UpdateCounterpartyRequestDto(string? Name);
