@@ -4,7 +4,7 @@ using TUnit.AspNetCore;
 
 namespace Balance.Tests.Api.Helpers;
 
-internal sealed class WebApplicationFactory : TestWebApplicationFactory<Program>
+internal class WebApplicationFactory : TestWebApplicationFactory<Program>
 {
     private readonly string _databasePath = Path.Combine(
         Path.GetTempPath(),

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json.Serialization;
+using Balance.Data;
 using Balance.Web.Middleware;
 using Balance.Web.OpenApi;
 using FluentValidation;
@@ -59,7 +60,7 @@ internal static class ServiceCollectionExtensions
         services.AddCors(c =>
             c.AddDefaultPolicy(p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader())
         );
-        services.AddHealthChecks();
+        services.AddHealthChecks().AddDbContextCheck<BalanceDbContext>(tags: ["readiness"]);
 
         services.AddValidatorsFromAssemblyContaining<IWebAssemblyMarker>(
             ServiceLifetime.Singleton,
