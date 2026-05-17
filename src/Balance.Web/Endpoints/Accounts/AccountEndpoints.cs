@@ -28,26 +28,23 @@ internal static class AccountEndpoints
         group.MapDelete("/{id:guid}", DeleteAsync).WithName("DeleteAccount");
     }
 
-    private static async Task<Ok<IReadOnlyList<AccountResponse>>> ListAsync(
+    private static async Task<Ok<IReadOnlyList<AccountOutput>>> ListAsync(
         [FromServices] IAccountService accountService,
         CancellationToken cancellationToken
     )
     {
         var accounts = await accountService.ListAsync(cancellationToken);
-        IReadOnlyList<AccountResponse> responses = [.. accounts.Select(AccountResponse.From)];
-        return TypedResults.Ok(responses);
+        return TypedResults.Ok(accounts);
     }
 
-    private static async Task<Results<Ok<AccountResponse>, NotFound>> GetAsync(
+    private static async Task<Results<Ok<AccountOutput>, NotFound>> GetAsync(
         [FromRoute] Guid id,
         [FromServices] IAccountService accountService,
         CancellationToken cancellationToken
     )
     {
         var account = await accountService.GetAsync(new AccountId(id), cancellationToken);
-        return account is null
-            ? TypedResults.NotFound()
-            : TypedResults.Ok(AccountResponse.From(account));
+        return account is null ? TypedResults.NotFound() : TypedResults.Ok(account);
     }
 
     private static async Task<Results<Ok<Money>, NotFound>> GetBalanceAsync(
@@ -63,7 +60,7 @@ internal static class AccountEndpoints
         return balance is null ? TypedResults.NotFound() : TypedResults.Ok(balance.Value);
     }
 
-    private static async Task<Created<AccountResponse>> CreateAsync(
+    private static async Task<Created<AccountOutput>> CreateAsync(
         [FromBody] CreateAccountRequest request,
         [FromServices] IAccountService accountService,
         CancellationToken cancellationToken
@@ -75,11 +72,10 @@ internal static class AccountEndpoints
             request.CurrencyCode,
             cancellationToken
         );
-        var response = AccountResponse.From(account);
-        return TypedResults.Created($"{PathPrefix}/{account.Id.Value}", response);
+        return TypedResults.Created($"{PathPrefix}/{account.Id.Value}", account);
     }
 
-    private static async Task<Ok<AccountResponse>> UpdateAsync(
+    private static async Task<Ok<AccountOutput>> UpdateAsync(
         [FromRoute] Guid id,
         [FromBody] UpdateAccountRequest request,
         [FromServices] IAccountService accountService,
@@ -93,7 +89,7 @@ internal static class AccountEndpoints
             request.CurrencyCode,
             cancellationToken
         );
-        return TypedResults.Ok(AccountResponse.From(account));
+        return TypedResults.Ok(account);
     }
 
     private static async Task<NoContent> DeleteAsync(
