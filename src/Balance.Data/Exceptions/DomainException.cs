@@ -4,6 +4,8 @@ public class DomainException : Exception
 {
     public DomainExceptionKind Kind { get; }
 
+    public IReadOnlyDictionary<string, string[]>? Errors { get; }
+
     public DomainException()
     {
         Kind = DomainExceptionKind.Invariant;
@@ -19,6 +21,17 @@ public class DomainException : Exception
         : base(message)
     {
         Kind = kind;
+    }
+
+    public DomainException(
+        DomainExceptionKind kind,
+        string message,
+        IReadOnlyDictionary<string, string[]> errors
+    )
+        : base(message)
+    {
+        Kind = kind;
+        Errors = errors;
     }
 
     public DomainException(string message, Exception innerException)
