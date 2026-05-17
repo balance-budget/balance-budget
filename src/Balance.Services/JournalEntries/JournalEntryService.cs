@@ -21,7 +21,7 @@ internal sealed class JournalEntryService : IJournalEntryService
         _timeProvider = timeProvider;
     }
 
-    public async Task<IReadOnlyList<JournalEntry>> ListAsync(
+    public async Task<IReadOnlyList<JournalEntryOutput>> ListAsync(
         int skip,
         int take,
         CancellationToken cancellationToken
@@ -31,22 +31,56 @@ internal sealed class JournalEntryService : IJournalEntryService
         var clampedTake = take <= 0 ? DefaultPageSize : Math.Min(take, MaxPageSize);
 
         return await _dbContext
-            .JournalEntries.AsNoTracking()
-            .Include(e => e.Lines)
-            .OrderByDescending(e => e.Date)
+            .JournalEntries.OrderByDescending(e => e.Date)
             .ThenByDescending(e => e.CreatedAt)
             .Skip(clampedSkip)
             .Take(clampedTake)
+            .Select(e => new JournalEntryOutput(
+                e.Id,
+                e.Date,
+                e.Description,
+                e.BankTransactionId,
+                e.CounterpartyId,
+                e.Lines.Select(l => new JournalLineOutput(
+                        l.Id,
+                        l.AccountId,
+                        l.Amount,
+                        l.ReconciliationStatus,
+                        l.Description
+                    ))
+                    .ToList(),
+                e.CreatedAt,
+                e.UpdatedAt
+            ))
             .ToListAsync(cancellationToken);
     }
 
-    public Task<JournalEntry?> GetAsync(JournalEntryId id, CancellationToken cancellationToken) =>
+    public Task<JournalEntryOutput?> GetAsync(
+        JournalEntryId id,
+        CancellationToken cancellationToken
+    ) =>
         _dbContext
-            .JournalEntries.AsNoTracking()
-            .Include(e => e.Lines)
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+            .JournalEntries.Where(e => e.Id == id)
+            .Select(e => new JournalEntryOutput(
+                e.Id,
+                e.Date,
+                e.Description,
+                e.BankTransactionId,
+                e.CounterpartyId,
+                e.Lines.Select(l => new JournalLineOutput(
+                        l.Id,
+                        l.AccountId,
+                        l.Amount,
+                        l.ReconciliationStatus,
+                        l.Description
+                    ))
+                    .ToList(),
+                e.CreatedAt,
+                e.UpdatedAt
+            ))
+            .FirstOrDefaultAsync(cancellationToken);
 
-    public async Task<JournalEntry> CreateAsync(
+    public async Task<JournalEntryOutput> CreateAsync(
         CreateJournalEntryInput input,
         CancellationToken cancellationToken
     )
@@ -93,10 +127,10 @@ internal sealed class JournalEntryService : IJournalEntryService
 
         _dbContext.JournalEntries.Add(entry);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return entry;
+        return ToOutput(entry);
     }
 
-    public async Task<JournalEntry> UpdateAsync(
+    public async Task<JournalEntryOutput> UpdateAsync(
         JournalEntryId id,
         UpdateJournalEntryInput input,
         CancellationToken cancellationToken
@@ -157,7 +191,7 @@ internal sealed class JournalEntryService : IJournalEntryService
 
         entry.UpdatedAt = now;
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return entry;
+        return ToOutput(entry);
     }
 
     public async Task DeleteAsync(JournalEntryId id, CancellationToken cancellationToken)
@@ -172,6 +206,26 @@ internal sealed class JournalEntryService : IJournalEntryService
         _dbContext.JournalEntries.Remove(entry);
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
+
+    private static JournalEntryOutput ToOutput(JournalEntry entry) =>
+        new(
+            entry.Id,
+            entry.Date,
+            entry.Description,
+            entry.BankTransactionId,
+            entry.CounterpartyId,
+            [
+                .. entry.Lines.Select(l => new JournalLineOutput(
+                    l.Id,
+                    l.AccountId,
+                    l.Amount,
+                    l.ReconciliationStatus,
+                    l.Description
+                )),
+            ],
+            entry.CreatedAt,
+            entry.UpdatedAt
+        );
 
     private async Task<IReadOnlyList<JournalLineDraft>> BuildDraftsAsync(
         IReadOnlyList<CreateJournalLineInput> lines,

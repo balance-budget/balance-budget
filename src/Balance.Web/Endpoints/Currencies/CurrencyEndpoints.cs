@@ -22,25 +22,22 @@ internal static class CurrencyEndpoints
             .WithName("GetCurrency");
     }
 
-    private static async Task<Ok<IReadOnlyList<CurrencyResponse>>> ListAsync(
+    private static async Task<Ok<IReadOnlyList<CurrencyOutput>>> ListAsync(
         [FromServices] ICurrencyService currencyService,
         CancellationToken cancellationToken
     )
     {
         var currencies = await currencyService.ListAsync(cancellationToken);
-        IReadOnlyList<CurrencyResponse> responses = [.. currencies.Select(CurrencyResponse.From)];
-        return TypedResults.Ok(responses);
+        return TypedResults.Ok(currencies);
     }
 
-    private static async Task<Results<Ok<CurrencyResponse>, NotFound>> GetAsync(
+    private static async Task<Results<Ok<CurrencyOutput>, NotFound>> GetAsync(
         [FromRoute] string code,
         [FromServices] ICurrencyService currencyService,
         CancellationToken cancellationToken
     )
     {
         var currency = await currencyService.GetAsync(new CurrencyCode(code), cancellationToken);
-        return currency is null
-            ? TypedResults.NotFound()
-            : TypedResults.Ok(CurrencyResponse.From(currency));
+        return currency is null ? TypedResults.NotFound() : TypedResults.Ok(currency);
     }
 }

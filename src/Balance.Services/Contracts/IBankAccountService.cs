@@ -1,20 +1,19 @@
-using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
 
 namespace Balance.Services.Contracts;
 
 public interface IBankAccountService
 {
-    Task<IReadOnlyList<BankAccount>> ListAsync(CancellationToken cancellationToken);
+    Task<IReadOnlyList<BankAccountOutput>> ListAsync(CancellationToken cancellationToken);
 
-    Task<BankAccount?> GetAsync(BankAccountId id, CancellationToken cancellationToken);
+    Task<BankAccountOutput?> GetAsync(BankAccountId id, CancellationToken cancellationToken);
 
-    Task<BankAccount> CreateAsync(
+    Task<BankAccountOutput> CreateAsync(
         CreateBankAccountInput input,
         CancellationToken cancellationToken
     );
 
-    Task<BankAccount> UpdateAsync(
+    Task<BankAccountOutput> UpdateAsync(
         BankAccountId id,
         UpdateBankAccountInput input,
         CancellationToken cancellationToken

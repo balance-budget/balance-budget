@@ -1,24 +1,23 @@
-using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
 
 namespace Balance.Services.Contracts;
 
 public interface IJournalEntryService
 {
-    Task<IReadOnlyList<JournalEntry>> ListAsync(
+    Task<IReadOnlyList<JournalEntryOutput>> ListAsync(
         int skip,
         int take,
         CancellationToken cancellationToken
     );
 
-    Task<JournalEntry?> GetAsync(JournalEntryId id, CancellationToken cancellationToken);
+    Task<JournalEntryOutput?> GetAsync(JournalEntryId id, CancellationToken cancellationToken);
 
-    Task<JournalEntry> CreateAsync(
+    Task<JournalEntryOutput> CreateAsync(
         CreateJournalEntryInput input,
         CancellationToken cancellationToken
     );
 
-    Task<JournalEntry> UpdateAsync(
+    Task<JournalEntryOutput> UpdateAsync(
         JournalEntryId id,
         UpdateJournalEntryInput input,
         CancellationToken cancellationToken

@@ -22,20 +22,16 @@ internal static class BankTransactionEndpoints
         group.MapDelete("/{id:guid}", DeleteAsync).WithName("DeleteBankTransaction");
     }
 
-    private static async Task<Ok<IReadOnlyList<BankTransactionResponse>>> ListAsync(
+    private static async Task<Ok<IReadOnlyList<BankTransactionOutput>>> ListAsync(
         [FromServices] IBankTransactionService bankTransactionService,
         CancellationToken cancellationToken
     )
     {
         var bankTransactions = await bankTransactionService.ListAsync(cancellationToken);
-        IReadOnlyList<BankTransactionResponse> responses =
-        [
-            .. bankTransactions.Select(BankTransactionResponse.From),
-        ];
-        return TypedResults.Ok(responses);
+        return TypedResults.Ok(bankTransactions);
     }
 
-    private static async Task<Results<Ok<BankTransactionResponse>, NotFound>> GetAsync(
+    private static async Task<Results<Ok<BankTransactionOutput>, NotFound>> GetAsync(
         [FromRoute] Guid id,
         [FromServices] IBankTransactionService bankTransactionService,
         CancellationToken cancellationToken
@@ -45,12 +41,10 @@ internal static class BankTransactionEndpoints
             new BankTransactionId(id),
             cancellationToken
         );
-        return bankTransaction is null
-            ? TypedResults.NotFound()
-            : TypedResults.Ok(BankTransactionResponse.From(bankTransaction));
+        return bankTransaction is null ? TypedResults.NotFound() : TypedResults.Ok(bankTransaction);
     }
 
-    private static async Task<Created<BankTransactionResponse>> CreateAsync(
+    private static async Task<Created<BankTransactionOutput>> CreateAsync(
         [FromBody] CreateBankTransactionRequest request,
         [FromServices] IBankTransactionService bankTransactionService,
         CancellationToken cancellationToken
@@ -65,8 +59,7 @@ internal static class BankTransactionEndpoints
             ),
             cancellationToken
         );
-        var response = BankTransactionResponse.From(bankTransaction);
-        return TypedResults.Created($"{PathPrefix}/{bankTransaction.Id.Value}", response);
+        return TypedResults.Created($"{PathPrefix}/{bankTransaction.Id.Value}", bankTransaction);
     }
 
     private static async Task<NoContent> DeleteAsync(
