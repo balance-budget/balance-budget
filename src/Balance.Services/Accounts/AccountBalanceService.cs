@@ -1,6 +1,5 @@
 using Balance.Data;
 using Balance.Data.Entities;
-using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
 using Microsoft.EntityFrameworkCore;
@@ -33,19 +32,9 @@ internal sealed class AccountBalanceService : IAccountBalanceService
             .Where(l => l.AccountId == id)
             .SumAsync(l => l.Amount, cancellationToken);
 
-        var signed = IsCreditNormal(account.AccountType) ? checked(-sum) : sum;
+        var signed = AccountSignConvention.IsCreditNormal(account.AccountType)
+            ? checked(-sum)
+            : sum;
         return new Money(signed, account.CurrencyCode);
     }
-
-    private static bool IsCreditNormal(AccountType accountType) =>
-        accountType switch
-        {
-            AccountType.Asset or AccountType.Expense => false,
-            AccountType.Liability or AccountType.Equity or AccountType.Income => true,
-            _ => throw new ArgumentOutOfRangeException(
-                nameof(accountType),
-                accountType,
-                "Unknown AccountType."
-            ),
-        };
 }
