@@ -1,7 +1,6 @@
 using Balance.Data.Exceptions;
 using Balance.Web.Logging;
 using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Balance.Web.Middleware;

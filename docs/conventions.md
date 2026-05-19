@@ -114,15 +114,24 @@ Call them as `logger.DatabaseMigrationStarted()`. Avoid `logger.LogInformation(.
 - Make a type `public` only when another project legitimately references it (e.g. options classes consumed by other layers, host extensions called from `Program.cs`).
 - For test access, the relevant project already declares `InternalsVisibleTo("Balance.Tests")` (currently `Balance.Web` and `Balance.Services`). Add the same on `Balance.Data` and others if/when tests need it.
 
-## Minimal APIs and HTMX
+## Minimal APIs
 
-- JSON endpoints: register through a feature-specific `MapXxxEndpoints` extension method called from `Program.cs`, with a clear route group. They are picked up automatically by `AddOpenApi` / Scalar.
-- HTMX fragment endpoints: register inside `HtmxEndpoints.MapHtmx`, group under `/htmx`, call `.ExcludeFromDescription()` so they don't appear in the OpenAPI document, and return `HtmlResult`.
+All backend routes are mounted on the `/api` route group built in `Program.cs`:
 
 ```csharp
-group.MapGet("/stats", async (IApplicationVersionService versionService, CancellationToken ct) =>
-    new HtmlResult($"<p class=\"stats\">Version: {versionService.Version}</p>"));
+var api = app.MapGroup("/api");
+api.MapCurrencies();
+api.MapAccounts();
+// ...
 ```
+
+Register a feature's endpoints through a `MapXxxEndpoints` extension method on `IEndpointRouteBuilder` and call it on `api` (never on `app` directly — the SPA fallback owns every non-`/api` URL). Each endpoint group is picked up automatically by `AddOpenApi` / Scalar, which are themselves mounted under `/api` (`/api/openapi/{document}.json`, `/api/docs/`).
+
+## Frontend
+
+The SPA lives at `src/Balance.Web.Client` (React 19 + TypeScript + Vite 8). Pages and components go under `src/`, public assets (favicons, etc.) under `public/`. The `.esproj` reference from `Balance.Web` packs the SPA's `dist/` into the ASP.NET publish output — there is no separate frontend deployment.
+
+During development, run the .NET host (`dotnet run --project src/Balance.Web`) and the Vite dev server (`npm run dev --prefix src/Balance.Web.Client`) in two terminals and browse the Vite URL (default `http://localhost:5173`) for HMR; Vite proxies `/api` to `http://localhost:5248` per `vite.config.ts`, so the browser only sees one origin.
 
 ## Background jobs
 

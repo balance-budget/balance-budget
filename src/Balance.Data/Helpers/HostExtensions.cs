@@ -1,3 +1,4 @@
+using Balance.Configuration.Helpers;
 using Balance.Data.Logging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +12,11 @@ public static class HostExtensions
     public static async Task MigrateDatabase(this IHost host, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(host);
+        var environment = host.Services.GetRequiredService<IHostEnvironment>();
+
+        // Don't run migrations during design time runs
+        if (environment.IsDesignTime())
+            return;
 
         await using var scope = host.Services.CreateAsyncScope();
 

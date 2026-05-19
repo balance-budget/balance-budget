@@ -31,7 +31,9 @@ internal sealed class OpenApiSchemaTests : EndpointsTestsBase
     private async Task<JsonDocument> GetOpenApiDocumentAsync()
     {
         using var client = Factory.CreateClient();
-        using var response = await client.GetAsync(new Uri("/openapi/v1.json", UriKind.Relative));
+        using var response = await client.GetAsync(
+            new Uri("/api/openapi/v1.json", UriKind.Relative)
+        );
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
         var stream = await response.Content.ReadAsStreamAsync();
         return await JsonDocument.ParseAsync(stream);

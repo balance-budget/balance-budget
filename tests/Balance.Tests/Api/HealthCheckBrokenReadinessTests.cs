@@ -12,7 +12,7 @@ internal sealed class HealthCheckBrokenReadinessTests
     {
         using var client = Factory.CreateClient();
 
-        using var response = await client.GetAsync(new Uri("/healthz/live", UriKind.Relative));
+        using var response = await client.GetAsync(new Uri("/api/healthz/live", UriKind.Relative));
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
     }
@@ -22,7 +22,7 @@ internal sealed class HealthCheckBrokenReadinessTests
     {
         using var client = Factory.CreateClient();
 
-        using var response = await client.GetAsync(new Uri("/healthz/ready", UriKind.Relative));
+        using var response = await client.GetAsync(new Uri("/api/healthz/ready", UriKind.Relative));
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.ServiceUnavailable);
     }

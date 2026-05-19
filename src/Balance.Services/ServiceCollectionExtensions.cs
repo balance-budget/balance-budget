@@ -1,4 +1,5 @@
 using Balance.Configuration;
+using Balance.Configuration.Helpers;
 using Balance.Data;
 using Balance.Services.Accounts;
 using Balance.Services.BankAccounts;
@@ -11,6 +12,7 @@ using Balance.Services.JournalEntries;
 using FluentValidation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Balance.Services;
 
@@ -19,18 +21,20 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddBalanceServices(
         this IServiceCollection services,
         IConfiguration configuration,
-        bool startJobs = true
+        IHostEnvironment environment
     )
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
+        // Only start the job scheduler when running in real environment
+        if (!environment.IsIntegrationTest() && !environment.IsDesignTime())
+            services.AddBalanceJobs();
+
         return services
             .AddBalanceConfiguration(configuration)
-            .AddBalanceData(configuration)
-            .AddBalanceJobs(configuration, startJobs)
+            .AddBalanceData(configuration, environment)
             .AddMemoryCache()
             .AddValidatorsFromAssemblyContaining<IServicesAssemblyMarker>(
-                ServiceLifetime.Scoped,
                 includeInternalTypes: true
             )
             .AddScoped<ICurrencyService, CurrencyService>()

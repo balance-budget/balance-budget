@@ -11,7 +11,9 @@ internal sealed class CounterpartyEndpointsTests : EndpointsTestsBase
     {
         using var client = Factory.CreateClient();
 
-        using var response = await client.GetAsync(new Uri("/counterparties", UriKind.Relative));
+        using var response = await client.GetAsync(
+            new Uri("/api/counterparties", UriKind.Relative)
+        );
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
         var counterparties = await response.Content.ReadFromJsonAsync<
@@ -27,7 +29,7 @@ internal sealed class CounterpartyEndpointsTests : EndpointsTestsBase
 
         var request = new CreateCounterpartyRequestDto("Albert Heijn");
         using var createResponse = await client.PostAsJsonAsync(
-            new Uri("/counterparties", UriKind.Relative),
+            new Uri("/api/counterparties", UriKind.Relative),
             request
         );
 
@@ -37,7 +39,7 @@ internal sealed class CounterpartyEndpointsTests : EndpointsTestsBase
         await Assert.That(created!.Name).IsEqualTo("Albert Heijn");
 
         using var getResponse = await client.GetAsync(
-            new Uri($"/counterparties/{created.Id}", UriKind.Relative)
+            new Uri($"/api/counterparties/{created.Id}", UriKind.Relative)
         );
         await Assert.That(getResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
         var fetched = await getResponse.Content.ReadFromJsonAsync<CounterpartyDto>();
@@ -45,7 +47,7 @@ internal sealed class CounterpartyEndpointsTests : EndpointsTestsBase
         await Assert.That(fetched.Name).IsEqualTo("Albert Heijn");
 
         using var listResponse = await client.GetAsync(
-            new Uri("/counterparties", UriKind.Relative)
+            new Uri("/api/counterparties", UriKind.Relative)
         );
         var list = await listResponse.Content.ReadFromJsonAsync<IReadOnlyList<CounterpartyDto>>();
         await Assert.That(list!.Select(c => c.Name)).Contains("Albert Heijn");
@@ -58,14 +60,14 @@ internal sealed class CounterpartyEndpointsTests : EndpointsTestsBase
 
         var first = new CreateCounterpartyRequestDto("Jumbo Supermarket");
         using var firstResponse = await client.PostAsJsonAsync(
-            new Uri("/counterparties", UriKind.Relative),
+            new Uri("/api/counterparties", UriKind.Relative),
             first
         );
         await Assert.That(firstResponse.StatusCode).IsEqualTo(HttpStatusCode.Created);
 
         var duplicate = new CreateCounterpartyRequestDto("jumbo supermarket");
         using var duplicateResponse = await client.PostAsJsonAsync(
-            new Uri("/counterparties", UriKind.Relative),
+            new Uri("/api/counterparties", UriKind.Relative),
             duplicate
         );
 
@@ -79,7 +81,7 @@ internal sealed class CounterpartyEndpointsTests : EndpointsTestsBase
 
         var unknownId = Guid.NewGuid();
         using var response = await client.GetAsync(
-            new Uri($"/counterparties/{unknownId}", UriKind.Relative)
+            new Uri($"/api/counterparties/{unknownId}", UriKind.Relative)
         );
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
@@ -92,7 +94,7 @@ internal sealed class CounterpartyEndpointsTests : EndpointsTestsBase
 
         var request = new CreateCounterpartyRequestDto("");
         using var response = await client.PostAsJsonAsync(
-            new Uri("/counterparties", UriKind.Relative),
+            new Uri("/api/counterparties", UriKind.Relative),
             request
         );
 
@@ -106,13 +108,13 @@ internal sealed class CounterpartyEndpointsTests : EndpointsTestsBase
 
         var request = new CreateCounterpartyRequestDto("Counterparty To Rename");
         using var createResponse = await client.PostAsJsonAsync(
-            new Uri("/counterparties", UriKind.Relative),
+            new Uri("/api/counterparties", UriKind.Relative),
             request
         );
         var created = await createResponse.Content.ReadFromJsonAsync<CounterpartyDto>();
 
         using var patchResponse = await client.PatchAsJsonPatchAsync(
-            new Uri($"/counterparties/{created!.Id}", UriKind.Relative),
+            new Uri($"/api/counterparties/{created!.Id}", UriKind.Relative),
             [JsonPatchHelpers.Replace("/name", "Renamed Counterparty")]
         );
 
@@ -127,7 +129,7 @@ internal sealed class CounterpartyEndpointsTests : EndpointsTestsBase
         using var client = Factory.CreateClient();
 
         using var response = await client.PatchAsJsonPatchAsync(
-            new Uri($"/counterparties/{Guid.NewGuid()}", UriKind.Relative),
+            new Uri($"/api/counterparties/{Guid.NewGuid()}", UriKind.Relative),
             [JsonPatchHelpers.Replace("/name", "Whatever")]
         );
 
@@ -141,19 +143,19 @@ internal sealed class CounterpartyEndpointsTests : EndpointsTestsBase
 
         var request = new CreateCounterpartyRequestDto("Temporary Counterparty");
         using var createResponse = await client.PostAsJsonAsync(
-            new Uri("/counterparties", UriKind.Relative),
+            new Uri("/api/counterparties", UriKind.Relative),
             request
         );
         var created = await createResponse.Content.ReadFromJsonAsync<CounterpartyDto>();
 
         using var deleteResponse = await client.DeleteAsync(
-            new Uri($"/counterparties/{created!.Id}", UriKind.Relative)
+            new Uri($"/api/counterparties/{created!.Id}", UriKind.Relative)
         );
 
         await Assert.That(deleteResponse.StatusCode).IsEqualTo(HttpStatusCode.NoContent);
 
         using var getResponse = await client.GetAsync(
-            new Uri($"/counterparties/{created.Id}", UriKind.Relative)
+            new Uri($"/api/counterparties/{created.Id}", UriKind.Relative)
         );
         await Assert.That(getResponse.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
     }

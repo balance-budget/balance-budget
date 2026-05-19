@@ -1,6 +1,6 @@
 # Architecture
 
-Balance Budget is a Clean Architecture ASP.NET Core 10 application. The codebase is currently at the "basic layout" stage — the personal finance domain has not yet been designed. This document describes the skeleton that new domain code will plug into.
+Balance Budget is a three-layer onion ASP.NET Core 10 application (Web → Services → Data) with a React + Vite single-page app shipped inside the same publish output. This document describes the skeleton that domain code plugs into.
 
 ## Solution
 
@@ -16,7 +16,7 @@ Balance.slnx
 │   ├── Balance.Data.Sqlite
 │   ├── Balance.Services
 │   ├── Balance.Web
-│   └── Balance.Console
+│   └── Balance.Web.Client
 └── /tests/
     └── Balance.Tests
 ```
@@ -26,19 +26,17 @@ Balance.slnx
 ```mermaid
 graph TD
     Web["Balance.Web<br/>(Microsoft.NET.Sdk.Web, exe)"]
-    Console["Balance.Console<br/>(Microsoft.NET.Sdk, exe)"]
+    Client["Balance.Web.Client<br/>(Microsoft.VisualStudio.JavaScript.Sdk, esproj)"]
     Sqlite[Balance.Data.Sqlite]
     Postgres[Balance.Data.PostgreSql]
     Services[Balance.Services]
     Data[Balance.Data]
     Configuration[Balance.Configuration]
 
+    Web -->|ReferenceOutputAssembly=false| Client
     Web --> Sqlite
     Web --> Services
     Web --> Postgres
-    Console --> Sqlite
-    Console --> Services
-    Console --> Postgres
 
     Sqlite --> Data
     Services --> Data
@@ -49,7 +47,8 @@ graph TD
 
 Notes:
 - `Balance.Data` does **not** reference the provider-specific projects. It targets EF Core's relational abstractions and lets the host process load the right migrations assembly at runtime.
-- `Balance.Web` and `Balance.Console` both reference the provider-specific projects directly so their assemblies are loaded for migrations.
+- `Balance.Web` references both provider-specific projects directly so their migration assemblies are loaded.
+- `Balance.Web` references `Balance.Web.Client` with `ReferenceOutputAssembly="false"` — the esproj produces no .NET assembly; the project reference exists purely so MSBuild builds the SPA (`npm run build` → `dist/`) and packs its static assets into the ASP.NET publish output.
 - `Balance.Tests` references `Balance.Web` and `Balance.Services` (transitively pulling in the rest). Both expose internals via `InternalsVisibleTo("Balance.Tests")`.
 
 ## Layers
@@ -89,19 +88,17 @@ Empty class libraries that exist solely to host provider-specific EF Core migrat
 
 ### Balance.Web
 
-Built with `WebApplication.CreateSlimBuilder` for fast startup and minimal default services. Uses workstation GC (`<ServerGarbageCollection>false</ServerGarbageCollection>`) because the app is expected to run in resource-constrained containers.
+Built with `WebApplication.CreateSlimBuilder` for fast startup and minimal default services. Uses workstation GC (`<ServerGarbageCollection>false</ServerGarbageCollection>`) because the app is expected to run in resource-constrained containers. Hosts both the JSON API and the React SPA shell.
 
-- `Program.cs` — startup, in this order: configure logging, remap config sources, compose services, build, run database migrations, map endpoints (`/healthz/live`, `/healthz/ready`, static assets, HTMX, OpenAPI, Scalar), then the middleware pipeline.
-- `Endpoints/HtmxEndpoints` — HTMX fragment routes under `/htmx/*`. Each is excluded from OpenAPI and returns `HtmlResult`.
-- `EndpointResults/HtmlResult` — `IResult` that writes raw HTML with `text/html` content type and a correct `Content-Length`.
+- `Program.cs` — startup order: configure logging → remap config sources → compose services → build → migrate the database → map the SPA (`MapStaticAssets()` + `MapFallbackToFile("index.html")`) → map all backend routes under `var api = app.MapGroup("/api")` (`/api/healthz/{live,ready}`, `/api/openapi/{document}.json`, `/api/docs/` for Scalar, and the feature endpoint groups) → middleware pipeline.
 - `Configuration/ConfigurationManagerExtensions.MapConfigurationSources` — in development and container-fast-mode, points JSON config providers at `AppContext.BaseDirectory` so the solution-root `appsettings.json` is found when running from source.
 - `Logging/LoggingBuilderExtensions.AddConsole` — single-line console logger with timestamps in containers, default console logger otherwise.
 - `ServiceCollectionExtensions.AddBalanceWeb` — OpenAPI, lowercase route options, forwarded-headers (proxy IP whitelist cleared — the app trusts any proxy by assumption that it never sits on the public internet directly), cookie authentication, authorization, antiforgery, permissive default CORS policy, health checks.
-- `wwwroot/` — static front-end with HTMX (`htmx.org@2.0.4`) loaded from a CDN, served via `MapStaticAssets()` (ASP.NET Core 9+ static-web-assets pipeline).
+- The SPA shell is served at `/` and any non-`/api` URL via `MapFallbackToFile("index.html")`; the SPA's built assets come from the `Balance.Web.Client` esproj reference and are picked up by `MapStaticAssets()` (ASP.NET Core 9+ static-web-assets pipeline).
 
-### Balance.Console
+### Balance.Web.Client
 
-A standalone `Host.CreateApplicationBuilder` entry point that shares the same service graph. Passes `startJobs: false` to `AddBalanceServices` so Quartz triggers do not fire on startup. Currently a scaffold for one-off operations (migrations, admin commands).
+React 19 + TypeScript + Vite 8 SPA. The `.esproj` (`Microsoft.VisualStudio.JavaScript.Sdk/1.0.5550578`) wraps `npm run build` and emits to `dist/`. The project is referenced from `Balance.Web` with `ReferenceOutputAssembly="false"` so MSBuild builds the SPA whenever `Balance.Web` builds, and the resulting static assets are packed into the publish output. During development, `npm run dev` runs the Vite dev server (default `http://localhost:5173`) with HMR; `vite.config.ts` proxies `/api` to the .NET host at `http://localhost:5248`, so the browser only ever talks to one origin and CORS stays out of the picture.
 
 ### Balance.Tests
 
@@ -109,23 +106,37 @@ TUnit-based test suite. `Microsoft.Testing.Platform` is the configured test runn
 
 ## Startup composition
 
-Both entry points follow this shape:
+The web host follows this shape:
 
 ```
 builder.Logging.AddConsole(...)
-builder.Configuration.MapConfigurationSources(...)          // Web only
-builder.Services.AddBalanceServices(builder.Configuration)  // Console passes startJobs:false
-builder.Services.AddBalanceWeb()                            // Web only
+builder.Configuration.MapConfigurationSources(...)
+builder.Services.AddBalanceServices(builder.Configuration)
+builder.Services.AddBalanceWeb()
 var app = builder.Build();
 await app.MigrateDatabase(lifetime.ApplicationStopping);
-// map endpoints / configure middleware (Web)
+
+// SPA shell — everything not under /api falls back here
+app.MapStaticAssets();
+app.MapFallbackToFile("index.html");
+
+// API surface — all backend routes live under /api
+var api = app.MapGroup("/api");
+api.MapHealthChecks("/healthz/live",  ...);
+api.MapHealthChecks("/healthz/ready", ...);
+api.MapOpenApi();
+api.MapScalarApiReference("/docs", o => o.WithOpenApiRoutePattern("/api/openapi/{documentName}.json"));
+api.MapCurrencies(); api.MapAccounts(); api.MapCounterparties();
+api.MapBankAccounts(); api.MapBankTransactions(); api.MapJournalEntries();
+
+// Middleware pipeline
 await app.RunAsync(lifetime.ApplicationStopping);
 ```
 
-Web middleware order is fixed in `Program.cs`:
+Middleware order in `Program.cs`:
 
 ```
-ForwardedHeaders → DefaultFiles → Routing → CORS → Authentication → Authorization → Antiforgery
+ExceptionHandler → StatusCodePages → ForwardedHeaders → DefaultFiles → Routing → CORS → Authentication → Authorization → Antiforgery
 ```
 
 ## Build and CI

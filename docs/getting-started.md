@@ -3,21 +3,23 @@
 ## Prerequisites
 
 - .NET SDK **10.0.300** (or any `10.0.x` that satisfies `rollForward=latestMinor`). The version is pinned in `global.json`.
+- **Node.js 20+** for the React + Vite frontend (`Balance.Web.Client`). The esproj build invokes `npm` and Vite 8 requires Node 20.19+ / 22.12+.
 - An IDE that understands the new `.slnx` solution format — Rider, Visual Studio 2022 17.11+, or VS Code with the C# Dev Kit.
 - (Optional) PostgreSQL 14+ if you want to run against the Postgres provider instead of SQLite.
 
 ## First-time setup
 
 ```bash
-dotnet tool restore     # installs CSharpier as a local tool
-dotnet restore          # restores NuGet packages
-dotnet build            # verify everything builds
+dotnet tool restore                              # installs CSharpier as a local tool
+dotnet restore                                   # restores NuGet packages
+npm install --prefix src/Balance.Web.Client      # restores SPA dependencies
+dotnet build                                     # also runs `npm run build` via the esproj reference
 ```
 
 ## Common commands
 
 ```bash
-# Build
+# Build (also builds the SPA via the esproj reference on Balance.Web)
 dotnet build --no-restore
 
 # Format (CI fails if these report differences)
@@ -27,12 +29,18 @@ dotnet csharpier format .
 # Test (TUnit via Microsoft.Testing.Platform)
 dotnet test
 
-# Run the web host (http://localhost:5248, https://localhost:7189)
+# Run — two terminals during development
+# Terminal 1: .NET host (serves /api/*, and the last built SPA at /)
 dotnet run --project src/Balance.Web/Balance.Web.csproj
 
-# Run the console host
-dotnet run --project src/Balance.Console/Balance.Console.csproj
+# Terminal 2: Vite dev server with HMR — browse http://localhost:5173
+npm run dev --prefix src/Balance.Web.Client
+
+# Publish (bundles the SPA's dist into the publish output)
+dotnet publish src/Balance.Web/Balance.Web.csproj -c Release
 ```
+
+During development, point your browser at the **Vite dev server** (`http://localhost:5173`) — it serves the SPA with HMR and proxies `/api/*` to the .NET host on `:5248` per `src/Balance.Web.Client/vite.config.ts`. The .NET host's `/` will still serve whatever SPA `dist/` was last built, which goes stale unless you rebuild — useful only for sanity-checking the published shape.
 
 ## Configuration
 
@@ -84,18 +92,23 @@ The migrations assembly is wired through `UseProvider` in `Balance.Data/Helpers/
 
 ## Endpoints exposed by the web host
 
-| Route        | Purpose                                                       |
-|--------------|---------------------------------------------------------------|
-| `/`          | Static landing page (`wwwroot/index.html` via DefaultFiles)   |
-| `/scalar/`   | Scalar API reference UI                                       |
-| `/openapi/*` | OpenAPI document (consumed by Scalar)                         |
-| `/htmx/*`    | HTMX fragment endpoints (excluded from OpenAPI)               |
-| `/healthz/live`  | Liveness probe (always 200 while the process is up)       |
-| `/healthz/ready` | Readiness probe (200 when the DB is reachable, else 503)  |
+The React SPA owns `/` and any non-`/api` URL (via `MapFallbackToFile("index.html")`). All backend routes are mounted under `/api`:
+
+| Route                              | Purpose                                                      |
+|------------------------------------|--------------------------------------------------------------|
+| `/`                                | React SPA shell (fallback to `index.html`)                   |
+| `/api/docs/`                       | Scalar API reference UI                                      |
+| `/api/openapi/{document}.json`     | OpenAPI document (consumed by Scalar)                        |
+| `/api/healthz/live`                | Liveness probe (always 200 while the process is up)          |
+| `/api/healthz/ready`               | Readiness probe (200 when the DB is reachable, else 503)     |
+| `/api/{feature}/…`                 | Feature endpoint groups (currencies, accounts, journal-entries, …) |
 
 Launch profiles (`src/Balance.Web/Properties/launchSettings.json`):
 - `http` → `http://*:5248`
 - `https` → `https://*:7189;http://*:5248`
+
+Vite dev server (default, no profile — set via `vite.config.ts`):
+- `http://localhost:5173` (HMR + `/api` → `http://localhost:5248` proxy)
 
 ## Adding a NuGet package
 

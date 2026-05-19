@@ -16,13 +16,13 @@
   -->
   <ItemGroup Condition="$(OutputType) == 'Exe' And $(MSBuildProjectExtension) == '.csproj'">
     <Content
-      Include="$(SolutionDir)appsettings.json"
+      Include="$(MSBuildThisFileDirectory)appsettings.json"
       Link="appsettings.json"
       CopyToOutputDirectory="PreserveNewest"
     />
     <Content
-      Include="$(SolutionDir)appsettings.Testing.json"
-      Link="appsettings.Testing.json"
+      Include="$(MSBuildThisFileDirectory)appsettings.*.json"
+      Link="%(Filename)%(Extension)"
       CopyToOutputDirectory="PreserveNewest"
     />
   </ItemGroup>

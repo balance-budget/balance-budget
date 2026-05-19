@@ -12,7 +12,7 @@ internal static class ConfigurationManagerExtensions
     )
     {
         if (
-            !environment.IsTesting()
+            !environment.IsIntegrationTest()
             && !environment.IsDevelopment()
             && !environment.IsContainerFastMode()
         )

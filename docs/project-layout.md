@@ -23,8 +23,8 @@ balance-budget/
 │   ├── Balance.Data.PostgreSql/
 │   ├── Balance.Data.Sqlite/
 │   ├── Balance.Services/
-│   ├── Balance.Web/
-│   └── Balance.Console/
+│   ├── Balance.Web/                 ASP.NET host (API + SPA shell)
+│   └── Balance.Web.Client/          React + Vite SPA (.esproj)
 ├── tests/
 │   └── Balance.Tests/
 ├── .github/                     Issue templates, workflows, dependabot, funding
@@ -42,9 +42,9 @@ balance-budget/
 | Service contract / DTO consumed by Web        | `src/Balance.Services/Contracts/`                                   |
 | Background job (Quartz `IJob`)                | `src/Balance.Services/Jobs/<JobName>.cs`, scheduled in `AddBalanceJobs` |
 | Options class                                 | `src/Balance.Configuration/Options/`, implement `IOptionsSection`   |
-| Minimal API endpoint (JSON)                   | `src/Balance.Web/Endpoints/` — new `Map<Feature>Endpoints` group   |
-| HTMX fragment endpoint                        | `src/Balance.Web/Endpoints/HtmxEndpoints.cs` (group under `/htmx`)   |
-| Static asset                                  | `src/Balance.Web/wwwroot/`                                          |
+| Minimal API endpoint (JSON)                   | `src/Balance.Web/Endpoints/` — new `Map<Feature>Endpoints` group, called on the `/api` route group in `Program.cs` |
+| Frontend page / component                     | `src/Balance.Web.Client/src/`                                       |
+| Public frontend asset (favicon, etc.)         | `src/Balance.Web.Client/public/`                                    |
 | Provider-specific migration                   | `src/Balance.Data.Sqlite/Migrations/` or `…PostgreSql/Migrations/`   |
 | Source-generated log message                  | `<Project>/Logging/LoggerExtensions.cs` partial class                |
 | Unit / integration test                       | `tests/Balance.Tests/`                                              |
@@ -65,7 +65,6 @@ Each project follows the same shape where applicable:
 ├── Logging/
 │   └── LoggerExtensions.cs          Source-generated [LoggerMessage] methods
 ├── Endpoints/                       Minimal-API endpoint groups                   (Web only)
-├── EndpointResults/                 Custom IResult implementations                (Web only)
 ├── Jobs/                            Quartz IJob impls and helpers                 (Services only)
 └── Properties/                      launchSettings.json                           (Web only)
 ```

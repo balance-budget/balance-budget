@@ -1,5 +1,4 @@
 using FluentValidation;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 
 namespace Balance.Web.Filters;

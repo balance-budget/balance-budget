@@ -13,7 +13,7 @@ internal sealed class ProblemDetailsContractTests : EndpointsTestsBase
         using var client = Factory.CreateClient();
 
         using var response = await client.GetAsync(
-            new Uri($"/accounts/{Guid.NewGuid()}", UriKind.Relative)
+            new Uri($"/api/accounts/{Guid.NewGuid()}", UriKind.Relative)
         );
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
@@ -37,14 +37,14 @@ internal sealed class ProblemDetailsContractTests : EndpointsTestsBase
 
         var first = new CreateAccountRequestDto($"DupName-{Guid.NewGuid():N}", "Expense", "EUR");
         using var firstResponse = await client.PostAsJsonAsync(
-            new Uri("/accounts", UriKind.Relative),
+            new Uri("/api/accounts", UriKind.Relative),
             first
         );
         await Assert.That(firstResponse.StatusCode).IsEqualTo(HttpStatusCode.Created);
 
         var duplicate = new CreateAccountRequestDto(first.Name, "Expense", "EUR");
         using var response = await client.PostAsJsonAsync(
-            new Uri("/accounts", UriKind.Relative),
+            new Uri("/api/accounts", UriKind.Relative),
             duplicate
         );
 
@@ -82,7 +82,7 @@ internal sealed class ProblemDetailsContractTests : EndpointsTestsBase
             ]
         );
         using var response = await client.PostAsJsonAsync(
-            new Uri("/journal-entries", UriKind.Relative),
+            new Uri("/api/journal-entries", UriKind.Relative),
             request
         );
 
@@ -110,7 +110,7 @@ internal sealed class ProblemDetailsContractTests : EndpointsTestsBase
             Lines: [new CreateJournalLineRequestDto(account.Id, 100, null)]
         );
         using var response = await client.PostAsJsonAsync(
-            new Uri("/journal-entries", UriKind.Relative),
+            new Uri("/api/journal-entries", UriKind.Relative),
             request
         );
 
@@ -131,7 +131,9 @@ internal sealed class ProblemDetailsContractTests : EndpointsTestsBase
     {
         using var client = Factory.CreateClient();
 
-        using var response = await client.GetAsync(new Uri("/openapi/v1.json", UriKind.Relative));
+        using var response = await client.GetAsync(
+            new Uri("/api/openapi/v1.json", UriKind.Relative)
+        );
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
         using var stream = await response.Content.ReadAsStreamAsync();
@@ -139,7 +141,7 @@ internal sealed class ProblemDetailsContractTests : EndpointsTestsBase
 
         var responses = document
             .RootElement.GetProperty("paths")
-            .GetProperty("/accounts/{id}")
+            .GetProperty("/api/accounts/{id}")
             .GetProperty("get")
             .GetProperty("responses");
 
@@ -147,7 +149,7 @@ internal sealed class ProblemDetailsContractTests : EndpointsTestsBase
 
         var responses400 = document
             .RootElement.GetProperty("paths")
-            .GetProperty("/accounts")
+            .GetProperty("/api/accounts")
             .GetProperty("post")
             .GetProperty("responses");
 
@@ -165,7 +167,7 @@ internal sealed class ProblemDetailsContractTests : EndpointsTestsBase
     {
         var req = new CreateAccountRequestDto(name, accountType, currencyCode);
         using var response = await client.PostAsJsonAsync(
-            new Uri("/accounts", UriKind.Relative),
+            new Uri("/api/accounts", UriKind.Relative),
             req
         );
         response.EnsureSuccessStatusCode();

@@ -19,8 +19,10 @@ If you are adding documentation, prefer extending the files under `docs/` and up
 dotnet tool restore
 # NuGet packages      
 dotnet restore
+# Frontend npm packages
+npm install --prefix src/Balance.Web.Client
 
-# Build (without restore)
+# Build (without restore) — also builds the SPA via the esproj reference
 dotnet build --no-restore -v:minimal
 
 # Generate EF core migrations (without build)
@@ -41,45 +43,49 @@ dotnet test --no-build -v:minimal
 # Single TUnit test
 dotnet test --no-build -v:minimal --treenode-filter "/Balance.Tests/Balance.Tests.Domain/MoneyTests/Equality_uses_amount_and_currency"
 
-# Run
+# Run — two terminals during development
+# .NET host (serves /api/*, and the last built SPA at /)
 dotnet run --project src/Balance.Web/Balance.Web.csproj
+# Vite dev server (HMR; proxies /api → http://localhost:5248) — browse this URL
+npm run dev --prefix src/Balance.Web.Client
+
+# Publish — bundles the SPA's dist into the ASP.NET publish output
+dotnet publish src/Balance.Web/Balance.Web.csproj -c Release
 ```
 
-The web app listens on `http://*:5248` (and `https://*:7189` via the `https` launch profile). Scalar UI is mounted at `/scalar/`, HTMX fragments at `/htmx/*`, liveness probe at `/healthz/live` and readiness probe at `/healthz/ready`.
+The .NET host listens on `http://*:5248` (and `https://*:7189` via the `https` launch profile). The Vite dev server listens on `http://localhost:5173` by default and proxies `/api/*` to the .NET host. All backend routes are under `/api`: Scalar UI at `/api/docs/`, OpenAPI document at `/api/openapi/{document}.json`, liveness probe at `/api/healthz/live`, readiness probe at `/api/healthz/ready`. The React SPA owns everything else (served via `MapStaticAssets()` with `MapFallbackToFile("index.html")`).
 
 ## Architecture at a glance
 
-Clean Architecture ASP.NET Core app targeting `net10.0`. Solution is `Balance.slnx` (the new XML solution format).
+Three-layer onion ASP.NET Core app targeting `net10.0`, with a React + Vite SPA shipped inside the same publish output. Solution is `Balance.slnx` (the new XML solution format).
 
 ```mermaid
 graph LR
     Web[Balance.Web]
-    Console[Balance.Console]
+    Client[Balance.Web.Client]
     Services[Balance.Services]
     Data[Balance.Data]
     Configuration[Balance.Configuration]
     Sqlite[Balance.Data.Sqlite]
     Postgres[Balance.Data.PostgreSql]
 
+    Web -->|esproj, ReferenceOutputAssembly=false| Client
     Web --> Services
-    Console --> Services
     Services --> Data
     Data --> Configuration
 
     Web --> Sqlite
     Web --> Postgres
-    Console --> Sqlite
-    Console --> Postgres
     Sqlite -->|migrations| Data
     Postgres -->|migrations| Data
 ```
 
 **Layers**
-- `Balance.Web` — Minimal APIs, HTMX endpoints, middleware pipeline, Scalar/OpenAPI. Uses `WebApplication.CreateSlimBuilder`.
-- `Balance.Console` — Standalone `Host.CreateApplicationBuilder` entry point that shares the service graph (currently bootstraps Quartz).
+- `Balance.Web` — Minimal APIs (all under `/api`), middleware pipeline, Scalar/OpenAPI, and the SPA host (`MapStaticAssets()` + `MapFallbackToFile("index.html")`). Uses `WebApplication.CreateSlimBuilder`.
+- `Balance.Web.Client` — React 19 + TypeScript + Vite SPA. Built via an `.esproj` (`Microsoft.VisualStudio.JavaScript.Sdk`) that wraps `npm run build`; the resulting `dist/` is packed into the ASP.NET publish output via the project reference on `Balance.Web` (`ReferenceOutputAssembly="false"`).
 - `Balance.Services` — Business logic, Quartz jobs, `IApplicationVersionService`. Composes `Configuration` + `Data` + `Jobs`.
 - `Balance.Data` — EF Core `BalanceDbContext` (also implements `IDataProtectionKeyContext`), abstract `BaseEntity` (`Id`/`CreatedAt`/`UpdatedAt`), migration host extension, UTC value converters.
-- `Balance.Data.Sqlite` / `Balance.Data.PostgreSql` — Provider-specific migrations assemblies (referenced by `Balance.Web`/`Balance.Console`, not by `Balance.Data`).
+- `Balance.Data.Sqlite` / `Balance.Data.PostgreSql` — Provider-specific migrations assemblies (referenced by `Balance.Web`, not by `Balance.Data`).
 - `Balance.Configuration` — Options pattern. `IOptionsSection` static-abstract contract, `DatabaseOptions` selecting `Sqlite` or `Postgres`, host environment helpers.
 - `Balance.Tests` — TUnit suite. `InternalsVisibleTo` is set from `Balance.Web` and `Balance.Services`.
 
@@ -87,12 +93,13 @@ graph LR
 
 These are conventions to follow when adding new code. See [docs/conventions.md](docs/conventions.md) for examples.
 
-- **DI composition.** Each layer exposes a `public static class ServiceCollectionExtensions` with a single `AddBalance<Layer>(...)` extension. A layer composes its dependencies by calling the lower layer's `AddBalance*` inside its own. The entry points (`Web` / `Console`) only call `AddBalanceServices` (+ `AddBalanceWeb` for the web host).
+- **DI composition.** Each layer exposes a `public static class ServiceCollectionExtensions` with a single `AddBalance<Layer>(...)` extension. A layer composes its dependencies by calling the lower layer's `AddBalance*` inside its own. The web entry point only calls `AddBalanceServices` + `AddBalanceWeb`.
 - **Options.** Strongly-typed options classes live under `Balance.Configuration/Options`, implement `IOptionsSection` (static-abstract `Section` name), and are wired through `AddSettings<T>` in `Balance.Configuration.ServiceCollectionExtensions`.
 - **Database provider.** Selected at runtime via `Database:Provider` (`Sqlite` or `Postgres`). The provider switch lives in `Balance.Data/Helpers/DbContextOptionsBuilderExtensions.UseProvider`. Migrations live in the provider-specific assemblies; `BalanceDbContext` is provider-agnostic.
 - **Entities.** Derive from `Balance.Data.Entities.BaseEntity` (`Id` `int`, `CreatedAt` `init`, `UpdatedAt`). All `DateTime` columns must round-trip as UTC via `DateConverters.UtcConverter` / `UtcNullableConverter`.
 - **Logging.** Use the source-generated `LoggerMessage` pattern. Each project has a `Logging/LoggerExtensions.cs` partial class; add `[LoggerMessage]` methods there rather than calling `ILogger.LogXxx` directly.
-- **HTMX endpoints.** Register fragment routes under `/htmx/*` in `Balance.Web/Endpoints/HtmxEndpoints.cs`, return HTML via `HtmlResult`, and call `.ExcludeFromDescription()` so they don't pollute the OpenAPI document.
+- **API surface.** All backend routes are mounted inside `var api = app.MapGroup("/api");` in `Program.cs`. Register feature endpoints through a `MapXxxEndpoints` extension and call it on `api`, not on `app` — the SPA fallback (`MapFallbackToFile("index.html")`) owns every non-`/api` URL.
+- **Frontend.** The React SPA lives at `src/Balance.Web.Client`. Pages and components go under `src/`, public assets (favicon, etc.) under `public/`. The Vite dev server (`npm run dev`) proxies `/api` to the .NET host (`http://localhost:5248`) per `vite.config.ts`.
 - **Background jobs.** Use the Quartz helpers in `Balance.Services/Jobs` (`ScheduleJob<TJob>` + `TriggerConfiguratorExtensions.StartNow(bool)`). The scheduler name is `"Balance Scheduler"`. Wire jobs inside `AddBalanceJobs`.
 - **Visibility.** Default to `internal`; expose `public` only where another project legitimately needs the type. `Balance.Web` and `Balance.Services` use `InternalsVisibleTo` to share internals with `Balance.Tests`.
 - **Formatting.** CSharpier is the source of truth — CI fails on any deviation. Always run `dotnet csharpier format .` before committing.
@@ -100,13 +107,15 @@ These are conventions to follow when adding new code. See [docs/conventions.md](
 
 ## Runtime composition
 
-Order matters and is shared by both entry points:
+The web host startup follows this order:
 
-1. `MapConfigurationSources` (web only) — patches JSON config providers to read from `AppContext.BaseDirectory` so the solution-root `appsettings.json` works when running from source.
+1. `MapConfigurationSources` — patches JSON config providers to read from `AppContext.BaseDirectory` so the solution-root `appsettings.json` works when running from source.
 2. `AddBalanceServices` → `AddBalanceConfiguration` → `AddBalanceData` (registers `BalanceDbContext`, factory, and Data Protection persistence) → `AddBalanceJobs` (Quartz hosted service) → `IApplicationVersionService`.
-3. `AddBalanceWeb` (web only) — OpenAPI, lowercase routing, forwarded headers (trust any proxy IP, the app is assumed to sit behind a reverse proxy), cookie auth, antiforgery, permissive CORS, health checks.
+3. `AddBalanceWeb` — OpenAPI, lowercase routing, forwarded headers (trust any proxy IP, the app is assumed to sit behind a reverse proxy), cookie auth, antiforgery, permissive CORS, health checks.
 4. `MigrateDatabase(cancellationToken)` runs `dbContext.Database.MigrateAsync` on startup, logged through `Balance.Data/Logging/LoggerExtensions`.
-5. Web middleware order (in `Program.cs`): `ForwardedHeaders → DefaultFiles → Routing → CORS → Authentication → Authorization → Antiforgery`.
+5. SPA hosting — `MapStaticAssets()` then `MapFallbackToFile("index.html")`. The SPA's `dist/` (from `Balance.Web.Client`) is bundled into the publish output via the esproj project reference.
+6. API endpoints — every backend route is registered on `var api = app.MapGroup("/api")`: `/api/healthz/{live,ready}`, `/api/openapi/...`, `/api/docs/` (Scalar), and the feature endpoint groups.
+7. Middleware order (in `Program.cs`): `ExceptionHandler → StatusCodePages → ForwardedHeaders → DefaultFiles → Routing → CORS → Authentication → Authorization → Antiforgery`.
 
 ## CI
 
