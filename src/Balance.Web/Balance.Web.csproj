@@ -7,6 +7,11 @@
     Workstation GC is a better fit.
     -->
     <ServerGarbageCollection>false</ServerGarbageCollection>
+    <!--
+    Emit the OpenAPI document at a stable, gitignored path under artifacts/ so the SPA's
+    `npm run codegen` can consume it without depending on obj-layout details.
+    -->
+    <OpenApiDocumentsDirectory>$(MSBuildThisFileDirectory)..\..\artifacts\openapi</OpenApiDocumentsDirectory>
   </PropertyGroup>
 
   <ItemGroup>

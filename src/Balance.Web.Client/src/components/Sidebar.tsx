@@ -1,6 +1,9 @@
 import { Link, useRouterState } from '@tanstack/react-router';
 import logo from '../assets/logo.svg';
 import { Icon } from './Icon';
+import { useAccounts, type Account } from '../api/accounts';
+import { Skeleton } from './Skeleton';
+import { ErrorState } from './ErrorState';
 
 type NavLink = {
     to: string;
@@ -54,6 +57,41 @@ function NavGroup({ title, items, currentPath }: { title: string; items: NavLink
     );
 }
 
+function AccountRow({ account }: { account: Account }) {
+    return (
+        <div className="flex items-center gap-3 px-3 py-[7px] rounded-sm text-fg-2 text-[13px]">
+            <Icon name="wallet" size={16} strokeWidth={1.75} className="shrink-0 text-fg-3" />
+            <span className="truncate">{account.name}</span>
+        </div>
+    );
+}
+
+function AccountsGroup() {
+    const { data, isPending, isError, refetch } = useAccounts();
+
+    return (
+        <div className="flex flex-col gap-[2px]">
+            <div className="eyebrow px-3 pt-3 pb-[6px]">Accounts</div>
+            {isPending && (
+                <div className="flex flex-col gap-[6px] px-3 py-2">
+                    <Skeleton className="h-[14px] w-32" />
+                    <Skeleton className="h-[14px] w-24" />
+                    <Skeleton className="h-[14px] w-28" />
+                </div>
+            )}
+            {isError && (
+                <div className="px-3 py-2">
+                    <ErrorState message="Couldn't load accounts." onRetry={() => refetch()} />
+                </div>
+            )}
+            {data && data.length === 0 && (
+                <div className="px-3 py-2 text-[12px] text-fg-3">No accounts yet.</div>
+            )}
+            {data && data.map(account => <AccountRow key={account.id} account={account} />)}
+        </div>
+    );
+}
+
 export function Sidebar() {
     const pathname = useRouterState({ select: s => s.location.pathname });
 
@@ -66,8 +104,9 @@ export function Sidebar() {
                 </span>
             </div>
 
-            <nav className="flex flex-col gap-1">
+            <nav className="flex flex-col gap-1 overflow-y-auto">
                 <NavGroup title="Main" items={NAV_MAIN} currentPath={pathname} />
+                <AccountsGroup />
                 <NavGroup title="Plan" items={NAV_PLAN} currentPath={pathname} />
                 <NavGroup title="Other" items={NAV_OTHER} currentPath={pathname} />
             </nav>
