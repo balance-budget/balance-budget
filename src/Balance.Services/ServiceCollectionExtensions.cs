@@ -19,18 +19,19 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddBalanceServices(
         this IServiceCollection services,
         IConfiguration configuration,
-        bool startJobs = true
+        bool runJobs
     )
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
+        if (runJobs)
+            services.AddBalanceJobs();
+
         return services
             .AddBalanceConfiguration(configuration)
             .AddBalanceData(configuration)
-            .AddBalanceJobs(configuration, startJobs)
             .AddMemoryCache()
             .AddValidatorsFromAssemblyContaining<IServicesAssemblyMarker>(
-                ServiceLifetime.Scoped,
                 includeInternalTypes: true
             )
             .AddScoped<ICurrencyService, CurrencyService>()
