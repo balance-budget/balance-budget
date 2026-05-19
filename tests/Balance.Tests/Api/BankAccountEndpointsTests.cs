@@ -11,7 +11,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
     {
         using var client = Factory.CreateClient();
 
-        using var response = await client.GetAsync(new Uri("/bank-accounts", UriKind.Relative));
+        using var response = await client.GetAsync(new Uri("/api/bank-accounts", UriKind.Relative));
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
         var bankAccounts = await response.Content.ReadFromJsonAsync<
@@ -37,7 +37,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
             CounterpartyId: null
         );
         using var createResponse = await client.PostAsJsonAsync(
-            new Uri("/bank-accounts", UriKind.Relative),
+            new Uri("/api/bank-accounts", UriKind.Relative),
             request
         );
 
@@ -49,7 +49,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
         await Assert.That(created.CounterpartyId).IsNull();
 
         using var getResponse = await client.GetAsync(
-            new Uri($"/bank-accounts/{created.Id}", UriKind.Relative)
+            new Uri($"/api/bank-accounts/{created.Id}", UriKind.Relative)
         );
         await Assert.That(getResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
     }
@@ -71,7 +71,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
             CounterpartyId: counterparty.Id
         );
         using var response = await client.PostAsJsonAsync(
-            new Uri("/bank-accounts", UriKind.Relative),
+            new Uri("/api/bank-accounts", UriKind.Relative),
             request
         );
 
@@ -97,7 +97,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
             CounterpartyId: null
         );
         using var response = await client.PostAsJsonAsync(
-            new Uri("/bank-accounts", UriKind.Relative),
+            new Uri("/api/bank-accounts", UriKind.Relative),
             request
         );
 
@@ -122,7 +122,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
             CounterpartyId: counterparty.Id
         );
         using var response = await client.PostAsJsonAsync(
-            new Uri("/bank-accounts", UriKind.Relative),
+            new Uri("/api/bank-accounts", UriKind.Relative),
             request
         );
 
@@ -146,7 +146,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
             CounterpartyId: null
         );
         using var response = await client.PostAsJsonAsync(
-            new Uri("/bank-accounts", UriKind.Relative),
+            new Uri("/api/bank-accounts", UriKind.Relative),
             request
         );
 
@@ -170,7 +170,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
             CounterpartyId: null
         );
         using var response = await client.PostAsJsonAsync(
-            new Uri("/bank-accounts", UriKind.Relative),
+            new Uri("/api/bank-accounts", UriKind.Relative),
             request
         );
 
@@ -195,14 +195,14 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
             CounterpartyId: null
         );
         using var firstResponse = await client.PostAsJsonAsync(
-            new Uri("/bank-accounts", UriKind.Relative),
+            new Uri("/api/bank-accounts", UriKind.Relative),
             first
         );
         await Assert.That(firstResponse.StatusCode).IsEqualTo(HttpStatusCode.Created);
 
         var duplicate = first with { AccountId = secondAccount.Id };
         using var duplicateResponse = await client.PostAsJsonAsync(
-            new Uri("/bank-accounts", UriKind.Relative),
+            new Uri("/api/bank-accounts", UriKind.Relative),
             duplicate
         );
 
@@ -226,14 +226,14 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
             CounterpartyId: null
         );
         using var firstResponse = await client.PostAsJsonAsync(
-            new Uri("/bank-accounts", UriKind.Relative),
+            new Uri("/api/bank-accounts", UriKind.Relative),
             first
         );
         await Assert.That(firstResponse.StatusCode).IsEqualTo(HttpStatusCode.Created);
 
         var duplicate = first with { Iban = "NL01ABNA0000000002" };
         using var duplicateResponse = await client.PostAsJsonAsync(
-            new Uri("/bank-accounts", UriKind.Relative),
+            new Uri("/api/bank-accounts", UriKind.Relative),
             duplicate
         );
 
@@ -256,7 +256,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
             CounterpartyId: null
         );
         using var response = await client.PostAsJsonAsync(
-            new Uri("/bank-accounts", UriKind.Relative),
+            new Uri("/api/bank-accounts", UriKind.Relative),
             request
         );
 
@@ -280,7 +280,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
             CounterpartyId: null
         );
         using var response = await client.PostAsJsonAsync(
-            new Uri("/bank-accounts", UriKind.Relative),
+            new Uri("/api/bank-accounts", UriKind.Relative),
             request
         );
 
@@ -293,7 +293,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
         using var client = Factory.CreateClient();
 
         using var response = await client.GetAsync(
-            new Uri($"/bank-accounts/{Guid.NewGuid()}", UriKind.Relative)
+            new Uri($"/api/bank-accounts/{Guid.NewGuid()}", UriKind.Relative)
         );
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
@@ -316,13 +316,13 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
             CounterpartyId: null
         );
         using var createResponse = await client.PostAsJsonAsync(
-            new Uri("/bank-accounts", UriKind.Relative),
+            new Uri("/api/bank-accounts", UriKind.Relative),
             request
         );
         var created = await createResponse.Content.ReadFromJsonAsync<BankAccountDto>();
 
         using var patchResponse = await client.PatchAsJsonPatchAsync(
-            new Uri($"/bank-accounts/{created!.Id}", UriKind.Relative),
+            new Uri($"/api/bank-accounts/{created!.Id}", UriKind.Relative),
             [JsonPatchHelpers.Replace("/bankName", "NewBank")]
         );
 
@@ -348,7 +348,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
             CounterpartyId: null
         );
         using var createResponse = await client.PostAsJsonAsync(
-            new Uri("/bank-accounts", UriKind.Relative),
+            new Uri("/api/bank-accounts", UriKind.Relative),
             request
         );
         var created = await createResponse.Content.ReadFromJsonAsync<BankAccountDto>();
@@ -356,7 +356,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
         // Iban stays set so the IBAN-or-AccountNumber invariant holds; everything else
         // becomes genuinely null via JSON Patch replace-to-null.
         using var patchResponse = await client.PatchAsJsonPatchAsync(
-            new Uri($"/bank-accounts/{created!.Id}", UriKind.Relative),
+            new Uri($"/api/bank-accounts/{created!.Id}", UriKind.Relative),
             [
                 JsonPatchHelpers.Replace("/bic", null),
                 JsonPatchHelpers.Replace("/bankName", null),
@@ -393,13 +393,13 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
             CounterpartyId: null
         );
         using var createResponse = await client.PostAsJsonAsync(
-            new Uri("/bank-accounts", UriKind.Relative),
+            new Uri("/api/bank-accounts", UriKind.Relative),
             request
         );
         var created = await createResponse.Content.ReadFromJsonAsync<BankAccountDto>();
 
         using var patchResponse = await client.PatchAsJsonPatchAsync(
-            new Uri($"/bank-accounts/{created!.Id}", UriKind.Relative),
+            new Uri($"/api/bank-accounts/{created!.Id}", UriKind.Relative),
             [JsonPatchHelpers.Replace("/iban", null)]
         );
 
@@ -423,18 +423,18 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
             CounterpartyId: null
         );
         using var createResponse = await client.PostAsJsonAsync(
-            new Uri("/bank-accounts", UriKind.Relative),
+            new Uri("/api/bank-accounts", UriKind.Relative),
             request
         );
         var created = await createResponse.Content.ReadFromJsonAsync<BankAccountDto>();
 
         using var deleteResponse = await client.DeleteAsync(
-            new Uri($"/bank-accounts/{created!.Id}", UriKind.Relative)
+            new Uri($"/api/bank-accounts/{created!.Id}", UriKind.Relative)
         );
         await Assert.That(deleteResponse.StatusCode).IsEqualTo(HttpStatusCode.NoContent);
 
         using var getResponse = await client.GetAsync(
-            new Uri($"/bank-accounts/{created.Id}", UriKind.Relative)
+            new Uri($"/api/bank-accounts/{created.Id}", UriKind.Relative)
         );
         await Assert.That(getResponse.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
     }
@@ -443,7 +443,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
     {
         var req = new CreateAccountRequestDto(name, "Asset", "EUR");
         using var response = await client.PostAsJsonAsync(
-            new Uri("/accounts", UriKind.Relative),
+            new Uri("/api/accounts", UriKind.Relative),
             req
         );
         response.EnsureSuccessStatusCode();
@@ -458,7 +458,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
     {
         var req = new CreateCounterpartyRequestDto(name);
         using var response = await client.PostAsJsonAsync(
-            new Uri("/counterparties", UriKind.Relative),
+            new Uri("/api/counterparties", UriKind.Relative),
             req
         );
         response.EnsureSuccessStatusCode();

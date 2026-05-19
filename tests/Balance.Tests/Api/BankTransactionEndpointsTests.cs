@@ -11,7 +11,9 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
     {
         using var client = Factory.CreateClient();
 
-        using var response = await client.GetAsync(new Uri("/bank-transactions", UriKind.Relative));
+        using var response = await client.GetAsync(
+            new Uri("/api/bank-transactions", UriKind.Relative)
+        );
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
         var list = await response.Content.ReadFromJsonAsync<IReadOnlyList<BankTransactionDto>>();
@@ -36,7 +38,7 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
             CurrencyCode: "EUR"
         );
         using var createResponse = await client.PostAsJsonAsync(
-            new Uri("/bank-transactions", UriKind.Relative),
+            new Uri("/api/bank-transactions", UriKind.Relative),
             request
         );
 
@@ -49,7 +51,7 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
         await Assert.That(created.BookingDate).IsEqualTo(new DateOnly(2026, 5, 17));
 
         using var getResponse = await client.GetAsync(
-            new Uri($"/bank-transactions/{created.Id}", UriKind.Relative)
+            new Uri($"/api/bank-transactions/{created.Id}", UriKind.Relative)
         );
         await Assert.That(getResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
         var fetched = await getResponse.Content.ReadFromJsonAsync<BankTransactionDto>();
@@ -75,7 +77,7 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
             CurrencyCode: "EUR"
         );
         using var response = await client.PostAsJsonAsync(
-            new Uri("/bank-transactions", UriKind.Relative),
+            new Uri("/api/bank-transactions", UriKind.Relative),
             request
         );
 
@@ -94,7 +96,7 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
             CurrencyCode: "EUR"
         );
         using var response = await client.PostAsJsonAsync(
-            new Uri("/bank-transactions", UriKind.Relative),
+            new Uri("/api/bank-transactions", UriKind.Relative),
             request
         );
 
@@ -119,7 +121,7 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
             CurrencyCode: "XYZ"
         );
         using var response = await client.PostAsJsonAsync(
-            new Uri("/bank-transactions", UriKind.Relative),
+            new Uri("/api/bank-transactions", UriKind.Relative),
             request
         );
 
@@ -144,7 +146,7 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
             CurrencyCode: "EUR"
         );
         using var response = await client.PostAsJsonAsync(
-            new Uri("/bank-transactions", UriKind.Relative),
+            new Uri("/api/bank-transactions", UriKind.Relative),
             request
         );
 
@@ -157,7 +159,7 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
         using var client = Factory.CreateClient();
 
         using var response = await client.GetAsync(
-            new Uri($"/bank-transactions/{Guid.NewGuid()}", UriKind.Relative)
+            new Uri($"/api/bank-transactions/{Guid.NewGuid()}", UriKind.Relative)
         );
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
@@ -181,18 +183,18 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
             CurrencyCode: "EUR"
         );
         using var createResponse = await client.PostAsJsonAsync(
-            new Uri("/bank-transactions", UriKind.Relative),
+            new Uri("/api/bank-transactions", UriKind.Relative),
             request
         );
         var created = await createResponse.Content.ReadFromJsonAsync<BankTransactionDto>();
 
         using var deleteResponse = await client.DeleteAsync(
-            new Uri($"/bank-transactions/{created!.Id}", UriKind.Relative)
+            new Uri($"/api/bank-transactions/{created!.Id}", UriKind.Relative)
         );
         await Assert.That(deleteResponse.StatusCode).IsEqualTo(HttpStatusCode.NoContent);
 
         using var getResponse = await client.GetAsync(
-            new Uri($"/bank-transactions/{created.Id}", UriKind.Relative)
+            new Uri($"/api/bank-transactions/{created.Id}", UriKind.Relative)
         );
         await Assert.That(getResponse.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
     }
@@ -201,7 +203,7 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
     {
         var req = new CreateAccountRequestDto(name, "Asset", "EUR");
         using var response = await client.PostAsJsonAsync(
-            new Uri("/accounts", UriKind.Relative),
+            new Uri("/api/accounts", UriKind.Relative),
             req
         );
         response.EnsureSuccessStatusCode();
@@ -216,7 +218,7 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
     {
         var req = new CreateCounterpartyRequestDto(name);
         using var response = await client.PostAsJsonAsync(
-            new Uri("/counterparties", UriKind.Relative),
+            new Uri("/api/counterparties", UriKind.Relative),
             req
         );
         response.EnsureSuccessStatusCode();
@@ -241,7 +243,7 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
             CounterpartyId: null
         );
         using var response = await client.PostAsJsonAsync(
-            new Uri("/bank-accounts", UriKind.Relative),
+            new Uri("/api/bank-accounts", UriKind.Relative),
             req
         );
         response.EnsureSuccessStatusCode();
@@ -266,7 +268,7 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
             CounterpartyId: counterpartyId
         );
         using var response = await client.PostAsJsonAsync(
-            new Uri("/bank-accounts", UriKind.Relative),
+            new Uri("/api/bank-accounts", UriKind.Relative),
             req
         );
         response.EnsureSuccessStatusCode();

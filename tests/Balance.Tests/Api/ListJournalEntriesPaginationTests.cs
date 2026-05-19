@@ -11,7 +11,7 @@ internal sealed class ListJournalEntriesPaginationTests : EndpointsTestsBase
         using var client = Factory.CreateClient();
 
         using var response = await client.GetAsync(
-            new Uri("/journal-entries?skip=-1", UriKind.Relative)
+            new Uri("/api/journal-entries?skip=-1", UriKind.Relative)
         );
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
@@ -23,7 +23,7 @@ internal sealed class ListJournalEntriesPaginationTests : EndpointsTestsBase
         using var client = Factory.CreateClient();
 
         using var response = await client.GetAsync(
-            new Uri("/journal-entries?take=201", UriKind.Relative)
+            new Uri("/api/journal-entries?take=201", UriKind.Relative)
         );
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
@@ -35,7 +35,7 @@ internal sealed class ListJournalEntriesPaginationTests : EndpointsTestsBase
         using var client = Factory.CreateClient();
 
         using var response = await client.GetAsync(
-            new Uri("/journal-entries?take=0", UriKind.Relative)
+            new Uri("/api/journal-entries?take=0", UriKind.Relative)
         );
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
@@ -46,7 +46,9 @@ internal sealed class ListJournalEntriesPaginationTests : EndpointsTestsBase
     {
         using var client = Factory.CreateClient();
 
-        using var response = await client.GetAsync(new Uri("/journal-entries", UriKind.Relative));
+        using var response = await client.GetAsync(
+            new Uri("/api/journal-entries", UriKind.Relative)
+        );
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
     }

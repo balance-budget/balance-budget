@@ -16,7 +16,9 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
     {
         using var client = Factory.CreateClient();
 
-        using var response = await client.GetAsync(new Uri("/journal-entries", UriKind.Relative));
+        using var response = await client.GetAsync(
+            new Uri("/api/journal-entries", UriKind.Relative)
+        );
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
         var list = await response.Content.ReadFromJsonAsync<IReadOnlyList<JournalEntryDto>>();
@@ -42,7 +44,7 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
             ]
         );
         using var createResponse = await client.PostAsJsonAsync(
-            new Uri("/journal-entries", UriKind.Relative),
+            new Uri("/api/journal-entries", UriKind.Relative),
             request
         );
 
@@ -53,7 +55,7 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
         await Assert.That(created.Lines.Sum(l => l.Amount)).IsEqualTo(0L);
 
         using var getResponse = await client.GetAsync(
-            new Uri($"/journal-entries/{created.Id}", UriKind.Relative)
+            new Uri($"/api/journal-entries/{created.Id}", UriKind.Relative)
         );
         await Assert.That(getResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
         var fetched = await getResponse.Content.ReadFromJsonAsync<JournalEntryDto>();
@@ -82,7 +84,7 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
             ]
         );
         using var response = await client.PostAsJsonAsync(
-            new Uri("/journal-entries", UriKind.Relative),
+            new Uri("/api/journal-entries", UriKind.Relative),
             request
         );
 
@@ -103,7 +105,7 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
             Lines: [new CreateJournalLineRequestDto(account.Id, 100, null)]
         );
         using var response = await client.PostAsJsonAsync(
-            new Uri("/journal-entries", UriKind.Relative),
+            new Uri("/api/journal-entries", UriKind.Relative),
             request
         );
 
@@ -129,7 +131,7 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
             ]
         );
         using var response = await client.PostAsJsonAsync(
-            new Uri("/journal-entries", UriKind.Relative),
+            new Uri("/api/journal-entries", UriKind.Relative),
             request
         );
 
@@ -142,7 +144,7 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
         using var client = Factory.CreateClient();
 
         using var response = await client.GetAsync(
-            new Uri($"/journal-entries/{Guid.NewGuid()}", UriKind.Relative)
+            new Uri($"/api/journal-entries/{Guid.NewGuid()}", UriKind.Relative)
         );
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
@@ -167,18 +169,18 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
             ]
         );
         using var createResponse = await client.PostAsJsonAsync(
-            new Uri("/journal-entries", UriKind.Relative),
+            new Uri("/api/journal-entries", UriKind.Relative),
             request
         );
         var created = await createResponse.Content.ReadFromJsonAsync<JournalEntryDto>();
 
         using var deleteResponse = await client.DeleteAsync(
-            new Uri($"/journal-entries/{created!.Id}", UriKind.Relative)
+            new Uri($"/api/journal-entries/{created!.Id}", UriKind.Relative)
         );
         await Assert.That(deleteResponse.StatusCode).IsEqualTo(HttpStatusCode.NoContent);
 
         using var getResponse = await client.GetAsync(
-            new Uri($"/journal-entries/{created.Id}", UriKind.Relative)
+            new Uri($"/api/journal-entries/{created.Id}", UriKind.Relative)
         );
         await Assert.That(getResponse.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
     }
@@ -202,13 +204,13 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
             ]
         );
         using var createResponse = await client.PostAsJsonAsync(
-            new Uri("/journal-entries", UriKind.Relative),
+            new Uri("/api/journal-entries", UriKind.Relative),
             create
         );
         var created = await createResponse.Content.ReadFromJsonAsync<JournalEntryDto>();
 
         using var patchResponse = await client.PatchAsJsonPatchAsync(
-            new Uri($"/journal-entries/{created!.Id}", UriKind.Relative),
+            new Uri($"/api/journal-entries/{created!.Id}", UriKind.Relative),
             [
                 JsonPatchHelpers.Replace("/date", "2026-05-02"),
                 JsonPatchHelpers.Replace("/description", "after"),
@@ -241,7 +243,7 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
             ]
         );
         using var createResponse = await client.PostAsJsonAsync(
-            new Uri("/journal-entries", UriKind.Relative),
+            new Uri("/api/journal-entries", UriKind.Relative),
             create
         );
         var created = await createResponse.Content.ReadFromJsonAsync<JournalEntryDto>();
@@ -249,7 +251,7 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
 
         var key = firstLine.Id.ToString("D");
         using var patchResponse = await client.PatchAsJsonPatchAsync(
-            new Uri($"/journal-entries/{created.Id}", UriKind.Relative),
+            new Uri($"/api/journal-entries/{created.Id}", UriKind.Relative),
             [JsonPatchHelpers.Replace($"/lines/{key}/description", "edited")]
         );
 
@@ -284,7 +286,7 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
             ]
         );
         using var createResponse = await client.PostAsJsonAsync(
-            new Uri("/journal-entries", UriKind.Relative),
+            new Uri("/api/journal-entries", UriKind.Relative),
             create
         );
         var created = await createResponse.Content.ReadFromJsonAsync<JournalEntryDto>();
@@ -292,7 +294,7 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
         var key = line.Id.ToString("D");
 
         using var patchResponse = await client.PatchAsJsonPatchAsync(
-            new Uri($"/journal-entries/{created.Id}", UriKind.Relative),
+            new Uri($"/api/journal-entries/{created.Id}", UriKind.Relative),
             [JsonPatchHelpers.Remove($"/lines/{key}")]
         );
 
@@ -318,14 +320,14 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
             ]
         );
         using var createResponse = await client.PostAsJsonAsync(
-            new Uri("/journal-entries", UriKind.Relative),
+            new Uri("/api/journal-entries", UriKind.Relative),
             create
         );
         var created = await createResponse.Content.ReadFromJsonAsync<JournalEntryDto>();
 
         var fakeKey = Guid.NewGuid().ToString("D");
         using var patchResponse = await client.PatchAsJsonPatchAsync(
-            new Uri($"/journal-entries/{created!.Id}", UriKind.Relative),
+            new Uri($"/api/journal-entries/{created!.Id}", UriKind.Relative),
             [JsonPatchHelpers.Add($"/lines/{fakeKey}", new { description = "snuck in" })]
         );
 
@@ -351,7 +353,7 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
             ]
         );
         using var createResponse = await client.PostAsJsonAsync(
-            new Uri("/journal-entries", UriKind.Relative),
+            new Uri("/api/journal-entries", UriKind.Relative),
             create
         );
         var created = await createResponse.Content.ReadFromJsonAsync<JournalEntryDto>();
@@ -362,7 +364,7 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
         await MarkLineClearedAsync(firstLine.Id);
 
         using var patchResponse = await client.PatchAsJsonPatchAsync(
-            new Uri($"/journal-entries/{created.Id}", UriKind.Relative),
+            new Uri($"/api/journal-entries/{created.Id}", UriKind.Relative),
             [JsonPatchHelpers.Replace("/description", "Albert Heijn, NL")]
         );
 
@@ -392,13 +394,13 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
             ]
         );
         using var createResponse = await client.PostAsJsonAsync(
-            new Uri("/journal-entries", UriKind.Relative),
+            new Uri("/api/journal-entries", UriKind.Relative),
             create
         );
         var created = await createResponse.Content.ReadFromJsonAsync<JournalEntryDto>();
 
         using var patchResponse = await client.PatchAsJsonPatchAsync(
-            new Uri($"/journal-entries/{created!.Id}", UriKind.Relative),
+            new Uri($"/api/journal-entries/{created!.Id}", UriKind.Relative),
             [JsonPatchHelpers.Replace("/bogusField", "x")]
         );
 
@@ -423,7 +425,7 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
     {
         var req = new CreateAccountRequestDto(name, accountType, currencyCode);
         using var response = await client.PostAsJsonAsync(
-            new Uri("/accounts", UriKind.Relative),
+            new Uri("/api/accounts", UriKind.Relative),
             req
         );
         response.EnsureSuccessStatusCode();
