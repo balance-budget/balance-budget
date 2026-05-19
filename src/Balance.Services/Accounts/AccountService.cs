@@ -25,33 +25,19 @@ internal sealed class AccountService : IAccountService
         _timeProvider = timeProvider;
     }
 
-    public async Task<IReadOnlyList<AccountOutput>> ListAsync(
-        CancellationToken cancellationToken
-    ) =>
-        await _dbContext
-            .Accounts.OrderBy(a => a.Name)
-            .Select(a => new AccountOutput(
-                a.Id,
-                a.Name,
-                a.AccountType,
-                a.CurrencyCode,
-                a.CreatedAt,
-                a.UpdatedAt
-            ))
+    public async Task<IReadOnlyList<AccountOutput>> ListAsync(CancellationToken cancellationToken)
+    {
+        var rows = await ProjectAccounts(_dbContext.Accounts.OrderBy(a => a.Name))
             .ToListAsync(cancellationToken);
+        return rows.Select(ToOutput).ToList();
+    }
 
-    public Task<AccountOutput?> GetAsync(AccountId id, CancellationToken cancellationToken) =>
-        _dbContext
-            .Accounts.Where(a => a.Id == id)
-            .Select(a => new AccountOutput(
-                a.Id,
-                a.Name,
-                a.AccountType,
-                a.CurrencyCode,
-                a.CreatedAt,
-                a.UpdatedAt
-            ))
+    public async Task<AccountOutput?> GetAsync(AccountId id, CancellationToken cancellationToken)
+    {
+        var row = await ProjectAccounts(_dbContext.Accounts.Where(a => a.Id == id))
             .FirstOrDefaultAsync(cancellationToken);
+        return row is null ? null : ToOutput(row);
+    }
 
     public Task<UpdateAccountInput?> GetSnapshotAsync(
         AccountId id,
@@ -99,7 +85,16 @@ internal sealed class AccountService : IAccountService
 
         _dbContext.Accounts.Add(account);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return ToOutput(account);
+        return new AccountOutput(
+            account.Id,
+            account.Name,
+            account.AccountType,
+            account.CurrencyCode,
+            Money.Zero(account.CurrencyCode),
+            BankAccount: null,
+            account.CreatedAt,
+            account.UpdatedAt
+        );
     }
 
     public async Task<AccountOutput> UpdateAsync(
@@ -138,7 +133,7 @@ internal sealed class AccountService : IAccountService
         account.CurrencyCode = input.CurrencyCode;
         account.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return ToOutput(account);
+        return (await GetAsync(id, cancellationToken))!;
     }
 
     public async Task DeleteAsync(AccountId id, CancellationToken cancellationToken)
@@ -162,14 +157,41 @@ internal sealed class AccountService : IAccountService
         }
     }
 
-    private static AccountOutput ToOutput(Account account) =>
+    private IQueryable<AccountProjectionRow> ProjectAccounts(IQueryable<Account> source) =>
+        source.Select(a => new AccountProjectionRow(
+            a.Id,
+            a.Name,
+            a.AccountType,
+            a.CurrencyCode,
+            _dbContext.JournalLines.Where(l => l.AccountId == a.Id).Sum(l => (long?)l.Amount) ?? 0L,
+            _dbContext
+                .BankAccounts.Where(ba => ba.AccountId == a.Id)
+                .Select(ba => new BankAccountSummary(
+                    ba.Iban,
+                    ba.AccountNumber,
+                    ba.Bic,
+                    ba.BankName
+                ))
+                .FirstOrDefault(),
+            a.CreatedAt,
+            a.UpdatedAt
+        ));
+
+    private static AccountOutput ToOutput(AccountProjectionRow row) =>
         new(
-            account.Id,
-            account.Name,
-            account.AccountType,
-            account.CurrencyCode,
-            account.CreatedAt,
-            account.UpdatedAt
+            row.Id,
+            row.Name,
+            row.AccountType,
+            row.CurrencyCode,
+            new Money(
+                AccountSignConvention.IsCreditNormal(row.AccountType)
+                    ? checked(-row.RawSum)
+                    : row.RawSum,
+                row.CurrencyCode
+            ),
+            row.BankAccount,
+            row.CreatedAt,
+            row.UpdatedAt
         );
 
     private async Task EnsureCurrencyExistsAsync(
@@ -204,4 +226,15 @@ internal sealed class AccountService : IAccountService
             );
         }
     }
+
+    private sealed record AccountProjectionRow(
+        AccountId Id,
+        string Name,
+        AccountType AccountType,
+        CurrencyCode CurrencyCode,
+        long RawSum,
+        BankAccountSummary? BankAccount,
+        DateTime CreatedAt,
+        DateTime UpdatedAt
+    );
 }

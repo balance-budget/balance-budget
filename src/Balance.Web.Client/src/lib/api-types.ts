@@ -223,6 +223,8 @@ export interface components {
             name: string;
             accountType: components["schemas"]["AccountType"];
             currencyCode: components["schemas"]["CurrencyCode"];
+            balance: components["schemas"]["Money"];
+            bankAccount: null | components["schemas"]["BankAccountSummary"];
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -246,6 +248,12 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        BankAccountSummary: {
+            iban: null | string;
+            accountNumber: null | string;
+            bic: null | string;
+            bankName: null | string;
         };
         /** Format: uuid */
         BankTransactionId: string;

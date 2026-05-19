@@ -1,3 +1,4 @@
+using Balance.Data.Entities;
 using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
 
@@ -8,6 +9,8 @@ public sealed record AccountOutput(
     string Name,
     AccountType AccountType,
     CurrencyCode CurrencyCode,
+    Money Balance,
+    BankAccountSummary? BankAccount,
     DateTime CreatedAt,
     DateTime UpdatedAt
 );

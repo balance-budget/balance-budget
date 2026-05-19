@@ -4,6 +4,8 @@ import { Icon } from './Icon';
 import { useAccounts, type Account } from '../api/accounts';
 import { Skeleton } from './Skeleton';
 import { ErrorState } from './ErrorState';
+import { formatMoney } from '../lib/money';
+import { visualHintFor } from '../lib/visualHints';
 
 type NavLink = {
     to: string;
@@ -57,11 +59,42 @@ function NavGroup({ title, items, currentPath }: { title: string; items: NavLink
     );
 }
 
+function lastFourIdentifier(account: Account): string | null {
+    const raw = account.bankAccount?.iban ?? account.bankAccount?.accountNumber ?? null;
+    if (!raw) return null;
+    const compact = raw.replace(/\s+/g, '');
+    return compact.length <= 4 ? compact : `· ${compact.slice(-4)}`;
+}
+
 function AccountRow({ account }: { account: Account }) {
+    const visual = visualHintFor(account.type, account.id);
+    const tail = lastFourIdentifier(account);
+    const isNegative = account.balance.amount < 0;
     return (
-        <div className="flex items-center gap-3 px-3 py-[7px] rounded-sm text-fg-2 text-[13px]">
-            <Icon name="wallet" size={16} strokeWidth={1.75} className="shrink-0 text-fg-3" />
-            <span className="truncate">{account.name}</span>
+        <div className="flex items-center gap-3 px-3 py-2 rounded-sm">
+            <span
+                className="shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-sm"
+                style={{
+                    background: `color-mix(in srgb, ${visual.accentColor} 12%, transparent)`,
+                    color: visual.accentColor,
+                }}
+            >
+                <Icon name={visual.iconName} size={14} strokeWidth={1.75} />
+            </span>
+            <div className="flex-1 min-w-0 flex flex-col leading-tight">
+                <span className="truncate text-[13px] text-fg-1">{account.name}</span>
+                {tail && <span className="text-[11px] text-fg-3 truncate">{tail}</span>}
+            </div>
+            <span
+                className={[
+                    'shrink-0 text-[12px] tabular-nums',
+                    isNegative ? 'text-danger' : 'text-fg-2',
+                ].join(' ')}
+            >
+                {formatMoney(account.balance.amount, account.balance.currencyCode, {
+                    decimals: false,
+                })}
+            </span>
         </div>
     );
 }
