@@ -11,7 +11,7 @@ internal sealed class AccountEndpointsTests : EndpointsTestsBase
     {
         using var client = Factory.CreateClient();
 
-        using var response = await client.GetAsync(new Uri("/accounts", UriKind.Relative));
+        using var response = await client.GetAsync(new Uri("/api/accounts", UriKind.Relative));
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
         var accounts = await response.Content.ReadFromJsonAsync<IReadOnlyList<AccountDto>>();
@@ -30,7 +30,7 @@ internal sealed class AccountEndpointsTests : EndpointsTestsBase
 
         var request = new CreateAccountRequestDto("ABN AMRO Checking", "Asset", "EUR");
         using var createResponse = await client.PostAsJsonAsync(
-            new Uri("/accounts", UriKind.Relative),
+            new Uri("/api/accounts", UriKind.Relative),
             request
         );
 
@@ -42,7 +42,7 @@ internal sealed class AccountEndpointsTests : EndpointsTestsBase
         await Assert.That(created.CurrencyCode).IsEqualTo("EUR");
 
         using var getResponse = await client.GetAsync(
-            new Uri($"/accounts/{created.Id}", UriKind.Relative)
+            new Uri($"/api/accounts/{created.Id}", UriKind.Relative)
         );
         await Assert.That(getResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
         var fetched = await getResponse.Content.ReadFromJsonAsync<AccountDto>();
@@ -57,14 +57,14 @@ internal sealed class AccountEndpointsTests : EndpointsTestsBase
 
         var first = new CreateAccountRequestDto("Groceries", "Expense", "EUR");
         using var firstResponse = await client.PostAsJsonAsync(
-            new Uri("/accounts", UriKind.Relative),
+            new Uri("/api/accounts", UriKind.Relative),
             first
         );
         await Assert.That(firstResponse.StatusCode).IsEqualTo(HttpStatusCode.Created);
 
         var duplicate = new CreateAccountRequestDto("groceries", "Expense", "EUR");
         using var duplicateResponse = await client.PostAsJsonAsync(
-            new Uri("/accounts", UriKind.Relative),
+            new Uri("/api/accounts", UriKind.Relative),
             duplicate
         );
 
@@ -78,7 +78,7 @@ internal sealed class AccountEndpointsTests : EndpointsTestsBase
 
         var unknownId = Guid.NewGuid();
         using var response = await client.GetAsync(
-            new Uri($"/accounts/{unknownId}", UriKind.Relative)
+            new Uri($"/api/accounts/{unknownId}", UriKind.Relative)
         );
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
@@ -91,7 +91,7 @@ internal sealed class AccountEndpointsTests : EndpointsTestsBase
 
         var request = new CreateAccountRequestDto("Mystery", "Asset", "XYZ");
         using var response = await client.PostAsJsonAsync(
-            new Uri("/accounts", UriKind.Relative),
+            new Uri("/api/accounts", UriKind.Relative),
             request
         );
 
@@ -105,13 +105,13 @@ internal sealed class AccountEndpointsTests : EndpointsTestsBase
 
         var request = new CreateAccountRequestDto("Old Name", "Asset", "EUR");
         using var createResponse = await client.PostAsJsonAsync(
-            new Uri("/accounts", UriKind.Relative),
+            new Uri("/api/accounts", UriKind.Relative),
             request
         );
         var created = await createResponse.Content.ReadFromJsonAsync<AccountDto>();
 
         using var patchResponse = await client.PatchAsJsonPatchAsync(
-            new Uri($"/accounts/{created!.Id}", UriKind.Relative),
+            new Uri($"/api/accounts/{created!.Id}", UriKind.Relative),
             [JsonPatchHelpers.Replace("/name", "New Name")]
         );
 
@@ -126,7 +126,7 @@ internal sealed class AccountEndpointsTests : EndpointsTestsBase
         using var client = Factory.CreateClient();
 
         using var patchResponse = await client.PatchAsJsonPatchAsync(
-            new Uri($"/accounts/{Guid.NewGuid()}", UriKind.Relative),
+            new Uri($"/api/accounts/{Guid.NewGuid()}", UriKind.Relative),
             [JsonPatchHelpers.Replace("/name", "Anything")]
         );
 
@@ -140,13 +140,13 @@ internal sealed class AccountEndpointsTests : EndpointsTestsBase
 
         var request = new CreateAccountRequestDto("Patch-Errors", "Asset", "EUR");
         using var createResponse = await client.PostAsJsonAsync(
-            new Uri("/accounts", UriKind.Relative),
+            new Uri("/api/accounts", UriKind.Relative),
             request
         );
         var created = await createResponse.Content.ReadFromJsonAsync<AccountDto>();
 
         using var patchResponse = await client.PatchAsJsonPatchAsync(
-            new Uri($"/accounts/{created!.Id}", UriKind.Relative),
+            new Uri($"/api/accounts/{created!.Id}", UriKind.Relative),
             [JsonPatchHelpers.Replace("/doesNotExist", "x")]
         );
 
@@ -160,19 +160,19 @@ internal sealed class AccountEndpointsTests : EndpointsTestsBase
 
         var request = new CreateAccountRequestDto("Temporary", "Asset", "EUR");
         using var createResponse = await client.PostAsJsonAsync(
-            new Uri("/accounts", UriKind.Relative),
+            new Uri("/api/accounts", UriKind.Relative),
             request
         );
         var created = await createResponse.Content.ReadFromJsonAsync<AccountDto>();
 
         using var deleteResponse = await client.DeleteAsync(
-            new Uri($"/accounts/{created!.Id}", UriKind.Relative)
+            new Uri($"/api/accounts/{created!.Id}", UriKind.Relative)
         );
 
         await Assert.That(deleteResponse.StatusCode).IsEqualTo(HttpStatusCode.NoContent);
 
         using var getResponse = await client.GetAsync(
-            new Uri($"/accounts/{created.Id}", UriKind.Relative)
+            new Uri($"/api/accounts/{created.Id}", UriKind.Relative)
         );
         await Assert.That(getResponse.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
     }

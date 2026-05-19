@@ -11,7 +11,7 @@ internal sealed class CurrencyEndpointsTests : EndpointsTestsBase
     {
         using var client = Factory.CreateClient();
 
-        using var response = await client.GetAsync(new Uri("/currencies", UriKind.Relative));
+        using var response = await client.GetAsync(new Uri("/api/currencies", UriKind.Relative));
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
@@ -34,7 +34,9 @@ internal sealed class CurrencyEndpointsTests : EndpointsTestsBase
     {
         using var client = Factory.CreateClient();
 
-        using var response = await client.GetAsync(new Uri("/currencies/EUR", UriKind.Relative));
+        using var response = await client.GetAsync(
+            new Uri("/api/currencies/EUR", UriKind.Relative)
+        );
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
@@ -50,7 +52,9 @@ internal sealed class CurrencyEndpointsTests : EndpointsTestsBase
     {
         using var client = Factory.CreateClient();
 
-        using var response = await client.GetAsync(new Uri("/currencies/XYZ", UriKind.Relative));
+        using var response = await client.GetAsync(
+            new Uri("/api/currencies/XYZ", UriKind.Relative)
+        );
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
     }
@@ -62,7 +66,7 @@ internal sealed class CurrencyEndpointsTests : EndpointsTestsBase
 
         var request = new CreateCurrencyRequestDto("SEK", "Swedish Krona", 2, "kr");
         using var createResponse = await client.PostAsJsonAsync(
-            new Uri("/currencies", UriKind.Relative),
+            new Uri("/api/currencies", UriKind.Relative),
             request
         );
 
@@ -72,7 +76,9 @@ internal sealed class CurrencyEndpointsTests : EndpointsTestsBase
         await Assert.That(created!.Code).IsEqualTo("SEK");
         await Assert.That(created.Symbol).IsEqualTo("kr");
 
-        using var getResponse = await client.GetAsync(new Uri("/currencies/SEK", UriKind.Relative));
+        using var getResponse = await client.GetAsync(
+            new Uri("/api/currencies/SEK", UriKind.Relative)
+        );
         await Assert.That(getResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
         var fetched = await getResponse.Content.ReadFromJsonAsync<CurrencyDto>();
         await Assert.That(fetched!.Code).IsEqualTo("SEK");
@@ -86,7 +92,7 @@ internal sealed class CurrencyEndpointsTests : EndpointsTestsBase
 
         var duplicate = new CreateCurrencyRequestDto("EUR", "Whatever", 2, null);
         using var response = await client.PostAsJsonAsync(
-            new Uri("/currencies", UriKind.Relative),
+            new Uri("/api/currencies", UriKind.Relative),
             duplicate
         );
 
@@ -100,7 +106,7 @@ internal sealed class CurrencyEndpointsTests : EndpointsTestsBase
 
         var invalid = new CreateCurrencyRequestDto("", "", -1, null);
         using var response = await client.PostAsJsonAsync(
-            new Uri("/currencies", UriKind.Relative),
+            new Uri("/api/currencies", UriKind.Relative),
             invalid
         );
 
@@ -114,14 +120,14 @@ internal sealed class CurrencyEndpointsTests : EndpointsTestsBase
 
         var create = new CreateCurrencyRequestDto("NOK", "Krone", 2, "kr");
         using var createResponse = await client.PostAsJsonAsync(
-            new Uri("/currencies", UriKind.Relative),
+            new Uri("/api/currencies", UriKind.Relative),
             create
         );
         await Assert.That(createResponse.StatusCode).IsEqualTo(HttpStatusCode.Created);
 
         var update = new UpdateCurrencyRequestDto("Norwegian Krone", "NOK");
         using var updateResponse = await client.PatchAsJsonAsync(
-            new Uri("/currencies/NOK", UriKind.Relative),
+            new Uri("/api/currencies/NOK", UriKind.Relative),
             update
         );
 
@@ -138,7 +144,7 @@ internal sealed class CurrencyEndpointsTests : EndpointsTestsBase
 
         var update = new UpdateCurrencyRequestDto("Whatever", null);
         using var response = await client.PatchAsJsonAsync(
-            new Uri("/currencies/XYZ", UriKind.Relative),
+            new Uri("/api/currencies/XYZ", UriKind.Relative),
             update
         );
 
@@ -152,18 +158,20 @@ internal sealed class CurrencyEndpointsTests : EndpointsTestsBase
 
         var create = new CreateCurrencyRequestDto("NZD", "New Zealand Dollar", 2, "$");
         using var createResponse = await client.PostAsJsonAsync(
-            new Uri("/currencies", UriKind.Relative),
+            new Uri("/api/currencies", UriKind.Relative),
             create
         );
         await Assert.That(createResponse.StatusCode).IsEqualTo(HttpStatusCode.Created);
 
         using var deleteResponse = await client.DeleteAsync(
-            new Uri("/currencies/NZD", UriKind.Relative)
+            new Uri("/api/currencies/NZD", UriKind.Relative)
         );
 
         await Assert.That(deleteResponse.StatusCode).IsEqualTo(HttpStatusCode.NoContent);
 
-        using var getResponse = await client.GetAsync(new Uri("/currencies/NZD", UriKind.Relative));
+        using var getResponse = await client.GetAsync(
+            new Uri("/api/currencies/NZD", UriKind.Relative)
+        );
         await Assert.That(getResponse.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
     }
 
@@ -174,7 +182,7 @@ internal sealed class CurrencyEndpointsTests : EndpointsTestsBase
 
         // EUR is seeded and referenced by the Opening Balances account.
         using var deleteResponse = await client.DeleteAsync(
-            new Uri("/currencies/EUR", UriKind.Relative)
+            new Uri("/api/currencies/EUR", UriKind.Relative)
         );
 
         await Assert.That(deleteResponse.StatusCode).IsEqualTo(HttpStatusCode.Conflict);
@@ -186,13 +194,13 @@ internal sealed class CurrencyEndpointsTests : EndpointsTestsBase
         using var client = Factory.CreateClient();
 
         // Hit GET first to populate the read cache (cache-miss → cache-hit sequence).
-        using var listBefore = await client.GetAsync(new Uri("/currencies", UriKind.Relative));
+        using var listBefore = await client.GetAsync(new Uri("/api/currencies", UriKind.Relative));
         await Assert.That(listBefore.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
         // User adds a new currency at runtime.
         var newCurrency = new CreateCurrencyRequestDto("AUD", "Australian Dollar", 2, "$");
         using var createCurrencyResponse = await client.PostAsJsonAsync(
-            new Uri("/currencies", UriKind.Relative),
+            new Uri("/api/currencies", UriKind.Relative),
             newCurrency
         );
         await Assert.That(createCurrencyResponse.StatusCode).IsEqualTo(HttpStatusCode.Created);
@@ -201,7 +209,7 @@ internal sealed class CurrencyEndpointsTests : EndpointsTestsBase
         // (cache must have been invalidated on write).
         var account = new CreateAccountRequestDto("Aussie Savings", "Asset", "AUD");
         using var createAccountResponse = await client.PostAsJsonAsync(
-            new Uri("/accounts", UriKind.Relative),
+            new Uri("/api/accounts", UriKind.Relative),
             account
         );
 

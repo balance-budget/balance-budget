@@ -12,7 +12,7 @@ internal sealed class AccountBalanceEndpointTests : EndpointsTestsBase
         using var client = Factory.CreateClient();
 
         using var response = await client.GetAsync(
-            new Uri($"/accounts/{Guid.NewGuid()}/balance", UriKind.Relative)
+            new Uri($"/api/accounts/{Guid.NewGuid()}/balance", UriKind.Relative)
         );
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
@@ -167,7 +167,7 @@ internal sealed class AccountBalanceEndpointTests : EndpointsTestsBase
     private static async Task<MoneyDto> GetBalanceAsync(HttpClient client, Guid accountId)
     {
         using var response = await client.GetAsync(
-            new Uri($"/accounts/{accountId}/balance", UriKind.Relative)
+            new Uri($"/api/accounts/{accountId}/balance", UriKind.Relative)
         );
         response.EnsureSuccessStatusCode();
         var dto = await response.Content.ReadFromJsonAsync<MoneyDto>();
@@ -183,7 +183,7 @@ internal sealed class AccountBalanceEndpointTests : EndpointsTestsBase
     {
         var req = new CreateAccountRequestDto(name, accountType, currencyCode);
         using var response = await client.PostAsJsonAsync(
-            new Uri("/accounts", UriKind.Relative),
+            new Uri("/api/accounts", UriKind.Relative),
             req
         );
         response.EnsureSuccessStatusCode();
@@ -204,7 +204,7 @@ internal sealed class AccountBalanceEndpointTests : EndpointsTestsBase
             Lines: lines
         );
         using var response = await client.PostAsJsonAsync(
-            new Uri("/journal-entries", UriKind.Relative),
+            new Uri("/api/journal-entries", UriKind.Relative),
             request
         );
         response.EnsureSuccessStatusCode();
