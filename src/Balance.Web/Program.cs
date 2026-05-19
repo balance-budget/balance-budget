@@ -1,3 +1,4 @@
+using System.Reflection;
 using Balance.Configuration.Helpers;
 using Balance.Data.Helpers;
 using Balance.Services;
@@ -15,18 +16,22 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
-// Detect design time runs and unit tests
-var isRegularApplicationRun = builder.Environment.IsRunningFrom<Program>();
+// Detect design time runs and tests
+var isOpenApiGenerator = builder.Environment.IsOpenApiGenerator();
+var isIntegrationTest = builder.Environment.IsIntegrationTest();
 
 builder.Logging.AddConsole(builder.Environment);
 builder.Configuration.MapConfigurationSources(builder.Environment);
-builder.Services.AddBalanceServices(builder.Configuration, isRegularApplicationRun);
+builder.Services.AddBalanceServices(
+    builder.Configuration,
+    !isOpenApiGenerator && !isIntegrationTest
+);
 builder.Services.AddBalanceWeb();
 
 var app = builder.Build();
 var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
 
-if (isRegularApplicationRun)
+if (!isOpenApiGenerator)
     await app.MigrateDatabase(lifetime.ApplicationStopping);
 
 // Serve Balance.Web.Client SPA
