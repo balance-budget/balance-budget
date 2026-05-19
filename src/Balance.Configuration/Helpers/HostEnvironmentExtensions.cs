@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.Extensions.Hosting;
 
 namespace Balance.Configuration.Helpers;
@@ -12,4 +13,7 @@ public static class HostEnvironmentExtensions
 
     public static bool IsTesting(this IHostEnvironment hostEnvironment) =>
         hostEnvironment.IsEnvironment("Testing");
+
+    public static bool IsRunningFrom<T>(this IHostEnvironment _) =>
+        Assembly.GetEntryAssembly() == typeof(T).Assembly;
 }

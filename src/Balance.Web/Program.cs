@@ -1,8 +1,8 @@
+using Balance.Configuration.Helpers;
 using Balance.Data.Helpers;
 using Balance.Services;
 using Balance.Web;
 using Balance.Web.Configuration;
-using Balance.Web.Endpoints;
 using Balance.Web.Endpoints.Accounts;
 using Balance.Web.Endpoints.BankAccounts;
 using Balance.Web.Endpoints.BankTransactions;
@@ -15,15 +15,19 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
+// Detect design time runs and unit tests
+var isRegularApplicationRun = builder.Environment.IsRunningFrom<Program>();
+
 builder.Logging.AddConsole(builder.Environment);
 builder.Configuration.MapConfigurationSources(builder.Environment);
-builder.Services.AddBalanceServices(builder.Configuration);
+builder.Services.AddBalanceServices(builder.Configuration, isRegularApplicationRun);
 builder.Services.AddBalanceWeb();
 
 var app = builder.Build();
 var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
 
-await app.MigrateDatabase(lifetime.ApplicationStopping);
+if (isRegularApplicationRun)
+    await app.MigrateDatabase(lifetime.ApplicationStopping);
 
 // Serve Balance.Web.Client SPA
 app.MapStaticAssets();
