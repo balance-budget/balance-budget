@@ -15,7 +15,7 @@ internal class WebApplicationFactory : TestWebApplicationFactory<Program>
     {
         ArgumentNullException.ThrowIfNull(builder);
 
-        builder.UseEnvironment("Testing");
+        builder.UseEnvironment("IntegrationTest");
         builder.ConfigureAppConfiguration(
             (_, config) =>
             {
