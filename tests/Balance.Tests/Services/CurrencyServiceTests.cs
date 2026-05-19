@@ -1,5 +1,4 @@
 using Balance.Data;
-using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
 using Balance.Services.Currencies;
