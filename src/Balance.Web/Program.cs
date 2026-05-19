@@ -16,22 +16,18 @@ using Scalar.AspNetCore;
 var builder = WebApplication.CreateSlimBuilder(args);
 
 // Detect design time runs and tests
-var isOpenApiGenerator = builder.Environment.IsOpenApiGenerator();
+var isOpenApiGenerator = builder.Environment.IsDesignTime();
 var isIntegrationTest = builder.Environment.IsIntegrationTest();
 
 builder.Logging.AddConsole(builder.Environment);
 builder.Configuration.MapConfigurationSources(builder.Environment);
-builder.Services.AddBalanceServices(
-    builder.Configuration,
-    !isOpenApiGenerator && !isIntegrationTest
-);
+builder.Services.AddBalanceServices(builder.Configuration, builder.Environment);
 builder.Services.AddBalanceWeb();
 
 var app = builder.Build();
 var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
 
-if (!isOpenApiGenerator)
-    await app.MigrateDatabase(lifetime.ApplicationStopping);
+await app.MigrateDatabase(lifetime.ApplicationStopping);
 
 // Serve Balance.Web.Client SPA
 app.MapStaticAssets();
