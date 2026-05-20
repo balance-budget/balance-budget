@@ -1,65 +1,180 @@
+import { useMemo } from 'react';
+import {
+    CartesianGrid,
+    Legend,
+    Line,
+    LineChart,
+    ResponsiveContainer,
+    Tooltip,
+    type TooltipContentProps,
+    XAxis,
+    YAxis,
+} from 'recharts';
+import type { TrendRange } from '../api/dashboard';
+import { formatTrendAxisDate, formatTrendTooltipDate } from '../lib/dates';
 import type { AccountTrend } from '../lib/domain';
+import { formatMoney, formatMoneyAxis } from '../lib/money';
 
 type TrendChartProps = {
     series: AccountTrend[];
-    days: number;
+    range: TrendRange;
+    currencyCode: string;
     height?: number;
 };
 
+type ChartRow = { date: string } & Record<string, number | string>;
+
+function buildRows(series: AccountTrend[]): ChartRow[] {
+    if (series.length === 0) return [];
+    const dates = series[0].points.map(p => p.date);
+    return dates.map((date, i) => {
+        const row: ChartRow = { date };
+        for (const s of series) {
+            row[s.accountId] = s.points[i].balanceMinor;
+        }
+        return row;
+    });
+}
+
+function computeTicks(rows: ChartRow[], range: TrendRange): string[] {
+    if (rows.length === 0) return [];
+    if (range === '1M') {
+        // Weekly cadence; day-of-month carries information at this scale.
+        return rows.filter((_, i) => i % 7 === 0).map(r => r.date);
+    }
+    // Monthly cadence at the 1st of the month — the day-of-month is noise
+    // for 3M / 6M / 1Y, so anchor to month boundaries instead.
+    return rows.filter(r => r.date.endsWith('-01')).map(r => r.date);
+}
+
 /**
- * Multi-account balance trend. Each series is plotted as a solid polyline
- * across the full window. A faint zero-line sits across the middle for sign
- * reference. The chart ends at today — there is no forecast / future half.
+ * Multi-account balance trend rendered by Recharts. Each series is one Asset
+ * Account; the chart shows a unified crosshair tooltip with all balances at
+ * the snapped date, sorted value-descending. Axes auto-fit; y-axis labels are
+ * compact above €10k, full below.
  */
-export function TrendChart({ series, days, height = 240 }: TrendChartProps) {
-    const width = 720;
-    const padX = 4;
-    const padY = 20;
-    const plotW = width - padX * 2;
-    const plotH = height - padY * 2;
-
-    const allPoints = series.flatMap(s => s.points.map(p => p.balanceMinor));
-    const min = Math.min(...allPoints, 0);
-    const max = Math.max(...allPoints, 0);
-    const range = max - min || 1;
-    const denom = days > 1 ? days - 1 : 1;
-
-    const xOf = (day: number) => padX + (day / denom) * plotW;
-    const yOf = (val: number) => padY + (1 - (val - min) / range) * plotH;
-
-    const zeroY = yOf(0);
+export function TrendChart({
+    series,
+    range,
+    currencyCode,
+    height = 240,
+}: TrendChartProps) {
+    const rows = useMemo(() => buildRows(series), [series]);
+    const ticks = useMemo(() => computeTicks(rows, range), [rows, range]);
+    const seriesByKey = useMemo(
+        () => new Map(series.map(s => [s.accountId as string, s])),
+        [series],
+    );
 
     return (
-        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto block">
-            {/* Zero line */}
-            <line
-                x1={padX}
-                x2={width - padX}
-                y1={zeroY}
-                y2={zeroY}
-                stroke="var(--color-border-soft)"
-                strokeDasharray="2 4"
-            />
-
-            {series.map(s => {
-                const d = s.points
-                    .map(
-                        (p, i) =>
-                            `${i === 0 ? 'M' : 'L'} ${xOf(p.day)} ${yOf(p.balanceMinor)}`,
-                    )
-                    .join(' ');
-                return (
-                    <path
+        <ResponsiveContainer width="100%" height={height}>
+            <LineChart data={rows} margin={{ top: 10, right: 12, bottom: 0, left: 0 }}>
+                <CartesianGrid
+                    stroke="var(--color-border-soft)"
+                    vertical={false}
+                    strokeDasharray="2 4"
+                />
+                <XAxis
+                    dataKey="date"
+                    ticks={ticks}
+                    interval={0}
+                    tickFormatter={d => formatTrendAxisDate(d, range)}
+                    tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                />
+                <YAxis
+                    domain={['auto', 'auto']}
+                    tickFormatter={v => formatMoneyAxis(v, currencyCode)}
+                    tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={60}
+                />
+                <Tooltip
+                    content={
+                        <TrendTooltip
+                            seriesByKey={seriesByKey}
+                            currencyCode={currencyCode}
+                        />
+                    }
+                    cursor={{
+                        stroke: 'var(--color-border-strong)',
+                        strokeWidth: 1,
+                        strokeDasharray: '2 2',
+                    }}
+                />
+                <Legend
+                    iconType="circle"
+                    iconSize={8}
+                    wrapperStyle={{ fontSize: 13, paddingTop: 8 }}
+                />
+                {series.map(s => (
+                    <Line
                         key={s.accountId}
-                        d={d}
-                        fill="none"
+                        type="monotone"
+                        dataKey={s.accountId}
+                        name={s.name}
                         stroke={s.accentColor}
                         strokeWidth={1.75}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                        dot={false}
+                        activeDot={{ r: 3, strokeWidth: 0 }}
+                        isAnimationActive={false}
                     />
-                );
-            })}
-        </svg>
+                ))}
+            </LineChart>
+        </ResponsiveContainer>
+    );
+}
+
+type TrendTooltipProps = Partial<TooltipContentProps<number, string>> & {
+    seriesByKey: Map<string, AccountTrend>;
+    currencyCode: string;
+};
+
+function TrendTooltip({
+    active,
+    payload,
+    label,
+    seriesByKey,
+    currencyCode,
+}: TrendTooltipProps) {
+    if (!active || !payload || payload.length === 0) return null;
+
+    const sorted = [...payload].sort(
+        (a, b) => (Number(b.value) || 0) - (Number(a.value) || 0),
+    );
+
+    return (
+        <div className="rounded-md border border-border-soft bg-bg-1 px-3 py-2 shadow-sm text-[12px]">
+            <div className="text-fg-3 mb-1">
+                {typeof label === 'string' ? formatTrendTooltipDate(label) : ''}
+            </div>
+            <div className="flex flex-col gap-1">
+                {sorted.map(item => {
+                    const series = seriesByKey.get(String(item.dataKey));
+                    const value = Number(item.value) || 0;
+                    return (
+                        <div
+                            key={String(item.dataKey)}
+                            className="flex items-center justify-between gap-x-4"
+                        >
+                            <span className="flex items-center gap-1.5">
+                                <span
+                                    className="w-2 h-2 rounded-full inline-block"
+                                    style={{ background: item.color }}
+                                />
+                                <span className="text-fg-2">
+                                    {series?.name ?? String(item.name ?? '')}
+                                </span>
+                            </span>
+                            <span className="font-mono tabular text-fg-1">
+                                {formatMoney(value, currencyCode)}
+                            </span>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
     );
 }
