@@ -14,15 +14,11 @@ type Brand<T, B> = T & { readonly [__brand]: B };
 export type AccountId = Brand<string, 'AccountId'>;
 export type JournalEntryId = Brand<string, 'JournalEntryId'>;
 export type CounterpartyId = Brand<string, 'CounterpartyId'>;
-export type BudgetId = Brand<string, 'BudgetId'>;
-export type SubscriptionId = Brand<string, 'SubscriptionId'>;
 export type BankTransactionId = Brand<string, 'BankTransactionId'>;
 
 /** Strip the brand for places that only have a raw string at hand (e.g. seed data). */
 export const asAccountId = (s: string) => s as AccountId;
 export const asJournalEntryId = (s: string) => s as JournalEntryId;
-export const asBudgetId = (s: string) => s as BudgetId;
-export const asSubscriptionId = (s: string) => s as SubscriptionId;
 
 export type AccountType = 'Asset' | 'Liability' | 'Equity' | 'Income' | 'Expense';
 
@@ -57,26 +53,6 @@ export type JournalEntrySummary = {
     categoryAccountName: string | null;
     /** Tint key — matches the offsetting account's accentColor. */
     accentColor: string;
-    iconName: string;
-};
-
-export type BudgetSummary = {
-    id: BudgetId;
-    name: string;
-    expenseAccountId: AccountId;
-    spentMinor: number;
-    limitMinor: number;
-    currencyCode: string;
-    accentColor: string;
-};
-
-export type SubscriptionSummary = {
-    id: SubscriptionId;
-    counterpartyName: string;
-    amountMinor: number;
-    currencyCode: string;
-    cadence: 'monthly' | 'yearly';
-    nextDate: string;
     iconName: string;
 };
 
