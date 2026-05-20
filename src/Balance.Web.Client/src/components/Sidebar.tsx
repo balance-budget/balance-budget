@@ -99,29 +99,65 @@ function AccountRow({ account }: { account: Account }) {
     );
 }
 
+function AccountSection({ title, accounts }: { title: string; accounts: Account[] }) {
+    if (accounts.length === 0) return null;
+    return (
+        <div className="flex flex-col gap-[2px]">
+            <div className="eyebrow px-3 pt-3 pb-[6px]">{title}</div>
+            {accounts.map(account => (
+                <AccountRow key={account.id} account={account} />
+            ))}
+        </div>
+    );
+}
+
 function AccountsGroup() {
     const { data, isPending, isError, refetch } = useAccounts();
 
-    return (
-        <div className="flex flex-col gap-[2px]">
-            <div className="eyebrow px-3 pt-3 pb-[6px]">Accounts</div>
-            {isPending && (
+    if (isPending) {
+        return (
+            <div className="flex flex-col gap-[2px]">
+                <div className="eyebrow px-3 pt-3 pb-[6px]">Accounts</div>
                 <div className="flex flex-col gap-[6px] px-3 py-2">
                     <Skeleton className="h-[14px] w-32" />
                     <Skeleton className="h-[14px] w-24" />
                     <Skeleton className="h-[14px] w-28" />
                 </div>
-            )}
-            {isError && (
+            </div>
+        );
+    }
+
+    if (isError) {
+        return (
+            <div className="flex flex-col gap-[2px]">
+                <div className="eyebrow px-3 pt-3 pb-[6px]">Accounts</div>
                 <div className="px-3 py-2">
                     <ErrorState message="Couldn't load accounts." onRetry={() => refetch()} />
                 </div>
-            )}
-            {data && data.length === 0 && (
+            </div>
+        );
+    }
+
+    // Asset + Liability are the user's "real money" accounts; Income + Expense are
+    // navigable "where money comes from / goes" categories. Equity (the seeded
+    // Opening Balances account) is bookkeeping plumbing and never rendered.
+    const ledgerAccounts = data.filter(a => a.type === 'Asset' || a.type === 'Liability');
+    const categoryAccounts = data.filter(a => a.type === 'Income' || a.type === 'Expense');
+
+    if (ledgerAccounts.length === 0 && categoryAccounts.length === 0) {
+        return (
+            <div className="flex flex-col gap-[2px]">
+                <div className="eyebrow px-3 pt-3 pb-[6px]">Accounts</div>
                 <div className="px-3 py-2 text-[12px] text-fg-3">No accounts yet.</div>
-            )}
-            {data && data.map(account => <AccountRow key={account.id} account={account} />)}
-        </div>
+            </div>
+        );
+    }
+
+    return (
+        <>
+            <AccountSection title="Accounts" accounts={ledgerAccounts} />
+            <AccountSection title="Categories" accounts={categoryAccounts} />
+        </>
     );
 }
 
