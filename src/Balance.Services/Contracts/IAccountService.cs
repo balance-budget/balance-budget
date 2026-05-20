@@ -33,15 +33,4 @@ public sealed record UpdateAccountInput
     public required string Name { get; set; }
     public required AccountType AccountType { get; set; }
     public required CurrencyCode CurrencyCode { get; set; }
-
-    public static UpdateAccountInput FromEntity(Account account)
-    {
-        ArgumentNullException.ThrowIfNull(account);
-        return new UpdateAccountInput
-        {
-            Name = account.Name,
-            AccountType = account.AccountType,
-            CurrencyCode = account.CurrencyCode,
-        };
-    }
 }

@@ -56,21 +56,6 @@ public sealed record UpdateJournalEntryInput
     public string? Description { get; set; }
     public CounterpartyId? CounterpartyId { get; set; }
     public required IDictionary<string, UpdateJournalLineInput> Lines { get; init; }
-
-    public static UpdateJournalEntryInput FromEntity(JournalEntry entry)
-    {
-        ArgumentNullException.ThrowIfNull(entry);
-        return new UpdateJournalEntryInput
-        {
-            Date = entry.Date,
-            Description = entry.Description,
-            CounterpartyId = entry.CounterpartyId,
-            Lines = entry.Lines.ToDictionary(
-                l => l.Id.Value.ToString("D", CultureInfo.InvariantCulture),
-                l => new UpdateJournalLineInput { Description = l.Description }
-            ),
-        };
-    }
 }
 
 public sealed record UpdateJournalLineInput
