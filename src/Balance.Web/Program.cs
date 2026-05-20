@@ -30,6 +30,17 @@ var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
 
 await app.MigrateDatabase(lifetime.ApplicationStopping);
 
+// Middleware pipeline, order matters here
+app.UseExceptionHandler();
+app.UseStatusCodePages();
+app.UseForwardedHeaders();
+app.UseDefaultFiles();
+app.UseRouting();
+app.UseCors();
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseAntiforgery();
+
 // Serve Balance.Web.Client SPA
 app.MapStaticAssets();
 app.MapFallbackToFile("index.html");
@@ -59,17 +70,6 @@ api.MapBankAccounts();
 api.MapBankTransactions();
 api.MapJournalEntries();
 api.MapDashboard();
-
-// Middleware pipeline, order matters here
-app.UseExceptionHandler();
-app.UseStatusCodePages();
-app.UseForwardedHeaders();
-app.UseDefaultFiles();
-app.UseRouting();
-app.UseCors();
-app.UseAuthentication();
-app.UseAuthorization();
-app.UseAntiforgery();
 
 await app.RunAsync(lifetime.ApplicationStopping);
 
