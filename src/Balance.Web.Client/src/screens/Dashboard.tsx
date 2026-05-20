@@ -1,6 +1,12 @@
 import { Link } from '@tanstack/react-router';
+import { useState } from 'react';
 import { useAccounts, type Account } from '../api/accounts';
-import { useDashboardSummary } from '../api/dashboard';
+import {
+    useAccountBalanceTrend,
+    useDashboardSummary,
+    TREND_RANGES,
+    type TrendRange,
+} from '../api/dashboard';
 import { useAccountRegister, type RegisterRow } from '../api/register';
 import { Amount } from '../components/Amount';
 import { ErrorState } from '../components/ErrorState';
@@ -9,7 +15,6 @@ import { MtdDeltaChip } from '../components/MtdDeltaChip';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { TrendChart } from '../components/TrendChart';
-import { TREND } from '../demo/trend';
 import { formatMoney } from '../lib/money';
 import { visualHintFor } from '../lib/visualHints';
 
@@ -240,6 +245,82 @@ function KpiStrip() {
     );
 }
 
+const RANGE_SUBTITLE: Record<TrendRange, string> = {
+    '1M': 'Balance over time · Last month',
+    '3M': 'Balance over time · Last 3 months',
+    '6M': 'Balance over time · Last 6 months',
+    '1Y': 'Balance over time · Last year',
+};
+
+function AccountBalanceTrendPanel() {
+    const [range, setRange] = useState<TrendRange>('3M');
+    const trend = useAccountBalanceTrend(range);
+
+    const pills = (
+        <div className="flex items-center gap-[6px]">
+            {TREND_RANGES.map(p => (
+                <button
+                    key={p}
+                    type="button"
+                    onClick={() => setRange(p)}
+                    className={[
+                        'px-[10px] py-[5px] rounded-full text-[11px] font-medium select-none',
+                        p === range
+                            ? 'bg-brand-primary-soft text-brand-primary'
+                            : 'text-fg-3 hover:text-fg-1',
+                    ].join(' ')}
+                >
+                    {p}
+                </button>
+            ))}
+        </div>
+    );
+
+    return (
+        <Panel>
+            <SectionHead
+                title="Account balances"
+                subtitle={RANGE_SUBTITLE[range]}
+                action={pills}
+            />
+            {trend.isPending ? (
+                <Skeleton className="h-[240px] w-full" />
+            ) : trend.isError ? (
+                <ErrorState
+                    message="Couldn't load the balance trend."
+                    onRetry={() => trend.refetch()}
+                />
+            ) : trend.data.series.length === 0 ? (
+                <div className="h-[240px] flex items-center justify-center text-[13px] text-fg-3">
+                    No balance history yet.
+                </div>
+            ) : (
+                <>
+                    <TrendChart
+                        series={trend.data.series}
+                        days={trend.data.series[0].points.length}
+                        height={240}
+                    />
+                    <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
+                        {trend.data.series.map(s => (
+                            <div
+                                key={s.accountId}
+                                className="flex items-center gap-2 text-14 text-fg-2"
+                            >
+                                <span
+                                    className="w-2 h-2 rounded-full"
+                                    style={{ background: s.accentColor }}
+                                />
+                                <span>{s.name}</span>
+                            </div>
+                        ))}
+                    </div>
+                </>
+            )}
+        </Panel>
+    );
+}
+
 export function Dashboard() {
     return (
         <>
@@ -247,39 +328,7 @@ export function Dashboard() {
 
             {/* Trend + accounts */}
             <section className="grid gap-[18px]" style={{ gridTemplateColumns: '1.4fr 1fr' }}>
-                <Panel>
-                    <SectionHead
-                        title="Your accounts"
-                        subtitle="Balance over time · May"
-                        action={
-                            <div className="flex items-center gap-[6px]">
-                                {['1M', '3M', '6M', '1Y'].map(p => (
-                                    <span
-                                        key={p}
-                                        className={[
-                                            'px-[10px] py-[5px] rounded-full text-[11px] font-medium select-none cursor-pointer',
-                                            p === '3M'
-                                                ? 'bg-brand-primary-soft text-brand-primary'
-                                                : 'text-fg-3 hover:text-fg-1',
-                                        ].join(' ')}
-                                    >
-                                        {p}
-                                    </span>
-                                ))}
-                            </div>
-                        }
-                    />
-                    {/* Trend stays demo-driven — running-balance projection is a later slice. */}
-                    <TrendChart series={TREND} days={30} today={15} height={240} />
-                    <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
-                        {TREND.map(s => (
-                            <div key={s.accountId} className="flex items-center gap-2 text-14 text-fg-2">
-                                <span className="w-2 h-2 rounded-full" style={{ background: s.accentColor }} />
-                                <span>{s.name}</span>
-                            </div>
-                        ))}
-                    </div>
-                </Panel>
+                <AccountBalanceTrendPanel />
 
                 <Panel>
                     <SectionHead

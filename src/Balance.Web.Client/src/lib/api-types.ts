@@ -244,10 +244,35 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/dashboard/account-balance-trend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetAccountBalanceTrend"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AccountBalanceTrendOutput: {
+            series: components["schemas"]["AccountTrendSeries"][];
+            /** Format: date */
+            periodStart: string;
+            /** Format: date */
+            periodEnd: string;
+            range: components["schemas"]["TrendRange"];
+            currencyCode: components["schemas"]["CurrencyCode"];
+        };
         /** Format: uuid */
         AccountId: string;
         AccountOutput: {
@@ -261,6 +286,11 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        AccountTrendSeries: {
+            accountId: components["schemas"]["AccountId"];
+            accountName: string;
+            points: components["schemas"]["TrendPoint"][];
         };
         /** @enum {unknown} */
         AccountType: "Asset" | "Liability" | "Equity" | "Income" | "Expense";
@@ -442,6 +472,13 @@ export interface components {
             amount: components["schemas"]["Money"];
             counter: components["schemas"]["RegisterRowCounterLeg"][];
         };
+        TrendPoint: {
+            /** Format: date */
+            date: string;
+            balance: components["schemas"]["Money"];
+        };
+        /** @enum {unknown} */
+        TrendRange: "OneMonth" | "ThreeMonths" | "SixMonths" | "OneYear";
         UpdateCurrencyRequest: {
             name: null | string;
             symbol: null | string;
@@ -3193,6 +3230,86 @@ export interface operations {
                             [key: string]: string[];
                         };
                     };
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        type?: null | string;
+                        title?: null | string;
+                        /** Format: int32 */
+                        status?: null | number | string;
+                        detail?: null | string;
+                        instance?: null | string;
+                    };
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        type?: null | string;
+                        title?: null | string;
+                        /** Format: int32 */
+                        status?: null | number | string;
+                        detail?: null | string;
+                        instance?: null | string;
+                    };
+                };
+            };
+            /** @description Domain invariant violated */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        type?: null | string;
+                        title?: null | string;
+                        /** Format: int32 */
+                        status?: null | number | string;
+                        detail?: null | string;
+                        instance?: null | string;
+                    };
+                };
+            };
+        };
+    };
+    GetAccountBalanceTrend: {
+        parameters: {
+            query?: {
+                range?: string;
+                currency?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountBalanceTrendOutput"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
                 };
             };
             /** @description Not found */

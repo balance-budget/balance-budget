@@ -9,12 +9,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Balance.Services.Dashboard;
 
-internal sealed class DashboardSummaryService : IDashboardSummaryService
+internal sealed class DashboardService : IDashboardService
 {
     private readonly BalanceDbContext _dbContext;
     private readonly TimeProvider _timeProvider;
 
-    public DashboardSummaryService(BalanceDbContext dbContext, TimeProvider timeProvider)
+    public DashboardService(BalanceDbContext dbContext, TimeProvider timeProvider)
     {
         _dbContext = dbContext;
         _timeProvider = timeProvider;
@@ -59,6 +59,97 @@ internal sealed class DashboardSummaryService : IDashboardSummaryService
             periodEnd,
             currencyCode
         );
+    }
+
+    public async Task<AccountBalanceTrendOutput> GetAccountBalanceTrendAsync(
+        CurrencyCode currencyCode,
+        TrendRange range,
+        CancellationToken cancellationToken
+    )
+    {
+        var today = DateOnly.FromDateTime(_timeProvider.GetUtcNow().UtcDateTime);
+        var periodStart = range switch
+        {
+            TrendRange.OneMonth => today.AddMonths(-1),
+            TrendRange.ThreeMonths => today.AddMonths(-3),
+            TrendRange.SixMonths => today.AddMonths(-6),
+            TrendRange.OneYear => today.AddYears(-1),
+            _ => throw new ArgumentOutOfRangeException(nameof(range), range, "Unknown TrendRange."),
+        };
+
+        var assets = await _dbContext
+            .Accounts.AsNoTracking()
+            .Where(a => a.AccountType == AccountType.Asset && a.CurrencyCode == currencyCode)
+            .Select(a => new { a.Id, a.Name })
+            .ToListAsync(cancellationToken);
+
+        if (assets.Count == 0)
+        {
+            return new AccountBalanceTrendOutput(
+                Array.Empty<AccountTrendSeries>(),
+                periodStart,
+                today,
+                range,
+                currencyCode
+            );
+        }
+
+        var assetIds = assets.Select(a => a.Id).ToHashSet();
+
+        var rows = await _dbContext
+            .JournalLines.AsNoTracking()
+            .Join(
+                _dbContext.JournalEntries.AsNoTracking(),
+                l => l.JournalEntryId,
+                e => e.Id,
+                (l, e) =>
+                    new
+                    {
+                        l.AccountId,
+                        e.Date,
+                        l.Amount,
+                    }
+            )
+            .Where(r => assetIds.Contains(r.AccountId) && r.Date <= today)
+            .ToListAsync(cancellationToken);
+
+        var byAccount = rows.GroupBy(r => r.AccountId).ToDictionary(g => g.Key, g => g.ToList());
+
+        var series = new List<AccountTrendSeries>();
+        foreach (var asset in assets)
+        {
+            var hasRows = byAccount.TryGetValue(asset.Id, out var accountRows);
+            var opening = hasRows
+                ? accountRows!.Where(r => r.Date < periodStart).Sum(r => r.Amount)
+                : 0L;
+            var inWindowByDate = hasRows
+                ? accountRows!
+                    .Where(r => r.Date >= periodStart)
+                    .GroupBy(r => r.Date)
+                    .ToDictionary(g => g.Key, g => g.Sum(r => r.Amount))
+                : new Dictionary<DateOnly, long>();
+
+            // Asset accounts with zero opening balance *and* no in-window activity are
+            // omitted from the series — flat-zero lines add nothing to the chart.
+            if (opening == 0L && inWindowByDate.Count == 0)
+            {
+                continue;
+            }
+
+            var points = new List<TrendPoint>();
+            var running = opening;
+            for (var d = periodStart; d <= today; d = d.AddDays(1))
+            {
+                if (inWindowByDate.TryGetValue(d, out var delta))
+                {
+                    running = checked(running + delta);
+                }
+                points.Add(new TrendPoint(d, new Money(running, currencyCode)));
+            }
+            series.Add(new AccountTrendSeries(asset.Id, asset.Name, points));
+        }
+
+        return new AccountBalanceTrendOutput(series, periodStart, today, range, currencyCode);
     }
 
     // Net Worth = sum(Asset balances) - sum(Liability balances), restricted to the
