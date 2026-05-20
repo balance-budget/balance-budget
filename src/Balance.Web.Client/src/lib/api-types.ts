@@ -212,6 +212,22 @@ export interface paths {
         patch: operations["UpdateJournalEntry"];
         trace?: never;
     };
+    "/api/dashboard/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetDashboardSummary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -332,6 +348,16 @@ export interface components {
             /** Format: int32 */
             minorUnitScale: number | string;
             symbol: null | string;
+        };
+        DashboardSummaryOutput: {
+            netWorth: components["schemas"]["Money"];
+            incomeMtd: components["schemas"]["Money"];
+            expensesMtd: components["schemas"]["Money"];
+            /** Format: date */
+            periodStart: string;
+            /** Format: date */
+            periodEnd: string;
+            currencyCode: components["schemas"]["CurrencyCode"];
         };
         /** Format: uuid */
         JournalEntryId: string;
@@ -2941,6 +2967,95 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["JournalEntryOutput"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        type?: null | string;
+                        title?: null | string;
+                        /** Format: int32 */
+                        status?: null | number | string;
+                        detail?: null | string;
+                        instance?: null | string;
+                        errors?: {
+                            [key: string]: string[];
+                        };
+                    };
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        type?: null | string;
+                        title?: null | string;
+                        /** Format: int32 */
+                        status?: null | number | string;
+                        detail?: null | string;
+                        instance?: null | string;
+                    };
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        type?: null | string;
+                        title?: null | string;
+                        /** Format: int32 */
+                        status?: null | number | string;
+                        detail?: null | string;
+                        instance?: null | string;
+                    };
+                };
+            };
+            /** @description Domain invariant violated */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        type?: null | string;
+                        title?: null | string;
+                        /** Format: int32 */
+                        status?: null | number | string;
+                        detail?: null | string;
+                        instance?: null | string;
+                    };
+                };
+            };
+        };
+    };
+    GetDashboardSummary: {
+        parameters: {
+            query?: {
+                currency?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardSummaryOutput"];
                 };
             };
             /** @description Validation failed */

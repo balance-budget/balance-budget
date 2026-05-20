@@ -8,6 +8,7 @@ using Balance.Web.Endpoints.BankAccounts;
 using Balance.Web.Endpoints.BankTransactions;
 using Balance.Web.Endpoints.Counterparties;
 using Balance.Web.Endpoints.Currencies;
+using Balance.Web.Endpoints.Dashboard;
 using Balance.Web.Endpoints.JournalEntries;
 using Balance.Web.Logging;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -57,6 +58,7 @@ api.MapCounterparties();
 api.MapBankAccounts();
 api.MapBankTransactions();
 api.MapJournalEntries();
+api.MapDashboard();
 
 // Middleware pipeline, order matters here
 app.UseExceptionHandler();

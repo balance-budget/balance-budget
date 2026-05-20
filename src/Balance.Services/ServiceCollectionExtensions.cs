@@ -7,6 +7,7 @@ using Balance.Services.BankTransactions;
 using Balance.Services.Contracts;
 using Balance.Services.Counterparties;
 using Balance.Services.Currencies;
+using Balance.Services.Dashboard;
 using Balance.Services.Jobs;
 using Balance.Services.JournalEntries;
 using FluentValidation;
@@ -44,6 +45,7 @@ public static class ServiceCollectionExtensions
             .AddScoped<IBankAccountService, BankAccountService>()
             .AddScoped<IBankTransactionService, BankTransactionService>()
             .AddScoped<IJournalEntryService, JournalEntryService>()
+            .AddScoped<IDashboardSummaryService, DashboardSummaryService>()
             .AddSingleton(TimeProvider.System)
             .AddSingleton<IApplicationVersionService, ApplicationVersionService>();
     }
