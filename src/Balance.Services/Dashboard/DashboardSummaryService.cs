@@ -4,6 +4,7 @@ using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
 using Balance.Services.Accounts;
 using Balance.Services.Contracts;
+using Balance.Services.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace Balance.Services.Dashboard;
@@ -25,8 +26,14 @@ internal sealed class DashboardSummaryService : IDashboardSummaryService
     )
     {
         var today = DateOnly.FromDateTime(_timeProvider.GetUtcNow().UtcDateTime);
-        var periodStart = new DateOnly(today.Year, today.Month, 1);
-        var periodEnd = periodStart.AddMonths(1).AddDays(-1);
+        var periodStart = today.GetMonthStart();
+        var periodEnd = today.GetMonthEnd();
+
+        // SPLM (same-period-last-month) window. `DateOnly.AddMonths(-1)` clamps to the
+        // prior month's last day when today doesn't exist there (Mar 31 → Feb 28/29),
+        // which is the end-of-month edge behaviour user story 15 requires.
+        var priorPeriodEnd = today.AddMonths(-1);
+        var priorPeriodStart = priorPeriodEnd.GetMonthStart();
 
         var netWorth = await ComputeNetWorthAsync(currencyCode, cancellationToken);
         var (income, expenses) = await ComputePeriodTotalsAsync(
@@ -35,11 +42,19 @@ internal sealed class DashboardSummaryService : IDashboardSummaryService
             periodEnd,
             cancellationToken
         );
+        var (incomePrior, expensesPrior) = await ComputePeriodTotalsAsync(
+            currencyCode,
+            priorPeriodStart,
+            priorPeriodEnd,
+            cancellationToken
+        );
 
         return new DashboardSummaryOutput(
             netWorth,
             income,
             expenses,
+            incomePrior,
+            expensesPrior,
             periodStart,
             periodEnd,
             currencyCode

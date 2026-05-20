@@ -368,6 +368,8 @@ export interface components {
             netWorth: components["schemas"]["Money"];
             incomeMtd: components["schemas"]["Money"];
             expensesMtd: components["schemas"]["Money"];
+            incomeMtdPrior: components["schemas"]["Money"];
+            expensesMtdPrior: components["schemas"]["Money"];
             /** Format: date */
             periodStart: string;
             /** Format: date */
