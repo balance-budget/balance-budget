@@ -20,13 +20,29 @@ internal static class DbContextOptionsBuilderExtensions
                         : options.ConnectionString,
                     x => x.MigrationsAssembly("Balance.Data.Sqlite")
                 )
-                .UseBulkInsertSqlite(),
+                .UseBulkInsertSqlite()
+                .UseSqliteExceptionProcessor(),
             DatabaseProvider.Postgres => builder
                 .UseNpgsql(
                     options.ConnectionString,
                     x => x.MigrationsAssembly("Balance.Data.PostgreSql")
                 )
-                .UseBulkInsertPostgreSql(),
+                .UseBulkInsertPostgreSql()
+                .UsePostgresExceptionProcessor(),
             _ => throw new InvalidOperationException("Invalid database provider"),
         };
+
+    private static DbContextOptionsBuilder UseSqliteExceptionProcessor(
+        this DbContextOptionsBuilder builder
+    ) =>
+        EntityFramework.Exceptions.Sqlite.ExceptionProcessorExtensions.UseExceptionProcessor(
+            builder
+        );
+
+    private static DbContextOptionsBuilder UsePostgresExceptionProcessor(
+        this DbContextOptionsBuilder builder
+    ) =>
+        EntityFramework.Exceptions.PostgreSQL.ExceptionProcessorExtensions.UseExceptionProcessor(
+            builder
+        );
 }
