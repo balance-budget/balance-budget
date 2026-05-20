@@ -23,7 +23,7 @@ export const asJournalLineId = (s: string) => s as JournalLineId;
 
 export type AccountType = 'Asset' | 'Liability' | 'Equity' | 'Income' | 'Expense';
 
-export type TrendPoint = { day: number; balanceMinor: number };
+export type TrendPoint = { date: string; balanceMinor: number };
 
 export type AccountTrend = {
     accountId: AccountId;

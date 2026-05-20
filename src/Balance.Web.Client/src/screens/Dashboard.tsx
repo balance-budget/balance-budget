@@ -295,27 +295,12 @@ function AccountBalanceTrendPanel() {
                     No balance history yet.
                 </div>
             ) : (
-                <>
-                    <TrendChart
-                        series={trend.data.series}
-                        days={trend.data.series[0].points.length}
-                        height={240}
-                    />
-                    <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
-                        {trend.data.series.map(s => (
-                            <div
-                                key={s.accountId}
-                                className="flex items-center gap-2 text-14 text-fg-2"
-                            >
-                                <span
-                                    className="w-2 h-2 rounded-full"
-                                    style={{ background: s.accentColor }}
-                                />
-                                <span>{s.name}</span>
-                            </div>
-                        ))}
-                    </div>
-                </>
+                <TrendChart
+                    series={trend.data.series}
+                    range={range}
+                    currencyCode={trend.data.currencyCode}
+                    height={240}
+                />
             )}
         </Panel>
     );

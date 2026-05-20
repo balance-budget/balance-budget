@@ -91,8 +91,8 @@ function toAccountTrend(series: WireTrendSeries): AccountTrend {
         accountId,
         name: series.accountName,
         accentColor: visual.accentColor,
-        points: series.points.map((point, index) => ({
-            day: index,
+        points: series.points.map(point => ({
+            date: point.date,
             balanceMinor:
                 typeof point.balance.amount === 'string'
                     ? Number(point.balance.amount)
