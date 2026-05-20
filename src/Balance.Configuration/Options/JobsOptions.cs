@@ -6,5 +6,5 @@ public sealed class JobsOptions : IOptionsSection
 {
     public static string Section => "Jobs";
 
-    public required bool RunJobs { get; init; }
+    public required string MaintenanceSchedule { get; init; }
 }

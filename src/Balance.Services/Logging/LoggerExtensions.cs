@@ -27,4 +27,22 @@ public static partial class LoggerExtensions
         string entity,
         string id
     );
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "Database optimization started at {DateTime}."
+    )]
+    public static partial void DatabaseOptimizationStarted(
+        this ILogger logger,
+        DateTimeOffset dateTime
+    );
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "Database optimization finished at {DateTime}."
+    )]
+    public static partial void DatabaseOptimizationFinished(
+        this ILogger logger,
+        DateTimeOffset dateTime
+    );
 }
