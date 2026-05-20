@@ -46,7 +46,7 @@ public static class ServiceCollectionExtensions
             .AddScoped<IBankAccountService, BankAccountService>()
             .AddScoped<IBankTransactionService, BankTransactionService>()
             .AddScoped<IJournalEntryService, JournalEntryService>()
-            .AddScoped<IDashboardSummaryService, DashboardSummaryService>()
+            .AddScoped<IDashboardService, DashboardService>()
             .AddSingleton(TimeProvider.System)
             .AddSingleton<IApplicationVersionService, ApplicationVersionService>();
     }
