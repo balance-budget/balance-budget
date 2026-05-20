@@ -15,9 +15,7 @@ public static class ServiceCollectionExtensions
     )
     {
         ArgumentNullException.ThrowIfNull(configuration);
-        services.AddDbContextFactory<BalanceDbContext>();
-        // Pooled context — ctor deps are all singleton-shaped, OnConfiguring runs on each rent.
-        services.AddDbContextPool<BalanceDbContext>(_ => { });
+        services.AddDbContext<BalanceDbContext>();
 
         var builder = services.AddDataProtection().SetApplicationName("Balance");
 
