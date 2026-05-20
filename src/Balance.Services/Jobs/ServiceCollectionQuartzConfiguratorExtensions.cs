@@ -11,6 +11,6 @@ internal static class ServiceCollectionQuartzConfiguratorExtensions
         where TJob : IJob =>
         configurator.ScheduleJob<TJob>(
             t => t.StartNow().WithCronSchedule(schedule),
-            j => j.WithIdentity(nameof(TJob)).DisallowConcurrentExecution()
+            j => j.WithIdentity(typeof(TJob).Name).DisallowConcurrentExecution()
         );
 }
