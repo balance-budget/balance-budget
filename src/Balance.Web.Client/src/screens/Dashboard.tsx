@@ -5,6 +5,7 @@ import { useAccountRegister, type RegisterRow } from '../api/register';
 import { Amount } from '../components/Amount';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
+import { MtdDeltaChip } from '../components/MtdDeltaChip';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { TrendChart } from '../components/TrendChart';
@@ -214,6 +215,11 @@ function KpiStrip() {
                     currencyCode={data.incomeMtd.currencyCode}
                     size="medium"
                 />
+                <MtdDeltaChip
+                    current={data.incomeMtd}
+                    prior={data.incomeMtdPrior}
+                    polarity="higher-is-good"
+                />
             </Panel>
 
             <Panel className="!p-[18px] flex flex-col gap-1 justify-between min-h-[120px]">
@@ -223,6 +229,11 @@ function KpiStrip() {
                     currencyCode={data.expensesMtd.currencyCode}
                     size="medium"
                     className={data.expensesMtd.amount < 0 ? 'text-danger' : ''}
+                />
+                <MtdDeltaChip
+                    current={data.expensesMtd}
+                    prior={data.expensesMtdPrior}
+                    polarity="lower-is-good"
                 />
             </Panel>
         </section>

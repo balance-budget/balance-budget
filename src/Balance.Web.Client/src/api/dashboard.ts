@@ -9,6 +9,8 @@ export type DashboardSummary = {
     netWorth: Money;
     incomeMtd: Money;
     expensesMtd: Money;
+    incomeMtdPrior: Money;
+    expensesMtdPrior: Money;
     periodStart: string;
     periodEnd: string;
     currencyCode: string;
@@ -41,6 +43,8 @@ function toSummary(wire: WireSummary): DashboardSummary {
         netWorth: toMoney(wire.netWorth, wire.currencyCode),
         incomeMtd: toMoney(wire.incomeMtd, wire.currencyCode),
         expensesMtd: toMoney(wire.expensesMtd, wire.currencyCode),
+        incomeMtdPrior: toMoney(wire.incomeMtdPrior, wire.currencyCode),
+        expensesMtdPrior: toMoney(wire.expensesMtdPrior, wire.currencyCode),
         periodStart: wire.periodStart,
         periodEnd: wire.periodEnd,
         currencyCode: wire.currencyCode,

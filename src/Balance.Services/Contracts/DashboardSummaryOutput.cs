@@ -7,6 +7,8 @@ public sealed record DashboardSummaryOutput(
     Money NetWorth,
     Money IncomeMtd,
     Money ExpensesMtd,
+    Money IncomeMtdPrior,
+    Money ExpensesMtdPrior,
     DateOnly PeriodStart,
     DateOnly PeriodEnd,
     CurrencyCode CurrencyCode
