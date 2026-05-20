@@ -5,8 +5,7 @@
  *
  * Resource-specific view-models live alongside the fetcher in `src/api/*.ts`.
  * This module owns the cross-cutting brand types and the trend-chart
- * view-model (still demo-driven; the running-balance projection is a later
- * slice per PRD #37).
+ * view-model consumed by TrendChart.
  */
 
 declare const __brand: unique symbol;
