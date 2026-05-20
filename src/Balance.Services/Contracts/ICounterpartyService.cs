@@ -28,10 +28,4 @@ public interface ICounterpartyService
 public sealed record UpdateCounterpartyInput
 {
     public required string Name { get; set; }
-
-    public static UpdateCounterpartyInput FromEntity(Counterparty counterparty)
-    {
-        ArgumentNullException.ThrowIfNull(counterparty);
-        return new UpdateCounterpartyInput { Name = counterparty.Name };
-    }
 }

@@ -1,4 +1,3 @@
-using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
 
 namespace Balance.Services.Contracts;
@@ -49,20 +48,4 @@ public sealed record UpdateBankAccountInput
     public CurrencyCode? CurrencyCode { get; set; }
     public AccountId? AccountId { get; set; }
     public CounterpartyId? CounterpartyId { get; set; }
-
-    public static UpdateBankAccountInput FromEntity(BankAccount bankAccount)
-    {
-        ArgumentNullException.ThrowIfNull(bankAccount);
-        return new UpdateBankAccountInput
-        {
-            Iban = bankAccount.Iban,
-            AccountNumber = bankAccount.AccountNumber,
-            Bic = bankAccount.Bic,
-            BankName = bankAccount.BankName,
-            AccountHolderName = bankAccount.AccountHolderName,
-            CurrencyCode = bankAccount.CurrencyCode,
-            AccountId = bankAccount.AccountId,
-            CounterpartyId = bankAccount.CounterpartyId,
-        };
-    }
 }
