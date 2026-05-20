@@ -1,6 +1,6 @@
 namespace Balance.Data.Exceptions;
 
-public class DomainException : Exception
+public sealed class DomainException : Exception
 {
     public DomainExceptionKind Kind { get; }
 
