@@ -1,6 +1,7 @@
 using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
 using Balance.Web.Filters;
+using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
@@ -20,10 +21,7 @@ internal static class BankAccountEndpoints
             .MapPost("", CreateAsync)
             .WithValidation<CreateBankAccountRequest>()
             .WithName("CreateBankAccount");
-        group
-            .MapPatch("/{id}", UpdateAsync)
-            .WithJsonPatch<UpdateBankAccountInput>(LoadBankAccountSnapshotAsync)
-            .WithName("UpdateBankAccount");
+        group.MapPatch("/{id}", UpdateAsync).WithName("UpdateBankAccount");
         group.MapDelete("/{id}", DeleteAsync).WithName("DeleteBankAccount");
     }
 
@@ -68,16 +66,19 @@ internal static class BankAccountEndpoints
         return TypedResults.Created($"{PathPrefix}/{bankAccount.Id.Value}", bankAccount);
     }
 
-    private static async Task<Ok<BankAccountOutput>> UpdateAsync(
+    private static async Task<Results<Ok<BankAccountOutput>, NotFound>> UpdateAsync(
         [FromRoute] BankAccountId id,
         [FromBody] JsonPatchDocument<UpdateBankAccountInput> patch,
-        HttpContext httpContext,
         [FromServices] IBankAccountService bankAccountService,
+        [FromServices] IValidator<UpdateBankAccountInput>? validator,
         CancellationToken cancellationToken
     )
     {
-        _ = patch;
-        var input = JsonPatchEndpointFilter.GetSnapshot<UpdateBankAccountInput>(httpContext);
+        var snapshot = await bankAccountService.GetSnapshotAsync(id, cancellationToken);
+        if (snapshot is null)
+            return TypedResults.NotFound();
+
+        var input = await patch.ApplyAndValidateAsync(snapshot, validator, cancellationToken);
         var bankAccount = await bankAccountService.UpdateAsync(id, input, cancellationToken);
         return TypedResults.Ok(bankAccount);
     }
@@ -90,15 +91,5 @@ internal static class BankAccountEndpoints
     {
         await bankAccountService.DeleteAsync(id, cancellationToken);
         return TypedResults.NoContent();
-    }
-
-    private static async Task<UpdateBankAccountInput?> LoadBankAccountSnapshotAsync(
-        EndpointFilterInvocationContext context,
-        CancellationToken cancellationToken
-    )
-    {
-        var id = context.Arguments.OfType<BankAccountId>().FirstOrDefault();
-        var service = context.HttpContext.RequestServices.GetRequiredService<IBankAccountService>();
-        return await service.GetSnapshotAsync(id, cancellationToken);
     }
 }

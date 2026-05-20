@@ -1,6 +1,7 @@
 using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
 using Balance.Web.Filters;
+using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
@@ -20,10 +21,7 @@ internal static class CounterpartyEndpoints
             .MapPost("", CreateAsync)
             .WithValidation<CreateCounterpartyRequest>()
             .WithName("CreateCounterparty");
-        group
-            .MapPatch("/{id}", UpdateAsync)
-            .WithJsonPatch<UpdateCounterpartyInput>(LoadCounterpartySnapshotAsync)
-            .WithName("UpdateCounterparty");
+        group.MapPatch("/{id}", UpdateAsync).WithName("UpdateCounterparty");
         group.MapDelete("/{id}", DeleteAsync).WithName("DeleteCounterparty");
     }
 
@@ -56,16 +54,19 @@ internal static class CounterpartyEndpoints
         return TypedResults.Created($"{PathPrefix}/{counterparty.Id.Value}", counterparty);
     }
 
-    private static async Task<Ok<CounterpartyOutput>> UpdateAsync(
+    private static async Task<Results<Ok<CounterpartyOutput>, NotFound>> UpdateAsync(
         [FromRoute] CounterpartyId id,
         [FromBody] JsonPatchDocument<UpdateCounterpartyInput> patch,
-        HttpContext httpContext,
         [FromServices] ICounterpartyService counterpartyService,
+        [FromServices] IValidator<UpdateCounterpartyInput>? validator,
         CancellationToken cancellationToken
     )
     {
-        _ = patch;
-        var input = JsonPatchEndpointFilter.GetSnapshot<UpdateCounterpartyInput>(httpContext);
+        var snapshot = await counterpartyService.GetSnapshotAsync(id, cancellationToken);
+        if (snapshot is null)
+            return TypedResults.NotFound();
+
+        var input = await patch.ApplyAndValidateAsync(snapshot, validator, cancellationToken);
         var counterparty = await counterpartyService.UpdateAsync(id, input, cancellationToken);
         return TypedResults.Ok(counterparty);
     }
@@ -78,16 +79,5 @@ internal static class CounterpartyEndpoints
     {
         await counterpartyService.DeleteAsync(id, cancellationToken);
         return TypedResults.NoContent();
-    }
-
-    private static async Task<UpdateCounterpartyInput?> LoadCounterpartySnapshotAsync(
-        EndpointFilterInvocationContext context,
-        CancellationToken cancellationToken
-    )
-    {
-        var id = context.Arguments.OfType<CounterpartyId>().FirstOrDefault();
-        var service =
-            context.HttpContext.RequestServices.GetRequiredService<ICounterpartyService>();
-        return await service.GetSnapshotAsync(id, cancellationToken);
     }
 }

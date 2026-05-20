@@ -2,6 +2,7 @@ using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
 using Balance.Web.Filters;
+using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
@@ -26,10 +27,7 @@ internal static class AccountEndpoints
             .MapPost("", CreateAsync)
             .WithValidation<CreateAccountRequest>()
             .WithName("CreateAccount");
-        group
-            .MapPatch("/{id}", UpdateAsync)
-            .WithJsonPatch<UpdateAccountInput>(LoadAccountSnapshotAsync)
-            .WithName("UpdateAccount");
+        group.MapPatch("/{id}", UpdateAsync).WithName("UpdateAccount");
         group.MapDelete("/{id}", DeleteAsync).WithName("DeleteAccount");
     }
 
@@ -92,16 +90,19 @@ internal static class AccountEndpoints
         return TypedResults.Created($"{PathPrefix}/{account.Id.Value}", account);
     }
 
-    private static async Task<Ok<AccountOutput>> UpdateAsync(
+    private static async Task<Results<Ok<AccountOutput>, NotFound>> UpdateAsync(
         [FromRoute] AccountId id,
         [FromBody] JsonPatchDocument<UpdateAccountInput> patch,
-        HttpContext httpContext,
         [FromServices] IAccountService accountService,
+        [FromServices] IValidator<UpdateAccountInput>? validator,
         CancellationToken cancellationToken
     )
     {
-        _ = patch;
-        var input = JsonPatchEndpointFilter.GetSnapshot<UpdateAccountInput>(httpContext);
+        var snapshot = await accountService.GetSnapshotAsync(id, cancellationToken);
+        if (snapshot is null)
+            return TypedResults.NotFound();
+
+        var input = await patch.ApplyAndValidateAsync(snapshot, validator, cancellationToken);
         var account = await accountService.UpdateAsync(id, input, cancellationToken);
         return TypedResults.Ok(account);
     }
@@ -114,15 +115,5 @@ internal static class AccountEndpoints
     {
         await accountService.DeleteAsync(id, cancellationToken);
         return TypedResults.NoContent();
-    }
-
-    private static async Task<UpdateAccountInput?> LoadAccountSnapshotAsync(
-        EndpointFilterInvocationContext context,
-        CancellationToken cancellationToken
-    )
-    {
-        var id = context.Arguments.OfType<AccountId>().FirstOrDefault();
-        var service = context.HttpContext.RequestServices.GetRequiredService<IAccountService>();
-        return await service.GetSnapshotAsync(id, cancellationToken);
     }
 }
