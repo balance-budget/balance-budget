@@ -81,3 +81,31 @@ export function formatMoney(
     const sep = m.fraction ? '.' : '';
     return `${m.sign}${m.symbol}${m.integer}${sep}${m.fraction}`;
 }
+
+/**
+ * Compact chart-axis label. Whole major units below 10,000 (e.g. €1,234), and
+ * k/M abbreviations above (€12k, €1.2M). Tooltips use full formatMoney; this
+ * is for the y-axis ticks where precision yields to legibility.
+ */
+export function formatMoneyAxis(minor: number, currencyCode: string): string {
+    const scale = MINOR_UNIT_SCALE[currencyCode] ?? 2;
+    const symbol = CURRENCY_SYMBOL[currencyCode] ?? currencyCode + ' ';
+    const negative = minor < 0;
+    const absMajor = Math.abs(minor) / 10 ** scale;
+    const sign = negative ? MINUS : '';
+
+    if (absMajor < 10_000) {
+        const integer = Math.round(absMajor).toLocaleString('en-US');
+        return `${sign}${symbol}${integer}`;
+    }
+
+    if (absMajor < 1_000_000) {
+        const k = absMajor / 1_000;
+        const rounded = k >= 100 ? Math.round(k) : Math.round(k * 10) / 10;
+        return `${sign}${symbol}${rounded}k`;
+    }
+
+    const m = absMajor / 1_000_000;
+    const rounded = m >= 100 ? Math.round(m) : Math.round(m * 10) / 10;
+    return `${sign}${symbol}${rounded}M`;
+}
