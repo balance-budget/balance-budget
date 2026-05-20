@@ -58,9 +58,7 @@ internal static class ServiceCollectionExtensions
         services.AddAuthorization();
 
         services.AddAntiforgery();
-        services.AddCors(c =>
-            c.AddDefaultPolicy(p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader())
-        );
+        services.AddCors();
         services.AddHealthChecks().AddDbContextCheck<BalanceDbContext>(tags: ["readiness"]);
 
         services.AddValidatorsFromAssemblyContaining<IWebAssemblyMarker>(
