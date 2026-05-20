@@ -1,65 +1,152 @@
 import { Link } from '@tanstack/react-router';
-import { useAccounts } from '../api/accounts';
+import { useAccounts, type Account } from '../api/accounts';
 import { useDashboardSummary } from '../api/dashboard';
+import { useAccountRegister, type RegisterRow } from '../api/register';
 import { Amount } from '../components/Amount';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { TrendChart } from '../components/TrendChart';
-import { ACCOUNTS } from '../demo/accounts';
-import { ENTRIES } from '../demo/entries';
 import { TREND } from '../demo/trend';
 import { formatMoney } from '../lib/money';
-import type { AccountId, AccountSummary, JournalEntrySummary } from '../lib/domain';
+import { visualHintFor } from '../lib/visualHints';
 
-function recentEntriesForAccount(accountId: AccountId, n: number): JournalEntrySummary[] {
-    return ENTRIES.filter(e => e.accountId === accountId).slice(0, n);
+function lastFourIdentifier(account: Account): string | null {
+    const raw = account.bankAccount?.iban ?? account.bankAccount?.accountNumber ?? null;
+    if (!raw) return null;
+    const compact = raw.replace(/\s+/g, '');
+    return compact.length <= 4 ? compact : `· ${compact.slice(-4)}`;
 }
 
-function AccountRow({ account }: { account: AccountSummary }) {
-    const recent = recentEntriesForAccount(account.id, 2);
+function RecentRow({ row }: { row: RegisterRow }) {
+    const label = row.counterpartyName ?? row.entryDescription ?? row.lineDescription ?? '—';
+    const negative = row.amount.amount < 0;
+    return (
+        <div className="flex items-center justify-between gap-2">
+            <span className="text-[12px] text-fg-2 truncate">{label}</span>
+            <span
+                className={[
+                    'font-mono text-[11px] tabular',
+                    negative ? 'text-fg-2' : 'text-success',
+                ].join(' ')}
+            >
+                {formatMoney(row.amount.amount, row.amount.currencyCode, { sign: true })}
+            </span>
+        </div>
+    );
+}
+
+function RecentActivity({ account }: { account: Account }) {
+    const register = useAccountRegister(account.id, 2);
+
+    if (register.isPending) {
+        return (
+            <div className="pl-12 flex flex-col gap-1">
+                <Skeleton className="h-3 w-2/3" />
+                <Skeleton className="h-3 w-1/2" />
+            </div>
+        );
+    }
+
+    if (register.isError) {
+        return (
+            <div className="pl-12">
+                <ErrorState
+                    message="Couldn't load recent activity."
+                    onRetry={() => register.refetch()}
+                />
+            </div>
+        );
+    }
+
+    const rows = register.data;
+    if (rows.length === 0) {
+        return null;
+    }
+
+    return (
+        <div className="pl-12 flex flex-col gap-1">
+            {rows.map(r => (
+                <RecentRow key={r.journalLineId} row={r} />
+            ))}
+        </div>
+    );
+}
+
+function AccountRow({ account }: { account: Account }) {
+    const visual = visualHintFor(account.type, account.id);
+    const tail = lastFourIdentifier(account);
+    const isNegative = account.balance.amount < 0;
     return (
         <div className="py-3 first:pt-0 last:pb-0 flex flex-col gap-2 border-b border-border-soft last:border-b-0">
             <div className="flex items-center gap-3">
                 <span
                     className="w-9 h-9 rounded-md flex items-center justify-center shrink-0"
                     style={{
-                        background: `color-mix(in srgb, ${account.accentColor} 12%, transparent)`,
-                        color: account.accentColor,
+                        background: `color-mix(in srgb, ${visual.accentColor} 12%, transparent)`,
+                        color: visual.accentColor,
                     }}
                 >
-                    <Icon name={account.iconName} size={16} strokeWidth={2} />
+                    <Icon name={visual.iconName} size={16} strokeWidth={2} />
                 </span>
                 <div className="flex flex-col gap-[2px] flex-1 min-w-0">
                     <span className="text-14 font-medium text-fg-1 truncate">{account.name}</span>
                     <span className="text-[12px] text-fg-3 truncate">
                         {account.type}
-                        {account.bankAccountNumber ? ` ${account.bankAccountNumber}` : ''}
+                        {tail ? ` ${tail}` : ''}
                     </span>
                 </div>
                 <Amount
-                    minor={account.balanceMinor}
-                    currencyCode={account.currencyCode}
+                    minor={account.balance.amount}
+                    currencyCode={account.balance.currencyCode}
                     size="inline"
                     decimals={false}
-                    className={account.balanceMinor < 0 ? 'text-danger' : ''}
+                    className={isNegative ? 'text-danger' : ''}
                 />
             </div>
-            {recent.length > 0 && (
-                <div className="pl-12 flex flex-col gap-1">
-                    {recent.map(e => (
-                        <div key={e.id} className="flex items-center justify-between gap-2">
-                            <span className="text-[12px] text-fg-2 truncate">
-                                {e.counterpartyName ?? e.description ?? '—'}
-                            </span>
-                            <span className={['font-mono text-[11px] tabular', e.amountMinor < 0 ? 'text-fg-2' : 'text-success'].join(' ')}>
-                                {formatMoney(e.amountMinor, e.currencyCode, { sign: true })}
-                            </span>
-                        </div>
-                    ))}
-                </div>
-            )}
+            <RecentActivity account={account} />
+        </div>
+    );
+}
+
+function AccountsPanel() {
+    const accounts = useAccounts();
+
+    if (accounts.isPending) {
+        return (
+            <div className="flex flex-col gap-3">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+            </div>
+        );
+    }
+
+    if (accounts.isError) {
+        return (
+            <ErrorState
+                message="Couldn't load accounts."
+                onRetry={() => accounts.refetch()}
+            />
+        );
+    }
+
+    // Only render Asset and Liability accounts — Equity / Income / Expense are
+    // bookkeeping plumbing the user doesn't think of as "their accounts".
+    const ledgerAccounts = accounts.data.filter(
+        a => a.type === 'Asset' || a.type === 'Liability',
+    );
+
+    if (ledgerAccounts.length === 0) {
+        return <span className="text-[13px] text-fg-3">No accounts yet.</span>;
+    }
+
+    return (
+        <div>
+            {ledgerAccounts.map(a => (
+                <AccountRow key={a.id} account={a} />
+            ))}
         </div>
     );
 }
@@ -105,7 +192,7 @@ function KpiStrip() {
     const subtext =
         accountCount !== undefined
             ? `Across ${accountCount} ${accountCount === 1 ? 'account' : 'accounts'}`
-            : ' ';
+            : ' ';
 
     return (
         <section className="grid gap-[14px]" style={{ gridTemplateColumns: '1.3fr 1fr 1fr' }}>
@@ -171,20 +258,15 @@ export function Dashboard() {
                             </div>
                         }
                     />
+                    {/* Trend stays demo-driven — running-balance projection is a later slice. */}
                     <TrendChart series={TREND} days={30} today={15} height={240} />
                     <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
-                        {TREND.map(s => {
-                            const account = ACCOUNTS.find(a => a.id === s.accountId);
-                            return (
-                                <div key={s.accountId} className="flex items-center gap-2 text-14 text-fg-2">
-                                    <span className="w-2 h-2 rounded-full" style={{ background: s.accentColor }} />
-                                    <span>{s.name}</span>
-                                    <span className="text-fg-3 tabular font-mono text-[12px]">
-                                        {account ? formatMoney(account.balanceMinor, account.currencyCode, { decimals: false }) : ''}
-                                    </span>
-                                </div>
-                            );
-                        })}
+                        {TREND.map(s => (
+                            <div key={s.accountId} className="flex items-center gap-2 text-14 text-fg-2">
+                                <span className="w-2 h-2 rounded-full" style={{ background: s.accentColor }} />
+                                <span>{s.name}</span>
+                            </div>
+                        ))}
                     </div>
                 </Panel>
 
@@ -197,9 +279,7 @@ export function Dashboard() {
                             </Link>
                         }
                     />
-                    <div>
-                        {ACCOUNTS.map(a => <AccountRow key={a.id} account={a} />)}
-                    </div>
+                    <AccountsPanel />
                 </Panel>
             </section>
         </>

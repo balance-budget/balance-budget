@@ -84,6 +84,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/accounts/{id}/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListAccountRegister"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/counterparties": {
         parameters: {
             query?: never;
@@ -284,8 +300,7 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
-        /** Format: uuid */
-        CounterpartyId: string;
+        CounterpartyId: unknown;
         CounterpartyOutput: {
             id: components["schemas"]["CounterpartyId"];
             name: string;
@@ -407,6 +422,24 @@ export interface components {
         };
         /** @enum {unknown} */
         ReconciliationStatus: "Uncleared" | "Cleared" | "Reconciled";
+        RegisterRowCounterLeg: {
+            accountId: components["schemas"]["AccountId"];
+            accountName: string;
+            amount: components["schemas"]["Money"];
+        };
+        RegisterRowOutput: {
+            journalEntryId: components["schemas"]["JournalEntryId"];
+            journalLineId: components["schemas"]["JournalLineId"];
+            /** Format: date */
+            date: string;
+            entryDescription: null | string;
+            counterpartyId: null | components["schemas"]["CounterpartyId"];
+            counterpartyName: null | string;
+            lineDescription: null | string;
+            reconciliationStatus: components["schemas"]["ReconciliationStatus"];
+            amount: components["schemas"]["Money"];
+            counter: components["schemas"]["RegisterRowCounterLeg"][];
+        };
         UpdateCurrencyRequest: {
             name: null | string;
             symbol: null | string;
@@ -1314,6 +1347,89 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Money"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        type?: null | string;
+                        title?: null | string;
+                        /** Format: int32 */
+                        status?: null | number | string;
+                        detail?: null | string;
+                        instance?: null | string;
+                        errors?: {
+                            [key: string]: string[];
+                        };
+                    };
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        type?: null | string;
+                        title?: null | string;
+                        /** Format: int32 */
+                        status?: null | number | string;
+                        detail?: null | string;
+                        instance?: null | string;
+                    };
+                };
+            };
+            /** @description Domain invariant violated */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        type?: null | string;
+                        title?: null | string;
+                        /** Format: int32 */
+                        status?: null | number | string;
+                        detail?: null | string;
+                        instance?: null | string;
+                    };
+                };
+            };
+        };
+    };
+    ListAccountRegister: {
+        parameters: {
+            query?: {
+                Skip?: number | string;
+                Take?: number | string;
+            };
+            header?: never;
+            path: {
+                id: components["schemas"]["AccountId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisterRowOutput"][];
                 };
             };
             /** @description Validation failed */

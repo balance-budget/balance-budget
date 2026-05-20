@@ -19,6 +19,10 @@ internal static class AccountEndpoints
         group.MapGet("/{id}", GetAsync).WithName("GetAccount");
         group.MapGet("/{id}/balance", GetBalanceAsync).WithName("GetAccountBalance");
         group
+            .MapGet("/{id}/register", ListRegisterAsync)
+            .WithValidation<ListAccountRegisterRequest>()
+            .WithName("ListAccountRegister");
+        group
             .MapPost("", CreateAsync)
             .WithValidation<CreateAccountRequest>()
             .WithName("CreateAccount");
@@ -46,6 +50,21 @@ internal static class AccountEndpoints
     {
         var account = await accountService.GetAsync(id, cancellationToken);
         return account is null ? TypedResults.NotFound() : TypedResults.Ok(account);
+    }
+
+    private static async Task<
+        Results<Ok<IReadOnlyList<RegisterRowOutput>>, NotFound>
+    > ListRegisterAsync(
+        [FromRoute] AccountId id,
+        [AsParameters] ListAccountRegisterRequest request,
+        [FromServices] IRegisterService registerService,
+        CancellationToken cancellationToken
+    )
+    {
+        var skip = request.Skip ?? 0;
+        var take = request.Take ?? ListAccountRegisterRequest.DefaultPageSize;
+        var rows = await registerService.ListAsync(id, skip, take, cancellationToken);
+        return rows is null ? TypedResults.NotFound() : TypedResults.Ok(rows);
     }
 
     private static async Task<Results<Ok<Money>, NotFound>> GetBalanceAsync(

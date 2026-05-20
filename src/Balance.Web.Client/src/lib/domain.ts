@@ -1,11 +1,12 @@
 /*
- * Frontend types mirroring the domain in CONTEXT.md and the ADRs. The real
- * API does not exist yet — these are the shapes we expect a /api/accounts
- * or /api/journal-entries response to take once it does. Demo data is
- * shaped to satisfy these so screens stay correct when the endpoint lands.
+ * Frontend view-model types. Per ADR-0004, IDs round-trip as GUID-shaped
+ * strings on the wire — branded here for parameter-swap safety without
+ * pulling in a runtime newtype library.
  *
- * Per ADR-0004, IDs are GUID-shaped strings on the wire. We brand them
- * here for parameter-swap safety without pulling in a runtime newtype lib.
+ * Resource-specific view-models live alongside the fetcher in `src/api/*.ts`.
+ * This module owns the cross-cutting brand types and the trend-chart
+ * view-model (still demo-driven; the running-balance projection is a later
+ * slice per PRD #37).
  */
 
 declare const __brand: unique symbol;
@@ -13,48 +14,15 @@ type Brand<T, B> = T & { readonly [__brand]: B };
 
 export type AccountId = Brand<string, 'AccountId'>;
 export type JournalEntryId = Brand<string, 'JournalEntryId'>;
+export type JournalLineId = Brand<string, 'JournalLineId'>;
 export type CounterpartyId = Brand<string, 'CounterpartyId'>;
 export type BankTransactionId = Brand<string, 'BankTransactionId'>;
 
-/** Strip the brand for places that only have a raw string at hand (e.g. seed data). */
 export const asAccountId = (s: string) => s as AccountId;
 export const asJournalEntryId = (s: string) => s as JournalEntryId;
+export const asJournalLineId = (s: string) => s as JournalLineId;
 
 export type AccountType = 'Asset' | 'Liability' | 'Equity' | 'Income' | 'Expense';
-
-export type AccountSummary = {
-    id: AccountId;
-    name: string;
-    type: AccountType;
-    balanceMinor: number;
-    currencyCode: string;
-    /** Visual hint — would live in a per-user UI preferences table, not on the entity itself. */
-    accentColor: string;
-    iconName: string;
-    /** Last four of IBAN / account number, when this Account is linked to a BankAccount. */
-    bankAccountNumber: string | null;
-};
-
-/**
- * What a /api/journal-entries list row will likely return: an entry collapsed
- * to its primary user-side leg, with the offsetting expense/income account
- * surfaced alongside for badge display.
- */
-export type JournalEntrySummary = {
-    id: JournalEntryId;
-    date: string;
-    counterpartyName: string | null;
-    description: string | null;
-    /** Net effect on the focal account — negative = money out. */
-    amountMinor: number;
-    currencyCode: string;
-    accountId: AccountId;
-    categoryAccountId: AccountId | null;
-    categoryAccountName: string | null;
-    /** Tint key — matches the offsetting account's accentColor. */
-    accentColor: string;
-    iconName: string;
-};
 
 export type TrendPoint = { day: number; balanceMinor: number };
 
