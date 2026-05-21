@@ -1,6 +1,7 @@
 using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
 using Balance.Web.Filters;
+using Balance.Web.OpenApi;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
@@ -21,7 +22,10 @@ internal static class CounterpartyEndpoints
             .MapPost("", CreateAsync)
             .WithValidation<CreateCounterpartyRequest>()
             .WithName("CreateCounterparty");
-        group.MapPatch("/{id}", UpdateAsync).WithName("UpdateCounterparty");
+        group
+            .MapPatch("/{id}", UpdateAsync)
+            .WithJsonPatchTarget<UpdateCounterpartyInput>()
+            .WithName("UpdateCounterparty");
         group.MapDelete("/{id}", DeleteAsync).WithName("DeleteCounterparty");
     }
 

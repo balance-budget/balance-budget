@@ -2,6 +2,7 @@ using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
 using Balance.Web.Filters;
+using Balance.Web.OpenApi;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
@@ -27,7 +28,10 @@ internal static class AccountEndpoints
             .MapPost("", CreateAsync)
             .WithValidation<CreateAccountRequest>()
             .WithName("CreateAccount");
-        group.MapPatch("/{id}", UpdateAsync).WithName("UpdateAccount");
+        group
+            .MapPatch("/{id}", UpdateAsync)
+            .WithJsonPatchTarget<UpdateAccountInput>()
+            .WithName("UpdateAccount");
         group.MapDelete("/{id}", DeleteAsync).WithName("DeleteAccount");
     }
 
