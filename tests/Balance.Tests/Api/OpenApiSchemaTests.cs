@@ -28,6 +28,62 @@ internal sealed class OpenApiSchemaTests : EndpointsTestsBase
         await Assert.That(schema.TryGetProperty("properties", out _)).IsFalse();
     }
 
+    [Test]
+    public async Task Patch_account_endpoint_references_per_target_schema()
+    {
+        var document = await GetOpenApiDocumentAsync();
+        var schemaRef =
+            document
+                .RootElement.GetProperty("paths")
+                .GetProperty("/api/accounts/{id}")
+                .GetProperty("patch")
+                .GetProperty("requestBody")
+                .GetProperty("content")
+                .GetProperty("application/json-patch+json")
+                .GetProperty("schema")
+                .GetProperty("$ref")
+                .GetString()
+            ?? string.Empty;
+
+        await Assert
+            .That(schemaRef)
+            .IsEqualTo("#/components/schemas/JsonPatchDocumentOfUpdateAccountInput");
+    }
+
+    [Test]
+    public async Task Patch_account_schema_constrains_path_to_target_properties()
+    {
+        var document = await GetOpenApiDocumentAsync();
+        var schema = GetComponentSchema(document, "JsonPatchDocumentOfUpdateAccountInput");
+
+        var pathEnum = schema
+            .GetProperty("items")
+            .GetProperty("oneOf")[0]
+            .GetProperty("properties")
+            .GetProperty("path")
+            .GetProperty("enum")
+            .EnumerateArray()
+            .Select(e => e.GetString() ?? string.Empty)
+            .ToArray();
+
+        await Assert.That(pathEnum).IsEquivalentTo(["/name", "/accountType", "/currencyCode"]);
+    }
+
+    [Test]
+    public async Task Patch_account_target_shape_is_present_in_components()
+    {
+        var document = await GetOpenApiDocumentAsync();
+        var schema = GetComponentSchema(document, "UpdateAccountInput");
+
+        await Assert.That(schema.GetProperty("type").GetString()).IsEqualTo("object");
+        var propertyNames = schema
+            .GetProperty("properties")
+            .EnumerateObject()
+            .Select(p => p.Name)
+            .ToArray();
+        await Assert.That(propertyNames).IsEquivalentTo(["name", "accountType", "currencyCode"]);
+    }
+
     private async Task<JsonDocument> GetOpenApiDocumentAsync()
     {
         using var client = Factory.CreateClient();

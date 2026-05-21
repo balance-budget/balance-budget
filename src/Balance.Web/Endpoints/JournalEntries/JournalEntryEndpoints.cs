@@ -1,6 +1,7 @@
 using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
 using Balance.Web.Filters;
+using Balance.Web.OpenApi;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
@@ -24,7 +25,10 @@ internal static class JournalEntryEndpoints
             .MapPost("", CreateAsync)
             .WithValidation<CreateJournalEntryRequest>()
             .WithName("CreateJournalEntry");
-        group.MapPatch("/{id}", UpdateAsync).WithName("UpdateJournalEntry");
+        group
+            .MapPatch("/{id}", UpdateAsync)
+            .WithJsonPatchTarget<UpdateJournalEntryInput>()
+            .WithName("UpdateJournalEntry");
         group.MapDelete("/{id}", DeleteAsync).WithName("DeleteJournalEntry");
     }
 
