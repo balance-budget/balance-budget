@@ -10,8 +10,8 @@ namespace Balance.Services.Currencies;
 
 internal sealed class CurrencyService : ICurrencyService
 {
-    internal const string ListCacheKey = "currency:list";
-    internal static readonly TimeSpan CacheTtl = TimeSpan.FromHours(24);
+    private const string ListCacheKey = "currency:list";
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(24);
 
     private readonly BalanceDbContext _dbContext;
     private readonly IMemoryCache _cache;
