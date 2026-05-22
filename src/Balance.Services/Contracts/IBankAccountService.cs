@@ -13,18 +13,18 @@ public interface IBankAccountService
         CancellationToken cancellationToken
     );
 
-    Task<BankAccountOutput> CreateAsync(
+    Task<Result<BankAccountOutput>> CreateAsync(
         CreateBankAccountInput input,
         CancellationToken cancellationToken
     );
 
-    Task<BankAccountOutput> UpdateAsync(
+    Task<Result<BankAccountOutput>> UpdateAsync(
         BankAccountId id,
         UpdateBankAccountInput input,
         CancellationToken cancellationToken
     );
 
-    Task DeleteAsync(BankAccountId id, CancellationToken cancellationToken);
+    Task<Result> DeleteAsync(BankAccountId id, CancellationToken cancellationToken);
 }
 
 public sealed record CreateBankAccountInput(

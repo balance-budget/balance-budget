@@ -2,9 +2,9 @@ using System.Globalization;
 using Balance.Data;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
-using Balance.Data.Exceptions;
 using Balance.Data.Helpers;
 using Balance.Services.Contracts;
+using Balance.Services.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace Balance.Services.JournalEntries;
@@ -110,7 +110,7 @@ internal sealed class JournalEntryService : IJournalEntryService
         };
     }
 
-    public async Task<JournalEntryOutput> CreateAsync(
+    public async Task<Result<JournalEntryOutput>> CreateAsync(
         CreateJournalEntryInput input,
         CancellationToken cancellationToken
     )
@@ -118,14 +118,28 @@ internal sealed class JournalEntryService : IJournalEntryService
         ArgumentNullException.ThrowIfNull(input);
         ArgumentNullException.ThrowIfNull(input.Lines);
 
-        var drafts = await BuildDraftsAsync(input.Lines, cancellationToken);
-        JournalEntryValidator.Validate(drafts);
+        var draftsResult = await BuildDraftsAsync(input.Lines, cancellationToken);
+        if (draftsResult.IsFailure)
+        {
+            return draftsResult.Error;
+        }
 
-        await EnsureOptionalReferencesExistAsync(
-            input.BankTransactionId,
-            input.CounterpartyId,
-            cancellationToken
-        );
+        if (JournalEntryValidator.Validate(draftsResult.Value) is { Error: { } e1 })
+        {
+            return e1;
+        }
+
+        if (
+            await EnsureOptionalReferencesExistAsync(
+                input.BankTransactionId,
+                input.CounterpartyId,
+                cancellationToken
+            ) is
+            { Error: { } e2 }
+        )
+        {
+            return e2;
+        }
 
         var now = _timeProvider.GetUtcNow().UtcDateTime;
         var entry = new JournalEntry
@@ -156,11 +170,14 @@ internal sealed class JournalEntryService : IJournalEntryService
         }
 
         _dbContext.JournalEntries.Add(entry);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        if (await _dbContext.SaveChangesAndCatchAsync(cancellationToken) is { Error: { } e3 })
+        {
+            return e3;
+        }
         return ToOutput(entry);
     }
 
-    public async Task<JournalEntryOutput> UpdateAsync(
+    public async Task<Result<JournalEntryOutput>> UpdateAsync(
         JournalEntryId id,
         UpdateJournalEntryInput input,
         CancellationToken cancellationToken
@@ -169,14 +186,13 @@ internal sealed class JournalEntryService : IJournalEntryService
         ArgumentNullException.ThrowIfNull(input);
         ArgumentNullException.ThrowIfNull(input.Lines);
 
-        var entry =
-            await _dbContext
-                .JournalEntries.Include(e => e.Lines)
-                .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
-            ?? throw new DomainException(
-                DomainExceptionKind.NotFound,
-                $"JournalEntry {id} not found."
-            );
+        var entry = await _dbContext
+            .JournalEntries.Include(e => e.Lines)
+            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+        if (entry is null)
+        {
+            return new NotFoundError("JournalEntry", id.Value.ToString());
+        }
 
         // Parse the dictionary keys back to typed IDs and enforce key-set equality. Adds /
         // removals / reorders are explicitly rejected — corrections to the *set* of lines
@@ -191,8 +207,8 @@ internal sealed class JournalEntryService : IJournalEntryService
                 && !Guid.TryParse(key, CultureInfo.InvariantCulture, out guid)
             )
             {
-                throw new DomainException(
-                    DomainExceptionKind.Invariant,
+                return new InvariantError(
+                    ErrorCodes.JournalLineKeyInvalid,
                     $"JournalLine key '{key}' is not a valid identifier."
                 );
             }
@@ -201,19 +217,25 @@ internal sealed class JournalEntryService : IJournalEntryService
 
         if (!parsedKeys.Keys.ToHashSet().SetEquals(existingIds))
         {
-            throw new DomainException(
-                DomainExceptionKind.Invariant,
+            return new InvariantError(
+                ErrorCodes.JournalLineSetMismatch,
                 "JournalLines cannot be added or removed via PATCH; use a reversing entry."
             );
         }
 
         if (input.CounterpartyId != entry.CounterpartyId)
         {
-            await EnsureOptionalReferencesExistAsync(
-                bankTransactionId: null,
-                input.CounterpartyId,
-                cancellationToken
-            );
+            if (
+                await EnsureOptionalReferencesExistAsync(
+                    bankTransactionId: null,
+                    input.CounterpartyId,
+                    cancellationToken
+                ) is
+                { Error: { } e1 }
+            )
+            {
+                return e1;
+            }
         }
 
         entry.Date = input.Date;
@@ -227,21 +249,26 @@ internal sealed class JournalEntryService : IJournalEntryService
         }
 
         entry.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        if (await _dbContext.SaveChangesAndCatchAsync(cancellationToken) is { Error: { } e2 })
+        {
+            return e2;
+        }
         return ToOutput(entry);
     }
 
-    public async Task DeleteAsync(JournalEntryId id, CancellationToken cancellationToken)
+    public async Task<Result> DeleteAsync(JournalEntryId id, CancellationToken cancellationToken)
     {
-        var entry =
-            await _dbContext.JournalEntries.FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
-            ?? throw new DomainException(
-                DomainExceptionKind.NotFound,
-                $"JournalEntry {id} not found."
-            );
+        var result = await _dbContext
+            .JournalEntries.Where(c => c.Id == id)
+            .ExecuteDeleteAndCatchAsync(cancellationToken);
 
-        _dbContext.JournalEntries.Remove(entry);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        if (result.IsFailure)
+            return result.Error;
+
+        if (result.Value == 0)
+            return new NotFoundError("JournalEntry", id.Value.ToString());
+
+        return Result.Success;
     }
 
     private static JournalEntryOutput ToOutput(JournalEntry entry) =>
@@ -264,14 +291,14 @@ internal sealed class JournalEntryService : IJournalEntryService
             entry.UpdatedAt
         );
 
-    private async Task<IReadOnlyList<JournalLineDraft>> BuildDraftsAsync(
+    private async Task<Result<IReadOnlyList<JournalLineDraft>>> BuildDraftsAsync(
         IReadOnlyList<CreateJournalLineInput> lines,
         CancellationToken cancellationToken
     )
     {
         if (lines.Count == 0)
         {
-            return [];
+            return new Result<IReadOnlyList<JournalLineDraft>>(Array.Empty<JournalLineDraft>());
         }
 
         var accountIds = lines.Select(l => l.AccountId).Distinct().ToList();
@@ -285,17 +312,14 @@ internal sealed class JournalEntryService : IJournalEntryService
         {
             if (!accounts.TryGetValue(line.AccountId, out var currencyCode))
             {
-                throw new DomainException(
-                    DomainExceptionKind.NotFound,
-                    $"Account {line.AccountId} not found."
-                );
+                return new NotFoundError("Account", line.AccountId.Value.ToString());
             }
             drafts.Add(new JournalLineDraft(line.Amount, currencyCode));
         }
-        return drafts;
+        return new Result<IReadOnlyList<JournalLineDraft>>(drafts);
     }
 
-    private async Task EnsureOptionalReferencesExistAsync(
+    private async Task<Result> EnsureOptionalReferencesExistAsync(
         BankTransactionId? bankTransactionId,
         CounterpartyId? counterpartyId,
         CancellationToken cancellationToken
@@ -309,10 +333,7 @@ internal sealed class JournalEntryService : IJournalEntryService
             );
             if (!exists)
             {
-                throw new DomainException(
-                    DomainExceptionKind.NotFound,
-                    $"BankTransaction {btxId} not found."
-                );
+                return new NotFoundError("BankTransaction", btxId.Value.ToString());
             }
         }
 
@@ -324,11 +345,9 @@ internal sealed class JournalEntryService : IJournalEntryService
             );
             if (!exists)
             {
-                throw new DomainException(
-                    DomainExceptionKind.NotFound,
-                    $"Counterparty {cpId} not found."
-                );
+                return new NotFoundError("Counterparty", cpId.Value.ToString());
             }
         }
+        return Result.Success;
     }
 }

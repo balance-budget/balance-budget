@@ -2,8 +2,8 @@ using Balance.Data;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
-using Balance.Data.Exceptions;
 using Balance.Services.Contracts;
+using Balance.Services.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace Balance.Services.Accounts;
@@ -54,7 +54,7 @@ internal sealed class AccountService : IAccountService
             })
             .FirstOrDefaultAsync(cancellationToken);
 
-    public async Task<AccountOutput> CreateAsync(
+    public async Task<Result<AccountOutput>> CreateAsync(
         string name,
         AccountType accountType,
         CurrencyCode currencyCode,
@@ -66,11 +66,20 @@ internal sealed class AccountService : IAccountService
         var trimmed = name.Trim();
         if (trimmed.Length == 0)
         {
-            throw new DomainException(DomainExceptionKind.Validation, "Account name is required.");
+            return new InvariantError(ErrorCodes.AccountNameEmpty, "Account name is required.");
         }
 
-        await EnsureCurrencyExistsAsync(currencyCode, cancellationToken);
-        await EnsureNameAvailableAsync(trimmed, excludingId: null, cancellationToken);
+        if (await EnsureCurrencyExistsAsync(currencyCode, cancellationToken) is { Error: { } e1 })
+        {
+            return e1;
+        }
+        if (
+            await EnsureNameAvailableAsync(trimmed, excludingId: null, cancellationToken) is
+            { Error: { } e2 }
+        )
+        {
+            return e2;
+        }
 
         var now = _timeProvider.GetUtcNow().UtcDateTime;
         var account = new Account
@@ -84,7 +93,11 @@ internal sealed class AccountService : IAccountService
         };
 
         _dbContext.Accounts.Add(account);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        if (await _dbContext.SaveChangesAndCatchAsync(cancellationToken) is { Error: { } e3 })
+        {
+            return e3;
+        }
+
         return new AccountOutput(
             account.Id,
             account.Name,
@@ -97,7 +110,7 @@ internal sealed class AccountService : IAccountService
         );
     }
 
-    public async Task<AccountOutput> UpdateAsync(
+    public async Task<Result<AccountOutput>> UpdateAsync(
         AccountId id,
         UpdateAccountInput input,
         CancellationToken cancellationToken
@@ -105,56 +118,67 @@ internal sealed class AccountService : IAccountService
     {
         ArgumentNullException.ThrowIfNull(input);
 
-        var account =
-            await _dbContext.Accounts.FirstOrDefaultAsync(a => a.Id == id, cancellationToken)
-            ?? throw new DomainException(DomainExceptionKind.NotFound, $"Account {id} not found.");
+        var account = await _dbContext.Accounts.FirstOrDefaultAsync(
+            a => a.Id == id,
+            cancellationToken
+        );
+        if (account is null)
+        {
+            return new NotFoundError("Account", id.Value.ToString());
+        }
 
         var trimmed = input.Name?.Trim() ?? string.Empty;
         if (trimmed.Length == 0)
         {
-            throw new DomainException(
-                DomainExceptionKind.Validation,
-                "Account name cannot be empty."
-            );
+            return new InvariantError(ErrorCodes.AccountNameEmpty, "Account name cannot be empty.");
         }
 
         if (!string.Equals(trimmed, account.Name, StringComparison.Ordinal))
         {
-            await EnsureNameAvailableAsync(trimmed, excludingId: id, cancellationToken);
+            if (
+                await EnsureNameAvailableAsync(trimmed, excludingId: id, cancellationToken) is
+                { Error: { } e1 }
+            )
+            {
+                return e1;
+            }
         }
 
         if (input.CurrencyCode != account.CurrencyCode)
         {
-            await EnsureCurrencyExistsAsync(input.CurrencyCode, cancellationToken);
+            if (
+                await EnsureCurrencyExistsAsync(input.CurrencyCode, cancellationToken) is
+                { Error: { } e2 }
+            )
+            {
+                return e2;
+            }
         }
 
         account.Name = trimmed;
         account.AccountType = input.AccountType;
         account.CurrencyCode = input.CurrencyCode;
         account.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        if (await _dbContext.SaveChangesAndCatchAsync(cancellationToken) is { Error: { } e3 })
+        {
+            return e3;
+        }
         return (await GetAsync(id, cancellationToken))!;
     }
 
-    public async Task DeleteAsync(AccountId id, CancellationToken cancellationToken)
+    public async Task<Result> DeleteAsync(AccountId id, CancellationToken cancellationToken)
     {
-        var account =
-            await _dbContext.Accounts.FirstOrDefaultAsync(a => a.Id == id, cancellationToken)
-            ?? throw new DomainException(DomainExceptionKind.NotFound, $"Account {id} not found.");
+        var result = await _dbContext
+            .Accounts.Where(c => c.Id == id)
+            .ExecuteDeleteAndCatchAsync(cancellationToken);
 
-        _dbContext.Accounts.Remove(account);
-        try
-        {
-            await _dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateException ex)
-        {
-            throw new DomainException(
-                DomainExceptionKind.Conflict,
-                $"Account {id} is referenced by other records and cannot be deleted.",
-                ex
-            );
-        }
+        if (result.IsFailure)
+            return result.Error;
+
+        if (result.Value == 0)
+            return new NotFoundError("Account", id.Value.ToString());
+
+        return Result.Success;
     }
 
     private IQueryable<AccountProjectionRow> ProjectAccounts(IQueryable<Account> source) =>
@@ -194,21 +218,19 @@ internal sealed class AccountService : IAccountService
             row.UpdatedAt
         );
 
-    private async Task EnsureCurrencyExistsAsync(
+    private async Task<Result> EnsureCurrencyExistsAsync(
         CurrencyCode code,
         CancellationToken cancellationToken
     )
     {
         if (await _currencyService.GetAsync(code, cancellationToken) is null)
         {
-            throw new DomainException(
-                DomainExceptionKind.NotFound,
-                $"Currency '{code.Value}' is not defined."
-            );
+            return new NotFoundError("Currency", code.Value);
         }
+        return Result.Success;
     }
 
-    private async Task EnsureNameAvailableAsync(
+    private async Task<Result> EnsureNameAvailableAsync(
         string name,
         AccountId? excludingId,
         CancellationToken cancellationToken
@@ -220,11 +242,12 @@ internal sealed class AccountService : IAccountService
         );
         if (taken)
         {
-            throw new DomainException(
-                DomainExceptionKind.Conflict,
+            return new ConflictError(
+                ErrorCodes.AccountNameTaken,
                 $"An account named '{name}' already exists."
             );
         }
+        return Result.Success;
     }
 
     private sealed record AccountProjectionRow(

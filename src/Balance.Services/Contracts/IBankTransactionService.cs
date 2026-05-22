@@ -11,12 +11,12 @@ public interface IBankTransactionService
         CancellationToken cancellationToken
     );
 
-    Task<BankTransactionOutput> CreateAsync(
+    Task<Result<BankTransactionOutput>> CreateAsync(
         CreateBankTransactionInput input,
         CancellationToken cancellationToken
     );
 
-    Task DeleteAsync(BankTransactionId id, CancellationToken cancellationToken);
+    Task<Result> DeleteAsync(BankTransactionId id, CancellationToken cancellationToken);
 }
 
 public sealed record CreateBankTransactionInput(

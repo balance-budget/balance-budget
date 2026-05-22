@@ -1,6 +1,5 @@
 using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
-using Balance.Data.Exceptions;
 
 namespace Balance.Tests.Domain;
 
@@ -108,21 +107,19 @@ internal sealed class MoneyTests
     }
 
     [Test]
-    public async Task Add_cross_currency_throws_DomainException()
+    public async Task Add_cross_currency_throws_InvalidOperation()
     {
         var act = () => _ = new Money(100, Eur) + new Money(100, Usd);
 
-        var ex = await Assert.That(act).Throws<DomainException>();
-        await Assert.That(ex!.Kind).IsEqualTo(DomainExceptionKind.Invariant);
+        await Assert.That(act).Throws<InvalidOperationException>();
     }
 
     [Test]
-    public async Task Subtract_cross_currency_throws_DomainException()
+    public async Task Subtract_cross_currency_throws_InvalidOperation()
     {
         var act = () => _ = new Money(100, Eur) - new Money(100, Usd);
 
-        var ex = await Assert.That(act).Throws<DomainException>();
-        await Assert.That(ex!.Kind).IsEqualTo(DomainExceptionKind.Invariant);
+        await Assert.That(act).Throws<InvalidOperationException>();
     }
 
     [Test]

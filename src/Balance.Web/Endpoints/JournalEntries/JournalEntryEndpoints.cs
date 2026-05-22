@@ -1,6 +1,7 @@
 using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
 using Balance.Web.Filters;
+using Balance.Web.Mappers;
 using Balance.Web.OpenApi;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -54,7 +55,9 @@ internal static class JournalEntryEndpoints
         return entry is null ? TypedResults.NotFound() : TypedResults.Ok(entry);
     }
 
-    private static async Task<Created<JournalEntryOutput>> CreateAsync(
+    private static async Task<
+        Results<Created<JournalEntryOutput>, ProblemHttpResult, ValidationProblem>
+    > CreateAsync(
         [FromBody] CreateJournalEntryRequest request,
         [FromServices] IJournalEntryService journalEntryService,
         CancellationToken cancellationToken
@@ -69,7 +72,7 @@ internal static class JournalEntryEndpoints
             )),
         ];
 
-        var entry = await journalEntryService.CreateAsync(
+        var result = await journalEntryService.CreateAsync(
             new CreateJournalEntryInput(
                 request.Date,
                 request.Description,
@@ -80,10 +83,12 @@ internal static class JournalEntryEndpoints
             cancellationToken
         );
 
-        return TypedResults.Created($"{PathPrefix}/{entry.Id.Value}", entry);
+        return result.ToCreated(value => $"{PathPrefix}/{value.Id.Value}");
     }
 
-    private static async Task<Results<Ok<JournalEntryOutput>, NotFound>> UpdateAsync(
+    private static async Task<
+        Results<Ok<JournalEntryOutput>, ProblemHttpResult, ValidationProblem>
+    > UpdateAsync(
         [FromRoute] JournalEntryId id,
         [FromBody] JsonPatchDocument<UpdateJournalEntryInput> patch,
         [FromServices] IJournalEntryService journalEntryService,
@@ -94,21 +99,28 @@ internal static class JournalEntryEndpoints
         var snapshot = await journalEntryService.GetSnapshotAsync(id, cancellationToken);
         if (snapshot is null)
         {
-            return TypedResults.NotFound();
+            return new Result<JournalEntryOutput>(
+                new NotFoundError("JournalEntry", id.Value.ToString())
+            ).ToOk();
         }
 
-        var input = await patch.ApplyAndValidateAsync(snapshot, validator, cancellationToken);
-        var entry = await journalEntryService.UpdateAsync(id, input, cancellationToken);
-        return TypedResults.Ok(entry);
+        var patched = await patch.ApplyAndValidateAsync(snapshot, validator, cancellationToken);
+        if (patched.IsFailure)
+        {
+            return new Result<JournalEntryOutput>(patched.Error).ToOk();
+        }
+
+        var result = await journalEntryService.UpdateAsync(id, patched.Value, cancellationToken);
+        return result.ToOk();
     }
 
-    private static async Task<NoContent> DeleteAsync(
+    private static async Task<Results<NoContent, ProblemHttpResult, ValidationProblem>> DeleteAsync(
         [FromRoute] JournalEntryId id,
         [FromServices] IJournalEntryService journalEntryService,
         CancellationToken cancellationToken
     )
     {
-        await journalEntryService.DeleteAsync(id, cancellationToken);
-        return TypedResults.NoContent();
+        var result = await journalEntryService.DeleteAsync(id, cancellationToken);
+        return result.ToNoContent();
     }
 }

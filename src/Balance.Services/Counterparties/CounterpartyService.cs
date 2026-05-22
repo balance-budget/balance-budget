@@ -1,8 +1,8 @@
 using Balance.Data;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
-using Balance.Data.Exceptions;
 using Balance.Services.Contracts;
+using Balance.Services.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace Balance.Services.Counterparties;
@@ -45,7 +45,7 @@ internal sealed class CounterpartyService : ICounterpartyService
             .Select(c => new UpdateCounterpartyInput { Name = c.Name })
             .FirstOrDefaultAsync(cancellationToken);
 
-    public async Task<CounterpartyOutput> CreateAsync(
+    public async Task<Result<CounterpartyOutput>> CreateAsync(
         string name,
         CancellationToken cancellationToken
     )
@@ -55,13 +55,19 @@ internal sealed class CounterpartyService : ICounterpartyService
         var trimmed = name.Trim();
         if (trimmed.Length == 0)
         {
-            throw new DomainException(
-                DomainExceptionKind.Validation,
+            return new InvariantError(
+                ErrorCodes.CounterpartyNameEmpty,
                 "Counterparty name is required."
             );
         }
 
-        await EnsureNameAvailableAsync(trimmed, excludingId: null, cancellationToken);
+        if (
+            await EnsureNameAvailableAsync(trimmed, excludingId: null, cancellationToken) is
+            { Error: { } e1 }
+        )
+        {
+            return e1;
+        }
 
         var now = _timeProvider.GetUtcNow().UtcDateTime;
         var counterparty = new Counterparty
@@ -73,11 +79,14 @@ internal sealed class CounterpartyService : ICounterpartyService
         };
 
         _dbContext.Counterparties.Add(counterparty);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        if (await _dbContext.SaveChangesAndCatchAsync(cancellationToken) is { Error: { } e2 })
+        {
+            return e2;
+        }
         return ToOutput(counterparty);
     }
 
-    public async Task<CounterpartyOutput> UpdateAsync(
+    public async Task<Result<CounterpartyOutput>> UpdateAsync(
         CounterpartyId id,
         UpdateCounterpartyInput input,
         CancellationToken cancellationToken
@@ -85,61 +94,63 @@ internal sealed class CounterpartyService : ICounterpartyService
     {
         ArgumentNullException.ThrowIfNull(input);
 
-        var counterparty =
-            await _dbContext.Counterparties.FirstOrDefaultAsync(c => c.Id == id, cancellationToken)
-            ?? throw new DomainException(
-                DomainExceptionKind.NotFound,
-                $"Counterparty {id} not found."
-            );
+        var counterparty = await _dbContext.Counterparties.FirstOrDefaultAsync(
+            c => c.Id == id,
+            cancellationToken
+        );
+        if (counterparty is null)
+        {
+            return new NotFoundError("Counterparty", id.Value.ToString());
+        }
 
         var trimmed = input.Name?.Trim() ?? string.Empty;
         if (trimmed.Length == 0)
         {
-            throw new DomainException(
-                DomainExceptionKind.Validation,
+            return new InvariantError(
+                ErrorCodes.CounterpartyNameEmpty,
                 "Counterparty name cannot be empty."
             );
         }
 
         if (!string.Equals(trimmed, counterparty.Name, StringComparison.Ordinal))
         {
-            await EnsureNameAvailableAsync(trimmed, excludingId: id, cancellationToken);
+            if (
+                await EnsureNameAvailableAsync(trimmed, excludingId: id, cancellationToken) is
+                { Error: { } e1 }
+            )
+            {
+                return e1;
+            }
         }
 
         counterparty.Name = trimmed;
         counterparty.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        if (await _dbContext.SaveChangesAndCatchAsync(cancellationToken) is { Error: { } e2 })
+        {
+            return e2;
+        }
         return ToOutput(counterparty);
     }
 
-    public async Task DeleteAsync(CounterpartyId id, CancellationToken cancellationToken)
+    public async Task<Result> DeleteAsync(CounterpartyId id, CancellationToken cancellationToken)
     {
-        var counterparty =
-            await _dbContext.Counterparties.FirstOrDefaultAsync(c => c.Id == id, cancellationToken)
-            ?? throw new DomainException(
-                DomainExceptionKind.NotFound,
-                $"Counterparty {id} not found."
-            );
+        var result = await _dbContext
+            .Counterparties.Where(c => c.Id == id)
+            .ExecuteDeleteAndCatchAsync(cancellationToken);
 
-        _dbContext.Counterparties.Remove(counterparty);
-        try
-        {
-            await _dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateException ex)
-        {
-            throw new DomainException(
-                DomainExceptionKind.Conflict,
-                $"Counterparty {id} is referenced by other records and cannot be deleted.",
-                ex
-            );
-        }
+        if (result.IsFailure)
+            return result.Error;
+
+        if (result.Value == 0)
+            return new NotFoundError("Counterparty", id.Value.ToString());
+
+        return Result.Success;
     }
 
     private static CounterpartyOutput ToOutput(Counterparty counterparty) =>
         new(counterparty.Id, counterparty.Name, counterparty.CreatedAt, counterparty.UpdatedAt);
 
-    private async Task EnsureNameAvailableAsync(
+    private async Task<Result> EnsureNameAvailableAsync(
         string name,
         CounterpartyId? excludingId,
         CancellationToken cancellationToken
@@ -151,10 +162,11 @@ internal sealed class CounterpartyService : ICounterpartyService
         );
         if (taken)
         {
-            throw new DomainException(
-                DomainExceptionKind.Conflict,
+            return new ConflictError(
+                ErrorCodes.CounterpartyNameTaken,
                 $"A counterparty named '{name}' already exists."
             );
         }
+        return Result.Success;
     }
 }

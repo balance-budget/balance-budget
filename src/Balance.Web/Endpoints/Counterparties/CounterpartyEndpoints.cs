@@ -1,6 +1,7 @@
 using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
 using Balance.Web.Filters;
+using Balance.Web.Mappers;
 using Balance.Web.OpenApi;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -48,17 +49,21 @@ internal static class CounterpartyEndpoints
         return counterparty is null ? TypedResults.NotFound() : TypedResults.Ok(counterparty);
     }
 
-    private static async Task<Created<CounterpartyOutput>> CreateAsync(
+    private static async Task<
+        Results<Created<CounterpartyOutput>, ProblemHttpResult, ValidationProblem>
+    > CreateAsync(
         [FromBody] CreateCounterpartyRequest request,
         [FromServices] ICounterpartyService counterpartyService,
         CancellationToken cancellationToken
     )
     {
-        var counterparty = await counterpartyService.CreateAsync(request.Name, cancellationToken);
-        return TypedResults.Created($"{PathPrefix}/{counterparty.Id.Value}", counterparty);
+        var result = await counterpartyService.CreateAsync(request.Name, cancellationToken);
+        return result.ToCreated(value => $"{PathPrefix}/{value.Id.Value}");
     }
 
-    private static async Task<Results<Ok<CounterpartyOutput>, NotFound>> UpdateAsync(
+    private static async Task<
+        Results<Ok<CounterpartyOutput>, ProblemHttpResult, ValidationProblem>
+    > UpdateAsync(
         [FromRoute] CounterpartyId id,
         [FromBody] JsonPatchDocument<UpdateCounterpartyInput> patch,
         [FromServices] ICounterpartyService counterpartyService,
@@ -68,20 +73,29 @@ internal static class CounterpartyEndpoints
     {
         var snapshot = await counterpartyService.GetSnapshotAsync(id, cancellationToken);
         if (snapshot is null)
-            return TypedResults.NotFound();
+        {
+            return new Result<CounterpartyOutput>(
+                new NotFoundError("Counterparty", id.Value.ToString())
+            ).ToOk();
+        }
 
-        var input = await patch.ApplyAndValidateAsync(snapshot, validator, cancellationToken);
-        var counterparty = await counterpartyService.UpdateAsync(id, input, cancellationToken);
-        return TypedResults.Ok(counterparty);
+        var patched = await patch.ApplyAndValidateAsync(snapshot, validator, cancellationToken);
+        if (patched.IsFailure)
+        {
+            return new Result<CounterpartyOutput>(patched.Error).ToOk();
+        }
+
+        var result = await counterpartyService.UpdateAsync(id, patched.Value, cancellationToken);
+        return result.ToOk();
     }
 
-    private static async Task<NoContent> DeleteAsync(
+    private static async Task<Results<NoContent, ProblemHttpResult, ValidationProblem>> DeleteAsync(
         [FromRoute] CounterpartyId id,
         [FromServices] ICounterpartyService counterpartyService,
         CancellationToken cancellationToken
     )
     {
-        await counterpartyService.DeleteAsync(id, cancellationToken);
-        return TypedResults.NoContent();
+        var result = await counterpartyService.DeleteAsync(id, cancellationToken);
+        return result.ToNoContent();
     }
 }
