@@ -29,10 +29,9 @@ internal sealed class JsonPatchOperationTransformer : IOpenApiOperationTransform
         var target = context
             .Description.ActionDescriptor.EndpointMetadata.OfType<JsonPatchTargetMetadata>()
             .FirstOrDefault();
+
         if (target is null)
-        {
             return;
-        }
 
         var targetSchema = await context.GetOrCreateSchemaAsync(
             target.Target,
@@ -45,15 +44,11 @@ internal sealed class JsonPatchOperationTransformer : IOpenApiOperationTransform
 
         var paths = GetTopLevelPaths(target.Target);
         if (paths.Length == 0 || operation.RequestBody?.Content is not { } content)
-        {
             return;
-        }
 
         var document = context.Document;
         if (document is null)
-        {
             return;
-        }
 
         var components = document.Components ?? (document.Components = new OpenApiComponents());
         var schemas =
@@ -64,15 +59,11 @@ internal sealed class JsonPatchOperationTransformer : IOpenApiOperationTransform
 
         // Ensure the target shape is in components so consumers can navigate to it.
         if (!schemas.ContainsKey(target.Target.Name))
-        {
             schemas[target.Target.Name] = targetSchema;
-        }
 
         var schemaName = "JsonPatchDocumentOf" + target.Target.Name;
         if (!schemas.ContainsKey(schemaName))
-        {
             schemas[schemaName] = BuildPatchSchema(paths);
-        }
 
         foreach (var media in content.Values)
         {
