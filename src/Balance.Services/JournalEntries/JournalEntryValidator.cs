@@ -1,5 +1,5 @@
 using Balance.Data.Entities.Ids;
-using Balance.Data.Exceptions;
+using Balance.Services.Contracts;
 
 namespace Balance.Services.JournalEntries;
 
@@ -11,14 +11,14 @@ internal static class JournalEntryValidator
         "All JournalLines in a single JournalEntry must share the same CurrencyCode in v1.";
     internal const string UnbalancedMessage = "JournalEntry lines must net to zero per currency";
 
-    public static void Validate(IReadOnlyList<JournalLineDraft> lines)
+    public static Result Validate(IReadOnlyList<JournalLineDraft> lines)
     {
         ArgumentNullException.ThrowIfNull(lines);
 
         if (lines.Count < 2)
         {
-            throw new DomainException(
-                DomainExceptionKind.Invariant,
+            return new InvariantError(
+                ErrorCodes.JournalTooFewLines,
                 $"{TooFewLinesMessage}; got {lines.Count}."
             );
         }
@@ -27,7 +27,7 @@ internal static class JournalEntryValidator
         {
             if (line.Amount == 0)
             {
-                throw new DomainException(DomainExceptionKind.Invariant, ZeroAmountLineMessage);
+                return new InvariantError(ErrorCodes.JournalZeroAmountLine, ZeroAmountLineMessage);
             }
         }
 
@@ -36,7 +36,10 @@ internal static class JournalEntryValidator
         {
             if (lines[i].AccountCurrencyCode != firstCurrency)
             {
-                throw new DomainException(DomainExceptionKind.Invariant, CurrencyMismatchMessage);
+                return new InvariantError(
+                    ErrorCodes.JournalCurrencyMismatch,
+                    CurrencyMismatchMessage
+                );
             }
         }
 
@@ -47,11 +50,13 @@ internal static class JournalEntryValidator
         }
         if (sum != 0L)
         {
-            throw new DomainException(
-                DomainExceptionKind.Invariant,
+            return new InvariantError(
+                ErrorCodes.JournalUnbalanced,
                 $"{UnbalancedMessage}; sum for {firstCurrency.Value} is {sum}."
             );
         }
+
+        return Result.Success;
     }
 }
 

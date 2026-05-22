@@ -1,4 +1,3 @@
-using System.Globalization;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
 
@@ -19,18 +18,18 @@ public interface IJournalEntryService
         CancellationToken cancellationToken
     );
 
-    Task<JournalEntryOutput> CreateAsync(
+    Task<Result<JournalEntryOutput>> CreateAsync(
         CreateJournalEntryInput input,
         CancellationToken cancellationToken
     );
 
-    Task<JournalEntryOutput> UpdateAsync(
+    Task<Result<JournalEntryOutput>> UpdateAsync(
         JournalEntryId id,
         UpdateJournalEntryInput input,
         CancellationToken cancellationToken
     );
 
-    Task DeleteAsync(JournalEntryId id, CancellationToken cancellationToken);
+    Task<Result> DeleteAsync(JournalEntryId id, CancellationToken cancellationToken);
 }
 
 public sealed record CreateJournalEntryInput(

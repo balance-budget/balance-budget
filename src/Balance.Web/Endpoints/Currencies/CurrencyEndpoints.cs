@@ -1,6 +1,7 @@
 using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
 using Balance.Web.Filters;
+using Balance.Web.Mappers;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
@@ -48,13 +49,15 @@ internal static class CurrencyEndpoints
         return currency is null ? TypedResults.NotFound() : TypedResults.Ok(currency);
     }
 
-    private static async Task<Created<CurrencyOutput>> CreateAsync(
+    private static async Task<
+        Results<Created<CurrencyOutput>, ProblemHttpResult, ValidationProblem>
+    > CreateAsync(
         [FromBody] CreateCurrencyRequest request,
         [FromServices] ICurrencyService currencyService,
         CancellationToken cancellationToken
     )
     {
-        var output = await currencyService.CreateAsync(
+        var result = await currencyService.CreateAsync(
             new CreateCurrencyInput(
                 request.Code,
                 request.Name,
@@ -63,31 +66,33 @@ internal static class CurrencyEndpoints
             ),
             cancellationToken
         );
-        return TypedResults.Created($"{PathPrefix}/{output.Code.Value}", output);
+        return result.ToCreated(value => $"{PathPrefix}/{value.Code.Value}");
     }
 
-    private static async Task<Ok<CurrencyOutput>> UpdateAsync(
+    private static async Task<
+        Results<Ok<CurrencyOutput>, ProblemHttpResult, ValidationProblem>
+    > UpdateAsync(
         [FromRoute] CurrencyCode code,
         [FromBody] UpdateCurrencyRequest request,
         [FromServices] ICurrencyService currencyService,
         CancellationToken cancellationToken
     )
     {
-        var output = await currencyService.UpdateAsync(
+        var result = await currencyService.UpdateAsync(
             code,
             new UpdateCurrencyInput(request.Name, request.Symbol),
             cancellationToken
         );
-        return TypedResults.Ok(output);
+        return result.ToOk();
     }
 
-    private static async Task<NoContent> DeleteAsync(
+    private static async Task<Results<NoContent, ProblemHttpResult, ValidationProblem>> DeleteAsync(
         [FromRoute] CurrencyCode code,
         [FromServices] ICurrencyService currencyService,
         CancellationToken cancellationToken
     )
     {
-        await currencyService.DeleteAsync(code, cancellationToken);
-        return TypedResults.NoContent();
+        var result = await currencyService.DeleteAsync(code, cancellationToken);
+        return result.ToNoContent();
     }
 }

@@ -49,6 +49,7 @@ public sealed class BalanceDbContext : DbContext, IDataProtectionKeyContext
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         ArgumentNullException.ThrowIfNull(optionsBuilder);
+
         optionsBuilder
             .UseProvider(_options)
             .UseLoggerFactory(_loggerFactory)

@@ -14,15 +14,15 @@ public interface ICounterpartyService
         CancellationToken cancellationToken
     );
 
-    Task<CounterpartyOutput> CreateAsync(string name, CancellationToken cancellationToken);
+    Task<Result<CounterpartyOutput>> CreateAsync(string name, CancellationToken cancellationToken);
 
-    Task<CounterpartyOutput> UpdateAsync(
+    Task<Result<CounterpartyOutput>> UpdateAsync(
         CounterpartyId id,
         UpdateCounterpartyInput input,
         CancellationToken cancellationToken
     );
 
-    Task DeleteAsync(CounterpartyId id, CancellationToken cancellationToken);
+    Task<Result> DeleteAsync(CounterpartyId id, CancellationToken cancellationToken);
 }
 
 public sealed record UpdateCounterpartyInput

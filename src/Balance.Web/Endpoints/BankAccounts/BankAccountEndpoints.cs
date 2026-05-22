@@ -1,6 +1,7 @@
 using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
 using Balance.Web.Filters;
+using Balance.Web.Mappers;
 using Balance.Web.OpenApi;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -48,13 +49,15 @@ internal static class BankAccountEndpoints
         return bankAccount is null ? TypedResults.NotFound() : TypedResults.Ok(bankAccount);
     }
 
-    private static async Task<Created<BankAccountOutput>> CreateAsync(
+    private static async Task<
+        Results<Created<BankAccountOutput>, ProblemHttpResult, ValidationProblem>
+    > CreateAsync(
         [FromBody] CreateBankAccountRequest request,
         [FromServices] IBankAccountService bankAccountService,
         CancellationToken cancellationToken
     )
     {
-        var bankAccount = await bankAccountService.CreateAsync(
+        var result = await bankAccountService.CreateAsync(
             new CreateBankAccountInput(
                 request.Iban,
                 request.AccountNumber,
@@ -67,10 +70,12 @@ internal static class BankAccountEndpoints
             ),
             cancellationToken
         );
-        return TypedResults.Created($"{PathPrefix}/{bankAccount.Id.Value}", bankAccount);
+        return result.ToCreated(value => $"{PathPrefix}/{value.Id.Value}");
     }
 
-    private static async Task<Results<Ok<BankAccountOutput>, NotFound>> UpdateAsync(
+    private static async Task<
+        Results<Ok<BankAccountOutput>, ProblemHttpResult, ValidationProblem>
+    > UpdateAsync(
         [FromRoute] BankAccountId id,
         [FromBody] JsonPatchDocument<UpdateBankAccountInput> patch,
         [FromServices] IBankAccountService bankAccountService,
@@ -80,20 +85,29 @@ internal static class BankAccountEndpoints
     {
         var snapshot = await bankAccountService.GetSnapshotAsync(id, cancellationToken);
         if (snapshot is null)
-            return TypedResults.NotFound();
+        {
+            return new Result<BankAccountOutput>(
+                new NotFoundError("BankAccount", id.Value.ToString())
+            ).ToOk();
+        }
 
-        var input = await patch.ApplyAndValidateAsync(snapshot, validator, cancellationToken);
-        var bankAccount = await bankAccountService.UpdateAsync(id, input, cancellationToken);
-        return TypedResults.Ok(bankAccount);
+        var patched = await patch.ApplyAndValidateAsync(snapshot, validator, cancellationToken);
+        if (patched.IsFailure)
+        {
+            return new Result<BankAccountOutput>(patched.Error).ToOk();
+        }
+
+        var result = await bankAccountService.UpdateAsync(id, patched.Value, cancellationToken);
+        return result.ToOk();
     }
 
-    private static async Task<NoContent> DeleteAsync(
+    private static async Task<Results<NoContent, ProblemHttpResult, ValidationProblem>> DeleteAsync(
         [FromRoute] BankAccountId id,
         [FromServices] IBankAccountService bankAccountService,
         CancellationToken cancellationToken
     )
     {
-        await bankAccountService.DeleteAsync(id, cancellationToken);
-        return TypedResults.NoContent();
+        var result = await bankAccountService.DeleteAsync(id, cancellationToken);
+        return result.ToNoContent();
     }
 }

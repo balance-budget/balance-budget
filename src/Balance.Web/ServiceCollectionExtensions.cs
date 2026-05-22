@@ -3,7 +3,6 @@ using System.Text.Json.Serialization;
 using Balance.Configuration.Helpers;
 using Balance.Configuration.Options;
 using Balance.Data;
-using Balance.Web.Middleware;
 using Balance.Web.OpenApi;
 using FluentValidation;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -39,8 +38,6 @@ internal static class ServiceCollectionExtensions
                 }
             };
         });
-
-        services.AddExceptionHandler<DomainExceptionHandler>();
 
         services.ConfigureHttpJsonOptions(options =>
         {

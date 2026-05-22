@@ -1,11 +1,11 @@
 using Balance.Data.Entities.Ids;
-using Balance.Data.Exceptions;
 
 namespace Balance.Data.Entities;
 
 /// <summary>
 /// A value object pairing an integer amount of minor units (cents, satoshi, etc.) with a Currency.
-/// Same-currency arithmetic is type-checked; cross-currency arithmetic throws DomainException.
+/// Same-currency arithmetic is type-checked; cross-currency arithmetic throws
+/// <see cref="InvalidOperationException"/> (a programmer error, not a domain error).
 /// Human-readable formatting/parsing lives in <see cref="MoneyExtensions"/> and requires a Currency.
 /// </summary>
 public readonly record struct Money(long Amount, CurrencyCode CurrencyCode)
@@ -45,8 +45,7 @@ public readonly record struct Money(long Amount, CurrencyCode CurrencyCode)
     {
         if (left.CurrencyCode != right.CurrencyCode)
         {
-            throw new DomainException(
-                DomainExceptionKind.Invariant,
+            throw new InvalidOperationException(
                 $"Cannot operate on Money values of different currencies: "
                     + $"{left.CurrencyCode.Value} and {right.CurrencyCode.Value}."
             );

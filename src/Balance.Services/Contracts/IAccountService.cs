@@ -12,20 +12,20 @@ public interface IAccountService
 
     Task<UpdateAccountInput?> GetSnapshotAsync(AccountId id, CancellationToken cancellationToken);
 
-    Task<AccountOutput> CreateAsync(
+    Task<Result<AccountOutput>> CreateAsync(
         string name,
         AccountType accountType,
         CurrencyCode currencyCode,
         CancellationToken cancellationToken
     );
 
-    Task<AccountOutput> UpdateAsync(
+    Task<Result<AccountOutput>> UpdateAsync(
         AccountId id,
         UpdateAccountInput input,
         CancellationToken cancellationToken
     );
 
-    Task DeleteAsync(AccountId id, CancellationToken cancellationToken);
+    Task<Result> DeleteAsync(AccountId id, CancellationToken cancellationToken);
 }
 
 public sealed record UpdateAccountInput

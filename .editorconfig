@@ -3,6 +3,7 @@ root = true
 [*.cs]
 dotnet_diagnostic.CA2007.severity = none # Consider calling ConfigureAwait on the awaited task
 dotnet_diagnostic.CA1812.severity = none # Uninstantiated internal classes should be removed
+dotnet_diagnostic.CA2225.severity = none # Operator overloads have named alternates — Result<T> implicit conversions are the idiomatic API
 
 # Disable checks in generated migrations
 [{src/Balance.Data.Sqlite/Migrations/*.cs,src/Balance.Data.PostgreSql/Migrations/*.cs}]

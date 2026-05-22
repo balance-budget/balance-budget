@@ -1,4 +1,4 @@
-using Balance.Data.Exceptions;
+using Balance.Services.Contracts;
 using FluentValidation;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 
@@ -8,10 +8,10 @@ internal static class JsonPatchExtensions
 {
     /// <summary>
     /// Applies <paramref name="patch"/> to <paramref name="snapshot"/>, collecting apply-time
-    /// errors as a <see cref="DomainException"/>; on success, runs <paramref name="validator"/>
+    /// errors as a <see cref="ValidationError"/>; on success, runs <paramref name="validator"/>
     /// against the patched snapshot and surfaces FluentValidation failures the same way.
     /// </summary>
-    public static async Task<T> ApplyAndValidateAsync<T>(
+    public static async Task<Result<T>> ApplyAndValidateAsync<T>(
         this JsonPatchDocument<T> patch,
         T snapshot,
         IValidator<T>? validator,
@@ -37,11 +37,7 @@ internal static class JsonPatchExtensions
 
         if (applyErrors is not null)
         {
-            throw new DomainException(
-                DomainExceptionKind.Validation,
-                "JSON Patch could not be applied.",
-                applyErrors
-            );
+            return new ValidationError(applyErrors);
         }
 
         if (validator is not null)
@@ -52,11 +48,7 @@ internal static class JsonPatchExtensions
                 var errors = result
                     .Errors.GroupBy(e => e.PropertyName)
                     .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
-                throw new DomainException(
-                    DomainExceptionKind.Validation,
-                    "Validation failed.",
-                    errors
-                );
+                return new ValidationError(errors);
             }
         }
 

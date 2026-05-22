@@ -1,8 +1,9 @@
+using System.Data.Common;
 using Balance.Data;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
-using Balance.Data.Exceptions;
 using Balance.Services.Contracts;
+using Balance.Services.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -61,7 +62,7 @@ internal sealed class CurrencyService : ICurrencyService
         );
     }
 
-    public async Task<CurrencyOutput> CreateAsync(
+    public async Task<Result<CurrencyOutput>> CreateAsync(
         CreateCurrencyInput input,
         CancellationToken cancellationToken
     )
@@ -77,8 +78,8 @@ internal sealed class CurrencyService : ICurrencyService
         );
         if (exists)
         {
-            throw new DomainException(
-                DomainExceptionKind.Conflict,
+            return new ConflictError(
+                ErrorCodes.CurrencyExists,
                 $"Currency '{input.Code.Value}' already exists."
             );
         }
@@ -91,13 +92,16 @@ internal sealed class CurrencyService : ICurrencyService
             Symbol = trimmedSymbol,
         };
         _dbContext.Currencies.Add(currency);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        if (await _dbContext.SaveChangesAndCatchAsync(cancellationToken) is { Error: { } err })
+        {
+            return err;
+        }
 
         InvalidateCache(input.Code);
         return CurrencyOutput.FromEntity(currency);
     }
 
-    public async Task<CurrencyOutput> UpdateAsync(
+    public async Task<Result<CurrencyOutput>> UpdateAsync(
         CurrencyCode code,
         UpdateCurrencyInput input,
         CancellationToken cancellationToken
@@ -105,20 +109,22 @@ internal sealed class CurrencyService : ICurrencyService
     {
         ArgumentNullException.ThrowIfNull(input);
 
-        var currency =
-            await _dbContext.Currencies.FirstOrDefaultAsync(c => c.Code == code, cancellationToken)
-            ?? throw new DomainException(
-                DomainExceptionKind.NotFound,
-                $"Currency '{code.Value}' not found."
-            );
+        var currency = await _dbContext.Currencies.FirstOrDefaultAsync(
+            c => c.Code == code,
+            cancellationToken
+        );
+        if (currency is null)
+        {
+            return new NotFoundError("Currency", code.Value);
+        }
 
         if (input.Name is not null)
         {
             var trimmed = input.Name.Trim();
             if (trimmed.Length == 0)
             {
-                throw new DomainException(
-                    DomainExceptionKind.Validation,
+                return new InvariantError(
+                    ErrorCodes.CurrencyNameEmpty,
                     "Currency name cannot be empty."
                 );
             }
@@ -131,36 +137,30 @@ internal sealed class CurrencyService : ICurrencyService
             currency.Symbol = trimmed.Length == 0 ? null : trimmed;
         }
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        if (await _dbContext.SaveChangesAndCatchAsync(cancellationToken) is { Error: { } err })
+        {
+            return err;
+        }
 
         InvalidateCache(code);
         return CurrencyOutput.FromEntity(currency);
     }
 
-    public async Task DeleteAsync(CurrencyCode code, CancellationToken cancellationToken)
+    public async Task<Result> DeleteAsync(CurrencyCode code, CancellationToken cancellationToken)
     {
-        var currency =
-            await _dbContext.Currencies.FirstOrDefaultAsync(c => c.Code == code, cancellationToken)
-            ?? throw new DomainException(
-                DomainExceptionKind.NotFound,
-                $"Currency '{code.Value}' not found."
-            );
+        var result = await _dbContext
+            .Currencies.Where(c => c.Code == code)
+            .ExecuteDeleteAndCatchAsync(cancellationToken);
 
-        _dbContext.Currencies.Remove(currency);
-        try
-        {
-            await _dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateException ex)
-        {
-            throw new DomainException(
-                DomainExceptionKind.Conflict,
-                $"Currency '{code.Value}' is referenced by other records and cannot be deleted.",
-                ex
-            );
-        }
+        if (result.IsFailure)
+            return result.Error;
+
+        if (result.Value == 0)
+            return new NotFoundError("Currency", code.Value);
 
         InvalidateCache(code);
+
+        return Result.Success;
     }
 
     internal static string CacheKey(CurrencyCode code) => $"currency:{code.Value}";
