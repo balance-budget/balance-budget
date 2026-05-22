@@ -2,17 +2,18 @@ import { useQuery } from '@tanstack/react-query';
 import type { components } from '../lib/api-types';
 import {
     type AccountId,
+    type CounterpartyId,
     type JournalEntryId,
     type JournalLineId,
     asAccountId,
+    asCounterpartyId,
     asJournalEntryId,
     asJournalLineId,
 } from '../lib/domain';
-import type { Money } from './accounts';
+import { toMoney, type Money } from '../lib/money';
 
 type WireRegisterRow = components['schemas']['RegisterRowOutput'];
 type WireCounterLeg = components['schemas']['RegisterRowCounterLeg'];
-type WireMoney = components['schemas']['Money'];
 
 export type ReconciliationStatus = 'Uncleared' | 'Cleared' | 'Reconciled';
 
@@ -27,7 +28,7 @@ export type RegisterRow = {
     journalLineId: JournalLineId;
     date: string;
     entryDescription: string | null;
-    counterpartyId: string | null;
+    counterpartyId: CounterpartyId | null;
     counterpartyName: string | null;
     lineDescription: string | null;
     reconciliationStatus: ReconciliationStatus;
@@ -55,15 +56,6 @@ async function fetchRegister(
     return (await response.json()) as WireRegisterRow[];
 }
 
-function toMoney(wire: WireMoney, fallbackCurrencyCode: string): Money {
-    const raw = wire.amount;
-    const amount = typeof raw === 'string' ? Number(raw) : (raw ?? 0);
-    return {
-        amount,
-        currencyCode: wire.currencyCode ?? fallbackCurrencyCode,
-    };
-}
-
 function toCounterLeg(wire: WireCounterLeg): RegisterCounterLeg {
     return {
         accountId: asAccountId(wire.accountId),
@@ -82,7 +74,9 @@ function toRegisterRow(wire: WireRegisterRow): RegisterRow {
         // CounterpartyId is typed as `unknown` by openapi-typescript (the OpenAPI
         // schema emits the typed-id as a bare `unknown` until the transformer
         // covers nullable references). Coerce here at the boundary.
-        counterpartyId: (wire.counterpartyId as string | null) ?? null,
+        counterpartyId: wire.counterpartyId
+            ? asCounterpartyId(wire.counterpartyId as string)
+            : null,
         counterpartyName: wire.counterpartyName,
         lineDescription: wire.lineDescription,
         reconciliationStatus: wire.reconciliationStatus,
@@ -91,11 +85,11 @@ function toRegisterRow(wire: WireRegisterRow): RegisterRow {
     };
 }
 
-export function useAccountRegister(accountId: AccountId, take: number) {
+export function useAccountRegister(accountId: AccountId, take: number, skip: number = 0) {
     return useQuery({
-        queryKey: registerKeys.list(accountId, 0, take),
+        queryKey: registerKeys.list(accountId, skip, take),
         queryFn: async ({ signal }) => {
-            const wire = await fetchRegister(accountId, 0, take, signal);
+            const wire = await fetchRegister(accountId, skip, take, signal);
             return wire.map(toRegisterRow);
         },
     });

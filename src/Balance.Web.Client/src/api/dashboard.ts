@@ -1,11 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import type { components } from '../lib/api-types';
 import { asAccountId, type AccountTrend, type TrendPoint } from '../lib/domain';
+import { toMoney, type Money } from '../lib/money';
 import { visualHintFor } from '../lib/visualHints';
-import type { Money } from './accounts';
 
 type WireSummary = components['schemas']['DashboardSummaryOutput'];
-type WireMoney = components['schemas']['Money'];
 type WireTrend = components['schemas']['AccountBalanceTrendOutput'];
 type WireTrendSeries = components['schemas']['AccountTrendSeries'];
 type WireTrendDelta = components['schemas']['TrendDelta'];
@@ -58,15 +57,6 @@ async function fetchTrend(range: TrendRange, signal: AbortSignal): Promise<WireT
         throw new Error(`Failed to load account balance trend (${response.status})`);
     }
     return (await response.json()) as WireTrend;
-}
-
-function toMoney(wire: WireMoney, fallbackCurrencyCode: string): Money {
-    const raw = wire.amount;
-    const amount = typeof raw === 'string' ? Number(raw) : (raw ?? 0);
-    return {
-        amount,
-        currencyCode: wire.currencyCode ?? fallbackCurrencyCode,
-    };
 }
 
 function toSummary(wire: WireSummary): DashboardSummary {

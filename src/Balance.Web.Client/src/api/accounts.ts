@@ -1,15 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import type { components } from '../lib/api-types';
 import { type AccountId, type AccountType, asAccountId } from '../lib/domain';
+import { toMoney, type Money } from '../lib/money';
 
 type WireAccount = components['schemas']['AccountOutput'];
-type WireMoney = components['schemas']['Money'];
 type WireBankAccountSummary = components['schemas']['BankAccountSummary'];
 
-export type Money = {
-    amount: number;
-    currencyCode: string;
-};
+export type { Money };
 
 export type BankAccountSummary = {
     iban: string | null;
@@ -38,18 +35,6 @@ async function fetchAccounts(signal: AbortSignal): Promise<WireAccount[]> {
         throw new Error(`Failed to load accounts (${response.status})`);
     }
     return (await response.json()) as WireAccount[];
-}
-
-function toMoney(wire: WireMoney, fallbackCurrencyCode: string): Money {
-    // Money is serialised as { amount, currencyCode } but openapi-typescript marks both
-    // as optional (System.Text.Json on a record struct). For ledger amounts that fit in
-    // number safely, coerce to number; fall back to the account's currency if absent.
-    const raw = wire.amount;
-    const amount = typeof raw === 'string' ? Number(raw) : (raw ?? 0);
-    return {
-        amount,
-        currencyCode: wire.currencyCode ?? fallbackCurrencyCode,
-    };
 }
 
 function toBankAccountSummary(

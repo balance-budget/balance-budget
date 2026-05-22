@@ -3,20 +3,56 @@
  * to display strings is a pure presentation concern that happens here.
  */
 
+import type { components } from './api-types';
+
+type WireMoney = components['schemas']['Money'];
+export type Money = { amount: number; currencyCode: string };
+
+/**
+ * Boundary converter for wire-format Money. openapi-typescript marks both fields
+ * optional (System.Text.Json on a record struct), and large ints may serialise
+ * as strings — both are normalised here. The fallback currency code is the
+ * envelope's currency (account, summary, etc.) when the inner value lacks one.
+ */
+export function toMoney(wire: WireMoney, fallbackCurrencyCode: string): Money {
+    const raw = wire.amount;
+    const amount = typeof raw === 'string' ? Number(raw) : (raw ?? 0);
+    return {
+        amount,
+        currencyCode: wire.currencyCode ?? fallbackCurrencyCode,
+    };
+}
+
+// Mirrors the backend's seeded currencies (Balance.Data.Configurations.CurrencySeed).
+// User-defined currencies fall back to the defaults below — refetch the currency
+// catalog from the API once non-seeded currencies become a real scenario.
 const MINOR_UNIT_SCALE: Record<string, number> = {
     EUR: 2,
     USD: 2,
     GBP: 2,
+    CHF: 2,
     JPY: 0,
     BTC: 8,
+    ETH: 18,
 };
 
 const CURRENCY_SYMBOL: Record<string, string> = {
     EUR: '€',
     USD: '$',
     GBP: '£',
+    CHF: 'CHF ',
     JPY: '¥',
 };
+
+const DEFAULT_SCALE = 2;
+
+function minorUnitScale(currencyCode: string): number {
+    return MINOR_UNIT_SCALE[currencyCode] ?? DEFAULT_SCALE;
+}
+
+function currencySymbol(currencyCode: string): string {
+    return CURRENCY_SYMBOL[currencyCode] ?? currencyCode + ' ';
+}
 
 export type FormatOptions = {
     /** Render the integer portion only — drops the decimal tail (e.g. tight summary numbers). */
@@ -46,8 +82,8 @@ export function splitMoney(
     currencyCode: string,
     opts: FormatOptions = {},
 ): FormattedMoney {
-    const scale = MINOR_UNIT_SCALE[currencyCode] ?? 2;
-    const symbol = CURRENCY_SYMBOL[currencyCode] ?? currencyCode + ' ';
+    const scale = minorUnitScale(currencyCode);
+    const symbol = currencySymbol(currencyCode);
 
     const negative = minor < 0;
     const absMinor = Math.abs(minor);
@@ -88,8 +124,8 @@ export function formatMoney(
  * is for the y-axis ticks where precision yields to legibility.
  */
 export function formatMoneyAxis(minor: number, currencyCode: string): string {
-    const scale = MINOR_UNIT_SCALE[currencyCode] ?? 2;
-    const symbol = CURRENCY_SYMBOL[currencyCode] ?? currencyCode + ' ';
+    const scale = minorUnitScale(currencyCode);
+    const symbol = currencySymbol(currencyCode);
     const negative = minor < 0;
     const absMajor = Math.abs(minor) / 10 ** scale;
     const sign = negative ? MINUS : '';

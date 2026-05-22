@@ -15,6 +15,7 @@ import { MtdDeltaChip } from '../components/MtdDeltaChip';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { TrendChart } from '../components/TrendChart';
+import { isLedgerAccount } from '../lib/domain';
 import { formatMoney } from '../lib/money';
 import { visualHintFor } from '../lib/visualHints';
 
@@ -138,11 +139,7 @@ function AccountsPanel() {
         );
     }
 
-    // Only render Asset and Liability accounts — Equity / Income / Expense are
-    // bookkeeping plumbing the user doesn't think of as "their accounts".
-    const ledgerAccounts = accounts.data.filter(
-        a => a.type === 'Asset' || a.type === 'Liability',
-    );
+    const ledgerAccounts = accounts.data.filter(isLedgerAccount);
 
     if (ledgerAccounts.length === 0) {
         return <span className="text-[13px] text-fg-3">No accounts yet.</span>;
@@ -192,9 +189,7 @@ function KpiStrip() {
     }
 
     const data = summary.data;
-    const accountCount = accounts.data?.filter(
-        a => a.type === 'Asset' || a.type === 'Liability',
-    ).length;
+    const accountCount = accounts.data?.filter(isLedgerAccount).length;
     const subtext =
         accountCount !== undefined
             ? `Across ${accountCount} ${accountCount === 1 ? 'account' : 'accounts'}`

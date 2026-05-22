@@ -12,9 +12,14 @@ type Props = {
 // period total is zero — no signal yet for brand-new accounts. Sign semantics:
 // for expenses both `current` and `prior` are negative (money out), so the
 // arithmetic ratio `(current - prior) / prior` naturally tracks magnitude
-// direction in either polarity.
+// direction in either polarity. Also returns null on a sign flip (e.g. income
+// turned net-negative, or expenses turned net-positive via refunds) — the
+// ratio is mathematically meaningless across a sign change.
 export function MtdDeltaChip({ current, prior, polarity }: Props) {
     if (prior.amount === 0) return null;
+    if (current.amount !== 0 && Math.sign(current.amount) !== Math.sign(prior.amount)) {
+        return null;
+    }
 
     const percent = Math.round(((current.amount - prior.amount) / prior.amount) * 100);
     const direction = percent === 0 ? 'flat' : percent > 0 ? 'up' : 'down';
