@@ -35,7 +35,9 @@ internal sealed class ProblemDetailsOperationTransformer : IOpenApiOperationTran
                 || response.Content is null
                 || !response.Content.Remove("application/json", out var mediaType)
             )
+            {
                 continue;
+            }
 
             response.Content["application/problem+json"] = mediaType;
         }

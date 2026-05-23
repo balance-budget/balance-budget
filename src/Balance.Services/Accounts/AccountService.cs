@@ -79,6 +79,7 @@ internal sealed class AccountService : IAccountService
         {
             return e1;
         }
+
         if (
             await EnsureNameAvailableAsync(trimmed, excludingId: null, cancellationToken) is
             { Error: { } e2 }
@@ -169,6 +170,7 @@ internal sealed class AccountService : IAccountService
         {
             return e3;
         }
+
         return await GetAsync(id, cancellationToken);
     }
 
@@ -250,6 +252,7 @@ internal sealed class AccountService : IAccountService
                 $"An account named '{name}' already exists."
             );
         }
+
         return Result.Success;
     }
 

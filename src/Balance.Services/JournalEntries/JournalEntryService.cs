@@ -177,6 +177,7 @@ internal sealed class JournalEntryService : IJournalEntryService
         {
             return e3;
         }
+
         return ToOutput(entry);
     }
 
@@ -215,6 +216,7 @@ internal sealed class JournalEntryService : IJournalEntryService
                     $"JournalLine key '{key}' is not a valid identifier."
                 );
             }
+
             parsedKeys[new JournalLineId(guid)] = lineInput;
         }
 
@@ -256,6 +258,7 @@ internal sealed class JournalEntryService : IJournalEntryService
         {
             return e2;
         }
+
         return ToOutput(entry);
     }
 
@@ -317,8 +320,10 @@ internal sealed class JournalEntryService : IJournalEntryService
             {
                 return new NotFoundError("Account", line.AccountId.Value.ToString());
             }
+
             drafts.Add(new JournalLineDraft(line.Amount, currencyCode));
         }
+
         return new Result<IReadOnlyList<JournalLineDraft>>(drafts);
     }
 
@@ -351,6 +356,7 @@ internal sealed class JournalEntryService : IJournalEntryService
                 return new NotFoundError("Counterparty", cpId.Value.ToString());
             }
         }
+
         return Result.Success;
     }
 }

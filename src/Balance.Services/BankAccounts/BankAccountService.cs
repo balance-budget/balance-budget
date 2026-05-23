@@ -109,6 +109,7 @@ internal sealed class BankAccountService : IBankAccountService
         {
             return e1;
         }
+
         if (EnsureIbanOrAccountNumber(iban, accountNumber) is { Error: { } e2 })
         {
             return e2;
@@ -134,6 +135,7 @@ internal sealed class BankAccountService : IBankAccountService
         {
             return e4;
         }
+
         if (
             await EnsureAccountSlotAvailableAsync(
                 input.AccountId,
@@ -167,6 +169,7 @@ internal sealed class BankAccountService : IBankAccountService
         {
             return e6;
         }
+
         return ToOutput(bankAccount);
     }
 
@@ -197,6 +200,7 @@ internal sealed class BankAccountService : IBankAccountService
         {
             return e1;
         }
+
         if (EnsureIbanOrAccountNumber(iban, accountNumber) is { Error: { } e2 })
         {
             return e2;
@@ -222,6 +226,7 @@ internal sealed class BankAccountService : IBankAccountService
         {
             return e4;
         }
+
         if (
             await EnsureAccountSlotAvailableAsync(
                 input.AccountId,
@@ -247,6 +252,7 @@ internal sealed class BankAccountService : IBankAccountService
         {
             return e6;
         }
+
         return ToOutput(bankAccount);
     }
 
@@ -291,6 +297,7 @@ internal sealed class BankAccountService : IBankAccountService
                 "A BankAccount must reference exactly one of AccountId or CounterpartyId."
             );
         }
+
         return Result.Success;
     }
 
@@ -303,6 +310,7 @@ internal sealed class BankAccountService : IBankAccountService
                 "A BankAccount must have at least one of Iban or AccountNumber."
             );
         }
+
         return Result.Success;
     }
 
@@ -342,6 +350,7 @@ internal sealed class BankAccountService : IBankAccountService
                 return new NotFoundError("Counterparty", cid.Value.ToString());
             }
         }
+
         return Result.Success;
     }
 
@@ -367,6 +376,7 @@ internal sealed class BankAccountService : IBankAccountService
                 $"A BankAccount with IBAN '{iban}' already exists."
             );
         }
+
         return Result.Success;
     }
 
@@ -392,6 +402,7 @@ internal sealed class BankAccountService : IBankAccountService
                 "A BankAccount for that Account already exists."
             );
         }
+
         return Result.Success;
     }
 }

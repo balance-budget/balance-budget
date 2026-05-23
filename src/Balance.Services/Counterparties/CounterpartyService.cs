@@ -89,6 +89,7 @@ internal sealed class CounterpartyService : ICounterpartyService
         {
             return e2;
         }
+
         return ToOutput(counterparty);
     }
 
@@ -135,6 +136,7 @@ internal sealed class CounterpartyService : ICounterpartyService
         {
             return e2;
         }
+
         return ToOutput(counterparty);
     }
 
@@ -173,6 +175,7 @@ internal sealed class CounterpartyService : ICounterpartyService
                 $"A counterparty named '{name}' already exists."
             );
         }
+
         return Result.Success;
     }
 }

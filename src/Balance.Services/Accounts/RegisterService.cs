@@ -122,6 +122,7 @@ internal sealed class RegisterService : IRegisterService
                         )
                     );
                 }
+
                 counter = legs;
             }
             else
@@ -144,6 +145,7 @@ internal sealed class RegisterService : IRegisterService
                 )
             );
         }
+
         return new Result<IReadOnlyList<RegisterRowOutput>>(output);
     }
 

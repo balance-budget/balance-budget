@@ -332,10 +332,12 @@ internal sealed class AccountBalanceTrendEndpointTests : EndpointsTestsBase
         {
             query.Add($"range={range}");
         }
+
         if (currency is not null)
         {
             query.Add($"currency={currency}");
         }
+
         var path =
             query.Count == 0
                 ? "/api/dashboard/account-balance-trend"
