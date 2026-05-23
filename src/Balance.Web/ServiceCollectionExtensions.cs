@@ -53,8 +53,9 @@ internal static class ServiceCollectionExtensions
         var reverseProxyOptions = configuration.GetSection<ReverseProxyOptions>();
         services.Configure<ForwardedHeadersOptions>(options =>
         {
-            // Assuming that Balance runs in docker without being publicly exposed directly,
-            // we trust any IP as a safe reverse proxy
+            // Trust only the networks listed in ReverseProxy:KnownNetworks. The framework
+            // defaults (loopback) are cleared so the configured list is authoritative; if it
+            // is empty no proxies are trusted and X-Forwarded-* headers are ignored.
             options.KnownIPNetworks.Clear();
             options.KnownProxies.Clear();
             options.ForwardedHeaders = ForwardedHeaders.All;
