@@ -53,7 +53,7 @@ public readonly record struct Result
         Error = error;
     }
 
-    public static Result Success { get; }
+    public static readonly Result Success;
 
     [MemberNotNullWhen(false, nameof(Error))]
     public bool IsSuccess => Error is null;

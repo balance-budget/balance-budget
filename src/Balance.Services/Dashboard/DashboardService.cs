@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Balance.Data;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Enums;
@@ -74,7 +75,7 @@ internal sealed class DashboardService : IDashboardService
             TrendRange.ThreeMonths => today.AddMonths(-3),
             TrendRange.SixMonths => today.AddMonths(-6),
             TrendRange.OneYear => today.AddYears(-1),
-            _ => throw new ArgumentOutOfRangeException(nameof(range), range, "Unknown TrendRange."),
+            _ => throw new UnreachableException($"Unknown TrendRange '{range}'."),
         };
 
         var assets = await _dbContext
