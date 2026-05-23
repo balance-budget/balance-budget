@@ -86,7 +86,7 @@ function toRegisterRow(wire: WireRegisterRow): RegisterRow {
     };
 }
 
-export function useAccountRegister(accountId: AccountId, take: number, skip: number = 0) {
+export function useAccountRegister(accountId: AccountId, skip: number, take: number) {
     return useQuery({
         queryKey: registerKeys.list(accountId, skip, take),
         queryFn: async ({ signal }) => {
