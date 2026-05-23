@@ -181,7 +181,8 @@ internal sealed record ProblemDetailsDto(
     string? Title,
     int? Status,
     string? Detail,
-    string? Instance
+    string? Instance,
+    string? Code
 );
 
 internal sealed record ValidationProblemDetailsDto(

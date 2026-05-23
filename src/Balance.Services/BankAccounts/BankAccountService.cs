@@ -113,6 +113,10 @@ internal sealed class BankAccountService : IBankAccountService
         if (identifierCheck.IsFailure)
             return identifierCheck.Error;
 
+        var currencyCheck = EnsureCurrencyWhenOwned(input.AccountId, input.CurrencyCode);
+        if (currencyCheck.IsFailure)
+            return currencyCheck.Error;
+
         var referencesCheck = await EnsureReferencedRowsExistAsync(
             input.CurrencyCode,
             input.AccountId,
@@ -188,6 +192,10 @@ internal sealed class BankAccountService : IBankAccountService
         var identifierCheck = EnsureIbanOrAccountNumber(iban, accountNumber);
         if (identifierCheck.IsFailure)
             return identifierCheck.Error;
+
+        var currencyCheck = EnsureCurrencyWhenOwned(input.AccountId, input.CurrencyCode);
+        if (currencyCheck.IsFailure)
+            return currencyCheck.Error;
 
         var referencesCheck = await EnsureReferencedRowsExistAsync(
             input.CurrencyCode,
@@ -278,6 +286,19 @@ internal sealed class BankAccountService : IBankAccountService
             return new InvariantError(
                 ErrorCodes.BankAccountIdentifierMissing,
                 "A BankAccount must have at least one of Iban or AccountNumber."
+            );
+        }
+
+        return Result.Success;
+    }
+
+    private static Result EnsureCurrencyWhenOwned(AccountId? accountId, CurrencyCode? currencyCode)
+    {
+        if (accountId.HasValue && currencyCode is null)
+        {
+            return new InvariantError(
+                ErrorCodes.BankAccountCurrencyRequiredWhenOwned,
+                "A BankAccount that represents one of your own Accounts must have a CurrencyCode."
             );
         }
 
