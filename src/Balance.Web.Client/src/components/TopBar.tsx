@@ -7,7 +7,8 @@ type TopBarProps = {
 };
 
 const BRAND_GRADIENT = {
-    background: 'linear-gradient(135deg, var(--color-brand-primary), var(--color-brand-primary-dark))',
+    background:
+        'linear-gradient(135deg, var(--color-brand-primary), var(--color-brand-primary-dark))',
 } as const;
 
 export function TopBar({ title, period = 'May 1 – 31, 2026', onAdd }: TopBarProps) {

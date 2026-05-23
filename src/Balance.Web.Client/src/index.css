@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /*
  * Design tokens — Balance Design System.
@@ -57,8 +57,8 @@
     --color-cat-savings-soft: rgba(45, 212, 191, 0.12);
 
     /* Type families */
-    --font-sans: "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;
-    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --font-sans: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
     /* Type scale */
     --text-12: 0.75rem;

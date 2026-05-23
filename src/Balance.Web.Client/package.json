@@ -1,47 +1,50 @@
 {
-  "name": "balance",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "codegen": "openapi-typescript ../../artifacts/openapi/Balance.Web.json --output src/lib/api-types.ts",
-    "build": "vite build && tsc -b",
-    "lint": "eslint .",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@fontsource/jetbrains-mono": "^5.2.8",
-    "@fontsource/poppins": "^5.2.7",
-    "@tailwindcss/vite": "^4.3.0",
-    "@tanstack/react-query": "^5.100.11",
-    "@tanstack/react-router": "^1.170.4",
-    "lucide-react": "^1.16.0",
-    "react": "^19.2.6",
-    "react-dom": "^19.2.6",
-    "recharts": "^3.8.1",
-    "tailwindcss": "^4.3.0"
-  },
-  "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "@tanstack/router-devtools": "^1.167.0",
-    "@tanstack/router-plugin": "^1.168.6",
-    "@types/node": "^24.12.3",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.1",
-    "eslint": "^10.3.0",
-    "eslint-plugin-react-hooks": "^7.1.1",
-    "eslint-plugin-react-refresh": "^0.5.2",
-    "globals": "^17.6.0",
-    "openapi-typescript": "^7.13.0",
-    "typescript": "~6.0.2",
-    "typescript-eslint": "^8.59.2",
-    "vite": "^8.0.12"
-  },
-  "overrides": {
-    "openapi-typescript": {
-      "typescript": "$typescript"
+    "name": "balance",
+    "private": true,
+    "version": "0.0.0",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "codegen": "openapi-typescript ../../artifacts/openapi/Balance.Web.json --output src/lib/api-types.ts",
+        "build": "vite build && tsc -b",
+        "lint": "eslint .",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "@fontsource/jetbrains-mono": "^5.2.8",
+        "@fontsource/poppins": "^5.2.7",
+        "@tailwindcss/vite": "^4.3.0",
+        "@tanstack/react-query": "^5.100.11",
+        "@tanstack/react-router": "^1.170.4",
+        "lucide-react": "^1.16.0",
+        "react": "^19.2.6",
+        "react-dom": "^19.2.6",
+        "recharts": "^3.8.1",
+        "tailwindcss": "^4.3.0"
+    },
+    "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "@tanstack/router-devtools": "^1.167.0",
+        "@tanstack/router-plugin": "^1.168.6",
+        "@types/node": "^24.12.3",
+        "@types/react": "^19.2.14",
+        "@types/react-dom": "^19.2.3",
+        "@vitejs/plugin-react": "^6.0.1",
+        "eslint": "^10.3.0",
+        "eslint-plugin-react-hooks": "^7.1.1",
+        "eslint-plugin-react-refresh": "^0.5.2",
+        "globals": "^17.6.0",
+        "openapi-typescript": "^7.13.0",
+        "prettier": "^3.8.3",
+        "typescript": "~6.0.2",
+        "typescript-eslint": "^8.59.2",
+        "vite": "^8.0.12"
+    },
+    "overrides": {
+        "openapi-typescript": {
+            "typescript": "$typescript"
+        }
     }
-  }
 }

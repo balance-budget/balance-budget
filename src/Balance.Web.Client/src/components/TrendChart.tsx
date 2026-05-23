@@ -53,12 +53,7 @@ function computeTicks(rows: ChartRow[], range: TrendRange): string[] {
  * the snapped date, sorted value-descending. Axes auto-fit; y-axis labels are
  * compact above €10k, full below.
  */
-export function TrendChart({
-    series,
-    range,
-    currencyCode,
-    height = 240,
-}: TrendChartProps) {
+export function TrendChart({ series, range, currencyCode, height = 240 }: TrendChartProps) {
     const rows = useMemo(() => buildRows(series), [series]);
     const ticks = useMemo(() => computeTicks(rows, range), [rows, range]);
     const seriesByKey = useMemo(
@@ -92,12 +87,7 @@ export function TrendChart({
                     width={60}
                 />
                 <Tooltip
-                    content={
-                        <TrendTooltip
-                            seriesByKey={seriesByKey}
-                            currencyCode={currencyCode}
-                        />
-                    }
+                    content={<TrendTooltip seriesByKey={seriesByKey} currencyCode={currencyCode} />}
                     cursor={{
                         stroke: 'var(--color-border-strong)',
                         strokeWidth: 1,
@@ -132,18 +122,10 @@ type TrendTooltipProps = Partial<TooltipContentProps<number, string>> & {
     currencyCode: string;
 };
 
-function TrendTooltip({
-    active,
-    payload,
-    label,
-    seriesByKey,
-    currencyCode,
-}: TrendTooltipProps) {
+function TrendTooltip({ active, payload, label, seriesByKey, currencyCode }: TrendTooltipProps) {
     if (!active || !payload || payload.length === 0) return null;
 
-    const sorted = [...payload].sort(
-        (a, b) => (Number(b.value) || 0) - (Number(a.value) || 0),
-    );
+    const sorted = [...payload].sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0));
 
     return (
         <div className="rounded-md border border-border-soft bg-bg-1 px-3 py-2 shadow-sm text-[12px]">

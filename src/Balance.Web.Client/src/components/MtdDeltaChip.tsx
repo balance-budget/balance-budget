@@ -33,8 +33,8 @@ export function MtdDeltaChip({ current, prior, polarity }: Props) {
         direction === 'flat'
             ? 'text-fg-3 bg-surface-2'
             : isGood
-                ? 'text-success bg-success-soft'
-                : 'text-danger bg-danger-soft';
+              ? 'text-success bg-success-soft'
+              : 'text-danger bg-danger-soft';
 
     return (
         <span

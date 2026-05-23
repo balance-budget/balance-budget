@@ -32,12 +32,21 @@ const NAV_OTHER: NavLink[] = [
     { to: '/settings', label: 'Settings', iconName: 'settings' },
 ];
 
-function NavGroup({ title, items, currentPath }: { title: string; items: NavLink[]; currentPath: string }) {
+function NavGroup({
+    title,
+    items,
+    currentPath,
+}: {
+    title: string;
+    items: NavLink[];
+    currentPath: string;
+}) {
     return (
         <div className="flex flex-col gap-[2px]">
             <div className="eyebrow px-3 pt-3 pb-[6px]">{title}</div>
             {items.map(item => {
-                const isActive = item.to === '/' ? currentPath === '/' : currentPath.startsWith(item.to);
+                const isActive =
+                    item.to === '/' ? currentPath === '/' : currentPath.startsWith(item.to);
                 return (
                     <Link
                         key={item.to}
@@ -51,7 +60,12 @@ function NavGroup({ title, items, currentPath }: { title: string; items: NavLink
                                 : 'text-fg-2 hover:bg-surface-2 hover:text-fg-1',
                         ].join(' ')}
                     >
-                        <Icon name={item.iconName} size={18} strokeWidth={1.75} className="shrink-0" />
+                        <Icon
+                            name={item.iconName}
+                            size={18}
+                            strokeWidth={1.75}
+                            className="shrink-0"
+                        />
                         <span>{item.label}</span>
                     </Link>
                 );
