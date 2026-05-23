@@ -3,7 +3,7 @@ using Quartz;
 
 namespace Balance.Services.Jobs;
 
-internal class MaintenanceJob : IJob
+internal sealed class MaintenanceJob : IJob
 {
     private readonly IDatabaseMaintenanceService _databaseMaintenanceService;
 

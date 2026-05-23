@@ -164,7 +164,11 @@ internal sealed class CurrencyService : ICurrencyService
         return Result.Success;
     }
 
-    internal static string CacheKey(CurrencyCode code) => $"currency:{code.Value}";
+    // Currency codes are conventionally uppercase (ISO 4217). Normalize defensively so direct
+    // service callers (tests, internal flows) can't poison the cache or DB with mixed case.
+    // Web-layer validators reject non-uppercase user input outright.
+    internal static string CacheKey(CurrencyCode code) =>
+        $"currency:{code.Value.ToUpperInvariant()}";
 
     private void InvalidateCache(CurrencyCode code)
     {

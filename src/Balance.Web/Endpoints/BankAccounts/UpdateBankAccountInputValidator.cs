@@ -1,4 +1,5 @@
 using Balance.Services.Contracts;
+using Balance.Web.Filters;
 using FluentValidation;
 
 namespace Balance.Web.Endpoints.BankAccounts;
@@ -22,8 +23,7 @@ internal sealed class UpdateBankAccountInputValidator : AbstractValidator<Update
             .MaximumLength(128)
             .When(x => !string.IsNullOrWhiteSpace(x.AccountHolderName));
         RuleFor(x => x.CurrencyCode!.Value.Value)
-            .NotEmpty()
-            .Length(2, 8)
+            .IsCurrencyCode()
             .When(x => x.CurrencyCode is not null);
     }
 }

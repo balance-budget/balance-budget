@@ -81,8 +81,7 @@ Empty class libraries that exist solely to host provider-specific EF Core migrat
 
 - `ApplicationVersionService` / `IApplicationVersionService` — reads `AssemblyInformationalVersionAttribute` from the entry assembly; falls back to `"0.0.0"`.
 - `Jobs/JobsServiceCollectionExtensions.AddBalanceJobs` — registers Quartz with `SchedulerName = "Balance Scheduler"` and the hosted service that waits for application startup and job completion on shutdown.
-- `Jobs/ServiceCollectionQuartzConfiguratorExtensions.ScheduleJob<TJob>` — schedules a job with a cron expression, optional immediate start, and `DisallowConcurrentExecution`.
-- `Jobs/TriggerConfiguratorExtensions.StartNow(bool)` — conditional variant of Quartz's `StartNow()`.
+- `Jobs/ServiceCollectionQuartzConfiguratorExtensions.ScheduleJobAt<TJob>` — schedules a job with a cron expression, immediate start, and `DisallowConcurrentExecution`.
 - `Logging/LoggerExtensions` — partial class for source-generated `[LoggerMessage]` methods.
 - `ServiceCollectionExtensions.AddBalanceServices` composes `Configuration` + `Data` + `Jobs` and registers `IApplicationVersionService`. The `startJobs` parameter (default `true`) flips whether jobs trigger immediately — the Console host passes `false`.
 
