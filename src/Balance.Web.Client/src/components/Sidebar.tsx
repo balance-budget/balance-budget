@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
 import logo from '../assets/logo.svg';
 import { Icon } from './Icon';
-import { useAccounts, type Account } from '../api/accounts';
+import { lastFourIdentifier, useAccounts, type Account } from '../api/accounts';
 import { Skeleton } from './Skeleton';
 import { ErrorState } from './ErrorState';
 import { cx } from '../lib/cx';
@@ -77,13 +77,6 @@ function NavGroup({
             })}
         </div>
     );
-}
-
-function lastFourIdentifier(account: Account): string | null {
-    const raw = account.bankAccount?.iban ?? account.bankAccount?.accountNumber ?? null;
-    if (!raw) return null;
-    const compact = raw.replace(/\s+/g, '');
-    return compact.length <= 4 ? compact : `· ${compact.slice(-4)}`;
 }
 
 function AccountRow({ account }: { account: Account }) {

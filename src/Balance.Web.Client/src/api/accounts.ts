@@ -69,3 +69,16 @@ export function useAccounts() {
         },
     });
 }
+
+/**
+ * Compact identifier suffix for an Account row — the last four characters of
+ * the linked bank IBAN or account number, prefixed by a middle-dot so it
+ * reads as a tail (e.g. "· 4242"). Returns the raw value (no dot) when it's
+ * already short enough to display in full, or null when nothing's linked.
+ */
+export function lastFourIdentifier(account: Account): string | null {
+    const raw = account.bankAccount?.iban ?? account.bankAccount?.accountNumber ?? null;
+    if (!raw) return null;
+    const compact = raw.replace(/\s+/g, '');
+    return compact.length <= 4 ? compact : `· ${compact.slice(-4)}`;
+}
