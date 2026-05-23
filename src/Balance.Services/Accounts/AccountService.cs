@@ -75,18 +75,17 @@ internal sealed class AccountService : IAccountService
             return new InvariantError(ErrorCodes.AccountNameEmpty, "Account name is required.");
         }
 
-        if (await EnsureCurrencyExistsAsync(currencyCode, cancellationToken) is { Error: { } e1 })
-        {
-            return e1;
-        }
+        var currencyCheck = await EnsureCurrencyExistsAsync(currencyCode, cancellationToken);
+        if (currencyCheck.IsFailure)
+            return currencyCheck.Error;
 
-        if (
-            await EnsureNameAvailableAsync(trimmed, excludingId: null, cancellationToken) is
-            { Error: { } e2 }
-        )
-        {
-            return e2;
-        }
+        var nameCheck = await EnsureNameAvailableAsync(
+            trimmed,
+            excludingId: null,
+            cancellationToken
+        );
+        if (nameCheck.IsFailure)
+            return nameCheck.Error;
 
         var now = _timeProvider.GetUtcNow().UtcDateTime;
         var account = new Account
@@ -100,10 +99,9 @@ internal sealed class AccountService : IAccountService
         };
 
         _dbContext.Accounts.Add(account);
-        if (await _dbContext.SaveChangesAndCatchAsync(cancellationToken) is { Error: { } e3 })
-        {
-            return e3;
-        }
+        var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
+        if (saveResult.IsFailure)
+            return saveResult.Error;
 
         return new AccountOutput(
             account.Id,
@@ -142,34 +140,32 @@ internal sealed class AccountService : IAccountService
 
         if (!string.Equals(trimmed, account.Name, StringComparison.Ordinal))
         {
-            if (
-                await EnsureNameAvailableAsync(trimmed, excludingId: id, cancellationToken) is
-                { Error: { } e1 }
-            )
-            {
-                return e1;
-            }
+            var nameCheck = await EnsureNameAvailableAsync(
+                trimmed,
+                excludingId: id,
+                cancellationToken
+            );
+            if (nameCheck.IsFailure)
+                return nameCheck.Error;
         }
 
         if (input.CurrencyCode != account.CurrencyCode)
         {
-            if (
-                await EnsureCurrencyExistsAsync(input.CurrencyCode, cancellationToken) is
-                { Error: { } e2 }
-            )
-            {
-                return e2;
-            }
+            var currencyCheck = await EnsureCurrencyExistsAsync(
+                input.CurrencyCode,
+                cancellationToken
+            );
+            if (currencyCheck.IsFailure)
+                return currencyCheck.Error;
         }
 
         account.Name = trimmed;
         account.AccountType = input.AccountType;
         account.CurrencyCode = input.CurrencyCode;
         account.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
-        if (await _dbContext.SaveChangesAndCatchAsync(cancellationToken) is { Error: { } e3 })
-        {
-            return e3;
-        }
+        var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
+        if (saveResult.IsFailure)
+            return saveResult.Error;
 
         return await GetAsync(id, cancellationToken);
     }

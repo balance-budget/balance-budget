@@ -127,22 +127,17 @@ internal sealed class JournalEntryService : IJournalEntryService
             return draftsResult.Error;
         }
 
-        if (JournalEntryValidator.Validate(draftsResult.Value) is { Error: { } e1 })
-        {
-            return e1;
-        }
+        var balanceCheck = JournalEntryValidator.Validate(draftsResult.Value);
+        if (balanceCheck.IsFailure)
+            return balanceCheck.Error;
 
-        if (
-            await EnsureOptionalReferencesExistAsync(
-                input.BankTransactionId,
-                input.CounterpartyId,
-                cancellationToken
-            ) is
-            { Error: { } e2 }
-        )
-        {
-            return e2;
-        }
+        var referencesCheck = await EnsureOptionalReferencesExistAsync(
+            input.BankTransactionId,
+            input.CounterpartyId,
+            cancellationToken
+        );
+        if (referencesCheck.IsFailure)
+            return referencesCheck.Error;
 
         var now = _timeProvider.GetUtcNow().UtcDateTime;
         var entry = new JournalEntry
@@ -173,10 +168,9 @@ internal sealed class JournalEntryService : IJournalEntryService
         }
 
         _dbContext.JournalEntries.Add(entry);
-        if (await _dbContext.SaveChangesAndCatchAsync(cancellationToken) is { Error: { } e3 })
-        {
-            return e3;
-        }
+        var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
+        if (saveResult.IsFailure)
+            return saveResult.Error;
 
         return ToOutput(entry);
     }
@@ -206,10 +200,7 @@ internal sealed class JournalEntryService : IJournalEntryService
         var parsedKeys = new Dictionary<JournalLineId, UpdateJournalLineInput>(existingIds.Count);
         foreach (var (key, lineInput) in input.Lines)
         {
-            if (
-                !Guid.TryParseExact(key, "D", out var guid)
-                && !Guid.TryParse(key, CultureInfo.InvariantCulture, out guid)
-            )
+            if (!Guid.TryParseExact(key, "D", out var guid))
             {
                 return new InvariantError(
                     ErrorCodes.JournalLineKeyInvalid,
@@ -230,17 +221,13 @@ internal sealed class JournalEntryService : IJournalEntryService
 
         if (input.CounterpartyId != entry.CounterpartyId)
         {
-            if (
-                await EnsureOptionalReferencesExistAsync(
-                    bankTransactionId: null,
-                    input.CounterpartyId,
-                    cancellationToken
-                ) is
-                { Error: { } e1 }
-            )
-            {
-                return e1;
-            }
+            var referencesCheck = await EnsureOptionalReferencesExistAsync(
+                bankTransactionId: null,
+                input.CounterpartyId,
+                cancellationToken
+            );
+            if (referencesCheck.IsFailure)
+                return referencesCheck.Error;
         }
 
         entry.Date = input.Date;
@@ -254,10 +241,9 @@ internal sealed class JournalEntryService : IJournalEntryService
         }
 
         entry.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
-        if (await _dbContext.SaveChangesAndCatchAsync(cancellationToken) is { Error: { } e2 })
-        {
-            return e2;
-        }
+        var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
+        if (saveResult.IsFailure)
+            return saveResult.Error;
 
         return ToOutput(entry);
     }
