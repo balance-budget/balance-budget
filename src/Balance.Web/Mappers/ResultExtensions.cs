@@ -55,6 +55,20 @@ internal static class ResultExtensions
             value => TypedResults.Created(new Uri(locationFactory(value), UriKind.Relative), value)
         );
 
+    /// <summary>
+    /// Builds the Location header from <paramref name="pathPrefix"/> + the resource's identifier
+    /// returned by <paramref name="identifier"/>. Use from <c>POST /resource</c> handlers so the
+    /// <c>$"{prefix}/{value.Id.Value}"</c> boilerplate stays in one place.
+    /// </summary>
+    public static Results<
+        Created<T>,
+        NotFound<ProblemDetails>,
+        Conflict<ProblemDetails>,
+        UnprocessableEntity<ProblemDetails>,
+        ValidationProblem
+    > ToCreatedAt<T>(this Result<T> result, string pathPrefix, Func<T, object> identifier) =>
+        result.ToCreated(value => $"{pathPrefix}/{identifier(value)}");
+
     public static Results<
         NoContent,
         NotFound<ProblemDetails>,

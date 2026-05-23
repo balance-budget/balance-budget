@@ -83,7 +83,7 @@ internal static class CurrencyEndpoints
             ),
             cancellationToken
         );
-        return result.ToCreated(value => $"{PathPrefix}/{value.Code.Value}");
+        return result.ToCreatedAt(PathPrefix, v => v.Code.Value);
     }
 
     private static async Task<

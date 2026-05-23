@@ -96,7 +96,7 @@ internal static class JournalEntryEndpoints
             cancellationToken
         );
 
-        return result.ToCreated(value => $"{PathPrefix}/{value.Id.Value}");
+        return result.ToCreatedAt(PathPrefix, v => v.Id.Value);
     }
 
     private static async Task<

@@ -71,7 +71,7 @@ internal static class CounterpartyEndpoints
     )
     {
         var result = await counterpartyService.CreateAsync(request.Name, cancellationToken);
-        return result.ToCreated(value => $"{PathPrefix}/{value.Id.Value}");
+        return result.ToCreatedAt(PathPrefix, v => v.Id.Value);
     }
 
     private static async Task<

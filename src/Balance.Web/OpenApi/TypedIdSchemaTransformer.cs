@@ -7,20 +7,15 @@ namespace Balance.Web.OpenApi;
 /// <summary>
 /// Flattens StronglyTypedId record-struct types in the OpenAPI document to their primitive
 /// JSON representation: <c>{ type: "string", format: "uuid" }</c> for Guid-backed IDs and
-/// <c>{ type: "string" }</c> for <see cref="CurrencyCode"/>. Without this transformer the
-/// schema would expose a wrapper object with a single <c>Value</c> property.
+/// <c>{ type: "string" }</c> for string-backed IDs (e.g. <see cref="CurrencyCode"/>). Without
+/// this transformer the schema would expose a wrapper object with a single <c>Value</c>
+/// property. The set of typed IDs is discovered by reflecting over the
+/// <c>Balance.Data.Entities.Ids</c> namespace, so new IDs are picked up automatically.
 /// </summary>
 internal sealed class TypedIdSchemaTransformer : IOpenApiSchemaTransformer
 {
-    private static readonly HashSet<Type> GuidBackedIds =
-    [
-        typeof(AccountId),
-        typeof(BankAccountId),
-        typeof(BankTransactionId),
-        typeof(CounterpartyId),
-        typeof(JournalEntryId),
-        typeof(JournalLineId),
-    ];
+    private static readonly HashSet<Type> GuidBackedIds = TypedIdsWithUnderlyingType<Guid>();
+    private static readonly HashSet<Type> StringBackedIds = TypedIdsWithUnderlyingType<string>();
 
     public Task TransformAsync(
         OpenApiSchema schema,
@@ -36,7 +31,7 @@ internal sealed class TypedIdSchemaTransformer : IOpenApiSchemaTransformer
         {
             FlattenToString(schema, format: "uuid");
         }
-        else if (type == typeof(CurrencyCode))
+        else if (StringBackedIds.Contains(type))
         {
             FlattenToString(schema, format: null);
         }
@@ -52,4 +47,14 @@ internal sealed class TypedIdSchemaTransformer : IOpenApiSchemaTransformer
         schema.Required?.Clear();
         schema.AdditionalProperties = null;
     }
+
+    private static HashSet<Type> TypedIdsWithUnderlyingType<T>() =>
+        typeof(AccountId)
+            .Assembly.GetTypes()
+            .Where(t =>
+                t.Namespace == typeof(AccountId).Namespace
+                && t.IsValueType
+                && t.GetProperty("Value")?.PropertyType == typeof(T)
+            )
+            .ToHashSet();
 }
