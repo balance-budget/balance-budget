@@ -20,10 +20,22 @@ export type DashboardSummary = {
     currencyCode: string;
 };
 
-// Wire enum values are PascalCase (OneMonth / ThreeMonths / ...); the URL token
-// is a short label (1M / 3M / 6M / 1Y). This module exposes the short form.
+// The UI uses short labels (1M / 3M / 6M / 1Y) while the wire carries PascalCase
+// enum names (OneMonth / ...). One bidirectional map keeps both directions in
+// lockstep — adding a new range only touches WIRE_BY_TOKEN.
 export const TREND_RANGES = ['1M', '3M', '6M', '1Y'] as const;
 export type TrendRange = (typeof TREND_RANGES)[number];
+
+const WIRE_BY_TOKEN = {
+    '1M': 'OneMonth',
+    '3M': 'ThreeMonths',
+    '6M': 'SixMonths',
+    '1Y': 'OneYear',
+} as const satisfies Record<TrendRange, WireTrend['range']>;
+
+const TOKEN_BY_WIRE = Object.fromEntries(
+    Object.entries(WIRE_BY_TOKEN).map(([token, wire]) => [wire, token]),
+) as Record<WireTrend['range'], TrendRange>;
 
 export type AccountBalanceTrend = {
     series: AccountTrend[];
@@ -50,7 +62,7 @@ async function fetchSummary(signal: AbortSignal): Promise<WireSummary> {
 
 async function fetchTrend(range: TrendRange, signal: AbortSignal): Promise<WireTrend> {
     const response = await fetch(
-        `/api/dashboard/account-balance-trend?range=${tokenToWireRange(range)}`,
+        `/api/dashboard/account-balance-trend?range=${WIRE_BY_TOKEN[range]}`,
         { signal },
     );
     if (!response.ok) {
@@ -130,35 +142,9 @@ function toTrend(wire: WireTrend): AccountBalanceTrend {
         series: wire.series.map(s => toAccountTrend(s, wire.periodStart, wire.periodEnd)),
         periodStart: wire.periodStart,
         periodEnd: wire.periodEnd,
-        range: wireRangeToToken(wire.range),
+        range: TOKEN_BY_WIRE[wire.range],
         currencyCode: wire.currencyCode,
     };
-}
-
-function wireRangeToToken(range: WireTrend['range']): TrendRange {
-    switch (range) {
-        case 'OneMonth':
-            return '1M';
-        case 'ThreeMonths':
-            return '3M';
-        case 'SixMonths':
-            return '6M';
-        case 'OneYear':
-            return '1Y';
-    }
-}
-
-function tokenToWireRange(range: TrendRange): WireTrend['range'] {
-    switch (range) {
-        case '1M':
-            return 'OneMonth';
-        case '3M':
-            return 'ThreeMonths';
-        case '6M':
-            return 'SixMonths';
-        case '1Y':
-            return 'OneYear';
-    }
 }
 
 export function useDashboardSummary() {
