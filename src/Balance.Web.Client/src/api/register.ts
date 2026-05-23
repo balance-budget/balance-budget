@@ -10,6 +10,7 @@ import {
     asJournalEntryId,
     asJournalLineId,
 } from '../lib/domain';
+import { getJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
 import { accountsKeys } from './accounts';
 
@@ -43,18 +44,17 @@ export const registerKeys = {
         [...registerKeys.all, accountId, { skip, take }] as const,
 };
 
-async function fetchRegister(
+function fetchRegister(
     accountId: AccountId,
     skip: number,
     take: number,
     signal: AbortSignal,
 ): Promise<WireRegisterRow[]> {
-    const url = `/api/accounts/${accountId}/register?skip=${skip}&take=${take}`;
-    const response = await fetch(url, { signal });
-    if (!response.ok) {
-        throw new Error(`Failed to load register (${response.status})`);
-    }
-    return (await response.json()) as WireRegisterRow[];
+    return getJson<WireRegisterRow[]>(
+        `/api/accounts/${accountId}/register?skip=${skip}&take=${take}`,
+        signal,
+        'load register',
+    );
 }
 
 function toCounterLeg(wire: WireCounterLeg): RegisterCounterLeg {

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { components } from '../lib/api-types';
 import { asAccountId, type AccountTrend, type TrendPoint } from '../lib/domain';
+import { getJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
 import { visualHintFor } from '../lib/visualHints';
 
@@ -52,23 +53,16 @@ export const dashboardKeys = {
         [...dashboardKeys.all, 'account-balance-trend', range] as const,
 };
 
-async function fetchSummary(signal: AbortSignal): Promise<WireSummary> {
-    const response = await fetch('/api/dashboard/summary', { signal });
-    if (!response.ok) {
-        throw new Error(`Failed to load dashboard summary (${response.status})`);
-    }
-    return (await response.json()) as WireSummary;
+function fetchSummary(signal: AbortSignal): Promise<WireSummary> {
+    return getJson<WireSummary>('/api/dashboard/summary', signal, 'load dashboard summary');
 }
 
-async function fetchTrend(range: TrendRange, signal: AbortSignal): Promise<WireTrend> {
-    const response = await fetch(
+function fetchTrend(range: TrendRange, signal: AbortSignal): Promise<WireTrend> {
+    return getJson<WireTrend>(
         `/api/dashboard/account-balance-trend?range=${WIRE_BY_TOKEN[range]}`,
-        { signal },
+        signal,
+        'load account balance trend',
     );
-    if (!response.ok) {
-        throw new Error(`Failed to load account balance trend (${response.status})`);
-    }
-    return (await response.json()) as WireTrend;
 }
 
 function toSummary(wire: WireSummary): DashboardSummary {
