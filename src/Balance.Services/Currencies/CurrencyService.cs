@@ -92,10 +92,9 @@ internal sealed class CurrencyService : ICurrencyService
             Symbol = trimmedSymbol,
         };
         _dbContext.Currencies.Add(currency);
-        if (await _dbContext.SaveChangesAndCatchAsync(cancellationToken) is { Error: { } err })
-        {
-            return err;
-        }
+        var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
+        if (saveResult.IsFailure)
+            return saveResult.Error;
 
         InvalidateCache(input.Code);
         return CurrencyOutput.FromEntity(currency);
@@ -138,10 +137,9 @@ internal sealed class CurrencyService : ICurrencyService
             currency.Symbol = trimmed.Length == 0 ? null : trimmed;
         }
 
-        if (await _dbContext.SaveChangesAndCatchAsync(cancellationToken) is { Error: { } err })
-        {
-            return err;
-        }
+        var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
+        if (saveResult.IsFailure)
+            return saveResult.Error;
 
         InvalidateCache(code);
         return CurrencyOutput.FromEntity(currency);

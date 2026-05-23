@@ -67,13 +67,13 @@ internal sealed class CounterpartyService : ICounterpartyService
             );
         }
 
-        if (
-            await EnsureNameAvailableAsync(trimmed, excludingId: null, cancellationToken) is
-            { Error: { } e1 }
-        )
-        {
-            return e1;
-        }
+        var nameCheck = await EnsureNameAvailableAsync(
+            trimmed,
+            excludingId: null,
+            cancellationToken
+        );
+        if (nameCheck.IsFailure)
+            return nameCheck.Error;
 
         var now = _timeProvider.GetUtcNow().UtcDateTime;
         var counterparty = new Counterparty
@@ -85,10 +85,9 @@ internal sealed class CounterpartyService : ICounterpartyService
         };
 
         _dbContext.Counterparties.Add(counterparty);
-        if (await _dbContext.SaveChangesAndCatchAsync(cancellationToken) is { Error: { } e2 })
-        {
-            return e2;
-        }
+        var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
+        if (saveResult.IsFailure)
+            return saveResult.Error;
 
         return ToOutput(counterparty);
     }
@@ -121,21 +120,20 @@ internal sealed class CounterpartyService : ICounterpartyService
 
         if (!string.Equals(trimmed, counterparty.Name, StringComparison.Ordinal))
         {
-            if (
-                await EnsureNameAvailableAsync(trimmed, excludingId: id, cancellationToken) is
-                { Error: { } e1 }
-            )
-            {
-                return e1;
-            }
+            var nameCheck = await EnsureNameAvailableAsync(
+                trimmed,
+                excludingId: id,
+                cancellationToken
+            );
+            if (nameCheck.IsFailure)
+                return nameCheck.Error;
         }
 
         counterparty.Name = trimmed;
         counterparty.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
-        if (await _dbContext.SaveChangesAndCatchAsync(cancellationToken) is { Error: { } e2 })
-        {
-            return e2;
-        }
+        var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
+        if (saveResult.IsFailure)
+            return saveResult.Error;
 
         return ToOutput(counterparty);
     }

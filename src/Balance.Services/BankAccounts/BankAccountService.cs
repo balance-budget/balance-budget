@@ -105,48 +105,38 @@ internal sealed class BankAccountService : IBankAccountService
         var bankName = input.BankName.TrimToNull();
         var accountHolderName = input.AccountHolderName.TrimToNull();
 
-        if (EnsureOwnershipXor(input.AccountId, input.CounterpartyId) is { Error: { } e1 })
-        {
-            return e1;
-        }
+        var ownershipCheck = EnsureOwnershipXor(input.AccountId, input.CounterpartyId);
+        if (ownershipCheck.IsFailure)
+            return ownershipCheck.Error;
 
-        if (EnsureIbanOrAccountNumber(iban, accountNumber) is { Error: { } e2 })
-        {
-            return e2;
-        }
+        var identifierCheck = EnsureIbanOrAccountNumber(iban, accountNumber);
+        if (identifierCheck.IsFailure)
+            return identifierCheck.Error;
 
-        if (
-            await EnsureReferencedRowsExistAsync(
-                input.CurrencyCode,
-                input.AccountId,
-                input.CounterpartyId,
-                cancellationToken
-            ) is
-            { Error: { } e3 }
-        )
-        {
-            return e3;
-        }
+        var referencesCheck = await EnsureReferencedRowsExistAsync(
+            input.CurrencyCode,
+            input.AccountId,
+            input.CounterpartyId,
+            cancellationToken
+        );
+        if (referencesCheck.IsFailure)
+            return referencesCheck.Error;
 
-        if (
-            await EnsureIbanAvailableAsync(iban, excludingId: null, cancellationToken) is
-            { Error: { } e4 }
-        )
-        {
-            return e4;
-        }
+        var ibanCheck = await EnsureIbanAvailableAsync(
+            iban,
+            excludingId: null,
+            cancellationToken
+        );
+        if (ibanCheck.IsFailure)
+            return ibanCheck.Error;
 
-        if (
-            await EnsureAccountSlotAvailableAsync(
-                input.AccountId,
-                excludingId: null,
-                cancellationToken
-            ) is
-            { Error: { } e5 }
-        )
-        {
-            return e5;
-        }
+        var slotCheck = await EnsureAccountSlotAvailableAsync(
+            input.AccountId,
+            excludingId: null,
+            cancellationToken
+        );
+        if (slotCheck.IsFailure)
+            return slotCheck.Error;
 
         var now = _timeProvider.GetUtcNow().UtcDateTime;
         var bankAccount = new BankAccount
@@ -165,10 +155,9 @@ internal sealed class BankAccountService : IBankAccountService
         };
 
         _dbContext.BankAccounts.Add(bankAccount);
-        if (await _dbContext.SaveChangesAndCatchAsync(cancellationToken) is { Error: { } e6 })
-        {
-            return e6;
-        }
+        var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
+        if (saveResult.IsFailure)
+            return saveResult.Error;
 
         return ToOutput(bankAccount);
     }
@@ -196,48 +185,34 @@ internal sealed class BankAccountService : IBankAccountService
         var bankName = input.BankName.TrimToNull();
         var accountHolderName = input.AccountHolderName.TrimToNull();
 
-        if (EnsureOwnershipXor(input.AccountId, input.CounterpartyId) is { Error: { } e1 })
-        {
-            return e1;
-        }
+        var ownershipCheck = EnsureOwnershipXor(input.AccountId, input.CounterpartyId);
+        if (ownershipCheck.IsFailure)
+            return ownershipCheck.Error;
 
-        if (EnsureIbanOrAccountNumber(iban, accountNumber) is { Error: { } e2 })
-        {
-            return e2;
-        }
+        var identifierCheck = EnsureIbanOrAccountNumber(iban, accountNumber);
+        if (identifierCheck.IsFailure)
+            return identifierCheck.Error;
 
-        if (
-            await EnsureReferencedRowsExistAsync(
-                input.CurrencyCode,
-                input.AccountId,
-                input.CounterpartyId,
-                cancellationToken
-            ) is
-            { Error: { } e3 }
-        )
-        {
-            return e3;
-        }
+        var referencesCheck = await EnsureReferencedRowsExistAsync(
+            input.CurrencyCode,
+            input.AccountId,
+            input.CounterpartyId,
+            cancellationToken
+        );
+        if (referencesCheck.IsFailure)
+            return referencesCheck.Error;
 
-        if (
-            await EnsureIbanAvailableAsync(iban, excludingId: id, cancellationToken) is
-            { Error: { } e4 }
-        )
-        {
-            return e4;
-        }
+        var ibanCheck = await EnsureIbanAvailableAsync(iban, excludingId: id, cancellationToken);
+        if (ibanCheck.IsFailure)
+            return ibanCheck.Error;
 
-        if (
-            await EnsureAccountSlotAvailableAsync(
-                input.AccountId,
-                excludingId: id,
-                cancellationToken
-            ) is
-            { Error: { } e5 }
-        )
-        {
-            return e5;
-        }
+        var slotCheck = await EnsureAccountSlotAvailableAsync(
+            input.AccountId,
+            excludingId: id,
+            cancellationToken
+        );
+        if (slotCheck.IsFailure)
+            return slotCheck.Error;
 
         bankAccount.Iban = iban;
         bankAccount.AccountNumber = accountNumber;
@@ -248,10 +223,9 @@ internal sealed class BankAccountService : IBankAccountService
         bankAccount.AccountId = input.AccountId;
         bankAccount.CounterpartyId = input.CounterpartyId;
         bankAccount.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
-        if (await _dbContext.SaveChangesAndCatchAsync(cancellationToken) is { Error: { } e6 })
-        {
-            return e6;
-        }
+        var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
+        if (saveResult.IsFailure)
+            return saveResult.Error;
 
         return ToOutput(bankAccount);
     }

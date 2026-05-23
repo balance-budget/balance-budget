@@ -109,10 +109,9 @@ internal sealed class BankTransactionService : IBankTransactionService
         };
 
         _dbContext.BankTransactions.Add(bankTransaction);
-        if (await _dbContext.SaveChangesAndCatchAsync(cancellationToken) is { Error: { } err })
-        {
-            return err;
-        }
+        var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
+        if (saveResult.IsFailure)
+            return saveResult.Error;
 
         return ToOutput(bankTransaction);
     }
