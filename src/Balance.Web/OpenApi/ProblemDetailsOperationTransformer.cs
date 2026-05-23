@@ -1,14 +1,17 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
 
 namespace Balance.Web.OpenApi;
 
+/// <summary>
+/// Makes sure that all responses with a <see cref="ProblemDetails"/> type also have an "application/problem+json" content type, as per RFC 7807.
+/// This is a temporary workaround until https://github.com/dotnet/aspnetcore/issues/58574 is fixed.
+/// </summary>
 internal sealed class ProblemDetailsOperationTransformer : IOpenApiOperationTransformer
 {
-    private const string ContentType = "application/problem+json";
-
-    public async Task TransformAsync(
+    public Task TransformAsync(
         OpenApiOperation operation,
         OpenApiOperationTransformerContext context,
         CancellationToken cancellationToken
@@ -17,42 +20,26 @@ internal sealed class ProblemDetailsOperationTransformer : IOpenApiOperationTran
         ArgumentNullException.ThrowIfNull(operation);
         ArgumentNullException.ThrowIfNull(context);
 
-        operation.Responses ??= new OpenApiResponses();
+        if (operation.Responses is null)
+            return Task.CompletedTask;
 
-        var problemSchema = await context.GetOrCreateSchemaAsync(
-            typeof(ProblemDetails),
-            cancellationToken: cancellationToken
-        );
-        var validationProblemSchema = await context.GetOrCreateSchemaAsync(
-            typeof(HttpValidationProblemDetails),
-            cancellationToken: cancellationToken
-        );
+        var problemStatusCodes = context
+            .Description.SupportedResponseTypes.Where(r => r.Type == typeof(ProblemDetails))
+            .Select(r => r.StatusCode.ToString(CultureInfo.InvariantCulture))
+            .ToHashSet();
 
-        AddResponse(operation.Responses, "400", "Validation failed", validationProblemSchema);
-        AddResponse(operation.Responses, "404", "Not found", problemSchema);
-        AddResponse(operation.Responses, "409", "Conflict", problemSchema);
-        AddResponse(operation.Responses, "422", "Domain invariant violated", problemSchema);
-    }
-
-    private static void AddResponse(
-        OpenApiResponses responses,
-        string statusCode,
-        string description,
-        IOpenApiSchema schema
-    )
-    {
-        if (responses.ContainsKey(statusCode))
+        foreach (var statusCode in problemStatusCodes)
         {
-            return;
+            if (
+                !operation.Responses.TryGetValue(statusCode, out var response)
+                || response.Content is null
+                || !response.Content.Remove("application/json", out var mediaType)
+            )
+                continue;
+
+            response.Content["application/problem+json"] = mediaType;
         }
 
-        responses[statusCode] = new OpenApiResponse
-        {
-            Description = description,
-            Content = new Dictionary<string, OpenApiMediaType>(StringComparer.Ordinal)
-            {
-                [ContentType] = new OpenApiMediaType { Schema = schema },
-            },
-        };
+        return Task.CompletedTask;
     }
 }
