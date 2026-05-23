@@ -192,6 +192,7 @@ export function Sidebar() {
                 <NavGroup title="Other" items={NAV_OTHER} currentPath={pathname} />
             </nav>
 
+            {/* TODO: replace placeholder identity once auth lands (see auth memory / ADR). */}
             <div className="mt-auto flex items-center gap-[10px] p-[10px] rounded-sm bg-surface-2">
                 <div className="w-8 h-8 rounded-full bg-brand-primary-soft text-brand-primary flex items-center justify-center text-[12px] font-semibold">
                     MR
