@@ -5,14 +5,6 @@ dotnet_diagnostic.CA2007.severity = none # Consider calling ConfigureAwait on th
 dotnet_diagnostic.CA1812.severity = none # Uninstantiated internal classes should be removed
 dotnet_diagnostic.CA2225.severity = none # Operator overloads have named alternates — Result<T> implicit conversions are the idiomatic API
 
-# Style: brace-less form for single-statement if/else/for/foreach/while bodies.
-csharp_prefer_braces = when_multiline
-dotnet_diagnostic.IDE0011.severity = warning
-
-# Style: require a blank line between a closing block and the next statement.
-dotnet_style_allow_statement_immediately_after_block_experimental = false
-dotnet_diagnostic.IDE2003.severity = warning
-
 # Disable checks in generated migrations
 [{src/Balance.Data.Sqlite/Migrations/*.cs,src/Balance.Data.PostgreSql/Migrations/*.cs}]
 dotnet_diagnostic.CA1062.severity = none
