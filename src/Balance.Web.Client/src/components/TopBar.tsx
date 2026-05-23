@@ -11,12 +11,16 @@ const BRAND_GRADIENT = {
         'linear-gradient(135deg, var(--color-brand-primary), var(--color-brand-primary-dark))',
 } as const;
 
-export function TopBar({ title, period = 'May 1 – 31, 2026', onAdd }: TopBarProps) {
+// TODO: search input + notifications button are visual scaffolding; wire to real handlers
+// once those features land. New-entry button forwards to onAdd if supplied.
+export function TopBar({ title, period, onAdd }: TopBarProps) {
     return (
         <header className="min-h-[72px] px-8 py-4 flex items-center gap-4 border-b border-border-soft">
             <div className="flex flex-col gap-[2px] min-w-0">
                 <h1 className="text-[22px] font-semibold whitespace-nowrap">{title}</h1>
-                <span className="text-14 text-fg-3 whitespace-nowrap">{period}</span>
+                {period ? (
+                    <span className="text-14 text-fg-3 whitespace-nowrap">{period}</span>
+                ) : null}
             </div>
             <div className="ml-auto flex items-center gap-[10px]">
                 <label className="w-[240px] h-9 px-[14px] flex items-center gap-2 rounded-sm bg-surface-2 border border-border-soft text-fg-3 text-14">
