@@ -81,7 +81,13 @@ internal static class AccountEndpoints
     }
 
     private static async Task<
-        Results<Created<AccountOutput>, ProblemHttpResult, ValidationProblem>
+        Results<
+            Created<AccountOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
     > CreateAsync(
         [FromBody] CreateAccountRequest request,
         [FromServices] IAccountService accountService,
@@ -98,7 +104,13 @@ internal static class AccountEndpoints
     }
 
     private static async Task<
-        Results<Ok<AccountOutput>, ProblemHttpResult, ValidationProblem>
+        Results<
+            Ok<AccountOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
     > UpdateAsync(
         [FromRoute] AccountId id,
         [FromBody] JsonPatchDocument<UpdateAccountInput> patch,
@@ -125,7 +137,15 @@ internal static class AccountEndpoints
         return result.ToOk();
     }
 
-    private static async Task<Results<NoContent, ProblemHttpResult, ValidationProblem>> DeleteAsync(
+    private static async Task<
+        Results<
+            NoContent,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > DeleteAsync(
         [FromRoute] AccountId id,
         [FromServices] IAccountService accountService,
         CancellationToken cancellationToken

@@ -56,7 +56,13 @@ internal static class JournalEntryEndpoints
     }
 
     private static async Task<
-        Results<Created<JournalEntryOutput>, ProblemHttpResult, ValidationProblem>
+        Results<
+            Created<JournalEntryOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
     > CreateAsync(
         [FromBody] CreateJournalEntryRequest request,
         [FromServices] IJournalEntryService journalEntryService,
@@ -87,7 +93,13 @@ internal static class JournalEntryEndpoints
     }
 
     private static async Task<
-        Results<Ok<JournalEntryOutput>, ProblemHttpResult, ValidationProblem>
+        Results<
+            Ok<JournalEntryOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
     > UpdateAsync(
         [FromRoute] JournalEntryId id,
         [FromBody] JsonPatchDocument<UpdateJournalEntryInput> patch,
@@ -114,7 +126,15 @@ internal static class JournalEntryEndpoints
         return result.ToOk();
     }
 
-    private static async Task<Results<NoContent, ProblemHttpResult, ValidationProblem>> DeleteAsync(
+    private static async Task<
+        Results<
+            NoContent,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > DeleteAsync(
         [FromRoute] JournalEntryId id,
         [FromServices] IJournalEntryService journalEntryService,
         CancellationToken cancellationToken

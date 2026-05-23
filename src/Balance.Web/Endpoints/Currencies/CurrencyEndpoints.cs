@@ -50,7 +50,13 @@ internal static class CurrencyEndpoints
     }
 
     private static async Task<
-        Results<Created<CurrencyOutput>, ProblemHttpResult, ValidationProblem>
+        Results<
+            Created<CurrencyOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
     > CreateAsync(
         [FromBody] CreateCurrencyRequest request,
         [FromServices] ICurrencyService currencyService,
@@ -70,7 +76,13 @@ internal static class CurrencyEndpoints
     }
 
     private static async Task<
-        Results<Ok<CurrencyOutput>, ProblemHttpResult, ValidationProblem>
+        Results<
+            Ok<CurrencyOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
     > UpdateAsync(
         [FromRoute] CurrencyCode code,
         [FromBody] UpdateCurrencyRequest request,
@@ -86,7 +98,15 @@ internal static class CurrencyEndpoints
         return result.ToOk();
     }
 
-    private static async Task<Results<NoContent, ProblemHttpResult, ValidationProblem>> DeleteAsync(
+    private static async Task<
+        Results<
+            NoContent,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > DeleteAsync(
         [FromRoute] CurrencyCode code,
         [FromServices] ICurrencyService currencyService,
         CancellationToken cancellationToken

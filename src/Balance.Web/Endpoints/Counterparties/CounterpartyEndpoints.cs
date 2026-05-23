@@ -50,7 +50,13 @@ internal static class CounterpartyEndpoints
     }
 
     private static async Task<
-        Results<Created<CounterpartyOutput>, ProblemHttpResult, ValidationProblem>
+        Results<
+            Created<CounterpartyOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
     > CreateAsync(
         [FromBody] CreateCounterpartyRequest request,
         [FromServices] ICounterpartyService counterpartyService,
@@ -62,7 +68,13 @@ internal static class CounterpartyEndpoints
     }
 
     private static async Task<
-        Results<Ok<CounterpartyOutput>, ProblemHttpResult, ValidationProblem>
+        Results<
+            Ok<CounterpartyOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
     > UpdateAsync(
         [FromRoute] CounterpartyId id,
         [FromBody] JsonPatchDocument<UpdateCounterpartyInput> patch,
@@ -89,7 +101,15 @@ internal static class CounterpartyEndpoints
         return result.ToOk();
     }
 
-    private static async Task<Results<NoContent, ProblemHttpResult, ValidationProblem>> DeleteAsync(
+    private static async Task<
+        Results<
+            NoContent,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > DeleteAsync(
         [FromRoute] CounterpartyId id,
         [FromServices] ICounterpartyService counterpartyService,
         CancellationToken cancellationToken

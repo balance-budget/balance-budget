@@ -43,7 +43,13 @@ internal static class BankTransactionEndpoints
     }
 
     private static async Task<
-        Results<Created<BankTransactionOutput>, ProblemHttpResult, ValidationProblem>
+        Results<
+            Created<BankTransactionOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
     > CreateAsync(
         [FromBody] CreateBankTransactionRequest request,
         [FromServices] IBankTransactionService bankTransactionService,
@@ -62,7 +68,15 @@ internal static class BankTransactionEndpoints
         return result.ToCreated(value => $"{PathPrefix}/{value.Id.Value}");
     }
 
-    private static async Task<Results<NoContent, ProblemHttpResult, ValidationProblem>> DeleteAsync(
+    private static async Task<
+        Results<
+            NoContent,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > DeleteAsync(
         [FromRoute] BankTransactionId id,
         [FromServices] IBankTransactionService bankTransactionService,
         CancellationToken cancellationToken
