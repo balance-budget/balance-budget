@@ -10,7 +10,7 @@ export function Panel({ children, className }: PanelProps) {
     return (
         <section
             className={[
-                'bg-surface-1 backdrop-blur-[20px] border border-border-soft rounded-md p-5 px-[22px]',
+                'bg-surface-1 backdrop-blur-card border border-border-soft rounded-md py-5 px-[22px]',
                 className,
             ]
                 .filter(Boolean)

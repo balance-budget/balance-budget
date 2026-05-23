@@ -177,7 +177,7 @@ export function Sidebar() {
     const pathname = useRouterState({ select: s => s.location.pathname });
 
     return (
-        <aside className="w-60 shrink-0 h-screen sticky top-0 flex flex-col gap-5 px-4 py-6 border-r border-border-soft bg-black/20 backdrop-blur-[20px]">
+        <aside className="w-60 shrink-0 h-screen sticky top-0 flex flex-col gap-5 px-4 py-6 border-r border-border-soft bg-surface-1 backdrop-blur-card">
             <div className="flex items-center gap-[10px] px-[10px] py-1">
                 <img src={logo} alt="" className="w-8 h-8 rounded-[6px]" />
                 <span className="text-[18px] font-normal tracking-[-0.01em]">
