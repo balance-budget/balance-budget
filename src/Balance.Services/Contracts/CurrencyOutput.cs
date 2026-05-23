@@ -29,4 +29,8 @@ public sealed record CreateCurrencyInput(
     string? Symbol
 );
 
-public sealed record UpdateCurrencyInput(string? Name, string? Symbol);
+public sealed record UpdateCurrencyInput
+{
+    public required string Name { get; set; }
+    public string? Symbol { get; set; }
+}
