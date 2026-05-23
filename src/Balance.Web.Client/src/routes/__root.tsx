@@ -2,22 +2,12 @@ import { createRootRoute, Outlet, useRouterState } from '@tanstack/react-router'
 import { Sidebar } from '../components/Sidebar';
 import { TopBar } from '../components/TopBar';
 
-const ROUTE_TITLES: Record<string, string> = {
-    '/': 'Dashboard',
-    '/accounts': 'Accounts',
-    '/journal': 'Journal entries',
-    '/bank-imports': 'Bank imports',
-    '/budgets': 'Budgets',
-    '/subscriptions': 'Subscriptions',
-    '/piggy-banks': 'Piggy banks',
-    '/reports': 'Reports',
-    '/settings': 'Settings',
-};
-
 export const Route = createRootRoute({
     component: function RootLayout() {
-        const pathname = useRouterState({ select: s => s.location.pathname });
-        const title = ROUTE_TITLES[pathname] ?? 'Balance';
+        // The deepest matched route owns the page title via its staticData.
+        const title = useRouterState({
+            select: s => s.matches.at(-1)?.staticData.title ?? 'Balance',
+        });
 
         return (
             <div className="flex min-h-screen">

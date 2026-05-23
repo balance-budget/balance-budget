@@ -30,6 +30,11 @@ declare module '@tanstack/react-router' {
     interface Register {
         router: typeof router;
     }
+    // Route-level static metadata — each createFileRoute may set this so
+    // __root can render a title without a hand-maintained pathname map.
+    interface StaticDataRouteOption {
+        title?: string;
+    }
 }
 
 createRoot(document.getElementById('root')!).render(

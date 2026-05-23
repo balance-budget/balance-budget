@@ -3,4 +3,5 @@ import { Empty } from '../components/Empty';
 
 export const Route = createFileRoute('/accounts')({
     component: () => <Empty title="Accounts" />,
+    staticData: { title: 'Accounts' },
 });
