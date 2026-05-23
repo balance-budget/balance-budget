@@ -167,6 +167,8 @@ internal sealed class AccountService : IAccountService
         if (saveResult.IsFailure)
             return saveResult.Error;
 
+        // Re-query so the response carries the computed Balance and BankAccount summary
+        // (peer services build their output from the mutated entity — Account can't).
         return await GetAsync(id, cancellationToken);
     }
 
@@ -185,6 +187,9 @@ internal sealed class AccountService : IAccountService
         return Result.Success;
     }
 
+    // Projects into a flat row in SQL; callers materialise then pass each row through
+    // ToOutput to flip the sign per AccountType and wrap the Money — neither step
+    // translates to SQL (checked() + Money's value-object constructor).
     private IQueryable<AccountProjectionRow> ProjectAccounts(IQueryable<Account> source) =>
         source.Select(a => new AccountProjectionRow(
             a.Id,
