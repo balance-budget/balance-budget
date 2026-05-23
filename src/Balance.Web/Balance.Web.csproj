@@ -40,6 +40,7 @@
     <ProjectReference Include="..\Balance.Data.PostgreSql\Balance.Data.PostgreSql.csproj" />
     <ProjectReference Include="..\Balance.Data.Sqlite\Balance.Data.Sqlite.csproj" />
     <ProjectReference Include="..\Balance.Data\Balance.Data.csproj" />
+    <ProjectReference Include="..\Balance.Integration.Ing\Balance.Integration.Ing.csproj" />
     <ProjectReference Include="..\Balance.Services\Balance.Services.csproj" />
     <ProjectReference
       Include="..\Balance.Web.Client\Balance.Web.Client.esproj"

@@ -1,0 +1,8 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="CsvHelper" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Balance.Services\Balance.Services.csproj" />
+  </ItemGroup>
+</Project>

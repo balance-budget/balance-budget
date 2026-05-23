@@ -4,6 +4,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
+    <PackageVersion Include="CsvHelper" Version="33.1.0" />
     <PackageVersion Include="EntityFrameworkCore.Exceptions.PostgreSQL" Version="10.0.0" />
     <PackageVersion Include="EntityFrameworkCore.Exceptions.Sqlite" Version="10.0.0" />
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
