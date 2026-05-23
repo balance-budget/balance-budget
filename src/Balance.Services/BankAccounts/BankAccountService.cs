@@ -122,11 +122,7 @@ internal sealed class BankAccountService : IBankAccountService
         if (referencesCheck.IsFailure)
             return referencesCheck.Error;
 
-        var ibanCheck = await EnsureIbanAvailableAsync(
-            iban,
-            excludingId: null,
-            cancellationToken
-        );
+        var ibanCheck = await EnsureIbanAvailableAsync(iban, excludingId: null, cancellationToken);
         if (ibanCheck.IsFailure)
             return ibanCheck.Error;
 
