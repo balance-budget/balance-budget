@@ -132,6 +132,8 @@ namespace Balance.Data.PostgreSql.Migrations
 
                     b.ToTable("BankAccounts", null, t =>
                         {
+                            t.HasCheckConstraint("CK_BankAccounts_CurrencyRequiredWhenOwned", "\"AccountId\" IS NULL OR \"CurrencyCode\" IS NOT NULL");
+
                             t.HasCheckConstraint("CK_BankAccounts_IbanOrAccountNumber", "\"Iban\" IS NOT NULL OR \"AccountNumber\" IS NOT NULL");
 
                             t.HasCheckConstraint("CK_BankAccounts_OwnershipXor", "(\"AccountId\" IS NULL) <> (\"CounterpartyId\" IS NULL)");

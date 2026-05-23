@@ -25,6 +25,8 @@ public static class ErrorCodes
     public const string BankAccountSlotTaken = "bank_account.slot_taken";
     public const string BankAccountOwnershipXor = "bank_account.ownership_xor";
     public const string BankAccountIdentifierMissing = "bank_account.identifier_missing";
+    public const string BankAccountCurrencyRequiredWhenOwned =
+        "bank_account.currency_required_when_owned";
 
     // BankTransaction
     public const string BankTransactionAmountZero = "bank_transaction.amount_zero";
