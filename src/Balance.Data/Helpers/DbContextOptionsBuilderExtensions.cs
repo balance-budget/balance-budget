@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Balance.Configuration.Options;
 using Microsoft.EntityFrameworkCore;
 using PhenX.EntityFrameworkCore.BulkInsert.PostgreSql;
@@ -29,7 +30,7 @@ internal static class DbContextOptionsBuilderExtensions
                 )
                 .UseBulkInsertPostgreSql()
                 .UsePostgresExceptionProcessor(),
-            _ => throw new InvalidOperationException("Invalid database provider"),
+            _ => throw new UnreachableException($"Unknown DatabaseProvider '{options.Provider}'."),
         };
 
     private static DbContextOptionsBuilder UseSqliteExceptionProcessor(

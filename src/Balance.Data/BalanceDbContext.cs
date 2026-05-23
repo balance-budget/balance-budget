@@ -61,22 +61,6 @@ public sealed class BalanceDbContext : DbContext, IDataProtectionKeyContext
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(BalanceDbContext).Assembly);
-
-        // Case-insensitive Name columns on Account and Counterparty. Both equality and
-        // pattern matching (LIKE / Contains / StartsWith) must behave the same on both
-        // providers — anticipating typeahead search on these columns. NOCASE collation on
-        // SQLite and the citext extension on Postgres both deliver case-insensitive =, LIKE,
-        // and ORDER BY without any per-query escape hatches.
-        if (_options.Provider == DatabaseProvider.Sqlite)
-        {
-            modelBuilder.Entity<Account>().Property(a => a.Name).UseCollation("NOCASE");
-            modelBuilder.Entity<Counterparty>().Property(c => c.Name).UseCollation("NOCASE");
-        }
-        else if (_options.Provider == DatabaseProvider.Postgres)
-        {
-            modelBuilder.HasPostgresExtension("citext");
-            modelBuilder.Entity<Account>().Property(a => a.Name).HasColumnType("citext");
-            modelBuilder.Entity<Counterparty>().Property(c => c.Name).HasColumnType("citext");
-        }
+        modelBuilder.ApplyProviderConventions(_options.Provider);
     }
 }

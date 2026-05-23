@@ -29,7 +29,8 @@ public static class DbPathHelper
         {
             throw new InvalidOperationException(
                 $"Balance can not be started. The database path '{path}' is not writeable. "
-                    + "Please ensure that the configured user/group has write permissions"
+                    + "Please ensure that the configured user/group has write permissions.",
+                ex
             );
         }
 

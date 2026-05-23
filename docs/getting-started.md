@@ -72,7 +72,7 @@ Database__Provider=Postgres Database__ConnectionString="Host=localhost;Database=
 
 ### Migrations
 
-`MigrateDatabase` runs on host startup, so `dotnet ef database update` is normally unnecessary. To create a new migration:
+`MigrateDatabaseAsync` runs on host startup, so `dotnet ef database update` is normally unnecessary. To create a new migration:
 
 ```bash
 # SQLite
