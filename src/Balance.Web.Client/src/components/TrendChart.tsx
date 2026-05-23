@@ -56,10 +56,7 @@ function computeTicks(rows: ChartRow[], range: TrendRange): string[] {
 export function TrendChart({ series, range, currencyCode, height = 240 }: TrendChartProps) {
     const rows = useMemo(() => buildRows(series), [series]);
     const ticks = useMemo(() => computeTicks(rows, range), [rows, range]);
-    const seriesByKey = useMemo(
-        () => new Map(series.map(s => [s.accountId, s])),
-        [series],
-    );
+    const seriesByKey = useMemo(() => new Map(series.map(s => [s.accountId, s])), [series]);
 
     return (
         <ResponsiveContainer width="100%" height={height}>

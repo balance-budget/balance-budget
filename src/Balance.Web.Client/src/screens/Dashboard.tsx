@@ -15,6 +15,7 @@ import { MtdDeltaChip } from '../components/MtdDeltaChip';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { TrendChart } from '../components/TrendChart';
+import { cx } from '../lib/cx';
 import { isLedgerAccount } from '../lib/domain';
 import { formatMoney } from '../lib/money';
 import { visualHintFor } from '../lib/visualHints';
@@ -33,10 +34,10 @@ function RecentRow({ row }: { row: RegisterRow }) {
         <div className="flex items-center justify-between gap-2">
             <span className="text-[12px] text-fg-2 truncate">{label}</span>
             <span
-                className={[
+                className={cx(
                     'font-mono text-[11px] tabular',
                     negative ? 'text-fg-2' : 'text-success',
-                ].join(' ')}
+                )}
             >
                 {formatMoney(row.amount.amount, row.amount.currencyCode, { sign: true })}
             </span>
@@ -253,12 +254,12 @@ function AccountBalanceTrendPanel() {
                     key={p}
                     type="button"
                     onClick={() => setRange(p)}
-                    className={[
+                    className={cx(
                         'px-[10px] py-[5px] rounded-full text-[11px] font-medium select-none',
                         p === range
                             ? 'bg-brand-primary-soft text-brand-primary'
                             : 'text-fg-3 hover:text-fg-1',
-                    ].join(' ')}
+                    )}
                 >
                     {p}
                 </button>

@@ -5,6 +5,7 @@ import { Icon } from './Icon';
 import { useAccounts, type Account } from '../api/accounts';
 import { Skeleton } from './Skeleton';
 import { ErrorState } from './ErrorState';
+import { cx } from '../lib/cx';
 import { isCategoryAccount, isLedgerAccount } from '../lib/domain';
 import { formatMoney } from '../lib/money';
 import { visualHintFor } from '../lib/visualHints';
@@ -56,14 +57,13 @@ function NavGroup({
                     <Link
                         key={item.to}
                         to={item.to}
-                        className={[
+                        className={cx(
                             'flex items-center gap-3 px-3 py-[9px] rounded-sm select-none',
-                            'text-[13.5px] font-medium',
-                            'transition-[background,color] duration-fast',
+                            'text-[13.5px] font-medium transition-[background,color] duration-fast',
                             isActive
                                 ? 'bg-brand-primary-soft text-brand-primary'
                                 : 'text-fg-2 hover:bg-surface-2 hover:text-fg-1',
-                        ].join(' ')}
+                        )}
                     >
                         <Icon
                             name={item.iconName}
@@ -106,10 +106,10 @@ function AccountRow({ account }: { account: Account }) {
                 {tail && <span className="text-[11px] text-fg-3 truncate">{tail}</span>}
             </div>
             <span
-                className={[
+                className={cx(
                     'shrink-0 text-[12px] tabular-nums',
                     isNegative ? 'text-danger' : 'text-fg-2',
-                ].join(' ')}
+                )}
             >
                 {formatMoney(account.balance.amount, account.balance.currencyCode, {
                     decimals: false,

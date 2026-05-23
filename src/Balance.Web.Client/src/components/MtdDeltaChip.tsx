@@ -1,4 +1,5 @@
 import type { Money } from '../api/accounts';
+import { cx } from '../lib/cx';
 
 type Polarity = 'higher-is-good' | 'lower-is-good';
 
@@ -40,10 +41,10 @@ export function MtdDeltaChip({ current, prior, polarity }: Props) {
 
     return (
         <span
-            className={[
+            className={cx(
                 'inline-flex items-center gap-[3px] px-2 py-[2px] rounded-full text-[11px] font-medium leading-none whitespace-nowrap',
                 colorClass,
-            ].join(' ')}
+            )}
         >
             <span className="text-[9px]">{arrow}</span>
             <span>{Math.abs(percent)}% vs Last month</span>
