@@ -50,7 +50,13 @@ internal static class BankAccountEndpoints
     }
 
     private static async Task<
-        Results<Created<BankAccountOutput>, ProblemHttpResult, ValidationProblem>
+        Results<
+            Created<BankAccountOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
     > CreateAsync(
         [FromBody] CreateBankAccountRequest request,
         [FromServices] IBankAccountService bankAccountService,
@@ -74,7 +80,13 @@ internal static class BankAccountEndpoints
     }
 
     private static async Task<
-        Results<Ok<BankAccountOutput>, ProblemHttpResult, ValidationProblem>
+        Results<
+            Ok<BankAccountOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
     > UpdateAsync(
         [FromRoute] BankAccountId id,
         [FromBody] JsonPatchDocument<UpdateBankAccountInput> patch,
@@ -101,7 +113,15 @@ internal static class BankAccountEndpoints
         return result.ToOk();
     }
 
-    private static async Task<Results<NoContent, ProblemHttpResult, ValidationProblem>> DeleteAsync(
+    private static async Task<
+        Results<
+            NoContent,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > DeleteAsync(
         [FromRoute] BankAccountId id,
         [FromServices] IBankAccountService bankAccountService,
         CancellationToken cancellationToken
