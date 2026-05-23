@@ -64,7 +64,7 @@ The real-world party on the other side of a transaction (e.g. "Albert Heijn", "E
 _Avoid_: payee account, vendor account, expense account (those conflate counterparty with **Account**).
 
 **BankAccount**:
-A real-world bank account known to the system, identified by IBAN *and/or* a bank-internal account number. Carries optional `Iban`, optional `AccountNumber`, optional `Bic` / `BankName` / `AccountHolderName` / `CurrencyCode` — with a CHECK constraint that at least one of `Iban` or `AccountNumber` is set (a **BankAccount** without any identifier is meaningless). Owned by exactly one of: an **Account** (`BankAccount.AccountId` set — this is one of yours) or a **Counterparty** (`BankAccount.CounterpartyId` set — this belongs to a counterparty). The XOR is enforced as a single-table CHECK constraint. Used during imports to resolve "the IBAN or account number on the other side of this statement row" to either a self-transfer or a known **Counterparty**.
+A real-world bank account known to the system, identified by IBAN *and/or* a bank-internal account number. Carries optional `Iban`, optional `AccountNumber`, optional `Bic` / `BankName` / `AccountHolderName`, and a `CurrencyCode` that is required when the **BankAccount** is one of yours (`AccountId` set) and optional when it belongs to a **Counterparty** (`CounterpartyId` set). A CHECK constraint enforces that at least one of `Iban` or `AccountNumber` is set (a **BankAccount** without any identifier is meaningless), and a second CHECK constraint enforces the conditional currency rule so you cannot accidentally import statements in the wrong currency. Owned by exactly one of: an **Account** (`BankAccount.AccountId` set — this is one of yours) or a **Counterparty** (`BankAccount.CounterpartyId` set — this belongs to a counterparty). The XOR is enforced as a single-table CHECK constraint. Used during imports to resolve "the IBAN or account number on the other side of this statement row" to either a self-transfer or a known **Counterparty**.
 _Avoid_: bank account details, IBAN entry, payment instrument.
 
 **Register**:
@@ -87,6 +87,7 @@ _Avoid_: Transaction (overloaded with DB transactions and Plaid/Stripe types), i
 - Each **Account** has exactly one **AccountType**.
 - Every **JournalLine** carries a **Money** amount; its **Currency** is inherited from its **Account**.
 - A **BankAccount** belongs to *exactly one* of: one **Account** (via `BankAccount.AccountId`) or one **Counterparty** (via `BankAccount.CounterpartyId`) — never both, never neither, enforced by CHECK constraint.
+- A **BankAccount** that belongs to an **Account** must have a `CurrencyCode`; one that belongs to a **Counterparty** may leave `CurrencyCode` null. Enforced by CHECK constraint and by service-layer validation.
 - An **Account** has at most one **BankAccount** (enforced by `UNIQUE(AccountId)` on **BankAccount** where non-null).
 - A **JournalEntry** *may* reference a **BankTransaction** (when imported) and *may* reference a **Counterparty** (when one is identified). Cash entries have neither **BankTransaction** nor (necessarily) a **BankAccount**-bearing side; they always have at least a **Counterparty** or a free-text description.
 - A **BankTransaction** is immutable once stored; the **JournalEntry** derived from it is editable. Re-imports are deduplicated by hash.

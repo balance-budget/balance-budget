@@ -165,7 +165,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
             Bic: null,
             BankName: "ING",
             AccountHolderName: null,
-            CurrencyCode: null,
+            CurrencyCode: "EUR",
             AccountId: account.Id,
             CounterpartyId: null
         );
@@ -190,7 +190,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
             Bic: null,
             BankName: null,
             AccountHolderName: null,
-            CurrencyCode: null,
+            CurrencyCode: "EUR",
             AccountId: firstAccount.Id,
             CounterpartyId: null
         );
@@ -221,7 +221,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
             Bic: null,
             BankName: null,
             AccountHolderName: null,
-            CurrencyCode: null,
+            CurrencyCode: "EUR",
             AccountId: account.Id,
             CounterpartyId: null
         );
@@ -251,7 +251,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
             Bic: null,
             BankName: null,
             AccountHolderName: null,
-            CurrencyCode: null,
+            CurrencyCode: "EUR",
             AccountId: Guid.NewGuid(),
             CounterpartyId: null
         );
@@ -311,7 +311,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
             Bic: null,
             BankName: "OldBank",
             AccountHolderName: null,
-            CurrencyCode: null,
+            CurrencyCode: "EUR",
             AccountId: account.Id,
             CounterpartyId: null
         );
@@ -353,15 +353,15 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
         );
         var created = await createResponse.Content.ReadFromJsonAsync<BankAccountDto>();
 
-        // Iban stays set so the IBAN-or-AccountNumber invariant holds; everything else
-        // becomes genuinely null via JSON Patch replace-to-null.
+        // Iban stays set so the IBAN-or-AccountNumber invariant holds; CurrencyCode
+        // stays set because owned BankAccounts must keep one (see ADR 0011); everything
+        // else becomes genuinely null via JSON Patch replace-to-null.
         using var patchResponse = await client.PatchAsJsonPatchAsync(
             new Uri($"/api/bank-accounts/{created!.Id}", UriKind.Relative),
             [
                 JsonPatchHelpers.Replace("/bic", null),
                 JsonPatchHelpers.Replace("/bankName", null),
                 JsonPatchHelpers.Replace("/accountHolderName", null),
-                JsonPatchHelpers.Replace("/currencyCode", null),
                 JsonPatchHelpers.Replace("/accountNumber", null),
             ]
         );
@@ -371,9 +371,9 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
         await Assert.That(updated!.Bic).IsNull();
         await Assert.That(updated.BankName).IsNull();
         await Assert.That(updated.AccountHolderName).IsNull();
-        await Assert.That(updated.CurrencyCode).IsNull();
         await Assert.That(updated.AccountNumber).IsNull();
         await Assert.That(updated.Iban).IsEqualTo("NL77RABO0700070007");
+        await Assert.That(updated.CurrencyCode).IsEqualTo("EUR");
     }
 
     [Test]
@@ -388,7 +388,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
             Bic: null,
             BankName: null,
             AccountHolderName: null,
-            CurrencyCode: null,
+            CurrencyCode: "EUR",
             AccountId: account.Id,
             CounterpartyId: null
         );
@@ -418,7 +418,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
             Bic: null,
             BankName: null,
             AccountHolderName: null,
-            CurrencyCode: null,
+            CurrencyCode: "EUR",
             AccountId: account.Id,
             CounterpartyId: null
         );
@@ -437,6 +437,88 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
             new Uri($"/api/bank-accounts/{created.Id}", UriKind.Relative)
         );
         await Assert.That(getResponse.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
+    }
+
+    [Test]
+    public async Task CreateBankAccount_owned_without_currency_returns_422()
+    {
+        using var client = Factory.CreateClient();
+        var account = await CreateAccountAsync(client, "No-Currency-Owned");
+
+        var request = new CreateBankAccountRequestDto(
+            Iban: "NL22ABNA0000022222",
+            AccountNumber: null,
+            Bic: null,
+            BankName: null,
+            AccountHolderName: null,
+            CurrencyCode: null,
+            AccountId: account.Id,
+            CounterpartyId: null
+        );
+        using var response = await client.PostAsJsonAsync(
+            new Uri("/api/bank-accounts", UriKind.Relative),
+            request
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.UnprocessableEntity);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetailsDto>();
+        await Assert.That(problem!.Code).IsEqualTo("bank_account.currency_required_when_owned");
+    }
+
+    [Test]
+    public async Task UpdateBankAccount_owned_clearing_currency_returns_422()
+    {
+        using var client = Factory.CreateClient();
+        var account = await CreateAccountAsync(client, "Clear-Currency-Owned");
+
+        var request = new CreateBankAccountRequestDto(
+            Iban: "NL33ABNA0000033333",
+            AccountNumber: null,
+            Bic: null,
+            BankName: null,
+            AccountHolderName: null,
+            CurrencyCode: "EUR",
+            AccountId: account.Id,
+            CounterpartyId: null
+        );
+        using var createResponse = await client.PostAsJsonAsync(
+            new Uri("/api/bank-accounts", UriKind.Relative),
+            request
+        );
+        var created = await createResponse.Content.ReadFromJsonAsync<BankAccountDto>();
+
+        using var patchResponse = await client.PatchAsJsonPatchAsync(
+            new Uri($"/api/bank-accounts/{created!.Id}", UriKind.Relative),
+            [JsonPatchHelpers.Replace("/currencyCode", null)]
+        );
+
+        await Assert.That(patchResponse.StatusCode).IsEqualTo(HttpStatusCode.UnprocessableEntity);
+        var problem = await patchResponse.Content.ReadFromJsonAsync<ProblemDetailsDto>();
+        await Assert.That(problem!.Code).IsEqualTo("bank_account.currency_required_when_owned");
+    }
+
+    [Test]
+    public async Task CreateBankAccount_counterparty_without_currency_succeeds()
+    {
+        using var client = Factory.CreateClient();
+        var counterparty = await CreateCounterpartyAsync(client, "No-Currency-Cp");
+
+        var request = new CreateBankAccountRequestDto(
+            Iban: "NL55ABNA0000055555",
+            AccountNumber: null,
+            Bic: null,
+            BankName: null,
+            AccountHolderName: null,
+            CurrencyCode: null,
+            AccountId: null,
+            CounterpartyId: counterparty.Id
+        );
+        using var response = await client.PostAsJsonAsync(
+            new Uri("/api/bank-accounts", UriKind.Relative),
+            request
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Created);
     }
 
     private static async Task<AccountDto> CreateAccountAsync(HttpClient client, string name)

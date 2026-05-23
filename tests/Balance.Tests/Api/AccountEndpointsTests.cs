@@ -260,7 +260,7 @@ internal sealed class AccountEndpointsTests : EndpointsTestsBase
             Bic: null,
             BankName: "Bunq",
             AccountHolderName: null,
-            CurrencyCode: null,
+            CurrencyCode: "EUR",
             AccountId: account.Id,
             CounterpartyId: null
         );
