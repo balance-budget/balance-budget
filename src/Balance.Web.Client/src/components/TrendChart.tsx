@@ -10,6 +10,7 @@ import {
     XAxis,
     YAxis,
 } from 'recharts';
+import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import type { TrendRange } from '../api/dashboard';
 import { formatTrendAxisDate, formatTrendTooltipDate } from '../lib/dates';
 import { asAccountId, type AccountId, type AccountTrend } from '../lib/domain';
@@ -54,6 +55,7 @@ function computeTicks(rows: ChartRow[], range: TrendRange): string[] {
  * compact above €10k, full below.
  */
 export function TrendChart({ series, range, currencyCode, height = 240 }: TrendChartProps) {
+    const catalog = useCurrencyCatalog();
     const rows = useMemo(() => buildRows(series), [series]);
     const ticks = useMemo(() => computeTicks(rows, range), [rows, range]);
     const seriesByKey = useMemo(() => new Map(series.map(s => [s.accountId, s])), [series]);
@@ -77,14 +79,20 @@ export function TrendChart({ series, range, currencyCode, height = 240 }: TrendC
                 />
                 <YAxis
                     domain={['auto', 'auto']}
-                    tickFormatter={v => formatMoneyAxis(v, currencyCode)}
+                    tickFormatter={v => formatMoneyAxis(v, currencyCode, catalog)}
                     tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
                     axisLine={false}
                     tickLine={false}
                     width={60}
                 />
                 <Tooltip
-                    content={<TrendTooltip seriesByKey={seriesByKey} currencyCode={currencyCode} />}
+                    content={
+                        <TrendTooltip
+                            seriesByKey={seriesByKey}
+                            currencyCode={currencyCode}
+                            catalog={catalog}
+                        />
+                    }
                     cursor={{
                         stroke: 'var(--color-border-strong)',
                         strokeWidth: 1,
@@ -117,9 +125,17 @@ export function TrendChart({ series, range, currencyCode, height = 240 }: TrendC
 type TrendTooltipProps = Partial<TooltipContentProps<number, string>> & {
     seriesByKey: Map<AccountId, AccountTrend>;
     currencyCode: string;
+    catalog: CurrencyCatalog;
 };
 
-function TrendTooltip({ active, payload, label, seriesByKey, currencyCode }: TrendTooltipProps) {
+function TrendTooltip({
+    active,
+    payload,
+    label,
+    seriesByKey,
+    currencyCode,
+    catalog,
+}: TrendTooltipProps) {
     if (!active || !payload || payload.length === 0) return null;
 
     const sorted = [...payload].sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0));
@@ -148,7 +164,7 @@ function TrendTooltip({ active, payload, label, seriesByKey, currencyCode }: Tre
                                 </span>
                             </span>
                             <span className="font-mono tabular text-fg-1">
-                                {formatMoney(value, currencyCode)}
+                                {formatMoney(value, currencyCode, catalog)}
                             </span>
                         </div>
                     );
