@@ -11,6 +11,7 @@ import {
     asJournalLineId,
 } from '../lib/domain';
 import { toMoney, type Money } from '../lib/money';
+import { accountsKeys } from './accounts';
 
 type WireRegisterRow = components['schemas']['RegisterRowOutput'];
 type WireCounterLeg = components['schemas']['RegisterRowCounterLeg'];
@@ -37,7 +38,7 @@ export type RegisterRow = {
 };
 
 export const registerKeys = {
-    all: ['accounts', 'register'] as const,
+    all: [...accountsKeys.all, 'register'] as const,
     list: (accountId: AccountId, skip: number, take: number) =>
         [...registerKeys.all, accountId, { skip, take }] as const,
 };
