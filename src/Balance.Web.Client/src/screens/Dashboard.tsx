@@ -56,7 +56,7 @@ function RecentActivity({ account }: { account: Account }) {
             <div className="pl-12">
                 <ErrorState
                     message="Couldn't load recent activity."
-                    onRetry={() => register.refetch()}
+                    onRetry={() => void register.refetch()}
                 />
             </div>
         );
@@ -117,7 +117,9 @@ function AccountsPanel() {
     }
 
     if (accounts.isError) {
-        return <ErrorState message="Couldn't load accounts." onRetry={() => accounts.refetch()} />;
+        return (
+            <ErrorState message="Couldn't load accounts." onRetry={() => void accounts.refetch()} />
+        );
     }
 
     const ledgerAccounts = accounts.data.filter(isLedgerAccount);
@@ -163,7 +165,7 @@ function KpiStrip() {
             <section>
                 <ErrorState
                     message="Couldn't load the dashboard summary."
-                    onRetry={() => summary.refetch()}
+                    onRetry={() => void summary.refetch()}
                 />
             </section>
         );
@@ -238,7 +240,9 @@ function AccountBalanceTrendPanel() {
                 <button
                     key={p}
                     type="button"
-                    onClick={() => setRange(p)}
+                    onClick={() => {
+                        setRange(p);
+                    }}
                     className={cx(
                         'px-[10px] py-[5px] rounded-full text-[11px] font-medium select-none',
                         p === range
@@ -260,7 +264,7 @@ function AccountBalanceTrendPanel() {
             ) : trend.isError ? (
                 <ErrorState
                     message="Couldn't load the balance trend."
-                    onRetry={() => trend.refetch()}
+                    onRetry={() => void trend.refetch()}
                 />
             ) : trend.data.series.length === 0 ? (
                 <div className="h-[240px] flex items-center justify-center text-[13px] text-fg-3">
