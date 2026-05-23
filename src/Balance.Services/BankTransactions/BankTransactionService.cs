@@ -1,3 +1,4 @@
+using System.Globalization;
 using Balance.Data;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
@@ -35,6 +36,9 @@ internal sealed class BankTransactionService : IBankTransactionService
                 b.BankAccountId,
                 b.BookingDate,
                 b.Money,
+                b.Description,
+                b.CounterpartyName,
+                b.CounterpartyAccountNumber,
                 b.CreatedAt,
                 b.UpdatedAt
             ))
@@ -52,6 +56,9 @@ internal sealed class BankTransactionService : IBankTransactionService
                 b.BankAccountId,
                 b.BookingDate,
                 b.Money,
+                b.Description,
+                b.CounterpartyName,
+                b.CounterpartyAccountNumber,
                 b.CreatedAt,
                 b.UpdatedAt
             ))
@@ -97,6 +104,9 @@ internal sealed class BankTransactionService : IBankTransactionService
             );
         }
 
+        var rawSource = BuildManualRawSource(input);
+        var rowHash = RowHasher.Hash(rawSource);
+
         var now = _timeProvider.GetUtcNow().UtcDateTime;
         var bankTransaction = new BankTransaction
         {
@@ -104,6 +114,11 @@ internal sealed class BankTransactionService : IBankTransactionService
             BankAccountId = input.BankAccountId,
             BookingDate = input.BookingDate,
             Money = new Money(input.Amount, input.CurrencyCode),
+            Description = input.Description,
+            CounterpartyName = input.CounterpartyName,
+            CounterpartyAccountNumber = input.CounterpartyAccountNumber,
+            RawSource = rawSource,
+            RowHash = rowHash,
             CreatedAt = now,
             UpdatedAt = now,
         };
@@ -115,6 +130,19 @@ internal sealed class BankTransactionService : IBankTransactionService
 
         return ToOutput(bankTransaction);
     }
+
+    private static string BuildManualRawSource(CreateBankTransactionInput input) =>
+        string.Join(
+            '\n',
+            "manual",
+            input.BankAccountId.Value.ToString("D", CultureInfo.InvariantCulture),
+            input.BookingDate.ToString("O", CultureInfo.InvariantCulture),
+            input.Amount.ToString(CultureInfo.InvariantCulture),
+            input.CurrencyCode.Value,
+            input.Description,
+            input.CounterpartyName ?? string.Empty,
+            input.CounterpartyAccountNumber ?? string.Empty
+        );
 
     public async Task<Result> DeleteAsync(BankTransactionId id, CancellationToken cancellationToken)
     {
@@ -137,6 +165,9 @@ internal sealed class BankTransactionService : IBankTransactionService
             bankTransaction.BankAccountId,
             bankTransaction.BookingDate,
             bankTransaction.Money,
+            bankTransaction.Description,
+            bankTransaction.CounterpartyName,
+            bankTransaction.CounterpartyAccountNumber,
             bankTransaction.CreatedAt,
             bankTransaction.UpdatedAt
         );

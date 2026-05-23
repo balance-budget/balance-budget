@@ -146,8 +146,31 @@ namespace Balance.Data.Sqlite.Migrations
                     b.Property<DateOnly>("BookingDate")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("CounterpartyAccountNumber")
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CounterpartyName")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RawSource")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RowHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT")
+                        .IsFixedLength();
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("TEXT");
@@ -174,6 +197,10 @@ namespace Balance.Data.Sqlite.Migrations
 
                     b.HasIndex("BookingDate")
                         .HasDatabaseName("IX_BankTransactions_BookingDate");
+
+                    b.HasIndex("BankAccountId", "RowHash")
+                        .IsUnique()
+                        .HasDatabaseName("UX_BankTransactions_BankAccountId_RowHash");
 
                     b.ToTable("BankTransactions", null, t =>
                         {

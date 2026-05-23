@@ -45,6 +45,12 @@ internal sealed class BankTransactionConfiguration : IEntityTypeConfiguration<Ba
             }
         );
 
+        builder.Property(b => b.Description).IsRequired().HasMaxLength(512);
+        builder.Property(b => b.CounterpartyName).HasMaxLength(256);
+        builder.Property(b => b.CounterpartyAccountNumber).HasMaxLength(64);
+        builder.Property(b => b.RawSource).IsRequired();
+        builder.Property(b => b.RowHash).IsRequired().IsFixedLength().HasMaxLength(64);
+
         builder.Property(b => b.CreatedAt).HasConversion(DateConverters.UtcConverter);
         builder.Property(b => b.UpdatedAt).HasConversion(DateConverters.UtcConverter);
 
@@ -57,5 +63,10 @@ internal sealed class BankTransactionConfiguration : IEntityTypeConfiguration<Ba
         builder.HasIndex(b => b.BankAccountId).HasDatabaseName("IX_BankTransactions_BankAccountId");
 
         builder.HasIndex(b => b.BookingDate).HasDatabaseName("IX_BankTransactions_BookingDate");
+
+        builder
+            .HasIndex(b => new { b.BankAccountId, b.RowHash })
+            .IsUnique()
+            .HasDatabaseName("UX_BankTransactions_BankAccountId_RowHash");
     }
 }

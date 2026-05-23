@@ -66,6 +66,11 @@ internal sealed class IngBankTransactionImporter : IBankTransactionImporter
             BookingDate = statement.Date,
             BankAccountId = new BankAccountId(Guid.CreateVersion7()),
             Money = new Money((long)(statement.Amount * 100), new CurrencyCode("EUR")),
+            Description = statement.Description,
+            CounterpartyName = sourceAccountName,
+            CounterpartyAccountNumber = destinationAccountNumber,
+            RawSource = string.Empty,
+            RowHash = string.Empty,
         };
     }
 

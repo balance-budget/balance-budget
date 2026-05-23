@@ -63,7 +63,10 @@ internal static class BankTransactionEndpoints
                 request.BankAccountId,
                 request.BookingDate,
                 request.Amount,
-                request.CurrencyCode
+                request.CurrencyCode,
+                request.Description,
+                request.CounterpartyName,
+                request.CounterpartyAccountNumber
             ),
             cancellationToken
         );

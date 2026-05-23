@@ -35,7 +35,10 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
             BankAccountId: bankAccount.Id,
             BookingDate: new DateOnly(2026, 5, 17),
             Amount: -12345L,
-            CurrencyCode: "EUR"
+            CurrencyCode: "EUR",
+            Description: "Round-trip groceries",
+            CounterpartyName: "Albert Heijn",
+            CounterpartyAccountNumber: "NL44RABO0123456789"
         );
         using var createResponse = await client.PostAsJsonAsync(
             new Uri("/api/bank-transactions", UriKind.Relative),
@@ -49,6 +52,9 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
         await Assert.That(created.Money.Amount).IsEqualTo(-12345L);
         await Assert.That(created.Money.CurrencyCode).IsEqualTo("EUR");
         await Assert.That(created.BookingDate).IsEqualTo(new DateOnly(2026, 5, 17));
+        await Assert.That(created.Description).IsEqualTo("Round-trip groceries");
+        await Assert.That(created.CounterpartyName).IsEqualTo("Albert Heijn");
+        await Assert.That(created.CounterpartyAccountNumber).IsEqualTo("NL44RABO0123456789");
 
         using var getResponse = await client.GetAsync(
             new Uri($"/api/bank-transactions/{created.Id}", UriKind.Relative)
@@ -57,6 +63,9 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
         var fetched = await getResponse.Content.ReadFromJsonAsync<BankTransactionDto>();
         await Assert.That(fetched!.Money.Amount).IsEqualTo(-12345L);
         await Assert.That(fetched.Money.CurrencyCode).IsEqualTo("EUR");
+        await Assert.That(fetched.Description).IsEqualTo("Round-trip groceries");
+        await Assert.That(fetched.CounterpartyName).IsEqualTo("Albert Heijn");
+        await Assert.That(fetched.CounterpartyAccountNumber).IsEqualTo("NL44RABO0123456789");
     }
 
     [Test]
@@ -74,7 +83,8 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
             BankAccountId: bankAccount.Id,
             BookingDate: new DateOnly(2026, 5, 17),
             Amount: 1000L,
-            CurrencyCode: "EUR"
+            CurrencyCode: "EUR",
+            Description: "Counterparty BTX"
         );
         using var response = await client.PostAsJsonAsync(
             new Uri("/api/bank-transactions", UriKind.Relative),
@@ -93,7 +103,8 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
             BankAccountId: Guid.NewGuid(),
             BookingDate: new DateOnly(2026, 5, 17),
             Amount: 250L,
-            CurrencyCode: "EUR"
+            CurrencyCode: "EUR",
+            Description: "Unknown BankAccount"
         );
         using var response = await client.PostAsJsonAsync(
             new Uri("/api/bank-transactions", UriKind.Relative),
@@ -118,7 +129,8 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
             BankAccountId: bankAccount.Id,
             BookingDate: new DateOnly(2026, 5, 17),
             Amount: 250L,
-            CurrencyCode: "XYZ"
+            CurrencyCode: "XYZ",
+            Description: "Unknown currency"
         );
         using var response = await client.PostAsJsonAsync(
             new Uri("/api/bank-transactions", UriKind.Relative),
@@ -143,7 +155,8 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
             BankAccountId: bankAccount.Id,
             BookingDate: new DateOnly(2026, 5, 17),
             Amount: 0L,
-            CurrencyCode: "EUR"
+            CurrencyCode: "EUR",
+            Description: "Zero amount"
         );
         using var response = await client.PostAsJsonAsync(
             new Uri("/api/bank-transactions", UriKind.Relative),
@@ -151,6 +164,63 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
         );
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+    }
+
+    [Test]
+    public async Task CreateBankTransaction_empty_description_returns_400()
+    {
+        using var client = Factory.CreateClient();
+        var account = await CreateAccountAsync(client, "Checking-BTX-EmptyDesc");
+        var bankAccount = await CreateBankAccountForAccountAsync(
+            client,
+            iban: "NL04RABO0BTX00006",
+            accountId: account.Id
+        );
+
+        var request = new CreateBankTransactionRequestDto(
+            BankAccountId: bankAccount.Id,
+            BookingDate: new DateOnly(2026, 5, 17),
+            Amount: 100L,
+            CurrencyCode: "EUR",
+            Description: ""
+        );
+        using var response = await client.PostAsJsonAsync(
+            new Uri("/api/bank-transactions", UriKind.Relative),
+            request
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+    }
+
+    [Test]
+    public async Task CreateBankTransaction_duplicate_payload_returns_409()
+    {
+        using var client = Factory.CreateClient();
+        var account = await CreateAccountAsync(client, "Checking-BTX-Duplicate");
+        var bankAccount = await CreateBankAccountForAccountAsync(
+            client,
+            iban: "NL05RABO0BTX00007",
+            accountId: account.Id
+        );
+
+        var request = new CreateBankTransactionRequestDto(
+            BankAccountId: bankAccount.Id,
+            BookingDate: new DateOnly(2026, 5, 17),
+            Amount: 500L,
+            CurrencyCode: "EUR",
+            Description: "Same payload twice"
+        );
+        using var first = await client.PostAsJsonAsync(
+            new Uri("/api/bank-transactions", UriKind.Relative),
+            request
+        );
+        await Assert.That(first.StatusCode).IsEqualTo(HttpStatusCode.Created);
+
+        using var second = await client.PostAsJsonAsync(
+            new Uri("/api/bank-transactions", UriKind.Relative),
+            request
+        );
+        await Assert.That(second.StatusCode).IsEqualTo(HttpStatusCode.Conflict);
     }
 
     [Test]
@@ -180,7 +250,8 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
             BankAccountId: bankAccount.Id,
             BookingDate: new DateOnly(2026, 5, 17),
             Amount: 1L,
-            CurrencyCode: "EUR"
+            CurrencyCode: "EUR",
+            Description: "Delete me"
         );
         using var createResponse = await client.PostAsJsonAsync(
             new Uri("/api/bank-transactions", UriKind.Relative),
@@ -282,6 +353,9 @@ internal sealed record BankTransactionDto(
     Guid BankAccountId,
     DateOnly BookingDate,
     MoneyDto Money,
+    string Description,
+    string? CounterpartyName,
+    string? CounterpartyAccountNumber,
     DateTime CreatedAt,
     DateTime UpdatedAt
 );
@@ -292,5 +366,8 @@ internal sealed record CreateBankTransactionRequestDto(
     Guid BankAccountId,
     DateOnly BookingDate,
     long Amount,
-    string CurrencyCode
+    string CurrencyCode,
+    string Description,
+    string? CounterpartyName = null,
+    string? CounterpartyAccountNumber = null
 );
