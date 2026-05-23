@@ -3,6 +3,7 @@ import { Link, useRouterState } from '@tanstack/react-router';
 import logo from '../assets/logo.svg';
 import { Icon } from './Icon';
 import { lastFourIdentifier, useAccounts, type Account } from '../api/accounts';
+import { useCurrencyCatalog } from '../api/currencies';
 import { Skeleton } from './Skeleton';
 import { ErrorState } from './ErrorState';
 import { cx } from '../lib/cx';
@@ -80,6 +81,7 @@ function NavGroup({
 }
 
 function AccountRow({ account }: { account: Account }) {
+    const catalog = useCurrencyCatalog();
     const visual = visualHintFor(account.type, account.id);
     const tail = lastFourIdentifier(account);
     const isNegative = account.balance.amount < 0;
@@ -104,7 +106,7 @@ function AccountRow({ account }: { account: Account }) {
                     isNegative ? 'text-danger' : 'text-fg-2',
                 )}
             >
-                {formatMoney(account.balance.amount, account.balance.currencyCode, {
+                {formatMoney(account.balance.amount, account.balance.currencyCode, catalog, {
                     decimals: false,
                 })}
             </span>

@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { lastFourIdentifier, useAccounts, type Account } from '../api/accounts';
+import { useCurrencyCatalog } from '../api/currencies';
 import {
     useAccountBalanceTrend,
     useDashboardSummary,
@@ -21,6 +22,7 @@ import { formatMoney } from '../lib/money';
 import { visualHintFor } from '../lib/visualHints';
 
 function RecentRow({ row }: { row: RegisterRow }) {
+    const catalog = useCurrencyCatalog();
     const label = row.counterpartyName ?? row.entryDescription ?? row.lineDescription ?? '—';
     const negative = row.amount.amount < 0;
     return (
@@ -32,7 +34,7 @@ function RecentRow({ row }: { row: RegisterRow }) {
                     negative ? 'text-fg-2' : 'text-success',
                 )}
             >
-                {formatMoney(row.amount.amount, row.amount.currencyCode, { sign: true })}
+                {formatMoney(row.amount.amount, row.amount.currencyCode, catalog, { sign: true })}
             </span>
         </div>
     );

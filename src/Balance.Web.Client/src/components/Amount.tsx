@@ -1,3 +1,4 @@
+import { useCurrencyCatalog } from '../api/currencies';
 import { cx } from '../lib/cx';
 import { splitMoney, type FormatOptions } from '../lib/money';
 
@@ -27,7 +28,8 @@ const CENTS_SCALE: Record<NonNullable<AmountProps['size']>, string> = {
  * tabular-aligned.
  */
 export function Amount({ minor, currencyCode, size = 'medium', className, ...fmt }: AmountProps) {
-    const m = splitMoney(minor, currencyCode, fmt);
+    const catalog = useCurrencyCatalog();
+    const m = splitMoney(minor, currencyCode, catalog, fmt);
     return (
         <span className={cx('tabular inline-flex items-baseline', SIZE_CLASS[size], className)}>
             {m.sign && <span className="mr-[0.05em]">{m.sign}</span>}
