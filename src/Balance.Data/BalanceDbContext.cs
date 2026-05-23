@@ -50,6 +50,9 @@ public sealed class BalanceDbContext : DbContext, IDataProtectionKeyContext
     {
         ArgumentNullException.ThrowIfNull(optionsBuilder);
 
+        // EnableSensitiveDataLogging writes EF parameter values into the log stream — useful
+        // when debugging queries locally, but it means anything the app reads or writes
+        // ends up in logs. Never run a Development host against production-shaped data.
         optionsBuilder
             .UseProvider(_options)
             .UseLoggerFactory(_loggerFactory)
