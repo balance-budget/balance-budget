@@ -75,14 +75,14 @@ export function TrendChart({ series, range, currencyCode, height = 240 }: TrendC
                     dataKey="date"
                     ticks={ticks}
                     interval={0}
-                    tickFormatter={d => formatTrendAxisDate(d, range)}
+                    tickFormatter={(d: string) => formatTrendAxisDate(d, range)}
                     tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
                     axisLine={false}
                     tickLine={false}
                 />
                 <YAxis
                     domain={['auto', 'auto']}
-                    tickFormatter={v => formatMoneyAxis(v, currencyCode, catalog)}
+                    tickFormatter={(v: number) => formatMoneyAxis(v, currencyCode, catalog)}
                     tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
                     axisLine={false}
                     tickLine={false}

@@ -138,7 +138,7 @@ function AccountsGroup() {
             <div className="flex flex-col gap-[2px]">
                 <SectionLabel>Accounts</SectionLabel>
                 <div className="px-3 py-2">
-                    <ErrorState message="Couldn't load accounts." onRetry={() => refetch()} />
+                    <ErrorState message="Couldn't load accounts." onRetry={() => void refetch()} />
                 </div>
             </div>
         );

@@ -30,6 +30,8 @@ const queryClient = new QueryClient({
     },
 });
 
+/* eslint-disable @typescript-eslint/consistent-type-definitions --
+   declaration-merging into TanStack's module requires `interface`. */
 declare module '@tanstack/react-router' {
     interface Register {
         router: typeof router;
@@ -40,8 +42,12 @@ declare module '@tanstack/react-router' {
         title?: string;
     }
 }
+/* eslint-enable @typescript-eslint/consistent-type-definitions */
 
-createRoot(document.getElementById('root')!).render(
+const rootElement = document.getElementById('root');
+if (!rootElement) throw new Error('Missing #root element in index.html');
+
+createRoot(rootElement).render(
     <StrictMode>
         <QueryClientProvider client={queryClient}>
             <RouterProvider router={router} />
