@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import type { TrendRange } from '../api/dashboard';
 import { formatTrendAxisDate, formatTrendTooltipDate } from '../lib/dates';
-import type { AccountTrend } from '../lib/domain';
+import { asAccountId, type AccountId, type AccountTrend } from '../lib/domain';
 import { formatMoney, formatMoneyAxis } from '../lib/money';
 
 type TrendChartProps = {
@@ -57,7 +57,7 @@ export function TrendChart({ series, range, currencyCode, height = 240 }: TrendC
     const rows = useMemo(() => buildRows(series), [series]);
     const ticks = useMemo(() => computeTicks(rows, range), [rows, range]);
     const seriesByKey = useMemo(
-        () => new Map(series.map(s => [s.accountId as string, s])),
+        () => new Map(series.map(s => [s.accountId, s])),
         [series],
     );
 
@@ -118,7 +118,7 @@ export function TrendChart({ series, range, currencyCode, height = 240 }: TrendC
 }
 
 type TrendTooltipProps = Partial<TooltipContentProps<number, string>> & {
-    seriesByKey: Map<string, AccountTrend>;
+    seriesByKey: Map<AccountId, AccountTrend>;
     currencyCode: string;
 };
 
@@ -134,7 +134,7 @@ function TrendTooltip({ active, payload, label, seriesByKey, currencyCode }: Tre
             </div>
             <div className="flex flex-col gap-1">
                 {sorted.map(item => {
-                    const series = seriesByKey.get(String(item.dataKey));
+                    const series = seriesByKey.get(asAccountId(String(item.dataKey)));
                     const value = Number(item.value) || 0;
                     return (
                         <div
