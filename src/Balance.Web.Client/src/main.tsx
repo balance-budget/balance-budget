@@ -12,9 +12,13 @@ import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/500.css';
 
 import './index.css';
+import { RouteError } from './components/RouteError';
 import { routeTree } from './routeTree.gen';
 
-const router = createRouter({ routeTree });
+const router = createRouter({
+    routeTree,
+    defaultErrorComponent: RouteError,
+});
 
 const queryClient = new QueryClient({
     defaultOptions: {
