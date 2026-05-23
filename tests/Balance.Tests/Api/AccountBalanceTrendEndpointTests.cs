@@ -22,7 +22,7 @@ internal sealed class AccountBalanceTrendEndpointTests : EndpointsTestsBase
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var expectedStart = today.AddMonths(-3);
 
-        await Assert.That(trend!.Range).IsEqualTo("3M");
+        await Assert.That(trend!.Range).IsEqualTo("ThreeMonths");
         await Assert.That(trend.PeriodStart).IsEqualTo(expectedStart);
         await Assert.That(trend.PeriodEnd).IsEqualTo(today);
         await Assert.That(trend.CurrencyCode).IsEqualTo("EUR");
@@ -45,10 +45,10 @@ internal sealed class AccountBalanceTrendEndpointTests : EndpointsTestsBase
     {
         using var client = Factory.CreateClient();
 
-        var trend = await GetTrendAsync(client, range: "1M");
+        var trend = await GetTrendAsync(client, range: "OneMonth");
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        await Assert.That(trend.Range).IsEqualTo("1M");
+        await Assert.That(trend.Range).IsEqualTo("OneMonth");
         await Assert.That(trend.PeriodStart).IsEqualTo(today.AddMonths(-1));
         await Assert.That(trend.PeriodEnd).IsEqualTo(today);
     }
@@ -58,10 +58,10 @@ internal sealed class AccountBalanceTrendEndpointTests : EndpointsTestsBase
     {
         using var client = Factory.CreateClient();
 
-        var trend = await GetTrendAsync(client, range: "1Y");
+        var trend = await GetTrendAsync(client, range: "OneYear");
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        await Assert.That(trend.Range).IsEqualTo("1Y");
+        await Assert.That(trend.Range).IsEqualTo("OneYear");
         await Assert.That(trend.PeriodStart).IsEqualTo(today.AddYears(-1));
         await Assert.That(trend.PeriodEnd).IsEqualTo(today);
     }
@@ -95,7 +95,7 @@ internal sealed class AccountBalanceTrendEndpointTests : EndpointsTestsBase
             ]
         );
 
-        var trend = await GetTrendAsync(client, range: "1M", currency: currency);
+        var trend = await GetTrendAsync(client, range: "OneMonth", currency: currency);
 
         var series = SeriesFor(trend, asset.Id);
         await Assert.That(series).IsNotNull();
@@ -145,7 +145,7 @@ internal sealed class AccountBalanceTrendEndpointTests : EndpointsTestsBase
             ]
         );
 
-        var trend = await GetTrendAsync(client, range: "1M", currency: currency);
+        var trend = await GetTrendAsync(client, range: "OneMonth", currency: currency);
 
         var series = SeriesFor(trend, asset.Id);
         await Assert.That(series).IsNotNull();
@@ -200,7 +200,7 @@ internal sealed class AccountBalanceTrendEndpointTests : EndpointsTestsBase
             ]
         );
 
-        var trend = await GetTrendAsync(client, range: "1M", currency: currency);
+        var trend = await GetTrendAsync(client, range: "OneMonth", currency: currency);
 
         var seriesA = SeriesFor(trend, assetA.Id);
         var seriesB = SeriesFor(trend, assetB.Id);
@@ -240,7 +240,7 @@ internal sealed class AccountBalanceTrendEndpointTests : EndpointsTestsBase
             ]
         );
 
-        var trend = await GetTrendAsync(client, range: "1M", currency: currency);
+        var trend = await GetTrendAsync(client, range: "OneMonth", currency: currency);
 
         await Assert.That(SeriesFor(trend, liability.Id)).IsNull();
     }
@@ -294,7 +294,7 @@ internal sealed class AccountBalanceTrendEndpointTests : EndpointsTestsBase
             ]
         );
 
-        var trend = await GetTrendAsync(client, range: "1M", currency: currencyA);
+        var trend = await GetTrendAsync(client, range: "OneMonth", currency: currencyA);
 
         await Assert.That(SeriesFor(trend, assetA.Id)).IsNotNull();
         await Assert.That(SeriesFor(trend, assetB.Id)).IsNull();
@@ -313,7 +313,7 @@ internal sealed class AccountBalanceTrendEndpointTests : EndpointsTestsBase
             currency
         );
 
-        var trend = await GetTrendAsync(client, range: "1M", currency: currency);
+        var trend = await GetTrendAsync(client, range: "OneMonth", currency: currency);
 
         await Assert.That(SeriesFor(trend, silentAsset.Id)).IsNull();
     }

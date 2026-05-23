@@ -68,7 +68,14 @@ internal sealed class DashboardService : IDashboardService
     )
     {
         var today = DateOnly.FromDateTime(_timeProvider.GetUtcNow().UtcDateTime);
-        var periodStart = today.AddMonths(-range.Months);
+        var periodStart = range switch
+        {
+            TrendRange.OneMonth => today.AddMonths(-1),
+            TrendRange.ThreeMonths => today.AddMonths(-3),
+            TrendRange.SixMonths => today.AddMonths(-6),
+            TrendRange.OneYear => today.AddYears(-1),
+            _ => throw new ArgumentOutOfRangeException(nameof(range), range, "Unknown TrendRange."),
+        };
 
         var assets = await _dbContext
             .Accounts.AsNoTracking()

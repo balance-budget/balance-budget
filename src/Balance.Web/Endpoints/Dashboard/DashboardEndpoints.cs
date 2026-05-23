@@ -13,7 +13,7 @@ internal static class DashboardEndpoints
     // Hardcoded fallback until per-user currency preferences land.
     private static readonly CurrencyCode DefaultCurrency = new("EUR");
 
-    private static readonly TrendRange DefaultTrendRange = TrendRange.ThreeMonths;
+    private const TrendRange DefaultTrendRange = TrendRange.ThreeMonths;
 
     public static void MapDashboard(this IEndpointRouteBuilder app)
     {
