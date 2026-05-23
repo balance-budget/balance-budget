@@ -28,7 +28,9 @@ export function MtdDeltaChip({ current, prior, polarity }: Props) {
         (polarity === 'higher-is-good' && direction === 'up') ||
         (polarity === 'lower-is-good' && direction === 'down');
 
-    const arrow = direction === 'up' ? '▲' : direction === 'down' ? '▼' : '—';
+    // Typographic minus (U+2212) for the flat case so the glyph baseline aligns
+    // with the ▲/▼ triangles instead of sitting on top.
+    const arrow = direction === 'up' ? '▲' : direction === 'down' ? '▼' : '−';
     const colorClass =
         direction === 'flat'
             ? 'text-fg-3 bg-surface-2'
