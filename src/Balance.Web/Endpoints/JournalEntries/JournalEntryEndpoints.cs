@@ -2,10 +2,7 @@ using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
 using Balance.Web.Filters;
 using Balance.Web.Mappers;
-using Balance.Web.OpenApi;
-using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Balance.Web.Endpoints.JournalEntries;
@@ -27,8 +24,16 @@ internal static class JournalEntryEndpoints
             .WithValidation<CreateJournalEntryRequest>()
             .WithName("CreateJournalEntry");
         group
-            .MapPatch("/{id}", UpdateAsync)
-            .WithJsonPatchTarget<UpdateJournalEntryInput>()
+            .MapPatchSnapshotted<
+                JournalEntryId,
+                IJournalEntryService,
+                UpdateJournalEntryInput,
+                JournalEntryOutput
+            >(
+                "/{id}",
+                (svc, id, ct) => svc.GetSnapshotAsync(id, ct),
+                (svc, id, input, ct) => svc.UpdateAsync(id, input, ct)
+            )
             .WithName("UpdateJournalEntry");
         group.MapDelete("/{id}", DeleteAsync).WithName("DeleteJournalEntry");
     }
@@ -92,42 +97,6 @@ internal static class JournalEntryEndpoints
         );
 
         return result.ToCreated(value => $"{PathPrefix}/{value.Id.Value}");
-    }
-
-    private static async Task<
-        Results<
-            Ok<JournalEntryOutput>,
-            NotFound<ProblemDetails>,
-            Conflict<ProblemDetails>,
-            UnprocessableEntity<ProblemDetails>,
-            ValidationProblem
-        >
-    > UpdateAsync(
-        [FromRoute] JournalEntryId id,
-        [FromBody] JsonPatchDocument<UpdateJournalEntryInput> patch,
-        [FromServices] IJournalEntryService journalEntryService,
-        [FromServices] IValidator<UpdateJournalEntryInput>? validator,
-        CancellationToken cancellationToken
-    )
-    {
-        var snapshot = await journalEntryService.GetSnapshotAsync(id, cancellationToken);
-        if (snapshot.IsFailure)
-        {
-            return new Result<JournalEntryOutput>(snapshot.Error).ToOk();
-        }
-
-        var patched = await patch.ApplyAndValidateAsync(
-            snapshot.Value,
-            validator,
-            cancellationToken
-        );
-        if (patched.IsFailure)
-        {
-            return new Result<JournalEntryOutput>(patched.Error).ToOk();
-        }
-
-        var result = await journalEntryService.UpdateAsync(id, patched.Value, cancellationToken);
-        return result.ToOk();
     }
 
     private static async Task<

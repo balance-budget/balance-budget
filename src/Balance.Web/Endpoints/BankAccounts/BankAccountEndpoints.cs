@@ -2,10 +2,7 @@ using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
 using Balance.Web.Filters;
 using Balance.Web.Mappers;
-using Balance.Web.OpenApi;
-using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Balance.Web.Endpoints.BankAccounts;
@@ -24,8 +21,16 @@ internal static class BankAccountEndpoints
             .WithValidation<CreateBankAccountRequest>()
             .WithName("CreateBankAccount");
         group
-            .MapPatch("/{id}", UpdateAsync)
-            .WithJsonPatchTarget<UpdateBankAccountInput>()
+            .MapPatchSnapshotted<
+                BankAccountId,
+                IBankAccountService,
+                UpdateBankAccountInput,
+                BankAccountOutput
+            >(
+                "/{id}",
+                (svc, id, ct) => svc.GetSnapshotAsync(id, ct),
+                (svc, id, input, ct) => svc.UpdateAsync(id, input, ct)
+            )
             .WithName("UpdateBankAccount");
         group.MapDelete("/{id}", DeleteAsync).WithName("DeleteBankAccount");
     }
@@ -79,42 +84,6 @@ internal static class BankAccountEndpoints
             cancellationToken
         );
         return result.ToCreated(value => $"{PathPrefix}/{value.Id.Value}");
-    }
-
-    private static async Task<
-        Results<
-            Ok<BankAccountOutput>,
-            NotFound<ProblemDetails>,
-            Conflict<ProblemDetails>,
-            UnprocessableEntity<ProblemDetails>,
-            ValidationProblem
-        >
-    > UpdateAsync(
-        [FromRoute] BankAccountId id,
-        [FromBody] JsonPatchDocument<UpdateBankAccountInput> patch,
-        [FromServices] IBankAccountService bankAccountService,
-        [FromServices] IValidator<UpdateBankAccountInput>? validator,
-        CancellationToken cancellationToken
-    )
-    {
-        var snapshot = await bankAccountService.GetSnapshotAsync(id, cancellationToken);
-        if (snapshot.IsFailure)
-        {
-            return new Result<BankAccountOutput>(snapshot.Error).ToOk();
-        }
-
-        var patched = await patch.ApplyAndValidateAsync(
-            snapshot.Value,
-            validator,
-            cancellationToken
-        );
-        if (patched.IsFailure)
-        {
-            return new Result<BankAccountOutput>(patched.Error).ToOk();
-        }
-
-        var result = await bankAccountService.UpdateAsync(id, patched.Value, cancellationToken);
-        return result.ToOk();
     }
 
     private static async Task<

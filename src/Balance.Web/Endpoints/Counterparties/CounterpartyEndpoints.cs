@@ -2,10 +2,7 @@ using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
 using Balance.Web.Filters;
 using Balance.Web.Mappers;
-using Balance.Web.OpenApi;
-using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Balance.Web.Endpoints.Counterparties;
@@ -24,8 +21,16 @@ internal static class CounterpartyEndpoints
             .WithValidation<CreateCounterpartyRequest>()
             .WithName("CreateCounterparty");
         group
-            .MapPatch("/{id}", UpdateAsync)
-            .WithJsonPatchTarget<UpdateCounterpartyInput>()
+            .MapPatchSnapshotted<
+                CounterpartyId,
+                ICounterpartyService,
+                UpdateCounterpartyInput,
+                CounterpartyOutput
+            >(
+                "/{id}",
+                (svc, id, ct) => svc.GetSnapshotAsync(id, ct),
+                (svc, id, input, ct) => svc.UpdateAsync(id, input, ct)
+            )
             .WithName("UpdateCounterparty");
         group.MapDelete("/{id}", DeleteAsync).WithName("DeleteCounterparty");
     }
@@ -67,42 +72,6 @@ internal static class CounterpartyEndpoints
     {
         var result = await counterpartyService.CreateAsync(request.Name, cancellationToken);
         return result.ToCreated(value => $"{PathPrefix}/{value.Id.Value}");
-    }
-
-    private static async Task<
-        Results<
-            Ok<CounterpartyOutput>,
-            NotFound<ProblemDetails>,
-            Conflict<ProblemDetails>,
-            UnprocessableEntity<ProblemDetails>,
-            ValidationProblem
-        >
-    > UpdateAsync(
-        [FromRoute] CounterpartyId id,
-        [FromBody] JsonPatchDocument<UpdateCounterpartyInput> patch,
-        [FromServices] ICounterpartyService counterpartyService,
-        [FromServices] IValidator<UpdateCounterpartyInput>? validator,
-        CancellationToken cancellationToken
-    )
-    {
-        var snapshot = await counterpartyService.GetSnapshotAsync(id, cancellationToken);
-        if (snapshot.IsFailure)
-        {
-            return new Result<CounterpartyOutput>(snapshot.Error).ToOk();
-        }
-
-        var patched = await patch.ApplyAndValidateAsync(
-            snapshot.Value,
-            validator,
-            cancellationToken
-        );
-        if (patched.IsFailure)
-        {
-            return new Result<CounterpartyOutput>(patched.Error).ToOk();
-        }
-
-        var result = await counterpartyService.UpdateAsync(id, patched.Value, cancellationToken);
-        return result.ToOk();
     }
 
     private static async Task<
