@@ -1,3 +1,4 @@
+using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
 
 namespace Balance.Services.Contracts;
@@ -7,4 +8,29 @@ public sealed record CurrencyOutput(
     string Name,
     int MinorUnitScale,
     string? Symbol
+)
+{
+    public static CurrencyOutput FromEntity(Currency currency)
+    {
+        ArgumentNullException.ThrowIfNull(currency);
+        return new CurrencyOutput(
+            currency.Code,
+            currency.Name,
+            currency.MinorUnitScale,
+            currency.Symbol
+        );
+    }
+}
+
+public sealed record CreateCurrencyInput(
+    CurrencyCode Code,
+    string Name,
+    int MinorUnitScale,
+    string? Symbol
 );
+
+public sealed record UpdateCurrencyInput
+{
+    public required string Name { get; set; }
+    public string? Symbol { get; set; }
+}

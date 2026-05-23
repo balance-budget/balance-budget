@@ -80,7 +80,7 @@ internal sealed class CurrencyServiceTests : EndpointsTestsBase
 
         await service.UpdateAsync(
             code,
-            new UpdateCurrencyInput("Updated", null),
+            new UpdateCurrencyInput { Name = "Updated", Symbol = null },
             cancellationToken
         );
 

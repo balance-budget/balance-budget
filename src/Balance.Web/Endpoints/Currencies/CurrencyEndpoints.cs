@@ -24,8 +24,17 @@ internal static class CurrencyEndpoints
             .WithValidation<CreateCurrencyRequest>()
             .WithName("CreateCurrency");
         group
-            .MapPatch("/{code}", UpdateAsync)
-            .WithValidation<UpdateCurrencyRequest>()
+            .MapPatchSnapshotted<
+                CurrencyCode,
+                ICurrencyService,
+                UpdateCurrencyInput,
+                CurrencyOutput
+            >(
+                "/{code}",
+                (svc, code, ct) => svc.GetSnapshotAsync(code, ct),
+                (svc, code, input, ct) => svc.UpdateAsync(code, input, ct),
+                idRouteName: "code"
+            )
             .WithName("UpdateCurrency");
         group.MapDelete("/{code}", DeleteAsync).WithName("DeleteCurrency");
     }
@@ -75,29 +84,6 @@ internal static class CurrencyEndpoints
             cancellationToken
         );
         return result.ToCreated(value => $"{PathPrefix}/{value.Code.Value}");
-    }
-
-    private static async Task<
-        Results<
-            Ok<CurrencyOutput>,
-            NotFound<ProblemDetails>,
-            Conflict<ProblemDetails>,
-            UnprocessableEntity<ProblemDetails>,
-            ValidationProblem
-        >
-    > UpdateAsync(
-        [FromRoute] CurrencyCode code,
-        [FromBody] UpdateCurrencyRequest request,
-        [FromServices] ICurrencyService currencyService,
-        CancellationToken cancellationToken
-    )
-    {
-        var result = await currencyService.UpdateAsync(
-            code,
-            new UpdateCurrencyInput(request.Name, request.Symbol),
-            cancellationToken
-        );
-        return result.ToOk();
     }
 
     private static async Task<

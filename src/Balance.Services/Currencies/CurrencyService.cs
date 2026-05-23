@@ -1,6 +1,7 @@
 using Balance.Data;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
+using Balance.Data.Helpers;
 using Balance.Services.Contracts;
 using Balance.Services.Helpers;
 using Microsoft.EntityFrameworkCore;
@@ -62,6 +63,19 @@ internal sealed class CurrencyService : ICurrencyService
         return output is null ? new NotFoundError("Currency", code.Value) : output;
     }
 
+    public async Task<Result<UpdateCurrencyInput>> GetSnapshotAsync(
+        CurrencyCode code,
+        CancellationToken cancellationToken
+    )
+    {
+        var snapshot = await _dbContext
+            .Currencies.AsNoTracking()
+            .Where(c => c.Code == code)
+            .Select(c => new UpdateCurrencyInput { Name = c.Name, Symbol = c.Symbol })
+            .FirstOrDefaultAsync(cancellationToken);
+        return snapshot is null ? new NotFoundError("Currency", code.Value) : snapshot;
+    }
+
     public async Task<Result<CurrencyOutput>> CreateAsync(
         CreateCurrencyInput input,
         CancellationToken cancellationToken
@@ -117,25 +131,17 @@ internal sealed class CurrencyService : ICurrencyService
             return new NotFoundError("Currency", code.Value);
         }
 
-        if (input.Name is not null)
+        var trimmedName = input.Name?.Trim() ?? string.Empty;
+        if (trimmedName.Length == 0)
         {
-            var trimmed = input.Name.Trim();
-            if (trimmed.Length == 0)
-            {
-                return new InvariantError(
-                    ErrorCodes.CurrencyNameEmpty,
-                    "Currency name cannot be empty."
-                );
-            }
-
-            currency.Name = trimmed;
+            return new InvariantError(
+                ErrorCodes.CurrencyNameEmpty,
+                "Currency name cannot be empty."
+            );
         }
 
-        if (input.Symbol is not null)
-        {
-            var trimmed = input.Symbol.Trim();
-            currency.Symbol = trimmed.Length == 0 ? null : trimmed;
-        }
+        currency.Name = trimmedName;
+        currency.Symbol = input.Symbol.TrimToNull();
 
         var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
         if (saveResult.IsFailure)

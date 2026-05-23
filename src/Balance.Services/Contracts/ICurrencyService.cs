@@ -8,6 +8,11 @@ public interface ICurrencyService
 
     Task<Result<CurrencyOutput>> GetAsync(CurrencyCode code, CancellationToken cancellationToken);
 
+    Task<Result<UpdateCurrencyInput>> GetSnapshotAsync(
+        CurrencyCode code,
+        CancellationToken cancellationToken
+    );
+
     Task<Result<CurrencyOutput>> CreateAsync(
         CreateCurrencyInput input,
         CancellationToken cancellationToken
