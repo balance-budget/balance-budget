@@ -23,6 +23,8 @@ internal sealed class IngBankTransactionImporter : IBankTransactionImporter
 
     public async Task ImportAsync(CancellationToken cancellationToken)
     {
+        // This method is a stub.
+        // Eventually this is where we need to turn the ING-specific statements into balance bank transactions
         const string path = "";
         var statements = await _ingStatementParser.ParseStatementsAsync(path, cancellationToken);
         var reOrderedStatements = statements.Reverse().Select(ToTransaction).ToList();
@@ -83,18 +85,5 @@ internal sealed class IngBankTransactionImporter : IBankTransactionImporter
         }
 
         return null;
-    }
-
-    private static (string AccountNumber, bool IsSavings) ParseFileName(string path)
-    {
-        var fileNamePatten = IngPatterns.ExportAccountNumberPattern();
-        var savingsAccountPattern = IngPatterns.SavingsAccountPattern();
-        var match = fileNamePatten.Match(Path.GetFileName(path));
-        var accountNumber = match.Success
-            ? match.Groups["num"].Value
-            : throw new InvalidOperationException("File name does not contain an account number.");
-
-        var isSavings = savingsAccountPattern.IsMatch(accountNumber);
-        return (accountNumber, isSavings);
     }
 }
