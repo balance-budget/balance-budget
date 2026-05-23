@@ -21,7 +21,6 @@ internal static class ServiceCollectionExtensions
 
         services.AddOpenApi(options =>
         {
-            options.AddOperationTransformer<ProblemDetailsOperationTransformer>();
             options.AddOperationTransformer<JsonPatchOperationTransformer>();
             options.AddSchemaTransformer<TypedIdSchemaTransformer>();
         });
