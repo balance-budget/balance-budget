@@ -21,7 +21,7 @@ builder.Services.AddBalanceWeb(builder.Configuration);
 var app = builder.Build();
 var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
 
-await app.MigrateDatabase(lifetime.ApplicationStopping);
+await app.MigrateDatabaseAsync(lifetime.ApplicationStopping);
 
 // Middleware pipeline, order matters here
 app.UseExceptionHandler();

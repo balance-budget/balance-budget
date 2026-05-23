@@ -67,8 +67,8 @@ Notes:
 - `Entities/BaseEntity` — `Id` (`int`), `CreatedAt` (`init`), `UpdatedAt`. All domain entities should derive from this.
 - `Helpers/DbContextOptionsBuilderExtensions.UseProvider` — the provider switch. Returns a `UseSqlite(...).UseBulkInsertSqlite()` or `UseNpgsql(...).UseBulkInsertPostgreSql()` builder, wiring the appropriate migrations assembly.
 - `Helpers/DbPathHelper` — picks the SQLite file path (`/data/balance.db` in containers, `%LOCALAPPDATA%/balance-budget/balance.db` otherwise) and proactively probes for write access.
-- `Helpers/DateConverters` — `UtcConverter` and `UtcNullableConverter` ensure `DateTime` columns round-trip with `Kind = Utc`.
-- `Helpers/HostExtensions.MigrateDatabase` — applies pending migrations at host startup and logs through the source-generated logger.
+- `Helpers/DateConverters` — `UtcConverter` ensures `DateTime` columns round-trip with `Kind = Utc`.
+- `Helpers/HostExtensions.MigrateDatabaseAsync` — applies pending migrations at host startup and logs through the source-generated logger.
 - `Helpers/DatabaseFacadeExtensions` — `Vacuum()` and `Analyze()` raw-SQL helpers.
 - `Logging/LoggerExtensions` — partial class for source-generated `[LoggerMessage]` methods.
 - `ServiceCollectionExtensions.AddBalanceData` registers `BalanceDbContext` (and its factory) plus ASP.NET Data Protection persisted to the same context with application name `"Balance"`.
@@ -113,7 +113,7 @@ builder.Configuration.MapConfigurationSources(...)
 builder.Services.AddBalanceServices(builder.Configuration)
 builder.Services.AddBalanceWeb()
 var app = builder.Build();
-await app.MigrateDatabase(lifetime.ApplicationStopping);
+await app.MigrateDatabaseAsync(lifetime.ApplicationStopping);
 
 // SPA shell — everything not under /api falls back here
 app.MapStaticAssets();

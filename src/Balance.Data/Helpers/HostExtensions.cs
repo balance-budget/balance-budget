@@ -9,7 +9,10 @@ namespace Balance.Data.Helpers;
 
 public static class HostExtensions
 {
-    public static async Task MigrateDatabase(this IHost host, CancellationToken cancellationToken)
+    public static async Task MigrateDatabaseAsync(
+        this IHost host,
+        CancellationToken cancellationToken
+    )
     {
         ArgumentNullException.ThrowIfNull(host);
         var environment = host.Services.GetRequiredService<IHostEnvironment>();
