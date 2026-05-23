@@ -15,6 +15,7 @@
     <Project Path="src/Balance.Services/Balance.Services.csproj" />
     <Project Path="src/Balance.Web/Balance.Web.csproj" />
     <Project Path="src/Balance.Web.Client/Balance.Web.Client.esproj" />
+    <Project Path="src\Balance.Integration.Ing\Balance.Integration.Ing.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Balance.Tests/Balance.Tests.csproj" />

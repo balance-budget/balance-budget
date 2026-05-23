@@ -1,4 +1,5 @@
 using Balance.Data.Helpers;
+using Balance.Integration.Ing;
 using Balance.Services;
 using Balance.Web;
 using Balance.Web.Endpoints.Accounts;
@@ -16,6 +17,7 @@ var builder = WebApplication.CreateSlimBuilder(args);
 
 builder.Logging.AddConsole(builder.Environment);
 builder.Services.AddBalanceServices(builder.Configuration, builder.Environment);
+builder.Services.AddBalanceIntegrationIng();
 builder.Services.AddBalanceWeb(builder.Configuration);
 
 var app = builder.Build();
