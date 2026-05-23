@@ -1,9 +1,9 @@
 using Balance.Data;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
-using Balance.Data.Exceptions;
 using Balance.Data.Helpers;
 using Balance.Services.Contracts;
+using Balance.Services.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace Balance.Services.BankAccounts;
@@ -45,11 +45,12 @@ internal sealed class BankAccountService : IBankAccountService
             ))
             .ToListAsync(cancellationToken);
 
-    public Task<BankAccountOutput?> GetAsync(
+    public async Task<Result<BankAccountOutput>> GetAsync(
         BankAccountId id,
         CancellationToken cancellationToken
-    ) =>
-        _dbContext
+    )
+    {
+        var output = await _dbContext
             .BankAccounts.Where(b => b.Id == id)
             .Select(b => new BankAccountOutput(
                 b.Id,
@@ -65,12 +66,15 @@ internal sealed class BankAccountService : IBankAccountService
                 b.UpdatedAt
             ))
             .FirstOrDefaultAsync(cancellationToken);
+        return output is null ? new NotFoundError("BankAccount", id.Value.ToString()) : output;
+    }
 
-    public Task<UpdateBankAccountInput?> GetSnapshotAsync(
+    public async Task<Result<UpdateBankAccountInput>> GetSnapshotAsync(
         BankAccountId id,
         CancellationToken cancellationToken
-    ) =>
-        _dbContext
+    )
+    {
+        var snapshot = await _dbContext
             .BankAccounts.AsNoTracking()
             .Where(b => b.Id == id)
             .Select(b => new UpdateBankAccountInput
@@ -85,8 +89,10 @@ internal sealed class BankAccountService : IBankAccountService
                 CounterpartyId = b.CounterpartyId,
             })
             .FirstOrDefaultAsync(cancellationToken);
+        return snapshot is null ? new NotFoundError("BankAccount", id.Value.ToString()) : snapshot;
+    }
 
-    public async Task<BankAccountOutput> CreateAsync(
+    public async Task<Result<BankAccountOutput>> CreateAsync(
         CreateBankAccountInput input,
         CancellationToken cancellationToken
     )
@@ -99,22 +105,34 @@ internal sealed class BankAccountService : IBankAccountService
         var bankName = input.BankName.TrimToNull();
         var accountHolderName = input.AccountHolderName.TrimToNull();
 
-        EnsureOwnershipXor(input.AccountId, input.CounterpartyId);
-        EnsureIbanOrAccountNumber(iban, accountNumber);
+        var ownershipCheck = EnsureOwnershipXor(input.AccountId, input.CounterpartyId);
+        if (ownershipCheck.IsFailure)
+            return ownershipCheck.Error;
 
-        await EnsureReferencedRowsExistAsync(
+        var identifierCheck = EnsureIbanOrAccountNumber(iban, accountNumber);
+        if (identifierCheck.IsFailure)
+            return identifierCheck.Error;
+
+        var referencesCheck = await EnsureReferencedRowsExistAsync(
             input.CurrencyCode,
             input.AccountId,
             input.CounterpartyId,
             cancellationToken
         );
+        if (referencesCheck.IsFailure)
+            return referencesCheck.Error;
 
-        await EnsureIbanAvailableAsync(iban, excludingId: null, cancellationToken);
-        await EnsureAccountSlotAvailableAsync(
+        var ibanCheck = await EnsureIbanAvailableAsync(iban, excludingId: null, cancellationToken);
+        if (ibanCheck.IsFailure)
+            return ibanCheck.Error;
+
+        var slotCheck = await EnsureAccountSlotAvailableAsync(
             input.AccountId,
             excludingId: null,
             cancellationToken
         );
+        if (slotCheck.IsFailure)
+            return slotCheck.Error;
 
         var now = _timeProvider.GetUtcNow().UtcDateTime;
         var bankAccount = new BankAccount
@@ -133,11 +151,14 @@ internal sealed class BankAccountService : IBankAccountService
         };
 
         _dbContext.BankAccounts.Add(bankAccount);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
+        if (saveResult.IsFailure)
+            return saveResult.Error;
+
         return ToOutput(bankAccount);
     }
 
-    public async Task<BankAccountOutput> UpdateAsync(
+    public async Task<Result<BankAccountOutput>> UpdateAsync(
         BankAccountId id,
         UpdateBankAccountInput input,
         CancellationToken cancellationToken
@@ -145,12 +166,14 @@ internal sealed class BankAccountService : IBankAccountService
     {
         ArgumentNullException.ThrowIfNull(input);
 
-        var bankAccount =
-            await _dbContext.BankAccounts.FirstOrDefaultAsync(b => b.Id == id, cancellationToken)
-            ?? throw new DomainException(
-                DomainExceptionKind.NotFound,
-                $"BankAccount {id} not found."
-            );
+        var bankAccount = await _dbContext.BankAccounts.FirstOrDefaultAsync(
+            b => b.Id == id,
+            cancellationToken
+        );
+        if (bankAccount is null)
+        {
+            return new NotFoundError("BankAccount", id.Value.ToString());
+        }
 
         var iban = input.Iban.TrimToNull();
         var accountNumber = input.AccountNumber.TrimToNull();
@@ -158,18 +181,34 @@ internal sealed class BankAccountService : IBankAccountService
         var bankName = input.BankName.TrimToNull();
         var accountHolderName = input.AccountHolderName.TrimToNull();
 
-        EnsureOwnershipXor(input.AccountId, input.CounterpartyId);
-        EnsureIbanOrAccountNumber(iban, accountNumber);
+        var ownershipCheck = EnsureOwnershipXor(input.AccountId, input.CounterpartyId);
+        if (ownershipCheck.IsFailure)
+            return ownershipCheck.Error;
 
-        await EnsureReferencedRowsExistAsync(
+        var identifierCheck = EnsureIbanOrAccountNumber(iban, accountNumber);
+        if (identifierCheck.IsFailure)
+            return identifierCheck.Error;
+
+        var referencesCheck = await EnsureReferencedRowsExistAsync(
             input.CurrencyCode,
             input.AccountId,
             input.CounterpartyId,
             cancellationToken
         );
+        if (referencesCheck.IsFailure)
+            return referencesCheck.Error;
 
-        await EnsureIbanAvailableAsync(iban, excludingId: id, cancellationToken);
-        await EnsureAccountSlotAvailableAsync(input.AccountId, excludingId: id, cancellationToken);
+        var ibanCheck = await EnsureIbanAvailableAsync(iban, excludingId: id, cancellationToken);
+        if (ibanCheck.IsFailure)
+            return ibanCheck.Error;
+
+        var slotCheck = await EnsureAccountSlotAvailableAsync(
+            input.AccountId,
+            excludingId: id,
+            cancellationToken
+        );
+        if (slotCheck.IsFailure)
+            return slotCheck.Error;
 
         bankAccount.Iban = iban;
         bankAccount.AccountNumber = accountNumber;
@@ -180,32 +219,26 @@ internal sealed class BankAccountService : IBankAccountService
         bankAccount.AccountId = input.AccountId;
         bankAccount.CounterpartyId = input.CounterpartyId;
         bankAccount.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
+        if (saveResult.IsFailure)
+            return saveResult.Error;
+
         return ToOutput(bankAccount);
     }
 
-    public async Task DeleteAsync(BankAccountId id, CancellationToken cancellationToken)
+    public async Task<Result> DeleteAsync(BankAccountId id, CancellationToken cancellationToken)
     {
-        var bankAccount =
-            await _dbContext.BankAccounts.FirstOrDefaultAsync(b => b.Id == id, cancellationToken)
-            ?? throw new DomainException(
-                DomainExceptionKind.NotFound,
-                $"BankAccount {id} not found."
-            );
+        var result = await _dbContext
+            .BankAccounts.Where(c => c.Id == id)
+            .ExecuteDeleteAndCatchAsync(cancellationToken);
 
-        _dbContext.BankAccounts.Remove(bankAccount);
-        try
-        {
-            await _dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateException ex)
-        {
-            throw new DomainException(
-                DomainExceptionKind.Conflict,
-                $"BankAccount {id} is referenced by other records and cannot be deleted.",
-                ex
-            );
-        }
+        if (result.IsFailure)
+            return result.Error;
+
+        if (result.Value == 0)
+            return new NotFoundError("BankAccount", id.Value.ToString());
+
+        return Result.Success;
     }
 
     private static BankAccountOutput ToOutput(BankAccount bankAccount) =>
@@ -223,31 +256,35 @@ internal sealed class BankAccountService : IBankAccountService
             bankAccount.UpdatedAt
         );
 
-    private static void EnsureOwnershipXor(AccountId? accountId, CounterpartyId? counterpartyId)
+    private static Result EnsureOwnershipXor(AccountId? accountId, CounterpartyId? counterpartyId)
     {
         var hasAccount = accountId.HasValue;
         var hasCounterparty = counterpartyId.HasValue;
         if (hasAccount == hasCounterparty)
         {
-            throw new DomainException(
-                DomainExceptionKind.Invariant,
+            return new InvariantError(
+                ErrorCodes.BankAccountOwnershipXor,
                 "A BankAccount must reference exactly one of AccountId or CounterpartyId."
             );
         }
+
+        return Result.Success;
     }
 
-    private static void EnsureIbanOrAccountNumber(string? iban, string? accountNumber)
+    private static Result EnsureIbanOrAccountNumber(string? iban, string? accountNumber)
     {
         if (iban is null && accountNumber is null)
         {
-            throw new DomainException(
-                DomainExceptionKind.Invariant,
+            return new InvariantError(
+                ErrorCodes.BankAccountIdentifierMissing,
                 "A BankAccount must have at least one of Iban or AccountNumber."
             );
         }
+
+        return Result.Success;
     }
 
-    private async Task EnsureReferencedRowsExistAsync(
+    private async Task<Result> EnsureReferencedRowsExistAsync(
         CurrencyCode? currencyCode,
         AccountId? accountId,
         CounterpartyId? counterpartyId,
@@ -256,12 +293,10 @@ internal sealed class BankAccountService : IBankAccountService
     {
         if (currencyCode is { } code)
         {
-            if (await _currencyService.GetAsync(code, cancellationToken) is null)
+            var currency = await _currencyService.GetAsync(code, cancellationToken);
+            if (currency.IsFailure)
             {
-                throw new DomainException(
-                    DomainExceptionKind.NotFound,
-                    $"Currency '{code.Value}' is not defined."
-                );
+                return currency.Error;
             }
         }
 
@@ -270,10 +305,7 @@ internal sealed class BankAccountService : IBankAccountService
             var exists = await _dbContext.Accounts.AnyAsync(a => a.Id == aid, cancellationToken);
             if (!exists)
             {
-                throw new DomainException(
-                    DomainExceptionKind.NotFound,
-                    $"Account {aid} not found."
-                );
+                return new NotFoundError("Account", aid.Value.ToString());
             }
         }
 
@@ -285,22 +317,23 @@ internal sealed class BankAccountService : IBankAccountService
             );
             if (!exists)
             {
-                throw new DomainException(
-                    DomainExceptionKind.NotFound,
-                    $"Counterparty {cid} not found."
-                );
+                return new NotFoundError("Counterparty", cid.Value.ToString());
             }
         }
+
+        return Result.Success;
     }
 
-    private async Task EnsureIbanAvailableAsync(
+    private async Task<Result> EnsureIbanAvailableAsync(
         string? iban,
         BankAccountId? excludingId,
         CancellationToken cancellationToken
     )
     {
         if (iban is null)
-            return;
+        {
+            return Result.Success;
+        }
 
         var taken = await _dbContext.BankAccounts.AnyAsync(
             b => b.Iban == iban && (excludingId == null || b.Id != excludingId),
@@ -308,21 +341,25 @@ internal sealed class BankAccountService : IBankAccountService
         );
         if (taken)
         {
-            throw new DomainException(
-                DomainExceptionKind.Conflict,
+            return new ConflictError(
+                ErrorCodes.BankAccountIbanTaken,
                 $"A BankAccount with IBAN '{iban}' already exists."
             );
         }
+
+        return Result.Success;
     }
 
-    private async Task EnsureAccountSlotAvailableAsync(
+    private async Task<Result> EnsureAccountSlotAvailableAsync(
         AccountId? accountId,
         BankAccountId? excludingId,
         CancellationToken cancellationToken
     )
     {
         if (accountId is null)
-            return;
+        {
+            return Result.Success;
+        }
 
         var taken = await _dbContext.BankAccounts.AnyAsync(
             b => b.AccountId == accountId && (excludingId == null || b.Id != excludingId),
@@ -330,10 +367,12 @@ internal sealed class BankAccountService : IBankAccountService
         );
         if (taken)
         {
-            throw new DomainException(
-                DomainExceptionKind.Conflict,
+            return new ConflictError(
+                ErrorCodes.BankAccountSlotTaken,
                 "A BankAccount for that Account already exists."
             );
         }
+
+        return Result.Success;
     }
 }

@@ -14,6 +14,7 @@ export default defineConfig({
             '/api': {
                 target: 'http://localhost:5248',
                 changeOrigin: true,
+                xfwd: true,
                 secure: false,
             },
         },

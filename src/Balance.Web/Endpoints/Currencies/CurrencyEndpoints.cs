@@ -1,6 +1,7 @@
 using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
 using Balance.Web.Filters;
+using Balance.Web.Mappers;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
@@ -23,8 +24,17 @@ internal static class CurrencyEndpoints
             .WithValidation<CreateCurrencyRequest>()
             .WithName("CreateCurrency");
         group
-            .MapPatch("/{code}", UpdateAsync)
-            .WithValidation<UpdateCurrencyRequest>()
+            .MapPatchSnapshotted<
+                CurrencyCode,
+                ICurrencyService,
+                UpdateCurrencyInput,
+                CurrencyOutput
+            >(
+                "/{code}",
+                (svc, code, ct) => svc.GetSnapshotAsync(code, ct),
+                (svc, code, input, ct) => svc.UpdateAsync(code, input, ct),
+                idRouteName: "code"
+            )
             .WithName("UpdateCurrency");
         group.MapDelete("/{code}", DeleteAsync).WithName("DeleteCurrency");
     }
@@ -38,23 +48,33 @@ internal static class CurrencyEndpoints
         return TypedResults.Ok(currencies);
     }
 
-    private static async Task<Results<Ok<CurrencyOutput>, NotFound>> GetAsync(
+    private static async Task<
+        Results<Ok<CurrencyOutput>, NotFound<ProblemDetails>, ValidationProblem>
+    > GetAsync(
         [FromRoute] CurrencyCode code,
         [FromServices] ICurrencyService currencyService,
         CancellationToken cancellationToken
     )
     {
-        var currency = await currencyService.GetAsync(code, cancellationToken);
-        return currency is null ? TypedResults.NotFound() : TypedResults.Ok(currency);
+        var result = await currencyService.GetAsync(code, cancellationToken);
+        return result.ToOkReadOnly();
     }
 
-    private static async Task<Created<CurrencyOutput>> CreateAsync(
+    private static async Task<
+        Results<
+            Created<CurrencyOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > CreateAsync(
         [FromBody] CreateCurrencyRequest request,
         [FromServices] ICurrencyService currencyService,
         CancellationToken cancellationToken
     )
     {
-        var output = await currencyService.CreateAsync(
+        var result = await currencyService.CreateAsync(
             new CreateCurrencyInput(
                 request.Code,
                 request.Name,
@@ -63,31 +83,24 @@ internal static class CurrencyEndpoints
             ),
             cancellationToken
         );
-        return TypedResults.Created($"{PathPrefix}/{output.Code.Value}", output);
+        return result.ToCreatedAt(PathPrefix, v => v.Code.Value);
     }
 
-    private static async Task<Ok<CurrencyOutput>> UpdateAsync(
-        [FromRoute] CurrencyCode code,
-        [FromBody] UpdateCurrencyRequest request,
-        [FromServices] ICurrencyService currencyService,
-        CancellationToken cancellationToken
-    )
-    {
-        var output = await currencyService.UpdateAsync(
-            code,
-            new UpdateCurrencyInput(request.Name, request.Symbol),
-            cancellationToken
-        );
-        return TypedResults.Ok(output);
-    }
-
-    private static async Task<NoContent> DeleteAsync(
+    private static async Task<
+        Results<
+            NoContent,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > DeleteAsync(
         [FromRoute] CurrencyCode code,
         [FromServices] ICurrencyService currencyService,
         CancellationToken cancellationToken
     )
     {
-        await currencyService.DeleteAsync(code, cancellationToken);
-        return TypedResults.NoContent();
+        var result = await currencyService.DeleteAsync(code, cancellationToken);
+        return result.ToNoContent();
     }
 }

@@ -1,4 +1,3 @@
-using Balance.Data.Entities;
 using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
 
@@ -8,24 +7,27 @@ public interface IAccountService
 {
     Task<IReadOnlyList<AccountOutput>> ListAsync(CancellationToken cancellationToken);
 
-    Task<AccountOutput?> GetAsync(AccountId id, CancellationToken cancellationToken);
+    Task<Result<AccountOutput>> GetAsync(AccountId id, CancellationToken cancellationToken);
 
-    Task<UpdateAccountInput?> GetSnapshotAsync(AccountId id, CancellationToken cancellationToken);
+    Task<Result<UpdateAccountInput>> GetSnapshotAsync(
+        AccountId id,
+        CancellationToken cancellationToken
+    );
 
-    Task<AccountOutput> CreateAsync(
+    Task<Result<AccountOutput>> CreateAsync(
         string name,
         AccountType accountType,
         CurrencyCode currencyCode,
         CancellationToken cancellationToken
     );
 
-    Task<AccountOutput> UpdateAsync(
+    Task<Result<AccountOutput>> UpdateAsync(
         AccountId id,
         UpdateAccountInput input,
         CancellationToken cancellationToken
     );
 
-    Task DeleteAsync(AccountId id, CancellationToken cancellationToken);
+    Task<Result> DeleteAsync(AccountId id, CancellationToken cancellationToken);
 }
 
 public sealed record UpdateAccountInput
@@ -33,15 +35,4 @@ public sealed record UpdateAccountInput
     public required string Name { get; set; }
     public required AccountType AccountType { get; set; }
     public required CurrencyCode CurrencyCode { get; set; }
-
-    public static UpdateAccountInput FromEntity(Account account)
-    {
-        ArgumentNullException.ThrowIfNull(account);
-        return new UpdateAccountInput
-        {
-            Name = account.Name,
-            AccountType = account.AccountType,
-            CurrencyCode = account.CurrencyCode,
-        };
-    }
 }

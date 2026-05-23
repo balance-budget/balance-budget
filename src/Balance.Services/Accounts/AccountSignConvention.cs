@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Balance.Data.Entities.Enums;
 
 namespace Balance.Services.Accounts;
@@ -9,10 +10,6 @@ internal static class AccountSignConvention
         {
             AccountType.Asset or AccountType.Expense => false,
             AccountType.Liability or AccountType.Equity or AccountType.Income => true,
-            _ => throw new ArgumentOutOfRangeException(
-                nameof(accountType),
-                accountType,
-                "Unknown AccountType."
-            ),
+            _ => throw new UnreachableException($"Unknown AccountType '{accountType}'."),
         };
 }

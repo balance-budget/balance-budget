@@ -20,8 +20,20 @@ export type BankTransactionId = Brand<string, 'BankTransactionId'>;
 export const asAccountId = (s: string) => s as AccountId;
 export const asJournalEntryId = (s: string) => s as JournalEntryId;
 export const asJournalLineId = (s: string) => s as JournalLineId;
+export const asCounterpartyId = (s: string) => s as CounterpartyId;
+export const asBankTransactionId = (s: string) => s as BankTransactionId;
 
 export type AccountType = 'Asset' | 'Liability' | 'Equity' | 'Income' | 'Expense';
+
+// "Ledger" = the user's real-money accounts (Asset + Liability). "Category" =
+// where money comes from / goes (Income + Expense). Equity is bookkeeping
+// plumbing and isn't navigable in the UI. See Sidebar / Dashboard for the
+// rendering split.
+export const isLedgerAccount = (a: { type: AccountType }): boolean =>
+    a.type === 'Asset' || a.type === 'Liability';
+
+export const isCategoryAccount = (a: { type: AccountType }): boolean =>
+    a.type === 'Income' || a.type === 'Expense';
 
 export type TrendPoint = { date: string; balanceMinor: number };
 

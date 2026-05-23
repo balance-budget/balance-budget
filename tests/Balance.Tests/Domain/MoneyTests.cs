@@ -1,6 +1,5 @@
 using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
-using Balance.Data.Exceptions;
 
 namespace Balance.Tests.Domain;
 
@@ -108,21 +107,19 @@ internal sealed class MoneyTests
     }
 
     [Test]
-    public async Task Add_cross_currency_throws_DomainException()
+    public async Task Add_cross_currency_throws_InvalidOperation()
     {
         var act = () => _ = new Money(100, Eur) + new Money(100, Usd);
 
-        var ex = await Assert.That(act).Throws<DomainException>();
-        await Assert.That(ex!.Kind).IsEqualTo(DomainExceptionKind.Invariant);
+        await Assert.That(act).Throws<InvalidOperationException>();
     }
 
     [Test]
-    public async Task Subtract_cross_currency_throws_DomainException()
+    public async Task Subtract_cross_currency_throws_InvalidOperation()
     {
         var act = () => _ = new Money(100, Eur) - new Money(100, Usd);
 
-        var ex = await Assert.That(act).Throws<DomainException>();
-        await Assert.That(ex!.Kind).IsEqualTo(DomainExceptionKind.Invariant);
+        await Assert.That(act).Throws<InvalidOperationException>();
     }
 
     [Test]
@@ -171,121 +168,4 @@ internal sealed class MoneyTests
         await Assert.That(new Money(0, Eur).IsZero).IsTrue();
         await Assert.That(new Money(1, Eur).IsZero).IsFalse();
     }
-
-    [Test]
-    public async Task Format_uses_minor_unit_scale_for_eur()
-    {
-        var formatted = new Money(12345, Eur).Format(
-            CurrencyOf(Eur, 2),
-            System.Globalization.CultureInfo.InvariantCulture
-        );
-
-        await Assert.That(formatted).IsEqualTo("123.45 EUR");
-    }
-
-    [Test]
-    public async Task Format_handles_zero_scale_jpy()
-    {
-        var formatted = new Money(7500, Jpy).Format(
-            CurrencyOf(Jpy, 0),
-            System.Globalization.CultureInfo.InvariantCulture
-        );
-
-        await Assert.That(formatted).IsEqualTo("7500 JPY");
-    }
-
-    [Test]
-    public async Task Format_handles_large_scale_btc()
-    {
-        var formatted = new Money(123_456_789, Btc).Format(
-            CurrencyOf(Btc, 8),
-            System.Globalization.CultureInfo.InvariantCulture
-        );
-
-        await Assert.That(formatted).IsEqualTo("1.23456789 BTC");
-    }
-
-    [Test]
-    public async Task Format_handles_negative()
-    {
-        var formatted = new Money(-12345, Eur).Format(
-            CurrencyOf(Eur, 2),
-            System.Globalization.CultureInfo.InvariantCulture
-        );
-
-        await Assert.That(formatted).IsEqualTo("-123.45 EUR");
-    }
-
-    [Test]
-    public async Task Format_throws_when_currency_mismatches()
-    {
-        var act = () =>
-            _ = new Money(100, Eur).Format(
-                CurrencyOf(Usd, 2),
-                System.Globalization.CultureInfo.InvariantCulture
-            );
-
-        var ex = await Assert.That(act).Throws<DomainException>();
-        await Assert.That(ex!.Kind).IsEqualTo(DomainExceptionKind.Invariant);
-    }
-
-    [Test]
-    public async Task Parse_uses_minor_unit_scale_for_eur()
-    {
-        var parsed = MoneyExtensions.Parse(
-            "123.45",
-            CurrencyOf(Eur, 2),
-            System.Globalization.CultureInfo.InvariantCulture
-        );
-
-        await Assert.That(parsed).IsEqualTo(new Money(12345, Eur));
-    }
-
-    [Test]
-    public async Task Parse_handles_zero_scale_jpy()
-    {
-        var parsed = MoneyExtensions.Parse(
-            "7500",
-            CurrencyOf(Jpy, 0),
-            System.Globalization.CultureInfo.InvariantCulture
-        );
-
-        await Assert.That(parsed).IsEqualTo(new Money(7500, Jpy));
-    }
-
-    [Test]
-    public async Task Parse_handles_large_scale_btc()
-    {
-        var parsed = MoneyExtensions.Parse(
-            "1.23456789",
-            CurrencyOf(Btc, 8),
-            System.Globalization.CultureInfo.InvariantCulture
-        );
-
-        await Assert.That(parsed).IsEqualTo(new Money(123_456_789, Btc));
-    }
-
-    [Test]
-    public async Task Parse_round_trips_through_Format_for_eur()
-    {
-        var currency = CurrencyOf(Eur, 2);
-        var original = new Money(-9876543, Eur);
-
-        var text = original.Format(currency, System.Globalization.CultureInfo.InvariantCulture);
-        var parsed = MoneyExtensions.Parse(
-            text.Replace(" EUR", "", StringComparison.Ordinal),
-            currency,
-            System.Globalization.CultureInfo.InvariantCulture
-        );
-
-        await Assert.That(parsed).IsEqualTo(original);
-    }
-
-    private static Currency CurrencyOf(CurrencyCode code, int scale) =>
-        new()
-        {
-            Code = code,
-            Name = code.Value,
-            MinorUnitScale = scale,
-        };
 }

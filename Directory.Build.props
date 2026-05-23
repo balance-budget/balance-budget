@@ -7,23 +7,8 @@
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisLevel>latest</AnalysisLevel>
     <AnalysisMode>All</AnalysisMode>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <TargetFramework>net10.0</TargetFramework>
     <UseArtifactsOutput>true</UseArtifactsOutput>
   </PropertyGroup>
-
-  <!--
-    Automatically add the appsettings file to all entry point projects
-  -->
-  <ItemGroup Condition="$(OutputType) == 'Exe' And $(MSBuildProjectExtension) == '.csproj'">
-    <Content
-      Include="$(MSBuildThisFileDirectory)appsettings.json"
-      Link="appsettings.json"
-      CopyToOutputDirectory="PreserveNewest"
-    />
-    <Content
-      Include="$(MSBuildThisFileDirectory)appsettings.*.json"
-      Link="%(Filename)%(Extension)"
-      CopyToOutputDirectory="PreserveNewest"
-    />
-  </ItemGroup>
 </Project>

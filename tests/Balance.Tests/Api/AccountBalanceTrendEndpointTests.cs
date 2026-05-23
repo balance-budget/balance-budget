@@ -45,7 +45,7 @@ internal sealed class AccountBalanceTrendEndpointTests : EndpointsTestsBase
     {
         using var client = Factory.CreateClient();
 
-        var trend = await GetTrendAsync(client, range: "1M");
+        var trend = await GetTrendAsync(client, range: "OneMonth");
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         await Assert.That(trend.Range).IsEqualTo("OneMonth");
@@ -58,7 +58,7 @@ internal sealed class AccountBalanceTrendEndpointTests : EndpointsTestsBase
     {
         using var client = Factory.CreateClient();
 
-        var trend = await GetTrendAsync(client, range: "1Y");
+        var trend = await GetTrendAsync(client, range: "OneYear");
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         await Assert.That(trend.Range).IsEqualTo("OneYear");
@@ -95,20 +95,13 @@ internal sealed class AccountBalanceTrendEndpointTests : EndpointsTestsBase
             ]
         );
 
-        var trend = await GetTrendAsync(client, range: "1M", currency: currency);
+        var trend = await GetTrendAsync(client, range: "OneMonth", currency: currency);
 
         var series = SeriesFor(trend, asset.Id);
         await Assert.That(series).IsNotNull();
-        await Assert.That(series!.Points.Count).IsGreaterThan(0);
-        // First point should be at periodStart, last at today.
-        await Assert.That(series.Points[0].Date).IsEqualTo(trend.PeriodStart);
-        await Assert.That(series.Points[^1].Date).IsEqualTo(trend.PeriodEnd);
-        // Every point sits at the opening balance — no in-window activity.
-        foreach (var point in series.Points)
-        {
-            await Assert.That(point.Balance!.Amount).IsEqualTo(500_000L);
-            await Assert.That(point.Balance.CurrencyCode).IsEqualTo(currency);
-        }
+        // Opening balance is the pre-window cumulative sum; no in-window activity.
+        await Assert.That(series!.OpeningBalance).IsEqualTo(500_000L);
+        await Assert.That(series.Deltas).IsEmpty();
     }
 
     [Test]
@@ -152,22 +145,21 @@ internal sealed class AccountBalanceTrendEndpointTests : EndpointsTestsBase
             ]
         );
 
-        var trend = await GetTrendAsync(client, range: "1M", currency: currency);
+        var trend = await GetTrendAsync(client, range: "OneMonth", currency: currency);
 
         var series = SeriesFor(trend, asset.Id);
         await Assert.That(series).IsNotNull();
 
-        var beforeJump = series!.Points.Single(p => p.Date == midDate.AddDays(-1));
-        var atJump = series.Points.Single(p => p.Date == midDate);
-        var lastPoint = series.Points[^1];
-
-        await Assert.That(beforeJump.Balance!.Amount).IsEqualTo(100_000L);
-        await Assert.That(atJump.Balance!.Amount).IsEqualTo(150_000L);
-        await Assert.That(lastPoint.Balance!.Amount).IsEqualTo(150_000L);
+        // Opening balance is the pre-window cumulative sum (the 100k from 2020), and the
+        // mid-window deposit shows as a single +50k delta on its date.
+        await Assert.That(series!.OpeningBalance).IsEqualTo(100_000L);
+        await Assert.That(series.Deltas.Count).IsEqualTo(1);
+        await Assert.That(series.Deltas[0].Date).IsEqualTo(midDate);
+        await Assert.That(series.Deltas[0].Amount).IsEqualTo(50_000L);
     }
 
     [Test]
-    public async Task GetTrend_emits_one_series_per_matching_asset_with_equal_length_points()
+    public async Task GetTrend_emits_one_series_per_matching_asset_with_currency_on_envelope()
     {
         using var client = Factory.CreateClient();
         var currency = await CreateIsolatedCurrencyAsync(client);
@@ -208,14 +200,16 @@ internal sealed class AccountBalanceTrendEndpointTests : EndpointsTestsBase
             ]
         );
 
-        var trend = await GetTrendAsync(client, range: "1M", currency: currency);
+        var trend = await GetTrendAsync(client, range: "OneMonth", currency: currency);
 
         var seriesA = SeriesFor(trend, assetA.Id);
         var seriesB = SeriesFor(trend, assetB.Id);
 
         await Assert.That(seriesA).IsNotNull();
         await Assert.That(seriesB).IsNotNull();
-        await Assert.That(seriesA!.Points.Count).IsEqualTo(seriesB!.Points.Count);
+        await Assert.That(seriesA!.OpeningBalance).IsEqualTo(10_000L);
+        await Assert.That(seriesB!.OpeningBalance).IsEqualTo(20_000L);
+        await Assert.That(trend.CurrencyCode).IsEqualTo(currency);
     }
 
     [Test]
@@ -246,7 +240,7 @@ internal sealed class AccountBalanceTrendEndpointTests : EndpointsTestsBase
             ]
         );
 
-        var trend = await GetTrendAsync(client, range: "1M", currency: currency);
+        var trend = await GetTrendAsync(client, range: "OneMonth", currency: currency);
 
         await Assert.That(SeriesFor(trend, liability.Id)).IsNull();
     }
@@ -300,7 +294,7 @@ internal sealed class AccountBalanceTrendEndpointTests : EndpointsTestsBase
             ]
         );
 
-        var trend = await GetTrendAsync(client, range: "1M", currency: currencyA);
+        var trend = await GetTrendAsync(client, range: "OneMonth", currency: currencyA);
 
         await Assert.That(SeriesFor(trend, assetA.Id)).IsNotNull();
         await Assert.That(SeriesFor(trend, assetB.Id)).IsNull();
@@ -319,7 +313,7 @@ internal sealed class AccountBalanceTrendEndpointTests : EndpointsTestsBase
             currency
         );
 
-        var trend = await GetTrendAsync(client, range: "1M", currency: currency);
+        var trend = await GetTrendAsync(client, range: "OneMonth", currency: currency);
 
         await Assert.That(SeriesFor(trend, silentAsset.Id)).IsNull();
     }
@@ -338,10 +332,12 @@ internal sealed class AccountBalanceTrendEndpointTests : EndpointsTestsBase
         {
             query.Add($"range={range}");
         }
+
         if (currency is not null)
         {
             query.Add($"currency={currency}");
         }
+
         var path =
             query.Count == 0
                 ? "/api/dashboard/account-balance-trend"
@@ -414,7 +410,8 @@ internal sealed record AccountBalanceTrendDto(
 internal sealed record AccountTrendSeriesDto(
     Guid AccountId,
     string AccountName,
-    IReadOnlyList<TrendPointDto> Points
+    long OpeningBalance,
+    IReadOnlyList<TrendDeltaDto> Deltas
 );
 
-internal sealed record TrendPointDto(DateOnly Date, MoneyDto? Balance);
+internal sealed record TrendDeltaDto(DateOnly Date, long Amount);

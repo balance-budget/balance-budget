@@ -4,6 +4,7 @@ import { Icon } from './Icon';
 import { useAccounts, type Account } from '../api/accounts';
 import { Skeleton } from './Skeleton';
 import { ErrorState } from './ErrorState';
+import { isCategoryAccount, isLedgerAccount } from '../lib/domain';
 import { formatMoney } from '../lib/money';
 import { visualHintFor } from '../lib/visualHints';
 
@@ -138,11 +139,8 @@ function AccountsGroup() {
         );
     }
 
-    // Asset + Liability are the user's "real money" accounts; Income + Expense are
-    // navigable "where money comes from / goes" categories. Equity (the seeded
-    // Opening Balances account) is bookkeeping plumbing and never rendered.
-    const ledgerAccounts = data.filter(a => a.type === 'Asset' || a.type === 'Liability');
-    const categoryAccounts = data.filter(a => a.type === 'Income' || a.type === 'Expense');
+    const ledgerAccounts = data.filter(isLedgerAccount);
+    const categoryAccounts = data.filter(isCategoryAccount);
 
     if (ledgerAccounts.length === 0 && categoryAccounts.length === 0) {
         return (

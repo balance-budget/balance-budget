@@ -19,20 +19,25 @@ internal sealed class JournalEntryServiceTests : EndpointsTestsBase
         var accountService = scope.ServiceProvider.GetRequiredService<IAccountService>();
         var journalEntryService = scope.ServiceProvider.GetRequiredService<IJournalEntryService>();
 
-        var groceries = await accountService.CreateAsync(
+        var groceriesResult = await accountService.CreateAsync(
             $"Groceries-svc-{Guid.NewGuid():N}",
             AccountType.Expense,
             new CurrencyCode("EUR"),
             cancellationToken
         );
-        var checking = await accountService.CreateAsync(
+        await Assert.That(groceriesResult.IsSuccess).IsTrue();
+        var groceries = groceriesResult.Value!;
+
+        var checkingResult = await accountService.CreateAsync(
             $"Checking-svc-{Guid.NewGuid():N}",
             AccountType.Asset,
             new CurrencyCode("EUR"),
             cancellationToken
         );
+        await Assert.That(checkingResult.IsSuccess).IsTrue();
+        var checking = checkingResult.Value!;
 
-        var created = await journalEntryService.CreateAsync(
+        var createdResult = await journalEntryService.CreateAsync(
             new CreateJournalEntryInput(
                 Date: new DateOnly(2026, 5, 17),
                 Description: "svc round-trip",
@@ -46,6 +51,8 @@ internal sealed class JournalEntryServiceTests : EndpointsTestsBase
             ),
             cancellationToken
         );
+        await Assert.That(createdResult.IsSuccess).IsTrue();
+        var created = createdResult.Value!;
 
         using var verifyScope = Factory.Services.CreateScope();
         var dbContext = verifyScope.ServiceProvider.GetRequiredService<BalanceDbContext>();

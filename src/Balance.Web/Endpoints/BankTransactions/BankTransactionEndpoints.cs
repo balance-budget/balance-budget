@@ -1,6 +1,7 @@
 using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
 using Balance.Web.Filters;
+using Balance.Web.Mappers;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
@@ -31,23 +32,33 @@ internal static class BankTransactionEndpoints
         return TypedResults.Ok(bankTransactions);
     }
 
-    private static async Task<Results<Ok<BankTransactionOutput>, NotFound>> GetAsync(
+    private static async Task<
+        Results<Ok<BankTransactionOutput>, NotFound<ProblemDetails>, ValidationProblem>
+    > GetAsync(
         [FromRoute] BankTransactionId id,
         [FromServices] IBankTransactionService bankTransactionService,
         CancellationToken cancellationToken
     )
     {
-        var bankTransaction = await bankTransactionService.GetAsync(id, cancellationToken);
-        return bankTransaction is null ? TypedResults.NotFound() : TypedResults.Ok(bankTransaction);
+        var result = await bankTransactionService.GetAsync(id, cancellationToken);
+        return result.ToOkReadOnly();
     }
 
-    private static async Task<Created<BankTransactionOutput>> CreateAsync(
+    private static async Task<
+        Results<
+            Created<BankTransactionOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > CreateAsync(
         [FromBody] CreateBankTransactionRequest request,
         [FromServices] IBankTransactionService bankTransactionService,
         CancellationToken cancellationToken
     )
     {
-        var bankTransaction = await bankTransactionService.CreateAsync(
+        var result = await bankTransactionService.CreateAsync(
             new CreateBankTransactionInput(
                 request.BankAccountId,
                 request.BookingDate,
@@ -56,16 +67,24 @@ internal static class BankTransactionEndpoints
             ),
             cancellationToken
         );
-        return TypedResults.Created($"{PathPrefix}/{bankTransaction.Id.Value}", bankTransaction);
+        return result.ToCreatedAt(PathPrefix, v => v.Id.Value);
     }
 
-    private static async Task<NoContent> DeleteAsync(
+    private static async Task<
+        Results<
+            NoContent,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > DeleteAsync(
         [FromRoute] BankTransactionId id,
         [FromServices] IBankTransactionService bankTransactionService,
         CancellationToken cancellationToken
     )
     {
-        await bankTransactionService.DeleteAsync(id, cancellationToken);
-        return TypedResults.NoContent();
+        var result = await bankTransactionService.DeleteAsync(id, cancellationToken);
+        return result.ToNoContent();
     }
 }

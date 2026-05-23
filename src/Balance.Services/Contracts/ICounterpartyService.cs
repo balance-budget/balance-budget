@@ -1,4 +1,3 @@
-using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
 
 namespace Balance.Services.Contracts;
@@ -7,31 +6,28 @@ public interface ICounterpartyService
 {
     Task<IReadOnlyList<CounterpartyOutput>> ListAsync(CancellationToken cancellationToken);
 
-    Task<CounterpartyOutput?> GetAsync(CounterpartyId id, CancellationToken cancellationToken);
-
-    Task<UpdateCounterpartyInput?> GetSnapshotAsync(
+    Task<Result<CounterpartyOutput>> GetAsync(
         CounterpartyId id,
         CancellationToken cancellationToken
     );
 
-    Task<CounterpartyOutput> CreateAsync(string name, CancellationToken cancellationToken);
+    Task<Result<UpdateCounterpartyInput>> GetSnapshotAsync(
+        CounterpartyId id,
+        CancellationToken cancellationToken
+    );
 
-    Task<CounterpartyOutput> UpdateAsync(
+    Task<Result<CounterpartyOutput>> CreateAsync(string name, CancellationToken cancellationToken);
+
+    Task<Result<CounterpartyOutput>> UpdateAsync(
         CounterpartyId id,
         UpdateCounterpartyInput input,
         CancellationToken cancellationToken
     );
 
-    Task DeleteAsync(CounterpartyId id, CancellationToken cancellationToken);
+    Task<Result> DeleteAsync(CounterpartyId id, CancellationToken cancellationToken);
 }
 
 public sealed record UpdateCounterpartyInput
 {
     public required string Name { get; set; }
-
-    public static UpdateCounterpartyInput FromEntity(Counterparty counterparty)
-    {
-        ArgumentNullException.ThrowIfNull(counterparty);
-        return new UpdateCounterpartyInput { Name = counterparty.Name };
-    }
 }

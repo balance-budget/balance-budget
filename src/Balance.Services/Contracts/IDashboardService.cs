@@ -4,12 +4,12 @@ namespace Balance.Services.Contracts;
 
 public interface IDashboardService
 {
-    Task<DashboardSummaryOutput> GetSummaryAsync(
+    Task<Result<DashboardSummaryOutput>> GetSummaryAsync(
         CurrencyCode currencyCode,
         CancellationToken cancellationToken
     );
 
-    Task<AccountBalanceTrendOutput> GetAccountBalanceTrendAsync(
+    Task<Result<AccountBalanceTrendOutput>> GetAccountBalanceTrendAsync(
         CurrencyCode currencyCode,
         TrendRange range,
         CancellationToken cancellationToken

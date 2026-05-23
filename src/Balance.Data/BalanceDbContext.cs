@@ -49,6 +49,10 @@ public sealed class BalanceDbContext : DbContext, IDataProtectionKeyContext
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         ArgumentNullException.ThrowIfNull(optionsBuilder);
+
+        // EnableSensitiveDataLogging writes EF parameter values into the log stream — useful
+        // when debugging queries locally, but it means anything the app reads or writes
+        // ends up in logs. Never run a Development host against production-shaped data.
         optionsBuilder
             .UseProvider(_options)
             .UseLoggerFactory(_loggerFactory)
@@ -60,11 +64,6 @@ public sealed class BalanceDbContext : DbContext, IDataProtectionKeyContext
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(BalanceDbContext).Assembly);
-
-        if (_options.Provider == DatabaseProvider.Sqlite)
-        {
-            modelBuilder.Entity<Account>().Property(a => a.Name).UseCollation("NOCASE");
-            modelBuilder.Entity<Counterparty>().Property(c => c.Name).UseCollation("NOCASE");
-        }
+        modelBuilder.ApplyProviderConventions(_options.Provider);
     }
 }

@@ -6,18 +6,23 @@ public interface ICurrencyService
 {
     Task<IReadOnlyList<CurrencyOutput>> ListAsync(CancellationToken cancellationToken);
 
-    Task<CurrencyOutput?> GetAsync(CurrencyCode code, CancellationToken cancellationToken);
+    Task<Result<CurrencyOutput>> GetAsync(CurrencyCode code, CancellationToken cancellationToken);
 
-    Task<CurrencyOutput> CreateAsync(
+    Task<Result<UpdateCurrencyInput>> GetSnapshotAsync(
+        CurrencyCode code,
+        CancellationToken cancellationToken
+    );
+
+    Task<Result<CurrencyOutput>> CreateAsync(
         CreateCurrencyInput input,
         CancellationToken cancellationToken
     );
 
-    Task<CurrencyOutput> UpdateAsync(
+    Task<Result<CurrencyOutput>> UpdateAsync(
         CurrencyCode code,
         UpdateCurrencyInput input,
         CancellationToken cancellationToken
     );
 
-    Task DeleteAsync(CurrencyCode code, CancellationToken cancellationToken);
+    Task<Result> DeleteAsync(CurrencyCode code, CancellationToken cancellationToken);
 }

@@ -30,7 +30,7 @@ internal sealed class CurrencyServiceTests : EndpointsTestsBase
         {
             var service = primeScope.ServiceProvider.GetRequiredService<ICurrencyService>();
             var primed = await service.GetAsync(code, cancellationToken);
-            await Assert.That(primed).IsNotNull();
+            await Assert.That(primed.IsSuccess).IsTrue();
         }
 
         // Mutate the entity *directly* in the DB to detect cache hits — if the next read
@@ -47,8 +47,8 @@ internal sealed class CurrencyServiceTests : EndpointsTestsBase
         {
             var service = readScope.ServiceProvider.GetRequiredService<ICurrencyService>();
             var stillCached = await service.GetAsync(code, cancellationToken);
-            await Assert.That(stillCached).IsNotNull();
-            await Assert.That(stillCached!.Name).IsEqualTo("Test"); // served from cache
+            await Assert.That(stillCached.IsSuccess).IsTrue();
+            await Assert.That(stillCached.Value!.Name).IsEqualTo("Test"); // served from cache
         }
 
         // Evict and re-read — the fresh value should now come back.
@@ -59,7 +59,7 @@ internal sealed class CurrencyServiceTests : EndpointsTestsBase
         {
             var service = afterEvict.ServiceProvider.GetRequiredService<ICurrencyService>();
             var fresh = await service.GetAsync(code, cancellationToken);
-            await Assert.That(fresh!.Name).IsEqualTo("Mutated");
+            await Assert.That(fresh.Value!.Name).IsEqualTo("Mutated");
         }
     }
 
@@ -76,17 +76,17 @@ internal sealed class CurrencyServiceTests : EndpointsTestsBase
             cancellationToken
         );
         var initial = await service.GetAsync(code, cancellationToken);
-        await Assert.That(initial!.Name).IsEqualTo("Initial");
+        await Assert.That(initial.Value!.Name).IsEqualTo("Initial");
 
         await service.UpdateAsync(
             code,
-            new UpdateCurrencyInput("Updated", null),
+            new UpdateCurrencyInput { Name = "Updated", Symbol = null },
             cancellationToken
         );
 
         // Without invalidation we would still see "Initial" — the previous GetAsync cached it.
         var afterUpdate = await service.GetAsync(code, cancellationToken);
-        await Assert.That(afterUpdate!.Name).IsEqualTo("Updated");
+        await Assert.That(afterUpdate.Value!.Name).IsEqualTo("Updated");
     }
 
     [Test]
@@ -102,12 +102,13 @@ internal sealed class CurrencyServiceTests : EndpointsTestsBase
             cancellationToken
         );
         var fetched = await service.GetAsync(code, cancellationToken);
-        await Assert.That(fetched).IsNotNull();
+        await Assert.That(fetched.IsSuccess).IsTrue();
 
         await service.DeleteAsync(code, cancellationToken);
 
         var afterDelete = await service.GetAsync(code, cancellationToken);
-        await Assert.That(afterDelete).IsNull();
+        await Assert.That(afterDelete.IsFailure).IsTrue();
+        await Assert.That(afterDelete.Error).IsTypeOf<NotFoundError>();
     }
 
     [Test]

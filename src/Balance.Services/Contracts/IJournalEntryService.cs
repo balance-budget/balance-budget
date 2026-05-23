@@ -1,4 +1,3 @@
-using System.Globalization;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
 
@@ -12,25 +11,28 @@ public interface IJournalEntryService
         CancellationToken cancellationToken
     );
 
-    Task<JournalEntryOutput?> GetAsync(JournalEntryId id, CancellationToken cancellationToken);
-
-    Task<UpdateJournalEntryInput?> GetSnapshotAsync(
+    Task<Result<JournalEntryOutput>> GetAsync(
         JournalEntryId id,
         CancellationToken cancellationToken
     );
 
-    Task<JournalEntryOutput> CreateAsync(
+    Task<Result<UpdateJournalEntryInput>> GetSnapshotAsync(
+        JournalEntryId id,
+        CancellationToken cancellationToken
+    );
+
+    Task<Result<JournalEntryOutput>> CreateAsync(
         CreateJournalEntryInput input,
         CancellationToken cancellationToken
     );
 
-    Task<JournalEntryOutput> UpdateAsync(
+    Task<Result<JournalEntryOutput>> UpdateAsync(
         JournalEntryId id,
         UpdateJournalEntryInput input,
         CancellationToken cancellationToken
     );
 
-    Task DeleteAsync(JournalEntryId id, CancellationToken cancellationToken);
+    Task<Result> DeleteAsync(JournalEntryId id, CancellationToken cancellationToken);
 }
 
 public sealed record CreateJournalEntryInput(
@@ -56,21 +58,6 @@ public sealed record UpdateJournalEntryInput
     public string? Description { get; set; }
     public CounterpartyId? CounterpartyId { get; set; }
     public required IDictionary<string, UpdateJournalLineInput> Lines { get; init; }
-
-    public static UpdateJournalEntryInput FromEntity(JournalEntry entry)
-    {
-        ArgumentNullException.ThrowIfNull(entry);
-        return new UpdateJournalEntryInput
-        {
-            Date = entry.Date,
-            Description = entry.Description,
-            CounterpartyId = entry.CounterpartyId,
-            Lines = entry.Lines.ToDictionary(
-                l => l.Id.Value.ToString("D", CultureInfo.InvariantCulture),
-                l => new UpdateJournalLineInput { Description = l.Description }
-            ),
-        };
-    }
 }
 
 public sealed record UpdateJournalLineInput

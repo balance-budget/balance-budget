@@ -1,8 +1,6 @@
-using Balance.Configuration.Helpers;
 using Balance.Data.Helpers;
 using Balance.Services;
 using Balance.Web;
-using Balance.Web.Configuration;
 using Balance.Web.Endpoints.Accounts;
 using Balance.Web.Endpoints.BankAccounts;
 using Balance.Web.Endpoints.BankTransactions;
@@ -16,19 +14,25 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
-// Detect design time runs and tests
-var isOpenApiGenerator = builder.Environment.IsDesignTime();
-var isIntegrationTest = builder.Environment.IsIntegrationTest();
-
 builder.Logging.AddConsole(builder.Environment);
-builder.Configuration.MapConfigurationSources(builder.Environment);
 builder.Services.AddBalanceServices(builder.Configuration, builder.Environment);
-builder.Services.AddBalanceWeb();
+builder.Services.AddBalanceWeb(builder.Configuration);
 
 var app = builder.Build();
 var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
 
-await app.MigrateDatabase(lifetime.ApplicationStopping);
+await app.MigrateDatabaseAsync(lifetime.ApplicationStopping);
+
+// Middleware pipeline, order matters here
+app.UseExceptionHandler();
+app.UseStatusCodePages();
+app.UseForwardedHeaders();
+app.UseDefaultFiles();
+app.UseRouting();
+app.UseCors();
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseAntiforgery();
 
 // Serve Balance.Web.Client SPA
 app.MapStaticAssets();
@@ -59,17 +63,6 @@ api.MapBankAccounts();
 api.MapBankTransactions();
 api.MapJournalEntries();
 api.MapDashboard();
-
-// Middleware pipeline, order matters here
-app.UseExceptionHandler();
-app.UseStatusCodePages();
-app.UseForwardedHeaders();
-app.UseDefaultFiles();
-app.UseRouting();
-app.UseCors();
-app.UseAuthentication();
-app.UseAuthorization();
-app.UseAntiforgery();
 
 await app.RunAsync(lifetime.ApplicationStopping);
 

@@ -15,7 +15,10 @@ internal sealed class AccountBalanceService : IAccountBalanceService
         _dbContext = dbContext;
     }
 
-    public async Task<Money?> GetBalanceAsync(AccountId id, CancellationToken cancellationToken)
+    public async Task<Result<Money>> GetBalanceAsync(
+        AccountId id,
+        CancellationToken cancellationToken
+    )
     {
         var account = await _dbContext
             .Accounts.AsNoTracking()
@@ -24,7 +27,7 @@ internal sealed class AccountBalanceService : IAccountBalanceService
             .FirstOrDefaultAsync(cancellationToken);
         if (account is null)
         {
-            return null;
+            return new NotFoundError("Account", id.Value.ToString());
         }
 
         var sum = await _dbContext

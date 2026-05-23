@@ -2,8 +2,8 @@ using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
 using Balance.Web.Filters;
+using Balance.Web.Mappers;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Balance.Web.Endpoints.Accounts;
@@ -27,8 +27,11 @@ internal static class AccountEndpoints
             .WithValidation<CreateAccountRequest>()
             .WithName("CreateAccount");
         group
-            .MapPatch("/{id}", UpdateAsync)
-            .WithJsonPatch<UpdateAccountInput>(LoadAccountSnapshotAsync)
+            .MapPatchSnapshotted<AccountId, IAccountService, UpdateAccountInput, AccountOutput>(
+                "/{id}",
+                (svc, id, ct) => svc.GetSnapshotAsync(id, ct),
+                (svc, id, input, ct) => svc.UpdateAsync(id, input, ct)
+            )
             .WithName("UpdateAccount");
         group.MapDelete("/{id}", DeleteAsync).WithName("DeleteAccount");
     }
@@ -42,18 +45,20 @@ internal static class AccountEndpoints
         return TypedResults.Ok(accounts);
     }
 
-    private static async Task<Results<Ok<AccountOutput>, NotFound>> GetAsync(
+    private static async Task<
+        Results<Ok<AccountOutput>, NotFound<ProblemDetails>, ValidationProblem>
+    > GetAsync(
         [FromRoute] AccountId id,
         [FromServices] IAccountService accountService,
         CancellationToken cancellationToken
     )
     {
-        var account = await accountService.GetAsync(id, cancellationToken);
-        return account is null ? TypedResults.NotFound() : TypedResults.Ok(account);
+        var result = await accountService.GetAsync(id, cancellationToken);
+        return result.ToOkReadOnly();
     }
 
     private static async Task<
-        Results<Ok<IReadOnlyList<RegisterRowOutput>>, NotFound>
+        Results<Ok<IReadOnlyList<RegisterRowOutput>>, NotFound<ProblemDetails>, ValidationProblem>
     > ListRegisterAsync(
         [FromRoute] AccountId id,
         [AsParameters] ListAccountRegisterRequest request,
@@ -63,66 +68,60 @@ internal static class AccountEndpoints
     {
         var skip = request.Skip ?? 0;
         var take = request.Take ?? ListAccountRegisterRequest.DefaultPageSize;
-        var rows = await registerService.ListAsync(id, skip, take, cancellationToken);
-        return rows is null ? TypedResults.NotFound() : TypedResults.Ok(rows);
+        var result = await registerService.ListAsync(id, skip, take, cancellationToken);
+        return result.ToOkReadOnly();
     }
 
-    private static async Task<Results<Ok<Money>, NotFound>> GetBalanceAsync(
+    private static async Task<
+        Results<Ok<Money>, NotFound<ProblemDetails>, ValidationProblem>
+    > GetBalanceAsync(
         [FromRoute] AccountId id,
         [FromServices] IAccountBalanceService accountBalanceService,
         CancellationToken cancellationToken
     )
     {
-        var balance = await accountBalanceService.GetBalanceAsync(id, cancellationToken);
-        return balance is null ? TypedResults.NotFound() : TypedResults.Ok(balance.Value);
+        var result = await accountBalanceService.GetBalanceAsync(id, cancellationToken);
+        return result.ToOkReadOnly();
     }
 
-    private static async Task<Created<AccountOutput>> CreateAsync(
+    private static async Task<
+        Results<
+            Created<AccountOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > CreateAsync(
         [FromBody] CreateAccountRequest request,
         [FromServices] IAccountService accountService,
         CancellationToken cancellationToken
     )
     {
-        var account = await accountService.CreateAsync(
+        var result = await accountService.CreateAsync(
             request.Name,
             request.AccountType,
             request.CurrencyCode,
             cancellationToken
         );
-        return TypedResults.Created($"{PathPrefix}/{account.Id.Value}", account);
+        return result.ToCreatedAt(PathPrefix, v => v.Id.Value);
     }
 
-    private static async Task<Ok<AccountOutput>> UpdateAsync(
-        [FromRoute] AccountId id,
-        [FromBody] JsonPatchDocument<UpdateAccountInput> patch,
-        HttpContext httpContext,
-        [FromServices] IAccountService accountService,
-        CancellationToken cancellationToken
-    )
-    {
-        _ = patch;
-        var input = JsonPatchEndpointFilter.GetSnapshot<UpdateAccountInput>(httpContext);
-        var account = await accountService.UpdateAsync(id, input, cancellationToken);
-        return TypedResults.Ok(account);
-    }
-
-    private static async Task<NoContent> DeleteAsync(
+    private static async Task<
+        Results<
+            NoContent,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > DeleteAsync(
         [FromRoute] AccountId id,
         [FromServices] IAccountService accountService,
         CancellationToken cancellationToken
     )
     {
-        await accountService.DeleteAsync(id, cancellationToken);
-        return TypedResults.NoContent();
-    }
-
-    private static async Task<UpdateAccountInput?> LoadAccountSnapshotAsync(
-        EndpointFilterInvocationContext context,
-        CancellationToken cancellationToken
-    )
-    {
-        var id = context.Arguments.OfType<AccountId>().FirstOrDefault();
-        var service = context.HttpContext.RequestServices.GetRequiredService<IAccountService>();
-        return await service.GetSnapshotAsync(id, cancellationToken);
+        var result = await accountService.DeleteAsync(id, cancellationToken);
+        return result.ToNoContent();
     }
 }

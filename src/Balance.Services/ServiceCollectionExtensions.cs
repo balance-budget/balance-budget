@@ -29,7 +29,7 @@ public static class ServiceCollectionExtensions
 
         // Only start the job scheduler when running in real environment
         if (!environment.IsIntegrationTest() && !environment.IsDesignTime())
-            services.AddBalanceJobs();
+            services.AddBalanceJobs(configuration);
 
         return services
             .AddBalanceConfiguration(configuration)
@@ -47,6 +47,7 @@ public static class ServiceCollectionExtensions
             .AddScoped<IBankTransactionService, BankTransactionService>()
             .AddScoped<IJournalEntryService, JournalEntryService>()
             .AddScoped<IDashboardService, DashboardService>()
+            .AddScoped<IDatabaseMaintenanceService, DatabaseMaintenanceService>()
             .AddSingleton(TimeProvider.System)
             .AddSingleton<IApplicationVersionService, ApplicationVersionService>();
     }

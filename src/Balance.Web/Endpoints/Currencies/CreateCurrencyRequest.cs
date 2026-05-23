@@ -1,4 +1,6 @@
 using Balance.Data.Entities.Ids;
+using Balance.Services.Contracts;
+using Balance.Web.Filters;
 using FluentValidation;
 
 namespace Balance.Web.Endpoints.Currencies;
@@ -14,9 +16,18 @@ internal sealed class CreateCurrencyRequestValidator : AbstractValidator<CreateC
 {
     public CreateCurrencyRequestValidator()
     {
-        RuleFor(x => x.Code.Value).NotEmpty().Length(2, 8);
+        RuleFor(x => x.Code.Value).IsCurrencyCode();
         RuleFor(x => x.Name).NotEmpty().MaximumLength(64);
         RuleFor(x => x.MinorUnitScale).InclusiveBetween(0, 30);
+        RuleFor(x => x.Symbol!).MaximumLength(8).When(x => x.Symbol is not null);
+    }
+}
+
+internal sealed class UpdateCurrencyInputValidator : AbstractValidator<UpdateCurrencyInput>
+{
+    public UpdateCurrencyInputValidator()
+    {
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(64);
         RuleFor(x => x.Symbol!).MaximumLength(8).When(x => x.Symbol is not null);
     }
 }

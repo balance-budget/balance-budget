@@ -65,6 +65,7 @@ export interface paths {
         delete: operations["DeleteAccount"];
         options?: never;
         head?: never;
+        /** @description Applies a JSON Patch (RFC 6902) document. The patchable surface is described by `UpdateAccountInput`. */
         patch: operations["UpdateAccount"];
         trace?: never;
     };
@@ -129,6 +130,7 @@ export interface paths {
         delete: operations["DeleteCounterparty"];
         options?: never;
         head?: never;
+        /** @description Applies a JSON Patch (RFC 6902) document. The patchable surface is described by `UpdateCounterpartyInput`. */
         patch: operations["UpdateCounterparty"];
         trace?: never;
     };
@@ -161,6 +163,7 @@ export interface paths {
         delete: operations["DeleteBankAccount"];
         options?: never;
         head?: never;
+        /** @description Applies a JSON Patch (RFC 6902) document. The patchable surface is described by `UpdateBankAccountInput`. */
         patch: operations["UpdateBankAccount"];
         trace?: never;
     };
@@ -225,6 +228,7 @@ export interface paths {
         delete: operations["DeleteJournalEntry"];
         options?: never;
         head?: never;
+        /** @description Applies a JSON Patch (RFC 6902) document. The patchable surface is described by `UpdateJournalEntryInput`. */
         patch: operations["UpdateJournalEntry"];
         trace?: never;
     };
@@ -290,7 +294,9 @@ export interface components {
         AccountTrendSeries: {
             accountId: components["schemas"]["AccountId"];
             accountName: string;
-            points: components["schemas"]["TrendPoint"][];
+            /** Format: int64 */
+            openingBalance: number | string;
+            deltas: components["schemas"]["TrendDelta"][];
         };
         /** @enum {unknown} */
         AccountType: "Asset" | "Liability" | "Equity" | "Income" | "Expense";
@@ -446,6 +452,78 @@ export interface components {
             op: "remove";
             path: string;
         })[];
+        JsonPatchDocumentOfUpdateAccountInput: ({
+            /** @enum {string} */
+            op: "add" | "replace" | "test";
+            /** @enum {string} */
+            path: "/name" | "/accountType" | "/currencyCode";
+            value: unknown;
+        } | {
+            /** @enum {string} */
+            op: "move" | "copy";
+            /** @enum {string} */
+            path: "/name" | "/accountType" | "/currencyCode";
+            from: string;
+        } | {
+            /** @enum {string} */
+            op: "remove";
+            /** @enum {string} */
+            path: "/name" | "/accountType" | "/currencyCode";
+        })[];
+        JsonPatchDocumentOfUpdateBankAccountInput: ({
+            /** @enum {string} */
+            op: "add" | "replace" | "test";
+            /** @enum {string} */
+            path: "/iban" | "/accountNumber" | "/bic" | "/bankName" | "/accountHolderName" | "/currencyCode" | "/accountId" | "/counterpartyId";
+            value: unknown;
+        } | {
+            /** @enum {string} */
+            op: "move" | "copy";
+            /** @enum {string} */
+            path: "/iban" | "/accountNumber" | "/bic" | "/bankName" | "/accountHolderName" | "/currencyCode" | "/accountId" | "/counterpartyId";
+            from: string;
+        } | {
+            /** @enum {string} */
+            op: "remove";
+            /** @enum {string} */
+            path: "/iban" | "/accountNumber" | "/bic" | "/bankName" | "/accountHolderName" | "/currencyCode" | "/accountId" | "/counterpartyId";
+        })[];
+        JsonPatchDocumentOfUpdateCounterpartyInput: ({
+            /** @enum {string} */
+            op: "add" | "replace" | "test";
+            /** @enum {string} */
+            path: "/name";
+            value: unknown;
+        } | {
+            /** @enum {string} */
+            op: "move" | "copy";
+            /** @enum {string} */
+            path: "/name";
+            from: string;
+        } | {
+            /** @enum {string} */
+            op: "remove";
+            /** @enum {string} */
+            path: "/name";
+        })[];
+        JsonPatchDocumentOfUpdateJournalEntryInput: ({
+            /** @enum {string} */
+            op: "add" | "replace" | "test";
+            /** @enum {string} */
+            path: "/date" | "/description" | "/counterpartyId" | "/lines";
+            value: unknown;
+        } | {
+            /** @enum {string} */
+            op: "move" | "copy";
+            /** @enum {string} */
+            path: "/date" | "/description" | "/counterpartyId" | "/lines";
+            from: string;
+        } | {
+            /** @enum {string} */
+            op: "remove";
+            /** @enum {string} */
+            path: "/date" | "/description" | "/counterpartyId" | "/lines";
+        })[];
         Money: {
             /** Format: int64 */
             amount?: number | string;
@@ -472,16 +550,47 @@ export interface components {
             amount: components["schemas"]["Money"];
             counter: components["schemas"]["RegisterRowCounterLeg"][];
         };
-        TrendPoint: {
+        TrendDelta: {
             /** Format: date */
             date: string;
-            balance: components["schemas"]["Money"];
+            /** Format: int64 */
+            amount: number | string;
         };
         /** @enum {unknown} */
         TrendRange: "OneMonth" | "ThreeMonths" | "SixMonths" | "OneYear";
+        UpdateAccountInput: {
+            name: string;
+            /** @enum {unknown} */
+            accountType: "Asset" | "Liability" | "Equity" | "Income" | "Expense";
+            currencyCode: string;
+        };
+        UpdateBankAccountInput: {
+            iban?: null | string;
+            accountNumber?: null | string;
+            bic?: null | string;
+            bankName?: null | string;
+            accountHolderName?: null | string;
+            currencyCode?: unknown;
+            accountId?: unknown;
+            counterpartyId?: unknown;
+        };
+        UpdateCounterpartyInput: {
+            name: string;
+        };
         UpdateCurrencyRequest: {
             name: null | string;
             symbol: null | string;
+        };
+        UpdateJournalEntryInput: {
+            /** Format: date */
+            date: string;
+            description?: null | string;
+            counterpartyId?: unknown;
+            lines: {
+                [key: string]: {
+                    description?: null | string;
+                };
+            };
         };
     };
     responses: never;
@@ -1286,7 +1395,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
+                "application/json-patch+json": components["schemas"]["JsonPatchDocumentOfUpdateAccountInput"];
             };
         };
         responses: {
@@ -1318,21 +1427,12 @@ export interface operations {
                     };
                 };
             };
-            /** @description Not found */
+            /** @description Not Found */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
-                };
+                content?: never;
             };
             /** @description Conflict */
             409: {
@@ -1887,7 +1987,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
+                "application/json-patch+json": components["schemas"]["JsonPatchDocumentOfUpdateCounterpartyInput"];
             };
         };
         responses: {
@@ -1919,21 +2019,12 @@ export interface operations {
                     };
                 };
             };
-            /** @description Not found */
+            /** @description Not Found */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
-                };
+                content?: never;
             };
             /** @description Conflict */
             409: {
@@ -2325,7 +2416,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
+                "application/json-patch+json": components["schemas"]["JsonPatchDocumentOfUpdateBankAccountInput"];
             };
         };
         responses: {
@@ -2357,21 +2448,12 @@ export interface operations {
                     };
                 };
             };
-            /** @description Not found */
+            /** @description Not Found */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
-                };
+                content?: never;
             };
             /** @description Conflict */
             409: {
@@ -3111,7 +3193,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
+                "application/json-patch+json": components["schemas"]["JsonPatchDocumentOfUpdateJournalEntryInput"];
             };
         };
         responses: {
@@ -3143,21 +3225,12 @@ export interface operations {
                     };
                 };
             };
-            /** @description Not found */
+            /** @description Not Found */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
-                };
+                content?: never;
             };
             /** @description Conflict */
             409: {

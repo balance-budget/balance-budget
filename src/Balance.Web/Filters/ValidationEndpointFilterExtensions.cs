@@ -51,35 +51,4 @@ internal static class ValidationEndpointFilterExtensions
             }
         );
     }
-
-    /// <summary>
-    /// Wires the <see cref="JsonPatchEndpointFilter{TInput}"/> for an endpoint that binds a
-    /// <c>JsonPatchDocument&lt;TInput&gt;</c>. The <paramref name="snapshotFactory"/> loads
-    /// the current entity state (or returns null for 404). The filter applies the patch,
-    /// runs the registered <see cref="IValidator{TInput}"/> if any, and then forwards the
-    /// validated snapshot to the handler in place of the patch document argument.
-    /// </summary>
-    public static RouteHandlerBuilder WithJsonPatch<TInput>(
-        this RouteHandlerBuilder builder,
-        Func<EndpointFilterInvocationContext, CancellationToken, Task<TInput?>> snapshotFactory
-    )
-        where TInput : class
-    {
-        ArgumentNullException.ThrowIfNull(builder);
-        ArgumentNullException.ThrowIfNull(snapshotFactory);
-
-        return builder.AddEndpointFilterFactory(
-            (_, next) =>
-            {
-                return async context =>
-                {
-                    var validator = context.HttpContext.RequestServices.GetService<
-                        IValidator<TInput>
-                    >();
-                    var filter = new JsonPatchEndpointFilter<TInput>(snapshotFactory, validator);
-                    return await filter.InvokeAsync(context, next);
-                };
-            }
-        );
-    }
 }

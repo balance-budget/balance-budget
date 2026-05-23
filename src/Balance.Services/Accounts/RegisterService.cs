@@ -16,7 +16,7 @@ internal sealed class RegisterService : IRegisterService
         _dbContext = dbContext;
     }
 
-    public async Task<IReadOnlyList<RegisterRowOutput>?> ListAsync(
+    public async Task<Result<IReadOnlyList<RegisterRowOutput>>> ListAsync(
         AccountId accountId,
         int skip,
         int take,
@@ -30,12 +30,12 @@ internal sealed class RegisterService : IRegisterService
             .FirstOrDefaultAsync(cancellationToken);
         if (account is null)
         {
-            return null;
+            return new NotFoundError("Account", accountId.Value.ToString());
         }
 
         if (take <= 0)
         {
-            return Array.Empty<RegisterRowOutput>();
+            return new Result<IReadOnlyList<RegisterRowOutput>>(Array.Empty<RegisterRowOutput>());
         }
 
         var isCreditNormal = AccountSignConvention.IsCreditNormal(account.AccountType);
@@ -76,7 +76,7 @@ internal sealed class RegisterService : IRegisterService
 
         if (focalRows.Count == 0)
         {
-            return Array.Empty<RegisterRowOutput>();
+            return new Result<IReadOnlyList<RegisterRowOutput>>(Array.Empty<RegisterRowOutput>());
         }
 
         var entryIds = focalRows.Select(r => r.EntryId).Distinct().ToList();
@@ -122,6 +122,7 @@ internal sealed class RegisterService : IRegisterService
                         )
                     );
                 }
+
                 counter = legs;
             }
             else
@@ -144,7 +145,8 @@ internal sealed class RegisterService : IRegisterService
                 )
             );
         }
-        return output;
+
+        return new Result<IReadOnlyList<RegisterRowOutput>>(output);
     }
 
     private sealed record FocalRow(

@@ -1,5 +1,6 @@
 using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
+using Balance.Web.Mappers;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
@@ -23,72 +24,47 @@ internal static class DashboardEndpoints
             .WithName("GetAccountBalanceTrend");
     }
 
-    private static async Task<Ok<DashboardSummaryOutput>> GetSummaryAsync(
-        [FromQuery] string? currency,
+    private static async Task<
+        Results<
+            Ok<DashboardSummaryOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > GetSummaryAsync(
+        [FromQuery] CurrencyCode? currency,
         [FromServices] IDashboardService dashboardService,
         CancellationToken cancellationToken
     )
     {
-        var currencyCode = string.IsNullOrWhiteSpace(currency)
-            ? DefaultCurrency
-            : new CurrencyCode(currency);
-        var summary = await dashboardService.GetSummaryAsync(currencyCode, cancellationToken);
-        return TypedResults.Ok(summary);
+        var result = await dashboardService.GetSummaryAsync(
+            currency ?? DefaultCurrency,
+            cancellationToken
+        );
+        return result.ToOk();
     }
 
     private static async Task<
-        Results<Ok<AccountBalanceTrendOutput>, BadRequest<string>>
+        Results<
+            Ok<AccountBalanceTrendOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
     > GetAccountBalanceTrendAsync(
-        [FromQuery] string? range,
-        [FromQuery] string? currency,
+        [FromQuery] TrendRange? range,
+        [FromQuery] CurrencyCode? currency,
         [FromServices] IDashboardService dashboardService,
         CancellationToken cancellationToken
     )
     {
-        if (!TryParseTrendRange(range, out var trendRange))
-        {
-            return TypedResults.BadRequest(
-                $"Invalid 'range' value '{range}'. Expected one of: 1M, 3M, 6M, 1Y."
-            );
-        }
-
-        var currencyCode = string.IsNullOrWhiteSpace(currency)
-            ? DefaultCurrency
-            : new CurrencyCode(currency);
-
-        var trend = await dashboardService.GetAccountBalanceTrendAsync(
-            currencyCode,
-            trendRange,
+        var result = await dashboardService.GetAccountBalanceTrendAsync(
+            currency ?? DefaultCurrency,
+            range ?? DefaultTrendRange,
             cancellationToken
         );
-        return TypedResults.Ok(trend);
-    }
-
-    private static bool TryParseTrendRange(string? raw, out TrendRange range)
-    {
-        if (string.IsNullOrWhiteSpace(raw))
-        {
-            range = DefaultTrendRange;
-            return true;
-        }
-
-        switch (raw.ToUpperInvariant())
-        {
-            case "1M":
-                range = TrendRange.OneMonth;
-                return true;
-            case "3M":
-                range = TrendRange.ThreeMonths;
-                return true;
-            case "6M":
-                range = TrendRange.SixMonths;
-                return true;
-            case "1Y":
-                range = TrendRange.OneYear;
-                return true;
-            default:
-                range = default;
-                return false;
-        }
+        return result.ToOk();
     }
 }

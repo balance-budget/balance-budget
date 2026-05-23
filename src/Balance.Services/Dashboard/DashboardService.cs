@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Balance.Data;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Enums;
@@ -20,7 +21,7 @@ internal sealed class DashboardService : IDashboardService
         _timeProvider = timeProvider;
     }
 
-    public async Task<DashboardSummaryOutput> GetSummaryAsync(
+    public async Task<Result<DashboardSummaryOutput>> GetSummaryAsync(
         CurrencyCode currencyCode,
         CancellationToken cancellationToken
     )
@@ -61,7 +62,7 @@ internal sealed class DashboardService : IDashboardService
         );
     }
 
-    public async Task<AccountBalanceTrendOutput> GetAccountBalanceTrendAsync(
+    public async Task<Result<AccountBalanceTrendOutput>> GetAccountBalanceTrendAsync(
         CurrencyCode currencyCode,
         TrendRange range,
         CancellationToken cancellationToken
@@ -74,7 +75,7 @@ internal sealed class DashboardService : IDashboardService
             TrendRange.ThreeMonths => today.AddMonths(-3),
             TrendRange.SixMonths => today.AddMonths(-6),
             TrendRange.OneYear => today.AddYears(-1),
-            _ => throw new ArgumentOutOfRangeException(nameof(range), range, "Unknown TrendRange."),
+            _ => throw new UnreachableException($"Unknown TrendRange '{range}'."),
         };
 
         var assets = await _dbContext
@@ -96,8 +97,10 @@ internal sealed class DashboardService : IDashboardService
 
         var assetIds = assets.Select(a => a.Id).ToHashSet();
 
-        var rows = await _dbContext
+        // Opening balance per account: one row per asset account, aggregated in SQL.
+        var openings = await _dbContext
             .JournalLines.AsNoTracking()
+            .Where(l => assetIds.Contains(l.AccountId))
             .Join(
                 _dbContext.JournalEntries.AsNoTracking(),
                 l => l.JournalEntryId,
@@ -110,44 +113,59 @@ internal sealed class DashboardService : IDashboardService
                         l.Amount,
                     }
             )
-            .Where(r => assetIds.Contains(r.AccountId) && r.Date <= today)
+            .Where(x => x.Date < periodStart)
+            .GroupBy(x => x.AccountId)
+            .Select(g => new { AccountId = g.Key, Sum = g.Sum(x => (long?)x.Amount) ?? 0L })
+            .ToDictionaryAsync(g => g.AccountId, g => g.Sum, cancellationToken);
+
+        // In-window daily deltas: one row per (account, active-day), aggregated in SQL.
+        var deltaRows = await _dbContext
+            .JournalLines.AsNoTracking()
+            .Where(l => assetIds.Contains(l.AccountId))
+            .Join(
+                _dbContext.JournalEntries.AsNoTracking(),
+                l => l.JournalEntryId,
+                e => e.Id,
+                (l, e) =>
+                    new
+                    {
+                        l.AccountId,
+                        e.Date,
+                        l.Amount,
+                    }
+            )
+            .Where(x => x.Date >= periodStart && x.Date <= today)
+            .GroupBy(x => new { x.AccountId, x.Date })
+            .Select(g => new
+            {
+                g.Key.AccountId,
+                g.Key.Date,
+                Sum = g.Sum(x => (long?)x.Amount) ?? 0L,
+            })
             .ToListAsync(cancellationToken);
 
-        var byAccount = rows.GroupBy(r => r.AccountId).ToDictionary(g => g.Key, g => g.ToList());
+        var deltasByAccount = deltaRows
+            .GroupBy(r => r.AccountId)
+            .ToDictionary(
+                g => g.Key,
+                g =>
+                    (IReadOnlyList<TrendDelta>)
+                        [.. g.OrderBy(r => r.Date).Select(r => new TrendDelta(r.Date, r.Sum))]
+            );
 
-        var series = new List<AccountTrendSeries>();
-        foreach (var asset in assets)
-        {
-            var hasRows = byAccount.TryGetValue(asset.Id, out var accountRows);
-            var opening = hasRows
-                ? accountRows!.Where(r => r.Date < periodStart).Sum(r => r.Amount)
-                : 0L;
-            var inWindowByDate = hasRows
-                ? accountRows!
-                    .Where(r => r.Date >= periodStart)
-                    .GroupBy(r => r.Date)
-                    .ToDictionary(g => g.Key, g => g.Sum(r => r.Amount))
-                : new Dictionary<DateOnly, long>();
-
-            // Asset accounts with zero opening balance *and* no in-window activity are
-            // omitted from the series — flat-zero lines add nothing to the chart.
-            if (opening == 0L && inWindowByDate.Count == 0)
+        // Skip flat-zero accounts (zero opening *and* no in-window activity). Forward-fill
+        // to a daily series is done by the renderer — see the frontend's toAccountTrend.
+        var series = assets
+            .Select(a => new
             {
-                continue;
-            }
-
-            var points = new List<TrendPoint>();
-            var running = opening;
-            for (var d = periodStart; d <= today; d = d.AddDays(1))
-            {
-                if (inWindowByDate.TryGetValue(d, out var delta))
-                {
-                    running = checked(running + delta);
-                }
-                points.Add(new TrendPoint(d, new Money(running, currencyCode)));
-            }
-            series.Add(new AccountTrendSeries(asset.Id, asset.Name, points));
-        }
+                a.Id,
+                a.Name,
+                Opening = openings.GetValueOrDefault(a.Id),
+                Deltas = deltasByAccount.GetValueOrDefault(a.Id, []),
+            })
+            .Where(a => a.Opening != 0L || a.Deltas.Count > 0)
+            .Select(a => new AccountTrendSeries(a.Id, a.Name, a.Opening, a.Deltas))
+            .ToList();
 
         return new AccountBalanceTrendOutput(series, periodStart, today, range, currencyCode);
     }
