@@ -23,5 +23,8 @@ public sealed record CreateBankTransactionInput(
     BankAccountId BankAccountId,
     DateOnly BookingDate,
     long Amount,
-    CurrencyCode CurrencyCode
+    CurrencyCode CurrencyCode,
+    string Description,
+    string? CounterpartyName,
+    string? CounterpartyAccountNumber
 );

@@ -8,6 +8,9 @@ public sealed record BankTransactionOutput(
     BankAccountId BankAccountId,
     DateOnly BookingDate,
     Money Money,
+    string Description,
+    string? CounterpartyName,
+    string? CounterpartyAccountNumber,
     DateTime CreatedAt,
     DateTime UpdatedAt
 );
