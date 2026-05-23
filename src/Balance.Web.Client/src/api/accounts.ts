@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { components } from '../lib/api-types';
 import { type AccountId, type AccountType, asAccountId } from '../lib/domain';
+import { getJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
 
 type WireAccount = components['schemas']['AccountOutput'];
@@ -29,17 +30,11 @@ export const accountsKeys = {
     list: () => [...accountsKeys.all, 'list'] as const,
 };
 
-async function fetchAccounts(signal: AbortSignal): Promise<WireAccount[]> {
-    const response = await fetch('/api/accounts', { signal });
-    if (!response.ok) {
-        throw new Error(`Failed to load accounts (${response.status})`);
-    }
-    return (await response.json()) as WireAccount[];
+function fetchAccounts(signal: AbortSignal): Promise<WireAccount[]> {
+    return getJson<WireAccount[]>('/api/accounts', signal, 'load accounts');
 }
 
-function toBankAccountSummary(
-    wire: WireBankAccountSummary | null,
-): BankAccountSummary | null {
+function toBankAccountSummary(wire: WireBankAccountSummary | null): BankAccountSummary | null {
     if (wire === null) {
         return null;
     }
@@ -70,4 +65,17 @@ export function useAccounts() {
             return wire.map(toAccount);
         },
     });
+}
+
+/**
+ * Compact identifier suffix for an Account row — the last four characters of
+ * the linked bank IBAN or account number, prefixed by a middle-dot so it
+ * reads as a tail (e.g. "· 4242"). Returns the raw value (no dot) when it's
+ * already short enough to display in full, or null when nothing's linked.
+ */
+export function lastFourIdentifier(account: Account): string | null {
+    const raw = account.bankAccount?.iban ?? account.bankAccount?.accountNumber ?? null;
+    if (!raw) return null;
+    const compact = raw.replace(/\s+/g, '');
+    return compact.length <= 4 ? compact : `· ${compact.slice(-4)}`;
 }

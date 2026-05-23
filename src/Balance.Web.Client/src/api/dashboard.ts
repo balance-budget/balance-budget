@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { components } from '../lib/api-types';
 import { asAccountId, type AccountTrend, type TrendPoint } from '../lib/domain';
+import { getJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
 import { visualHintFor } from '../lib/visualHints';
 
@@ -20,10 +21,22 @@ export type DashboardSummary = {
     currencyCode: string;
 };
 
-// Wire enum values are PascalCase (OneMonth / ThreeMonths / ...); the URL token
-// is a short label (1M / 3M / 6M / 1Y). This module exposes the short form.
+// The UI uses short labels (1M / 3M / 6M / 1Y) while the wire carries PascalCase
+// enum names (OneMonth / ...). One bidirectional map keeps both directions in
+// lockstep — adding a new range only touches WIRE_BY_TOKEN.
 export const TREND_RANGES = ['1M', '3M', '6M', '1Y'] as const;
 export type TrendRange = (typeof TREND_RANGES)[number];
+
+const WIRE_BY_TOKEN = {
+    '1M': 'OneMonth',
+    '3M': 'ThreeMonths',
+    '6M': 'SixMonths',
+    '1Y': 'OneYear',
+} as const satisfies Record<TrendRange, WireTrend['range']>;
+
+const TOKEN_BY_WIRE = Object.fromEntries(
+    Object.entries(WIRE_BY_TOKEN).map(([token, wire]) => [wire, token]),
+) as Record<WireTrend['range'], TrendRange>;
 
 export type AccountBalanceTrend = {
     series: AccountTrend[];
@@ -40,23 +53,16 @@ export const dashboardKeys = {
         [...dashboardKeys.all, 'account-balance-trend', range] as const,
 };
 
-async function fetchSummary(signal: AbortSignal): Promise<WireSummary> {
-    const response = await fetch('/api/dashboard/summary', { signal });
-    if (!response.ok) {
-        throw new Error(`Failed to load dashboard summary (${response.status})`);
-    }
-    return (await response.json()) as WireSummary;
+function fetchSummary(signal: AbortSignal): Promise<WireSummary> {
+    return getJson<WireSummary>('/api/dashboard/summary', signal, 'load dashboard summary');
 }
 
-async function fetchTrend(range: TrendRange, signal: AbortSignal): Promise<WireTrend> {
-    const response = await fetch(
-        `/api/dashboard/account-balance-trend?range=${tokenToWireRange(range)}`,
-        { signal },
+function fetchTrend(range: TrendRange, signal: AbortSignal): Promise<WireTrend> {
+    return getJson<WireTrend>(
+        `/api/dashboard/account-balance-trend?range=${WIRE_BY_TOKEN[range]}`,
+        signal,
+        'load account balance trend',
     );
-    if (!response.ok) {
-        throw new Error(`Failed to load account balance trend (${response.status})`);
-    }
-    return (await response.json()) as WireTrend;
 }
 
 function toSummary(wire: WireSummary): DashboardSummary {
@@ -127,40 +133,12 @@ function toAccountTrend(
 
 function toTrend(wire: WireTrend): AccountBalanceTrend {
     return {
-        series: wire.series.map(s =>
-            toAccountTrend(s, wire.periodStart, wire.periodEnd),
-        ),
+        series: wire.series.map(s => toAccountTrend(s, wire.periodStart, wire.periodEnd)),
         periodStart: wire.periodStart,
         periodEnd: wire.periodEnd,
-        range: wireRangeToToken(wire.range),
+        range: TOKEN_BY_WIRE[wire.range],
         currencyCode: wire.currencyCode,
     };
-}
-
-function wireRangeToToken(range: WireTrend['range']): TrendRange {
-    switch (range) {
-        case 'OneMonth':
-            return '1M';
-        case 'ThreeMonths':
-            return '3M';
-        case 'SixMonths':
-            return '6M';
-        case 'OneYear':
-            return '1Y';
-    }
-}
-
-function tokenToWireRange(range: TrendRange): WireTrend['range'] {
-    switch (range) {
-        case '1M':
-            return 'OneMonth';
-        case '3M':
-            return 'ThreeMonths';
-        case '6M':
-            return 'SixMonths';
-        case '1Y':
-            return 'OneYear';
-    }
 }
 
 export function useDashboardSummary() {

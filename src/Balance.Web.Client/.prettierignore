@@ -1,0 +1,7 @@
+dist
+node_modules
+obj
+.tanstack
+src/routeTree.gen.ts
+src/lib/api-types.ts
+package-lock.json

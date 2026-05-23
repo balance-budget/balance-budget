@@ -10,9 +10,10 @@ import {
     XAxis,
     YAxis,
 } from 'recharts';
+import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import type { TrendRange } from '../api/dashboard';
 import { formatTrendAxisDate, formatTrendTooltipDate } from '../lib/dates';
-import type { AccountTrend } from '../lib/domain';
+import { asAccountId, type AccountId, type AccountTrend } from '../lib/domain';
 import { formatMoney, formatMoneyAxis } from '../lib/money';
 
 type TrendChartProps = {
@@ -25,12 +26,15 @@ type TrendChartProps = {
 type ChartRow = { date: string } & Record<string, number | string>;
 
 function buildRows(series: AccountTrend[]): ChartRow[] {
-    if (series.length === 0) return [];
-    const dates = series[0].points.map(p => p.date);
-    return dates.map((date, i) => {
-        const row: ChartRow = { date };
+    const first = series[0];
+    if (!first) return [];
+    return first.points.map((firstPoint, i) => {
+        const row: ChartRow = { date: firstPoint.date };
         for (const s of series) {
-            row[s.accountId] = s.points[i].balanceMinor;
+            // All series are aligned to the same date axis by the backend, so
+            // s.points[i] is guaranteed to exist alongside first.points[i].
+            const point = s.points[i];
+            if (point) row[s.accountId] = point.balanceMinor;
         }
         return row;
     });
@@ -53,18 +57,11 @@ function computeTicks(rows: ChartRow[], range: TrendRange): string[] {
  * the snapped date, sorted value-descending. Axes auto-fit; y-axis labels are
  * compact above €10k, full below.
  */
-export function TrendChart({
-    series,
-    range,
-    currencyCode,
-    height = 240,
-}: TrendChartProps) {
+export function TrendChart({ series, range, currencyCode, height = 240 }: TrendChartProps) {
+    const catalog = useCurrencyCatalog();
     const rows = useMemo(() => buildRows(series), [series]);
     const ticks = useMemo(() => computeTicks(rows, range), [rows, range]);
-    const seriesByKey = useMemo(
-        () => new Map(series.map(s => [s.accountId as string, s])),
-        [series],
-    );
+    const seriesByKey = useMemo(() => new Map(series.map(s => [s.accountId, s])), [series]);
 
     return (
         <ResponsiveContainer width="100%" height={height}>
@@ -78,14 +75,14 @@ export function TrendChart({
                     dataKey="date"
                     ticks={ticks}
                     interval={0}
-                    tickFormatter={d => formatTrendAxisDate(d, range)}
+                    tickFormatter={(d: string) => formatTrendAxisDate(d, range)}
                     tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
                     axisLine={false}
                     tickLine={false}
                 />
                 <YAxis
                     domain={['auto', 'auto']}
-                    tickFormatter={v => formatMoneyAxis(v, currencyCode)}
+                    tickFormatter={(v: number) => formatMoneyAxis(v, currencyCode, catalog)}
                     tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
                     axisLine={false}
                     tickLine={false}
@@ -96,6 +93,7 @@ export function TrendChart({
                         <TrendTooltip
                             seriesByKey={seriesByKey}
                             currencyCode={currencyCode}
+                            catalog={catalog}
                         />
                     }
                     cursor={{
@@ -128,8 +126,9 @@ export function TrendChart({
 }
 
 type TrendTooltipProps = Partial<TooltipContentProps<number, string>> & {
-    seriesByKey: Map<string, AccountTrend>;
+    seriesByKey: Map<AccountId, AccountTrend>;
     currencyCode: string;
+    catalog: CurrencyCatalog;
 };
 
 function TrendTooltip({
@@ -138,12 +137,11 @@ function TrendTooltip({
     label,
     seriesByKey,
     currencyCode,
+    catalog,
 }: TrendTooltipProps) {
     if (!active || !payload || payload.length === 0) return null;
 
-    const sorted = [...payload].sort(
-        (a, b) => (Number(b.value) || 0) - (Number(a.value) || 0),
-    );
+    const sorted = [...payload].sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0));
 
     return (
         <div className="rounded-md border border-border-soft bg-bg-1 px-3 py-2 shadow-sm text-[12px]">
@@ -152,7 +150,7 @@ function TrendTooltip({
             </div>
             <div className="flex flex-col gap-1">
                 {sorted.map(item => {
-                    const series = seriesByKey.get(String(item.dataKey));
+                    const series = seriesByKey.get(asAccountId(String(item.dataKey)));
                     const value = Number(item.value) || 0;
                     return (
                         <div
@@ -169,7 +167,7 @@ function TrendTooltip({
                                 </span>
                             </span>
                             <span className="font-mono tabular text-fg-1">
-                                {formatMoney(value, currencyCode)}
+                                {formatMoney(value, currencyCode, catalog)}
                             </span>
                         </div>
                     );

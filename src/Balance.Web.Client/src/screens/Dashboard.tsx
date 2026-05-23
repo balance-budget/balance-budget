@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
-import { useAccounts, type Account } from '../api/accounts';
+import { lastFourIdentifier, useAccounts, type Account } from '../api/accounts';
+import { useCurrencyCatalog } from '../api/currencies';
 import {
     useAccountBalanceTrend,
     useDashboardSummary,
@@ -8,44 +9,38 @@ import {
     type TrendRange,
 } from '../api/dashboard';
 import { useAccountRegister, type RegisterRow } from '../api/register';
+import { AccountAvatar } from '../components/AccountAvatar';
 import { Amount } from '../components/Amount';
 import { ErrorState } from '../components/ErrorState';
-import { Icon } from '../components/Icon';
 import { MtdDeltaChip } from '../components/MtdDeltaChip';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { TrendChart } from '../components/TrendChart';
+import { cx } from '../lib/cx';
 import { isLedgerAccount } from '../lib/domain';
 import { formatMoney } from '../lib/money';
-import { visualHintFor } from '../lib/visualHints';
-
-function lastFourIdentifier(account: Account): string | null {
-    const raw = account.bankAccount?.iban ?? account.bankAccount?.accountNumber ?? null;
-    if (!raw) return null;
-    const compact = raw.replace(/\s+/g, '');
-    return compact.length <= 4 ? compact : `· ${compact.slice(-4)}`;
-}
 
 function RecentRow({ row }: { row: RegisterRow }) {
+    const catalog = useCurrencyCatalog();
     const label = row.counterpartyName ?? row.entryDescription ?? row.lineDescription ?? '—';
     const negative = row.amount.amount < 0;
     return (
         <div className="flex items-center justify-between gap-2">
             <span className="text-[12px] text-fg-2 truncate">{label}</span>
             <span
-                className={[
+                className={cx(
                     'font-mono text-[11px] tabular',
                     negative ? 'text-fg-2' : 'text-success',
-                ].join(' ')}
+                )}
             >
-                {formatMoney(row.amount.amount, row.amount.currencyCode, { sign: true })}
+                {formatMoney(row.amount.amount, row.amount.currencyCode, catalog, { sign: true })}
             </span>
         </div>
     );
 }
 
 function RecentActivity({ account }: { account: Account }) {
-    const register = useAccountRegister(account.id, 5);
+    const register = useAccountRegister(account.id, 0, 5);
 
     if (register.isPending) {
         return (
@@ -61,7 +56,7 @@ function RecentActivity({ account }: { account: Account }) {
             <div className="pl-12">
                 <ErrorState
                     message="Couldn't load recent activity."
-                    onRetry={() => register.refetch()}
+                    onRetry={() => void register.refetch()}
                 />
             </div>
         );
@@ -82,21 +77,12 @@ function RecentActivity({ account }: { account: Account }) {
 }
 
 function AccountRow({ account }: { account: Account }) {
-    const visual = visualHintFor(account.type, account.id);
     const tail = lastFourIdentifier(account);
     const isNegative = account.balance.amount < 0;
     return (
         <div className="py-3 first:pt-0 last:pb-0 flex flex-col gap-2 border-b border-border-soft last:border-b-0">
             <div className="flex items-center gap-3">
-                <span
-                    className="w-9 h-9 rounded-md flex items-center justify-center shrink-0"
-                    style={{
-                        background: `color-mix(in srgb, ${visual.accentColor} 12%, transparent)`,
-                        color: visual.accentColor,
-                    }}
-                >
-                    <Icon name={visual.iconName} size={16} strokeWidth={2} />
-                </span>
+                <AccountAvatar account={account} size="md" />
                 <div className="flex flex-col gap-[2px] flex-1 min-w-0">
                     <span className="text-14 font-medium text-fg-1 truncate">{account.name}</span>
                     <span className="text-[12px] text-fg-3 truncate">
@@ -132,10 +118,7 @@ function AccountsPanel() {
 
     if (accounts.isError) {
         return (
-            <ErrorState
-                message="Couldn't load accounts."
-                onRetry={() => accounts.refetch()}
-            />
+            <ErrorState message="Couldn't load accounts." onRetry={() => void accounts.refetch()} />
         );
     }
 
@@ -161,15 +144,15 @@ function KpiStrip() {
     if (summary.isPending) {
         return (
             <section className="grid gap-[14px]" style={{ gridTemplateColumns: '1.3fr 1fr 1fr' }}>
-                <Panel className="!p-[18px] flex flex-col gap-1 justify-between min-h-[120px]">
+                <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
                     <span className="eyebrow truncate">Net worth</span>
                     <Skeleton className="h-[44px] w-[180px]" />
                 </Panel>
-                <Panel className="!p-[18px] flex flex-col gap-1 justify-between min-h-[120px]">
+                <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
                     <span className="eyebrow truncate">Income · MTD</span>
                     <Skeleton className="h-[22px] w-[120px]" />
                 </Panel>
-                <Panel className="!p-[18px] flex flex-col gap-1 justify-between min-h-[120px]">
+                <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
                     <span className="eyebrow truncate">Expenses · MTD</span>
                     <Skeleton className="h-[22px] w-[120px]" />
                 </Panel>
@@ -182,7 +165,7 @@ function KpiStrip() {
             <section>
                 <ErrorState
                     message="Couldn't load the dashboard summary."
-                    onRetry={() => summary.refetch()}
+                    onRetry={() => void summary.refetch()}
                 />
             </section>
         );
@@ -197,7 +180,7 @@ function KpiStrip() {
 
     return (
         <section className="grid gap-[14px]" style={{ gridTemplateColumns: '1.3fr 1fr 1fr' }}>
-            <Panel className="!p-[18px] flex flex-col gap-1 justify-between min-h-[120px]">
+            <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
                 <span className="eyebrow truncate">Net worth</span>
                 <Amount
                     minor={data.netWorth.amount}
@@ -208,7 +191,7 @@ function KpiStrip() {
                 <span className="text-14 text-fg-3">{subtext}</span>
             </Panel>
 
-            <Panel className="!p-[18px] flex flex-col gap-1 justify-between min-h-[120px]">
+            <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
                 <span className="eyebrow truncate">Income · MTD</span>
                 <Amount
                     minor={data.incomeMtd.amount}
@@ -222,7 +205,7 @@ function KpiStrip() {
                 />
             </Panel>
 
-            <Panel className="!p-[18px] flex flex-col gap-1 justify-between min-h-[120px]">
+            <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
                 <span className="eyebrow truncate">Expenses · MTD</span>
                 <Amount
                     minor={data.expensesMtd.amount}
@@ -257,13 +240,15 @@ function AccountBalanceTrendPanel() {
                 <button
                     key={p}
                     type="button"
-                    onClick={() => setRange(p)}
-                    className={[
+                    onClick={() => {
+                        setRange(p);
+                    }}
+                    className={cx(
                         'px-[10px] py-[5px] rounded-full text-[11px] font-medium select-none',
                         p === range
                             ? 'bg-brand-primary-soft text-brand-primary'
                             : 'text-fg-3 hover:text-fg-1',
-                    ].join(' ')}
+                    )}
                 >
                     {p}
                 </button>
@@ -273,17 +258,13 @@ function AccountBalanceTrendPanel() {
 
     return (
         <Panel>
-            <SectionHead
-                title="Account balances"
-                subtitle={RANGE_SUBTITLE[range]}
-                action={pills}
-            />
+            <SectionHead title="Account balances" subtitle={RANGE_SUBTITLE[range]} action={pills} />
             {trend.isPending ? (
                 <Skeleton className="h-[240px] w-full" />
             ) : trend.isError ? (
                 <ErrorState
                     message="Couldn't load the balance trend."
-                    onRetry={() => trend.refetch()}
+                    onRetry={() => void trend.refetch()}
                 />
             ) : trend.data.series.length === 0 ? (
                 <div className="h-[240px] flex items-center justify-center text-[13px] text-fg-3">
@@ -314,7 +295,10 @@ export function Dashboard() {
                     <SectionHead
                         title="Accounts"
                         action={
-                            <Link to="/accounts" className="text-[13px] font-medium text-fg-2 hover:text-brand-primary">
+                            <Link
+                                to="/accounts"
+                                className="text-[13px] font-medium text-fg-2 hover:text-brand-primary"
+                            >
                                 All →
                             </Link>
                         }

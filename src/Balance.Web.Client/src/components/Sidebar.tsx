@@ -1,12 +1,19 @@
+import type { ReactNode } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
 import logo from '../assets/logo.svg';
 import { Icon } from './Icon';
-import { useAccounts, type Account } from '../api/accounts';
+import { lastFourIdentifier, useAccounts, type Account } from '../api/accounts';
+import { useCurrencyCatalog } from '../api/currencies';
+import { AccountAvatar } from './AccountAvatar';
 import { Skeleton } from './Skeleton';
 import { ErrorState } from './ErrorState';
+import { cx } from '../lib/cx';
 import { isCategoryAccount, isLedgerAccount } from '../lib/domain';
 import { formatMoney } from '../lib/money';
-import { visualHintFor } from '../lib/visualHints';
+
+function SectionLabel({ children }: { children: ReactNode }) {
+    return <div className="eyebrow px-3 pt-3 pb-[6px]">{children}</div>;
+}
 
 type NavLink = {
     to: string;
@@ -32,26 +39,39 @@ const NAV_OTHER: NavLink[] = [
     { to: '/settings', label: 'Settings', iconName: 'settings' },
 ];
 
-function NavGroup({ title, items, currentPath }: { title: string; items: NavLink[]; currentPath: string }) {
+function NavGroup({
+    title,
+    items,
+    currentPath,
+}: {
+    title: string;
+    items: NavLink[];
+    currentPath: string;
+}) {
     return (
         <div className="flex flex-col gap-[2px]">
-            <div className="eyebrow px-3 pt-3 pb-[6px]">{title}</div>
+            <SectionLabel>{title}</SectionLabel>
             {items.map(item => {
-                const isActive = item.to === '/' ? currentPath === '/' : currentPath.startsWith(item.to);
+                const isActive =
+                    item.to === '/' ? currentPath === '/' : currentPath.startsWith(item.to);
                 return (
                     <Link
                         key={item.to}
                         to={item.to}
-                        className={[
+                        className={cx(
                             'flex items-center gap-3 px-3 py-[9px] rounded-sm select-none',
-                            'text-[13.5px] font-medium',
-                            'transition-[background,color] duration-fast',
+                            'text-[13.5px] font-medium transition-[background,color] duration-fast',
                             isActive
                                 ? 'bg-brand-primary-soft text-brand-primary'
                                 : 'text-fg-2 hover:bg-surface-2 hover:text-fg-1',
-                        ].join(' ')}
+                        )}
                     >
-                        <Icon name={item.iconName} size={18} strokeWidth={1.75} className="shrink-0" />
+                        <Icon
+                            name={item.iconName}
+                            size={18}
+                            strokeWidth={1.75}
+                            className="shrink-0"
+                        />
                         <span>{item.label}</span>
                     </Link>
                 );
@@ -60,39 +80,24 @@ function NavGroup({ title, items, currentPath }: { title: string; items: NavLink
     );
 }
 
-function lastFourIdentifier(account: Account): string | null {
-    const raw = account.bankAccount?.iban ?? account.bankAccount?.accountNumber ?? null;
-    if (!raw) return null;
-    const compact = raw.replace(/\s+/g, '');
-    return compact.length <= 4 ? compact : `· ${compact.slice(-4)}`;
-}
-
 function AccountRow({ account }: { account: Account }) {
-    const visual = visualHintFor(account.type, account.id);
+    const catalog = useCurrencyCatalog();
     const tail = lastFourIdentifier(account);
     const isNegative = account.balance.amount < 0;
     return (
         <div className="flex items-center gap-3 px-3 py-2 rounded-sm">
-            <span
-                className="shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-sm"
-                style={{
-                    background: `color-mix(in srgb, ${visual.accentColor} 12%, transparent)`,
-                    color: visual.accentColor,
-                }}
-            >
-                <Icon name={visual.iconName} size={14} strokeWidth={1.75} />
-            </span>
+            <AccountAvatar account={account} />
             <div className="flex-1 min-w-0 flex flex-col leading-tight">
                 <span className="truncate text-[13px] text-fg-1">{account.name}</span>
                 {tail && <span className="text-[11px] text-fg-3 truncate">{tail}</span>}
             </div>
             <span
-                className={[
+                className={cx(
                     'shrink-0 text-[12px] tabular-nums',
                     isNegative ? 'text-danger' : 'text-fg-2',
-                ].join(' ')}
+                )}
             >
-                {formatMoney(account.balance.amount, account.balance.currencyCode, {
+                {formatMoney(account.balance.amount, account.balance.currencyCode, catalog, {
                     decimals: false,
                 })}
             </span>
@@ -104,7 +109,7 @@ function AccountSection({ title, accounts }: { title: string; accounts: Account[
     if (accounts.length === 0) return null;
     return (
         <div className="flex flex-col gap-[2px]">
-            <div className="eyebrow px-3 pt-3 pb-[6px]">{title}</div>
+            <SectionLabel>{title}</SectionLabel>
             {accounts.map(account => (
                 <AccountRow key={account.id} account={account} />
             ))}
@@ -118,7 +123,7 @@ function AccountsGroup() {
     if (isPending) {
         return (
             <div className="flex flex-col gap-[2px]">
-                <div className="eyebrow px-3 pt-3 pb-[6px]">Accounts</div>
+                <SectionLabel>Accounts</SectionLabel>
                 <div className="flex flex-col gap-[6px] px-3 py-2">
                     <Skeleton className="h-[14px] w-32" />
                     <Skeleton className="h-[14px] w-24" />
@@ -131,9 +136,9 @@ function AccountsGroup() {
     if (isError) {
         return (
             <div className="flex flex-col gap-[2px]">
-                <div className="eyebrow px-3 pt-3 pb-[6px]">Accounts</div>
+                <SectionLabel>Accounts</SectionLabel>
                 <div className="px-3 py-2">
-                    <ErrorState message="Couldn't load accounts." onRetry={() => refetch()} />
+                    <ErrorState message="Couldn't load accounts." onRetry={() => void refetch()} />
                 </div>
             </div>
         );
@@ -145,7 +150,7 @@ function AccountsGroup() {
     if (ledgerAccounts.length === 0 && categoryAccounts.length === 0) {
         return (
             <div className="flex flex-col gap-[2px]">
-                <div className="eyebrow px-3 pt-3 pb-[6px]">Accounts</div>
+                <SectionLabel>Accounts</SectionLabel>
                 <div className="px-3 py-2 text-[12px] text-fg-3">No accounts yet.</div>
             </div>
         );
@@ -163,7 +168,7 @@ export function Sidebar() {
     const pathname = useRouterState({ select: s => s.location.pathname });
 
     return (
-        <aside className="w-60 shrink-0 h-screen sticky top-0 flex flex-col gap-5 px-4 py-6 border-r border-border-soft bg-black/20 backdrop-blur-[20px]">
+        <aside className="w-60 shrink-0 h-screen sticky top-0 flex flex-col gap-5 px-4 py-6 border-r border-border-soft bg-surface-1 backdrop-blur-card">
             <div className="flex items-center gap-[10px] px-[10px] py-1">
                 <img src={logo} alt="" className="w-8 h-8 rounded-[6px]" />
                 <span className="text-[18px] font-normal tracking-[-0.01em]">
@@ -178,6 +183,7 @@ export function Sidebar() {
                 <NavGroup title="Other" items={NAV_OTHER} currentPath={pathname} />
             </nav>
 
+            {/* TODO: replace placeholder identity once auth lands (see auth memory / ADR). */}
             <div className="mt-auto flex items-center gap-[10px] p-[10px] rounded-sm bg-surface-2">
                 <div className="w-8 h-8 rounded-full bg-brand-primary-soft text-brand-primary flex items-center justify-center text-[12px] font-semibold">
                     MR

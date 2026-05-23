@@ -1,18 +1,29 @@
 import type { ReactNode } from 'react';
+import { cx } from '../lib/cx';
+
+type PanelPadding = 'sm' | 'md';
 
 type PanelProps = {
     children: ReactNode;
+    /** sm = 18px (kpi tiles), md = 20px/22px (default card layout). */
+    padding?: PanelPadding;
     className?: string;
 };
 
+const PADDING_CLASS: Record<PanelPadding, string> = {
+    sm: 'p-[18px]',
+    md: 'py-5 px-[22px]',
+};
+
 /** Frosted card: surface-1 with backdrop blur, hairline border, radius-md. */
-export function Panel({ children, className }: PanelProps) {
+export function Panel({ children, padding = 'md', className }: PanelProps) {
     return (
         <section
-            className={[
-                'bg-surface-1 backdrop-blur-[20px] border border-border-soft rounded-md p-5 px-[22px]',
+            className={cx(
+                'bg-surface-1 backdrop-blur-card border border-border-soft rounded-md',
+                PADDING_CLASS[padding],
                 className,
-            ].filter(Boolean).join(' ')}
+            )}
         >
             {children}
         </section>

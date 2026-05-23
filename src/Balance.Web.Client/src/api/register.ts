@@ -10,7 +10,9 @@ import {
     asJournalEntryId,
     asJournalLineId,
 } from '../lib/domain';
+import { getJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
+import { accountsKeys } from './accounts';
 
 type WireRegisterRow = components['schemas']['RegisterRowOutput'];
 type WireCounterLeg = components['schemas']['RegisterRowCounterLeg'];
@@ -37,35 +39,34 @@ export type RegisterRow = {
 };
 
 export const registerKeys = {
-    all: ['accounts', 'register'] as const,
+    all: [...accountsKeys.all, 'register'] as const,
     list: (accountId: AccountId, skip: number, take: number) =>
         [...registerKeys.all, accountId, { skip, take }] as const,
 };
 
-async function fetchRegister(
+function fetchRegister(
     accountId: AccountId,
     skip: number,
     take: number,
     signal: AbortSignal,
 ): Promise<WireRegisterRow[]> {
-    const url = `/api/accounts/${accountId}/register?skip=${skip}&take=${take}`;
-    const response = await fetch(url, { signal });
-    if (!response.ok) {
-        throw new Error(`Failed to load register (${response.status})`);
-    }
-    return (await response.json()) as WireRegisterRow[];
+    return getJson<WireRegisterRow[]>(
+        `/api/accounts/${accountId}/register?skip=${skip}&take=${take}`,
+        signal,
+        'load register',
+    );
 }
 
 function toCounterLeg(wire: WireCounterLeg): RegisterCounterLeg {
     return {
         accountId: asAccountId(wire.accountId),
         accountName: wire.accountName,
-        amount: toMoney(wire.amount, ''),
+        amount: toMoney(wire.amount),
     };
 }
 
 function toRegisterRow(wire: WireRegisterRow): RegisterRow {
-    const focal = toMoney(wire.amount, '');
+    const focal = toMoney(wire.amount);
     return {
         journalEntryId: asJournalEntryId(wire.journalEntryId),
         journalLineId: asJournalLineId(wire.journalLineId),
@@ -85,7 +86,7 @@ function toRegisterRow(wire: WireRegisterRow): RegisterRow {
     };
 }
 
-export function useAccountRegister(accountId: AccountId, take: number, skip: number = 0) {
+export function useAccountRegister(accountId: AccountId, skip: number, take: number) {
     return useQuery({
         queryKey: registerKeys.list(accountId, skip, take),
         queryFn: async ({ signal }) => {

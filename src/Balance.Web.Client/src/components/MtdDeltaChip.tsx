@@ -1,4 +1,5 @@
 import type { Money } from '../api/accounts';
+import { cx } from '../lib/cx';
 
 type Polarity = 'higher-is-good' | 'lower-is-good';
 
@@ -28,20 +29,22 @@ export function MtdDeltaChip({ current, prior, polarity }: Props) {
         (polarity === 'higher-is-good' && direction === 'up') ||
         (polarity === 'lower-is-good' && direction === 'down');
 
-    const arrow = direction === 'up' ? '▲' : direction === 'down' ? '▼' : '—';
+    // Typographic minus (U+2212) for the flat case so the glyph baseline aligns
+    // with the ▲/▼ triangles instead of sitting on top.
+    const arrow = direction === 'up' ? '▲' : direction === 'down' ? '▼' : '−';
     const colorClass =
         direction === 'flat'
             ? 'text-fg-3 bg-surface-2'
             : isGood
-                ? 'text-success bg-success-soft'
-                : 'text-danger bg-danger-soft';
+              ? 'text-success bg-success-soft'
+              : 'text-danger bg-danger-soft';
 
     return (
         <span
-            className={[
+            className={cx(
                 'inline-flex items-center gap-[3px] px-2 py-[2px] rounded-full text-[11px] font-medium leading-none whitespace-nowrap',
                 colorClass,
-            ].join(' ')}
+            )}
         >
             <span className="text-[9px]">{arrow}</span>
             <span>{Math.abs(percent)}% vs Last month</span>
