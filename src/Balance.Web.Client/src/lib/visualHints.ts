@@ -38,10 +38,15 @@ function hashId(id: string): number {
     return hash;
 }
 
+const FALLBACK_ACCENT = 'var(--color-fg-3)';
+
 export function visualHintFor(accountType: AccountType, id: AccountId): VisualHint {
     const palette = PALETTE_BY_TYPE[accountType];
+    // Every PALETTE_BY_TYPE entry has at least one colour, so the modulo
+    // lookup always hits — fallback keeps noUncheckedIndexedAccess honest.
+    const accentColor = palette[hashId(id) % palette.length] ?? FALLBACK_ACCENT;
     return {
-        accentColor: palette[hashId(id) % palette.length],
+        accentColor,
         iconName: ICON_BY_TYPE[accountType],
     };
 }
