@@ -50,7 +50,7 @@ async function fetchSummary(signal: AbortSignal): Promise<WireSummary> {
 
 async function fetchTrend(range: TrendRange, signal: AbortSignal): Promise<WireTrend> {
     const response = await fetch(
-        `/api/dashboard/account-balance-trend?range=${range}`,
+        `/api/dashboard/account-balance-trend?range=${tokenToWireRange(range)}`,
         { signal },
     );
     if (!response.ok) {
@@ -147,6 +147,19 @@ function wireRangeToToken(range: WireTrend['range']): TrendRange {
             return '6M';
         case 'OneYear':
             return '1Y';
+    }
+}
+
+function tokenToWireRange(range: TrendRange): WireTrend['range'] {
+    switch (range) {
+        case '1M':
+            return 'OneMonth';
+        case '3M':
+            return 'ThreeMonths';
+        case '6M':
+            return 'SixMonths';
+        case '1Y':
+            return 'OneYear';
     }
 }
 
