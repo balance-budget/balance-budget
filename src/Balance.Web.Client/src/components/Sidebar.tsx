@@ -4,12 +4,12 @@ import logo from '../assets/logo.svg';
 import { Icon } from './Icon';
 import { lastFourIdentifier, useAccounts, type Account } from '../api/accounts';
 import { useCurrencyCatalog } from '../api/currencies';
+import { AccountAvatar } from './AccountAvatar';
 import { Skeleton } from './Skeleton';
 import { ErrorState } from './ErrorState';
 import { cx } from '../lib/cx';
 import { isCategoryAccount, isLedgerAccount } from '../lib/domain';
 import { formatMoney } from '../lib/money';
-import { visualHintFor } from '../lib/visualHints';
 
 function SectionLabel({ children }: { children: ReactNode }) {
     return <div className="eyebrow px-3 pt-3 pb-[6px]">{children}</div>;
@@ -82,20 +82,11 @@ function NavGroup({
 
 function AccountRow({ account }: { account: Account }) {
     const catalog = useCurrencyCatalog();
-    const visual = visualHintFor(account.type, account.id);
     const tail = lastFourIdentifier(account);
     const isNegative = account.balance.amount < 0;
     return (
         <div className="flex items-center gap-3 px-3 py-2 rounded-sm">
-            <span
-                className="shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-sm"
-                style={{
-                    background: `color-mix(in srgb, ${visual.accentColor} 12%, transparent)`,
-                    color: visual.accentColor,
-                }}
-            >
-                <Icon name={visual.iconName} size={14} strokeWidth={1.75} />
-            </span>
+            <AccountAvatar account={account} />
             <div className="flex-1 min-w-0 flex flex-col leading-tight">
                 <span className="truncate text-[13px] text-fg-1">{account.name}</span>
                 {tail && <span className="text-[11px] text-fg-3 truncate">{tail}</span>}

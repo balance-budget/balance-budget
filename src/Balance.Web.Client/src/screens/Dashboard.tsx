@@ -9,9 +9,9 @@ import {
     type TrendRange,
 } from '../api/dashboard';
 import { useAccountRegister, type RegisterRow } from '../api/register';
+import { AccountAvatar } from '../components/AccountAvatar';
 import { Amount } from '../components/Amount';
 import { ErrorState } from '../components/ErrorState';
-import { Icon } from '../components/Icon';
 import { MtdDeltaChip } from '../components/MtdDeltaChip';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
@@ -19,7 +19,6 @@ import { TrendChart } from '../components/TrendChart';
 import { cx } from '../lib/cx';
 import { isLedgerAccount } from '../lib/domain';
 import { formatMoney } from '../lib/money';
-import { visualHintFor } from '../lib/visualHints';
 
 function RecentRow({ row }: { row: RegisterRow }) {
     const catalog = useCurrencyCatalog();
@@ -78,21 +77,12 @@ function RecentActivity({ account }: { account: Account }) {
 }
 
 function AccountRow({ account }: { account: Account }) {
-    const visual = visualHintFor(account.type, account.id);
     const tail = lastFourIdentifier(account);
     const isNegative = account.balance.amount < 0;
     return (
         <div className="py-3 first:pt-0 last:pb-0 flex flex-col gap-2 border-b border-border-soft last:border-b-0">
             <div className="flex items-center gap-3">
-                <span
-                    className="w-9 h-9 rounded-md flex items-center justify-center shrink-0"
-                    style={{
-                        background: `color-mix(in srgb, ${visual.accentColor} 12%, transparent)`,
-                        color: visual.accentColor,
-                    }}
-                >
-                    <Icon name={visual.iconName} size={16} strokeWidth={2} />
-                </span>
+                <AccountAvatar account={account} size="md" />
                 <div className="flex flex-col gap-[2px] flex-1 min-w-0">
                     <span className="text-14 font-medium text-fg-1 truncate">{account.name}</span>
                     <span className="text-[12px] text-fg-3 truncate">
