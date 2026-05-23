@@ -40,7 +40,10 @@ internal sealed class JsonPatchOperationTransformer : IOpenApiOperationTransform
 
         operation.Description =
             $"Applies a JSON Patch (RFC 6902) document. The patchable surface is described "
-            + $"by `{target.Target.Name}`.";
+            + $"by `{target.Target.Name}`. The `path` enum lists the top-level patchable "
+            + "properties only; dictionary-valued properties (e.g. keyed line items) accept "
+            + "child paths like `/lines/{key}/description` at runtime but are not enumerated "
+            + "here. Consumers' codegen will not narrow those.";
 
         var paths = GetTopLevelPaths(target.Target);
         if (paths.Length == 0 || operation.RequestBody?.Content is not { } content)
