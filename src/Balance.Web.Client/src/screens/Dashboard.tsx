@@ -157,15 +157,15 @@ function KpiStrip() {
     if (summary.isPending) {
         return (
             <section className="grid gap-[14px]" style={{ gridTemplateColumns: '1.3fr 1fr 1fr' }}>
-                <Panel className="!p-[18px] flex flex-col gap-1 justify-between min-h-[120px]">
+                <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
                     <span className="eyebrow truncate">Net worth</span>
                     <Skeleton className="h-[44px] w-[180px]" />
                 </Panel>
-                <Panel className="!p-[18px] flex flex-col gap-1 justify-between min-h-[120px]">
+                <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
                     <span className="eyebrow truncate">Income · MTD</span>
                     <Skeleton className="h-[22px] w-[120px]" />
                 </Panel>
-                <Panel className="!p-[18px] flex flex-col gap-1 justify-between min-h-[120px]">
+                <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
                     <span className="eyebrow truncate">Expenses · MTD</span>
                     <Skeleton className="h-[22px] w-[120px]" />
                 </Panel>
@@ -193,7 +193,7 @@ function KpiStrip() {
 
     return (
         <section className="grid gap-[14px]" style={{ gridTemplateColumns: '1.3fr 1fr 1fr' }}>
-            <Panel className="!p-[18px] flex flex-col gap-1 justify-between min-h-[120px]">
+            <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
                 <span className="eyebrow truncate">Net worth</span>
                 <Amount
                     minor={data.netWorth.amount}
@@ -204,7 +204,7 @@ function KpiStrip() {
                 <span className="text-14 text-fg-3">{subtext}</span>
             </Panel>
 
-            <Panel className="!p-[18px] flex flex-col gap-1 justify-between min-h-[120px]">
+            <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
                 <span className="eyebrow truncate">Income · MTD</span>
                 <Amount
                     minor={data.incomeMtd.amount}
@@ -218,7 +218,7 @@ function KpiStrip() {
                 />
             </Panel>
 
-            <Panel className="!p-[18px] flex flex-col gap-1 justify-between min-h-[120px]">
+            <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
                 <span className="eyebrow truncate">Expenses · MTD</span>
                 <Amount
                     minor={data.expensesMtd.amount}
