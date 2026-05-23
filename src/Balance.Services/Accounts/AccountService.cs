@@ -32,18 +32,22 @@ internal sealed class AccountService : IAccountService
         return rows.Select(ToOutput).ToList();
     }
 
-    public async Task<AccountOutput?> GetAsync(AccountId id, CancellationToken cancellationToken)
+    public async Task<Result<AccountOutput>> GetAsync(
+        AccountId id,
+        CancellationToken cancellationToken
+    )
     {
         var row = await ProjectAccounts(_dbContext.Accounts.Where(a => a.Id == id))
             .FirstOrDefaultAsync(cancellationToken);
-        return row is null ? null : ToOutput(row);
+        return row is null ? new NotFoundError("Account", id.Value.ToString()) : ToOutput(row);
     }
 
-    public Task<UpdateAccountInput?> GetSnapshotAsync(
+    public async Task<Result<UpdateAccountInput>> GetSnapshotAsync(
         AccountId id,
         CancellationToken cancellationToken
-    ) =>
-        _dbContext
+    )
+    {
+        var snapshot = await _dbContext
             .Accounts.AsNoTracking()
             .Where(a => a.Id == id)
             .Select(a => new UpdateAccountInput
@@ -53,6 +57,8 @@ internal sealed class AccountService : IAccountService
                 CurrencyCode = a.CurrencyCode,
             })
             .FirstOrDefaultAsync(cancellationToken);
+        return snapshot is null ? new NotFoundError("Account", id.Value.ToString()) : snapshot;
+    }
 
     public async Task<Result<AccountOutput>> CreateAsync(
         string name,
@@ -163,7 +169,7 @@ internal sealed class AccountService : IAccountService
         {
             return e3;
         }
-        return (await GetAsync(id, cancellationToken))!;
+        return await GetAsync(id, cancellationToken);
     }
 
     public async Task<Result> DeleteAsync(AccountId id, CancellationToken cancellationToken)
@@ -223,11 +229,8 @@ internal sealed class AccountService : IAccountService
         CancellationToken cancellationToken
     )
     {
-        if (await _currencyService.GetAsync(code, cancellationToken) is null)
-        {
-            return new NotFoundError("Currency", code.Value);
-        }
-        return Result.Success;
+        var result = await _currencyService.GetAsync(code, cancellationToken);
+        return result.IsFailure ? result.Error : Result.Success;
     }
 
     private async Task<Result> EnsureNameAvailableAsync(

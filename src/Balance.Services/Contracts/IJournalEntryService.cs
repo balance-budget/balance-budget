@@ -11,9 +11,12 @@ public interface IJournalEntryService
         CancellationToken cancellationToken
     );
 
-    Task<JournalEntryOutput?> GetAsync(JournalEntryId id, CancellationToken cancellationToken);
+    Task<Result<JournalEntryOutput>> GetAsync(
+        JournalEntryId id,
+        CancellationToken cancellationToken
+    );
 
-    Task<UpdateJournalEntryInput?> GetSnapshotAsync(
+    Task<Result<UpdateJournalEntryInput>> GetSnapshotAsync(
         JournalEntryId id,
         CancellationToken cancellationToken
     );

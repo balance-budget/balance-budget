@@ -39,14 +39,16 @@ internal static class CurrencyEndpoints
         return TypedResults.Ok(currencies);
     }
 
-    private static async Task<Results<Ok<CurrencyOutput>, NotFound>> GetAsync(
+    private static async Task<
+        Results<Ok<CurrencyOutput>, NotFound<ProblemDetails>, ValidationProblem>
+    > GetAsync(
         [FromRoute] CurrencyCode code,
         [FromServices] ICurrencyService currencyService,
         CancellationToken cancellationToken
     )
     {
-        var currency = await currencyService.GetAsync(code, cancellationToken);
-        return currency is null ? TypedResults.NotFound() : TypedResults.Ok(currency);
+        var result = await currencyService.GetAsync(code, cancellationToken);
+        return result.ToOkReadOnly();
     }
 
     private static async Task<

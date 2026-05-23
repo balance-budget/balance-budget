@@ -4,7 +4,7 @@ namespace Balance.Services.Contracts;
 
 public interface IRegisterService
 {
-    Task<IReadOnlyList<RegisterRowOutput>?> ListAsync(
+    Task<Result<IReadOnlyList<RegisterRowOutput>>> ListAsync(
         AccountId accountId,
         int skip,
         int take,

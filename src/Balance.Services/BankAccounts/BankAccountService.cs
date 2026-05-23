@@ -45,11 +45,12 @@ internal sealed class BankAccountService : IBankAccountService
             ))
             .ToListAsync(cancellationToken);
 
-    public Task<BankAccountOutput?> GetAsync(
+    public async Task<Result<BankAccountOutput>> GetAsync(
         BankAccountId id,
         CancellationToken cancellationToken
-    ) =>
-        _dbContext
+    )
+    {
+        var output = await _dbContext
             .BankAccounts.Where(b => b.Id == id)
             .Select(b => new BankAccountOutput(
                 b.Id,
@@ -65,12 +66,15 @@ internal sealed class BankAccountService : IBankAccountService
                 b.UpdatedAt
             ))
             .FirstOrDefaultAsync(cancellationToken);
+        return output is null ? new NotFoundError("BankAccount", id.Value.ToString()) : output;
+    }
 
-    public Task<UpdateBankAccountInput?> GetSnapshotAsync(
+    public async Task<Result<UpdateBankAccountInput>> GetSnapshotAsync(
         BankAccountId id,
         CancellationToken cancellationToken
-    ) =>
-        _dbContext
+    )
+    {
+        var snapshot = await _dbContext
             .BankAccounts.AsNoTracking()
             .Where(b => b.Id == id)
             .Select(b => new UpdateBankAccountInput
@@ -85,6 +89,8 @@ internal sealed class BankAccountService : IBankAccountService
                 CounterpartyId = b.CounterpartyId,
             })
             .FirstOrDefaultAsync(cancellationToken);
+        return snapshot is null ? new NotFoundError("BankAccount", id.Value.ToString()) : snapshot;
+    }
 
     public async Task<Result<BankAccountOutput>> CreateAsync(
         CreateBankAccountInput input,
@@ -309,9 +315,10 @@ internal sealed class BankAccountService : IBankAccountService
     {
         if (currencyCode is { } code)
         {
-            if (await _currencyService.GetAsync(code, cancellationToken) is null)
+            var currency = await _currencyService.GetAsync(code, cancellationToken);
+            if (currency.IsFailure)
             {
-                return new NotFoundError("Currency", code.Value);
+                return currency.Error;
             }
         }
 

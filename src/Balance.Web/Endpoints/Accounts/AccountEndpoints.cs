@@ -45,18 +45,20 @@ internal static class AccountEndpoints
         return TypedResults.Ok(accounts);
     }
 
-    private static async Task<Results<Ok<AccountOutput>, NotFound>> GetAsync(
+    private static async Task<
+        Results<Ok<AccountOutput>, NotFound<ProblemDetails>, ValidationProblem>
+    > GetAsync(
         [FromRoute] AccountId id,
         [FromServices] IAccountService accountService,
         CancellationToken cancellationToken
     )
     {
-        var account = await accountService.GetAsync(id, cancellationToken);
-        return account is null ? TypedResults.NotFound() : TypedResults.Ok(account);
+        var result = await accountService.GetAsync(id, cancellationToken);
+        return result.ToOkReadOnly();
     }
 
     private static async Task<
-        Results<Ok<IReadOnlyList<RegisterRowOutput>>, NotFound>
+        Results<Ok<IReadOnlyList<RegisterRowOutput>>, NotFound<ProblemDetails>, ValidationProblem>
     > ListRegisterAsync(
         [FromRoute] AccountId id,
         [AsParameters] ListAccountRegisterRequest request,
@@ -66,18 +68,20 @@ internal static class AccountEndpoints
     {
         var skip = request.Skip ?? 0;
         var take = request.Take ?? ListAccountRegisterRequest.DefaultPageSize;
-        var rows = await registerService.ListAsync(id, skip, take, cancellationToken);
-        return rows is null ? TypedResults.NotFound() : TypedResults.Ok(rows);
+        var result = await registerService.ListAsync(id, skip, take, cancellationToken);
+        return result.ToOkReadOnly();
     }
 
-    private static async Task<Results<Ok<Money>, NotFound>> GetBalanceAsync(
+    private static async Task<
+        Results<Ok<Money>, NotFound<ProblemDetails>, ValidationProblem>
+    > GetBalanceAsync(
         [FromRoute] AccountId id,
         [FromServices] IAccountBalanceService accountBalanceService,
         CancellationToken cancellationToken
     )
     {
-        var balance = await accountBalanceService.GetBalanceAsync(id, cancellationToken);
-        return balance is null ? TypedResults.NotFound() : TypedResults.Ok(balance.Value);
+        var result = await accountBalanceService.GetBalanceAsync(id, cancellationToken);
+        return result.ToOkReadOnly();
     }
 
     private static async Task<
@@ -120,14 +124,16 @@ internal static class AccountEndpoints
     )
     {
         var snapshot = await accountService.GetSnapshotAsync(id, cancellationToken);
-        if (snapshot is null)
+        if (snapshot.IsFailure)
         {
-            return new Result<AccountOutput>(
-                new NotFoundError("Account", id.Value.ToString())
-            ).ToOk();
+            return new Result<AccountOutput>(snapshot.Error).ToOk();
         }
 
-        var patched = await patch.ApplyAndValidateAsync(snapshot, validator, cancellationToken);
+        var patched = await patch.ApplyAndValidateAsync(
+            snapshot.Value,
+            validator,
+            cancellationToken
+        );
         if (patched.IsFailure)
         {
             return new Result<AccountOutput>(patched.Error).ToOk();

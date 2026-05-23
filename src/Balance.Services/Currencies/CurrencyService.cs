@@ -43,12 +43,12 @@ internal sealed class CurrencyService : ICurrencyService
         return cached ?? [];
     }
 
-    public async Task<CurrencyOutput?> GetAsync(
+    public async Task<Result<CurrencyOutput>> GetAsync(
         CurrencyCode code,
         CancellationToken cancellationToken
     )
     {
-        return await _cache.GetOrCreateAsync(
+        var output = await _cache.GetOrCreateAsync(
             CacheKey(code),
             async entry =>
             {
@@ -59,6 +59,7 @@ internal sealed class CurrencyService : ICurrencyService
                 return currency is null ? null : CurrencyOutput.FromEntity(currency);
             }
         );
+        return output is null ? new NotFoundError("Currency", code.Value) : output;
     }
 
     public async Task<Result<CurrencyOutput>> CreateAsync(

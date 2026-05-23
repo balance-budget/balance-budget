@@ -40,11 +40,12 @@ internal sealed class BankTransactionService : IBankTransactionService
             ))
             .ToListAsync(cancellationToken);
 
-    public Task<BankTransactionOutput?> GetAsync(
+    public async Task<Result<BankTransactionOutput>> GetAsync(
         BankTransactionId id,
         CancellationToken cancellationToken
-    ) =>
-        _dbContext
+    )
+    {
+        var output = await _dbContext
             .BankTransactions.Where(b => b.Id == id)
             .Select(b => new BankTransactionOutput(
                 b.Id,
@@ -55,6 +56,8 @@ internal sealed class BankTransactionService : IBankTransactionService
                 b.UpdatedAt
             ))
             .FirstOrDefaultAsync(cancellationToken);
+        return output is null ? new NotFoundError("BankTransaction", id.Value.ToString()) : output;
+    }
 
     public async Task<Result<BankTransactionOutput>> CreateAsync(
         CreateBankTransactionInput input,
@@ -71,9 +74,10 @@ internal sealed class BankTransactionService : IBankTransactionService
             );
         }
 
-        if (await _currencyService.GetAsync(input.CurrencyCode, cancellationToken) is null)
+        var currency = await _currencyService.GetAsync(input.CurrencyCode, cancellationToken);
+        if (currency.IsFailure)
         {
-            return new NotFoundError("Currency", input.CurrencyCode.Value);
+            return currency.Error;
         }
 
         var bankAccount = await _dbContext

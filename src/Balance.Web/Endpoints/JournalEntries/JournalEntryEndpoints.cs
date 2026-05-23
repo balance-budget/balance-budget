@@ -45,14 +45,16 @@ internal static class JournalEntryEndpoints
         return TypedResults.Ok(entries);
     }
 
-    private static async Task<Results<Ok<JournalEntryOutput>, NotFound>> GetAsync(
+    private static async Task<
+        Results<Ok<JournalEntryOutput>, NotFound<ProblemDetails>, ValidationProblem>
+    > GetAsync(
         [FromRoute] JournalEntryId id,
         [FromServices] IJournalEntryService journalEntryService,
         CancellationToken cancellationToken
     )
     {
-        var entry = await journalEntryService.GetAsync(id, cancellationToken);
-        return entry is null ? TypedResults.NotFound() : TypedResults.Ok(entry);
+        var result = await journalEntryService.GetAsync(id, cancellationToken);
+        return result.ToOkReadOnly();
     }
 
     private static async Task<
@@ -109,14 +111,16 @@ internal static class JournalEntryEndpoints
     )
     {
         var snapshot = await journalEntryService.GetSnapshotAsync(id, cancellationToken);
-        if (snapshot is null)
+        if (snapshot.IsFailure)
         {
-            return new Result<JournalEntryOutput>(
-                new NotFoundError("JournalEntry", id.Value.ToString())
-            ).ToOk();
+            return new Result<JournalEntryOutput>(snapshot.Error).ToOk();
         }
 
-        var patched = await patch.ApplyAndValidateAsync(snapshot, validator, cancellationToken);
+        var patched = await patch.ApplyAndValidateAsync(
+            snapshot.Value,
+            validator,
+            cancellationToken
+        );
         if (patched.IsFailure)
         {
             return new Result<JournalEntryOutput>(patched.Error).ToOk();
