@@ -24,11 +24,17 @@ function fetchCurrencies(signal: AbortSignal): Promise<WireCurrency[]> {
     return getJson<WireCurrency[]>('/api/currencies', signal, 'load currencies');
 }
 
+// Backend always emits these; openapi-typescript marks them optional because
+// the underlying property nullability isn't expressible in the schema.
+// minorUnitScale comes through as `number | string` for the same long-int
+// reason as Money — normalise.
 function toCurrency(wire: WireCurrency): Currency {
+    const rawScale = wire.minorUnitScale;
+    const minorUnitScale = typeof rawScale === 'string' ? Number(rawScale) : (rawScale ?? 2);
     return {
-        code: wire.code,
-        name: wire.name,
-        minorUnitScale: wire.minorUnitScale,
+        code: wire.code ?? '',
+        name: wire.name ?? '',
+        minorUnitScale,
         symbol: wire.symbol ?? null,
     };
 }

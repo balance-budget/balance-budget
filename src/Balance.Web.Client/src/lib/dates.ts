@@ -49,6 +49,6 @@ function parseIsoDate(date: string): Date {
     // The wire emits ISO `YYYY-MM-DD` from DateOnly. `new Date('YYYY-MM-DD')`
     // parses as UTC midnight, which can drift a day in negative-UTC locales;
     // construct from parts to keep the local calendar day stable.
-    const [year, month, day] = date.split('-').map(Number);
+    const [year = 1970, month = 1, day = 1] = date.split('-').map(Number);
     return new Date(year, month - 1, day);
 }

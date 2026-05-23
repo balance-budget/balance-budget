@@ -26,12 +26,15 @@ type TrendChartProps = {
 type ChartRow = { date: string } & Record<string, number | string>;
 
 function buildRows(series: AccountTrend[]): ChartRow[] {
-    if (series.length === 0) return [];
-    const dates = series[0].points.map(p => p.date);
-    return dates.map((date, i) => {
-        const row: ChartRow = { date };
+    const first = series[0];
+    if (!first) return [];
+    return first.points.map((firstPoint, i) => {
+        const row: ChartRow = { date: firstPoint.date };
         for (const s of series) {
-            row[s.accountId] = s.points[i].balanceMinor;
+            // All series are aligned to the same date axis by the backend, so
+            // s.points[i] is guaranteed to exist alongside first.points[i].
+            const point = s.points[i];
+            if (point) row[s.accountId] = point.balanceMinor;
         }
         return row;
     });
