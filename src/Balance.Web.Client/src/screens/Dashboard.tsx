@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
-import { useAccounts, type Account } from '../api/accounts';
+import { lastFourIdentifier, useAccounts, type Account } from '../api/accounts';
 import {
     useAccountBalanceTrend,
     useDashboardSummary,
@@ -19,13 +19,6 @@ import { cx } from '../lib/cx';
 import { isLedgerAccount } from '../lib/domain';
 import { formatMoney } from '../lib/money';
 import { visualHintFor } from '../lib/visualHints';
-
-function lastFourIdentifier(account: Account): string | null {
-    const raw = account.bankAccount?.iban ?? account.bankAccount?.accountNumber ?? null;
-    if (!raw) return null;
-    const compact = raw.replace(/\s+/g, '');
-    return compact.length <= 4 ? compact : `· ${compact.slice(-4)}`;
-}
 
 function RecentRow({ row }: { row: RegisterRow }) {
     const label = row.counterpartyName ?? row.entryDescription ?? row.lineDescription ?? '—';
