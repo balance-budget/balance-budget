@@ -125,10 +125,12 @@ internal sealed class CurrencyEndpointsTests : EndpointsTestsBase
         );
         await Assert.That(createResponse.StatusCode).IsEqualTo(HttpStatusCode.Created);
 
-        var update = new UpdateCurrencyRequestDto("Norwegian Krone", "NOK");
-        using var updateResponse = await client.PatchAsJsonAsync(
+        using var updateResponse = await client.PatchAsJsonPatchAsync(
             new Uri("/api/currencies/NOK", UriKind.Relative),
-            update
+            [
+                JsonPatchHelpers.Replace("/name", "Norwegian Krone"),
+                JsonPatchHelpers.Replace("/symbol", "NOK"),
+            ]
         );
 
         await Assert.That(updateResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
@@ -142,10 +144,9 @@ internal sealed class CurrencyEndpointsTests : EndpointsTestsBase
     {
         using var client = Factory.CreateClient();
 
-        var update = new UpdateCurrencyRequestDto("Whatever", null);
-        using var response = await client.PatchAsJsonAsync(
+        using var response = await client.PatchAsJsonPatchAsync(
             new Uri("/api/currencies/XYZ", UriKind.Relative),
-            update
+            [JsonPatchHelpers.Replace("/name", "Whatever")]
         );
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
@@ -225,5 +226,3 @@ internal sealed record CreateCurrencyRequestDto(
     int MinorUnitScale,
     string? Symbol
 );
-
-internal sealed record UpdateCurrencyRequestDto(string? Name, string? Symbol);
