@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
 import logo from '../assets/logo.svg';
 import { Icon } from './Icon';
@@ -7,6 +8,10 @@ import { ErrorState } from './ErrorState';
 import { isCategoryAccount, isLedgerAccount } from '../lib/domain';
 import { formatMoney } from '../lib/money';
 import { visualHintFor } from '../lib/visualHints';
+
+function SectionLabel({ children }: { children: ReactNode }) {
+    return <div className="eyebrow px-3 pt-3 pb-[6px]">{children}</div>;
+}
 
 type NavLink = {
     to: string;
@@ -43,7 +48,7 @@ function NavGroup({
 }) {
     return (
         <div className="flex flex-col gap-[2px]">
-            <div className="eyebrow px-3 pt-3 pb-[6px]">{title}</div>
+            <SectionLabel>{title}</SectionLabel>
             {items.map(item => {
                 const isActive =
                     item.to === '/' ? currentPath === '/' : currentPath.startsWith(item.to);
@@ -118,7 +123,7 @@ function AccountSection({ title, accounts }: { title: string; accounts: Account[
     if (accounts.length === 0) return null;
     return (
         <div className="flex flex-col gap-[2px]">
-            <div className="eyebrow px-3 pt-3 pb-[6px]">{title}</div>
+            <SectionLabel>{title}</SectionLabel>
             {accounts.map(account => (
                 <AccountRow key={account.id} account={account} />
             ))}
@@ -132,7 +137,7 @@ function AccountsGroup() {
     if (isPending) {
         return (
             <div className="flex flex-col gap-[2px]">
-                <div className="eyebrow px-3 pt-3 pb-[6px]">Accounts</div>
+                <SectionLabel>Accounts</SectionLabel>
                 <div className="flex flex-col gap-[6px] px-3 py-2">
                     <Skeleton className="h-[14px] w-32" />
                     <Skeleton className="h-[14px] w-24" />
@@ -145,7 +150,7 @@ function AccountsGroup() {
     if (isError) {
         return (
             <div className="flex flex-col gap-[2px]">
-                <div className="eyebrow px-3 pt-3 pb-[6px]">Accounts</div>
+                <SectionLabel>Accounts</SectionLabel>
                 <div className="px-3 py-2">
                     <ErrorState message="Couldn't load accounts." onRetry={() => refetch()} />
                 </div>
@@ -159,7 +164,7 @@ function AccountsGroup() {
     if (ledgerAccounts.length === 0 && categoryAccounts.length === 0) {
         return (
             <div className="flex flex-col gap-[2px]">
-                <div className="eyebrow px-3 pt-3 pb-[6px]">Accounts</div>
+                <SectionLabel>Accounts</SectionLabel>
                 <div className="px-3 py-2 text-[12px] text-fg-3">No accounts yet.</div>
             </div>
         );
