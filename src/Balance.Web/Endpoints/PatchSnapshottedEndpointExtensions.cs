@@ -47,10 +47,7 @@ internal static class PatchSnapshottedEndpointExtensions
                 ) =>
                 {
                     var raw = httpContext.GetRouteValue(idRouteName) as string;
-                    if (
-                        raw is null
-                        || !TId.TryParse(raw, CultureInfo.InvariantCulture, out var id)
-                    )
+                    if (raw is null || !TId.TryParse(raw, CultureInfo.InvariantCulture, out var id))
                     {
                         return new Result<TOutput>(
                             new NotFoundError(typeof(TOutput).Name, raw ?? string.Empty)

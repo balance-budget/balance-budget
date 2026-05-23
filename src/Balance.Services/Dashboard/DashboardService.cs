@@ -20,7 +20,7 @@ internal sealed class DashboardService : IDashboardService
         _timeProvider = timeProvider;
     }
 
-    public async Task<DashboardSummaryOutput> GetSummaryAsync(
+    public async Task<Result<DashboardSummaryOutput>> GetSummaryAsync(
         CurrencyCode currencyCode,
         CancellationToken cancellationToken
     )
@@ -61,21 +61,14 @@ internal sealed class DashboardService : IDashboardService
         );
     }
 
-    public async Task<AccountBalanceTrendOutput> GetAccountBalanceTrendAsync(
+    public async Task<Result<AccountBalanceTrendOutput>> GetAccountBalanceTrendAsync(
         CurrencyCode currencyCode,
         TrendRange range,
         CancellationToken cancellationToken
     )
     {
         var today = DateOnly.FromDateTime(_timeProvider.GetUtcNow().UtcDateTime);
-        var periodStart = range switch
-        {
-            TrendRange.OneMonth => today.AddMonths(-1),
-            TrendRange.ThreeMonths => today.AddMonths(-3),
-            TrendRange.SixMonths => today.AddMonths(-6),
-            TrendRange.OneYear => today.AddYears(-1),
-            _ => throw new ArgumentOutOfRangeException(nameof(range), range, "Unknown TrendRange."),
-        };
+        var periodStart = today.AddMonths(-range.Months);
 
         var assets = await _dbContext
             .Accounts.AsNoTracking()
