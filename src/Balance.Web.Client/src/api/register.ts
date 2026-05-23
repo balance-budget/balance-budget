@@ -61,12 +61,12 @@ function toCounterLeg(wire: WireCounterLeg): RegisterCounterLeg {
     return {
         accountId: asAccountId(wire.accountId),
         accountName: wire.accountName,
-        amount: toMoney(wire.amount, ''),
+        amount: toMoney(wire.amount),
     };
 }
 
 function toRegisterRow(wire: WireRegisterRow): RegisterRow {
-    const focal = toMoney(wire.amount, '');
+    const focal = toMoney(wire.amount);
     return {
         journalEntryId: asJournalEntryId(wire.journalEntryId),
         journalLineId: asJournalLineId(wire.journalLineId),
