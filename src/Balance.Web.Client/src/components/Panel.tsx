@@ -12,7 +12,9 @@ export function Panel({ children, className }: PanelProps) {
             className={[
                 'bg-surface-1 backdrop-blur-[20px] border border-border-soft rounded-md p-5 px-[22px]',
                 className,
-            ].filter(Boolean).join(' ')}
+            ]
+                .filter(Boolean)
+                .join(' ')}
         >
             {children}
         </section>

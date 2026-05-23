@@ -131,12 +131,7 @@ function AccountsPanel() {
     }
 
     if (accounts.isError) {
-        return (
-            <ErrorState
-                message="Couldn't load accounts."
-                onRetry={() => accounts.refetch()}
-            />
-        );
+        return <ErrorState message="Couldn't load accounts." onRetry={() => accounts.refetch()} />;
     }
 
     const ledgerAccounts = accounts.data.filter(isLedgerAccount);
@@ -273,11 +268,7 @@ function AccountBalanceTrendPanel() {
 
     return (
         <Panel>
-            <SectionHead
-                title="Account balances"
-                subtitle={RANGE_SUBTITLE[range]}
-                action={pills}
-            />
+            <SectionHead title="Account balances" subtitle={RANGE_SUBTITLE[range]} action={pills} />
             {trend.isPending ? (
                 <Skeleton className="h-[240px] w-full" />
             ) : trend.isError ? (
@@ -314,7 +305,10 @@ export function Dashboard() {
                     <SectionHead
                         title="Accounts"
                         action={
-                            <Link to="/accounts" className="text-[13px] font-medium text-fg-2 hover:text-brand-primary">
+                            <Link
+                                to="/accounts"
+                                className="text-[13px] font-medium text-fg-2 hover:text-brand-primary"
+                            >
                                 All →
                             </Link>
                         }

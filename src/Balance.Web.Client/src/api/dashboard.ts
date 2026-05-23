@@ -127,9 +127,7 @@ function toAccountTrend(
 
 function toTrend(wire: WireTrend): AccountBalanceTrend {
     return {
-        series: wire.series.map(s =>
-            toAccountTrend(s, wire.periodStart, wire.periodEnd),
-        ),
+        series: wire.series.map(s => toAccountTrend(s, wire.periodStart, wire.periodEnd)),
         periodStart: wire.periodStart,
         periodEnd: wire.periodEnd,
         range: wireRangeToToken(wire.range),

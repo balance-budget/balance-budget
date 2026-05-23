@@ -37,9 +37,7 @@ async function fetchAccounts(signal: AbortSignal): Promise<WireAccount[]> {
     return (await response.json()) as WireAccount[];
 }
 
-function toBankAccountSummary(
-    wire: WireBankAccountSummary | null,
-): BankAccountSummary | null {
+function toBankAccountSummary(wire: WireBankAccountSummary | null): BankAccountSummary | null {
     if (wire === null) {
         return null;
     }

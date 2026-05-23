@@ -108,11 +108,7 @@ export function splitMoney(
 }
 
 /** Render the parts as a single string, when you don't need styled spans. */
-export function formatMoney(
-    minor: number,
-    currencyCode: string,
-    opts: FormatOptions = {},
-): string {
+export function formatMoney(minor: number, currencyCode: string, opts: FormatOptions = {}): string {
     const m = splitMoney(minor, currencyCode, opts);
     const sep = m.fraction ? '.' : '';
     return `${m.sign}${m.symbol}${m.integer}${sep}${m.fraction}`;

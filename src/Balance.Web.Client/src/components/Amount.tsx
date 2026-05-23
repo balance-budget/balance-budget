@@ -28,12 +28,18 @@ const CENTS_SCALE: Record<NonNullable<AmountProps['size']>, string> = {
 export function Amount({ minor, currencyCode, size = 'medium', className, ...fmt }: AmountProps) {
     const m = splitMoney(minor, currencyCode, fmt);
     return (
-        <span className={['tabular inline-flex items-baseline', SIZE_CLASS[size], className].filter(Boolean).join(' ')}>
+        <span
+            className={['tabular inline-flex items-baseline', SIZE_CLASS[size], className]
+                .filter(Boolean)
+                .join(' ')}
+        >
             {m.sign && <span className="mr-[0.05em]">{m.sign}</span>}
             <span className="text-fg-3 font-normal mr-[0.1em]">{m.symbol}</span>
             <span>{m.integer}</span>
             {m.fraction && (
-                <span className={['text-fg-2 ml-[1px]', CENTS_SCALE[size]].join(' ')}>.{m.fraction}</span>
+                <span className={['text-fg-2 ml-[1px]', CENTS_SCALE[size]].join(' ')}>
+                    .{m.fraction}
+                </span>
             )}
         </span>
     );
