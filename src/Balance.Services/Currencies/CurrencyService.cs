@@ -128,6 +128,7 @@ internal sealed class CurrencyService : ICurrencyService
                     "Currency name cannot be empty."
                 );
             }
+
             currency.Name = trimmed;
         }
 

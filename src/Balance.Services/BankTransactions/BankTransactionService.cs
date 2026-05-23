@@ -113,6 +113,7 @@ internal sealed class BankTransactionService : IBankTransactionService
         {
             return err;
         }
+
         return ToOutput(bankTransaction);
     }
 

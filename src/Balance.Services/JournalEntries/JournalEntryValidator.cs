@@ -48,6 +48,7 @@ internal static class JournalEntryValidator
         {
             sum = checked(sum + line.Amount);
         }
+
         if (sum != 0L)
         {
             return new InvariantError(
