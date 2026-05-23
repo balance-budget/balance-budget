@@ -15,4 +15,13 @@
     <ProjectReference Include="..\..\src\Balance.Services\Balance.Services.csproj" />
     <ProjectReference Include="..\..\src\Balance.Web\Balance.Web.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Integrations\Ing\NL69INGB0123456789_01-01-2026_31-01-2026.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Integrations\Ing\NL69INGB0123456789_01-03-2026_31-03-2026.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
