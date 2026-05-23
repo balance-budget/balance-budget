@@ -39,14 +39,16 @@ internal static class CounterpartyEndpoints
         return TypedResults.Ok(counterparties);
     }
 
-    private static async Task<Results<Ok<CounterpartyOutput>, NotFound>> GetAsync(
+    private static async Task<
+        Results<Ok<CounterpartyOutput>, NotFound<ProblemDetails>, ValidationProblem>
+    > GetAsync(
         [FromRoute] CounterpartyId id,
         [FromServices] ICounterpartyService counterpartyService,
         CancellationToken cancellationToken
     )
     {
-        var counterparty = await counterpartyService.GetAsync(id, cancellationToken);
-        return counterparty is null ? TypedResults.NotFound() : TypedResults.Ok(counterparty);
+        var result = await counterpartyService.GetAsync(id, cancellationToken);
+        return result.ToOkReadOnly();
     }
 
     private static async Task<
@@ -84,14 +86,16 @@ internal static class CounterpartyEndpoints
     )
     {
         var snapshot = await counterpartyService.GetSnapshotAsync(id, cancellationToken);
-        if (snapshot is null)
+        if (snapshot.IsFailure)
         {
-            return new Result<CounterpartyOutput>(
-                new NotFoundError("Counterparty", id.Value.ToString())
-            ).ToOk();
+            return new Result<CounterpartyOutput>(snapshot.Error).ToOk();
         }
 
-        var patched = await patch.ApplyAndValidateAsync(snapshot, validator, cancellationToken);
+        var patched = await patch.ApplyAndValidateAsync(
+            snapshot.Value,
+            validator,
+            cancellationToken
+        );
         if (patched.IsFailure)
         {
             return new Result<CounterpartyOutput>(patched.Error).ToOk();

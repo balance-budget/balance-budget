@@ -6,9 +6,12 @@ public interface ICounterpartyService
 {
     Task<IReadOnlyList<CounterpartyOutput>> ListAsync(CancellationToken cancellationToken);
 
-    Task<CounterpartyOutput?> GetAsync(CounterpartyId id, CancellationToken cancellationToken);
+    Task<Result<CounterpartyOutput>> GetAsync(
+        CounterpartyId id,
+        CancellationToken cancellationToken
+    );
 
-    Task<UpdateCounterpartyInput?> GetSnapshotAsync(
+    Task<Result<UpdateCounterpartyInput>> GetSnapshotAsync(
         CounterpartyId id,
         CancellationToken cancellationToken
     );

@@ -39,14 +39,16 @@ internal static class BankAccountEndpoints
         return TypedResults.Ok(bankAccounts);
     }
 
-    private static async Task<Results<Ok<BankAccountOutput>, NotFound>> GetAsync(
+    private static async Task<
+        Results<Ok<BankAccountOutput>, NotFound<ProblemDetails>, ValidationProblem>
+    > GetAsync(
         [FromRoute] BankAccountId id,
         [FromServices] IBankAccountService bankAccountService,
         CancellationToken cancellationToken
     )
     {
-        var bankAccount = await bankAccountService.GetAsync(id, cancellationToken);
-        return bankAccount is null ? TypedResults.NotFound() : TypedResults.Ok(bankAccount);
+        var result = await bankAccountService.GetAsync(id, cancellationToken);
+        return result.ToOkReadOnly();
     }
 
     private static async Task<
@@ -96,14 +98,16 @@ internal static class BankAccountEndpoints
     )
     {
         var snapshot = await bankAccountService.GetSnapshotAsync(id, cancellationToken);
-        if (snapshot is null)
+        if (snapshot.IsFailure)
         {
-            return new Result<BankAccountOutput>(
-                new NotFoundError("BankAccount", id.Value.ToString())
-            ).ToOk();
+            return new Result<BankAccountOutput>(snapshot.Error).ToOk();
         }
 
-        var patched = await patch.ApplyAndValidateAsync(snapshot, validator, cancellationToken);
+        var patched = await patch.ApplyAndValidateAsync(
+            snapshot.Value,
+            validator,
+            cancellationToken
+        );
         if (patched.IsFailure)
         {
             return new Result<BankAccountOutput>(patched.Error).ToOk();

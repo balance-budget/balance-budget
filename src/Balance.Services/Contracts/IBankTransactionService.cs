@@ -6,7 +6,7 @@ public interface IBankTransactionService
 {
     Task<IReadOnlyList<BankTransactionOutput>> ListAsync(CancellationToken cancellationToken);
 
-    Task<BankTransactionOutput?> GetAsync(
+    Task<Result<BankTransactionOutput>> GetAsync(
         BankTransactionId id,
         CancellationToken cancellationToken
     );

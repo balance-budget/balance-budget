@@ -7,9 +7,12 @@ public interface IAccountService
 {
     Task<IReadOnlyList<AccountOutput>> ListAsync(CancellationToken cancellationToken);
 
-    Task<AccountOutput?> GetAsync(AccountId id, CancellationToken cancellationToken);
+    Task<Result<AccountOutput>> GetAsync(AccountId id, CancellationToken cancellationToken);
 
-    Task<UpdateAccountInput?> GetSnapshotAsync(AccountId id, CancellationToken cancellationToken);
+    Task<Result<UpdateAccountInput>> GetSnapshotAsync(
+        AccountId id,
+        CancellationToken cancellationToken
+    );
 
     Task<Result<AccountOutput>> CreateAsync(
         string name,

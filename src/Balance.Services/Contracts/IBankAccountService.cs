@@ -6,9 +6,9 @@ public interface IBankAccountService
 {
     Task<IReadOnlyList<BankAccountOutput>> ListAsync(CancellationToken cancellationToken);
 
-    Task<BankAccountOutput?> GetAsync(BankAccountId id, CancellationToken cancellationToken);
+    Task<Result<BankAccountOutput>> GetAsync(BankAccountId id, CancellationToken cancellationToken);
 
-    Task<UpdateBankAccountInput?> GetSnapshotAsync(
+    Task<Result<UpdateBankAccountInput>> GetSnapshotAsync(
         BankAccountId id,
         CancellationToken cancellationToken
     );

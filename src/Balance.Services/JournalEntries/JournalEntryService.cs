@@ -51,11 +51,12 @@ internal sealed class JournalEntryService : IJournalEntryService
             .ToListAsync(cancellationToken);
     }
 
-    public Task<JournalEntryOutput?> GetAsync(
+    public async Task<Result<JournalEntryOutput>> GetAsync(
         JournalEntryId id,
         CancellationToken cancellationToken
-    ) =>
-        _dbContext
+    )
+    {
+        var output = await _dbContext
             .JournalEntries.Where(e => e.Id == id)
             .Select(e => new JournalEntryOutput(
                 e.Id,
@@ -75,8 +76,10 @@ internal sealed class JournalEntryService : IJournalEntryService
                 e.UpdatedAt
             ))
             .FirstOrDefaultAsync(cancellationToken);
+        return output is null ? new NotFoundError("JournalEntry", id.Value.ToString()) : output;
+    }
 
-    public async Task<UpdateJournalEntryInput?> GetSnapshotAsync(
+    public async Task<Result<UpdateJournalEntryInput>> GetSnapshotAsync(
         JournalEntryId id,
         CancellationToken cancellationToken
     )
@@ -95,7 +98,7 @@ internal sealed class JournalEntryService : IJournalEntryService
 
         if (snapshot is null)
         {
-            return null;
+            return new NotFoundError("JournalEntry", id.Value.ToString());
         }
 
         return new UpdateJournalEntryInput

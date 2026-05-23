@@ -32,14 +32,16 @@ internal static class BankTransactionEndpoints
         return TypedResults.Ok(bankTransactions);
     }
 
-    private static async Task<Results<Ok<BankTransactionOutput>, NotFound>> GetAsync(
+    private static async Task<
+        Results<Ok<BankTransactionOutput>, NotFound<ProblemDetails>, ValidationProblem>
+    > GetAsync(
         [FromRoute] BankTransactionId id,
         [FromServices] IBankTransactionService bankTransactionService,
         CancellationToken cancellationToken
     )
     {
-        var bankTransaction = await bankTransactionService.GetAsync(id, cancellationToken);
-        return bankTransaction is null ? TypedResults.NotFound() : TypedResults.Ok(bankTransaction);
+        var result = await bankTransactionService.GetAsync(id, cancellationToken);
+        return result.ToOkReadOnly();
     }
 
     private static async Task<

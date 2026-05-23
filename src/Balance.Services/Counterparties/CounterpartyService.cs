@@ -26,24 +26,30 @@ internal sealed class CounterpartyService : ICounterpartyService
             .Select(c => new CounterpartyOutput(c.Id, c.Name, c.CreatedAt, c.UpdatedAt))
             .ToListAsync(cancellationToken);
 
-    public Task<CounterpartyOutput?> GetAsync(
+    public async Task<Result<CounterpartyOutput>> GetAsync(
         CounterpartyId id,
         CancellationToken cancellationToken
-    ) =>
-        _dbContext
+    )
+    {
+        var output = await _dbContext
             .Counterparties.Where(c => c.Id == id)
             .Select(c => new CounterpartyOutput(c.Id, c.Name, c.CreatedAt, c.UpdatedAt))
             .FirstOrDefaultAsync(cancellationToken);
+        return output is null ? new NotFoundError("Counterparty", id.Value.ToString()) : output;
+    }
 
-    public Task<UpdateCounterpartyInput?> GetSnapshotAsync(
+    public async Task<Result<UpdateCounterpartyInput>> GetSnapshotAsync(
         CounterpartyId id,
         CancellationToken cancellationToken
-    ) =>
-        _dbContext
+    )
+    {
+        var snapshot = await _dbContext
             .Counterparties.AsNoTracking()
             .Where(c => c.Id == id)
             .Select(c => new UpdateCounterpartyInput { Name = c.Name })
             .FirstOrDefaultAsync(cancellationToken);
+        return snapshot is null ? new NotFoundError("Counterparty", id.Value.ToString()) : snapshot;
+    }
 
     public async Task<Result<CounterpartyOutput>> CreateAsync(
         string name,

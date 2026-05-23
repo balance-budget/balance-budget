@@ -28,13 +28,20 @@ internal static class ResultExtensions
     /// </summary>
     public static Results<Ok<T>, NotFound<ProblemDetails>, ValidationProblem> ToOkReadOnly<T>(
         this Result<T> result
-    ) =>
-        result.ToOk() switch
+    )
+    {
+        if (result.IsSuccess)
+            return TypedResults.Ok(result.Value);
+
+        return result.Error switch
         {
-            Ok<T> o => o,
-            NotFound<ProblemDetails> n => n,
+            NotFoundError n => TypedResults.NotFound(
+                Problem(StatusCodes.Status404NotFound, n.Code, $"{n.Entity} {n.Id} not found.", n)
+            ),
+            ValidationError v => TypedResults.ValidationProblem(v.Errors),
             _ => throw new UnreachableException(),
         };
+    }
 
     public static Results<
         Created<T>,

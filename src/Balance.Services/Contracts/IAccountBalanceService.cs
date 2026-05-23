@@ -5,5 +5,5 @@ namespace Balance.Services.Contracts;
 
 public interface IAccountBalanceService
 {
-    Task<Money?> GetBalanceAsync(AccountId id, CancellationToken cancellationToken);
+    Task<Result<Money>> GetBalanceAsync(AccountId id, CancellationToken cancellationToken);
 }
