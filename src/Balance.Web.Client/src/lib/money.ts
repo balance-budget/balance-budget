@@ -17,17 +17,22 @@ export type Money = { amount: number; currencyCode: string };
 
 /**
  * Boundary converter for wire-format Money. openapi-typescript marks both fields
- * optional (System.Text.Json on a record struct), and large ints may serialise
- * as strings — both are normalised here. The fallback currency code is the
- * envelope's currency (account, summary, etc.) when the inner value lacks one.
+ * optional (System.Text.Json on a record struct), but the backend contract
+ * guarantees both are present — large ints may serialise as strings, which is
+ * normalised to number here. `fallbackCurrencyCode` lets envelope-shaped
+ * payloads (DashboardSummaryOutput, AccountOutput, ...) supply their outer
+ * currency as a belt-and-suspenders default; pass it when available, omit it
+ * when the wire Money is the only source of truth. Throws if currency code is
+ * missing from both wire and fallback — that indicates a contract violation.
  */
-export function toMoney(wire: WireMoney, fallbackCurrencyCode: string): Money {
+export function toMoney(wire: WireMoney, fallbackCurrencyCode?: string): Money {
     const raw = wire.amount;
     const amount = typeof raw === 'string' ? Number(raw) : (raw ?? 0);
-    return {
-        amount,
-        currencyCode: wire.currencyCode ?? fallbackCurrencyCode,
-    };
+    const currencyCode = wire.currencyCode ?? fallbackCurrencyCode;
+    if (currencyCode === undefined) {
+        throw new Error('Money wire payload is missing currencyCode and no fallback was provided');
+    }
+    return { amount, currencyCode };
 }
 
 const DEFAULT_SCALE = 2;
