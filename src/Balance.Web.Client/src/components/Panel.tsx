@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { cx } from '../lib/cx';
 
 type PanelProps = {
     children: ReactNode;
@@ -9,12 +10,10 @@ type PanelProps = {
 export function Panel({ children, className }: PanelProps) {
     return (
         <section
-            className={[
+            className={cx(
                 'bg-surface-1 backdrop-blur-card border border-border-soft rounded-md py-5 px-[22px]',
                 className,
-            ]
-                .filter(Boolean)
-                .join(' ')}
+            )}
         >
             {children}
         </section>

@@ -1,3 +1,5 @@
+import { cx } from '../lib/cx';
+
 type SkeletonProps = {
     className?: string;
 };
@@ -5,9 +7,7 @@ type SkeletonProps = {
 export function Skeleton({ className }: SkeletonProps) {
     return (
         <div
-            className={['rounded-sm bg-surface-2 animate-pulse', className]
-                .filter(Boolean)
-                .join(' ')}
+            className={cx('rounded-sm bg-surface-2 animate-pulse', className)}
             aria-hidden="true"
         />
     );
