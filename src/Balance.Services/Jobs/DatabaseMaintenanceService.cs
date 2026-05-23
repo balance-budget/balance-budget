@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Balance.Services.Jobs;
 
-internal class DatabaseMaintenanceService : IDatabaseMaintenanceService
+internal sealed class DatabaseMaintenanceService : IDatabaseMaintenanceService
 {
     private readonly ILogger<DatabaseMaintenanceService> _logger;
     private readonly BalanceDbContext _dbContext;

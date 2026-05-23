@@ -1,4 +1,5 @@
 using Balance.Data.Entities.Ids;
+using Balance.Web.Filters;
 using FluentValidation;
 
 namespace Balance.Web.Endpoints.BankTransactions;
@@ -18,6 +19,6 @@ internal sealed class CreateBankTransactionRequestValidator
         RuleFor(x => x.BankAccountId.Value).NotEqual(Guid.Empty);
         RuleFor(x => x.BookingDate).NotEqual(default(DateOnly));
         RuleFor(x => x.Amount).NotEqual(0L).WithMessage("Amount must be non-zero.");
-        RuleFor(x => x.CurrencyCode.Value).NotEmpty().Length(2, 8);
+        RuleFor(x => x.CurrencyCode.Value).IsCurrencyCode();
     }
 }

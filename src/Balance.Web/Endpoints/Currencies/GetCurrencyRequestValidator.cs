@@ -1,4 +1,5 @@
 using Balance.Data.Entities.Ids;
+using Balance.Web.Filters;
 using FluentValidation;
 
 namespace Balance.Web.Endpoints.Currencies;
@@ -9,6 +10,6 @@ internal sealed class GetCurrencyRequestValidator : AbstractValidator<GetCurrenc
 {
     public GetCurrencyRequestValidator()
     {
-        RuleFor(x => x.Code.Value).NotEmpty().Length(2, 8);
+        RuleFor(x => x.Code.Value).IsCurrencyCode();
     }
 }

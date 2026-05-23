@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Query;
 
 namespace Balance.Services.Helpers;
 
-public static class QueryableExtensions
+internal static class QueryableExtensions
 {
     public static Task<Result<int>> ExecuteDeleteAndCatchAsync<TSource>(
         this IQueryable<TSource> source,
