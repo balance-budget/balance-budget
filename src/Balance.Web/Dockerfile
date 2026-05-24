@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS base
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine-extra AS base
 RUN mkdir -p /data && chown -R $APP_UID /data && chmod -R 755 /data
 RUN apk add --no-cache curl tzdata krb5-libs
 USER $APP_UID
