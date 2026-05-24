@@ -17,7 +17,7 @@ internal sealed class BankAccountImportEndpointTests : EndpointsTestsBase
 
     private const string RowEtosTemplate =
         "\"20260131\";\"Etos\";\"{0}\";\"\";\"BA\";\"Debit\";"
-        + "\"72,30\";\"Payment terminal\";\"Card sequence no.: 001\";\"1183,44\";\"\"";
+        + "\"72,30\";\"Payment terminal\";\"Card sequence no.: 001 31-01-2026 09:26\";\"1183,44\";\"\"";
 
     private const string RowCoolblueTemplate =
         "\"20260130\";\"Coolblue BV\";\"{0}\";\"NL22INGB3141592653\";\"GT\";"
