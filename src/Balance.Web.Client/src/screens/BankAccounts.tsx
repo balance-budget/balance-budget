@@ -1,0 +1,309 @@
+import { useState } from 'react';
+import { Link } from '@tanstack/react-router';
+import {
+    useBankAccount,
+    useBankAccounts,
+    useDeleteBankAccount,
+    type BankAccount,
+} from '../api/bankAccounts';
+import { useAccounts } from '../api/accounts';
+import { useCounterparties } from '../api/counterparties';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { ErrorState } from '../components/ErrorState';
+import { Icon } from '../components/Icon';
+import { Panel, SectionHead } from '../components/Panel';
+import { Skeleton } from '../components/Skeleton';
+import { useToast } from '../components/Toast';
+import type { BankAccountId } from '../lib/domain';
+import { ApiError } from '../lib/http';
+import { BankAccountFormModal } from './BankAccountForm';
+
+export function BankAccounts() {
+    const [creating, setCreating] = useState(false);
+
+    return (
+        <>
+            <Panel>
+                <SectionHead
+                    title="Bank accounts"
+                    subtitle="The real-world bank accounts behind your ledger accounts and counterparties."
+                    action={
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setCreating(true);
+                            }}
+                            className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm bg-brand-primary text-white text-[13px] font-medium hover:bg-brand-primary-dark"
+                        >
+                            <Icon name="plus" size={14} strokeWidth={2} />
+                            New bank account
+                        </button>
+                    }
+                />
+                <BankAccountList />
+            </Panel>
+
+            {creating && (
+                <BankAccountFormModal
+                    mode="create"
+                    onClose={() => {
+                        setCreating(false);
+                    }}
+                />
+            )}
+        </>
+    );
+}
+
+function BankAccountList() {
+    const query = useBankAccounts();
+    const accounts = useAccounts();
+    const counterparties = useCounterparties();
+
+    if (query.isPending) {
+        return (
+            <div className="flex flex-col gap-3">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+            </div>
+        );
+    }
+
+    if (query.isError) {
+        return (
+            <ErrorState
+                message="Couldn't load bank accounts."
+                onRetry={() => void query.refetch()}
+            />
+        );
+    }
+
+    if (query.data.length === 0) {
+        return (
+            <div className="py-8 flex flex-col items-center gap-2 text-center">
+                <span className="text-[14px] text-fg-2">No bank accounts yet.</span>
+                <span className="text-[12px] text-fg-3">
+                    Add one to attach to a ledger account or counterparty.
+                </span>
+            </div>
+        );
+    }
+
+    const accountsById = new Map((accounts.data ?? []).map(a => [a.id, a]));
+    const counterpartiesById = new Map((counterparties.data ?? []).map(c => [c.id, c]));
+
+    return (
+        <div>
+            {query.data.map(ba => (
+                <BankAccountRow
+                    key={ba.id}
+                    bankAccount={ba}
+                    ownerLabel={resolveOwnerLabel(ba, accountsById, counterpartiesById)}
+                />
+            ))}
+        </div>
+    );
+}
+
+function resolveOwnerLabel(
+    ba: BankAccount,
+    accountsById: Map<string, { name: string }>,
+    counterpartiesById: Map<string, { name: string }>,
+): string {
+    if (ba.accountId) {
+        return accountsById.get(ba.accountId)?.name ?? 'Unknown account';
+    }
+    if (ba.counterpartyId) {
+        return counterpartiesById.get(ba.counterpartyId)?.name ?? 'Unknown counterparty';
+    }
+    return '—';
+}
+
+function BankAccountRow({
+    bankAccount,
+    ownerLabel,
+}: {
+    bankAccount: BankAccount;
+    ownerLabel: string;
+}) {
+    const label = bankAccount.bankName ?? bankAccount.iban ?? bankAccount.accountNumber ?? '—';
+    const identifier = bankAccount.iban ?? bankAccount.accountNumber;
+    const ownerKind = bankAccount.accountId ? 'Account' : 'Counterparty';
+
+    return (
+        <Link
+            to="/settings/bank-accounts/$id"
+            params={{ id: bankAccount.id }}
+            className="py-3 first:pt-0 last:pb-0 flex items-center gap-3 border-b border-border-soft last:border-b-0 hover:bg-surface-2 px-1 -mx-1 rounded-sm"
+        >
+            <span className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-md bg-brand-primary-soft text-brand-primary">
+                <Icon name="landmark" size={16} strokeWidth={2} />
+            </span>
+            <div className="flex-1 min-w-0 flex flex-col leading-tight">
+                <span className="text-14 font-medium text-fg-1 truncate">{label}</span>
+                <span className="text-[12px] text-fg-3 tabular truncate">
+                    {identifier ?? '—'}
+                    {bankAccount.currencyCode ? ` · ${bankAccount.currencyCode}` : ''}
+                </span>
+            </div>
+            <div className="shrink-0 flex flex-col items-end leading-tight">
+                <span className="text-[11px] text-fg-3 uppercase tracking-wider">{ownerKind}</span>
+                <span className="text-[12px] text-fg-2 truncate max-w-[160px]">{ownerLabel}</span>
+            </div>
+            <Icon name="chevron-right" size={14} className="text-fg-3" />
+        </Link>
+    );
+}
+
+export function BankAccountDetail({ id }: { id: BankAccountId }) {
+    const query = useBankAccount(id);
+    const [editing, setEditing] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+
+    if (query.isPending) {
+        return (
+            <Panel>
+                <Skeleton className="h-6 w-1/3 mb-3" />
+                <Skeleton className="h-4 w-1/2" />
+            </Panel>
+        );
+    }
+
+    if (query.isError) {
+        return (
+            <Panel>
+                <ErrorState
+                    message="Couldn't load bank account."
+                    onRetry={() => void query.refetch()}
+                />
+            </Panel>
+        );
+    }
+
+    const ba = query.data;
+
+    return (
+        <>
+            <Panel>
+                <div className="flex items-start justify-between gap-3 mb-4">
+                    <div className="flex flex-col gap-[2px] min-w-0">
+                        <Link
+                            to="/settings/bank-accounts"
+                            className="text-[12px] text-fg-3 hover:text-fg-1"
+                        >
+                            ← Bank accounts
+                        </Link>
+                        <h1 className="text-[22px] font-medium text-fg-1 truncate">
+                            {ba.bankName ?? ba.iban ?? ba.accountNumber ?? 'Bank account'}
+                        </h1>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setEditing(true);
+                            }}
+                            className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm text-[13px] font-medium text-fg-2 hover:text-fg-1 hover:bg-surface-2"
+                        >
+                            <Icon name="pencil" size={14} strokeWidth={2} />
+                            Edit
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setDeleting(true);
+                            }}
+                            className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm text-[13px] font-medium text-fg-2 hover:text-danger hover:bg-surface-2"
+                        >
+                            <Icon name="trash" size={14} strokeWidth={2} />
+                            Delete
+                        </button>
+                    </div>
+                </div>
+                <BankAccountDetails bankAccount={ba} />
+            </Panel>
+
+            {editing && (
+                <BankAccountFormModal
+                    mode="edit"
+                    bankAccount={ba}
+                    onClose={() => {
+                        setEditing(false);
+                    }}
+                />
+            )}
+            {deleting && (
+                <DeleteBankAccountDialog
+                    bankAccount={ba}
+                    onClose={() => {
+                        setDeleting(false);
+                    }}
+                />
+            )}
+        </>
+    );
+}
+
+function BankAccountDetails({ bankAccount }: { bankAccount: BankAccount }) {
+    return (
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-[13px]">
+            <Field label="IBAN" value={bankAccount.iban} />
+            <Field label="Account number" value={bankAccount.accountNumber} />
+            <Field label="BIC" value={bankAccount.bic} />
+            <Field label="Bank name" value={bankAccount.bankName} />
+            <Field label="Account holder" value={bankAccount.accountHolderName} />
+            <Field label="Currency" value={bankAccount.currencyCode} />
+        </dl>
+    );
+}
+
+function Field({ label, value }: { label: string; value: string | null }) {
+    return (
+        <div className="flex flex-col gap-[2px]">
+            <dt className="text-[11px] text-fg-3 uppercase tracking-wider">{label}</dt>
+            <dd className="text-fg-1 tabular">{value ?? '—'}</dd>
+        </div>
+    );
+}
+
+function DeleteBankAccountDialog({
+    bankAccount,
+    onClose,
+}: {
+    bankAccount: BankAccount;
+    onClose: () => void;
+}) {
+    const del = useDeleteBankAccount();
+    const toast = useToast();
+    const [error, setError] = useState<string | null>(null);
+
+    async function onConfirm() {
+        setError(null);
+        try {
+            await del.mutateAsync(bankAccount.id);
+            toast.success('Bank account deleted.');
+            onClose();
+        } catch (err) {
+            if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+                setError(err.message);
+            } else if (err instanceof Error) {
+                toast.error(err.message);
+            }
+        }
+    }
+
+    return (
+        <ConfirmDialog
+            open
+            onClose={onClose}
+            onConfirm={() => void onConfirm()}
+            title="Delete this bank account?"
+            message="This can't be undone."
+            confirmLabel="Delete"
+            variant="destructive"
+            busy={del.isPending}
+            error={error}
+        />
+    );
+}

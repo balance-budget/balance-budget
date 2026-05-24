@@ -127,6 +127,14 @@ body {
     min-height: 100vh;
 }
 
+/* Browsers default <button> to cursor: default. Restore the pointer for
+ * interactive controls; disabled elements keep the default cursor. */
+button:not(:disabled),
+summary,
+[role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+}
+
 /* Tabular numerics — for amounts, dates, percentages. */
 .tabular {
     font-variant-numeric: tabular-nums;
