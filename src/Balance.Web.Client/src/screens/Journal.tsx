@@ -1,6 +1,5 @@
 import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import { useJournalEntries, type JournalEntryRow } from '../api/journalEntries';
-import { Amount } from '../components/Amount';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Pagination } from '../components/Pagination';
@@ -161,33 +160,17 @@ function legLabel(legs: JournalEntryRow['fromLegs']): string {
 function AmountCell({ row, catalog }: { row: JournalEntryRow; catalog: CurrencyCatalog }) {
     // ADR-0012: transfers (NetWorthChange == 0) render unsigned magnitude in
     // muted text; operating entries render the signed net-worth change with
-    // colour by sign.
-    if (row.isTransfer) {
-        return (
-            <span className="text-[13px] text-fg-3 tabular text-right truncate">
-                {formatMoney(
-                    row.grossMagnitude.amount,
-                    row.grossMagnitude.currencyCode,
-                    catalog,
-                )}
-            </span>
-        );
-    }
-
-    const negative = row.netWorthChange.amount < 0;
+    // colour by sign. Font/size matches the per-account Register row for
+    // visual consistency across the two amount-on-row surfaces.
+    const money = row.isTransfer ? row.grossMagnitude : row.netWorthChange;
+    const colour = row.isTransfer
+        ? 'text-fg-3'
+        : money.amount < 0
+          ? 'text-danger'
+          : 'text-success';
     return (
-        <span
-            className={cx(
-                'text-right',
-                negative ? 'text-danger' : 'text-success',
-            )}
-        >
-            <Amount
-                minor={row.netWorthChange.amount}
-                currencyCode={row.netWorthChange.currencyCode}
-                size="inline"
-                sign
-            />
+        <span className={cx('font-mono text-[13px] tabular text-right', colour)}>
+            {formatMoney(money.amount, money.currencyCode, catalog, { sign: !row.isTransfer })}
         </span>
     );
 }
