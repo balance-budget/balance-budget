@@ -8,20 +8,27 @@ namespace Balance.Integration.Ing.Parsers;
 internal sealed class IngNoteParser : IIngNoteParser
 {
     private static readonly CultureInfo Culture = CultureInfo.GetCultureInfo("nl-NL");
+
+    // Each action either assigns directly (for fields whose value is just the raw string),
+    // or routes through a TryParse-based setter that leaves the field at its default when
+    // the value is malformed. ING exports are well-formed at the CSV-column level, but
+    // individual note-prefix values occasionally drift (truncated timestamps, missing
+    // currency codes, locale switches mid-export) — degrade silently rather than sink the
+    // whole import.
     private static readonly Dictionary<Action<IngNote, string>, HashSet<string>> Prefixes = new()
     {
         [(n, v) => n.Name = v] = ["Naam", "Name"],
         [(n, v) => n.Description = v] = ["Omschrijving", "Description"],
         [(n, v) => n.Iban = v] = ["IBAN"],
-        [(n, v) => n.CardSequence = CardSequence.Parse(v)] = ["Pasvolgnr", "Card sequence no."],
+        [(n, v) => n.CardSequence = CardSequence.TryParse(v)] = ["Pasvolgnr", "Card sequence no."],
         [(n, v) => n.Transaction = v] = ["Transactie", "Transaction"],
         [(n, v) => n.Term = v] = ["Term"],
-        [(n, v) => n.ForeignCurrencyAmount = CurrencyAmount.Parse(v)] = ["Valuta", "Currency"],
-        [(n, v) => n.ForeignCurrencyRate = decimal.Parse(v, Culture)] = ["Koers", "Rate"],
-        [(n, v) => n.ForeignCurrencyMarkUp = CurrencyAmount.Parse(v)] = ["Opslag", "Mark-up"],
-        [(n, v) => n.ForeignCurrencyFee = CurrencyAmount.Parse(v)] = ["Kosten", "Fee"],
-        [(n, v) => n.ValueDate = DateOnly.Parse(v, Culture)] = ["Valutadatum", "Value date"],
-        [(n, v) => n.DateTime = DateTime.Parse(v, Culture)] = ["Datum/Tijd", "Date/time"],
+        [(n, v) => n.ForeignCurrencyAmount = CurrencyAmount.TryParse(v)] = ["Valuta", "Currency"],
+        [SetForeignCurrencyRate] = ["Koers", "Rate"],
+        [(n, v) => n.ForeignCurrencyMarkUp = CurrencyAmount.TryParse(v)] = ["Opslag", "Mark-up"],
+        [(n, v) => n.ForeignCurrencyFee = CurrencyAmount.TryParse(v)] = ["Kosten", "Fee"],
+        [SetValueDate] = ["Valutadatum", "Value date"],
+        [SetDateTime] = ["Datum/Tijd", "Date/time"],
         [(n, v) => n.Reference = v] = ["Kenmerk", "Reference"],
         [(n, v) => n.MandateId = v] = ["Machtiging ID", "Mandate ID"],
         [(n, v) => n.Creditor = SepaDirectDebitCreditor.Parse(v)] = ["Incassant ID", "Creditor ID"],
@@ -71,5 +78,23 @@ internal sealed class IngNoteParser : IIngNoteParser
         result.Other = leftover.Trim();
 
         return result;
+    }
+
+    private static void SetForeignCurrencyRate(IngNote note, string value)
+    {
+        if (decimal.TryParse(value, NumberStyles.Number, Culture, out var rate))
+            note.ForeignCurrencyRate = rate;
+    }
+
+    private static void SetValueDate(IngNote note, string value)
+    {
+        if (DateOnly.TryParse(value, Culture, out var date))
+            note.ValueDate = date;
+    }
+
+    private static void SetDateTime(IngNote note, string value)
+    {
+        if (DateTime.TryParse(value, Culture, out var dateTime))
+            note.DateTime = dateTime;
     }
 }

@@ -13,12 +13,28 @@ internal sealed class CurrencyAmount
         CurrencyCode = currencyCode;
     }
 
-    internal static CurrencyAmount Parse(string value)
+    /// <summary>
+    /// Parses a currency-amount note value of the form <c>"100,00 BYN"</c>. Returns
+    /// <c>null</c> when the amount is non-numeric or the currency code is missing —
+    /// keeps a single malformed ING row from sinking a whole import.
+    /// </summary>
+    internal static CurrencyAmount? TryParse(string value)
     {
         var parts = value.Split(' ', 2);
-        var amount = decimal.Parse(parts[0], CultureInfo.GetCultureInfo("nl-NL"));
-        var currencyCode = parts[1];
-        return new CurrencyAmount(amount, currencyCode);
+        if (parts.Length < 2)
+            return null;
+
+        if (
+            !decimal.TryParse(
+                parts[0],
+                NumberStyles.Number,
+                CultureInfo.GetCultureInfo("nl-NL"),
+                out var amount
+            )
+        )
+            return null;
+
+        return new CurrencyAmount(amount, parts[1]);
     }
 
     public override string ToString() =>
