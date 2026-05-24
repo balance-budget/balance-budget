@@ -6,5 +6,5 @@ public sealed class ReverseProxyOptions : IOptionsSection
 {
     public static string Section => "ReverseProxy";
 
-    public required IReadOnlyList<string> KnownNetworks { get; init; }
+    public required IReadOnlyList<string> KnownNetworks { get; init; } = [];
 }
