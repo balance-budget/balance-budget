@@ -32,6 +32,13 @@ public static class ErrorCodes
     public const string BankTransactionAmountZero = "bank_transaction.amount_zero";
     public const string BankTransactionRequiresOwnAccount = "bank_transaction.requires_own_account";
 
+    // BankTransaction import
+    public const string ImportIbanMismatch = "import.iban_mismatch";
+    public const string ImportAccountColumnDivergence = "import.account_column_divergence";
+    public const string ImportCurrencyMismatch = "import.currency_mismatch";
+    public const string ImportBankAccountNotOwned = "import.bank_account_not_owned";
+    public const string ImportFormatInvalid = "import.format_invalid";
+
     // Currency
     public const string CurrencyExists = "currency.exists";
     public const string CurrencyNameEmpty = "currency.name_empty";

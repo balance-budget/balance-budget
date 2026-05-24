@@ -7,7 +7,7 @@ namespace Balance.Services.BankTransactions;
 /// Hashes a statement row's raw bytes per ADR 0010: normalise <c>\r\n</c> to <c>\n</c>,
 /// trim trailing whitespace on each line, then SHA-256 the UTF-8 bytes and lowercase-hex the digest.
 /// </summary>
-internal static class RowHasher
+public static class RowHasher
 {
     public static string Hash(string rawSource)
     {

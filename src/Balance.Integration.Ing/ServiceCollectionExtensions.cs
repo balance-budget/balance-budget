@@ -12,5 +12,5 @@ public static class ServiceCollectionExtensions
         services
             .AddScoped<IIngNoteParser, IngNoteParser>()
             .AddScoped<IIngStatementParser, IngStatementParser>()
-            .AddScoped<IBankTransactionImporter, IngBankTransactionImporter>();
+            .AddScoped<IBankTransactionExtractor, IngBankTransactionExtractor>();
 }
