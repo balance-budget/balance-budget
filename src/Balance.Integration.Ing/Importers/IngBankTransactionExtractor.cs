@@ -1,6 +1,8 @@
 using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
 using Balance.Integration.Ing.Contracts;
+using Balance.Integration.Ing.Helpers;
+using Balance.Integration.Ing.Models.Notes;
 using Balance.Integration.Ing.Models.Statements;
 using Balance.Services.BankTransactions;
 using Balance.Services.Contracts;
@@ -13,10 +15,15 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
     private static readonly CurrencyCode Eur = new("EUR");
 
     private readonly IIngStatementParser _ingStatementParser;
+    private readonly IIngNoteParser _ingNoteParser;
 
-    public IngBankTransactionExtractor(IIngStatementParser ingStatementParser)
+    public IngBankTransactionExtractor(
+        IIngStatementParser ingStatementParser,
+        IIngNoteParser ingNoteParser
+    )
     {
         _ingStatementParser = ingStatementParser;
+        _ingNoteParser = ingNoteParser;
     }
 
     public async Task<Result<IReadOnlyList<BankTransaction>>> ExtractAsync(
@@ -86,27 +93,41 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
             }
         }
 
+        // ING CSVs are most-recent-first. Reverse so insertion order — and the time-ordered
+        // BankTransaction.Id we mint per row — matches BookingDate order; a list sorted by
+        // (BookingDate, Id) then breaks intra-day ties in CSV-chronological order.
         var bankTransactions = new List<BankTransaction>(rows.Count);
-        foreach (var row in rows)
+        foreach (var row in rows.Reverse())
         {
-            bankTransactions.Add(ToBankTransaction(bankAccount.Id, row));
+            var mapped = ToBankTransaction(bankAccount.Id, row);
+            if (mapped.IsFailure)
+                return mapped.Error;
+            bankTransactions.Add(mapped.Value);
         }
         return bankTransactions;
     }
 
-    private static BankTransaction ToBankTransaction(
+    private Result<BankTransaction> ToBankTransaction(
         BankAccountId bankAccountId,
         IngStatementRow row
     )
     {
+        var note = _ingNoteParser.ParseNote(row.Parsed.Notifications);
+
+        var description = FirstNonBlank(note.Description, row.Parsed.Description);
+        if (description is null)
+        {
+            return new InvariantError(
+                ErrorCodes.ImportFormatInvalid,
+                $"Row dated {row.Parsed.Date:yyyy-MM-dd} has no usable description "
+                    + "('Naam / Omschrijving' is blank and 'Mededelingen' carries no "
+                    + "'Omschrijving:' field)."
+            );
+        }
+
+        var counterpartyName = NullIfBlank(row.Parsed.Description);
+        var counterpartyAccountNumber = ResolveCounterpartyAccountNumber(row, note);
         var signedCents = ToSignedCents(row.Parsed.Amount, row.Parsed.DebitCredit);
-        var counterpartyAccountNumber = string.IsNullOrWhiteSpace(row.Parsed.CounterParty)
-            ? null
-            : row.Parsed.CounterParty;
-        var counterpartyName = string.IsNullOrWhiteSpace(row.Parsed.Description)
-            ? null
-            : row.Parsed.Description;
-        var rawSource = RowHasher.Normalise(row.RawRecord);
 
         return new BankTransaction
         {
@@ -114,12 +135,35 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
             BankAccountId = bankAccountId,
             BookingDate = row.Parsed.Date,
             Money = new Money(signedCents, Eur),
-            Description = row.Parsed.Notifications,
+            Description = description,
             CounterpartyName = counterpartyName,
             CounterpartyAccountNumber = counterpartyAccountNumber,
-            RawSource = rawSource,
+            RawSource = RowHasher.Normalise(row.RawRecord),
             RowHash = RowHasher.Hash(row.RawRecord),
         };
+    }
+
+    private static string? ResolveCounterpartyAccountNumber(IngStatementRow row, IngNote note)
+    {
+        if (!string.IsNullOrWhiteSpace(row.Parsed.CounterParty))
+            return row.Parsed.CounterParty;
+
+        // ING own-savings transfers leave 'Tegenrekening' blank and embed the savings number
+        // (D########) in 'Naam / Omschrijving' or in the parsed note's free-text leftover.
+        var pattern = IngPatterns.SavingsAccountPattern();
+
+        var inDescription = pattern.Match(row.Parsed.Description);
+        if (inDescription.Success)
+            return inDescription.Value;
+
+        if (!string.IsNullOrWhiteSpace(note.Other))
+        {
+            var inNoteOther = pattern.Match(note.Other);
+            if (inNoteOther.Success)
+                return inNoteOther.Value;
+        }
+
+        return null;
     }
 
     private static long ToSignedCents(decimal amount, DebitCredit debitCredit)
@@ -142,4 +186,16 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
         value is null
             ? string.Empty
             : value.Replace(" ", "", StringComparison.Ordinal).ToUpperInvariant();
+
+    private static string? FirstNonBlank(string? a, string? b)
+    {
+        if (!string.IsNullOrWhiteSpace(a))
+            return a;
+        if (!string.IsNullOrWhiteSpace(b))
+            return b;
+        return null;
+    }
+
+    private static string? NullIfBlank(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value;
 }

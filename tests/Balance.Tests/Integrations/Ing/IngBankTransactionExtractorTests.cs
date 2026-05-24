@@ -14,7 +14,8 @@ internal sealed class IngBankTransactionExtractorTests
         + "\"Debit/credit\";\"Amount (EUR)\";\"Transaction type\";\"Notifications\";"
         + "\"Resulting balance\";\"Tag\"";
 
-    private static IngBankTransactionExtractor BuildExtractor() => new(new IngStatementParser());
+    private static IngBankTransactionExtractor BuildExtractor() =>
+        new(new IngStatementParser(), new IngNoteParser());
 
     private static BankAccount OwnedEurAccount(string iban = "NL69INGB0123456789") =>
         new()
@@ -44,7 +45,7 @@ internal sealed class IngBankTransactionExtractorTests
         var bankAccount = OwnedEurAccount();
         await using var stream = CsvStream(
             "\"20260131\";\"Etos\";\"NL69INGB0123456789\";\"\";\"BA\";\"Debit\";"
-                + "\"72,30\";\"Payment terminal\";\"Card sequence no.: 001\";\"1183,44\";\"\"",
+                + "\"72,30\";\"Payment terminal\";\"Card sequence no.: 001 31-01-2026 09:26\";\"1183,44\";\"\"",
             "\"20260130\";\"Coolblue BV\";\"NL69INGB0123456789\";\"NL22INGB3141592653\";\"GT\";"
                 + "\"Credit\";\"59,95\";\"Online Banking\";\"Name: Coolblue BV\";\"1412,95\";\"\""
         );
@@ -55,17 +56,118 @@ internal sealed class IngBankTransactionExtractorTests
         var rows = result.Value!;
         await Assert.That(rows).Count().IsEqualTo(2);
 
-        await Assert.That(rows[0].BankAccountId).IsEqualTo(bankAccount.Id);
-        await Assert.That(rows[0].BookingDate).IsEqualTo(new DateOnly(2026, 1, 31));
-        await Assert.That(rows[0].Money.Amount).IsEqualTo(-7230L);
+        // ING is most-recent-first; the extractor reverses so the oldest row lands first.
+        await Assert.That(rows[0].BookingDate).IsEqualTo(new DateOnly(2026, 1, 30));
+        await Assert.That(rows[0].Money.Amount).IsEqualTo(5995L);
         await Assert.That(rows[0].Money.CurrencyCode).IsEqualTo(new CurrencyCode("EUR"));
-        await Assert.That(rows[0].Description).IsEqualTo("Card sequence no.: 001");
-        await Assert.That(rows[0].CounterpartyName).IsEqualTo("Etos");
-        await Assert.That(rows[0].CounterpartyAccountNumber).IsNull();
+        await Assert.That(rows[0].Description).IsEqualTo("Coolblue BV");
+        await Assert.That(rows[0].CounterpartyName).IsEqualTo("Coolblue BV");
+        await Assert.That(rows[0].CounterpartyAccountNumber).IsEqualTo("NL22INGB3141592653");
 
-        await Assert.That(rows[1].Money.Amount).IsEqualTo(5995L);
-        await Assert.That(rows[1].CounterpartyName).IsEqualTo("Coolblue BV");
-        await Assert.That(rows[1].CounterpartyAccountNumber).IsEqualTo("NL22INGB3141592653");
+        await Assert.That(rows[1].BookingDate).IsEqualTo(new DateOnly(2026, 1, 31));
+        await Assert.That(rows[1].Money.Amount).IsEqualTo(-7230L);
+        await Assert.That(rows[1].Description).IsEqualTo("Etos");
+        await Assert.That(rows[1].CounterpartyName).IsEqualTo("Etos");
+        await Assert.That(rows[1].CounterpartyAccountNumber).IsNull();
+    }
+
+    [Test]
+    public async Task Description_prefers_structured_Omschrijving_from_Notifications_over_Naam(
+        CancellationToken cancellationToken
+    )
+    {
+        var bankAccount = OwnedEurAccount();
+        await using var stream = CsvStream(
+            "\"20260129\";\"Booking.com\";\"NL69INGB0123456789\";\"NL22ABNA2000003006\";\"ID\";"
+                + "\"Debit\";\"32,15\";\"iDEAL\";"
+                + "\"Naam: Booking.com Omschrijving: Online bestelling 1278631 IBAN: "
+                + "NL22ABNA2000003006 Kenmerk: 1278631\";\"1277,49\";\"\""
+        );
+
+        var result = await BuildExtractor().ExtractAsync(bankAccount, stream, cancellationToken);
+
+        await Assert.That(result.IsSuccess).IsTrue();
+        var row = result.Value![0];
+        await Assert.That(row.Description).IsEqualTo("Online bestelling 1278631");
+        await Assert.That(row.CounterpartyName).IsEqualTo("Booking.com");
+        await Assert.That(row.CounterpartyAccountNumber).IsEqualTo("NL22ABNA2000003006");
+    }
+
+    [Test]
+    public async Task Rows_are_reversed_so_oldest_comes_first(CancellationToken cancellationToken)
+    {
+        var bankAccount = OwnedEurAccount();
+        await using var stream = CsvStream(
+            "\"20260131\";\"A\";\"NL69INGB0123456789\";\"\";\"BA\";\"Debit\";"
+                + "\"1,00\";\"Payment terminal\";\"x\";\"100,00\";\"\"",
+            "\"20260130\";\"B\";\"NL69INGB0123456789\";\"\";\"BA\";\"Debit\";"
+                + "\"2,00\";\"Payment terminal\";\"y\";\"99,00\";\"\"",
+            "\"20260129\";\"C\";\"NL69INGB0123456789\";\"\";\"BA\";\"Debit\";"
+                + "\"3,00\";\"Payment terminal\";\"z\";\"97,00\";\"\""
+        );
+
+        var result = await BuildExtractor().ExtractAsync(bankAccount, stream, cancellationToken);
+
+        await Assert.That(result.IsSuccess).IsTrue();
+        var rows = result.Value!;
+        await Assert.That(rows[0].BookingDate).IsEqualTo(new DateOnly(2026, 1, 29));
+        await Assert.That(rows[1].BookingDate).IsEqualTo(new DateOnly(2026, 1, 30));
+        await Assert.That(rows[2].BookingDate).IsEqualTo(new DateOnly(2026, 1, 31));
+    }
+
+    [Test]
+    public async Task Savings_number_fallback_from_Naam_Omschrijving(
+        CancellationToken cancellationToken
+    )
+    {
+        var bankAccount = OwnedEurAccount();
+        await using var stream = CsvStream(
+            "\"20260131\";\"Naar Oranje Spaarrekening D12345678\";\"NL69INGB0123456789\";\"\";"
+                + "\"OV\";\"Debit\";\"100,00\";\"Internal transfer\";\"\";\"500,00\";\"\""
+        );
+
+        var result = await BuildExtractor().ExtractAsync(bankAccount, stream, cancellationToken);
+
+        await Assert.That(result.IsSuccess).IsTrue();
+        var row = result.Value![0];
+        await Assert.That(row.CounterpartyAccountNumber).IsEqualTo("D12345678");
+    }
+
+    [Test]
+    public async Task Savings_number_fallback_from_Notifications_Other_when_Description_lacks_it(
+        CancellationToken cancellationToken
+    )
+    {
+        var bankAccount = OwnedEurAccount();
+        // 'Internal transfer' carries no D######## itself; 'Mededelingen' has it as free-text
+        // leftover (no known prefix), so it lands in IngNote.Other.
+        await using var stream = CsvStream(
+            "\"20260131\";\"Internal transfer\";\"NL69INGB0123456789\";\"\";\"OV\";\"Debit\";"
+                + "\"100,00\";\"Internal transfer\";\"Transfer to D87654321 confirmed\";"
+                + "\"500,00\";\"\""
+        );
+
+        var result = await BuildExtractor().ExtractAsync(bankAccount, stream, cancellationToken);
+
+        await Assert.That(result.IsSuccess).IsTrue();
+        var row = result.Value![0];
+        await Assert.That(row.CounterpartyAccountNumber).IsEqualTo("D87654321");
+    }
+
+    [Test]
+    public async Task Rejects_row_with_no_usable_description(CancellationToken cancellationToken)
+    {
+        var bankAccount = OwnedEurAccount();
+        // Empty 'Naam / Omschrijving' AND a 'Mededelingen' that carries no 'Omschrijving:'.
+        await using var stream = CsvStream(
+            "\"20260131\";\"\";\"NL69INGB0123456789\";\"\";\"BA\";\"Debit\";"
+                + "\"10,00\";\"Payment terminal\";\"Kenmerk: 12345\";\"100,00\";\"\""
+        );
+
+        var result = await BuildExtractor().ExtractAsync(bankAccount, stream, cancellationToken);
+
+        await Assert.That(result.IsFailure).IsTrue();
+        await Assert.That(result.Error!.Code).IsEqualTo(ErrorCodes.ImportFormatInvalid);
     }
 
     [Test]
@@ -74,7 +176,7 @@ internal sealed class IngBankTransactionExtractorTests
         var bankAccount = OwnedEurAccount();
         await using var stream = CsvStream(
             "\"20260131\";\"Etos\";\"NL69INGB0123456789\";\"\";\"BA\";\"Debit\";"
-                + "\"72,30\";\"Payment terminal\";\"Card sequence no.: 001\";\"1183,44\";\"\""
+                + "\"72,30\";\"Payment terminal\";\"Card sequence no.: 001 31-01-2026 09:26\";\"1183,44\";\"\""
         );
 
         var result = await BuildExtractor().ExtractAsync(bankAccount, stream, cancellationToken);

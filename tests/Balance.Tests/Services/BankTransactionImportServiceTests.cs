@@ -22,7 +22,7 @@ internal sealed class BankTransactionImportServiceTests : EndpointsTestsBase
 
     private const string RowEtos =
         "\"20260131\";\"Etos\";\"NL69INGB0123456789\";\"\";\"BA\";\"Debit\";"
-        + "\"72,30\";\"Payment terminal\";\"Card sequence no.: 001\";\"1183,44\";\"\"";
+        + "\"72,30\";\"Payment terminal\";\"Card sequence no.: 001 31-01-2026 09:26\";\"1183,44\";\"\"";
 
     private const string RowCoolblue =
         "\"20260130\";\"Coolblue BV\";\"NL69INGB0123456789\";\"NL22INGB3141592653\";\"GT\";"
@@ -30,7 +30,7 @@ internal sealed class BankTransactionImportServiceTests : EndpointsTestsBase
 
     private const string RowAh =
         "\"20260129\";\"Albert Heijn\";\"NL69INGB0123456789\";\"\";\"BA\";\"Debit\";"
-        + "\"21,40\";\"Payment terminal\";\"Card sequence no.: 002\";\"1232,90\";\"\"";
+        + "\"21,40\";\"Payment terminal\";\"Card sequence no.: 002 30-01-2026 14:12\";\"1232,90\";\"\"";
 
     private static MemoryStream CsvStream(params string[] rows)
     {
