@@ -16,17 +16,14 @@ for ((i=1; i<=$1; i++)); do
   tmpfile=$(mktemp)
   trap "rm -f $tmpfile" EXIT
   
-  #!/bin/bash
-  
-  issues=$(cat issues/*.md 2>/dev/null || echo "No issues found.")
-  commits=$(git log -n 5 --format="%H%n%ad%n%B---" --date=short 2>/dev/null || echo "No commits found.")
   prompt=$(cat ralph/prompt.md)
+  claude --worktree --permission-mode auto "$prompt"
   
   docker sandbox run claude . -- \
     --verbose \
     --print \
     --output-format stream-json \
-    "Previous commits: $commits Issues: $issues $prompt" \
+    "$prompt" \
   | grep --line-buffered '^{' \
   | tee "$tmpfile" \
   | jq --unbuffered -rj "$stream_text"
