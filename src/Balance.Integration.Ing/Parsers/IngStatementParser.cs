@@ -8,16 +8,27 @@ namespace Balance.Integration.Ing.Parsers;
 
 internal sealed class IngStatementParser : IIngStatementParser
 {
-    public async ValueTask<IReadOnlyList<CurrentAccountStatementRow>> ParseStatementsAsync(
-        string path,
+    public async ValueTask<IReadOnlyList<IngStatementRow>> ParseStatementsAsync(
+        Stream stream,
         CancellationToken cancellationToken
     )
     {
-        using var reader = new StreamReader(path);
+        using var reader = new StreamReader(stream);
         using var csv = GetCsvReader(reader);
 
-        return await csv.GetRecordsAsync<CurrentAccountStatementRow>(cancellationToken)
-            .ToListAsync(cancellationToken);
+        await csv.ReadAsync();
+        csv.ReadHeader();
+
+        var rows = new List<IngStatementRow>();
+        while (await csv.ReadAsync())
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var parsed = csv.GetRecord<CurrentAccountStatementRow>();
+            var rawRecord = csv.Context.Parser?.RawRecord ?? string.Empty;
+            rows.Add(new IngStatementRow(parsed, rawRecord));
+        }
+        return rows;
     }
 
     private static CsvReader GetCsvReader(TextReader reader) =>
