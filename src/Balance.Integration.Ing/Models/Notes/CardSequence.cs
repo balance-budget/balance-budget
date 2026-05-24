@@ -13,13 +13,21 @@ internal sealed class CardSequence
         DateTime = dateTime;
     }
 
-    internal static CardSequence Parse(string value)
+    /// <summary>
+    /// Parses a card-sequence note value of the form <c>"008 12-01-2019 15:26"</c>.
+    /// Returns <c>null</c> when the value is missing the date/time tail or the date
+    /// fails to parse — keeps a single malformed ING row from sinking a whole import.
+    /// </summary>
+    internal static CardSequence? TryParse(string value)
     {
         var parts = value.Split(' ', 2);
-        var sequenceNumber = parts[0];
-        var date = DateTime.Parse(parts[1], CultureInfo.GetCultureInfo("nl-NL"));
+        if (parts.Length < 2)
+            return null;
 
-        return new CardSequence(sequenceNumber, date);
+        if (!DateTime.TryParse(parts[1], CultureInfo.GetCultureInfo("nl-NL"), out var date))
+            return null;
+
+        return new CardSequence(parts[0], date);
     }
 
     public override string ToString() =>

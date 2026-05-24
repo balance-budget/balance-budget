@@ -1,3 +1,4 @@
+using Balance.Integration.Ing.Models.Notes;
 using Balance.Integration.Ing.Parsers;
 
 namespace Balance.Tests.Integrations.Ing;
@@ -107,5 +108,75 @@ internal sealed class IngNoteParserTests
 
         await Assert.That(result.DateTime).IsEqualTo(new DateTime(2024, 3, 25, 12, 37, 32));
         await Assert.That(result.ValueDate).IsEqualTo(new DateOnly(2024, 3, 25));
+    }
+
+    [Test]
+    [Arguments("001")] // missing date/time tail
+    [Arguments("001 not-a-date")] // unparseable date
+    [Arguments("")] // empty value never reaches TryParse via the parser, but the contract should still degrade
+    public async Task CardSequence_TryParse_returns_null_on_malformed_value(string value)
+    {
+        await Assert.That(CardSequence.TryParse(value)).IsNull();
+    }
+
+    [Test]
+    [Arguments("100,00")] // missing currency code
+    [Arguments("not-a-number EUR")] // unparseable amount
+    [Arguments("")]
+    public async Task CurrencyAmount_TryParse_returns_null_on_malformed_value(string value)
+    {
+        await Assert.That(CurrencyAmount.TryParse(value)).IsNull();
+    }
+
+    [Test]
+    public async Task Note_with_malformed_Pasvolgnr_drops_the_field_and_keeps_the_rest(
+        CancellationToken cancellationToken
+    )
+    {
+        // Real-world drift: the timestamp tail of Pasvolgnr got truncated by some
+        // upstream tool. The rest of the note should still parse instead of throwing.
+        _ = cancellationToken;
+        var result = _parser.ParseNote(
+            "Pasvolgnr: 001 Transactie: ABC123 Term: XYZ987 Valutadatum: 14-08-2018"
+        );
+
+        await Assert.That(result.CardSequence).IsNull();
+        await Assert.That(result.Transaction).IsEqualTo("ABC123");
+        await Assert.That(result.Term).IsEqualTo("XYZ987");
+        await Assert.That(result.ValueDate).IsEqualTo(new DateOnly(2018, 8, 14));
+    }
+
+    [Test]
+    public async Task Note_with_malformed_Koers_leaves_rate_default_and_keeps_the_rest(
+        CancellationToken cancellationToken
+    )
+    {
+        _ = cancellationToken;
+        var result = _parser.ParseNote(
+            "Valuta: 100,00 BYN Koers: not-a-decimal Kosten: 2,25 EUR Valutadatum: 31-12-2016"
+        );
+
+        await Assert.That(result.ForeignCurrencyAmount).IsNotNull();
+        await Assert.That(result.ForeignCurrencyAmount.CurrencyCode).IsEqualTo("BYN");
+        await Assert.That(result.ForeignCurrencyRate).IsEqualTo(0m); // default
+        await Assert.That(result.ForeignCurrencyFee).IsNotNull();
+        await Assert.That(result.ForeignCurrencyFee.Amount).IsEqualTo(2.25m);
+        await Assert.That(result.ValueDate).IsEqualTo(new DateOnly(2016, 12, 31));
+    }
+
+    [Test]
+    public async Task Note_with_malformed_Valutadatum_leaves_date_null_and_keeps_the_rest(
+        CancellationToken cancellationToken
+    )
+    {
+        _ = cancellationToken;
+        var result = _parser.ParseNote(
+            "Naam: Acme Omschrijving: Invoice 42 IBAN: NL00BANK0000000000 Valutadatum: not-a-date"
+        );
+
+        await Assert.That(result.Name).IsEqualTo("Acme");
+        await Assert.That(result.Description).IsEqualTo("Invoice 42");
+        await Assert.That(result.Iban).IsEqualTo("NL00BANK0000000000");
+        await Assert.That(result.ValueDate).IsNull();
     }
 }
