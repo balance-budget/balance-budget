@@ -75,8 +75,20 @@ _Avoid_: statement (sounds like a printed bank statement — that's a separate c
 One row in a **Register** — derived from exactly one **JournalLine** on the focal **Account**. Carries the focal-account-signed **Money** amount (positive = money in to the focal account, negative = out — *not* the raw debit/credit sign), the **JournalEntry** header (`Date`, `Description`, `CounterpartyId`/`CounterpartyName`), the focal **JournalLine**'s `ReconciliationStatus` and `Description`, and the offsetting side as a list of `(AccountId, AccountName, Amount)` — one entry per non-focal **JournalLine** on the same **JournalEntry**. The list is single-element for a simple two-leg entry and multi-element for a split (e.g. one €100 purchase divided across `Groceries +60` and `Household +40`). UI renders the first element by name and the rest as a "+N" hint; the row's focal amount remains the sum of the focal line(s), so it always matches what a bank statement would show.
 
 **BankTransaction**:
-An immutable record of one imported bank-statement row, tied to the user's own **BankAccount** that the row belongs to. Carries the **BookingDate**, signed **Amount** (positive = money in, negative = money out, from the bank's perspective), and **Currency**. The other side of the row is denormalised onto the same record as a free-text `Description` and optional `CounterpartyName` / `CounterpartyAccountNumber` — bank-agnostic fields every statement row carries; bank-specific extras (e.g. ING's transaction code, SEPA mandate ID, foreign-currency block) live inside the raw row blob and are not promoted to columns. Also carries `RawSource` (the original statement-row text as exported by the bank) for audit and re-parsing, and `RowHash` (a content hash of the raw row) for idempotent re-imports. The name matches ISO 20022 vocabulary and is intentionally distinct from a **JournalEntry** — a **BankTransaction** is *what the bank told us*; a **JournalEntry** is *what we did about it*. A **JournalEntry** *may* reference a **BankTransaction** via `JournalEntry.BankTransactionId?`; cash entries leave it null.
+An immutable record of one imported bank-statement row, tied to the user's own **BankAccount** that the row belongs to. Carries the **BookingDate**, signed **Amount** (positive = money in, negative = money out, from the bank's perspective), and **Currency**. The other side of the row is denormalised onto the same record as a free-text `Description` and optional `CounterpartyName` / `CounterpartyAccountNumber` — bank-agnostic fields every statement row carries; bank-specific extras (e.g. ING's transaction code, SEPA mandate ID, foreign-currency block) live inside the raw row blob and are not promoted to columns. Also carries `RawSource` (the original statement-row text as exported by the bank) for audit and re-parsing, and `RowHash` (a content hash of the raw row) for idempotent re-imports. The name matches ISO 20022 vocabulary and is intentionally distinct from a **JournalEntry** — a **BankTransaction** is *what the bank told us*; a **JournalEntry** is *what we did about it*. A **JournalEntry** *may* reference a **BankTransaction** via `JournalEntry.BankTransactionId?`; cash entries leave it null. A **BankTransaction** may carry user-applied `DismissedAt` / `DismissedReason` metadata recording a **Dismissed** state — these fields are the only mutable surface on the row; all bank-supplied fields are immutable (see ADR 0010, 0013).
 _Avoid_: Transaction (overloaded with DB transactions and Plaid/Stripe types), import row, statement line.
+
+**Inbox**:
+The derived set of **BankTransactions** that have neither a referencing **JournalEntry** nor a recorded **Dismissed** state — the starting point of the **Categorisation flow**. *Derived*, not stored: the filter is `NOT EXISTS(JournalEntries WHERE BankTransactionId = b.Id) AND b.DismissedAt IS NULL`. Defaulted-sorted oldest-first so the user works the queue in statement order. Distinct from the full **BankTransaction** list view, which shows every imported row regardless of state.
+_Avoid_: queue, unmatched list, pending imports.
+
+**Dismissed**:
+A terminal state of a **BankTransaction**, recorded as `DismissedAt` (UTC timestamp) plus `DismissedReason` (short free-text) on the row itself. Used when no **JournalEntry** should ever be created for the row (e.g. the orphaned sibling of a self-transfer already booked from the other side, a fee corrected elsewhere, a row the user explicitly chooses not to categorise). Reversible via undismiss — the row returns to the **Inbox**. User-applied metadata, *not* a mutation of bank-supplied fields; set and cleared only through a dedicated dismiss/undismiss action, never via PATCH or the **Categorisation flow**.
+_Avoid_: archived, ignored, deleted (the row still exists and remains immutable in its bank-supplied fields).
+
+**Categorisation flow**:
+The user-driven process of producing exactly one **JournalEntry** (or one **Dismissed** state) for one **BankTransaction**. Resolves the **Counterparty** (and creates a counterparty-side **BankAccount** if the row's `CounterpartyAccountNumber` is new) and the counter-side **Account**(s), then creates the **JournalEntry** atomically with the bank-side **JournalLine** in `Cleared` **ReconciliationStatus** and counter-side line(s) in `Uncleared`. Exposed as the composite endpoint `POST /api/bank-transactions/{id}/categorize`. Multi-Account splits are modelled as multiple **JournalLines** within the single created **JournalEntry**, summing to `−BT.Amount` on the counter side. See ADR 0014.
+_Avoid_: import flow (already used for parsing CSVs into BankTransactions — see ADR 0010), assignment, classification.
 
 ## Relationships
 
@@ -90,7 +102,8 @@ _Avoid_: Transaction (overloaded with DB transactions and Plaid/Stripe types), i
 - An **Account**-tied **BankAccount** must have a `CurrencyCode`; a **Counterparty**-tied **BankAccount** may leave it null. Enforced by CHECK constraint.
 - An **Account** has at most one **BankAccount** (enforced by `UNIQUE(AccountId)` on **BankAccount** where non-null).
 - A **JournalEntry** *may* reference a **BankTransaction** (when imported) and *may* reference a **Counterparty** (when one is identified). Cash entries have neither **BankTransaction** nor (necessarily) a **BankAccount**-bearing side; they always have at least a **Counterparty** or a free-text description.
-- A **BankTransaction** is immutable once stored; the **JournalEntry** derived from it is editable. Re-imports are deduplicated by hash.
+- A **BankTransaction** has *at most one* referencing **JournalEntry** (enforced by a filtered `UNIQUE` index on `JournalEntries.BankTransactionId WHERE NOT NULL`). Splits are modelled as multiple **JournalLines** within one **JournalEntry**, not as multiple **JournalEntries** sharing a **BankTransaction**.
+- A **BankTransaction** is immutable in its bank-supplied fields once stored; the **JournalEntry** derived from it is editable; the **Dismissed** metadata (`DismissedAt`, `DismissedReason`) is the only mutable surface on a **BankTransaction**. Re-imports are deduplicated by hash.
 
 ## Example dialogue
 
@@ -111,11 +124,11 @@ _Avoid_: Transaction (overloaded with DB transactions and Plaid/Stripe types), i
   - **Line-level (not editable):** `Amount`, `AccountId`, and the *set* of lines (no additions, no removals, no reordering). Correct these by deleting the **JournalEntry** and recreating.
   - **Preserved across edits:** every **JournalLine**'s `Id`, `CreatedAt`, and `ReconciliationStatus` survive a **JournalEntry** edit — editing the entry's description never resets a line's `Cleared`/`Reconciled` state.
   - **Trajectory:** this scope may tighten further to fully append-only with reversing entries; today's surface is the smallest set of edits that supports common typo-fixing without rewriting bookkeeping state.
-- **BankTransactions** remain immutable regardless of `JournalEntry` editability.
+- **BankTransactions** remain immutable in their bank-supplied fields (`BankAccountId`, `BookingDate`, `Money`, `Description`, `CounterpartyName`, `CounterpartyAccountNumber`, `RawSource`, `RowHash`) regardless of `JournalEntry` editability. User-applied **Dismissed** metadata (`DismissedAt`, `DismissedReason`) is set and cleared through a dedicated dismiss/undismiss action — see ADR 0013 — never via PATCH and never as a side effect of the **Categorisation flow**.
 
 ## Deletion policy (v1)
 
-- **BankTransaction** is immutable — never deleted.
+- **BankTransaction** is immutable in its bank-supplied fields and never deleted. **Dismissed** is the appropriate "make this row stop showing in the **Inbox**" action and is reversible — the row remains queryable in the full BankTransaction list view.
 - **JournalEntry** is deletable (its **JournalLines** cascade). Editing is preferred for corrections.
 - **Account**, **Counterparty**, **BankAccount** are hard-deletable; FK constraints block the delete when they're still referenced. No archival / `IsArchived` flag in v1 — add later if UI clutter becomes a real problem.
 
