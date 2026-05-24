@@ -1,3 +1,7 @@
+# PREVIOUS COMMITS
+
+** List the last 5 commits** and **Read** them to understand the previous work done.
+
 # ISSUES
 
 **List issues** from the issue tracker and **Read** them to understand the open issues.
