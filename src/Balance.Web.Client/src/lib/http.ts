@@ -30,6 +30,19 @@ export async function getJson<T>(url: string, signal: AbortSignal, label: string
     return (await response.json()) as T;
 }
 
+export async function postFormData<T>(
+    url: string,
+    formData: FormData,
+    signal: AbortSignal,
+    label: string,
+): Promise<T> {
+    const response = await fetch(url, { method: 'POST', body: formData, signal });
+    if (!response.ok) {
+        throw await toApiError(response, label);
+    }
+    return (await response.json()) as T;
+}
+
 async function toApiError(response: Response, label: string): Promise<ApiError> {
     const fallback = `Failed to ${label} (${response.status})`;
     const contentType = response.headers.get('content-type') ?? '';
