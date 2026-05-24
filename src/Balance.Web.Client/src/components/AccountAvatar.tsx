@@ -32,7 +32,7 @@ type AccountAvatarProps = {
  * Sidebar and Dashboard rows can't drift apart visually.
  */
 export function AccountAvatar({ account, size = 'sm', className }: AccountAvatarProps) {
-    const visual = visualHintFor(account.type, account.id);
+    const visual = visualHintFor(account.type);
     return (
         <span
             className={cx(

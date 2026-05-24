@@ -3,7 +3,7 @@ import type { components } from '../lib/api-types';
 import { asAccountId, type AccountTrend, type TrendPoint } from '../lib/domain';
 import { getJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
-import { visualHintFor } from '../lib/visualHints';
+import { chartColorFor } from '../lib/visualHints';
 
 type WireSummary = components['schemas']['DashboardSummaryOutput'];
 type WireTrend = components['schemas']['AccountBalanceTrendOutput'];
@@ -114,14 +114,10 @@ function toAccountTrend(
     periodEnd: string,
 ): AccountTrend {
     const accountId = asAccountId(series.accountId);
-    // Asset is the only AccountType this projection emits — visualHintFor's palette
-    // for Asset is what we want for every trend line. Keeping the lookup here (vs.
-    // wiring colour on the server) keeps visual hints a frontend concern.
-    const visual = visualHintFor('Asset', accountId);
     return {
         accountId,
         name: series.accountName,
-        accentColor: visual.accentColor,
+        accentColor: chartColorFor(accountId),
         points: expandToDailyPoints(
             toMinor(series.openingBalance),
             series.deltas,

@@ -13,6 +13,7 @@ import '@fontsource/jetbrains-mono/500.css';
 
 import './index.css';
 import { RouteError } from './components/RouteError';
+import { ToastProvider } from './components/Toast';
 import { routeTree } from './routeTree.gen';
 
 const router = createRouter({
@@ -50,7 +51,9 @@ if (!rootElement) throw new Error('Missing #root element in index.html');
 createRoot(rootElement).render(
     <StrictMode>
         <QueryClientProvider client={queryClient}>
-            <RouterProvider router={router} />
+            <ToastProvider>
+                <RouterProvider router={router} />
+            </ToastProvider>
         </QueryClientProvider>
     </StrictMode>,
 );

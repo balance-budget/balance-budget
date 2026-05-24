@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
-import { lastFourIdentifier, useAccounts, type Account } from '../api/accounts';
+import { accountIdentifier, useAccounts, type Account } from '../api/accounts';
 import { useCurrencyCatalog } from '../api/currencies';
 import {
     useAccountBalanceTrend,
@@ -77,7 +77,7 @@ function RecentActivity({ account }: { account: Account }) {
 }
 
 function AccountRow({ account }: { account: Account }) {
-    const tail = lastFourIdentifier(account);
+    const identifier = accountIdentifier(account);
     const isNegative = account.balance.amount < 0;
     return (
         <div className="py-3 first:pt-0 last:pb-0 flex flex-col gap-2 border-b border-border-soft last:border-b-0">
@@ -87,7 +87,7 @@ function AccountRow({ account }: { account: Account }) {
                     <span className="text-14 font-medium text-fg-1 truncate">{account.name}</span>
                     <span className="text-[12px] text-fg-3 truncate">
                         {account.type}
-                        {tail ? ` ${tail}` : ''}
+                        {identifier ? ` · ${identifier}` : ''}
                     </span>
                 </div>
                 <Amount
