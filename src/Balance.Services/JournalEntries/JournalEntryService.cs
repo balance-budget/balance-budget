@@ -33,7 +33,7 @@ internal sealed class JournalEntryService : IJournalEntryService
             .ThenByDescending(e => e.CreatedAt)
             .Skip(skip)
             .Take(take)
-            .Select(e => new ListRow(
+            .Select(e => new EntryProjectionRow(
                 e.Id,
                 e.Date,
                 e.Description,
@@ -47,7 +47,8 @@ internal sealed class JournalEntryService : IJournalEntryService
                         .FirstOrDefault(),
                 e.CreatedAt,
                 e.UpdatedAt,
-                e.Lines.Select(l => new ListLine(
+                e.Lines.Select(l => new EntryProjectionLine(
+                        l.Id,
                         l.AccountId,
                         _dbContext
                             .Accounts.Where(a => a.Id == l.AccountId)
@@ -61,7 +62,9 @@ internal sealed class JournalEntryService : IJournalEntryService
                             .Accounts.Where(a => a.Id == l.AccountId)
                             .Select(a => a.CurrencyCode)
                             .First(),
-                        l.Amount
+                        l.Amount,
+                        l.ReconciliationStatus,
+                        l.Description
                     ))
                     .ToList()
             ))
@@ -76,7 +79,11 @@ internal sealed class JournalEntryService : IJournalEntryService
         return output;
     }
 
-    private static JournalEntryRowOutput BuildRowOutput(ListRow row)
+    private static (
+        Money NetWorthChange,
+        Money GrossMagnitude,
+        JournalEntryProjectionResult Result
+    ) Project(EntryProjectionRow row)
     {
         // All lines in a balanced entry share a currency (enforced by JournalEntryValidator).
         // For the empty-or-degenerate edge case, fall back to a sentinel so the projection
@@ -94,7 +101,16 @@ internal sealed class JournalEntryService : IJournalEntryService
             .ToList();
 
         var projection = JournalEntryProjection.Compute(projectionInputs);
+        return (
+            new Money(projection.NetWorthChange, currencyCode),
+            new Money(projection.GrossMagnitude, currencyCode),
+            projection
+        );
+    }
 
+    private static JournalEntryRowOutput BuildRowOutput(EntryProjectionRow row)
+    {
+        var (netWorthChange, grossMagnitude, projection) = Project(row);
         return new JournalEntryRowOutput(
             row.Id,
             row.Date,
@@ -104,8 +120,8 @@ internal sealed class JournalEntryService : IJournalEntryService
             row.CounterpartyName,
             row.Lines.Count,
             projection.IsTransfer,
-            new Money(projection.NetWorthChange, currencyCode),
-            new Money(projection.GrossMagnitude, currencyCode),
+            netWorthChange,
+            grossMagnitude,
             projection.IsSimplifiable,
             projection.FromLegs,
             projection.ToLegs,
@@ -114,7 +130,40 @@ internal sealed class JournalEntryService : IJournalEntryService
         );
     }
 
-    private sealed record ListRow(
+    private static JournalEntryOutput BuildDetailOutput(EntryProjectionRow row)
+    {
+        var (netWorthChange, grossMagnitude, projection) = Project(row);
+        var lines = row
+            .Lines.Select(l => new JournalLineOutput(
+                l.Id,
+                l.AccountId,
+                l.AccountName,
+                l.Amount,
+                l.ReconciliationStatus,
+                l.Description
+            ))
+            .ToList();
+        return new JournalEntryOutput(
+            row.Id,
+            row.Date,
+            row.Description,
+            row.BankTransactionId,
+            row.CounterpartyId,
+            row.CounterpartyName,
+            row.Lines.Count,
+            projection.IsTransfer,
+            netWorthChange,
+            grossMagnitude,
+            projection.IsSimplifiable,
+            projection.FromLegs,
+            projection.ToLegs,
+            lines,
+            row.CreatedAt,
+            row.UpdatedAt
+        );
+    }
+
+    private sealed record EntryProjectionRow(
         JournalEntryId Id,
         DateOnly Date,
         string? Description,
@@ -123,15 +172,18 @@ internal sealed class JournalEntryService : IJournalEntryService
         string? CounterpartyName,
         DateTime CreatedAt,
         DateTime UpdatedAt,
-        IReadOnlyList<ListLine> Lines
+        IReadOnlyList<EntryProjectionLine> Lines
     );
 
-    private sealed record ListLine(
+    private sealed record EntryProjectionLine(
+        JournalLineId Id,
         AccountId AccountId,
         string AccountName,
         AccountType AccountType,
         CurrencyCode CurrencyCode,
-        long Amount
+        long Amount,
+        ReconciliationStatus ReconciliationStatus,
+        string? Description
     );
 
     public async Task<Result<JournalEntryOutput>> GetAsync(
@@ -139,27 +191,56 @@ internal sealed class JournalEntryService : IJournalEntryService
         CancellationToken cancellationToken
     )
     {
-        var output = await _dbContext
-            .JournalEntries.Where(e => e.Id == id)
-            .Select(e => new JournalEntryOutput(
+        var row = await QueryDetailAsync(id, cancellationToken);
+        if (row is null)
+            return new NotFoundError("JournalEntry", id.Value.ToString());
+        return BuildDetailOutput(row);
+    }
+
+    private Task<EntryProjectionRow?> QueryDetailAsync(
+        JournalEntryId id,
+        CancellationToken cancellationToken
+    )
+    {
+        return _dbContext
+            .JournalEntries.AsNoTracking()
+            .Where(e => e.Id == id)
+            .Select(e => new EntryProjectionRow(
                 e.Id,
                 e.Date,
                 e.Description,
                 e.BankTransactionId,
                 e.CounterpartyId,
-                e.Lines.Select(l => new JournalLineOutput(
+                e.CounterpartyId == null
+                    ? null
+                    : _dbContext
+                        .Counterparties.Where(c => c.Id == e.CounterpartyId)
+                        .Select(c => c.Name)
+                        .FirstOrDefault(),
+                e.CreatedAt,
+                e.UpdatedAt,
+                e.Lines.Select(l => new EntryProjectionLine(
                         l.Id,
                         l.AccountId,
+                        _dbContext
+                            .Accounts.Where(a => a.Id == l.AccountId)
+                            .Select(a => a.Name)
+                            .First(),
+                        _dbContext
+                            .Accounts.Where(a => a.Id == l.AccountId)
+                            .Select(a => a.AccountType)
+                            .First(),
+                        _dbContext
+                            .Accounts.Where(a => a.Id == l.AccountId)
+                            .Select(a => a.CurrencyCode)
+                            .First(),
                         l.Amount,
                         l.ReconciliationStatus,
                         l.Description
                     ))
-                    .ToList(),
-                e.CreatedAt,
-                e.UpdatedAt
+                    .ToList()
             ))
             .FirstOrDefaultAsync(cancellationToken);
-        return output is null ? new NotFoundError("JournalEntry", id.Value.ToString()) : output;
     }
 
     public async Task<Result<UpdateJournalEntryInput>> GetSnapshotAsync(
@@ -255,7 +336,7 @@ internal sealed class JournalEntryService : IJournalEntryService
         if (saveResult.IsFailure)
             return saveResult.Error;
 
-        return ToOutput(entry);
+        return await LoadDetailOrThrowAsync(entry.Id, cancellationToken);
     }
 
     public async Task<Result<JournalEntryOutput>> UpdateAsync(
@@ -328,7 +409,7 @@ internal sealed class JournalEntryService : IJournalEntryService
         if (saveResult.IsFailure)
             return saveResult.Error;
 
-        return ToOutput(entry);
+        return await LoadDetailOrThrowAsync(entry.Id, cancellationToken);
     }
 
     public async Task<Result> DeleteAsync(JournalEntryId id, CancellationToken cancellationToken)
@@ -346,25 +427,21 @@ internal sealed class JournalEntryService : IJournalEntryService
         return Result.Success;
     }
 
-    private static JournalEntryOutput ToOutput(JournalEntry entry) =>
-        new(
-            entry.Id,
-            entry.Date,
-            entry.Description,
-            entry.BankTransactionId,
-            entry.CounterpartyId,
-            [
-                .. entry.Lines.Select(l => new JournalLineOutput(
-                    l.Id,
-                    l.AccountId,
-                    l.Amount,
-                    l.ReconciliationStatus,
-                    l.Description
-                )),
-            ],
-            entry.CreatedAt,
-            entry.UpdatedAt
-        );
+    private async Task<JournalEntryOutput> LoadDetailOrThrowAsync(
+        JournalEntryId id,
+        CancellationToken cancellationToken
+    )
+    {
+        var row = await QueryDetailAsync(id, cancellationToken);
+        if (row is null)
+        {
+            throw new InvalidOperationException(
+                $"JournalEntry {id.Value} disappeared between save and re-query."
+            );
+        }
+
+        return BuildDetailOutput(row);
+    }
 
     private async Task<Result<IReadOnlyList<JournalLineDraft>>> BuildDraftsAsync(
         IReadOnlyList<CreateJournalLineInput> lines,

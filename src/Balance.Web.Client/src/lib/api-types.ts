@@ -468,6 +468,15 @@ export interface components {
             description: null | string;
             bankTransactionId: null | components["schemas"]["BankTransactionId"];
             counterpartyId: null | components["schemas"]["CounterpartyId"];
+            counterpartyName: null | string;
+            /** Format: int32 */
+            lineCount: number | string;
+            isTransfer: boolean;
+            netWorthChange: components["schemas"]["Money"];
+            grossMagnitude: components["schemas"]["Money"];
+            isSimplifiable: boolean;
+            fromLegs: components["schemas"]["JournalEntryLegSummary"][];
+            toLegs: components["schemas"]["JournalEntryLegSummary"][];
             lines: components["schemas"]["JournalLineOutput"][];
             /** Format: date-time */
             createdAt: string;
@@ -500,6 +509,7 @@ export interface components {
         JournalLineOutput: {
             id: components["schemas"]["JournalLineId"];
             accountId: components["schemas"]["AccountId"];
+            accountName: string;
             /** Format: int64 */
             amount: number | string;
             reconciliationStatus: components["schemas"]["ReconciliationStatus"];
