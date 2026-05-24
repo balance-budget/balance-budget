@@ -356,7 +356,8 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
-        CounterpartyId: unknown;
+        /** Format: uuid */
+        CounterpartyId: string;
         CounterpartyOutput: {
             id: components["schemas"]["CounterpartyId"];
             name: string;
