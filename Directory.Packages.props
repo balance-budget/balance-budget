@@ -46,7 +46,7 @@
     <PackageVersion Include="Scalar.AspNetCore" Version="2.14.14" />
     <PackageVersion Include="StronglyTypedId" Version="1.0.0-beta08" />
     <PackageVersion Include="TUnit" Version="1.44.39" />
-    <PackageVersion Include="TUnit.AspNetCore" Version="1.44.39" />
+    <PackageVersion Include="TUnit.AspNetCore" Version="1.45.29" />
     <PackageVersion Include="TUnit.Mocks" Version="1.44.39" />
   </ItemGroup>
 </Project>
