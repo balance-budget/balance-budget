@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { Empty } from '../components/Empty';
+import { BankImports } from '../screens/BankImports';
 
 export const Route = createFileRoute('/bank-imports')({
-    component: () => <Empty title="Bank imports" />,
+    component: BankImports,
     staticData: { title: 'Bank imports' },
 });
