@@ -38,6 +38,7 @@ public static class ErrorCodes
     public const string ImportCurrencyMismatch = "import.currency_mismatch";
     public const string ImportBankAccountNotOwned = "import.bank_account_not_owned";
     public const string ImportFormatInvalid = "import.format_invalid";
+    public const string ImportConcurrentConflict = "import.concurrent_conflict";
 
     // Currency
     public const string CurrencyExists = "currency.exists";

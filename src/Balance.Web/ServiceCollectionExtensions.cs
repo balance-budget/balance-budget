@@ -5,6 +5,7 @@ using Balance.Configuration.Options;
 using Balance.Data;
 using Balance.Web.OpenApi;
 using FluentValidation;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.HttpOverrides;
 using IPNetwork = System.Net.IPNetwork;
 
@@ -47,6 +48,13 @@ internal static class ServiceCollectionExtensions
         {
             options.LowercaseQueryStrings = true;
             options.LowercaseUrls = true;
+        });
+
+        // 5 MB cap covers ING current-account CSVs (kilobytes in practice) with headroom; the
+        // only multipart endpoint today is POST /api/bank-accounts/{id}/imports.
+        services.Configure<FormOptions>(options =>
+        {
+            options.MultipartBodyLengthLimit = 5L * 1024 * 1024;
         });
 
         var reverseProxyOptions = configuration.GetSection<ReverseProxyOptions>();

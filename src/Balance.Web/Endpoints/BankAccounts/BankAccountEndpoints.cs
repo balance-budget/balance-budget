@@ -33,6 +33,12 @@ internal static class BankAccountEndpoints
             )
             .WithName("UpdateBankAccount");
         group.MapDelete("/{id}", DeleteAsync).WithName("DeleteBankAccount");
+        // Multipart upload — antiforgery is auto-required for IFormFile bindings; we opt out
+        // because the v1 auth/antiforgery posture is dormant (matches JSON POST endpoints).
+        group
+            .MapPost("/{id}/imports", ImportStatementAsync)
+            .DisableAntiforgery()
+            .WithName("ImportBankAccountStatement");
     }
 
     private static async Task<Ok<IReadOnlyList<BankAccountOutput>>> ListAsync(
@@ -84,6 +90,33 @@ internal static class BankAccountEndpoints
             cancellationToken
         );
         return result.ToCreatedAt(PathPrefix, v => v.Id.Value);
+    }
+
+    private static async Task<
+        Results<
+            Ok<ImportResult>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > ImportStatementAsync(
+        [FromRoute] BankAccountId id,
+        IFormFile file,
+        [FromServices] IBankTransactionImportService importService,
+        CancellationToken cancellationToken
+    )
+    {
+        if (file.Length == 0)
+        {
+            return TypedResults.ValidationProblem(
+                new Dictionary<string, string[]> { ["file"] = ["File must not be empty."] }
+            );
+        }
+
+        await using var stream = file.OpenReadStream();
+        var result = await importService.ImportAsync(id, stream, cancellationToken);
+        return result.ToOk();
     }
 
     private static async Task<
