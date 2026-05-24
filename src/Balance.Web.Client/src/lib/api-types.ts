@@ -33,6 +33,7 @@ export interface paths {
         delete: operations["DeleteCurrency"];
         options?: never;
         head?: never;
+        /** @description Applies a JSON Patch (RFC 6902) document. The patchable surface is described by `UpdateCurrencyInput`. The `path` enum lists the top-level patchable properties only; dictionary-valued properties (e.g. keyed line items) accept child paths like `/lines/{key}/description` at runtime but are not enumerated here. Consumers' codegen will not narrow those. */
         patch: operations["UpdateCurrency"];
         trace?: never;
     };
@@ -65,7 +66,7 @@ export interface paths {
         delete: operations["DeleteAccount"];
         options?: never;
         head?: never;
-        /** @description Applies a JSON Patch (RFC 6902) document. The patchable surface is described by `UpdateAccountInput`. */
+        /** @description Applies a JSON Patch (RFC 6902) document. The patchable surface is described by `UpdateAccountInput`. The `path` enum lists the top-level patchable properties only; dictionary-valued properties (e.g. keyed line items) accept child paths like `/lines/{key}/description` at runtime but are not enumerated here. Consumers' codegen will not narrow those. */
         patch: operations["UpdateAccount"];
         trace?: never;
     };
@@ -130,7 +131,7 @@ export interface paths {
         delete: operations["DeleteCounterparty"];
         options?: never;
         head?: never;
-        /** @description Applies a JSON Patch (RFC 6902) document. The patchable surface is described by `UpdateCounterpartyInput`. */
+        /** @description Applies a JSON Patch (RFC 6902) document. The patchable surface is described by `UpdateCounterpartyInput`. The `path` enum lists the top-level patchable properties only; dictionary-valued properties (e.g. keyed line items) accept child paths like `/lines/{key}/description` at runtime but are not enumerated here. Consumers' codegen will not narrow those. */
         patch: operations["UpdateCounterparty"];
         trace?: never;
     };
@@ -163,8 +164,24 @@ export interface paths {
         delete: operations["DeleteBankAccount"];
         options?: never;
         head?: never;
-        /** @description Applies a JSON Patch (RFC 6902) document. The patchable surface is described by `UpdateBankAccountInput`. */
+        /** @description Applies a JSON Patch (RFC 6902) document. The patchable surface is described by `UpdateBankAccountInput`. The `path` enum lists the top-level patchable properties only; dictionary-valued properties (e.g. keyed line items) accept child paths like `/lines/{key}/description` at runtime but are not enumerated here. Consumers' codegen will not narrow those. */
         patch: operations["UpdateBankAccount"];
+        trace?: never;
+    };
+    "/api/bank-accounts/{id}/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ImportBankAccountStatement"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/bank-transactions": {
@@ -228,7 +245,7 @@ export interface paths {
         delete: operations["DeleteJournalEntry"];
         options?: never;
         head?: never;
-        /** @description Applies a JSON Patch (RFC 6902) document. The patchable surface is described by `UpdateJournalEntryInput`. */
+        /** @description Applies a JSON Patch (RFC 6902) document. The patchable surface is described by `UpdateJournalEntryInput`. The `path` enum lists the top-level patchable properties only; dictionary-valued properties (e.g. keyed line items) accept child paths like `/lines/{key}/description` at runtime but are not enumerated here. Consumers' codegen will not narrow those. */
         patch: operations["UpdateJournalEntry"];
         trace?: never;
     };
@@ -331,6 +348,9 @@ export interface components {
             /** Format: date */
             bookingDate: string;
             money: components["schemas"]["Money"];
+            description: string;
+            counterpartyName: null | string;
+            counterpartyAccountNumber: null | string;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -367,6 +387,9 @@ export interface components {
             /** Format: int64 */
             amount: number | string;
             currencyCode: components["schemas"]["CurrencyCode"];
+            description: string;
+            counterpartyName: null | string;
+            counterpartyAccountNumber: null | string;
         };
         CreateCounterpartyRequest: {
             name: string;
@@ -411,6 +434,25 @@ export interface components {
             /** Format: date */
             periodEnd: string;
             currencyCode: components["schemas"]["CurrencyCode"];
+        };
+        HttpValidationProblemDetails: {
+            type?: null | string;
+            title?: null | string;
+            /** Format: int32 */
+            status?: null | number | string;
+            detail?: null | string;
+            instance?: null | string;
+            errors?: {
+                [key: string]: string[];
+            };
+        };
+        /** Format: binary */
+        IFormFile: string;
+        ImportResult: {
+            /** Format: int32 */
+            imported: number | string;
+            /** Format: int32 */
+            skippedAsDuplicate: number | string;
         };
         /** Format: uuid */
         JournalEntryId: string;
@@ -506,6 +548,24 @@ export interface components {
             /** @enum {string} */
             path: "/name";
         })[];
+        JsonPatchDocumentOfUpdateCurrencyInput: ({
+            /** @enum {string} */
+            op: "add" | "replace" | "test";
+            /** @enum {string} */
+            path: "/name" | "/symbol";
+            value: unknown;
+        } | {
+            /** @enum {string} */
+            op: "move" | "copy";
+            /** @enum {string} */
+            path: "/name" | "/symbol";
+            from: string;
+        } | {
+            /** @enum {string} */
+            op: "remove";
+            /** @enum {string} */
+            path: "/name" | "/symbol";
+        })[];
         JsonPatchDocumentOfUpdateJournalEntryInput: ({
             /** @enum {string} */
             op: "add" | "replace" | "test";
@@ -529,6 +589,14 @@ export interface components {
             amount?: number | string;
             currencyCode?: components["schemas"]["CurrencyCode"];
             isZero?: boolean;
+        };
+        ProblemDetails: {
+            type?: null | string;
+            title?: null | string;
+            /** Format: int32 */
+            status?: null | number | string;
+            detail?: null | string;
+            instance?: null | string;
         };
         /** @enum {unknown} */
         ReconciliationStatus: "Uncleared" | "Cleared" | "Reconciled";
@@ -577,9 +645,9 @@ export interface components {
         UpdateCounterpartyInput: {
             name: string;
         };
-        UpdateCurrencyRequest: {
-            name: null | string;
-            symbol: null | string;
+        UpdateCurrencyInput: {
+            name: string;
+            symbol?: null | string;
         };
         UpdateJournalEntryInput: {
             /** Format: date */
@@ -619,73 +687,6 @@ export interface operations {
                     "application/json": components["schemas"]["CurrencyOutput"][];
                 };
             };
-            /** @description Validation failed */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
-                };
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
-                };
-            };
-            /** @description Domain invariant violated */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
-                };
-            };
         };
     };
     CreateCurrency: {
@@ -710,39 +711,22 @@ export interface operations {
                     "application/json": components["schemas"]["CurrencyOutput"];
                 };
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
-            /** @description Not found */
+            /** @description Not Found */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -751,30 +735,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description Domain invariant violated */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -799,23 +769,13 @@ export interface operations {
                     "application/json": components["schemas"]["CurrencyOutput"];
                 };
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
             /** @description Not Found */
@@ -823,38 +783,8 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
-                };
-            };
-            /** @description Domain invariant violated */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -877,39 +807,22 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
-            /** @description Not found */
+            /** @description Not Found */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -918,30 +831,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description Domain invariant violated */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -950,14 +849,12 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                code: components["schemas"]["CurrencyCode"];
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpdateCurrencyRequest"];
+                "application/json-patch+json": components["schemas"]["JsonPatchDocumentOfUpdateCurrencyInput"];
             };
         };
         responses: {
@@ -970,39 +867,22 @@ export interface operations {
                     "application/json": components["schemas"]["CurrencyOutput"];
                 };
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
-            /** @description Not found */
+            /** @description Not Found */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -1011,30 +891,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description Domain invariant violated */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -1055,73 +921,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AccountOutput"][];
-                };
-            };
-            /** @description Validation failed */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
-                };
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
-                };
-            };
-            /** @description Domain invariant violated */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
                 };
             };
         };
@@ -1148,39 +947,22 @@ export interface operations {
                     "application/json": components["schemas"]["AccountOutput"];
                 };
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
-            /** @description Not found */
+            /** @description Not Found */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -1189,30 +971,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description Domain invariant violated */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -1237,23 +1005,13 @@ export interface operations {
                     "application/json": components["schemas"]["AccountOutput"];
                 };
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
             /** @description Not Found */
@@ -1261,38 +1019,8 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
-                };
-            };
-            /** @description Domain invariant violated */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -1315,39 +1043,22 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
-            /** @description Not found */
+            /** @description Not Found */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -1356,30 +1067,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description Domain invariant violated */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -1388,9 +1085,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                id: components["schemas"]["AccountId"];
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
@@ -1408,23 +1103,13 @@ export interface operations {
                     "application/json": components["schemas"]["AccountOutput"];
                 };
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
             /** @description Not Found */
@@ -1432,7 +1117,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
             };
             /** @description Conflict */
             409: {
@@ -1440,30 +1127,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description Domain invariant violated */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -1488,23 +1161,13 @@ export interface operations {
                     "application/json": components["schemas"]["Money"];
                 };
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
             /** @description Not Found */
@@ -1512,38 +1175,8 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
-                };
-            };
-            /** @description Domain invariant violated */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -1571,23 +1204,13 @@ export interface operations {
                     "application/json": components["schemas"]["RegisterRowOutput"][];
                 };
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
             /** @description Not Found */
@@ -1595,38 +1218,8 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
-                };
-            };
-            /** @description Domain invariant violated */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -1647,73 +1240,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CounterpartyOutput"][];
-                };
-            };
-            /** @description Validation failed */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
-                };
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
-                };
-            };
-            /** @description Domain invariant violated */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
                 };
             };
         };
@@ -1740,39 +1266,22 @@ export interface operations {
                     "application/json": components["schemas"]["CounterpartyOutput"];
                 };
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
-            /** @description Not found */
+            /** @description Not Found */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -1781,30 +1290,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description Domain invariant violated */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -1829,23 +1324,13 @@ export interface operations {
                     "application/json": components["schemas"]["CounterpartyOutput"];
                 };
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
             /** @description Not Found */
@@ -1853,38 +1338,8 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
-                };
-            };
-            /** @description Domain invariant violated */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -1907,39 +1362,22 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
-            /** @description Not found */
+            /** @description Not Found */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -1948,30 +1386,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description Domain invariant violated */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -1980,9 +1404,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                id: components["schemas"]["CounterpartyId"];
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
@@ -2000,23 +1422,13 @@ export interface operations {
                     "application/json": components["schemas"]["CounterpartyOutput"];
                 };
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
             /** @description Not Found */
@@ -2024,7 +1436,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
             };
             /** @description Conflict */
             409: {
@@ -2032,30 +1446,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description Domain invariant violated */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -2076,73 +1476,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BankAccountOutput"][];
-                };
-            };
-            /** @description Validation failed */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
-                };
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
-                };
-            };
-            /** @description Domain invariant violated */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
                 };
             };
         };
@@ -2169,39 +1502,22 @@ export interface operations {
                     "application/json": components["schemas"]["BankAccountOutput"];
                 };
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
-            /** @description Not found */
+            /** @description Not Found */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -2210,30 +1526,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description Domain invariant violated */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -2258,23 +1560,13 @@ export interface operations {
                     "application/json": components["schemas"]["BankAccountOutput"];
                 };
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
             /** @description Not Found */
@@ -2282,38 +1574,8 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
-                };
-            };
-            /** @description Domain invariant violated */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -2336,39 +1598,22 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
-            /** @description Not found */
+            /** @description Not Found */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -2377,30 +1622,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description Domain invariant violated */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -2409,9 +1640,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                id: components["schemas"]["BankAccountId"];
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
@@ -2429,23 +1658,13 @@ export interface operations {
                     "application/json": components["schemas"]["BankAccountOutput"];
                 };
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
             /** @description Not Found */
@@ -2453,7 +1672,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
             };
             /** @description Conflict */
             409: {
@@ -2461,30 +1682,80 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description Domain invariant violated */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ImportBankAccountStatement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["BankAccountId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    file: components["schemas"]["IFormFile"];
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResult"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -2505,73 +1776,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BankTransactionOutput"][];
-                };
-            };
-            /** @description Validation failed */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
-                };
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
-                };
-            };
-            /** @description Domain invariant violated */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
                 };
             };
         };
@@ -2598,39 +1802,22 @@ export interface operations {
                     "application/json": components["schemas"]["BankTransactionOutput"];
                 };
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
-            /** @description Not found */
+            /** @description Not Found */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -2639,30 +1826,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description Domain invariant violated */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -2687,23 +1860,13 @@ export interface operations {
                     "application/json": components["schemas"]["BankTransactionOutput"];
                 };
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
             /** @description Not Found */
@@ -2711,38 +1874,8 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
-                };
-            };
-            /** @description Domain invariant violated */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -2765,39 +1898,22 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
-            /** @description Not found */
+            /** @description Not Found */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -2806,30 +1922,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description Domain invariant violated */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -2853,73 +1955,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["JournalEntryOutput"][];
-                };
-            };
-            /** @description Validation failed */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
-                };
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
-                };
-            };
-            /** @description Domain invariant violated */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
                 };
             };
         };
@@ -2946,39 +1981,22 @@ export interface operations {
                     "application/json": components["schemas"]["JournalEntryOutput"];
                 };
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
-            /** @description Not found */
+            /** @description Not Found */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -2987,30 +2005,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description Domain invariant violated */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -3035,23 +2039,13 @@ export interface operations {
                     "application/json": components["schemas"]["JournalEntryOutput"];
                 };
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
             /** @description Not Found */
@@ -3059,38 +2053,8 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
-                };
-            };
-            /** @description Domain invariant violated */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -3113,39 +2077,22 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
-            /** @description Not found */
+            /** @description Not Found */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -3154,30 +2101,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description Domain invariant violated */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -3186,9 +2119,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                id: components["schemas"]["JournalEntryId"];
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
@@ -3206,23 +2137,13 @@ export interface operations {
                     "application/json": components["schemas"]["JournalEntryOutput"];
                 };
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
             /** @description Not Found */
@@ -3230,7 +2151,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
             };
             /** @description Conflict */
             409: {
@@ -3238,30 +2161,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description Domain invariant violated */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -3269,7 +2178,7 @@ export interface operations {
     GetDashboardSummary: {
         parameters: {
             query?: {
-                currency?: string;
+                currency?: components["schemas"]["CurrencyCode"];
             };
             header?: never;
             path?: never;
@@ -3286,39 +2195,22 @@ export interface operations {
                     "application/json": components["schemas"]["DashboardSummaryOutput"];
                 };
             };
-            /** @description Validation failed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                        errors?: {
-                            [key: string]: string[];
-                        };
-                    };
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
-            /** @description Not found */
+            /** @description Not Found */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -3327,30 +2219,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description Domain invariant violated */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -3358,8 +2236,8 @@ export interface operations {
     GetAccountBalanceTrend: {
         parameters: {
             query?: {
-                range?: string;
-                currency?: string;
+                range?: components["schemas"]["TrendRange"];
+                currency?: components["schemas"]["CurrencyCode"];
             };
             header?: never;
             path?: never;
@@ -3382,23 +2260,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": string;
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
-            /** @description Not found */
+            /** @description Not Found */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -3407,30 +2278,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description Domain invariant violated */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": {
-                        type?: null | string;
-                        title?: null | string;
-                        /** Format: int32 */
-                        status?: null | number | string;
-                        detail?: null | string;
-                        instance?: null | string;
-                    };
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
