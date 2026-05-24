@@ -72,12 +72,7 @@ function toRegisterRow(wire: WireRegisterRow): RegisterRow {
         journalLineId: asJournalLineId(wire.journalLineId),
         date: wire.date,
         entryDescription: wire.entryDescription,
-        // CounterpartyId is typed as `unknown` by openapi-typescript (the OpenAPI
-        // schema emits the typed-id as a bare `unknown` until the transformer
-        // covers nullable references). Coerce here at the boundary.
-        counterpartyId: wire.counterpartyId
-            ? asCounterpartyId(wire.counterpartyId as string)
-            : null,
+        counterpartyId: wire.counterpartyId ? asCounterpartyId(wire.counterpartyId) : null,
         counterpartyName: wire.counterpartyName,
         lineDescription: wire.lineDescription,
         reconciliationStatus: wire.reconciliationStatus,

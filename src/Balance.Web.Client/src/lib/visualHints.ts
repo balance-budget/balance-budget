@@ -13,22 +13,38 @@ const ICON_BY_TYPE: Record<AccountType, string> = {
     Expense: 'shopping-cart',
 };
 
-const PALETTE_BY_TYPE: Record<AccountType, readonly string[]> = {
-    Asset: ['var(--color-cat-transport)', 'var(--color-cat-savings)'],
-    Liability: ['var(--color-cat-shopping)', 'var(--color-cat-bills)'],
-    Equity: ['var(--color-cat-housing)'],
-    Income: ['var(--color-cat-entertain)'],
-    Expense: [
-        'var(--color-cat-food)',
-        'var(--color-cat-bills)',
-        'var(--color-cat-shopping)',
-        'var(--color-cat-housing)',
-        'var(--color-cat-transport)',
-    ],
+// One accent per AccountType — accounts no longer get per-instance tints, so
+// the list / sidebar / dashboard read as type-grouped at a glance.
+const ACCENT_BY_TYPE: Record<AccountType, string> = {
+    Asset: 'var(--color-cat-transport)',
+    Liability: 'var(--color-cat-shopping)',
+    Equity: 'var(--color-cat-housing)',
+    Income: 'var(--color-cat-entertain)',
+    Expense: 'var(--color-cat-food)',
 };
 
-// FNV-1a 32-bit. Deterministic and dependency-free; only used to pick a palette
-// slot so collisions are harmless beyond two accounts sharing a tint.
+export function visualHintFor(accountType: AccountType): VisualHint {
+    return {
+        accentColor: ACCENT_BY_TYPE[accountType],
+        iconName: ICON_BY_TYPE[accountType],
+    };
+}
+
+// Charts need lines that read as distinct even when all accounts share an
+// AccountType. Pick deterministically from a wider category palette by hashing
+// the account id, independent of the type-level avatar accent.
+const CHART_PALETTE: readonly string[] = [
+    'var(--color-cat-transport)',
+    'var(--color-cat-savings)',
+    'var(--color-cat-housing)',
+    'var(--color-cat-entertain)',
+    'var(--color-cat-food)',
+    'var(--color-cat-bills)',
+    'var(--color-cat-shopping)',
+];
+
+// FNV-1a 32-bit. Deterministic and dependency-free; collisions are harmless
+// beyond two trend lines sharing a colour.
 function hashId(id: string): number {
     let hash = 2166136261;
     for (let i = 0; i < id.length; i++) {
@@ -38,15 +54,8 @@ function hashId(id: string): number {
     return hash;
 }
 
-const FALLBACK_ACCENT = 'var(--color-fg-3)';
-
-export function visualHintFor(accountType: AccountType, id: AccountId): VisualHint {
-    const palette = PALETTE_BY_TYPE[accountType];
-    // Every PALETTE_BY_TYPE entry has at least one colour, so the modulo
-    // lookup always hits — fallback keeps noUncheckedIndexedAccess honest.
-    const accentColor = palette[hashId(id) % palette.length] ?? FALLBACK_ACCENT;
-    return {
-        accentColor,
-        iconName: ICON_BY_TYPE[accountType],
-    };
+export function chartColorFor(id: AccountId): string {
+    // Palette is non-empty by construction, so the modulo lookup always hits;
+    // the fallback only exists to keep noUncheckedIndexedAccess honest.
+    return CHART_PALETTE[hashId(id) % CHART_PALETTE.length] ?? 'var(--color-fg-3)';
 }

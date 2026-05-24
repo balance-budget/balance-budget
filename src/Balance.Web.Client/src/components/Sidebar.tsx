@@ -2,13 +2,13 @@ import type { ReactNode } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
 import logo from '../assets/logo.svg';
 import { Icon } from './Icon';
-import { lastFourIdentifier, useAccounts, type Account } from '../api/accounts';
+import { accountIdentifier, useAccounts, type Account } from '../api/accounts';
 import { useCurrencyCatalog } from '../api/currencies';
 import { AccountAvatar } from './AccountAvatar';
 import { Skeleton } from './Skeleton';
 import { ErrorState } from './ErrorState';
 import { cx } from '../lib/cx';
-import { isCategoryAccount, isLedgerAccount } from '../lib/domain';
+import { isLedgerAccount } from '../lib/domain';
 import { formatMoney } from '../lib/money';
 
 function SectionLabel({ children }: { children: ReactNode }) {
@@ -82,14 +82,21 @@ function NavGroup({
 
 function AccountRow({ account }: { account: Account }) {
     const catalog = useCurrencyCatalog();
-    const tail = lastFourIdentifier(account);
+    const identifier = accountIdentifier(account);
     const isNegative = account.balance.amount < 0;
     return (
-        <div className="flex items-center gap-3 px-3 py-2 rounded-sm">
+        <Link
+            to="/accounts/$id"
+            params={{ id: account.id }}
+            className="flex items-center gap-3 px-3 py-2 rounded-sm text-fg-1 hover:bg-surface-2 transition-colors"
+            activeProps={{ className: 'bg-brand-primary-soft text-brand-primary' }}
+        >
             <AccountAvatar account={account} />
             <div className="flex-1 min-w-0 flex flex-col leading-tight">
-                <span className="truncate text-[13px] text-fg-1">{account.name}</span>
-                {tail && <span className="text-[11px] text-fg-3 truncate">{tail}</span>}
+                <span className="truncate text-[13px]">{account.name}</span>
+                {identifier && (
+                    <span className="text-[11px] text-fg-3 truncate tabular">{identifier}</span>
+                )}
             </div>
             <span
                 className={cx(
@@ -101,7 +108,7 @@ function AccountRow({ account }: { account: Account }) {
                     decimals: false,
                 })}
             </span>
-        </div>
+        </Link>
     );
 }
 
@@ -145,9 +152,14 @@ function AccountsGroup() {
     }
 
     const ledgerAccounts = data.filter(isLedgerAccount);
-    const categoryAccounts = data.filter(isCategoryAccount);
+    const incomeAccounts = data.filter(a => a.type === 'Income');
+    const expenseAccounts = data.filter(a => a.type === 'Expense');
 
-    if (ledgerAccounts.length === 0 && categoryAccounts.length === 0) {
+    if (
+        ledgerAccounts.length === 0 &&
+        incomeAccounts.length === 0 &&
+        expenseAccounts.length === 0
+    ) {
         return (
             <div className="flex flex-col gap-[2px]">
                 <SectionLabel>Accounts</SectionLabel>
@@ -159,7 +171,8 @@ function AccountsGroup() {
     return (
         <>
             <AccountSection title="Accounts" accounts={ledgerAccounts} />
-            <AccountSection title="Categories" accounts={categoryAccounts} />
+            <AccountSection title="Income" accounts={incomeAccounts} />
+            <AccountSection title="Expenses" accounts={expenseAccounts} />
         </>
     );
 }
