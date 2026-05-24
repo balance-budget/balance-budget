@@ -24,6 +24,9 @@ internal static class ServiceCollectionExtensions
         {
             options.AddOperationTransformer<JsonPatchOperationTransformer>();
             options.AddSchemaTransformer<TypedIdSchemaTransformer>();
+            // Final sweep over components.schemas — backstops typed-IDs that the
+            // per-schema pass missed (see remarks on the transformer).
+            options.AddDocumentTransformer<TypedIdSchemaTransformer>();
         });
 
         services.AddProblemDetails(options =>

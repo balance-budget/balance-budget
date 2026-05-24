@@ -53,11 +53,7 @@ function toBankAccount(wire: WireBankAccount): BankAccount {
         accountHolderName: wire.accountHolderName,
         currencyCode: wire.currencyCode,
         accountId: wire.accountId ? asAccountId(wire.accountId) : null,
-        // CounterpartyId in the generated schema is `unknown` (missing format
-        // annotation server-side); the wire value is always a GUID string.
-        counterpartyId: wire.counterpartyId
-            ? asCounterpartyId(wire.counterpartyId as string)
-            : null,
+        counterpartyId: wire.counterpartyId ? asCounterpartyId(wire.counterpartyId) : null,
     };
 }
 

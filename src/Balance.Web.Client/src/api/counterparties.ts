@@ -20,9 +20,7 @@ export const counterpartiesKeys = {
 };
 
 function toCounterparty(wire: WireCounterparty): Counterparty {
-    // CounterpartyId in the generated schema is `unknown` (missing format
-    // annotation server-side); the wire value is always a GUID string.
-    return { id: asCounterpartyId(wire.id as string), name: wire.name };
+    return { id: asCounterpartyId(wire.id), name: wire.name };
 }
 
 export function useCounterparties() {
