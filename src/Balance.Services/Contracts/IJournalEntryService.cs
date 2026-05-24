@@ -5,7 +5,7 @@ namespace Balance.Services.Contracts;
 
 public interface IJournalEntryService
 {
-    Task<IReadOnlyList<JournalEntryOutput>> ListAsync(
+    Task<IReadOnlyList<JournalEntryRowOutput>> ListAsync(
         int skip,
         int take,
         CancellationToken cancellationToken
