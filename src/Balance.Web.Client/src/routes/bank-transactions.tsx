@@ -1,20 +1,13 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { BankTransactions } from '../screens/BankTransactions';
-import type { BankTransactionFilter } from '../api/bankTransactions';
+import { BANK_TRANSACTION_FILTERS, type BankTransactionFilter } from '../api/bankTransactions';
+import { BankTransactionsInbox } from '../screens/BankTransactionsInbox';
 
 type Search = { page: number; filter: BankTransactionFilter };
 
-const FILTER_VALUES: ReadonlySet<BankTransactionFilter> = new Set<BankTransactionFilter>([
-    'Inbox',
-    'Matched',
-    'Dismissed',
-    'All',
-]);
-
-function parseFilter(raw: unknown): BankTransactionFilter {
-    return typeof raw === 'string' && FILTER_VALUES.has(raw as BankTransactionFilter)
-        ? (raw as BankTransactionFilter)
-        : 'Inbox';
+function isFilter(value: unknown): value is BankTransactionFilter {
+    return (
+        typeof value === 'string' && (BANK_TRANSACTION_FILTERS as readonly string[]).includes(value)
+    );
 }
 
 export const Route = createFileRoute('/bank-transactions')({
@@ -22,12 +15,13 @@ export const Route = createFileRoute('/bank-transactions')({
         const { page, filter } = Route.useSearch();
         const navigate = useNavigate({ from: Route.fullPath });
         return (
-            <BankTransactions
+            <BankTransactionsInbox
                 page={page}
                 filter={filter}
                 onPageChange={p => {
-                    void navigate({ search: { page: p, filter } });
+                    void navigate({ search: prev => ({ ...prev, page: p }) });
                 }}
+                // Filter changes always reset to page 1 — pagination is per-filter.
                 onFilterChange={f => {
                     void navigate({ search: { page: 1, filter: f } });
                 }}
@@ -38,6 +32,7 @@ export const Route = createFileRoute('/bank-transactions')({
     validateSearch: (raw: Record<string, unknown>): Search => {
         const candidate = Number(raw.page);
         const page = Number.isInteger(candidate) && candidate >= 1 ? candidate : 1;
-        return { page, filter: parseFilter(raw.filter) };
+        const filter = isFilter(raw.filter) ? raw.filter : 'Inbox';
+        return { page, filter };
     },
 });
