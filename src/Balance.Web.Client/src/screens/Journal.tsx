@@ -11,9 +11,9 @@ import { Skeleton } from '../components/Skeleton';
 import { cx } from '../lib/cx';
 import { type AccountId } from '../lib/domain';
 import {
-    projectJournalEntry,
+    formatLegLabel,
+    projectEntry,
     type JournalProjection,
-    type ProjectionLine,
 } from '../lib/journalProjection';
 import { formatMoney } from '../lib/money';
 
@@ -170,8 +170,8 @@ function FromToCell({
         return <span className="text-[12px] text-fg-3 truncate">Split ({lineCount} lines)</span>;
     }
 
-    const fromLabel = legLabel(projection.fromLegs);
-    const toLabel = legLabel(projection.toLegs);
+    const fromLabel = formatLegLabel(projection.fromLegs);
+    const toLabel = formatLegLabel(projection.toLegs);
 
     return (
         <span className="text-[12px] text-fg-2 truncate flex items-center gap-1">
@@ -185,13 +185,6 @@ function FromToCell({
             <span className="truncate">{toLabel}</span>
         </span>
     );
-}
-
-function legLabel(legs: JournalProjection['fromLegs']): string {
-    const first = legs[0];
-    if (!first) return '—';
-    if (legs.length === 1) return first.accountName;
-    return `${first.accountName} +${legs.length - 1}`;
 }
 
 function AmountCell({
@@ -220,24 +213,3 @@ function AmountCell({
     );
 }
 
-export function projectEntry(
-    entry: JournalEntry,
-    accountById: ReadonlyMap<AccountId, Account>,
-): JournalProjection {
-    // Every balanced entry shares a currency across all lines (the backend
-    // validator enforces this). Pick the currency off the first line's account;
-    // fall back to "XXX" for the empty-lines edge case so a Money payload is
-    // still constructable.
-    const firstLineAccount = entry.lines[0]
-        ? accountById.get(entry.lines[0].accountId)
-        : undefined;
-    const currencyCode = firstLineAccount?.currencyCode ?? 'XXX';
-    const projectionLines: ProjectionLine[] = entry.lines.map(line => ({
-        id: line.id,
-        accountId: line.accountId,
-        accountName: line.accountName,
-        accountType: accountById.get(line.accountId)?.type ?? 'Asset',
-        amount: line.amount,
-    }));
-    return projectJournalEntry(projectionLines, currencyCode);
-}

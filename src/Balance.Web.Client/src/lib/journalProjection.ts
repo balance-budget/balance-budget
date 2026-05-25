@@ -18,6 +18,8 @@
  * instead of being baked into the API response.
  */
 
+import type { Account } from '../api/accounts';
+import type { JournalEntry } from '../api/journalEntries';
 import type { AccountId, AccountType, JournalLineId } from './domain';
 import type { Money } from './money';
 
@@ -99,4 +101,40 @@ function sortLegs(accounts: ReadonlyMap<AccountId, string>): ProjectionLeg[] {
     }
     legs.sort((a, b) => (a.accountName < b.accountName ? -1 : a.accountName > b.accountName ? 1 : 0));
     return legs;
+}
+
+/**
+ * Adapter that projects a loaded `JournalEntry` for UI rendering. Currency is
+ * taken off the first line's account — balanced entries are single-currency
+ * (enforced by the backend validator) — and falls back to "XXX" so an empty
+ * entry still produces a Money payload.
+ */
+export function projectEntry(
+    entry: JournalEntry,
+    accountById: ReadonlyMap<AccountId, Account>,
+): JournalProjection {
+    const firstLineAccount = entry.lines[0]
+        ? accountById.get(entry.lines[0].accountId)
+        : undefined;
+    const currencyCode = firstLineAccount?.currencyCode ?? 'XXX';
+    const projectionLines: ProjectionLine[] = entry.lines.map(line => ({
+        id: line.id,
+        accountId: line.accountId,
+        accountName: line.accountName,
+        accountType: accountById.get(line.accountId)?.type ?? 'Asset',
+        amount: line.amount,
+    }));
+    return projectJournalEntry(projectionLines, currencyCode);
+}
+
+/**
+ * Renders the From/To label for a simplifiable projection: "—" for an empty
+ * leg, the single name when there's one account, or "{first} +{n}" when
+ * multiple accounts collapse onto one side.
+ */
+export function formatLegLabel(legs: readonly ProjectionLeg[]): string {
+    const first = legs[0];
+    if (!first) return '—';
+    if (legs.length === 1) return first.accountName;
+    return `${first.accountName} +${legs.length - 1}`;
 }
