@@ -6,15 +6,10 @@ import {
     simpleToAdvanced,
     tryAdvancedToSimple,
     type AdvancedLine,
-    type SimpleLeg,
 } from './journalNew.state';
 
 const A = asAccountId('11111111-1111-1111-1111-111111111111');
 const B = asAccountId('22222222-2222-2222-2222-222222222222');
-
-function leg(amount: string, accountId = A): SimpleLeg {
-    return { ...emptySimpleLeg(), amount, accountId };
-}
 
 function line(partial: Partial<AdvancedLine> = {}): AdvancedLine {
     return { ...emptyAdvancedLine(), ...partial };
@@ -91,7 +86,3 @@ describe('emptyAdvancedLine and emptySimpleLeg', () => {
         expect(c.id).not.toBe(d.id);
     });
 });
-
-// Helper to silence unused-import warnings for the `leg` helper above when no
-// test currently references it. (kept for symmetry with `line`).
-void leg;
