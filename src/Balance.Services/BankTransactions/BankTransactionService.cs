@@ -26,11 +26,39 @@ internal sealed class BankTransactionService : IBankTransactionService
     }
 
     public async Task<IReadOnlyList<BankTransactionOutput>> ListAsync(
+        int skip,
+        int take,
+        BankTransactionListFilter filter,
         CancellationToken cancellationToken
-    ) =>
-        await _dbContext
-            .BankTransactions.OrderByDescending(b => b.BookingDate)
-            .ThenBy(b => b.CreatedAt)
+    )
+    {
+        var query = _dbContext.BankTransactions.AsNoTracking().AsQueryable();
+
+        query = filter switch
+        {
+            BankTransactionListFilter.Inbox => query
+                .Where(b =>
+                    b.DismissedAt == null
+                    && !_dbContext.JournalEntries.Any(j => j.BankTransactionId == b.Id)
+                )
+                .OrderBy(b => b.BookingDate)
+                .ThenBy(b => b.CreatedAt),
+            BankTransactionListFilter.Matched => query
+                .Where(b => _dbContext.JournalEntries.Any(j => j.BankTransactionId == b.Id))
+                .OrderByDescending(b => b.BookingDate)
+                .ThenByDescending(b => b.CreatedAt),
+            BankTransactionListFilter.Dismissed => query
+                .Where(b => b.DismissedAt != null)
+                .OrderByDescending(b => b.DismissedAt),
+            BankTransactionListFilter.All => query
+                .OrderByDescending(b => b.BookingDate)
+                .ThenByDescending(b => b.CreatedAt),
+            _ => throw new ArgumentOutOfRangeException(nameof(filter), filter, null),
+        };
+
+        return await query
+            .Skip(skip)
+            .Take(take)
             .Select(b => new BankTransactionOutput(
                 b.Id,
                 b.BankAccountId,
@@ -39,12 +67,17 @@ internal sealed class BankTransactionService : IBankTransactionService
                 b.Description,
                 b.CounterpartyName,
                 b.CounterpartyAccountNumber,
+                _dbContext
+                    .JournalEntries.Where(j => j.BankTransactionId == b.Id)
+                    .Select(j => (JournalEntryId?)j.Id)
+                    .FirstOrDefault(),
                 b.DismissedAt,
                 b.DismissedReason,
                 b.CreatedAt,
                 b.UpdatedAt
             ))
             .ToListAsync(cancellationToken);
+    }
 
     public async Task<Result<BankTransactionOutput>> GetAsync(
         BankTransactionId id,
@@ -61,6 +94,10 @@ internal sealed class BankTransactionService : IBankTransactionService
                 b.Description,
                 b.CounterpartyName,
                 b.CounterpartyAccountNumber,
+                _dbContext
+                    .JournalEntries.Where(j => j.BankTransactionId == b.Id)
+                    .Select(j => (JournalEntryId?)j.Id)
+                    .FirstOrDefault(),
                 b.DismissedAt,
                 b.DismissedReason,
                 b.CreatedAt,
@@ -132,7 +169,7 @@ internal sealed class BankTransactionService : IBankTransactionService
         if (saveResult.IsFailure)
             return saveResult.Error;
 
-        return ToOutput(bankTransaction);
+        return ToOutputNoMatch(bankTransaction);
     }
 
     private static string BuildManualRawSource(CreateBankTransactionInput input) =>
@@ -219,7 +256,7 @@ internal sealed class BankTransactionService : IBankTransactionService
         if (saveResult.IsFailure)
             return saveResult.Error;
 
-        return ToOutput(bankTransaction);
+        return ToOutputNoMatch(bankTransaction);
     }
 
     public async Task<Result<BankTransactionOutput>> UndismissAsync(
@@ -252,10 +289,10 @@ internal sealed class BankTransactionService : IBankTransactionService
         if (saveResult.IsFailure)
             return saveResult.Error;
 
-        return ToOutput(bankTransaction);
+        return ToOutputNoMatch(bankTransaction);
     }
 
-    private static BankTransactionOutput ToOutput(BankTransaction bankTransaction) =>
+    private static BankTransactionOutput ToOutputNoMatch(BankTransaction bankTransaction) =>
         new(
             bankTransaction.Id,
             bankTransaction.BankAccountId,
@@ -264,6 +301,7 @@ internal sealed class BankTransactionService : IBankTransactionService
             bankTransaction.Description,
             bankTransaction.CounterpartyName,
             bankTransaction.CounterpartyAccountNumber,
+            null,
             bankTransaction.DismissedAt,
             bankTransaction.DismissedReason,
             bankTransaction.CreatedAt,

@@ -11,6 +11,7 @@ public sealed record BankTransactionOutput(
     string Description,
     string? CounterpartyName,
     string? CounterpartyAccountNumber,
+    JournalEntryId? JournalEntryId,
     DateTime? DismissedAt,
     string? DismissedReason,
     DateTime CreatedAt,

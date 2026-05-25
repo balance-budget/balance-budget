@@ -4,7 +4,12 @@ namespace Balance.Services.Contracts;
 
 public interface IBankTransactionService
 {
-    Task<IReadOnlyList<BankTransactionOutput>> ListAsync(CancellationToken cancellationToken);
+    Task<IReadOnlyList<BankTransactionOutput>> ListAsync(
+        int skip,
+        int take,
+        BankTransactionListFilter filter,
+        CancellationToken cancellationToken
+    );
 
     Task<Result<BankTransactionOutput>> GetAsync(
         BankTransactionId id,
