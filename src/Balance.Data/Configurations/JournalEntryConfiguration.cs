@@ -54,6 +54,8 @@ internal sealed class JournalEntryConfiguration : IEntityTypeConfiguration<Journ
         builder.HasIndex(e => e.Date).HasDatabaseName("IX_JournalEntries_Date");
         builder
             .HasIndex(e => e.BankTransactionId)
+            .IsUnique()
+            .HasFilter("\"BankTransactionId\" IS NOT NULL")
             .HasDatabaseName("IX_JournalEntries_BankTransactionId");
         builder.HasIndex(e => e.CounterpartyId).HasDatabaseName("IX_JournalEntries_CounterpartyId");
     }
