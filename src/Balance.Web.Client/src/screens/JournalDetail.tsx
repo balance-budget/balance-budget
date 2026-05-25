@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
+import { useAccounts, type Account } from '../api/accounts';
 import {
     toUpdateInput,
     useDeleteJournalEntry,
@@ -20,8 +21,13 @@ import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { cx } from '../lib/cx';
-import { asCounterpartyId, type JournalEntryId } from '../lib/domain';
+import { asCounterpartyId, type AccountId, type JournalEntryId } from '../lib/domain';
 import { ApiError } from '../lib/http';
+import {
+    formatLegLabel,
+    projectEntry,
+    type JournalProjection,
+} from '../lib/journalProjection';
 import { formatMoney } from '../lib/money';
 
 type DraftLine = { id: string; description: string };
@@ -43,8 +49,14 @@ function toDraft(entry: JournalEntry): Draft {
 
 export function JournalDetail({ id }: { id: JournalEntryId }) {
     const query = useJournalEntry(id);
+    const accounts = useAccounts();
     const [editing, setEditing] = useState(false);
     const [deleting, setDeleting] = useState(false);
+
+    const accountById = useMemo(
+        () => new Map<AccountId, Account>((accounts.data ?? []).map(a => [a.id, a])),
+        [accounts.data],
+    );
 
     if (query.isPending) {
         return (
@@ -67,11 +79,13 @@ export function JournalDetail({ id }: { id: JournalEntryId }) {
     }
 
     const entry = query.data;
+    const projection = projectEntry(entry, accountById);
 
     if (editing) {
         return (
             <EditJournalEntry
                 entry={entry}
+                projection={projection}
                 onCancel={() => {
                     setEditing(false);
                 }}
@@ -87,6 +101,7 @@ export function JournalDetail({ id }: { id: JournalEntryId }) {
             <Panel>
                 <DetailHeader
                     entry={entry}
+                    projection={projection}
                     onEdit={() => {
                         setEditing(true);
                     }}
@@ -101,7 +116,7 @@ export function JournalDetail({ id }: { id: JournalEntryId }) {
                     title="Lines"
                     subtitle="Double-entry detail. Edit the entry to change line descriptions."
                 />
-                <LineTable entry={entry} />
+                <LineTable entry={entry} projection={projection} />
             </Panel>
 
             {deleting && (
@@ -118,10 +133,12 @@ export function JournalDetail({ id }: { id: JournalEntryId }) {
 
 function DetailHeader({
     entry,
+    projection,
     onEdit,
     onDelete,
 }: {
     entry: JournalEntry;
+    projection: JournalProjection;
     onEdit: () => void;
     onDelete: () => void;
 }) {
@@ -152,10 +169,10 @@ function DetailHeader({
                     {entry.date}
                     {entry.counterpartyName && entry.description ? ` · ${entry.description}` : ''}
                 </span>
-                <FromToSummary entry={entry} />
+                <FromToSummary projection={projection} lineCount={entry.lines.length} />
             </div>
             <div className="flex items-center gap-3 shrink-0">
-                <HeaderAmount entry={entry} />
+                <HeaderAmount projection={projection} />
                 <div className="flex items-center gap-2">
                     <button
                         type="button"
@@ -179,17 +196,23 @@ function DetailHeader({
     );
 }
 
-function FromToSummary({ entry }: { entry: JournalEntry }) {
-    if (!entry.isSimplifiable) {
+function FromToSummary({
+    projection,
+    lineCount,
+}: {
+    projection: JournalProjection;
+    lineCount: number;
+}) {
+    if (!projection.isSimplifiable) {
         return (
             <span className="text-[12px] text-fg-2 mt-1">
-                Split ({entry.lineCount.toLocaleString('en-US')} lines)
+                Split ({lineCount.toLocaleString('en-US')} lines)
             </span>
         );
     }
 
-    const from = legLabel(entry.fromLegs);
-    const to = legLabel(entry.toLegs);
+    const from = formatLegLabel(projection.fromLegs);
+    const to = formatLegLabel(projection.toLegs);
 
     return (
         <span className="text-[12px] text-fg-2 mt-1 inline-flex items-center gap-1">
@@ -200,18 +223,11 @@ function FromToSummary({ entry }: { entry: JournalEntry }) {
     );
 }
 
-function legLabel(legs: JournalEntry['fromLegs']): string {
-    const first = legs[0];
-    if (!first) return '—';
-    if (legs.length === 1) return first.accountName;
-    return `${first.accountName} +${legs.length - 1}`;
-}
-
-function HeaderAmount({ entry }: { entry: JournalEntry }) {
+function HeaderAmount({ projection }: { projection: JournalProjection }) {
     // ADR-0012: transfers render unsigned magnitude, muted; operating entries
     // render the signed net-worth change with colour by sign.
-    const money = entry.isTransfer ? entry.grossMagnitude : entry.netWorthChange;
-    const colour = entry.isTransfer
+    const money = projection.isTransfer ? projection.grossMagnitude : projection.netWorthChange;
+    const colour = projection.isTransfer
         ? 'text-fg-3'
         : money.amount < 0
           ? 'text-danger'
@@ -221,13 +237,19 @@ function HeaderAmount({ entry }: { entry: JournalEntry }) {
             minor={money.amount}
             currencyCode={money.currencyCode}
             size="big"
-            sign={!entry.isTransfer}
+            sign={!projection.isTransfer}
             className={colour}
         />
     );
 }
 
-function LineTable({ entry }: { entry: JournalEntry }) {
+function LineTable({
+    entry,
+    projection,
+}: {
+    entry: JournalEntry;
+    projection: JournalProjection;
+}) {
     const catalog = useCurrencyCatalog();
     return (
         <div className="flex flex-col">
@@ -242,7 +264,7 @@ function LineTable({ entry }: { entry: JournalEntry }) {
                 <LineRow
                     key={line.id}
                     line={line}
-                    currencyCode={entry.netWorthChange.currencyCode}
+                    currencyCode={projection.netWorthChange.currencyCode}
                     catalog={catalog}
                 />
             ))}
@@ -297,10 +319,12 @@ function ReconciliationChip({ status }: { status: JournalLine['reconciliationSta
 
 function EditJournalEntry({
     entry,
+    projection,
     onCancel,
     onSaved,
 }: {
     entry: JournalEntry;
+    projection: JournalProjection;
     onCancel: () => void;
     onSaved: () => void;
 }) {
@@ -429,6 +453,7 @@ function EditJournalEntry({
                 <SectionHead title="Lines" subtitle="Only line descriptions are editable." />
                 <EditLineTable
                     entry={entry}
+                    projection={projection}
                     draft={draft}
                     catalog={catalog}
                     onLineDescription={patchLine}
@@ -458,18 +483,20 @@ function EditJournalEntry({
 
 function EditLineTable({
     entry,
+    projection,
     draft,
     catalog,
     onLineDescription,
     fieldErrors,
 }: {
     entry: JournalEntry;
+    projection: JournalProjection;
     draft: Draft;
     catalog: CurrencyCatalog;
     onLineDescription: (lineId: string, description: string) => void;
     fieldErrors: Record<string, string[]> | null;
 }) {
-    const currencyCode = entry.netWorthChange.currencyCode;
+    const currencyCode = projection.netWorthChange.currencyCode;
     const linesById = new Map<string, JournalLine>(entry.lines.map(l => [l.id, l]));
 
     return (
