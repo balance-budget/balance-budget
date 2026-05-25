@@ -31,6 +31,9 @@ public static class ErrorCodes
     // BankTransaction
     public const string BankTransactionAmountZero = "bank_transaction.amount_zero";
     public const string BankTransactionRequiresOwnAccount = "bank_transaction.requires_own_account";
+    public const string BankTransactionAlreadyDismissed = "bank_transaction.already_dismissed";
+    public const string BankTransactionNotDismissed = "bank_transaction.not_dismissed";
+    public const string BankTransactionAlreadyCategorised = "bank_transaction.already_categorised";
 
     // BankTransaction import
     public const string ImportIbanMismatch = "import.iban_mismatch";

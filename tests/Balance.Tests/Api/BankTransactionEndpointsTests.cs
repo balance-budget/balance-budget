@@ -270,6 +270,242 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
         await Assert.That(getResponse.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
     }
 
+    [Test]
+    public async Task DismissBankTransaction_marks_row_dismissed_and_round_trips()
+    {
+        using var client = Factory.CreateClient();
+        var btx = await CreateOwnedBankTransactionAsync(client, "NL10RABO0BTX01010", -1L);
+
+        using var dismissResponse = await client.PostAsJsonAsync(
+            new Uri($"/api/bank-transactions/{btx.Id}/dismiss", UriKind.Relative),
+            new DismissBankTransactionRequestDto("Test transaction — ignore.")
+        );
+
+        await Assert.That(dismissResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var dismissed = await dismissResponse.Content.ReadFromJsonAsync<BankTransactionDto>();
+        await Assert.That(dismissed!.DismissedAt).IsNotNull();
+        await Assert.That(dismissed.DismissedReason).IsEqualTo("Test transaction — ignore.");
+
+        using var getResponse = await client.GetAsync(
+            new Uri($"/api/bank-transactions/{btx.Id}", UriKind.Relative)
+        );
+        var fetched = await getResponse.Content.ReadFromJsonAsync<BankTransactionDto>();
+        await Assert.That(fetched!.DismissedAt).IsNotNull();
+        await Assert.That(fetched.DismissedReason).IsEqualTo("Test transaction — ignore.");
+    }
+
+    [Test]
+    public async Task DismissBankTransaction_trims_reason()
+    {
+        using var client = Factory.CreateClient();
+        var btx = await CreateOwnedBankTransactionAsync(client, "NL11RABO0BTX01011", -2L);
+
+        using var dismissResponse = await client.PostAsJsonAsync(
+            new Uri($"/api/bank-transactions/{btx.Id}/dismiss", UriKind.Relative),
+            new DismissBankTransactionRequestDto("   Settled out of band.   ")
+        );
+
+        await Assert.That(dismissResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var dismissed = await dismissResponse.Content.ReadFromJsonAsync<BankTransactionDto>();
+        await Assert.That(dismissed!.DismissedReason).IsEqualTo("Settled out of band.");
+    }
+
+    [Test]
+    public async Task DismissBankTransaction_empty_reason_returns_400()
+    {
+        using var client = Factory.CreateClient();
+        var btx = await CreateOwnedBankTransactionAsync(client, "NL12RABO0BTX01012", -3L);
+
+        using var response = await client.PostAsJsonAsync(
+            new Uri($"/api/bank-transactions/{btx.Id}/dismiss", UriKind.Relative),
+            new DismissBankTransactionRequestDto("")
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+    }
+
+    [Test]
+    public async Task DismissBankTransaction_whitespace_reason_returns_400()
+    {
+        using var client = Factory.CreateClient();
+        var btx = await CreateOwnedBankTransactionAsync(client, "NL13RABO0BTX01013", -4L);
+
+        using var response = await client.PostAsJsonAsync(
+            new Uri($"/api/bank-transactions/{btx.Id}/dismiss", UriKind.Relative),
+            new DismissBankTransactionRequestDto("   ")
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+    }
+
+    [Test]
+    public async Task DismissBankTransaction_already_dismissed_returns_409()
+    {
+        using var client = Factory.CreateClient();
+        var btx = await CreateOwnedBankTransactionAsync(client, "NL14RABO0BTX01014", -5L);
+
+        using var first = await client.PostAsJsonAsync(
+            new Uri($"/api/bank-transactions/{btx.Id}/dismiss", UriKind.Relative),
+            new DismissBankTransactionRequestDto("Ignore me.")
+        );
+        await Assert.That(first.StatusCode).IsEqualTo(HttpStatusCode.OK);
+
+        using var second = await client.PostAsJsonAsync(
+            new Uri($"/api/bank-transactions/{btx.Id}/dismiss", UriKind.Relative),
+            new DismissBankTransactionRequestDto("Already done.")
+        );
+        await Assert.That(second.StatusCode).IsEqualTo(HttpStatusCode.Conflict);
+    }
+
+    [Test]
+    public async Task DismissBankTransaction_with_referencing_journal_entry_returns_409()
+    {
+        using var client = Factory.CreateClient();
+        var account = await CreateAccountAsync(client, "Checking-BTX-Cat1");
+        var bankAccount = await CreateBankAccountForAccountAsync(
+            client,
+            iban: "NL17RABO0BTX01017",
+            accountId: account.Id
+        );
+        var btxRequest = new CreateBankTransactionRequestDto(
+            BankAccountId: bankAccount.Id,
+            BookingDate: new DateOnly(2026, 5, 17),
+            Amount: 1234L,
+            CurrencyCode: "EUR",
+            Description: "Already categorised"
+        );
+        using var btxResponse = await client.PostAsJsonAsync(
+            new Uri("/api/bank-transactions", UriKind.Relative),
+            btxRequest
+        );
+        var btx = await btxResponse.Content.ReadFromJsonAsync<BankTransactionDto>();
+        var counter = await CreateAccountAsync(client, "Income-BTX-Cat1");
+
+        var jeRequest = new
+        {
+            Date = new DateOnly(2026, 5, 17),
+            Description = "Linked entry",
+            BankTransactionId = btx!.Id,
+            CounterpartyId = (Guid?)null,
+            Lines = new[]
+            {
+                new
+                {
+                    AccountId = account.Id,
+                    Amount = 1234L,
+                    Description = (string?)null,
+                },
+                new
+                {
+                    AccountId = counter.Id,
+                    Amount = -1234L,
+                    Description = (string?)null,
+                },
+            },
+        };
+        using var jeResponse = await client.PostAsJsonAsync(
+            new Uri("/api/journal-entries", UriKind.Relative),
+            jeRequest
+        );
+        await Assert.That(jeResponse.StatusCode).IsEqualTo(HttpStatusCode.Created);
+
+        using var dismiss = await client.PostAsJsonAsync(
+            new Uri($"/api/bank-transactions/{btx.Id}/dismiss", UriKind.Relative),
+            new DismissBankTransactionRequestDto("Try to dismiss after categorising.")
+        );
+        await Assert.That(dismiss.StatusCode).IsEqualTo(HttpStatusCode.Conflict);
+    }
+
+    [Test]
+    public async Task DismissBankTransaction_unknown_id_returns_404()
+    {
+        using var client = Factory.CreateClient();
+
+        using var response = await client.PostAsJsonAsync(
+            new Uri($"/api/bank-transactions/{Guid.NewGuid()}/dismiss", UriKind.Relative),
+            new DismissBankTransactionRequestDto("Doesn't matter.")
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
+    }
+
+    [Test]
+    public async Task UndismissBankTransaction_clears_dismissal()
+    {
+        using var client = Factory.CreateClient();
+        var btx = await CreateOwnedBankTransactionAsync(client, "NL15RABO0BTX01015", -6L);
+
+        using var dismiss = await client.PostAsJsonAsync(
+            new Uri($"/api/bank-transactions/{btx.Id}/dismiss", UriKind.Relative),
+            new DismissBankTransactionRequestDto("Wrong call.")
+        );
+        await Assert.That(dismiss.StatusCode).IsEqualTo(HttpStatusCode.OK);
+
+        using var undismiss = await client.PostAsync(
+            new Uri($"/api/bank-transactions/{btx.Id}/undismiss", UriKind.Relative),
+            content: null
+        );
+        await Assert.That(undismiss.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var restored = await undismiss.Content.ReadFromJsonAsync<BankTransactionDto>();
+        await Assert.That(restored!.DismissedAt).IsNull();
+        await Assert.That(restored.DismissedReason).IsNull();
+    }
+
+    [Test]
+    public async Task UndismissBankTransaction_when_not_dismissed_returns_422()
+    {
+        using var client = Factory.CreateClient();
+        var btx = await CreateOwnedBankTransactionAsync(client, "NL16RABO0BTX01016", -7L);
+
+        using var response = await client.PostAsync(
+            new Uri($"/api/bank-transactions/{btx.Id}/undismiss", UriKind.Relative),
+            content: null
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.UnprocessableEntity);
+    }
+
+    [Test]
+    public async Task UndismissBankTransaction_unknown_id_returns_404()
+    {
+        using var client = Factory.CreateClient();
+
+        using var response = await client.PostAsync(
+            new Uri($"/api/bank-transactions/{Guid.NewGuid()}/undismiss", UriKind.Relative),
+            content: null
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
+    }
+
+    private static async Task<BankTransactionDto> CreateOwnedBankTransactionAsync(
+        HttpClient client,
+        string iban,
+        long amount
+    )
+    {
+        var account = await CreateAccountAsync(client, $"Checking-{iban}");
+        var bankAccount = await CreateBankAccountForAccountAsync(
+            client,
+            iban: iban,
+            accountId: account.Id
+        );
+        var request = new CreateBankTransactionRequestDto(
+            BankAccountId: bankAccount.Id,
+            BookingDate: new DateOnly(2026, 5, 17),
+            Amount: amount,
+            CurrencyCode: "EUR",
+            Description: $"Dismissal-fixture {iban} {amount}"
+        );
+        using var response = await client.PostAsJsonAsync(
+            new Uri("/api/bank-transactions", UriKind.Relative),
+            request
+        );
+        response.EnsureSuccessStatusCode();
+        var dto = await response.Content.ReadFromJsonAsync<BankTransactionDto>();
+        return dto!;
+    }
+
     private static async Task<AccountDto> CreateAccountAsync(HttpClient client, string name)
     {
         var req = new CreateAccountRequestDto(name, "Asset", "EUR");
@@ -356,6 +592,8 @@ internal sealed record BankTransactionDto(
     string Description,
     string? CounterpartyName,
     string? CounterpartyAccountNumber,
+    DateTime? DismissedAt,
+    string? DismissedReason,
     DateTime CreatedAt,
     DateTime UpdatedAt
 );
@@ -371,3 +609,5 @@ internal sealed record CreateBankTransactionRequestDto(
     string? CounterpartyName = null,
     string? CounterpartyAccountNumber = null
 );
+
+internal sealed record DismissBankTransactionRequestDto(string Reason);

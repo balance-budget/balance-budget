@@ -11,6 +11,8 @@ public sealed record BankTransactionOutput(
     string Description,
     string? CounterpartyName,
     string? CounterpartyAccountNumber,
+    DateTime? DismissedAt,
+    string? DismissedReason,
     DateTime CreatedAt,
     DateTime UpdatedAt
 );
