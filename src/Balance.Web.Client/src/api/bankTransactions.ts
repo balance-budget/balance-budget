@@ -78,10 +78,9 @@ export function useDismissBankTransaction() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (args: { id: BankTransactionId; reason: string }) => {
-            const body: WireDismissRequest = { reason: args.reason };
             const wire = await postJson<WireBankTransaction>(
                 `/api/bank-transactions/${args.id}/dismiss`,
-                body,
+                { reason: args.reason },
                 new AbortController().signal,
                 'dismiss bank transaction',
             );
