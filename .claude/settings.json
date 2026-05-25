@@ -1,0 +1,8 @@
+{
+  "enabledPlugins": {
+    "csharp-lsp@claude-plugins-official": true,
+    "github@claude-plugins-official": false,
+    "typescript-lsp@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true
+  }
+}
