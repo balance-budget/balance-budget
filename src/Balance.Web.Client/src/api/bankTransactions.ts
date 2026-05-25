@@ -12,7 +12,8 @@ import { getJson, postJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
 
 type WireBankTransaction = components['schemas']['BankTransactionOutput'];
-type WireDismissRequest = components['schemas']['DismissBankTransactionRequest'];
+type WireCategorizeRequest = components['schemas']['CategorizeBankTransactionRequest'];
+type WireJournalEntry = components['schemas']['JournalEntryOutput'];
 
 // Mirrors the BankTransactionListFilter enum on the server. The wire type
 // allows null (openapi-typescript marks query-string enums as nullable), so we
@@ -43,6 +44,7 @@ export const bankTransactionsKeys = {
     all: ['bank-transactions'] as const,
     list: (skip: number, take: number, filter: BankTransactionFilter) =>
         [...bankTransactionsKeys.all, 'list', { skip, take, filter }] as const,
+    detail: (id: BankTransactionId) => [...bankTransactionsKeys.all, 'detail', id] as const,
 };
 
 function toBankTransaction(wire: WireBankTransaction): BankTransaction {
@@ -70,6 +72,41 @@ export function useBankTransactions(skip: number, take: number, filter: BankTran
                 'load bank transactions',
             );
             return wire.map(toBankTransaction);
+        },
+    });
+}
+
+export function useBankTransaction(id: BankTransactionId) {
+    return useQuery({
+        queryKey: bankTransactionsKeys.detail(id),
+        queryFn: async ({ signal }) => {
+            const wire = await getJson<WireBankTransaction>(
+                `/api/bank-transactions/${id}`,
+                signal,
+                'load bank transaction',
+            );
+            return toBankTransaction(wire);
+        },
+    });
+}
+
+export function useCategorizeBankTransaction() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (args: { id: BankTransactionId; request: WireCategorizeRequest }) => {
+            return await postJson<WireJournalEntry>(
+                `/api/bank-transactions/${args.id}/categorize`,
+                args.request,
+                new AbortController().signal,
+                'categorise bank transaction',
+            );
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: bankTransactionsKeys.all });
+            await queryClient.invalidateQueries({ queryKey: ['journalEntries'] });
+            await queryClient.invalidateQueries({ queryKey: ['counterparties'] });
+            await queryClient.invalidateQueries({ queryKey: ['bank-accounts'] });
+            await queryClient.invalidateQueries({ queryKey: ['accounts'] });
         },
     });
 }
