@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from '@tanstack/react-router';
 import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import {
     BANK_TRANSACTION_FILTERS,
@@ -173,7 +174,7 @@ function Body({
 
     return (
         <div className="flex flex-col">
-            <div className="grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px_88px] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
+            <div className="grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px_minmax(180px,200px)] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
                 <span>Date</span>
                 <span>Description</span>
                 <span>Counterparty</span>
@@ -208,7 +209,7 @@ function Row({
     onDismiss: (bt: BankTransaction) => void;
 }) {
     return (
-        <div className="grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px_88px] gap-3 items-center px-2 py-2 border-b border-border-soft last:border-b-0">
+        <div className="grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px_minmax(180px,200px)] gap-3 items-center px-2 py-2 border-b border-border-soft last:border-b-0">
             <span className="text-[12px] text-fg-3 tabular">{bankTransaction.bookingDate}</span>
             <div className="min-w-0 flex flex-col leading-tight">
                 <span className="text-[13px] text-fg-1 truncate">
@@ -284,7 +285,16 @@ function RowActions({
         return <UndismissButton bankTransaction={bankTransaction} />;
     }
     return (
-        <div className="flex items-center justify-end">
+        <div className="flex items-center justify-end gap-1">
+            <Link
+                to="/bank-transactions/$id/categorize"
+                params={{ id: bankTransaction.id }}
+                aria-label="Categorise"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-[12px] text-brand-primary hover:bg-brand-primary-soft"
+            >
+                <Icon name="check-circle" size={14} strokeWidth={2} />
+                Categorise
+            </Link>
             <button
                 type="button"
                 onClick={() => {

@@ -1,22 +1,30 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { compare } from 'fast-json-patch';
 import type { components } from '../lib/api-types';
-import { asCounterpartyId, type CounterpartyId } from '../lib/domain';
+import { asAccountId, asCounterpartyId, type AccountId, type CounterpartyId } from '../lib/domain';
 import { deleteRequest, getJson, patchJson, postJson } from '../lib/http';
 
 type WireCounterparty = components['schemas']['CounterpartyOutput'];
 type WireCreateRequest = components['schemas']['CreateCounterpartyRequest'];
 type WireUpdateInput = components['schemas']['UpdateCounterpartyInput'];
+type WireSuggestedCounterAccount = components['schemas']['SuggestedCounterAccountOutput'];
 
 export type Counterparty = {
     id: CounterpartyId;
     name: string;
 };
 
+export type SuggestedCounterAccount = {
+    accountId: AccountId;
+    amount: number;
+};
+
 export const counterpartiesKeys = {
     all: ['counterparties'] as const,
     list: () => [...counterpartiesKeys.all, 'list'] as const,
     detail: (id: CounterpartyId) => [...counterpartiesKeys.all, 'detail', id] as const,
+    suggestedAccounts: (id: CounterpartyId) =>
+        [...counterpartiesKeys.all, 'suggested-accounts', id] as const,
 };
 
 function toCounterparty(wire: WireCounterparty): Counterparty {
@@ -92,6 +100,27 @@ export function useUpdateCounterparty() {
                 queryKey: counterpartiesKeys.detail(vars.id),
             });
         },
+    });
+}
+
+function toSuggestedCounterAccount(wire: WireSuggestedCounterAccount): SuggestedCounterAccount {
+    const amount = typeof wire.amount === 'string' ? Number(wire.amount) : wire.amount;
+    return { accountId: asAccountId(wire.accountId), amount };
+}
+
+export function useSuggestedCounterAccounts(id: CounterpartyId | null) {
+    return useQuery({
+        queryKey: id ? counterpartiesKeys.suggestedAccounts(id) : ['counterparties', 'noop'],
+        queryFn: async ({ signal }) => {
+            if (id === null) return [] as SuggestedCounterAccount[];
+            const wire = await getJson<WireSuggestedCounterAccount[]>(
+                `/api/counterparties/${id}/suggested-accounts`,
+                signal,
+                'load suggested accounts',
+            );
+            return wire.map(toSuggestedCounterAccount);
+        },
+        enabled: id !== null,
     });
 }
 
