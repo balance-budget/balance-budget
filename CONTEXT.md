@@ -90,6 +90,10 @@ _Avoid_: archived, ignored, deleted (the row still exists and remains immutable 
 The user-driven process of producing exactly one **JournalEntry** (or one **Dismissed** state) for one **BankTransaction**. Resolves the **Counterparty** (and creates a counterparty-side **BankAccount** if the row's `CounterpartyAccountNumber` is new) and the counter-side **Account**(s), then creates the **JournalEntry** atomically with the bank-side **JournalLine** in `Cleared` **ReconciliationStatus** and counter-side line(s) in `Uncleared`. Exposed as the composite endpoint `POST /api/bank-transactions/{id}/categorize`. Multi-Account splits are modelled as multiple **JournalLines** within the single created **JournalEntry**, summing to `−BT.Amount` on the counter side. See ADR 0014.
 _Avoid_: import flow (already used for parsing CSVs into BankTransactions — see ADR 0010), assignment, classification.
 
+**Self-transfer**:
+A **JournalEntry** that moves money between two of your own **Accounts** — e.g. Current (**Asset**) → Savings (**Asset**), or Current (**Asset**) → Credit Card (**Liability**) when paying down the card. Every **JournalLine** references an **Account** that is yours (`Account` linked via `BankAccount.AccountId`); there is no external party, so `CounterpartyId` is `null`. When both sides of the movement appear as imported **BankTransactions** (one per statement), v1 has the user resolve the pair manually: categorise one side via the **Categorisation flow** with both lines on the user's own **Accounts**, then **Dismiss** the sibling **BankTransaction** on the other side as `"sibling of self-transfer, already booked"`. The JE↔BT cardinality stays 1:1 (ADR 0013); no auto-pairing in v1 (ADR 0014(e)).
+_Avoid_: internal transaction, transfer (bare), between-accounts entry. "Transaction" is overloaded; "transfer" alone is ambiguous (some systems use it for any movement, including to a counterparty).
+
 ## Relationships
 
 - A **JournalEntry** owns two or more **JournalLines** whose amounts net to zero.
