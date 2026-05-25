@@ -27,6 +27,7 @@ import {
     asCounterpartyId,
     type AccountId,
     type AccountType,
+    type BankAccountId,
     type BankTransactionId,
     type CounterpartyId,
 } from '../lib/domain';
@@ -37,6 +38,7 @@ import {
     buildRequest,
     computeTotals,
     emptyLine,
+    formatMagnitudeFor,
     initialForm,
     type CategorizeFormState,
     type FieldErrors,
@@ -196,37 +198,31 @@ function CategorizeForm({
         [bt.counterpartyAccountNumber, bankAccounts],
     );
 
+    const scale = useMemo(() => {
+        const currency = catalog.get(bt.money.currencyCode);
+        return currency?.minorUnitScale ?? 2;
+    }, [catalog, bt.money.currencyCode]);
+
+    const formatMagnitude = useMemo(() => formatMagnitudeFor(scale), [scale]);
+
     const [form, setForm] = useState<CategorizeFormState>(() =>
         initialForm({
             today: todayIso(),
             bookingDate: bt.bookingDate,
             description: bt.description,
             resolvedCounterpartyId,
+            btAmountMinor: bt.money.amount,
+            formatMagnitude,
         }),
     );
     const [topError, setTopError] = useState<string | null>(null);
     const [fieldErrors, setFieldErrors] = useState<FieldErrors | null>(null);
-
-    const scale = useMemo(() => {
-        const currency = catalog.get(bt.money.currencyCode);
-        return currency?.minorUnitScale ?? 2;
-    }, [catalog, bt.money.currencyCode]);
 
     const accountsById = useMemo(() => {
         const m = new Map<AccountId, Account>();
         for (const a of accounts) m.set(a.id, a);
         return m;
     }, [accounts]);
-
-    const formatMagnitude = useMemo(() => {
-        return (minor: number): string => {
-            const divisor = 10 ** scale;
-            const major = Math.floor(minor / divisor);
-            const remainder = minor - major * divisor;
-            if (scale === 0) return major.toString();
-            return `${major.toString()}.${remainder.toString().padStart(scale, '0')}`;
-        };
-    }, [scale]);
 
     const activeCounterpartyId =
         form.counterpartyMode === 'existing' ? form.counterpartyId : null;
@@ -351,6 +347,7 @@ function CategorizeForm({
                     lines={form.lines}
                     accounts={accounts}
                     bankAccounts={bankAccounts}
+                    bankTransactionBankAccountId={bt.bankAccountId}
                     currencyCode={bt.money.currencyCode}
                     fieldErrors={fieldErrors}
                     onUpdate={updateLine}
@@ -493,7 +490,7 @@ function CounterpartyInput({
                         }}
                         className="flex-1 min-w-0 px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
                     >
-                        <option value="">Select…</option>
+                        <option value="">None (self-transfer)</option>
                         {sorted.map(c => (
                             <option key={c.id} value={c.id}>
                                 {c.name}
@@ -555,6 +552,7 @@ function Lines({
     lines,
     accounts,
     bankAccounts,
+    bankTransactionBankAccountId,
     currencyCode,
     fieldErrors,
     onUpdate,
@@ -564,26 +562,28 @@ function Lines({
     lines: LineInput[];
     accounts: Account[];
     bankAccounts: BankAccount[];
+    bankTransactionBankAccountId: BankAccountId;
     currencyCode: string;
     fieldErrors: FieldErrors | null;
     onUpdate: (index: number, patch: Partial<LineInput>) => void;
     onAdd: () => void;
     onRemove: (index: number) => void;
 }) {
-    const bankSideAccountIds = useMemo(() => {
-        const set = new Set<AccountId>();
-        for (const ba of bankAccounts) {
-            if (ba.accountId !== null) set.add(ba.accountId);
-        }
-        return set;
-    }, [bankAccounts]);
+    // Only exclude the BT's own bank-side account (otherwise the JE would
+    // credit and debit the same account, since the server adds that line).
+    // Other user-owned accounts must remain pickable so self-transfers
+    // (Current → Savings, Current → Credit Card) work — see ADR 0014(e).
+    const ownBankSideAccountId = useMemo(() => {
+        const ba = bankAccounts.find(b => b.id === bankTransactionBankAccountId);
+        return ba?.accountId ?? null;
+    }, [bankAccounts, bankTransactionBankAccountId]);
 
     const visibleAccounts = useMemo(
         () =>
             accounts.filter(
-                a => a.currencyCode === currencyCode && !bankSideAccountIds.has(a.id),
+                a => a.currencyCode === currencyCode && a.id !== ownBankSideAccountId,
             ),
-        [accounts, currencyCode, bankSideAccountIds],
+        [accounts, currencyCode, ownBankSideAccountId],
     );
 
     return (

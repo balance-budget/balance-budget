@@ -3,17 +3,11 @@ import { Icon } from './Icon';
 type TopBarProps = {
     title: string;
     period?: string;
-    onAdd?: () => void;
 };
 
-const BRAND_GRADIENT = {
-    background:
-        'linear-gradient(135deg, var(--color-brand-primary), var(--color-brand-primary-dark))',
-} as const;
-
 // TODO: search input + notifications button are visual scaffolding; wire to real handlers
-// once those features land. New-entry button forwards to onAdd if supplied.
-export function TopBar({ title, period, onAdd }: TopBarProps) {
+// once those features land.
+export function TopBar({ title, period }: TopBarProps) {
     return (
         <header className="min-h-[72px] px-8 py-4 flex items-center gap-4 border-b border-border-soft">
             <div className="flex flex-col gap-[2px] min-w-0">
@@ -36,15 +30,6 @@ export function TopBar({ title, period, onAdd }: TopBarProps) {
                     className="w-9 h-9 rounded-sm bg-surface-2 border border-border-soft flex items-center justify-center text-fg-2 transition-colors duration-fast hover:bg-surface-3 hover:text-fg-1"
                 >
                     <Icon name="bell" size={18} strokeWidth={1.75} />
-                </button>
-                <button
-                    type="button"
-                    onClick={onAdd}
-                    style={BRAND_GRADIENT}
-                    className="h-9 px-4 inline-flex items-center gap-2 rounded-sm text-fg-1 text-[13px] font-medium transition-[filter,transform] duration-fast hover:brightness-105 active:scale-[0.97]"
-                >
-                    <Icon name="plus" size={16} strokeWidth={2} />
-                    New entry
                 </button>
             </div>
         </header>

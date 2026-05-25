@@ -394,6 +394,54 @@ internal sealed class BankTransactionCategorisationServiceTests : EndpointsTests
     }
 
     [Test]
+    public async Task CategorizeAsync_self_transfer_with_null_counterparty_creates_balanced_entry(
+        CancellationToken cancellationToken
+    )
+    {
+        await using var fixture = await SeedAsync(cancellationToken);
+
+        var savings = await fixture.CreateAccountAsync(
+            "Savings-self-transfer",
+            AccountType.Asset,
+            cancellationToken
+        );
+
+        var bankTransaction = await fixture.CreateBankTransactionAsync(
+            amount: -25000,
+            counterpartyAccountNumber: null,
+            cancellationToken
+        );
+
+        var result = await fixture.CategorisationService.CategorizeAsync(
+            bankTransaction.Id,
+            new CategorizeBankTransactionInput(
+                CounterpartyId: null,
+                NewCounterparty: null,
+                Date: bankTransaction.BookingDate,
+                Description: "Transfer to savings",
+                Lines: [new CategorizeBankTransactionLineInput(savings.Id, 25000, null)]
+            ),
+            cancellationToken
+        );
+
+        await Assert.That(result.IsSuccess).IsTrue();
+        var entry = result.Value!;
+        await Assert.That(entry.BankTransactionId).IsEqualTo(bankTransaction.Id);
+        await Assert.That(entry.CounterpartyId).IsNull();
+        await Assert.That(entry.Lines).Count().IsEqualTo(2);
+        await Assert.That(entry.Lines.Sum(l => l.Amount)).IsEqualTo(0L);
+
+        var bankLine = entry.Lines.Single(l => l.AccountId == fixture.OwnedAccountId);
+        var savingsLine = entry.Lines.Single(l => l.AccountId == savings.Id);
+        await Assert.That(bankLine.Amount).IsEqualTo(-25000L);
+        await Assert.That(bankLine.ReconciliationStatus).IsEqualTo(ReconciliationStatus.Cleared);
+        await Assert.That(savingsLine.Amount).IsEqualTo(25000L);
+        await Assert
+            .That(savingsLine.ReconciliationStatus)
+            .IsEqualTo(ReconciliationStatus.Uncleared);
+    }
+
+    [Test]
     public async Task CategorizeAsync_both_counterparty_options_returns_invariant_error(
         CancellationToken cancellationToken
     )
