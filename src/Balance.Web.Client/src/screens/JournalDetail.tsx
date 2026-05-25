@@ -24,9 +24,9 @@ import { cx } from '../lib/cx';
 import { asCounterpartyId, type AccountId, type JournalEntryId } from '../lib/domain';
 import { ApiError } from '../lib/http';
 import {
-    projectJournalEntry,
+    formatLegLabel,
+    projectEntry,
     type JournalProjection,
-    type ProjectionLine,
 } from '../lib/journalProjection';
 import { formatMoney } from '../lib/money';
 
@@ -131,24 +131,6 @@ export function JournalDetail({ id }: { id: JournalEntryId }) {
     );
 }
 
-function projectEntry(
-    entry: JournalEntry,
-    accountById: ReadonlyMap<AccountId, Account>,
-): JournalProjection {
-    const firstLineAccount = entry.lines[0]
-        ? accountById.get(entry.lines[0].accountId)
-        : undefined;
-    const currencyCode = firstLineAccount?.currencyCode ?? 'XXX';
-    const projectionLines: ProjectionLine[] = entry.lines.map(line => ({
-        id: line.id,
-        accountId: line.accountId,
-        accountName: line.accountName,
-        accountType: accountById.get(line.accountId)?.type ?? 'Asset',
-        amount: line.amount,
-    }));
-    return projectJournalEntry(projectionLines, currencyCode);
-}
-
 function DetailHeader({
     entry,
     projection,
@@ -229,8 +211,8 @@ function FromToSummary({
         );
     }
 
-    const from = legLabel(projection.fromLegs);
-    const to = legLabel(projection.toLegs);
+    const from = formatLegLabel(projection.fromLegs);
+    const to = formatLegLabel(projection.toLegs);
 
     return (
         <span className="text-[12px] text-fg-2 mt-1 inline-flex items-center gap-1">
@@ -239,13 +221,6 @@ function FromToSummary({
             <span>{to}</span>
         </span>
     );
-}
-
-function legLabel(legs: JournalProjection['fromLegs']): string {
-    const first = legs[0];
-    if (!first) return '—';
-    if (legs.length === 1) return first.accountName;
-    return `${first.accountName} +${legs.length - 1}`;
 }
 
 function HeaderAmount({ projection }: { projection: JournalProjection }) {
