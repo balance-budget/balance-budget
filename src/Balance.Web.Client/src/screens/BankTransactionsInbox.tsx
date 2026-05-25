@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from '@tanstack/react-router';
 import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import {
     BANK_TRANSACTION_FILTERS,
@@ -9,6 +10,7 @@ import {
     type BankTransactionFilter,
 } from '../api/bankTransactions';
 import { ErrorState } from '../components/ErrorState';
+import { FieldError } from '../components/FieldError';
 import { FormErrorBanner } from '../components/FormErrorBanner';
 import { Icon } from '../components/Icon';
 import { Modal, ModalFooter } from '../components/Modal';
@@ -172,15 +174,20 @@ function Body({
 
     return (
         <div className="flex flex-col">
-            <div className="grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px_120px] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
+            <div className="grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px_minmax(180px,200px)] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
                 <span>Date</span>
                 <span>Description</span>
                 <span>Counterparty</span>
                 <span className="text-right">Amount</span>
-                <span />
+                <span className="text-right">Actions</span>
             </div>
             {query.data.map(bt => (
-                <Row key={bt.id} bankTransaction={bt} catalog={catalog} onDismiss={onDismiss} />
+                <Row
+                    key={bt.id}
+                    bankTransaction={bt}
+                    catalog={catalog}
+                    onDismiss={onDismiss}
+                />
             ))}
             <Pagination
                 page={page}
@@ -202,7 +209,7 @@ function Row({
     onDismiss: (bt: BankTransaction) => void;
 }) {
     return (
-        <div className="grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px_120px] gap-3 items-center px-2 py-2 border-b border-border-soft last:border-b-0">
+        <div className="grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px_minmax(180px,200px)] gap-3 items-center px-2 py-2 border-b border-border-soft last:border-b-0">
             <span className="text-[12px] text-fg-3 tabular">{bankTransaction.bookingDate}</span>
             <div className="min-w-0 flex flex-col leading-tight">
                 <span className="text-[13px] text-fg-1 truncate">
@@ -269,59 +276,70 @@ function RowActions({
     bankTransaction: BankTransaction;
     onDismiss: (bt: BankTransaction) => void;
 }) {
+    // Matched rows are read-only — once a JournalEntry exists, the action is
+    // delete-and-recreate via the journal entry detail page, not here.
     if (bankTransaction.journalEntryId) {
-        return <span />;
+        return <div />;
     }
     if (bankTransaction.dismissedAt) {
-        return <UndismissAction bankTransaction={bankTransaction} />;
+        return <UndismissButton bankTransaction={bankTransaction} />;
     }
     return (
         <div className="flex items-center justify-end gap-1">
+            <Link
+                to="/bank-transactions/$id/categorize"
+                params={{ id: bankTransaction.id }}
+                aria-label="Categorise"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-[12px] text-brand-primary hover:bg-brand-primary-soft"
+            >
+                <Icon name="check-circle" size={14} strokeWidth={2} />
+                Categorise
+            </Link>
             <button
                 type="button"
                 onClick={() => {
                     onDismiss(bankTransaction);
                 }}
-                className="px-2 py-1 rounded-sm text-[12px] font-medium text-fg-2 hover:text-fg-1 hover:bg-surface-2"
+                aria-label="Dismiss"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-[12px] text-fg-2 hover:text-fg-1 hover:bg-surface-2"
             >
+                <Icon name="x" size={14} strokeWidth={2} />
                 Dismiss
             </button>
         </div>
     );
 }
 
-function UndismissAction({ bankTransaction }: { bankTransaction: BankTransaction }) {
+function UndismissButton({ bankTransaction }: { bankTransaction: BankTransaction }) {
     const undismiss = useUndismissBankTransaction();
     const toast = useToast();
 
     async function onClick() {
         try {
             await undismiss.mutateAsync(bankTransaction.id);
-            toast.success('Returned to inbox.');
+            toast.success('Restored to inbox.');
         } catch (err) {
-            if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
-                toast.error(err.message);
-            } else if (err instanceof Error) {
+            if (err instanceof Error) {
                 toast.error(err.message);
             }
         }
     }
 
     return (
-        <div className="flex items-center justify-end gap-1">
+        <div className="flex items-center justify-end">
             <button
                 type="button"
                 onClick={() => void onClick()}
                 disabled={undismiss.isPending}
-                className="px-2 py-1 rounded-sm text-[12px] font-medium text-fg-2 hover:text-fg-1 hover:bg-surface-2 disabled:opacity-60"
+                aria-label="Undismiss"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-[12px] text-fg-2 hover:text-fg-1 hover:bg-surface-2 disabled:opacity-60"
             >
-                {undismiss.isPending ? 'Undismissing…' : 'Undismiss'}
+                <Icon name="inbox" size={14} strokeWidth={2} />
+                Undismiss
             </button>
         </div>
     );
 }
-
-const REASON_MAX_LENGTH = 500;
 
 function DismissDialog({
     bankTransaction,
@@ -333,24 +351,25 @@ function DismissDialog({
     const dismiss = useDismissBankTransaction();
     const toast = useToast();
     const [reason, setReason] = useState('');
-    const [error, setError] = useState<string | null>(null);
-
-    const trimmed = reason.trim();
-    const canSubmit = trimmed.length > 0 && !dismiss.isPending;
+    const [topError, setTopError] = useState<string | null>(null);
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string[]> | null>(null);
 
     async function submit() {
-        setError(null);
-        if (!canSubmit) {
-            setError('Enter a short reason.');
-            return;
-        }
+        setTopError(null);
+        setFieldErrors(null);
         try {
-            await dismiss.mutateAsync({ id: bankTransaction.id, reason: trimmed });
+            await dismiss.mutateAsync({ id: bankTransaction.id, reason });
             toast.success('Dismissed.');
             onClose();
         } catch (err) {
-            if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
-                setError(err.message);
+            if (err instanceof ApiError) {
+                if (err.fieldErrors) {
+                    setFieldErrors(err.fieldErrors);
+                } else if (err.status >= 400 && err.status < 500) {
+                    setTopError(err.message);
+                } else {
+                    toast.error(err.message);
+                }
             } else if (err instanceof Error) {
                 toast.error(err.message);
             }
@@ -361,9 +380,9 @@ function DismissDialog({
         <Modal
             open
             onClose={onClose}
-            title="Dismiss this bank transaction?"
-            description="Future-you will see the reason in the Dismissed list."
-            width="md"
+            title="Dismiss bank transaction"
+            description="Mark this row as not needing a journal entry. You can undismiss later."
+            width="sm"
         >
             <form
                 onSubmit={e => {
@@ -372,15 +391,7 @@ function DismissDialog({
                 }}
                 noValidate
             >
-                <FormErrorBanner message={error} />
-                <div className="flex flex-col gap-2 mb-3 text-[12px] text-fg-3">
-                    <div className="flex items-center gap-2">
-                        <Icon name="inbox" size={14} strokeWidth={2} />
-                        <span className="truncate">
-                            {bankTransaction.bookingDate} · {bankTransaction.description}
-                        </span>
-                    </div>
-                </div>
+                <FormErrorBanner message={topError} />
                 <label className="flex flex-col gap-1">
                     <span className="text-[12px] font-medium text-fg-2">Reason</span>
                     <textarea
@@ -388,13 +399,14 @@ function DismissDialog({
                         onChange={e => {
                             setReason(e.target.value);
                         }}
-                        rows={3}
-                        maxLength={REASON_MAX_LENGTH}
-                        autoFocus
                         required
+                        maxLength={500}
+                        rows={3}
+                        autoFocus
                         placeholder="e.g. settled by journal entry X"
                         className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong resize-none"
                     />
+                    <FieldError name="Reason" errors={fieldErrors} />
                 </label>
                 <ModalFooter>
                     <button
@@ -407,7 +419,7 @@ function DismissDialog({
                     </button>
                     <button
                         type="submit"
-                        disabled={!canSubmit}
+                        disabled={dismiss.isPending}
                         className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
                     >
                         {dismiss.isPending ? 'Dismissing…' : 'Dismiss'}
