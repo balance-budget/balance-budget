@@ -43,6 +43,7 @@ import {
 import { ApiError, getJson, postJson } from '../lib/http';
 import { formatMoney } from '../lib/money';
 import {
+    emptyDraft,
     initialPrefill,
     isPristine,
     pickSuggestedAccountId,
@@ -249,7 +250,6 @@ function Body({
     );
 }
 
-// Read-only list for Matched / Dismissed / All — same layout as before #84.
 function ReadOnlyList({
     bankTransactions,
     catalog,
@@ -586,9 +586,8 @@ function InboxEditorReady({
     }, [visibleBts, basePrefillByBt, suggestionQueries, accountsById, bankAccountsById]);
 
     function draftFor(id: BankTransactionId): RowDraft {
-        const prefill = prefillByBt.get(id);
+        const prefill = prefillByBt.get(id) ?? emptyDraft();
         const override = userOverrides.get(id);
-        if (!prefill) return override as RowDraft;
         return { ...prefill, ...override };
     }
 
@@ -601,12 +600,7 @@ function InboxEditorReady({
     }
 
     function patchDraft(id: BankTransactionId, patch: Partial<RowDraft>) {
-        setRowErrors(prev => {
-            if (!prev.has(id)) return prev;
-            const next = new Map(prev);
-            next.delete(id);
-            return next;
-        });
+        setRowErrors(prev => withoutKey(prev, id));
         setUserOverrides(prev => {
             const next = new Map(prev);
             const existing = next.get(id) ?? {};
@@ -616,18 +610,8 @@ function InboxEditorReady({
     }
 
     function resetRow(id: BankTransactionId) {
-        setUserOverrides(prev => {
-            if (!prev.has(id)) return prev;
-            const next = new Map(prev);
-            next.delete(id);
-            return next;
-        });
-        setRowErrors(prev => {
-            if (!prev.has(id)) return prev;
-            const next = new Map(prev);
-            next.delete(id);
-            return next;
-        });
+        setUserOverrides(prev => withoutKey(prev, id));
+        setRowErrors(prev => withoutKey(prev, id));
     }
 
     function discardAll() {
@@ -695,12 +679,7 @@ function InboxEditorReady({
             onRowResult: (id, outcome: SaveAllOutcome) => {
                 if (outcome.ok) {
                     setSavedIds(prev => new Set(prev).add(id));
-                    setUserOverrides(prev => {
-                        if (!prev.has(id)) return prev;
-                        const next = new Map(prev);
-                        next.delete(id);
-                        return next;
-                    });
+                    setUserOverrides(prev => withoutKey(prev, id));
                 } else {
                     setRowErrors(prev => new Map(prev).set(id, outcome.error));
                 }
@@ -832,6 +811,13 @@ function InboxEditorReady({
             )}
         </div>
     );
+}
+
+function withoutKey<K, V>(map: Map<K, V>, key: K): Map<K, V> {
+    if (!map.has(key)) return map;
+    const next = new Map(map);
+    next.delete(key);
+    return next;
 }
 
 function buildCounterpartyItems(
