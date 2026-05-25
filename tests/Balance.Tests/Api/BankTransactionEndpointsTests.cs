@@ -768,6 +768,41 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
     }
 
     [Test]
+    public async Task CategorizeBankTransaction_self_transfer_with_null_counterparty_returns_ok()
+    {
+        using var client = Factory.CreateClient();
+        var btx = await CreateOwnedBankTransactionAsync(client, "NL30RABO0BTX03100", -2500L);
+        var savings = await CreateAccountAsync(client, "Savings-API-self");
+
+        using var response = await client.PostAsJsonAsync(
+            new Uri($"/api/bank-transactions/{btx.Id}/categorize", UriKind.Relative),
+            new
+            {
+                CounterpartyId = (Guid?)null,
+                NewCounterparty = (object?)null,
+                Date = btx.BookingDate,
+                Description = "Transfer to savings",
+                Lines = new[]
+                {
+                    new
+                    {
+                        AccountId = savings.Id,
+                        Amount = 2500L,
+                        Description = (string?)null,
+                    },
+                },
+            }
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var dto = await response.Content.ReadFromJsonAsync<JournalEntryDto>();
+        await Assert.That(dto!.BankTransactionId).IsEqualTo(btx.Id);
+        await Assert.That(dto.CounterpartyId).IsNull();
+        await Assert.That(dto.Lines).Count().IsEqualTo(2);
+        await Assert.That(dto.Lines.Sum(l => l.Amount)).IsEqualTo(0L);
+    }
+
+    [Test]
     public async Task CategorizeBankTransaction_already_categorised_returns_409()
     {
         using var client = Factory.CreateClient();

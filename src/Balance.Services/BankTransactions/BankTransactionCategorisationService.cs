@@ -143,13 +143,14 @@ internal sealed class BankTransactionCategorisationService : IBankTransactionCat
 
     private static Result ResolveCounterpartySelection(CategorizeBankTransactionInput input)
     {
-        var hasExisting = input.CounterpartyId.HasValue;
-        var hasNew = input.NewCounterparty is not null;
-        if (hasExisting == hasNew)
+        // A self-transfer (CONTEXT.md / ADR 0014(e)) is a JE with no external party,
+        // so both CounterpartyId and NewCounterparty being null is a valid input —
+        // only the contradictory "both provided" case is rejected here.
+        if (input.CounterpartyId.HasValue && input.NewCounterparty is not null)
         {
             return new InvariantError(
                 ErrorCodes.CategoriseCounterpartySelection,
-                "Exactly one of CounterpartyId or NewCounterparty must be provided."
+                "Provide at most one of CounterpartyId or NewCounterparty."
             );
         }
 
@@ -172,8 +173,13 @@ internal sealed class BankTransactionCategorisationService : IBankTransactionCat
             return new Result<CounterpartyId?>(existingId);
         }
 
+        if (input.NewCounterparty is null)
+        {
+            return new Result<CounterpartyId?>((CounterpartyId?)null);
+        }
+
         var created = await _counterpartyService.CreateAsync(
-            input.NewCounterparty!.Name,
+            input.NewCounterparty.Name,
             cancellationToken
         );
         if (created.IsFailure)

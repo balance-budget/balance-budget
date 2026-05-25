@@ -50,19 +50,39 @@ export function emptyLine(): LineInput {
     return { id: nextLineId(), accountId: null, amount: '', description: '' };
 }
 
+/** Format an absolute minor-units amount as a positive major-units string for
+ *  use in the magnitude input. Mirrors the form's input convention (positive
+ *  magnitudes only — sign is derived at projection time from BT direction). */
+export function formatMagnitudeFor(scale: number): (minor: number) => string {
+    return (minor: number): string => {
+        const absMinor = Math.abs(minor);
+        const divisor = 10 ** scale;
+        const major = Math.floor(absMinor / divisor);
+        const remainder = absMinor - major * divisor;
+        if (scale === 0) return major.toString();
+        return `${major.toString()}.${remainder.toString().padStart(scale, '0')}`;
+    };
+}
+
 export function initialForm(args: {
     today: string;
     bookingDate: string;
     description: string;
     resolvedCounterpartyId: CounterpartyId | null;
+    btAmountMinor: number;
+    formatMagnitude: (minor: number) => string;
 }): CategorizeFormState {
+    const seedLine: LineInput = {
+        ...emptyLine(),
+        amount: args.formatMagnitude(Math.abs(args.btAmountMinor)),
+    };
     return {
         date: args.bookingDate || args.today,
         description: args.description,
         counterpartyMode: 'existing',
         counterpartyId: args.resolvedCounterpartyId,
         newCounterpartyName: '',
-        lines: [emptyLine()],
+        lines: [seedLine],
     };
 }
 
@@ -161,9 +181,9 @@ export function buildRequest(
         errors.date = ['Required'];
     }
 
-    if (form.counterpartyMode === 'existing' && form.counterpartyId === null) {
-        errors.counterpartyId = ['Pick a counterparty or create a new one.'];
-    }
+    // 'existing' mode with a null counterpartyId is a valid self-transfer
+    // (CONTEXT.md, ADR 0014(e)) — the server treats both inputs null as
+    // "no external party", so we don't require a pick here either.
     if (form.counterpartyMode === 'new') {
         const trimmed = form.newCounterpartyName.trim();
         if (trimmed.length === 0) {

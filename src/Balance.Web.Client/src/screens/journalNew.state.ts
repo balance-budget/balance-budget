@@ -110,17 +110,22 @@ export function simpleToAdvanced(simple: FormState['simple']): AdvancedLine[] {
     return lines;
 }
 
-/** Project Advanced lines back into Simple legs iff every line uses exactly
- *  one of debit/credit (one column empty). Returns null otherwise — Simple
- *  can't express a line that's both debit and credit, nor an empty line. */
+/** Project Advanced lines back into Simple legs. Rows with both debit and
+ *  credit set are genuinely ambiguous (Simple can't express them) and abort
+ *  the conversion with null. Empty rows and account-only rows are dropped —
+ *  the empty-side pad at the end restores a canonical From/To pair so a
+ *  fresh form (no input typed yet) round-trips cleanly. */
 export function tryAdvancedToSimple(lines: AdvancedLine[]): FormState['simple'] | null {
     const from: SimpleLeg[] = [];
     const to: SimpleLeg[] = [];
     for (const line of lines) {
         const hasDebit = line.debit.trim().length > 0;
         const hasCredit = line.credit.trim().length > 0;
-        if (hasDebit === hasCredit) {
+        if (hasDebit && hasCredit) {
             return null;
+        }
+        if (!hasDebit && !hasCredit) {
+            continue;
         }
         if (hasDebit) {
             to.push({ id: line.id, accountId: line.accountId, amount: line.debit });

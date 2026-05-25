@@ -20,6 +20,25 @@ internal sealed class CategorizeBankTransactionRequestValidatorTests
     }
 
     [Test]
+    public async Task Valid_request_with_null_counterparty_passes_self_transfer(
+        CancellationToken cancellationToken
+    )
+    {
+        // The validator does not enforce the CounterpartyId XOR NewCounterparty
+        // rule — that lives in the service layer. A self-transfer request
+        // (both null) must therefore pass validation.
+        var request = ValidRequestWithExistingCounterparty() with
+        {
+            CounterpartyId = null,
+            NewCounterparty = null,
+        };
+
+        var result = await Validator.ValidateAsync(request, cancellationToken);
+
+        await Assert.That(result.IsValid).IsTrue();
+    }
+
+    [Test]
     public async Task Valid_request_with_new_counterparty_passes(
         CancellationToken cancellationToken
     )
