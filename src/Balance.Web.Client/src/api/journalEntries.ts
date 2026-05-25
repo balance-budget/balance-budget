@@ -13,9 +13,10 @@ import {
     asJournalEntryId,
     asJournalLineId,
 } from '../lib/domain';
-import { deleteRequest, getJson, patchJson } from '../lib/http';
+import { deleteRequest, getJson, patchJson, postJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
 
+type WireCreateRequest = components['schemas']['CreateJournalEntryRequest'];
 type WireUpdateInput = components['schemas']['UpdateJournalEntryInput'];
 
 type WireRow = components['schemas']['JournalEntryRowOutput'];
@@ -158,6 +159,24 @@ export function toUpdateInput(entry: JournalEntry): WireUpdateInput {
             entry.lines.map(line => [line.id, { description: line.description }]),
         ),
     };
+}
+
+export function useCreateJournalEntry() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (input: WireCreateRequest) => {
+            const wire = await postJson<WireDetail>(
+                '/api/journal-entries',
+                input,
+                new AbortController().signal,
+                'create journal entry',
+            );
+            return toEntry(wire);
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: journalEntriesKeys.all });
+        },
+    });
 }
 
 export function useUpdateJournalEntry() {
