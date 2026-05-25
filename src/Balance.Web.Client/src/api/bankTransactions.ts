@@ -13,17 +13,7 @@ import { toMoney, type Money } from '../lib/money';
 
 type WireBankTransaction = components['schemas']['BankTransactionOutput'];
 
-// Mirrors the BankTransactionListFilter enum on the server. The wire type
-// allows null (openapi-typescript marks query-string enums as nullable), so we
-// re-state it as a non-nullable view-model.
 export type BankTransactionFilter = 'Inbox' | 'Matched' | 'Dismissed' | 'All';
-
-export const BANK_TRANSACTION_FILTERS: readonly BankTransactionFilter[] = [
-    'Inbox',
-    'Matched',
-    'Dismissed',
-    'All',
-] as const;
 
 export type BankTransaction = {
     id: BankTransactionId;
@@ -40,8 +30,8 @@ export type BankTransaction = {
 
 export const bankTransactionsKeys = {
     all: ['bank-transactions'] as const,
-    list: (skip: number, take: number, filter: BankTransactionFilter) =>
-        [...bankTransactionsKeys.all, 'list', { skip, take, filter }] as const,
+    list: (filter: BankTransactionFilter, skip: number, take: number) =>
+        [...bankTransactionsKeys.all, 'list', { filter, skip, take }] as const,
 };
 
 function toBankTransaction(wire: WireBankTransaction): BankTransaction {
@@ -59,12 +49,17 @@ function toBankTransaction(wire: WireBankTransaction): BankTransaction {
     };
 }
 
-export function useBankTransactions(skip: number, take: number, filter: BankTransactionFilter) {
+export function useBankTransactions(filter: BankTransactionFilter, skip: number, take: number) {
     return useQuery({
-        queryKey: bankTransactionsKeys.list(skip, take, filter),
+        queryKey: bankTransactionsKeys.list(filter, skip, take),
         queryFn: async ({ signal }) => {
+            const params = new URLSearchParams({
+                Filter: filter,
+                Skip: String(skip),
+                Take: String(take),
+            });
             const wire = await getJson<WireBankTransaction[]>(
-                `/api/bank-transactions?skip=${skip}&take=${take}&filter=${filter}`,
+                `/api/bank-transactions?${params.toString()}`,
                 signal,
                 'load bank transactions',
             );
