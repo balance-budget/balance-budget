@@ -74,7 +74,7 @@ export function initialForm(args: {
 }): CategorizeFormState {
     const seedLine: LineInput = {
         ...emptyLine(),
-        amount: args.formatMagnitude(Math.abs(args.btAmountMinor)),
+        amount: args.formatMagnitude(args.btAmountMinor),
     };
     return {
         date: args.bookingDate || args.today,
