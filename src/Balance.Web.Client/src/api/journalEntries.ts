@@ -1,20 +1,25 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { components } from '../lib/api-types';
 import {
     type AccountId,
     type BankTransactionId,
     type CounterpartyId,
     type JournalEntryId,
+    type JournalLineId,
     asAccountId,
     asBankTransactionId,
     asCounterpartyId,
     asJournalEntryId,
+    asJournalLineId,
 } from '../lib/domain';
-import { getJson } from '../lib/http';
+import { deleteRequest, getJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
 
 type WireRow = components['schemas']['JournalEntryRowOutput'];
+type WireDetail = components['schemas']['JournalEntryOutput'];
 type WireLeg = components['schemas']['JournalEntryLegSummary'];
+type WireLine = components['schemas']['JournalLineOutput'];
+type WireReconciliationStatus = components['schemas']['ReconciliationStatus'];
 
 export type JournalEntryLeg = {
     accountId: AccountId;
@@ -35,6 +40,19 @@ export type JournalEntryRow = {
     isSimplifiable: boolean;
     fromLegs: JournalEntryLeg[];
     toLegs: JournalEntryLeg[];
+};
+
+export type JournalLine = {
+    id: JournalLineId;
+    accountId: AccountId;
+    accountName: string;
+    amount: number;
+    reconciliationStatus: WireReconciliationStatus;
+    description: string | null;
+};
+
+export type JournalEntry = JournalEntryRow & {
+    lines: JournalLine[];
 };
 
 export const journalEntriesKeys = {
@@ -80,12 +98,61 @@ function toRow(wire: WireRow): JournalEntryRow {
     };
 }
 
+function toLine(wire: WireLine): JournalLine {
+    const amount = typeof wire.amount === 'string' ? Number(wire.amount) : wire.amount;
+    return {
+        id: asJournalLineId(wire.id),
+        accountId: asAccountId(wire.accountId),
+        accountName: wire.accountName,
+        amount,
+        reconciliationStatus: wire.reconciliationStatus,
+        description: wire.description,
+    };
+}
+
+function toEntry(wire: WireDetail): JournalEntry {
+    return {
+        ...toRow(wire),
+        lines: wire.lines.map(toLine),
+    };
+}
+
 export function useJournalEntries(skip: number, take: number) {
     return useQuery({
         queryKey: journalEntriesKeys.list(skip, take),
         queryFn: async ({ signal }) => {
             const wire = await fetchList(skip, take, signal);
             return wire.map(toRow);
+        },
+    });
+}
+
+export function useJournalEntry(id: JournalEntryId) {
+    return useQuery({
+        queryKey: journalEntriesKeys.detail(id),
+        queryFn: async ({ signal }) => {
+            const wire = await getJson<WireDetail>(
+                `/api/journal-entries/${id}`,
+                signal,
+                'load journal entry',
+            );
+            return toEntry(wire);
+        },
+    });
+}
+
+export function useDeleteJournalEntry() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (id: JournalEntryId) => {
+            await deleteRequest(
+                `/api/journal-entries/${id}`,
+                new AbortController().signal,
+                'delete journal entry',
+            );
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: journalEntriesKeys.all });
         },
     });
 }

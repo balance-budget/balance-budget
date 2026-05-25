@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import { useJournalEntries, type JournalEntryRow } from '../api/journalEntries';
 import { ErrorState } from '../components/ErrorState';
@@ -110,7 +111,11 @@ function JournalBody({
 
 function JournalRow({ row, catalog }: { row: JournalEntryRow; catalog: CurrencyCatalog }) {
     return (
-        <div className="grid grid-cols-[100px_24px_1fr_minmax(180px,1.2fr)_140px] gap-3 items-center px-2 py-2 border-b border-border-soft last:border-b-0 hover:bg-surface-2">
+        <Link
+            to="/journal/$id"
+            params={{ id: row.id }}
+            className="grid grid-cols-[100px_24px_1fr_minmax(180px,1.2fr)_140px] gap-3 items-center px-2 py-2 border-b border-border-soft last:border-b-0 hover:bg-surface-2"
+        >
             <span className="text-[12px] text-fg-3 tabular">{row.date}</span>
             <span className="flex items-center justify-center text-fg-3" aria-hidden="true">
                 {row.bankTransactionId ? (
@@ -122,7 +127,7 @@ function JournalRow({ row, catalog }: { row: JournalEntryRow; catalog: CurrencyC
             </span>
             <FromToCell row={row} />
             <AmountCell row={row} catalog={catalog} />
-        </div>
+        </Link>
     );
 }
 
