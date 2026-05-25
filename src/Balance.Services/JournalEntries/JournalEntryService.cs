@@ -324,6 +324,7 @@ internal sealed class JournalEntryService : IJournalEntryService
                     JournalEntryId = entry.Id,
                     AccountId = line.AccountId,
                     Amount = line.Amount,
+                    ReconciliationStatus = line.ReconciliationStatus,
                     Description = line.Description.TrimToNull(),
                     CreatedAt = now,
                     UpdatedAt = now,

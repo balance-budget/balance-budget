@@ -34,6 +34,8 @@ public static class ErrorCodes
     public const string BankTransactionAlreadyDismissed = "bank_transaction.already_dismissed";
     public const string BankTransactionNotDismissed = "bank_transaction.not_dismissed";
     public const string BankTransactionAlreadyCategorised = "bank_transaction.already_categorised";
+    public const string BankTransactionDismissed = "bank_transaction.dismissed";
+    public const string CategoriseCounterpartySelection = "categorise.counterparty_selection";
 
     // BankTransaction import
     public const string ImportIbanMismatch = "import.iban_mismatch";
