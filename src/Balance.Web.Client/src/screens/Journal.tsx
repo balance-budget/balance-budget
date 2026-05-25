@@ -1,19 +1,28 @@
+import { useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
+import { useAccounts, type Account } from '../api/accounts';
 import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
-import { useJournalEntries, type JournalEntryRow } from '../api/journalEntries';
+import { useJournalEntries, type JournalEntry } from '../api/journalEntries';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Pagination } from '../components/Pagination';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { cx } from '../lib/cx';
+import { type AccountId } from '../lib/domain';
+import {
+    projectJournalEntry,
+    type JournalProjection,
+    type ProjectionLine,
+} from '../lib/journalProjection';
 import { formatMoney } from '../lib/money';
 
 const PAGE_SIZE = 50;
 
 export function Journal({ page, onPageChange }: { page: number; onPageChange: (p: number) => void }) {
     const skip = (page - 1) * PAGE_SIZE;
-    const query = useJournalEntries(skip, PAGE_SIZE);
+    const entries = useJournalEntries(skip, PAGE_SIZE);
+    const accounts = useAccounts();
     const catalog = useCurrencyCatalog();
 
     return (
@@ -32,7 +41,8 @@ export function Journal({ page, onPageChange }: { page: number; onPageChange: (p
                 }
             />
             <JournalBody
-                query={query}
+                entries={entries}
+                accounts={accounts.data ?? []}
                 catalog={catalog}
                 page={page}
                 onPageChange={onPageChange}
@@ -42,17 +52,24 @@ export function Journal({ page, onPageChange }: { page: number; onPageChange: (p
 }
 
 function JournalBody({
-    query,
+    entries,
+    accounts,
     catalog,
     page,
     onPageChange,
 }: {
-    query: ReturnType<typeof useJournalEntries>;
+    entries: ReturnType<typeof useJournalEntries>;
+    accounts: Account[];
     catalog: CurrencyCatalog;
     page: number;
     onPageChange: (p: number) => void;
 }) {
-    if (query.isPending) {
+    const accountById = useMemo(
+        () => new Map<AccountId, Account>(accounts.map(a => [a.id, a])),
+        [accounts],
+    );
+
+    if (entries.isPending) {
         return (
             <div className="flex flex-col gap-2">
                 <Skeleton className="h-10 w-full" />
@@ -64,16 +81,16 @@ function JournalBody({
         );
     }
 
-    if (query.isError) {
+    if (entries.isError) {
         return (
             <ErrorState
                 message="Couldn't load journal entries."
-                onRetry={() => void query.refetch()}
+                onRetry={() => void entries.refetch()}
             />
         );
     }
 
-    if (query.data.length === 0 && page === 1) {
+    if (entries.data.length === 0 && page === 1) {
         return (
             <div className="py-8 flex flex-col items-center gap-2 text-center">
                 <span className="text-[14px] text-fg-2">No journal entries yet.</span>
@@ -93,50 +110,68 @@ function JournalBody({
                 <span>From → To</span>
                 <span className="text-right">Amount</span>
             </div>
-            {query.data.map(row => (
-                <JournalRow key={row.id} row={row} catalog={catalog} />
+            {entries.data.map(entry => (
+                <JournalRow
+                    key={entry.id}
+                    entry={entry}
+                    accountById={accountById}
+                    catalog={catalog}
+                />
             ))}
             <Pagination
                 page={page}
                 pageSize={PAGE_SIZE}
-                count={query.data.length}
+                count={entries.data.length}
                 onPageChange={onPageChange}
             />
         </div>
     );
 }
 
-function JournalRow({ row, catalog }: { row: JournalEntryRow; catalog: CurrencyCatalog }) {
+function JournalRow({
+    entry,
+    accountById,
+    catalog,
+}: {
+    entry: JournalEntry;
+    accountById: ReadonlyMap<AccountId, Account>;
+    catalog: CurrencyCatalog;
+}) {
+    const projection = projectEntry(entry, accountById);
     return (
         <Link
             to="/journal/$id"
-            params={{ id: row.id }}
+            params={{ id: entry.id }}
             className="grid grid-cols-[100px_24px_1fr_minmax(180px,1.2fr)_140px] gap-3 items-center px-2 py-2 border-b border-border-soft last:border-b-0 hover:bg-surface-2"
         >
-            <span className="text-[12px] text-fg-3 tabular">{row.date}</span>
+            <span className="text-[12px] text-fg-3 tabular">{entry.date}</span>
             <span className="flex items-center justify-center text-fg-3" aria-hidden="true">
-                {row.bankTransactionId ? (
+                {entry.bankTransactionId ? (
                     <Icon name="download" size={12} strokeWidth={2} />
                 ) : null}
             </span>
             <span className="text-[13px] text-fg-1 truncate">
-                {row.counterpartyName ?? row.description ?? '—'}
+                {entry.counterpartyName ?? entry.description ?? '—'}
             </span>
-            <FromToCell row={row} />
-            <AmountCell row={row} catalog={catalog} />
+            <FromToCell projection={projection} lineCount={entry.lines.length} />
+            <AmountCell projection={projection} catalog={catalog} />
         </Link>
     );
 }
 
-function FromToCell({ row }: { row: JournalEntryRow }) {
-    if (!row.isSimplifiable) {
-        return (
-            <span className="text-[12px] text-fg-3 truncate">Split ({row.lineCount} lines)</span>
-        );
+function FromToCell({
+    projection,
+    lineCount,
+}: {
+    projection: JournalProjection;
+    lineCount: number;
+}) {
+    if (!projection.isSimplifiable) {
+        return <span className="text-[12px] text-fg-3 truncate">Split ({lineCount} lines)</span>;
     }
 
-    const fromLabel = legLabel(row.fromLegs);
-    const toLabel = legLabel(row.toLegs);
+    const fromLabel = legLabel(projection.fromLegs);
+    const toLabel = legLabel(projection.toLegs);
 
     return (
         <span className="text-[12px] text-fg-2 truncate flex items-center gap-1">
@@ -152,27 +187,57 @@ function FromToCell({ row }: { row: JournalEntryRow }) {
     );
 }
 
-function legLabel(legs: JournalEntryRow['fromLegs']): string {
+function legLabel(legs: JournalProjection['fromLegs']): string {
     const first = legs[0];
     if (!first) return '—';
     if (legs.length === 1) return first.accountName;
     return `${first.accountName} +${legs.length - 1}`;
 }
 
-function AmountCell({ row, catalog }: { row: JournalEntryRow; catalog: CurrencyCatalog }) {
+function AmountCell({
+    projection,
+    catalog,
+}: {
+    projection: JournalProjection;
+    catalog: CurrencyCatalog;
+}) {
     // ADR-0012: transfers (NetWorthChange == 0) render unsigned magnitude in
     // muted text; operating entries render the signed net-worth change with
     // colour by sign. Font/size matches the per-account Register row for
     // visual consistency across the two amount-on-row surfaces.
-    const money = row.isTransfer ? row.grossMagnitude : row.netWorthChange;
-    const colour = row.isTransfer
+    const money = projection.isTransfer ? projection.grossMagnitude : projection.netWorthChange;
+    const colour = projection.isTransfer
         ? 'text-fg-3'
         : money.amount < 0
           ? 'text-danger'
           : 'text-success';
     return (
         <span className={cx('font-mono text-[13px] tabular text-right', colour)}>
-            {formatMoney(money.amount, money.currencyCode, catalog, { sign: !row.isTransfer })}
+            {formatMoney(money.amount, money.currencyCode, catalog, {
+                sign: !projection.isTransfer,
+            })}
         </span>
     );
+}
+
+export function projectEntry(
+    entry: JournalEntry,
+    accountById: ReadonlyMap<AccountId, Account>,
+): JournalProjection {
+    // Every balanced entry shares a currency across all lines (the backend
+    // validator enforces this). Pick the currency off the first line's account;
+    // fall back to "XXX" for the empty-lines edge case so a Money payload is
+    // still constructable.
+    const firstLineAccount = entry.lines[0]
+        ? accountById.get(entry.lines[0].accountId)
+        : undefined;
+    const currencyCode = firstLineAccount?.currencyCode ?? 'XXX';
+    const projectionLines: ProjectionLine[] = entry.lines.map(line => ({
+        id: line.id,
+        accountId: line.accountId,
+        accountName: line.accountName,
+        accountType: accountById.get(line.accountId)?.type ?? 'Asset',
+        amount: line.amount,
+    }));
+    return projectJournalEntry(projectionLines, currencyCode);
 }

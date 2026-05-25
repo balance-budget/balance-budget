@@ -1,7 +1,6 @@
 using System.Globalization;
 using Balance.Data;
 using Balance.Data.Entities;
-using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
 using Balance.Data.Helpers;
 using Balance.Services.Contracts;
@@ -21,226 +20,31 @@ internal sealed class JournalEntryService : IJournalEntryService
         _timeProvider = timeProvider;
     }
 
-    public async Task<IReadOnlyList<JournalEntryRowOutput>> ListAsync(
+    public async Task<IReadOnlyList<JournalEntryOutput>> ListAsync(
         int skip,
         int take,
         CancellationToken cancellationToken
     )
     {
-        var rows = await _dbContext
+        var page = _dbContext
             .JournalEntries.AsNoTracking()
             .OrderByDescending(e => e.Date)
             .ThenByDescending(e => e.CreatedAt)
             .Skip(skip)
-            .Take(take)
-            .Select(e => new EntryProjectionRow(
-                e.Id,
-                e.Date,
-                e.Description,
-                e.BankTransactionId,
-                e.CounterpartyId,
-                e.CounterpartyId == null
-                    ? null
-                    : _dbContext
-                        .Counterparties.Where(c => c.Id == e.CounterpartyId)
-                        .Select(c => c.Name)
-                        .FirstOrDefault(),
-                e.CreatedAt,
-                e.UpdatedAt,
-                e.Lines.Select(l => new EntryProjectionLine(
-                        l.Id,
-                        l.AccountId,
-                        _dbContext
-                            .Accounts.Where(a => a.Id == l.AccountId)
-                            .Select(a => a.Name)
-                            .First(),
-                        _dbContext
-                            .Accounts.Where(a => a.Id == l.AccountId)
-                            .Select(a => a.AccountType)
-                            .First(),
-                        _dbContext
-                            .Accounts.Where(a => a.Id == l.AccountId)
-                            .Select(a => a.CurrencyCode)
-                            .First(),
-                        l.Amount,
-                        l.ReconciliationStatus,
-                        l.Description
-                    ))
-                    .ToList()
-            ))
-            .ToListAsync(cancellationToken);
-
-        var output = new List<JournalEntryRowOutput>(rows.Count);
-        foreach (var row in rows)
-        {
-            output.Add(BuildRowOutput(row));
-        }
-
-        return output;
+            .Take(take);
+        return await ProjectOutput(_dbContext, page).ToListAsync(cancellationToken);
     }
-
-    private static (
-        Money NetWorthChange,
-        Money GrossMagnitude,
-        JournalEntryProjectionResult Result
-    ) Project(EntryProjectionRow row)
-    {
-        // All lines in a balanced entry share a currency (enforced by JournalEntryValidator).
-        // For the empty-or-degenerate edge case, fall back to a sentinel so the projection
-        // can still wrap zero amounts as Money.
-        var currencyCode =
-            row.Lines.Count > 0 ? row.Lines[0].CurrencyCode : new CurrencyCode("XXX");
-
-        var projectionInputs = row
-            .Lines.Select(l => new JournalLineProjectionInput(
-                l.AccountId,
-                l.AccountName,
-                l.AccountType,
-                l.Amount
-            ))
-            .ToList();
-
-        var projection = JournalEntryProjection.Compute(projectionInputs);
-        return (
-            new Money(projection.NetWorthChange, currencyCode),
-            new Money(projection.GrossMagnitude, currencyCode),
-            projection
-        );
-    }
-
-    private static JournalEntryRowOutput BuildRowOutput(EntryProjectionRow row)
-    {
-        var (netWorthChange, grossMagnitude, projection) = Project(row);
-        return new JournalEntryRowOutput(
-            row.Id,
-            row.Date,
-            row.Description,
-            row.BankTransactionId,
-            row.CounterpartyId,
-            row.CounterpartyName,
-            row.Lines.Count,
-            projection.IsTransfer,
-            netWorthChange,
-            grossMagnitude,
-            projection.IsSimplifiable,
-            projection.FromLegs,
-            projection.ToLegs,
-            row.CreatedAt,
-            row.UpdatedAt
-        );
-    }
-
-    private static JournalEntryOutput BuildDetailOutput(EntryProjectionRow row)
-    {
-        var (netWorthChange, grossMagnitude, projection) = Project(row);
-        var lines = row
-            .Lines.Select(l => new JournalLineOutput(
-                l.Id,
-                l.AccountId,
-                l.AccountName,
-                l.Amount,
-                l.ReconciliationStatus,
-                l.Description
-            ))
-            .ToList();
-        return new JournalEntryOutput(
-            row.Id,
-            row.Date,
-            row.Description,
-            row.BankTransactionId,
-            row.CounterpartyId,
-            row.CounterpartyName,
-            row.Lines.Count,
-            projection.IsTransfer,
-            netWorthChange,
-            grossMagnitude,
-            projection.IsSimplifiable,
-            projection.FromLegs,
-            projection.ToLegs,
-            lines,
-            row.CreatedAt,
-            row.UpdatedAt
-        );
-    }
-
-    private sealed record EntryProjectionRow(
-        JournalEntryId Id,
-        DateOnly Date,
-        string? Description,
-        BankTransactionId? BankTransactionId,
-        CounterpartyId? CounterpartyId,
-        string? CounterpartyName,
-        DateTime CreatedAt,
-        DateTime UpdatedAt,
-        IReadOnlyList<EntryProjectionLine> Lines
-    );
-
-    private sealed record EntryProjectionLine(
-        JournalLineId Id,
-        AccountId AccountId,
-        string AccountName,
-        AccountType AccountType,
-        CurrencyCode CurrencyCode,
-        long Amount,
-        ReconciliationStatus ReconciliationStatus,
-        string? Description
-    );
 
     public async Task<Result<JournalEntryOutput>> GetAsync(
         JournalEntryId id,
         CancellationToken cancellationToken
     )
     {
-        var row = await QueryDetailAsync(id, cancellationToken);
-        if (row is null)
+        var query = _dbContext.JournalEntries.AsNoTracking().Where(e => e.Id == id);
+        var output = await ProjectOutput(_dbContext, query).FirstOrDefaultAsync(cancellationToken);
+        if (output is null)
             return new NotFoundError("JournalEntry", id.Value.ToString());
-        return BuildDetailOutput(row);
-    }
-
-    private Task<EntryProjectionRow?> QueryDetailAsync(
-        JournalEntryId id,
-        CancellationToken cancellationToken
-    )
-    {
-        return _dbContext
-            .JournalEntries.AsNoTracking()
-            .Where(e => e.Id == id)
-            .Select(e => new EntryProjectionRow(
-                e.Id,
-                e.Date,
-                e.Description,
-                e.BankTransactionId,
-                e.CounterpartyId,
-                e.CounterpartyId == null
-                    ? null
-                    : _dbContext
-                        .Counterparties.Where(c => c.Id == e.CounterpartyId)
-                        .Select(c => c.Name)
-                        .FirstOrDefault(),
-                e.CreatedAt,
-                e.UpdatedAt,
-                e.Lines.Select(l => new EntryProjectionLine(
-                        l.Id,
-                        l.AccountId,
-                        _dbContext
-                            .Accounts.Where(a => a.Id == l.AccountId)
-                            .Select(a => a.Name)
-                            .First(),
-                        _dbContext
-                            .Accounts.Where(a => a.Id == l.AccountId)
-                            .Select(a => a.AccountType)
-                            .First(),
-                        _dbContext
-                            .Accounts.Where(a => a.Id == l.AccountId)
-                            .Select(a => a.CurrencyCode)
-                            .First(),
-                        l.Amount,
-                        l.ReconciliationStatus,
-                        l.Description
-                    ))
-                    .ToList()
-            ))
-            .FirstOrDefaultAsync(cancellationToken);
+        return output;
     }
 
     public async Task<Result<UpdateJournalEntryInput>> GetSnapshotAsync(
@@ -433,15 +237,53 @@ internal sealed class JournalEntryService : IJournalEntryService
         CancellationToken cancellationToken
     )
     {
-        var row = await QueryDetailAsync(id, cancellationToken);
-        if (row is null)
+        var query = _dbContext.JournalEntries.AsNoTracking().Where(e => e.Id == id);
+        var output = await ProjectOutput(_dbContext, query).FirstOrDefaultAsync(cancellationToken);
+        if (output is null)
         {
             throw new InvalidOperationException(
                 $"JournalEntry {id.Value} disappeared between save and re-query."
             );
         }
 
-        return BuildDetailOutput(row);
+        return output;
+    }
+
+    /// <summary>
+    /// EF projection from a JournalEntry queryable straight to the wire shape, with name
+    /// joins for Counterparty and Account. The caller applies ordering/paging before
+    /// projecting — the nested Lines collection blocks server-side ordering on the projected
+    /// shape.
+    /// </summary>
+    private static IQueryable<JournalEntryOutput> ProjectOutput(
+        BalanceDbContext db,
+        IQueryable<JournalEntry> source
+    )
+    {
+        return source.Select(e => new JournalEntryOutput(
+            e.Id,
+            e.Date,
+            e.Description,
+            e.BankTransactionId,
+            e.CounterpartyId,
+            e.CounterpartyId == null
+                ? null
+                : db
+                    .Counterparties.Where(c => c.Id == e.CounterpartyId)
+                    .Select(c => c.Name)
+                    .FirstOrDefault(),
+            e.Lines.Select(l => new JournalLineOutput(
+                    l.Id,
+                    l.AccountId,
+                    db.Accounts.Where(a => a.Id == l.AccountId).Select(a => a.Name).First(),
+                    l.Amount,
+                    l.ReconciliationStatus,
+                    l.Description
+                ))
+                .ToList(),
+            e.CreatedAt,
+            e.UpdatedAt
+        ));
     }
 
     private async Task<Result<IReadOnlyList<JournalLineDraft>>> BuildDraftsAsync(

@@ -544,10 +544,6 @@ export interface components {
         };
         /** Format: uuid */
         JournalEntryId: string;
-        JournalEntryLegSummary: {
-            accountId: components["schemas"]["AccountId"];
-            accountName: string;
-        };
         JournalEntryOutput: {
             id: components["schemas"]["JournalEntryId"];
             /** Format: date */
@@ -556,36 +552,7 @@ export interface components {
             bankTransactionId: null | components["schemas"]["BankTransactionId"];
             counterpartyId: null | components["schemas"]["CounterpartyId"];
             counterpartyName: null | string;
-            /** Format: int32 */
-            lineCount: number | string;
-            isTransfer: boolean;
-            netWorthChange: components["schemas"]["Money"];
-            grossMagnitude: components["schemas"]["Money"];
-            isSimplifiable: boolean;
-            fromLegs: components["schemas"]["JournalEntryLegSummary"][];
-            toLegs: components["schemas"]["JournalEntryLegSummary"][];
             lines: components["schemas"]["JournalLineOutput"][];
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
-        };
-        JournalEntryRowOutput: {
-            id: components["schemas"]["JournalEntryId"];
-            /** Format: date */
-            date: string;
-            description: null | string;
-            bankTransactionId: null | components["schemas"]["BankTransactionId"];
-            counterpartyId: null | components["schemas"]["CounterpartyId"];
-            counterpartyName: null | string;
-            /** Format: int32 */
-            lineCount: number | string;
-            isTransfer: boolean;
-            netWorthChange: components["schemas"]["Money"];
-            grossMagnitude: components["schemas"]["Money"];
-            isSimplifiable: boolean;
-            fromLegs: components["schemas"]["JournalEntryLegSummary"][];
-            toLegs: components["schemas"]["JournalEntryLegSummary"][];
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -2311,7 +2278,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["JournalEntryRowOutput"][];
+                    "application/json": components["schemas"]["JournalEntryOutput"][];
                 };
             };
         };
