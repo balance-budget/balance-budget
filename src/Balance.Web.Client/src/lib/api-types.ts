@@ -135,6 +135,22 @@ export interface paths {
         patch: operations["UpdateCounterparty"];
         trace?: never;
     };
+    "/api/counterparties/{id}/suggested-accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetCounterpartySuggestedAccounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/bank-accounts": {
         parameters: {
             query?: never;
@@ -211,6 +227,54 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["DeleteBankTransaction"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bank-transactions/{id}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["DismissBankTransaction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bank-transactions/{id}/undismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["UndismissBankTransaction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bank-transactions/{id}/categorize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["CategorizeBankTransaction"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -342,6 +406,8 @@ export interface components {
         };
         /** Format: uuid */
         BankTransactionId: string;
+        /** @enum {unknown} */
+        BankTransactionListFilter: "Inbox" | "Matched" | "Dismissed" | "All" | null;
         BankTransactionOutput: {
             id: components["schemas"]["BankTransactionId"];
             bankAccountId: components["schemas"]["BankAccountId"];
@@ -351,10 +417,28 @@ export interface components {
             description: string;
             counterpartyName: null | string;
             counterpartyAccountNumber: null | string;
+            journalEntryId: null | components["schemas"]["JournalEntryId"];
+            /** Format: date-time */
+            dismissedAt: null | string;
+            dismissedReason: null | string;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        CategorizeBankTransactionLineRequest: {
+            accountId: components["schemas"]["AccountId"];
+            /** Format: int64 */
+            amount: number | string;
+            description: null | string;
+        };
+        CategorizeBankTransactionRequest: {
+            counterpartyId: null | components["schemas"]["CounterpartyId"];
+            newCounterparty: null | components["schemas"]["NewCounterpartyRequest"];
+            /** Format: date */
+            date: string;
+            description: null | string;
+            lines: components["schemas"]["CategorizeBankTransactionLineRequest"][];
         };
         /** Format: uuid */
         CounterpartyId: string;
@@ -435,6 +519,9 @@ export interface components {
             /** Format: date */
             periodEnd: string;
             currencyCode: components["schemas"]["CurrencyCode"];
+        };
+        DismissBankTransactionRequest: {
+            reason: string;
         };
         HttpValidationProblemDetails: {
             type?: null | string;
@@ -626,6 +713,9 @@ export interface components {
             currencyCode?: components["schemas"]["CurrencyCode"];
             isZero?: boolean;
         };
+        NewCounterpartyRequest: {
+            name: string;
+        };
         ProblemDetails: {
             type?: null | string;
             title?: null | string;
@@ -653,6 +743,11 @@ export interface components {
             reconciliationStatus: components["schemas"]["ReconciliationStatus"];
             amount: components["schemas"]["Money"];
             counter: components["schemas"]["RegisterRowCounterLeg"][];
+        };
+        SuggestedCounterAccountOutput: {
+            accountId: components["schemas"]["AccountId"];
+            /** Format: int64 */
+            amount: number | string;
         };
         TrendDelta: {
             /** Format: date */
@@ -1496,6 +1591,46 @@ export interface operations {
             };
         };
     };
+    GetCounterpartySuggestedAccounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["CounterpartyId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuggestedCounterAccountOutput"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     ListBankAccounts: {
         parameters: {
             query?: never;
@@ -1798,7 +1933,11 @@ export interface operations {
     };
     ListBankTransactions: {
         parameters: {
-            query?: never;
+            query?: {
+                Skip?: number | string;
+                Take?: number | string;
+                Filter?: components["schemas"]["BankTransactionListFilter"];
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1933,6 +2072,188 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    DismissBankTransaction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["BankTransactionId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DismissBankTransactionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankTransactionOutput"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    UndismissBankTransaction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["BankTransactionId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankTransactionOutput"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    CategorizeBankTransaction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["BankTransactionId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CategorizeBankTransactionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalEntryOutput"];
+                };
             };
             /** @description Bad Request */
             400: {
