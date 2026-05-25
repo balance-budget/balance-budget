@@ -78,6 +78,7 @@ export function BankTransactionsInbox({ page, filter, onPageChange, onFilterChan
                     onDismiss={setDismissing}
                 />
             </Panel>
+
             {dismissing && (
                 <DismissDialog
                     bankTransaction={dismissing}

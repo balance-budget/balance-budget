@@ -12,6 +12,7 @@ import { getJson, postJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
 
 type WireBankTransaction = components['schemas']['BankTransactionOutput'];
+type WireDismissRequest = components['schemas']['DismissBankTransactionRequest'];
 
 // Mirrors the BankTransactionListFilter enum on the server. The wire type
 // allows null (openapi-typescript marks query-string enums as nullable), so we
