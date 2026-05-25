@@ -12,4 +12,7 @@ public sealed class BankTransaction : BaseEntity<BankTransactionId>
     public string? CounterpartyAccountNumber { get; init; }
     public required string RawSource { get; init; }
     public required string RowHash { get; init; }
+
+    public DateTime? DismissedAt { get; set; }
+    public string? DismissedReason { get; set; }
 }
