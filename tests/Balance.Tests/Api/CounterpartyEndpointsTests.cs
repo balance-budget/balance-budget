@@ -137,6 +137,42 @@ internal sealed class CounterpartyEndpointsTests : EndpointsTestsBase
     }
 
     [Test]
+    public async Task GetSuggestedAccounts_returns_404_when_counterparty_unknown()
+    {
+        using var client = Factory.CreateClient();
+
+        using var response = await client.GetAsync(
+            new Uri($"/api/counterparties/{Guid.NewGuid()}/suggested-accounts", UriKind.Relative)
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
+    }
+
+    [Test]
+    public async Task GetSuggestedAccounts_returns_empty_for_counterparty_with_no_entries()
+    {
+        using var client = Factory.CreateClient();
+
+        var request = new CreateCounterpartyRequestDto($"Empty-Suggestions-{Guid.NewGuid():N}");
+        using var createResponse = await client.PostAsJsonAsync(
+            new Uri("/api/counterparties", UriKind.Relative),
+            request
+        );
+        var created = await createResponse.Content.ReadFromJsonAsync<CounterpartyDto>();
+
+        using var response = await client.GetAsync(
+            new Uri($"/api/counterparties/{created!.Id}/suggested-accounts", UriKind.Relative)
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var suggestions = await response.Content.ReadFromJsonAsync<
+            IReadOnlyList<SuggestedCounterAccountDto>
+        >();
+        await Assert.That(suggestions).IsNotNull();
+        await Assert.That(suggestions!).IsEmpty();
+    }
+
+    [Test]
     public async Task DeleteCounterparty_removes_the_row()
     {
         using var client = Factory.CreateClient();
@@ -164,3 +200,5 @@ internal sealed class CounterpartyEndpointsTests : EndpointsTestsBase
 internal sealed record CounterpartyDto(Guid Id, string Name);
 
 internal sealed record CreateCounterpartyRequestDto(string Name);
+
+internal sealed record SuggestedCounterAccountDto(Guid AccountId, long Amount);

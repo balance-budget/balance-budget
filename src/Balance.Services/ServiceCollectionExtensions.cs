@@ -43,6 +43,7 @@ public static class ServiceCollectionExtensions
             .AddScoped<IAccountBalanceService, AccountBalanceService>()
             .AddScoped<IRegisterService, RegisterService>()
             .AddScoped<ICounterpartyService, CounterpartyService>()
+            .AddScoped<IAccountSuggestionService, AccountSuggestionService>()
             .AddScoped<IBankAccountService, BankAccountService>()
             .AddScoped<IBankTransactionService, BankTransactionService>()
             .AddScoped<IBankTransactionImportService, BankTransactionImportService>()

@@ -17,6 +17,9 @@ internal static class CounterpartyEndpoints
         group.MapGet("", ListAsync).WithName("ListCounterparties");
         group.MapGet("/{id}", GetAsync).WithName("GetCounterparty");
         group
+            .MapGet("/{id}/suggested-accounts", GetSuggestedAccountsAsync)
+            .WithName("GetCounterpartySuggestedAccounts");
+        group
             .MapPost("", CreateAsync)
             .WithValidation<CreateCounterpartyRequest>()
             .WithName("CreateCounterparty");
@@ -53,6 +56,25 @@ internal static class CounterpartyEndpoints
     )
     {
         var result = await counterpartyService.GetAsync(id, cancellationToken);
+        return result.ToOkReadOnly();
+    }
+
+    private static async Task<
+        Results<
+            Ok<IReadOnlyList<SuggestedCounterAccountOutput>>,
+            NotFound<ProblemDetails>,
+            ValidationProblem
+        >
+    > GetSuggestedAccountsAsync(
+        [FromRoute] CounterpartyId id,
+        [FromServices] IAccountSuggestionService suggestionService,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await suggestionService.GetSuggestedCounterAccountsAsync(
+            id,
+            cancellationToken
+        );
         return result.ToOkReadOnly();
     }
 
