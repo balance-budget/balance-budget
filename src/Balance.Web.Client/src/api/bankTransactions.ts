@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { components } from '../lib/api-types';
 import {
     asBankAccountId,
@@ -8,7 +8,7 @@ import {
     type BankTransactionId,
     type JournalEntryId,
 } from '../lib/domain';
-import { getJson } from '../lib/http';
+import { getJson, postJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
 
 type WireBankTransaction = components['schemas']['BankTransactionOutput'];
@@ -64,6 +64,42 @@ export function useBankTransactions(filter: BankTransactionFilter, skip: number,
                 'load bank transactions',
             );
             return wire.map(toBankTransaction);
+        },
+    });
+}
+
+export function useDismissBankTransaction() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (args: { id: BankTransactionId; reason: string }) => {
+            const wire = await postJson<WireBankTransaction>(
+                `/api/bank-transactions/${args.id}/dismiss`,
+                { reason: args.reason },
+                new AbortController().signal,
+                'dismiss bank transaction',
+            );
+            return toBankTransaction(wire);
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: bankTransactionsKeys.all });
+        },
+    });
+}
+
+export function useUndismissBankTransaction() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (id: BankTransactionId) => {
+            const wire = await postJson<WireBankTransaction>(
+                `/api/bank-transactions/${id}/undismiss`,
+                {},
+                new AbortController().signal,
+                'undismiss bank transaction',
+            );
+            return toBankTransaction(wire);
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: bankTransactionsKeys.all });
         },
     });
 }
