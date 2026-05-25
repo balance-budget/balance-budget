@@ -22,15 +22,13 @@ export function Journal({ page, onPageChange }: { page: number; onPageChange: (p
                 title="Journal entries"
                 subtitle="Every bookkeeping event, newest first."
                 action={
-                    <button
-                        type="button"
-                        disabled
-                        title="Manual entry creation isn't built yet."
-                        className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm bg-brand-primary text-white text-[13px] font-medium opacity-40 cursor-not-allowed"
+                    <Link
+                        to="/journal/new"
+                        className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm bg-brand-primary text-white text-[13px] font-medium hover:bg-brand-primary-dark"
                     >
                         <Icon name="plus" size={14} strokeWidth={2} />
                         New entry
-                    </button>
+                    </Link>
                 }
             />
             <JournalBody
@@ -80,8 +78,7 @@ function JournalBody({
             <div className="py-8 flex flex-col items-center gap-2 text-center">
                 <span className="text-[14px] text-fg-2">No journal entries yet.</span>
                 <span className="text-[12px] text-fg-3">
-                    Manual entry creation isn't built yet — entries appear here once you import a
-                    bank statement.
+                    Create one manually or import a bank statement.
                 </span>
             </div>
         );
