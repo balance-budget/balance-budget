@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { components } from '../lib/api-types';
 import {
     asBankAccountId,
@@ -8,10 +8,11 @@ import {
     type BankTransactionId,
     type JournalEntryId,
 } from '../lib/domain';
-import { getJson } from '../lib/http';
+import { getJson, postJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
 
 type WireBankTransaction = components['schemas']['BankTransactionOutput'];
+type WireDismissRequest = components['schemas']['DismissBankTransactionRequest'];
 
 // Mirrors the BankTransactionListFilter enum on the server. The wire type
 // allows null (openapi-typescript marks query-string enums as nullable), so we
@@ -69,6 +70,43 @@ export function useBankTransactions(skip: number, take: number, filter: BankTran
                 'load bank transactions',
             );
             return wire.map(toBankTransaction);
+        },
+    });
+}
+
+export function useDismissBankTransaction() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (args: { id: BankTransactionId; reason: string }) => {
+            const body: WireDismissRequest = { reason: args.reason };
+            const wire = await postJson<WireBankTransaction>(
+                `/api/bank-transactions/${args.id}/dismiss`,
+                body,
+                new AbortController().signal,
+                'dismiss bank transaction',
+            );
+            return toBankTransaction(wire);
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: bankTransactionsKeys.all });
+        },
+    });
+}
+
+export function useUndismissBankTransaction() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (id: BankTransactionId) => {
+            const wire = await postJson<WireBankTransaction>(
+                `/api/bank-transactions/${id}/undismiss`,
+                {},
+                new AbortController().signal,
+                'undismiss bank transaction',
+            );
+            return toBankTransaction(wire);
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: bankTransactionsKeys.all });
         },
     });
 }
