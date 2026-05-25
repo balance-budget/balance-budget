@@ -12,8 +12,20 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
   | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
   && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
   | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
-  && apt-get update && apt-get install -y gh \
-  && rm -rf /var/lib/apt/lists/*
+  && apt-get update \
+  && apt-get install -y gh \
+  && rm -rf /var/lib/apt/lists/* 
+
+# Add typescript language server
+RUN npm install -g typescript-language-server typescript
+
+RUN wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
+  && dpkg -i packages-microsoft-prod.deb \
+  && rm packages-microsoft-prod.deb \
+  && apt-get update \
+  && apt-get install -y dotnet-sdk-10.0 
+
+RUN dotnet tool install --global csharp-ls
 
 # Build-args for UID/GID alignment: sandcastle docker build-image
 # defaults these to the host user's UID/GID so image-built files
