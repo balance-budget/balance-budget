@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { compare } from 'fast-json-patch';
 import type { components } from '../lib/api-types';
 import {
     type AccountId,
@@ -12,8 +13,10 @@ import {
     asJournalEntryId,
     asJournalLineId,
 } from '../lib/domain';
-import { deleteRequest, getJson } from '../lib/http';
+import { deleteRequest, getJson, patchJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
+
+type WireUpdateInput = components['schemas']['UpdateJournalEntryInput'];
 
 type WireRow = components['schemas']['JournalEntryRowOutput'];
 type WireDetail = components['schemas']['JournalEntryOutput'];
@@ -137,6 +140,48 @@ export function useJournalEntry(id: JournalEntryId) {
                 'load journal entry',
             );
             return toEntry(wire);
+        },
+    });
+}
+
+/**
+ * Builds the `UpdateJournalEntryInput` shape from a loaded entry. Lines are
+ * keyed by line id (D-format Guid string, matching what the server expects)
+ * so that `compare()` produces stable `/lines/{id}/description` paths.
+ */
+export function toUpdateInput(entry: JournalEntry): WireUpdateInput {
+    return {
+        date: entry.date,
+        description: entry.description,
+        counterpartyId: entry.counterpartyId,
+        lines: Object.fromEntries(
+            entry.lines.map(line => [line.id, { description: line.description }]),
+        ),
+    };
+}
+
+export function useUpdateJournalEntry() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (args: {
+            id: JournalEntryId;
+            original: WireUpdateInput;
+            edited: WireUpdateInput;
+        }) => {
+            const patch = compare(args.original, args.edited);
+            const wire = await patchJson<WireDetail>(
+                `/api/journal-entries/${args.id}`,
+                patch,
+                new AbortController().signal,
+                'update journal entry',
+            );
+            return toEntry(wire);
+        },
+        onSuccess: async (_data, vars) => {
+            await queryClient.invalidateQueries({ queryKey: journalEntriesKeys.all });
+            await queryClient.invalidateQueries({
+                queryKey: journalEntriesKeys.detail(vars.id),
+            });
         },
     });
 }
