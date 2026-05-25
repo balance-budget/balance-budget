@@ -126,6 +126,59 @@ export function formatMoney(
     return `${m.sign}${m.symbol}${m.integer}${sep}${m.fraction}`;
 }
 
+export type ParseMoneyResult =
+    | { ok: true; minor: number }
+    | { ok: false; error: string };
+
+/**
+ * User-input boundary parser. Takes a major-units string ("12.34", "1,234.50",
+ * "-7") and converts to a minor-units integer against the supplied scale.
+ * Rejects strings with more decimal places than the currency allows rather
+ * than silently rounding — losing precision on the input boundary would
+ * violate ADR-0002 (minor-unit precision is exact at the boundaries).
+ *
+ * Accepts an optional leading sign, optional thousands separators (comma or
+ * space), and a `.` decimal mark. Trims whitespace. Empty / whitespace-only
+ * is reported as "Required" so callers can render it as a field error.
+ */
+export function parseMoney(input: string, scale: number): ParseMoneyResult {
+    const trimmed = input.trim();
+    if (trimmed.length === 0) {
+        return { ok: false, error: 'Required' };
+    }
+
+    const match = /^([+\-−])?([\d,\s]+)(?:\.(\d+))?$/.exec(trimmed);
+    if (!match) {
+        return { ok: false, error: 'Enter a number, e.g. 12.34' };
+    }
+
+    const [, signGroup, integerGroup, fractionGroup] = match;
+    const sign = signGroup === '-' || signGroup === '−' ? -1 : 1;
+    const integerDigits = (integerGroup ?? '').replace(/[,\s]/g, '');
+    const fractionDigits = fractionGroup ?? '';
+
+    if (integerDigits.length === 0) {
+        return { ok: false, error: 'Enter a number, e.g. 12.34' };
+    }
+
+    if (fractionDigits.length > scale) {
+        return {
+            ok: false,
+            error: scale === 0 ? 'Whole numbers only' : `At most ${scale} decimal places`,
+        };
+    }
+
+    const paddedFraction = fractionDigits.padEnd(scale, '0');
+    const combined = `${integerDigits}${paddedFraction}`;
+    const magnitude = Number(combined);
+
+    if (!Number.isFinite(magnitude) || !Number.isSafeInteger(magnitude)) {
+        return { ok: false, error: 'Amount is too large' };
+    }
+
+    return { ok: true, minor: sign * magnitude };
+}
+
 /**
  * Compact chart-axis label. Whole major units below 10,000 (e.g. €1,234), and
  * k/M abbreviations above (€12k, €1.2M). Tooltips use full formatMoney; this
