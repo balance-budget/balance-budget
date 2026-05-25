@@ -1,14 +1,27 @@
-import { useState } from 'react';
-import { Link } from '@tanstack/react-router';
-import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
+import { useMemo, useState } from 'react';
+import { Link, useBlocker } from '@tanstack/react-router';
+import { useQueries, useQueryClient } from '@tanstack/react-query';
+import { useAccounts, type Account } from '../api/accounts';
+import { useBankAccounts, type BankAccount } from '../api/bankAccounts';
 import {
     BANK_TRANSACTION_FILTERS,
+    bankTransactionsKeys,
     useBankTransactions,
     useDismissBankTransaction,
     useUndismissBankTransaction,
     type BankTransaction,
     type BankTransactionFilter,
 } from '../api/bankTransactions';
+import {
+    counterpartiesKeys,
+    useCounterparties,
+    type Counterparty,
+    type SuggestedCounterAccount,
+} from '../api/counterparties';
+import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
+import { Combobox } from '../components/Combobox';
+import { type ComboboxItem } from '../components/combobox.state';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ErrorState } from '../components/ErrorState';
 import { FieldError } from '../components/FieldError';
 import { FormErrorBanner } from '../components/FormErrorBanner';
@@ -19,8 +32,33 @@ import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { cx } from '../lib/cx';
-import { ApiError } from '../lib/http';
+import {
+    asAccountId,
+    asCounterpartyId,
+    type AccountId,
+    type AccountType,
+    type BankTransactionId,
+    type CounterpartyId,
+} from '../lib/domain';
+import { ApiError, getJson, postJson } from '../lib/http';
 import { formatMoney } from '../lib/money';
+import {
+    initialPrefill,
+    isPristine,
+    pickSuggestedAccountId,
+    rowStatus,
+    runSaveAll,
+    withSuggestedAccount,
+    type RowDraft,
+    type RowStatus,
+    type SaveAllOutcome,
+} from './bankTransactionsInbox.state';
+import type { components } from '../lib/api-types';
+
+type WireCounterparty = components['schemas']['CounterpartyOutput'];
+type WireJournalEntry = components['schemas']['JournalEntryOutput'];
+type WireCategorizeRequest = components['schemas']['CategorizeBankTransactionRequest'];
+type WireSuggested = components['schemas']['SuggestedCounterAccountOutput'];
 
 const PAGE_SIZE = 50;
 
@@ -32,7 +70,7 @@ const FILTER_LABEL: Record<BankTransactionFilter, string> = {
 };
 
 const SUBTITLE: Record<BankTransactionFilter, string> = {
-    Inbox: 'Bank rows waiting for a journal entry. Oldest first — work the queue.',
+    Inbox: 'Bank rows waiting for a journal entry. Pick Counterparty and Account inline; Save all when you’re happy.',
     Matched: 'Bank rows that have been categorised into a journal entry.',
     Dismissed: 'Bank rows you marked as not needing a journal entry.',
     All: 'Every imported bank row, regardless of state.',
@@ -50,6 +88,22 @@ const EMPTY_HINT: Record<BankTransactionFilter, string> = {
     Matched: 'Categorise an inbox row to see it here.',
     Dismissed: 'Dismissed rows live here for audit.',
     All: 'Import a bank statement from Bank imports to get started.',
+};
+
+const ACCOUNT_TYPE_ORDER: AccountType[] = [
+    'Asset',
+    'Liability',
+    'Income',
+    'Expense',
+    'Equity',
+];
+
+const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
+    Asset: 'Assets',
+    Liability: 'Liabilities',
+    Income: 'Income',
+    Expense: 'Expenses',
+    Equity: 'Equity',
 };
 
 type Props = {
@@ -172,6 +226,43 @@ function Body({
         );
     }
 
+    if (filter === 'Inbox') {
+        return (
+            <InboxEditor
+                bankTransactions={query.data}
+                catalog={catalog}
+                page={page}
+                onPageChange={onPageChange}
+                onDismiss={onDismiss}
+            />
+        );
+    }
+
+    return (
+        <ReadOnlyList
+            bankTransactions={query.data}
+            catalog={catalog}
+            page={page}
+            onPageChange={onPageChange}
+            onDismiss={onDismiss}
+        />
+    );
+}
+
+// Read-only list for Matched / Dismissed / All — same layout as before #84.
+function ReadOnlyList({
+    bankTransactions,
+    catalog,
+    page,
+    onPageChange,
+    onDismiss,
+}: {
+    bankTransactions: BankTransaction[];
+    catalog: CurrencyCatalog;
+    page: number;
+    onPageChange: (page: number) => void;
+    onDismiss: (bt: BankTransaction) => void;
+}) {
     return (
         <div className="flex flex-col">
             <div className="grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px_minmax(180px,200px)] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
@@ -181,8 +272,8 @@ function Body({
                 <span className="text-right">Amount</span>
                 <span className="text-right">Actions</span>
             </div>
-            {query.data.map(bt => (
-                <Row
+            {bankTransactions.map(bt => (
+                <ReadOnlyRow
                     key={bt.id}
                     bankTransaction={bt}
                     catalog={catalog}
@@ -192,14 +283,14 @@ function Body({
             <Pagination
                 page={page}
                 pageSize={PAGE_SIZE}
-                count={query.data.length}
+                count={bankTransactions.length}
                 onPageChange={onPageChange}
             />
         </div>
     );
 }
 
-function Row({
+function ReadOnlyRow({
     bankTransaction,
     catalog,
     onDismiss,
@@ -219,7 +310,7 @@ function Row({
             </div>
             <CounterpartyCell bankTransaction={bankTransaction} />
             <AmountCell bankTransaction={bankTransaction} catalog={catalog} />
-            <RowActions bankTransaction={bankTransaction} onDismiss={onDismiss} />
+            <ReadOnlyActions bankTransaction={bankTransaction} onDismiss={onDismiss} />
         </div>
     );
 }
@@ -269,15 +360,13 @@ function AmountCell({
     );
 }
 
-function RowActions({
+function ReadOnlyActions({
     bankTransaction,
     onDismiss,
 }: {
     bankTransaction: BankTransaction;
     onDismiss: (bt: BankTransaction) => void;
 }) {
-    // Matched rows are read-only — once a JournalEntry exists, the action is
-    // delete-and-recreate via the journal entry detail page, not here.
     if (bankTransaction.journalEntryId) {
         return <div />;
     }
@@ -305,6 +394,744 @@ function RowActions({
             >
                 <Icon name="x" size={14} strokeWidth={2} />
                 Dismiss
+            </button>
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Inbox editor: per-row draft buffer, top Save-all bar, navigation guard.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function InboxEditor({
+    bankTransactions,
+    catalog,
+    page,
+    onPageChange,
+    onDismiss,
+}: {
+    bankTransactions: BankTransaction[];
+    catalog: CurrencyCatalog;
+    page: number;
+    onPageChange: (page: number) => void;
+    onDismiss: (bt: BankTransaction) => void;
+}) {
+    const accounts = useAccounts();
+    const counterparties = useCounterparties();
+    const bankAccounts = useBankAccounts();
+
+    if (accounts.isPending || counterparties.isPending || bankAccounts.isPending) {
+        return (
+            <div className="flex flex-col gap-2">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+            </div>
+        );
+    }
+    if (accounts.isError) {
+        return <ErrorState message="Couldn't load accounts." onRetry={() => void accounts.refetch()} />;
+    }
+    if (counterparties.isError) {
+        return (
+            <ErrorState
+                message="Couldn't load counterparties."
+                onRetry={() => void counterparties.refetch()}
+            />
+        );
+    }
+    if (bankAccounts.isError) {
+        return (
+            <ErrorState
+                message="Couldn't load bank accounts."
+                onRetry={() => void bankAccounts.refetch()}
+            />
+        );
+    }
+
+    return (
+        <InboxEditorReady
+            bankTransactions={bankTransactions}
+            accounts={accounts.data}
+            counterparties={counterparties.data}
+            bankAccounts={bankAccounts.data}
+            catalog={catalog}
+            page={page}
+            onPageChange={onPageChange}
+            onDismiss={onDismiss}
+        />
+    );
+}
+
+function InboxEditorReady({
+    bankTransactions,
+    accounts,
+    counterparties,
+    bankAccounts,
+    catalog,
+    page,
+    onPageChange,
+    onDismiss,
+}: {
+    bankTransactions: BankTransaction[];
+    accounts: Account[];
+    counterparties: Counterparty[];
+    bankAccounts: BankAccount[];
+    catalog: CurrencyCatalog;
+    page: number;
+    onPageChange: (page: number) => void;
+    onDismiss: (bt: BankTransaction) => void;
+}) {
+    const toast = useToast();
+    const queryClient = useQueryClient();
+
+    const accountsById = useMemo(() => {
+        const m = new Map<AccountId, Account>();
+        for (const a of accounts) m.set(a.id, a);
+        return m;
+    }, [accounts]);
+
+    const bankAccountsById = useMemo(() => {
+        const m = new Map<string, BankAccount>();
+        for (const ba of bankAccounts) m.set(ba.id, ba);
+        return m;
+    }, [bankAccounts]);
+
+    // ── Per-row state ────────────────────────────────────────────────────────
+    // userOverrides: Partial<RowDraft> the user has typed on top of the
+    // server-derived prefill. Keeping this separate from the prefill lets the
+    // prefill be derived from props (BT + bankAccounts + suggestion query
+    // results) without setState-in-effect: re-rendering composes the effective
+    // draft as `{ ...prefill, ...overrides.get(id) }`.
+    const [userOverrides, setUserOverrides] = useState<Map<BankTransactionId, Partial<RowDraft>>>(
+        new Map(),
+    );
+    const [rowErrors, setRowErrors] = useState<Map<BankTransactionId, string>>(new Map());
+    // Optimistically hide rows we just saved — the BT query refetch will
+    // exclude them once it lands, but we want them gone immediately so the
+    // user sees the inbox shrink as Save-all ticks through.
+    const [savedIds, setSavedIds] = useState<Set<BankTransactionId>>(new Set());
+
+    const visibleBts = useMemo(
+        () => bankTransactions.filter(bt => !savedIds.has(bt.id)),
+        [bankTransactions, savedIds],
+    );
+
+    // Base prefill = IBAN-resolved counterparty + null account. Doesn't depend
+    // on the async per-CP suggestions, which keeps the cpId list below from
+    // becoming circular with the draft.
+    const basePrefillByBt = useMemo(() => {
+        const m = new Map<BankTransactionId, RowDraft>();
+        for (const bt of visibleBts) {
+            m.set(bt.id, initialPrefill(bt, bankAccounts));
+        }
+        return m;
+    }, [visibleBts, bankAccounts]);
+
+    // The cp we fire the per-row suggestion query for: user override wins,
+    // otherwise the IBAN-resolved cp. Self-transfer (null) skips the fetch.
+    const cpIdsForSuggestions = useMemo(
+        () =>
+            visibleBts.map(bt => {
+                const override = userOverrides.get(bt.id);
+                if (override?.counterpartyMode === 'new') return null;
+                if (override && 'counterpartyId' in override) return override.counterpartyId ?? null;
+                return basePrefillByBt.get(bt.id)?.counterpartyId ?? null;
+            }),
+        [visibleBts, userOverrides, basePrefillByBt],
+    );
+
+    const suggestionQueries = useQueries({
+        queries: cpIdsForSuggestions.map(cpId => ({
+            queryKey: cpId
+                ? counterpartiesKeys.suggestedAccounts(cpId)
+                : ['counterparties', 'noop'],
+            queryFn: async ({ signal }: { signal: AbortSignal }) => {
+                if (cpId === null) return [] as SuggestedCounterAccount[];
+                const wire = await getJson<WireSuggested[]>(
+                    `/api/counterparties/${cpId}/suggested-accounts`,
+                    signal,
+                    'load suggested accounts',
+                );
+                return wire.map(w => ({
+                    accountId: asAccountId(w.accountId),
+                    amount: typeof w.amount === 'string' ? Number(w.amount) : w.amount,
+                }));
+            },
+            enabled: cpId !== null,
+        })),
+    });
+
+    // Final prefill = base + suggestion-derived account (if any).
+    const prefillByBt = useMemo(() => {
+        const m = new Map<BankTransactionId, RowDraft>();
+        visibleBts.forEach((bt, i) => {
+            const base = basePrefillByBt.get(bt.id);
+            if (!base) return;
+            const queryResult = suggestionQueries[i];
+            if (!queryResult?.data) {
+                m.set(bt.id, base);
+                return;
+            }
+            const ownBankSide = bankAccountsById.get(bt.bankAccountId)?.accountId ?? null;
+            const suggested = pickSuggestedAccountId(
+                queryResult.data,
+                accountsById,
+                bt.money.currencyCode,
+                ownBankSide,
+            );
+            m.set(bt.id, withSuggestedAccount(base, suggested));
+        });
+        return m;
+    }, [visibleBts, basePrefillByBt, suggestionQueries, accountsById, bankAccountsById]);
+
+    function draftFor(id: BankTransactionId): RowDraft {
+        const prefill = prefillByBt.get(id);
+        const override = userOverrides.get(id);
+        if (!prefill) return override as RowDraft;
+        return { ...prefill, ...override };
+    }
+
+    function isRowPristine(id: BankTransactionId): boolean {
+        const override = userOverrides.get(id);
+        if (!override) return true;
+        const prefill = prefillByBt.get(id);
+        if (!prefill) return false;
+        return isPristine({ ...prefill, ...override }, prefill);
+    }
+
+    function patchDraft(id: BankTransactionId, patch: Partial<RowDraft>) {
+        setRowErrors(prev => {
+            if (!prev.has(id)) return prev;
+            const next = new Map(prev);
+            next.delete(id);
+            return next;
+        });
+        setUserOverrides(prev => {
+            const next = new Map(prev);
+            const existing = next.get(id) ?? {};
+            next.set(id, { ...existing, ...patch });
+            return next;
+        });
+    }
+
+    function resetRow(id: BankTransactionId) {
+        setUserOverrides(prev => {
+            if (!prev.has(id)) return prev;
+            const next = new Map(prev);
+            next.delete(id);
+            return next;
+        });
+        setRowErrors(prev => {
+            if (!prev.has(id)) return prev;
+            const next = new Map(prev);
+            next.delete(id);
+            return next;
+        });
+    }
+
+    function discardAll() {
+        setUserOverrides(new Map());
+        setRowErrors(new Map());
+    }
+
+    const readyIds = useMemo(
+        () =>
+            visibleBts
+                .map(bt => bt.id)
+                .filter(id => rowStatus(draftFor(id)) === 'ready'),
+        // draftFor depends on userOverrides + prefillByBt
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [visibleBts, userOverrides, prefillByBt],
+    );
+
+    const dirtyCount = useMemo(() => {
+        let n = 0;
+        for (const id of userOverrides.keys()) {
+            if (!isRowPristine(id)) n += 1;
+        }
+        return n;
+        // isRowPristine depends on userOverrides + prefillByBt
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userOverrides, prefillByBt]);
+
+    const [saving, setSaving] = useState(false);
+    const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+    const [discardOpen, setDiscardOpen] = useState(false);
+
+    async function saveAll() {
+        if (readyIds.length === 0) return;
+        setSaving(true);
+        setProgress({ done: 0, total: readyIds.length });
+        const readyRows = readyIds
+            .map(id => {
+                const bt = visibleBts.find(b => b.id === id);
+                if (!bt) return null;
+                return { id, bt, draft: draftFor(id) };
+            })
+            .filter((r): r is NonNullable<typeof r> => r !== null);
+
+        const summary = await runSaveAll(readyRows, {
+            createCounterparty: async name => {
+                const wire = await postJson<WireCounterparty>(
+                    '/api/counterparties',
+                    { name },
+                    new AbortController().signal,
+                    'create counterparty',
+                );
+                return asCounterpartyId(wire.id);
+            },
+            categorize: async (id, request: WireCategorizeRequest) => {
+                await postJson<WireJournalEntry>(
+                    `/api/bank-transactions/${id}/categorize`,
+                    request,
+                    new AbortController().signal,
+                    'categorise bank transaction',
+                );
+            },
+            onProgress: (done, total) => {
+                setProgress({ done, total });
+            },
+            onRowResult: (id, outcome: SaveAllOutcome) => {
+                if (outcome.ok) {
+                    setSavedIds(prev => new Set(prev).add(id));
+                    setUserOverrides(prev => {
+                        if (!prev.has(id)) return prev;
+                        const next = new Map(prev);
+                        next.delete(id);
+                        return next;
+                    });
+                } else {
+                    setRowErrors(prev => new Map(prev).set(id, outcome.error));
+                }
+            },
+        });
+
+        await queryClient.invalidateQueries({ queryKey: bankTransactionsKeys.all });
+        await queryClient.invalidateQueries({ queryKey: ['journalEntries'] });
+        await queryClient.invalidateQueries({ queryKey: counterpartiesKeys.all });
+        await queryClient.invalidateQueries({ queryKey: ['bank-accounts'] });
+        await queryClient.invalidateQueries({ queryKey: ['accounts'] });
+
+        // Refetch settled — saved rows have left the inbox list, so drop the
+        // optimistic-hidden shadow.
+        setSavedIds(new Set());
+        setSaving(false);
+        setProgress(null);
+        toast.push(
+            summary.failed === 0
+                ? `${summary.saved.toString()} categorised.`
+                : `${summary.saved.toString()} categorised, ${summary.failed.toString()} failed.`,
+            summary.failed === 0 ? 'success' : 'error',
+        );
+    }
+
+    const blocker = useBlocker({
+        shouldBlockFn: () => dirtyCount > 0 && !saving,
+        enableBeforeUnload: () => dirtyCount > 0,
+        withResolver: true,
+    });
+
+    const counterpartyItems = useMemo(
+        () => buildCounterpartyItems(counterparties),
+        [counterparties],
+    );
+
+    return (
+        <div className="flex flex-col">
+            <SaveBar
+                dirtyCount={dirtyCount}
+                readyCount={readyIds.length}
+                saving={saving}
+                progress={progress}
+                onSave={() => void saveAll()}
+                onDiscard={() => {
+                    setDiscardOpen(true);
+                }}
+            />
+            <div className="grid grid-cols-[88px_1fr_minmax(180px,1.4fr)_minmax(180px,1.4fr)_120px_120px] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
+                <span>Date</span>
+                <span>Description</span>
+                <span>Counterparty</span>
+                <span>Account</span>
+                <span className="text-right">Amount</span>
+                <span className="text-right">Actions</span>
+            </div>
+            {visibleBts.map(bt => {
+                const prefill = prefillByBt.get(bt.id);
+                if (!prefill) return null;
+                const draft = draftFor(bt.id);
+                const pristine = isRowPristine(bt.id);
+                return (
+                    <InboxRow
+                        key={bt.id}
+                        bankTransaction={bt}
+                        draft={draft}
+                        pristine={pristine}
+                        error={rowErrors.get(bt.id) ?? null}
+                        counterpartyItems={counterpartyItems}
+                        accountItems={buildAccountItems(
+                            accounts,
+                            bt.money.currencyCode,
+                            bankAccountsById.get(bt.bankAccountId)?.accountId ?? null,
+                        )}
+                        catalog={catalog}
+                        saving={saving}
+                        onPatch={patch => {
+                            patchDraft(bt.id, patch);
+                        }}
+                        onReset={() => {
+                            resetRow(bt.id);
+                        }}
+                        onDismiss={onDismiss}
+                    />
+                );
+            })}
+            <Pagination
+                page={page}
+                pageSize={PAGE_SIZE}
+                count={visibleBts.length}
+                onPageChange={onPageChange}
+            />
+
+            <ConfirmDialog
+                open={discardOpen}
+                onClose={() => {
+                    setDiscardOpen(false);
+                }}
+                onConfirm={() => {
+                    discardAll();
+                    setDiscardOpen(false);
+                }}
+                title="Discard unsaved categorisations?"
+                message={
+                    dirtyCount > 0
+                        ? `Reset all ${dirtyCount.toString()} unsaved drafts back to the server-suggested values.`
+                        : undefined
+                }
+                confirmLabel="Discard"
+                variant="destructive"
+            />
+
+            {blocker.status === 'blocked' && (
+                <ConfirmDialog
+                    open
+                    onClose={() => {
+                        blocker.reset();
+                    }}
+                    onConfirm={() => {
+                        blocker.proceed();
+                    }}
+                    title="Leave with unsaved drafts?"
+                    message={`You have ${dirtyCount.toString()} unsaved categorisation${
+                        dirtyCount === 1 ? '' : 's'
+                    }. Leaving will discard them.`}
+                    confirmLabel="Leave"
+                    variant="destructive"
+                />
+            )}
+        </div>
+    );
+}
+
+function buildCounterpartyItems(
+    counterparties: Counterparty[],
+): ComboboxItem<CounterpartyId | null>[] {
+    return [...counterparties]
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map(c => ({ key: c.id, label: c.name, value: c.id }));
+}
+
+function buildAccountItems(
+    accounts: Account[],
+    currencyCode: string,
+    ownBankSideAccountId: AccountId | null,
+): ComboboxItem<AccountId>[] {
+    return accounts
+        .filter(a => a.currencyCode === currencyCode && a.id !== ownBankSideAccountId)
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map(a => ({ key: a.id, label: a.name, group: a.type, value: a.id }));
+}
+
+function SaveBar({
+    dirtyCount,
+    readyCount,
+    saving,
+    progress,
+    onSave,
+    onDiscard,
+}: {
+    dirtyCount: number;
+    readyCount: number;
+    saving: boolean;
+    progress: { done: number; total: number } | null;
+    onSave: () => void;
+    onDiscard: () => void;
+}) {
+    if (dirtyCount === 0 && !saving) {
+        return null;
+    }
+    return (
+        <div className="flex items-center justify-between gap-3 mb-3 px-3 py-2 rounded-sm bg-brand-primary-soft border border-brand-primary/30">
+            <div className="flex items-center gap-3 text-[12px] text-fg-2">
+                {saving && progress ? (
+                    <span className="tabular">
+                        Saving {progress.done.toString()}/{progress.total.toString()}…
+                    </span>
+                ) : (
+                    <span>
+                        {dirtyCount.toString()} unsaved · {readyCount.toString()} ready
+                    </span>
+                )}
+            </div>
+            <div className="flex items-center gap-2">
+                <button
+                    type="button"
+                    onClick={onDiscard}
+                    disabled={saving}
+                    className="px-3 py-1 rounded-sm text-[13px] font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
+                >
+                    Discard
+                </button>
+                <button
+                    type="button"
+                    onClick={onSave}
+                    disabled={saving || readyCount === 0}
+                    className="px-3 py-1 rounded-sm text-[13px] font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
+                >
+                    {saving ? 'Saving…' : `Save ${readyCount.toString()} row${readyCount === 1 ? '' : 's'}`}
+                </button>
+            </div>
+        </div>
+    );
+}
+
+function InboxRow({
+    bankTransaction,
+    draft,
+    pristine,
+    error,
+    counterpartyItems,
+    accountItems,
+    catalog,
+    saving,
+    onPatch,
+    onReset,
+    onDismiss,
+}: {
+    bankTransaction: BankTransaction;
+    draft: RowDraft;
+    pristine: boolean;
+    error: string | null;
+    counterpartyItems: ComboboxItem<CounterpartyId | null>[];
+    accountItems: ComboboxItem<AccountId>[];
+    catalog: CurrencyCatalog;
+    saving: boolean;
+    onPatch: (patch: Partial<RowDraft>) => void;
+    onReset: () => void;
+    onDismiss: (bt: BankTransaction) => void;
+}) {
+    const status = rowStatus(draft);
+
+    return (
+        <div className="grid grid-cols-[88px_1fr_minmax(180px,1.4fr)_minmax(180px,1.4fr)_120px_120px] gap-3 items-start px-2 py-2 border-b border-border-soft last:border-b-0">
+            <div className="flex flex-col leading-tight pt-2">
+                <span className="text-[12px] text-fg-3 tabular">{bankTransaction.bookingDate}</span>
+                <StatusIndicator status={status} />
+            </div>
+            <div className="min-w-0 flex flex-col leading-tight pt-2">
+                <span className="text-[13px] text-fg-1 truncate">
+                    {bankTransaction.description}
+                </span>
+                {bankTransaction.counterpartyAccountNumber && (
+                    <span className="text-[11px] text-fg-3 truncate tabular">
+                        {bankTransaction.counterpartyAccountNumber}
+                    </span>
+                )}
+                {error && <span className="text-[11px] text-danger mt-1">{error}</span>}
+            </div>
+            <CounterpartyPicker
+                draft={draft}
+                items={counterpartyItems}
+                onPatch={onPatch}
+                disabled={saving}
+            />
+            <AccountPicker
+                draft={draft}
+                items={accountItems}
+                onPatch={onPatch}
+                disabled={saving}
+            />
+            <div className="pt-2">
+                <AmountCell bankTransaction={bankTransaction} catalog={catalog} />
+            </div>
+            <InboxRowActions
+                bankTransaction={bankTransaction}
+                pristine={pristine}
+                disabled={saving}
+                onReset={onReset}
+                onDismiss={onDismiss}
+            />
+        </div>
+    );
+}
+
+function StatusIndicator({ status }: { status: RowStatus }) {
+    if (status === 'ready') {
+        return (
+            <span className="text-[11px] text-success tabular inline-flex items-center gap-1">
+                <span aria-hidden>●</span> ready
+            </span>
+        );
+    }
+    if (status === 'invalid') {
+        return (
+            <span className="text-[11px] text-warning tabular inline-flex items-center gap-1">
+                <span aria-hidden>⚠</span> invalid
+            </span>
+        );
+    }
+    return (
+        <span className="text-[11px] text-fg-3 tabular inline-flex items-center gap-1">
+            <span aria-hidden>—</span>
+        </span>
+    );
+}
+
+function CounterpartyPicker({
+    draft,
+    items,
+    onPatch,
+    disabled,
+}: {
+    draft: RowDraft;
+    items: ComboboxItem<CounterpartyId | null>[];
+    onPatch: (patch: Partial<RowDraft>) => void;
+    disabled: boolean;
+}) {
+    // Render the in-progress "new" name as a synthetic item, so the user sees
+    // what they typed across renders.
+    const effectiveItems = useMemo(() => {
+        if (draft.counterpartyMode !== 'new' || draft.newCounterpartyName.trim().length === 0) {
+            return items;
+        }
+        const pending: ComboboxItem<CounterpartyId | null> = {
+            key: '__pending__',
+            label: `${draft.newCounterpartyName.trim()} (new)`,
+            value: null,
+        };
+        return [pending, ...items];
+    }, [draft.counterpartyMode, draft.newCounterpartyName, items]);
+
+    const value: CounterpartyId | null =
+        draft.counterpartyMode === 'existing' ? draft.counterpartyId : null;
+
+    return (
+        <Combobox
+            items={effectiveItems}
+            value={value}
+            onChange={id => {
+                onPatch({
+                    counterpartyMode: 'existing',
+                    counterpartyId: id,
+                    newCounterpartyName: '',
+                });
+            }}
+            onClear={() => {
+                onPatch({
+                    counterpartyMode: 'existing',
+                    counterpartyId: null,
+                    newCounterpartyName: '',
+                });
+            }}
+            onCreate={typed => {
+                onPatch({
+                    counterpartyMode: 'new',
+                    counterpartyId: null,
+                    newCounterpartyName: typed,
+                });
+            }}
+            noneLabel="── None (self-transfer)"
+            createLabel={typed => `+ Create '${typed}'`}
+            placeholder="Pick counterparty…"
+            disabled={disabled}
+            ariaLabel="Counterparty"
+        />
+    );
+}
+
+function AccountPicker({
+    draft,
+    items,
+    onPatch,
+    disabled,
+}: {
+    draft: RowDraft;
+    items: ComboboxItem<AccountId>[];
+    onPatch: (patch: Partial<RowDraft>) => void;
+    disabled: boolean;
+}) {
+    return (
+        <Combobox
+            items={items}
+            value={draft.accountId}
+            onChange={id => {
+                onPatch({ accountId: id });
+            }}
+            groupOrder={ACCOUNT_TYPE_ORDER}
+            groupLabels={ACCOUNT_TYPE_LABEL}
+            placeholder="Pick account…"
+            disabled={disabled}
+            ariaLabel="Account"
+        />
+    );
+}
+
+function InboxRowActions({
+    bankTransaction,
+    pristine,
+    disabled,
+    onReset,
+    onDismiss,
+}: {
+    bankTransaction: BankTransaction;
+    pristine: boolean;
+    disabled: boolean;
+    onReset: () => void;
+    onDismiss: (bt: BankTransaction) => void;
+}) {
+    return (
+        <div className="flex items-center justify-end gap-1 pt-1">
+            <Link
+                to="/bank-transactions/$id/categorize"
+                params={{ id: bankTransaction.id }}
+                aria-label="Edit details"
+                title="Edit details (splits, custom date)"
+                className="inline-flex items-center justify-center p-1 rounded-sm text-fg-3 hover:text-fg-1 hover:bg-surface-2"
+            >
+                <Icon name="pencil" size={14} strokeWidth={2} />
+            </Link>
+            <button
+                type="button"
+                onClick={onReset}
+                disabled={pristine || disabled}
+                aria-label="Reset draft"
+                title="Reset draft to server suggestion"
+                className="inline-flex items-center justify-center p-1 rounded-sm text-fg-3 hover:text-fg-1 hover:bg-surface-2 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+                <Icon name="repeat" size={14} strokeWidth={2} />
+            </button>
+            <button
+                type="button"
+                onClick={() => {
+                    onDismiss(bankTransaction);
+                }}
+                disabled={disabled}
+                aria-label="Dismiss"
+                title="Dismiss this row"
+                className="inline-flex items-center justify-center p-1 rounded-sm text-fg-3 hover:text-danger hover:bg-surface-2 disabled:opacity-40"
+            >
+                <Icon name="x" size={14} strokeWidth={2} />
             </button>
         </div>
     );
