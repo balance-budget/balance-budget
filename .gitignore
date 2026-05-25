@@ -12,4 +12,6 @@ Desktop.ini
 .DS_Store
 *.lscache
 
+node_modules/
+
 .claude/
