@@ -17,6 +17,17 @@ public interface IBankTransactionService
     );
 
     Task<Result> DeleteAsync(BankTransactionId id, CancellationToken cancellationToken);
+
+    Task<Result<BankTransactionOutput>> DismissAsync(
+        BankTransactionId id,
+        string reason,
+        CancellationToken cancellationToken
+    );
+
+    Task<Result<BankTransactionOutput>> UndismissAsync(
+        BankTransactionId id,
+        CancellationToken cancellationToken
+    );
 }
 
 public sealed record CreateBankTransactionInput(

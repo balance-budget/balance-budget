@@ -167,6 +167,13 @@ namespace Balance.Data.PostgreSql.Migrations
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
 
+                    b.Property<DateTime?>("DismissedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DismissedReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<string>("RawSource")
                         .IsRequired()
                         .HasColumnType("text");
@@ -210,6 +217,8 @@ namespace Balance.Data.PostgreSql.Migrations
                     b.ToTable("BankTransactions", null, t =>
                         {
                             t.HasCheckConstraint("CK_BankTransactions_Amount_NonZero", "\"Amount\" <> 0");
+
+                            t.HasCheckConstraint("CK_BankTransactions_Dismissed_Pair", "(\"DismissedAt\" IS NULL AND \"DismissedReason\" IS NULL) OR (\"DismissedAt\" IS NOT NULL AND \"DismissedReason\" IS NOT NULL)");
                         });
                 });
 

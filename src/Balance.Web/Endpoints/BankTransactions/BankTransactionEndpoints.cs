@@ -21,6 +21,11 @@ internal static class BankTransactionEndpoints
             .WithValidation<CreateBankTransactionRequest>()
             .WithName("CreateBankTransaction");
         group.MapDelete("/{id}", DeleteAsync).WithName("DeleteBankTransaction");
+        group
+            .MapPost("/{id}/dismiss", DismissAsync)
+            .WithValidation<DismissBankTransactionRequest>()
+            .WithName("DismissBankTransaction");
+        group.MapPost("/{id}/undismiss", UndismissAsync).WithName("UndismissBankTransaction");
     }
 
     private static async Task<Ok<IReadOnlyList<BankTransactionOutput>>> ListAsync(
@@ -89,5 +94,46 @@ internal static class BankTransactionEndpoints
     {
         var result = await bankTransactionService.DeleteAsync(id, cancellationToken);
         return result.ToNoContent();
+    }
+
+    private static async Task<
+        Results<
+            Ok<BankTransactionOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > DismissAsync(
+        [FromRoute] BankTransactionId id,
+        [FromBody] DismissBankTransactionRequest request,
+        [FromServices] IBankTransactionService bankTransactionService,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await bankTransactionService.DismissAsync(
+            id,
+            request.Reason,
+            cancellationToken
+        );
+        return result.ToOk();
+    }
+
+    private static async Task<
+        Results<
+            Ok<BankTransactionOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > UndismissAsync(
+        [FromRoute] BankTransactionId id,
+        [FromServices] IBankTransactionService bankTransactionService,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await bankTransactionService.UndismissAsync(id, cancellationToken);
+        return result.ToOk();
     }
 }

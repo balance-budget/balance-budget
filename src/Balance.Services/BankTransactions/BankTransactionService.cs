@@ -39,6 +39,8 @@ internal sealed class BankTransactionService : IBankTransactionService
                 b.Description,
                 b.CounterpartyName,
                 b.CounterpartyAccountNumber,
+                b.DismissedAt,
+                b.DismissedReason,
                 b.CreatedAt,
                 b.UpdatedAt
             ))
@@ -59,6 +61,8 @@ internal sealed class BankTransactionService : IBankTransactionService
                 b.Description,
                 b.CounterpartyName,
                 b.CounterpartyAccountNumber,
+                b.DismissedAt,
+                b.DismissedReason,
                 b.CreatedAt,
                 b.UpdatedAt
             ))
@@ -159,6 +163,98 @@ internal sealed class BankTransactionService : IBankTransactionService
         return Result.Success;
     }
 
+    public async Task<Result<BankTransactionOutput>> DismissAsync(
+        BankTransactionId id,
+        string reason,
+        CancellationToken cancellationToken
+    )
+    {
+        ArgumentNullException.ThrowIfNull(reason);
+
+        var trimmed = reason.Trim();
+        if (trimmed.Length == 0)
+        {
+            return new InvariantError(
+                ErrorCodes.RequestInvalid,
+                "Dismissal reason must not be empty."
+            );
+        }
+
+        var bankTransaction = await _dbContext.BankTransactions.FirstOrDefaultAsync(
+            b => b.Id == id,
+            cancellationToken
+        );
+        if (bankTransaction is null)
+        {
+            return new NotFoundError("BankTransaction", id.Value.ToString());
+        }
+
+        if (bankTransaction.DismissedAt is not null)
+        {
+            return new ConflictError(
+                ErrorCodes.BankTransactionAlreadyDismissed,
+                "BankTransaction is already dismissed."
+            );
+        }
+
+        var hasJournalEntry = await _dbContext.JournalEntries.AnyAsync(
+            j => j.BankTransactionId == id,
+            cancellationToken
+        );
+        if (hasJournalEntry)
+        {
+            return new ConflictError(
+                ErrorCodes.BankTransactionAlreadyCategorised,
+                "BankTransaction has a JournalEntry and cannot be dismissed. "
+                    + "Delete the JournalEntry first."
+            );
+        }
+
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
+        bankTransaction.DismissedAt = now;
+        bankTransaction.DismissedReason = trimmed;
+        bankTransaction.UpdatedAt = now;
+
+        var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
+        if (saveResult.IsFailure)
+            return saveResult.Error;
+
+        return ToOutput(bankTransaction);
+    }
+
+    public async Task<Result<BankTransactionOutput>> UndismissAsync(
+        BankTransactionId id,
+        CancellationToken cancellationToken
+    )
+    {
+        var bankTransaction = await _dbContext.BankTransactions.FirstOrDefaultAsync(
+            b => b.Id == id,
+            cancellationToken
+        );
+        if (bankTransaction is null)
+        {
+            return new NotFoundError("BankTransaction", id.Value.ToString());
+        }
+
+        if (bankTransaction.DismissedAt is null)
+        {
+            return new InvariantError(
+                ErrorCodes.BankTransactionNotDismissed,
+                "BankTransaction is not currently dismissed."
+            );
+        }
+
+        bankTransaction.DismissedAt = null;
+        bankTransaction.DismissedReason = null;
+        bankTransaction.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
+
+        var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
+        if (saveResult.IsFailure)
+            return saveResult.Error;
+
+        return ToOutput(bankTransaction);
+    }
+
     private static BankTransactionOutput ToOutput(BankTransaction bankTransaction) =>
         new(
             bankTransaction.Id,
@@ -168,6 +264,8 @@ internal sealed class BankTransactionService : IBankTransactionService
             bankTransaction.Description,
             bankTransaction.CounterpartyName,
             bankTransaction.CounterpartyAccountNumber,
+            bankTransaction.DismissedAt,
+            bankTransaction.DismissedReason,
             bankTransaction.CreatedAt,
             bankTransaction.UpdatedAt
         );
