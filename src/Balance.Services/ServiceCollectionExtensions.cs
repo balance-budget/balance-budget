@@ -47,6 +47,10 @@ public static class ServiceCollectionExtensions
             .AddScoped<IBankAccountService, BankAccountService>()
             .AddScoped<IBankTransactionService, BankTransactionService>()
             .AddScoped<IBankTransactionImportService, BankTransactionImportService>()
+            .AddScoped<
+                IBankTransactionCategorisationService,
+                BankTransactionCategorisationService
+            >()
             .AddScoped<IJournalEntryService, JournalEntryService>()
             .AddScoped<IDashboardService, DashboardService>()
             .AddScoped<IDatabaseMaintenanceService, DatabaseMaintenanceService>()

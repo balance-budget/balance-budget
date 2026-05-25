@@ -29,6 +29,10 @@ internal static class BankTransactionEndpoints
             .WithValidation<DismissBankTransactionRequest>()
             .WithName("DismissBankTransaction");
         group.MapPost("/{id}/undismiss", UndismissAsync).WithName("UndismissBankTransaction");
+        group
+            .MapPost("/{id}/categorize", CategorizeAsync)
+            .WithValidation<CategorizeBankTransactionRequest>()
+            .WithName("CategorizeBankTransaction");
     }
 
     private static async Task<Ok<IReadOnlyList<BankTransactionOutput>>> ListAsync(
@@ -146,6 +150,46 @@ internal static class BankTransactionEndpoints
     )
     {
         var result = await bankTransactionService.UndismissAsync(id, cancellationToken);
+        return result.ToOk();
+    }
+
+    private static async Task<
+        Results<
+            Ok<JournalEntryOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > CategorizeAsync(
+        [FromRoute] BankTransactionId id,
+        [FromBody] CategorizeBankTransactionRequest request,
+        [FromServices] IBankTransactionCategorisationService categorisationService,
+        CancellationToken cancellationToken
+    )
+    {
+        IReadOnlyList<CategorizeBankTransactionLineInput> lines =
+        [
+            .. request.Lines.Select(l => new CategorizeBankTransactionLineInput(
+                l.AccountId,
+                l.Amount,
+                l.Description
+            )),
+        ];
+
+        var result = await categorisationService.CategorizeAsync(
+            id,
+            new CategorizeBankTransactionInput(
+                CounterpartyId: request.CounterpartyId,
+                NewCounterparty: request.NewCounterparty is null
+                    ? null
+                    : new NewCounterpartyInput(request.NewCounterparty.Name),
+                Date: request.Date,
+                Description: request.Description,
+                Lines: lines
+            ),
+            cancellationToken
+        );
         return result.ToOk();
     }
 }

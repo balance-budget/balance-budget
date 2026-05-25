@@ -1,4 +1,5 @@
 using Balance.Data.Entities;
+using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
 
 namespace Balance.Services.Contracts;
@@ -43,7 +44,12 @@ public sealed record CreateJournalEntryInput(
     IReadOnlyList<CreateJournalLineInput> Lines
 );
 
-public sealed record CreateJournalLineInput(AccountId AccountId, long Amount, string? Description);
+public sealed record CreateJournalLineInput(
+    AccountId AccountId,
+    long Amount,
+    string? Description,
+    ReconciliationStatus ReconciliationStatus = ReconciliationStatus.Uncleared
+);
 
 /// <summary>
 /// Patchable surface of a <see cref="JournalEntry"/>. <see cref="Lines"/> is keyed by the

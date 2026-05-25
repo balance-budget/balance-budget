@@ -732,6 +732,91 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
     }
 
+    [Test]
+    public async Task CategorizeBankTransaction_happy_path_returns_journal_entry()
+    {
+        using var client = Factory.CreateClient();
+        var btx = await CreateOwnedBankTransactionAsync(client, "NL30RABO0BTX03000", -4200L);
+        var counterparty = await CreateCounterpartyAsync(client, "AH-API-cat");
+        var counterAccount = await CreateExpenseAccountAsync(client, "Groceries-API-cat");
+
+        using var response = await client.PostAsJsonAsync(
+            new Uri($"/api/bank-transactions/{btx.Id}/categorize", UriKind.Relative),
+            new
+            {
+                CounterpartyId = counterparty.Id,
+                NewCounterparty = (object?)null,
+                Date = btx.BookingDate,
+                Description = "Categorised AH",
+                Lines = new[]
+                {
+                    new
+                    {
+                        AccountId = counterAccount.Id,
+                        Amount = 4200L,
+                        Description = (string?)null,
+                    },
+                },
+            }
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var dto = await response.Content.ReadFromJsonAsync<JournalEntryDto>();
+        await Assert.That(dto!.BankTransactionId).IsEqualTo(btx.Id);
+        await Assert.That(dto.Lines).Count().IsEqualTo(2);
+        await Assert.That(dto.Lines.Sum(l => l.Amount)).IsEqualTo(0L);
+    }
+
+    [Test]
+    public async Task CategorizeBankTransaction_already_categorised_returns_409()
+    {
+        using var client = Factory.CreateClient();
+        var btx = await CreateOwnedBankTransactionAsync(client, "NL30RABO0BTX03001", -100L);
+        var counterparty = await CreateCounterpartyAsync(client, "AH-API-conflict");
+        var counterAccount = await CreateExpenseAccountAsync(client, "Groceries-API-conflict");
+
+        var body = new
+        {
+            CounterpartyId = counterparty.Id,
+            NewCounterparty = (object?)null,
+            Date = btx.BookingDate,
+            Description = (string?)null,
+            Lines = new[]
+            {
+                new
+                {
+                    AccountId = counterAccount.Id,
+                    Amount = 100L,
+                    Description = (string?)null,
+                },
+            },
+        };
+
+        using var first = await client.PostAsJsonAsync(
+            new Uri($"/api/bank-transactions/{btx.Id}/categorize", UriKind.Relative),
+            body
+        );
+        await Assert.That(first.StatusCode).IsEqualTo(HttpStatusCode.OK);
+
+        using var second = await client.PostAsJsonAsync(
+            new Uri($"/api/bank-transactions/{btx.Id}/categorize", UriKind.Relative),
+            body
+        );
+        await Assert.That(second.StatusCode).IsEqualTo(HttpStatusCode.Conflict);
+    }
+
+    private static async Task<AccountDto> CreateExpenseAccountAsync(HttpClient client, string name)
+    {
+        var req = new CreateAccountRequestDto($"{name}-{Guid.NewGuid():N}", "Expense", "EUR");
+        using var response = await client.PostAsJsonAsync(
+            new Uri("/api/accounts", UriKind.Relative),
+            req
+        );
+        response.EnsureSuccessStatusCode();
+        var dto = await response.Content.ReadFromJsonAsync<AccountDto>();
+        return dto!;
+    }
+
     private static async Task<IReadOnlyList<BankTransactionDto>> ListBankTransactionsAsync(
         HttpClient client,
         string? filter = null
