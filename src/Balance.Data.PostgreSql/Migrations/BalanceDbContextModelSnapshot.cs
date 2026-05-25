@@ -348,7 +348,9 @@ namespace Balance.Data.PostgreSql.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("BankTransactionId")
-                        .HasDatabaseName("IX_JournalEntries_BankTransactionId");
+                        .IsUnique()
+                        .HasDatabaseName("IX_JournalEntries_BankTransactionId")
+                        .HasFilter("\"BankTransactionId\" IS NOT NULL");
 
                     b.HasIndex("CounterpartyId")
                         .HasDatabaseName("IX_JournalEntries_CounterpartyId");
