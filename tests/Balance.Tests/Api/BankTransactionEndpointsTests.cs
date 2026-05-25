@@ -478,10 +478,342 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
     }
 
+    [Test]
+    public async Task ListBankTransactions_default_filter_excludes_dismissed_rows()
+    {
+        using var client = Factory.CreateClient();
+        var inbox = await CreateOwnedBankTransactionAsync(client, "NL20RABO0BTX02001", -101L);
+        var dismissed = await CreateOwnedBankTransactionAsync(client, "NL20RABO0BTX02002", -202L);
+
+        using var dismiss = await client.PostAsJsonAsync(
+            new Uri($"/api/bank-transactions/{dismissed.Id}/dismiss", UriKind.Relative),
+            new DismissBankTransactionRequestDto("Default-filter exclusion test")
+        );
+        await Assert.That(dismiss.StatusCode).IsEqualTo(HttpStatusCode.OK);
+
+        var rows = await ListBankTransactionsAsync(client);
+        await Assert.That(rows.Any(b => b.Id == inbox.Id)).IsTrue();
+        await Assert.That(rows.Any(b => b.Id == dismissed.Id)).IsFalse();
+    }
+
+    [Test]
+    public async Task ListBankTransactions_default_filter_excludes_matched_rows()
+    {
+        using var client = Factory.CreateClient();
+        var account = await CreateAccountAsync(client, "Checking-LIST-Default-Matched");
+        var bankAccount = await CreateBankAccountForAccountAsync(
+            client,
+            iban: "NL21RABO0BTX02003",
+            accountId: account.Id
+        );
+        var btx = await CreateBankTransactionAsync(
+            client,
+            bankAccount.Id,
+            new DateOnly(2026, 5, 17),
+            500L,
+            "Default-Matched inbox exclusion"
+        );
+
+        var counter = await CreateAccountAsync(client, "Income-LIST-Default-Matched");
+        await CreateJournalEntryForBankTransactionAsync(
+            client,
+            btx.Id,
+            account.Id,
+            counter.Id,
+            500L
+        );
+
+        var rows = await ListBankTransactionsAsync(client);
+        await Assert.That(rows.Any(b => b.Id == btx.Id)).IsFalse();
+    }
+
+    [Test]
+    public async Task ListBankTransactions_inbox_filter_sorts_oldest_first()
+    {
+        using var client = Factory.CreateClient();
+        var older = await CreateOwnedBankTransactionAsync(
+            client,
+            "NL22RABO0BTX02010",
+            -10L,
+            new DateOnly(2024, 1, 15)
+        );
+        var newer = await CreateOwnedBankTransactionAsync(
+            client,
+            "NL22RABO0BTX02011",
+            -11L,
+            new DateOnly(2026, 7, 22)
+        );
+
+        var rows = await ListBankTransactionsAsync(client, "Inbox");
+        var olderIdx = rows.ToList().FindIndex(b => b.Id == older.Id);
+        var newerIdx = rows.ToList().FindIndex(b => b.Id == newer.Id);
+        await Assert.That(olderIdx).IsGreaterThanOrEqualTo(0);
+        await Assert.That(newerIdx).IsGreaterThanOrEqualTo(0);
+        await Assert.That(olderIdx).IsLessThan(newerIdx);
+    }
+
+    [Test]
+    public async Task ListBankTransactions_matched_filter_returns_only_rows_with_journal_entry()
+    {
+        using var client = Factory.CreateClient();
+        var account = await CreateAccountAsync(client, "Checking-LIST-Matched");
+        var bankAccount = await CreateBankAccountForAccountAsync(
+            client,
+            iban: "NL23RABO0BTX02020",
+            accountId: account.Id
+        );
+        var matched = await CreateBankTransactionAsync(
+            client,
+            bankAccount.Id,
+            new DateOnly(2026, 5, 17),
+            777L,
+            "Matched-filter target"
+        );
+        var counter = await CreateAccountAsync(client, "Income-LIST-Matched");
+        var je = await CreateJournalEntryForBankTransactionAsync(
+            client,
+            matched.Id,
+            account.Id,
+            counter.Id,
+            777L
+        );
+
+        var inboxRow = await CreateOwnedBankTransactionAsync(client, "NL23RABO0BTX02021", -55L);
+
+        var rows = await ListBankTransactionsAsync(client, "Matched");
+        var matchedRow = rows.SingleOrDefault(b => b.Id == matched.Id);
+        await Assert.That(matchedRow).IsNotNull();
+        await Assert.That(matchedRow!.JournalEntryId).IsEqualTo(je);
+        await Assert.That(rows.Any(b => b.Id == inboxRow.Id)).IsFalse();
+    }
+
+    [Test]
+    public async Task ListBankTransactions_dismissed_filter_returns_only_dismissed_rows()
+    {
+        using var client = Factory.CreateClient();
+        var dismissed = await CreateOwnedBankTransactionAsync(client, "NL24RABO0BTX02030", -33L);
+        using var dismiss = await client.PostAsJsonAsync(
+            new Uri($"/api/bank-transactions/{dismissed.Id}/dismiss", UriKind.Relative),
+            new DismissBankTransactionRequestDto("Dismissed-filter test")
+        );
+        await Assert.That(dismiss.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var inboxRow = await CreateOwnedBankTransactionAsync(client, "NL24RABO0BTX02031", -34L);
+
+        var rows = await ListBankTransactionsAsync(client, "Dismissed");
+        await Assert.That(rows.Any(b => b.Id == dismissed.Id)).IsTrue();
+        await Assert.That(rows.Any(b => b.Id == inboxRow.Id)).IsFalse();
+    }
+
+    [Test]
+    public async Task ListBankTransactions_all_filter_returns_inbox_matched_and_dismissed_rows()
+    {
+        using var client = Factory.CreateClient();
+        var account = await CreateAccountAsync(client, "Checking-LIST-All");
+        var bankAccount = await CreateBankAccountForAccountAsync(
+            client,
+            iban: "NL25RABO0BTX02040",
+            accountId: account.Id
+        );
+        var matched = await CreateBankTransactionAsync(
+            client,
+            bankAccount.Id,
+            new DateOnly(2026, 5, 17),
+            42L,
+            "All-filter matched"
+        );
+        var counter = await CreateAccountAsync(client, "Income-LIST-All");
+        await CreateJournalEntryForBankTransactionAsync(
+            client,
+            matched.Id,
+            account.Id,
+            counter.Id,
+            42L
+        );
+
+        var dismissed = await CreateOwnedBankTransactionAsync(client, "NL25RABO0BTX02041", -50L);
+        using var dismiss = await client.PostAsJsonAsync(
+            new Uri($"/api/bank-transactions/{dismissed.Id}/dismiss", UriKind.Relative),
+            new DismissBankTransactionRequestDto("All-filter dismissed")
+        );
+        await Assert.That(dismiss.StatusCode).IsEqualTo(HttpStatusCode.OK);
+
+        var inbox = await CreateOwnedBankTransactionAsync(client, "NL25RABO0BTX02042", -60L);
+
+        var rows = await ListBankTransactionsAsync(client, "All");
+        await Assert.That(rows.Any(b => b.Id == matched.Id)).IsTrue();
+        await Assert.That(rows.Any(b => b.Id == dismissed.Id)).IsTrue();
+        await Assert.That(rows.Any(b => b.Id == inbox.Id)).IsTrue();
+    }
+
+    [Test]
+    public async Task ListBankTransactions_pagination_applies_take_limit()
+    {
+        using var client = Factory.CreateClient();
+        await CreateOwnedBankTransactionAsync(client, "NL26RABO0BTX02050", -1L);
+        await CreateOwnedBankTransactionAsync(client, "NL26RABO0BTX02051", -2L);
+        await CreateOwnedBankTransactionAsync(client, "NL26RABO0BTX02052", -3L);
+
+        using var response = await client.GetAsync(
+            new Uri("/api/bank-transactions?filter=Inbox&take=2", UriKind.Relative)
+        );
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var rows = await response.Content.ReadFromJsonAsync<IReadOnlyList<BankTransactionDto>>();
+        await Assert.That(rows!.Count).IsLessThanOrEqualTo(2);
+    }
+
+    [Test]
+    public async Task ListBankTransactions_pagination_skip_advances_past_first_page()
+    {
+        using var client = Factory.CreateClient();
+        var first = await CreateOwnedBankTransactionAsync(
+            client,
+            "NL27RABO0BTX02060",
+            -10L,
+            new DateOnly(2020, 1, 1)
+        );
+        var second = await CreateOwnedBankTransactionAsync(
+            client,
+            "NL27RABO0BTX02061",
+            -11L,
+            new DateOnly(2020, 1, 2)
+        );
+
+        using var pageOne = await client.GetAsync(
+            new Uri("/api/bank-transactions?filter=Inbox&skip=0&take=1", UriKind.Relative)
+        );
+        var pageOneRows = await pageOne.Content.ReadFromJsonAsync<
+            IReadOnlyList<BankTransactionDto>
+        >();
+        using var pageTwo = await client.GetAsync(
+            new Uri("/api/bank-transactions?filter=Inbox&skip=1&take=200", UriKind.Relative)
+        );
+        var pageTwoRows = await pageTwo.Content.ReadFromJsonAsync<
+            IReadOnlyList<BankTransactionDto>
+        >();
+
+        // The two pages must not contain the same row by ID (they're disjoint).
+        var overlap = pageOneRows!.Select(r => r.Id).Intersect(pageTwoRows!.Select(r => r.Id));
+        await Assert.That(overlap).IsEmpty();
+    }
+
+    [Test]
+    public async Task ListBankTransactions_take_above_max_returns_400()
+    {
+        using var client = Factory.CreateClient();
+
+        using var response = await client.GetAsync(
+            new Uri("/api/bank-transactions?take=201", UriKind.Relative)
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+    }
+
+    [Test]
+    public async Task ListBankTransactions_negative_skip_returns_400()
+    {
+        using var client = Factory.CreateClient();
+
+        using var response = await client.GetAsync(
+            new Uri("/api/bank-transactions?skip=-1", UriKind.Relative)
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+    }
+
+    [Test]
+    public async Task ListBankTransactions_unknown_filter_returns_400()
+    {
+        using var client = Factory.CreateClient();
+
+        using var response = await client.GetAsync(
+            new Uri("/api/bank-transactions?filter=Bogus", UriKind.Relative)
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+    }
+
+    private static async Task<IReadOnlyList<BankTransactionDto>> ListBankTransactionsAsync(
+        HttpClient client,
+        string? filter = null
+    )
+    {
+        var query = filter is null ? string.Empty : $"?filter={filter}";
+        using var response = await client.GetAsync(
+            new Uri($"/api/bank-transactions{query}", UriKind.Relative)
+        );
+        response.EnsureSuccessStatusCode();
+        var rows = await response.Content.ReadFromJsonAsync<IReadOnlyList<BankTransactionDto>>();
+        return rows!;
+    }
+
+    private static async Task<BankTransactionDto> CreateBankTransactionAsync(
+        HttpClient client,
+        Guid bankAccountId,
+        DateOnly bookingDate,
+        long amount,
+        string description
+    )
+    {
+        var request = new CreateBankTransactionRequestDto(
+            BankAccountId: bankAccountId,
+            BookingDate: bookingDate,
+            Amount: amount,
+            CurrencyCode: "EUR",
+            Description: description
+        );
+        using var response = await client.PostAsJsonAsync(
+            new Uri("/api/bank-transactions", UriKind.Relative),
+            request
+        );
+        response.EnsureSuccessStatusCode();
+        var dto = await response.Content.ReadFromJsonAsync<BankTransactionDto>();
+        return dto!;
+    }
+
+    private static async Task<Guid> CreateJournalEntryForBankTransactionAsync(
+        HttpClient client,
+        Guid bankTransactionId,
+        Guid bankSideAccountId,
+        Guid counterAccountId,
+        long bankSideAmount
+    )
+    {
+        var request = new
+        {
+            Date = new DateOnly(2026, 5, 17),
+            Description = "Linked-from-BTX",
+            BankTransactionId = bankTransactionId,
+            CounterpartyId = (Guid?)null,
+            Lines = new[]
+            {
+                new
+                {
+                    AccountId = bankSideAccountId,
+                    Amount = bankSideAmount,
+                    Description = (string?)null,
+                },
+                new
+                {
+                    AccountId = counterAccountId,
+                    Amount = -bankSideAmount,
+                    Description = (string?)null,
+                },
+            },
+        };
+        using var response = await client.PostAsJsonAsync(
+            new Uri("/api/journal-entries", UriKind.Relative),
+            request
+        );
+        response.EnsureSuccessStatusCode();
+        var dto = await response.Content.ReadFromJsonAsync<JournalEntryIdDto>();
+        return dto!.Id;
+    }
+
     private static async Task<BankTransactionDto> CreateOwnedBankTransactionAsync(
         HttpClient client,
         string iban,
-        long amount
+        long amount,
+        DateOnly? bookingDate = null
     )
     {
         var account = await CreateAccountAsync(client, $"Checking-{iban}");
@@ -492,7 +824,7 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
         );
         var request = new CreateBankTransactionRequestDto(
             BankAccountId: bankAccount.Id,
-            BookingDate: new DateOnly(2026, 5, 17),
+            BookingDate: bookingDate ?? new DateOnly(2026, 5, 17),
             Amount: amount,
             CurrencyCode: "EUR",
             Description: $"Dismissal-fixture {iban} {amount}"
@@ -592,6 +924,7 @@ internal sealed record BankTransactionDto(
     string Description,
     string? CounterpartyName,
     string? CounterpartyAccountNumber,
+    Guid? JournalEntryId,
     DateTime? DismissedAt,
     string? DismissedReason,
     DateTime CreatedAt,
@@ -611,3 +944,5 @@ internal sealed record CreateBankTransactionRequestDto(
 );
 
 internal sealed record DismissBankTransactionRequestDto(string Reason);
+
+internal sealed record JournalEntryIdDto(Guid Id);
