@@ -25,6 +25,7 @@ const NAV_MAIN: NavLink[] = [
     { to: '/', label: 'Dashboard', iconName: 'layout-dashboard' },
     { to: '/accounts', label: 'Accounts', iconName: 'wallet' },
     { to: '/journal', label: 'Journal', iconName: 'book-open' },
+    { to: '/bank-transactions', label: 'Bank transactions', iconName: 'inbox' },
     { to: '/bank-imports', label: 'Bank imports', iconName: 'download' },
 ];
 
