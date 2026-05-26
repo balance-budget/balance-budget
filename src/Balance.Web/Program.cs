@@ -27,16 +27,6 @@ var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
 
 await app.MigrateDatabaseAsync(lifetime.ApplicationStopping);
 
-// One-shot BankTransaction metadata re-extraction backfill (issue #89). Throwaway —
-// invoked here so it runs once after migrations on every host start; a follow-up PR
-// removes this call alongside BankTransactionMetadataBackfillService and
-// IBankTransactionReExtractor once the production database has been backfilled.
-if (!builder.Environment.IsIntegrationTest())
-    await BankTransactionMetadataBackfillService.RunAsync(
-        app.Services,
-        lifetime.ApplicationStopping
-    );
-
 // Middleware pipeline, order matters here
 app.UseExceptionHandler();
 app.UseStatusCodePages();

@@ -15,10 +15,5 @@ public static class ServiceCollectionExtensions
             .AddScoped<IngBankTransactionExtractor>()
             .AddScoped<IBankTransactionExtractor>(sp =>
                 sp.GetRequiredService<IngBankTransactionExtractor>()
-            )
-            // Throwaway registration for the one-shot re-extraction backfill (issue #89);
-            // removed in the follow-up PR alongside the backfill itself.
-            .AddScoped<IBankTransactionReExtractor>(sp =>
-                sp.GetRequiredService<IngBankTransactionExtractor>()
             );
 }
