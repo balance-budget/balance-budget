@@ -381,18 +381,16 @@ export function allVisibleSelectionState(
     return 'some';
 }
 
-/** Distinct currency codes across the selected rows, preserving first-seen
+/** Distinct currency codes across the given rows, preserving first-seen
  *  order. Used by the sticky footer to decide whether the Account picker is
  *  applyable (single-currency only). */
-export function distinctSelectedCurrencies(
-    selection: ReadonlySet<BankTransactionId>,
-    rows: readonly { id: BankTransactionId; bt: { money: { currencyCode: string } } }[],
+export function distinctRowCurrencies(
+    rows: readonly { money: { currencyCode: string } }[],
 ): string[] {
     const seen = new Set<string>();
     const out: string[] = [];
     for (const row of rows) {
-        if (!selection.has(row.id)) continue;
-        const code = row.bt.money.currencyCode;
+        const code = row.money.currencyCode;
         if (seen.has(code)) continue;
         seen.add(code);
         out.push(code);

@@ -47,7 +47,7 @@ import {
     applyBulkPatchToOverride,
     clearVisibleSelection,
     computeRangeSelection,
-    distinctSelectedCurrencies,
+    distinctRowCurrencies,
     emptyDraft,
     initialPrefill,
     isPristine,
@@ -57,7 +57,9 @@ import {
     selectAllVisible,
     toggleSelection,
     withSuggestedAccount,
+    type AllVisibleSelectionState,
     type BulkApplyCounterparty,
+    type BulkApplyInput,
     type RowDraft,
     type RowStatus,
     type SaveAllOutcome,
@@ -658,10 +660,7 @@ function InboxEditorReady({
         setSelectionAnchor(null);
     }
 
-    function applyBulk(input: {
-        counterparty: BulkApplyCounterparty | null;
-        accountId: AccountId | null;
-    }) {
+    function applyBulk(input: BulkApplyInput) {
         if (input.counterparty === null && input.accountId === null) return;
         setUserOverrides(prev => {
             const next = new Map(prev);
@@ -688,26 +687,26 @@ function InboxEditorReady({
         });
     }
 
-    const selectedRowsForFooter = useMemo(
-        () => visibleBts.filter(b => selection.has(b.id)).map(b => ({ id: b.id, bt: b })),
+    // Filtered to visible rows: an entry can linger in the selection set after
+    // a row leaves `visibleBts` (e.g. saved optimistically), and the footer
+    // count + visibility need to match what the user can still act on.
+    const selectedBts = useMemo(
+        () => visibleBts.filter(b => selection.has(b.id)),
         [visibleBts, selection],
     );
     const selectedCurrencies = useMemo(
-        () => distinctSelectedCurrencies(selection, selectedRowsForFooter),
-        [selection, selectedRowsForFooter],
+        () => distinctRowCurrencies(selectedBts),
+        [selectedBts],
     );
     const ownBankSideAccountIdsInSelection = useMemo(() => {
         const s = new Set<AccountId>();
-        for (const row of selectedRowsForFooter) {
-            const baAccount = bankAccountsById.get(row.bt.bankAccountId)?.accountId;
+        for (const bt of selectedBts) {
+            const baAccount = bankAccountsById.get(bt.bankAccountId)?.accountId;
             if (baAccount) s.add(baAccount);
         }
         return s;
-    }, [selectedRowsForFooter, bankAccountsById]);
-    // Footer count is filtered to visible rows: an entry can linger in the
-    // selection set after a row leaves `visibleBts` (e.g. saved optimistically),
-    // and we want the count + footer visibility to match reality.
-    const selectionCount = selectedRowsForFooter.length;
+    }, [selectedBts, bankAccountsById]);
+    const selectionCount = selectedBts.length;
 
     const readyIds = useMemo(
         () =>
@@ -1012,7 +1011,7 @@ function HeaderSelectAllCheckbox({
     onClick,
     disabled,
 }: {
-    state: 'all' | 'some' | 'none';
+    state: AllVisibleSelectionState;
     onClick: () => void;
     disabled: boolean;
 }) {
@@ -1046,10 +1045,7 @@ function BulkApplyFooter({
     counterpartyItems: ComboboxItem<CounterpartyId | null>[];
     accountItems: ComboboxItem<AccountId>[];
     saving: boolean;
-    onApply: (input: {
-        counterparty: BulkApplyCounterparty | null;
-        accountId: AccountId | null;
-    }) => void;
+    onApply: (input: BulkApplyInput) => void;
     onClear: () => void;
 }) {
     const [counterparty, setCounterparty] = useState<BulkApplyCounterparty | null>(null);
