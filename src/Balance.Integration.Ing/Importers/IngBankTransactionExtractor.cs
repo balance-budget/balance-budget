@@ -12,6 +12,8 @@ namespace Balance.Integration.Ing.Importers;
 
 internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
 {
+    internal const string Key = "Ing.CurrentAccount.V1";
+
     private static readonly CurrencyCode Eur = new("EUR");
 
     private readonly IIngStatementParser _ingStatementParser;
@@ -129,6 +131,11 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
         var counterpartyAccountNumber = ResolveCounterpartyAccountNumber(row, note);
         var signedCents = ToSignedCents(row.Parsed.Amount, row.Parsed.DebitCredit);
 
+        var foreignAmountMinor = ToMinorUnits(note.ForeignCurrencyAmount);
+        var foreignCurrencyCode = NullIfBlank(note.ForeignCurrencyAmount?.CurrencyCode);
+        var exchangeRate =
+            note.ForeignCurrencyRate == 0m ? (decimal?)null : note.ForeignCurrencyRate;
+
         return new BankTransaction
         {
             Id = new BankTransactionId(Guid.CreateVersion7()),
@@ -140,7 +147,29 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
             CounterpartyAccountNumber = counterpartyAccountNumber,
             RawSource = RowHasher.Normalise(row.RawRecord),
             RowHash = RowHasher.Hash(row.RawRecord),
+            ValueDate = note.ValueDate,
+            Reference = NullIfBlank(note.Reference),
+            MandateId = NullIfBlank(note.MandateId),
+            SepaCreditorId = NullIfBlank(note.Creditor?.Id),
+            ForeignAmount = foreignAmountMinor,
+            ForeignCurrencyCode = foreignCurrencyCode,
+            ExchangeRate = exchangeRate,
+            ImporterKey = Key,
         };
+    }
+
+    private static long? ToMinorUnits(CurrencyAmount? amount)
+    {
+        if (amount is null)
+            return null;
+        // ING foreign amounts in 'Mededelingen' are quoted in the foreign currency's
+        // major units. The promoted column carries minor units (paired with the
+        // foreign currency code). We don't know the foreign currency's
+        // MinorUnitScale here — Currency reference data lives in Balance.Data and
+        // the extractor sits below that. The fixed-set columns assume scale 2 for
+        // all practical SEPA-region currencies (USD/GBP/CHF/PLN/SEK/NOK etc.);
+        // this matches what every other ING note value is parsed under.
+        return (long)decimal.Round(amount.Amount * 100m);
     }
 
     private static string? ResolveCounterpartyAccountNumber(IngStatementRow row, IngNote note)

@@ -347,4 +347,109 @@ internal sealed class IngBankTransactionExtractorTests
         await Assert.That(result.IsSuccess).IsTrue();
         await Assert.That(result.Value!.Count).IsEqualTo(0);
     }
+
+    [Test]
+    public async Task Stamps_ImporterKey_on_every_row(CancellationToken cancellationToken)
+    {
+        var bankAccount = OwnedEurAccount();
+        await using var stream = CsvStream(
+            "\"20260131\";\"Etos\";\"NL69INGB0123456789\";\"\";\"BA\";\"Debit\";"
+                + "\"10,00\";\"Payment terminal\";\"x\";\"100,00\";\"\"",
+            "\"20260130\";\"Coolblue BV\";\"NL69INGB0123456789\";\"NL22INGB3141592653\";\"GT\";"
+                + "\"Credit\";\"59,95\";\"Online Banking\";\"Name: Coolblue BV\";\"1412,95\";\"\""
+        );
+
+        var result = await BuildExtractor().ExtractAsync(bankAccount, stream, cancellationToken);
+
+        await Assert.That(result.IsSuccess).IsTrue();
+        var rows = result.Value!;
+        await Assert.That(rows[0].ImporterKey).IsEqualTo("Ing.CurrentAccount.V1");
+        await Assert.That(rows[1].ImporterKey).IsEqualTo("Ing.CurrentAccount.V1");
+    }
+
+    [Test]
+    public async Task Populates_SEPA_columns_for_direct_debit_row(
+        CancellationToken cancellationToken
+    )
+    {
+        var bankAccount = OwnedEurAccount();
+        // SEPA direct-debit row: Naam/Omschrijving/IBAN/Kenmerk/Machtiging ID/Incassant ID/Valutadatum.
+        await using var stream = CsvStream(
+            "\"20260131\";\"SPOTIFY BY ADYEN\";\"NL69INGB0123456789\";\"NL48ABNA0502830042\";"
+                + "\"ID\";\"Debit\";\"9,99\";\"SEPA Direct Debit\";"
+                + "\"Naam: SPOTIFY BY ADYEN Omschrijving: SpotifyNL P0102A103D "
+                + "IBAN: NL48ABNA0502830042 Kenmerk: D1815340503797720C "
+                + "Machtiging ID: 4815225945787361 Incassant ID: NL74ZZZ546978200017 "
+                + "Doorlopende incasso Overige partij: SpotifyNL Valutadatum: 31-01-2026\";"
+                + "\"500,00\";\"\""
+        );
+
+        var result = await BuildExtractor().ExtractAsync(bankAccount, stream, cancellationToken);
+
+        await Assert.That(result.IsSuccess).IsTrue();
+        var row = result.Value![0];
+        await Assert.That(row.ValueDate).IsEqualTo(new DateOnly(2026, 1, 31));
+        await Assert.That(row.Reference).IsEqualTo("D1815340503797720C");
+        await Assert.That(row.MandateId).IsEqualTo("4815225945787361");
+        await Assert.That(row.SepaCreditorId).IsEqualTo("NL74ZZZ546978200017");
+        await Assert.That(row.ForeignAmount).IsNull();
+        await Assert.That(row.ForeignCurrencyCode).IsNull();
+        await Assert.That(row.ExchangeRate).IsNull();
+        await Assert.That(row.ImporterKey).IsEqualTo("Ing.CurrentAccount.V1");
+    }
+
+    [Test]
+    public async Task Populates_FX_columns_for_foreign_currency_row(
+        CancellationToken cancellationToken
+    )
+    {
+        var bankAccount = OwnedEurAccount();
+        // FX withdrawal: Valuta + Koers in the note.
+        await using var stream = CsvStream(
+            "\"20261231\";\"ATM Belarus\";\"NL69INGB0123456789\";\"\";\"GM\";\"Debit\";"
+                + "\"40,97\";\"Cash machine\";"
+                + "\"Pasvolgnr: 008 30-12-2026 14:20 Transactie: Q71243 Term: ATM12713 "
+                + "Valuta: 100,00 BYN Koers: 2,4406776 Opslag: 0,45 EUR "
+                + "Kosten: 2,25 EUR Valutadatum: 31-12-2026\";\"459,03\";\"\""
+        );
+
+        var result = await BuildExtractor().ExtractAsync(bankAccount, stream, cancellationToken);
+
+        await Assert.That(result.IsSuccess).IsTrue();
+        var row = result.Value![0];
+        await Assert.That(row.ForeignAmount).IsEqualTo(10000L);
+        await Assert.That(row.ForeignCurrencyCode).IsEqualTo("BYN");
+        await Assert.That(row.ExchangeRate).IsEqualTo(2.4406776m);
+        await Assert.That(row.ValueDate).IsEqualTo(new DateOnly(2026, 12, 31));
+        await Assert.That(row.MandateId).IsNull();
+        await Assert.That(row.SepaCreditorId).IsNull();
+        await Assert.That(row.ImporterKey).IsEqualTo("Ing.CurrentAccount.V1");
+    }
+
+    [Test]
+    public async Task Promoted_columns_are_null_when_note_lacks_them(
+        CancellationToken cancellationToken
+    )
+    {
+        var bankAccount = OwnedEurAccount();
+        await using var stream = CsvStream(
+            "\"20260131\";\"Etos\";\"NL69INGB0123456789\";\"\";\"BA\";\"Debit\";"
+                + "\"10,00\";\"Payment terminal\";\"Pasvolgnr: 001 31-01-2026 09:26\";"
+                + "\"100,00\";\"\""
+        );
+
+        var result = await BuildExtractor().ExtractAsync(bankAccount, stream, cancellationToken);
+
+        await Assert.That(result.IsSuccess).IsTrue();
+        var row = result.Value![0];
+        await Assert.That(row.ValueDate).IsNull();
+        await Assert.That(row.Reference).IsNull();
+        await Assert.That(row.MandateId).IsNull();
+        await Assert.That(row.SepaCreditorId).IsNull();
+        await Assert.That(row.ForeignAmount).IsNull();
+        await Assert.That(row.ForeignCurrencyCode).IsNull();
+        await Assert.That(row.ExchangeRate).IsNull();
+        // ImporterKey is always stamped, even for rows without note fields.
+        await Assert.That(row.ImporterKey).IsEqualTo("Ing.CurrentAccount.V1");
+    }
 }
