@@ -282,15 +282,22 @@ internal sealed class IngBankTransactionExtractor
             AddString(entries, "Foreign Currency Fee Code", fee.CurrencyCode);
         }
 
-        AddString(entries, "SEPA Creditor", note.Creditor?.Description);
-        AddString(entries, "Card Sequence", note.CardSequence?.ToString() ?? null);
+        AddString(entries, "SEPA Description", note.Creditor?.Description);
+        AddString(entries, "SEPA Other Party", note.OtherParty);
 
-        AddString(
-            entries,
-            "Date / Time",
-            note.DateTime?.ToString("o", CultureInfo.InvariantCulture)
-        );
-        AddString(entries, "Other Party", note.OtherParty);
+        // For card payments, use the card sequence for the exact date / time
+        if (note.CardSequence is { } cardSequence)
+        {
+            AddString(entries, "Card Sequence Number", cardSequence.SequenceNumber);
+            AddString(
+                entries,
+                "Date",
+                cardSequence.DateTime.ToString("o", CultureInfo.InvariantCulture)
+            );
+        }
+
+        // For transfers, use the date / time field
+        AddString(entries, "Date", note.DateTime?.ToString("o", CultureInfo.InvariantCulture));
         AddString(entries, "Other Notes", note.Other);
 
         return entries;
