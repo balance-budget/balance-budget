@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { Link, useBlocker } from '@tanstack/react-router';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { useAccounts, type Account } from '../api/accounts';
@@ -43,13 +43,21 @@ import {
 import { ApiError, getJson, postJson } from '../lib/http';
 import { formatMoney } from '../lib/money';
 import {
+    allVisibleSelectionState,
+    applyBulkPatchToOverride,
+    clearVisibleSelection,
+    computeRangeSelection,
+    distinctSelectedCurrencies,
     emptyDraft,
     initialPrefill,
     isPristine,
     pickSuggestedAccountId,
     rowStatus,
     runSaveAll,
+    selectAllVisible,
+    toggleSelection,
     withSuggestedAccount,
+    type BulkApplyCounterparty,
     type RowDraft,
     type RowStatus,
     type SaveAllOutcome,
@@ -614,10 +622,92 @@ function InboxEditorReady({
         setRowErrors(prev => withoutKey(prev, id));
     }
 
+    // ── Selection ────────────────────────────────────────────────────────────
+    const [selection, setSelection] = useState<Set<BankTransactionId>>(new Set());
+    const selectionAnchorRef = useRef<BankTransactionId | null>(null);
+    function setSelectionAnchor(id: BankTransactionId | null) {
+        selectionAnchorRef.current = id;
+    }
+
+    const visibleIds = useMemo(() => visibleBts.map(b => b.id), [visibleBts]);
+
     function discardAll() {
         setUserOverrides(new Map());
         setRowErrors(new Map());
+        setSelection(new Set());
+        setSelectionAnchor(null);
     }
+
+    function onRowCheckboxClick(id: BankTransactionId, shiftKey: boolean) {
+        const anchor = selectionAnchorRef.current;
+        if (shiftKey && anchor !== null) {
+            setSelection(prev => computeRangeSelection(visibleIds, prev, anchor, id));
+        } else {
+            setSelection(prev => toggleSelection(prev, id));
+        }
+        setSelectionAnchor(id);
+    }
+
+    function onHeaderCheckboxClick() {
+        const state = allVisibleSelectionState(selection, visibleIds);
+        if (state === 'all') {
+            setSelection(prev => clearVisibleSelection(prev, visibleIds));
+        } else {
+            setSelection(prev => selectAllVisible(prev, visibleIds));
+        }
+        setSelectionAnchor(null);
+    }
+
+    function applyBulk(input: {
+        counterparty: BulkApplyCounterparty | null;
+        accountId: AccountId | null;
+    }) {
+        if (input.counterparty === null && input.accountId === null) return;
+        setUserOverrides(prev => {
+            const next = new Map(prev);
+            for (const id of selection) {
+                if (!visibleIds.includes(id)) continue;
+                const updated = applyBulkPatchToOverride(prev.get(id), input);
+                next.set(id, updated);
+            }
+            return next;
+        });
+        // Clear any per-row error that was sitting on a now-bulk-applied row.
+        setRowErrors(prev => {
+            let mutated = false;
+            let next = prev;
+            for (const id of selection) {
+                if (!next.has(id)) continue;
+                if (!mutated) {
+                    next = new Map(next);
+                    mutated = true;
+                }
+                next.delete(id);
+            }
+            return mutated ? next : prev;
+        });
+    }
+
+    const selectedRowsForFooter = useMemo(
+        () => visibleBts.filter(b => selection.has(b.id)).map(b => ({ id: b.id, bt: b })),
+        [visibleBts, selection],
+    );
+    const selectedCurrencies = useMemo(
+        () => distinctSelectedCurrencies(selection, selectedRowsForFooter),
+        [selection, selectedRowsForFooter],
+    );
+    const ownBankSideAccountIdsInSelection = useMemo(() => {
+        const s = new Set<AccountId>();
+        for (const row of selectedRowsForFooter) {
+            const baAccount = bankAccountsById.get(row.bt.bankAccountId)?.accountId;
+            if (baAccount) s.add(baAccount);
+        }
+        return s;
+    }, [selectedRowsForFooter, bankAccountsById]);
+    // Footer count is filtered to visible rows: an entry can linger in the
+    // selection set after a row leaves `visibleBts` (e.g. saved optimistically),
+    // and we want the count + footer visibility to match reality.
+    const selectionCount = selectedRowsForFooter.length;
 
     const readyIds = useMemo(
         () =>
@@ -728,7 +818,12 @@ function InboxEditorReady({
                     setDiscardOpen(true);
                 }}
             />
-            <div className="grid grid-cols-[88px_1fr_minmax(180px,1.4fr)_minmax(180px,1.4fr)_120px_120px] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
+            <div className="grid grid-cols-[28px_88px_1fr_minmax(180px,1.4fr)_minmax(180px,1.4fr)_120px_120px] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
+                <HeaderSelectAllCheckbox
+                    state={allVisibleSelectionState(selection, visibleIds)}
+                    onClick={onHeaderCheckboxClick}
+                    disabled={saving || visibleIds.length === 0}
+                />
                 <span>Date</span>
                 <span>Description</span>
                 <span>Counterparty</span>
@@ -756,6 +851,10 @@ function InboxEditorReady({
                         )}
                         catalog={catalog}
                         saving={saving}
+                        selected={selection.has(bt.id)}
+                        onCheckboxClick={shiftKey => {
+                            onRowCheckboxClick(bt.id, shiftKey);
+                        }}
                         onPatch={patch => {
                             patchDraft(bt.id, patch);
                         }}
@@ -772,6 +871,25 @@ function InboxEditorReady({
                 count={visibleBts.length}
                 onPageChange={onPageChange}
             />
+
+            {selectionCount > 0 && (
+                <BulkApplyFooter
+                    selectionCount={selectionCount}
+                    selectedCurrencies={selectedCurrencies}
+                    counterpartyItems={counterpartyItems}
+                    accountItems={buildBulkAccountItems(
+                        accounts,
+                        selectedCurrencies,
+                        ownBankSideAccountIdsInSelection,
+                    )}
+                    saving={saving}
+                    onApply={applyBulk}
+                    onClear={() => {
+                        setSelection(new Set());
+                        setSelectionAnchor(null);
+                    }}
+                />
+            )}
 
             <ConfirmDialog
                 open={discardOpen}
@@ -839,6 +957,197 @@ function buildAccountItems(
         .map(a => ({ key: a.id, label: a.name, group: a.type, value: a.id }));
 }
 
+/** Bulk-apply Account picker items. Empty when the selection spans more than
+ *  one currency (the picker is also disabled in that case). Excludes any
+ *  bank-side account that maps to a selected row's bank, so the user can't
+ *  bulk-pick the very account on the BT side of those rows. */
+function buildBulkAccountItems(
+    accounts: Account[],
+    selectedCurrencies: readonly string[],
+    excludedAccountIds: ReadonlySet<AccountId>,
+): ComboboxItem<AccountId>[] {
+    if (selectedCurrencies.length !== 1) return [];
+    const currency = selectedCurrencies[0];
+    return accounts
+        .filter(a => a.currencyCode === currency && !excludedAccountIds.has(a.id))
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map(a => ({ key: a.id, label: a.name, group: a.type, value: a.id }));
+}
+
+function RowSelectCheckbox({
+    selected,
+    disabled,
+    onClick,
+    ariaLabel,
+}: {
+    selected: boolean;
+    disabled: boolean;
+    onClick: (shiftKey: boolean) => void;
+    ariaLabel: string;
+}) {
+    function handleClick(e: ReactMouseEvent<HTMLInputElement>) {
+        // Use onClick (mouse) for shift detection; native onChange doesn't
+        // carry the modifier flags.
+        e.preventDefault();
+        if (disabled) return;
+        onClick(e.shiftKey);
+    }
+    return (
+        <input
+            type="checkbox"
+            aria-label={ariaLabel}
+            checked={selected}
+            disabled={disabled}
+            onClick={handleClick}
+            onChange={() => {
+                /* handled in onClick to capture shift */
+            }}
+            className="h-4 w-4 cursor-pointer accent-brand-primary disabled:opacity-40 disabled:cursor-not-allowed"
+        />
+    );
+}
+
+function HeaderSelectAllCheckbox({
+    state,
+    onClick,
+    disabled,
+}: {
+    state: 'all' | 'some' | 'none';
+    onClick: () => void;
+    disabled: boolean;
+}) {
+    function setRef(el: HTMLInputElement | null) {
+        if (el) el.indeterminate = state === 'some';
+    }
+    return (
+        <input
+            ref={setRef}
+            type="checkbox"
+            aria-label="Select all visible rows"
+            checked={state === 'all'}
+            disabled={disabled}
+            onChange={onClick}
+            className="h-4 w-4 cursor-pointer accent-brand-primary disabled:opacity-40 disabled:cursor-not-allowed"
+        />
+    );
+}
+
+function BulkApplyFooter({
+    selectionCount,
+    selectedCurrencies,
+    counterpartyItems,
+    accountItems,
+    saving,
+    onApply,
+    onClear,
+}: {
+    selectionCount: number;
+    selectedCurrencies: readonly string[];
+    counterpartyItems: ComboboxItem<CounterpartyId | null>[];
+    accountItems: ComboboxItem<AccountId>[];
+    saving: boolean;
+    onApply: (input: {
+        counterparty: BulkApplyCounterparty | null;
+        accountId: AccountId | null;
+    }) => void;
+    onClear: () => void;
+}) {
+    const [counterparty, setCounterparty] = useState<BulkApplyCounterparty | null>(null);
+    const [accountId, setAccountId] = useState<AccountId | null>(null);
+
+    const mixedCurrency = selectedCurrencies.length > 1;
+    const accountDisabled = saving || mixedCurrency;
+    const canApply =
+        !saving && (counterparty !== null || accountId !== null);
+
+    const cpValue: CounterpartyId | null =
+        counterparty?.kind === 'existing' ? counterparty.counterpartyId : null;
+    const cpItemsWithPending = useMemo(() => {
+        if (counterparty?.kind !== 'new' || counterparty.name.trim().length === 0) {
+            return counterpartyItems;
+        }
+        const pending: ComboboxItem<CounterpartyId | null> = {
+            key: '__pending_bulk__',
+            label: `${counterparty.name.trim()} (new)`,
+            value: null,
+        };
+        return [pending, ...counterpartyItems];
+    }, [counterparty, counterpartyItems]);
+
+    function handleApply() {
+        if (!canApply) return;
+        onApply({ counterparty, accountId });
+        setCounterparty(null);
+        setAccountId(null);
+    }
+
+    return (
+        <div className="sticky bottom-0 z-20 -mx-1 mt-3 px-3 py-2 rounded-sm bg-bg-1 border border-brand-primary/30 shadow-overlay">
+            <div className="flex flex-wrap items-center gap-3">
+                <span className="text-[12px] font-medium text-fg-1">
+                    {selectionCount.toString()} selected
+                </span>
+                <div className="min-w-[180px] flex-1 max-w-[260px]">
+                    <Combobox
+                        items={cpItemsWithPending}
+                        value={cpValue}
+                        onChange={id => {
+                            setCounterparty({ kind: 'existing', counterpartyId: id });
+                        }}
+                        onClear={() => {
+                            setCounterparty({ kind: 'existing', counterpartyId: null });
+                        }}
+                        onCreate={typed => {
+                            setCounterparty({ kind: 'new', name: typed });
+                        }}
+                        noneLabel="── None (self-transfer)"
+                        createLabel={typed => `+ Create '${typed}'`}
+                        placeholder="Counterparty…"
+                        disabled={saving}
+                        ariaLabel="Bulk counterparty"
+                    />
+                </div>
+                <div className="min-w-[180px] flex-1 max-w-[260px]">
+                    <Combobox
+                        items={accountItems}
+                        value={accountId}
+                        onChange={id => {
+                            setAccountId(id);
+                        }}
+                        groupOrder={ACCOUNT_TYPE_ORDER}
+                        groupLabels={ACCOUNT_TYPE_LABEL}
+                        placeholder={mixedCurrency ? 'Account (mixed currencies)' : 'Account…'}
+                        disabled={accountDisabled}
+                        ariaLabel="Bulk account"
+                    />
+                </div>
+                <button
+                    type="button"
+                    onClick={handleApply}
+                    disabled={!canApply}
+                    className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
+                >
+                    Apply to {selectionCount.toString()} selected
+                </button>
+                <button
+                    type="button"
+                    onClick={onClear}
+                    disabled={saving}
+                    className="px-2 py-[7px] rounded-sm text-[13px] font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
+                >
+                    Clear
+                </button>
+            </div>
+            {mixedCurrency && (
+                <p className="mt-1 text-[11px] text-fg-3">
+                    Selected rows span {selectedCurrencies.join(' + ')} — Account can&apos;t be
+                    bulk-applied.
+                </p>
+            )}
+        </div>
+    );
+}
+
 function SaveBar({
     dirtyCount,
     readyCount,
@@ -901,6 +1210,8 @@ function InboxRow({
     accountItems,
     catalog,
     saving,
+    selected,
+    onCheckboxClick,
     onPatch,
     onReset,
     onDismiss,
@@ -913,6 +1224,8 @@ function InboxRow({
     accountItems: ComboboxItem<AccountId>[];
     catalog: CurrencyCatalog;
     saving: boolean;
+    selected: boolean;
+    onCheckboxClick: (shiftKey: boolean) => void;
     onPatch: (patch: Partial<RowDraft>) => void;
     onReset: () => void;
     onDismiss: (bt: BankTransaction) => void;
@@ -920,7 +1233,15 @@ function InboxRow({
     const status = rowStatus(draft);
 
     return (
-        <div className="grid grid-cols-[88px_1fr_minmax(180px,1.4fr)_minmax(180px,1.4fr)_120px_120px] gap-3 items-start px-2 py-2 border-b border-border-soft last:border-b-0">
+        <div className="grid grid-cols-[28px_88px_1fr_minmax(180px,1.4fr)_minmax(180px,1.4fr)_120px_120px] gap-3 items-start px-2 py-2 border-b border-border-soft last:border-b-0">
+            <div className="pt-2">
+                <RowSelectCheckbox
+                    selected={selected}
+                    disabled={saving}
+                    onClick={onCheckboxClick}
+                    ariaLabel={`Select bank transaction ${bankTransaction.description}`}
+                />
+            </div>
             <div className="flex flex-col leading-tight pt-2">
                 <span className="text-[12px] text-fg-3 tabular">{bankTransaction.bookingDate}</span>
                 <StatusIndicator status={status} />

@@ -292,3 +292,156 @@ function errorMessage(err: unknown): string {
     if (err instanceof Error) return err.message;
     return 'Failed';
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Multi-select + bulk-apply (issue #85). Selection state and the bulk-apply
+// mutator are pure helpers so the component owns only React wiring.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Flip a single row's membership in the selection set. */
+export function toggleSelection(
+    current: ReadonlySet<BankTransactionId>,
+    id: BankTransactionId,
+): Set<BankTransactionId> {
+    const next = new Set(current);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    return next;
+}
+
+/**
+ * Shift-click range selection. The range from `anchorId` to `targetId`
+ * (inclusive, in `orderedIds` order) is set to the *new* state of `targetId`,
+ * i.e. the toggled state of the target.
+ *
+ * - If target was unselected, the range becomes selected (target included).
+ * - If target was selected, the range becomes unselected (target included).
+ *
+ * When anchor or target is not in `orderedIds` (e.g. anchor scrolled off-page),
+ * falls back to a plain toggle of the target.
+ */
+export function computeRangeSelection(
+    orderedIds: readonly BankTransactionId[],
+    current: ReadonlySet<BankTransactionId>,
+    anchorId: BankTransactionId,
+    targetId: BankTransactionId,
+): Set<BankTransactionId> {
+    const anchorIdx = orderedIds.indexOf(anchorId);
+    const targetIdx = orderedIds.indexOf(targetId);
+    if (anchorIdx === -1 || targetIdx === -1) {
+        return toggleSelection(current, targetId);
+    }
+    const newState = !current.has(targetId);
+    const [lo, hi] =
+        anchorIdx <= targetIdx ? [anchorIdx, targetIdx] : [targetIdx, anchorIdx];
+    const next = new Set(current);
+    for (let i = lo; i <= hi; i += 1) {
+        const id = orderedIds[i];
+        if (id === undefined) continue;
+        if (newState) next.add(id);
+        else next.delete(id);
+    }
+    return next;
+}
+
+/** Add every id in `visibleIds` to the selection. */
+export function selectAllVisible(
+    current: ReadonlySet<BankTransactionId>,
+    visibleIds: readonly BankTransactionId[],
+): Set<BankTransactionId> {
+    const next = new Set(current);
+    for (const id of visibleIds) next.add(id);
+    return next;
+}
+
+/** Remove every id in `visibleIds` from the selection. */
+export function clearVisibleSelection(
+    current: ReadonlySet<BankTransactionId>,
+    visibleIds: readonly BankTransactionId[],
+): Set<BankTransactionId> {
+    const next = new Set(current);
+    for (const id of visibleIds) next.delete(id);
+    return next;
+}
+
+/** "Select-all checkbox" state for a visible row list. */
+export type AllVisibleSelectionState = 'all' | 'some' | 'none';
+
+export function allVisibleSelectionState(
+    selection: ReadonlySet<BankTransactionId>,
+    visibleIds: readonly BankTransactionId[],
+): AllVisibleSelectionState {
+    if (visibleIds.length === 0) return 'none';
+    let selectedCount = 0;
+    for (const id of visibleIds) {
+        if (selection.has(id)) selectedCount += 1;
+    }
+    if (selectedCount === 0) return 'none';
+    if (selectedCount === visibleIds.length) return 'all';
+    return 'some';
+}
+
+/** Distinct currency codes across the selected rows, preserving first-seen
+ *  order. Used by the sticky footer to decide whether the Account picker is
+ *  applyable (single-currency only). */
+export function distinctSelectedCurrencies(
+    selection: ReadonlySet<BankTransactionId>,
+    rows: readonly { id: BankTransactionId; bt: { money: { currencyCode: string } } }[],
+): string[] {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const row of rows) {
+        if (!selection.has(row.id)) continue;
+        const code = row.bt.money.currencyCode;
+        if (seen.has(code)) continue;
+        seen.add(code);
+        out.push(code);
+    }
+    return out;
+}
+
+export type BulkApplyCounterparty =
+    | { kind: 'existing'; counterpartyId: CounterpartyId | null }
+    | { kind: 'new'; name: string };
+
+export type BulkApplyInput = {
+    /** null = don't touch the row's counterparty draft. */
+    counterparty: BulkApplyCounterparty | null;
+    /** null = don't touch the row's account draft. */
+    accountId: AccountId | null;
+};
+
+/**
+ * Build the new per-row override produced by applying the footer's bulk
+ * patch on top of the row's existing override. Mirrors the row picker's
+ * intent: Counterparty selection overwrites both `counterpartyMode` and
+ * `counterpartyId`/`newCounterpartyName`; Account selection overwrites
+ * `accountId`. Fields whose picker is unfilled (`null`) are left alone.
+ *
+ * Note: this is the *override layer*. The effective draft is still
+ * `{ ...prefill, ...override }`, so applying only a counterparty to a row
+ * whose effective account was empty still benefits from the suggestion
+ * cascade — the override now contains the new cpId, the per-row suggestion
+ * query refires, and `withSuggestedAccount` fills the prefill.
+ */
+export function applyBulkPatchToOverride(
+    override: Partial<RowDraft> | undefined,
+    input: BulkApplyInput,
+): Partial<RowDraft> {
+    const next: Partial<RowDraft> = { ...(override ?? {}) };
+    if (input.counterparty !== null) {
+        if (input.counterparty.kind === 'new') {
+            next.counterpartyMode = 'new';
+            next.counterpartyId = null;
+            next.newCounterpartyName = input.counterparty.name;
+        } else {
+            next.counterpartyMode = 'existing';
+            next.counterpartyId = input.counterparty.counterpartyId;
+            next.newCounterpartyName = '';
+        }
+    }
+    if (input.accountId !== null) {
+        next.accountId = input.accountId;
+    }
+    return next;
+}
