@@ -100,7 +100,7 @@ export function JournalNew() {
     return (
         <JournalNewForm
             accounts={accounts.data}
-            counterparties={counterparties.data ?? []}
+            counterparties={counterparties.data}
             catalog={catalog}
         />
     );

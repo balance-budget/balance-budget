@@ -7,11 +7,15 @@ import {
     useJournalEntry,
     useUpdateJournalEntry,
     type JournalEntry,
+    type JournalEntryDetail,
     type JournalLine,
 } from '../api/journalEntries';
 import { useCounterparties } from '../api/counterparties';
 import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import { Amount } from '../components/Amount';
+import { BankTransactionDetails } from '../components/BankTransactionDetails';
+import { Combobox } from '../components/Combobox';
+import { type ComboboxItem } from '../components/combobox.state';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ErrorState } from '../components/ErrorState';
 import { FieldError } from '../components/FieldError';
@@ -21,7 +25,7 @@ import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { cx } from '../lib/cx';
-import { asCounterpartyId, type AccountId, type JournalEntryId } from '../lib/domain';
+import { type AccountId, type CounterpartyId, type JournalEntryId } from '../lib/domain';
 import { ApiError } from '../lib/http';
 import {
     formatLegLabel,
@@ -34,7 +38,7 @@ type DraftLine = { id: string; description: string };
 type Draft = {
     date: string;
     description: string;
-    counterpartyId: string;
+    counterpartyId: CounterpartyId | null;
     lines: DraftLine[];
 };
 
@@ -42,7 +46,7 @@ function toDraft(entry: JournalEntry): Draft {
     return {
         date: entry.date,
         description: entry.description ?? '',
-        counterpartyId: entry.counterpartyId ?? '',
+        counterpartyId: entry.counterpartyId,
         lines: entry.lines.map(line => ({ id: line.id, description: line.description ?? '' })),
     };
 }
@@ -50,6 +54,7 @@ function toDraft(entry: JournalEntry): Draft {
 export function JournalDetail({ id }: { id: JournalEntryId }) {
     const query = useJournalEntry(id);
     const accounts = useAccounts();
+    const catalog = useCurrencyCatalog();
     const [editing, setEditing] = useState(false);
     const [deleting, setDeleting] = useState(false);
 
@@ -110,6 +115,16 @@ export function JournalDetail({ id }: { id: JournalEntryId }) {
                     }}
                 />
             </Panel>
+
+            {entry.bankTransaction && (
+                <Panel>
+                    <SectionHead
+                        title="Bank transaction"
+                        subtitle="Imported row this entry was categorised from."
+                    />
+                    <BankTransactionDetails bt={entry.bankTransaction} catalog={catalog} />
+                </Panel>
+            )}
 
             <Panel>
                 <SectionHead
@@ -323,7 +338,7 @@ function EditJournalEntry({
     onCancel,
     onSaved,
 }: {
-    entry: JournalEntry;
+    entry: JournalEntryDetail;
     projection: JournalProjection;
     onCancel: () => void;
     onSaved: () => void;
@@ -337,7 +352,13 @@ function EditJournalEntry({
     const [topError, setTopError] = useState<string | null>(null);
     const [fieldErrors, setFieldErrors] = useState<Record<string, string[]> | null>(null);
 
-    const counterpartyList = counterparties.data ?? [];
+    const counterpartyItems = useMemo<ComboboxItem<CounterpartyId | null>[]>(
+        () =>
+            [...(counterparties.data ?? [])]
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map(c => ({ key: c.id, label: c.name, value: c.id })),
+        [counterparties.data],
+    );
 
     function patch(patch: Partial<Draft>) {
         setDraft(prev => ({ ...prev, ...patch }));
@@ -359,8 +380,7 @@ function EditJournalEntry({
             const edited = {
                 date: draft.date,
                 description: trimmedDescription.length === 0 ? null : trimmedDescription,
-                counterpartyId:
-                    draft.counterpartyId === '' ? null : asCounterpartyId(draft.counterpartyId),
+                counterpartyId: draft.counterpartyId,
                 lines: Object.fromEntries(
                     draft.lines.map(line => {
                         const trimmed = line.description.trim();
@@ -394,6 +414,16 @@ function EditJournalEntry({
             }}
             noValidate
         >
+            {entry.bankTransaction && (
+                <Panel>
+                    <SectionHead
+                        title="Bank transaction"
+                        subtitle="Imported row this entry was categorised from."
+                    />
+                    <BankTransactionDetails bt={entry.bankTransaction} catalog={catalog} />
+                </Panel>
+            )}
+
             <Panel>
                 <SectionHead
                     title="Edit entry"
@@ -428,24 +458,23 @@ function EditJournalEntry({
                         />
                         <FieldError name="Description" errors={fieldErrors} />
                     </label>
-                    <label className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-1">
                         <span className="text-[12px] font-medium text-fg-2">Counterparty</span>
-                        <select
+                        <Combobox
+                            items={counterpartyItems}
                             value={draft.counterpartyId}
-                            onChange={e => {
-                                patch({ counterpartyId: e.target.value });
+                            onChange={id => {
+                                patch({ counterpartyId: id });
                             }}
-                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
-                        >
-                            <option value="">None</option>
-                            {counterpartyList.map(c => (
-                                <option key={c.id} value={c.id}>
-                                    {c.name}
-                                </option>
-                            ))}
-                        </select>
+                            onClear={() => {
+                                patch({ counterpartyId: null });
+                            }}
+                            noneLabel="── None"
+                            placeholder="Pick counterparty…"
+                            ariaLabel="Counterparty"
+                        />
                         <FieldError name="CounterpartyId" errors={fieldErrors} />
-                    </label>
+                    </div>
                 </div>
             </Panel>
 
