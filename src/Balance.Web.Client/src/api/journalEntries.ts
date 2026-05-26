@@ -1,5 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { compare } from 'fast-json-patch';
+import {
+    toBankTransactionDetail,
+    type BankTransactionDetail,
+} from './bankTransactions';
 import type { components } from '../lib/api-types';
 import {
     type AccountId,
@@ -18,6 +22,7 @@ import { deleteRequest, getJson, patchJson, postJson } from '../lib/http';
 type WireCreateRequest = components['schemas']['CreateJournalEntryRequest'];
 type WireUpdateInput = components['schemas']['UpdateJournalEntryInput'];
 type WireEntry = components['schemas']['JournalEntryOutput'];
+type WireEntryDetail = components['schemas']['JournalEntryDetailOutput'];
 type WireLine = components['schemas']['JournalLineOutput'];
 type WireReconciliationStatus = components['schemas']['ReconciliationStatus'];
 
@@ -38,6 +43,10 @@ export type JournalEntry = {
     counterpartyId: CounterpartyId | null;
     counterpartyName: string | null;
     lines: JournalLine[];
+};
+
+export type JournalEntryDetail = JournalEntry & {
+    bankTransaction: BankTransactionDetail | null;
 };
 
 export const journalEntriesKeys = {
@@ -73,6 +82,16 @@ function toEntry(wire: WireEntry): JournalEntry {
     };
 }
 
+function toEntryDetail(wire: WireEntryDetail): JournalEntryDetail {
+    return {
+        ...toEntry(wire),
+        bankTransaction:
+            wire.bankTransaction === null
+                ? null
+                : toBankTransactionDetail(wire.bankTransaction),
+    };
+}
+
 export function useJournalEntries(skip: number, take: number) {
     return useQuery({
         queryKey: journalEntriesKeys.list(skip, take),
@@ -91,12 +110,12 @@ export function useJournalEntry(id: JournalEntryId) {
     return useQuery({
         queryKey: journalEntriesKeys.detail(id),
         queryFn: async ({ signal }) => {
-            const wire = await getJson<WireEntry>(
+            const wire = await getJson<WireEntryDetail>(
                 `/api/journal-entries/${id}`,
                 signal,
                 'load journal entry',
             );
-            return toEntry(wire);
+            return toEntryDetail(wire);
         },
     });
 }
@@ -121,13 +140,13 @@ export function useCreateJournalEntry() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (input: WireCreateRequest) => {
-            const wire = await postJson<WireEntry>(
+            const wire = await postJson<WireEntryDetail>(
                 '/api/journal-entries',
                 input,
                 new AbortController().signal,
                 'create journal entry',
             );
-            return toEntry(wire);
+            return toEntryDetail(wire);
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: journalEntriesKeys.all });
@@ -144,13 +163,13 @@ export function useUpdateJournalEntry() {
             edited: WireUpdateInput;
         }) => {
             const patch = compare(args.original, args.edited);
-            const wire = await patchJson<WireEntry>(
+            const wire = await patchJson<WireEntryDetail>(
                 `/api/journal-entries/${args.id}`,
                 patch,
                 new AbortController().signal,
                 'update journal entry',
             );
-            return toEntry(wire);
+            return toEntryDetail(wire);
         },
         onSuccess: async (_data, vars) => {
             await queryClient.invalidateQueries({ queryKey: journalEntriesKeys.all });
