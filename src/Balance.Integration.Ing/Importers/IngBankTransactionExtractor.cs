@@ -14,19 +14,9 @@ using CsvHelper.Configuration.Attributes;
 
 namespace Balance.Integration.Ing.Importers;
 
-internal sealed class IngBankTransactionExtractor
-    : IBankTransactionExtractor,
-        IBankTransactionReExtractor
+internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
 {
     private const string Key = "Ing.CurrentAccount.V1";
-
-    // CSV header used to re-parse a single stored RawSource row (issue #89 backfill).
-    // CurrentAccountStatementRow tolerates both English and Dutch headers; we stick to Dutch
-    // because that's what every real ING export and every stored RawSource uses today.
-    private const string CsvHeader =
-        "\"Date\";\"Name / Description\";\"Account\";\"Counterparty\";\"Code\";\"Debit/credit\";\"Amount (EUR)\";\"Transaction type\";\"Notifications\";\"Resulting balance\";\"Tag\"";
-
-    string IBankTransactionReExtractor.ImporterKey => Key;
 
     private static readonly CurrencyCode Eur = new("EUR");
 
@@ -180,70 +170,6 @@ internal sealed class IngBankTransactionExtractor
             ImporterKey = Key,
             Metadata = BuildMetadata(row, note),
         };
-    }
-
-    // Re-extracts the promoted columns + metadata from a stored RawSource row (issue #89
-    // backfill). Re-parses the row with the same CSV + note parsers and the same per-row
-    // mapping as the live import — only the surrounding "load BankAccount + dedup" plumbing
-    // and the (already-stable) identifying columns are skipped.
-    async Task<Result<BankTransactionReExtraction>> IBankTransactionReExtractor.ReExtractAsync(
-        string rawSource,
-        CancellationToken cancellationToken
-    )
-    {
-        ArgumentNullException.ThrowIfNull(rawSource);
-
-        // RawSource is one normalised CSV data row; CsvHelper needs a header to bind columns.
-        // Prepend the known ING header so the same parser used by ExtractAsync handles it.
-        var synthetic = CsvHeader + "\n" + rawSource + "\n";
-        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(synthetic));
-
-        IReadOnlyList<IngStatementRow> rows;
-        try
-        {
-            rows = await _ingStatementParser.ParseStatementsAsync(stream, cancellationToken);
-        }
-        catch (CsvHelperException ex)
-        {
-            return new InvariantError(
-                ErrorCodes.ImportFormatInvalid,
-                $"Failed to re-parse stored RawSource as an ING row: {ex.Message}"
-            );
-        }
-
-        if (rows.Count == 0)
-        {
-            return new InvariantError(
-                ErrorCodes.ImportFormatInvalid,
-                "Stored RawSource yielded no CSV row when re-parsed."
-            );
-        }
-
-        var row = rows[0];
-        var note = _ingNoteParser.ParseNote(row.Parsed.Notifications);
-        return MapPromotedAndMetadata(row, note);
-    }
-
-    private static BankTransactionReExtraction MapPromotedAndMetadata(
-        IngStatementRow row,
-        IngNote note
-    )
-    {
-        var foreignAmountMinor = ToMinorUnits(note.ForeignCurrencyAmount?.Amount);
-        var foreignCurrencyCode = NullIfBlank(note.ForeignCurrencyAmount?.CurrencyCode);
-        var exchangeRate =
-            note.ForeignCurrencyRate == 0m ? (decimal?)null : note.ForeignCurrencyRate;
-
-        return new BankTransactionReExtraction(
-            ValueDate: note.ValueDate,
-            Reference: NullIfBlank(note.Reference),
-            MandateId: NullIfBlank(note.MandateId),
-            SepaCreditorId: NullIfBlank(note.Creditor?.Id),
-            ForeignAmount: foreignAmountMinor,
-            ForeignCurrencyCode: foreignCurrencyCode,
-            ExchangeRate: exchangeRate,
-            Metadata: BuildMetadata(row, note)
-        );
     }
 
     // Anything the extractor parses that is *not* promoted to a BankTransaction column lives
