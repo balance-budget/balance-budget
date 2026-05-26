@@ -56,6 +56,12 @@ internal sealed class BankTransactionConfiguration : IEntityTypeConfiguration<Ba
         builder.Property(b => b.RawSource).IsRequired();
         builder.Property(b => b.RowHash).IsRequired().IsFixedLength().HasMaxLength(64);
 
+        builder.Property(b => b.Reference).HasMaxLength(256);
+        builder.Property(b => b.MandateId).HasMaxLength(64);
+        builder.Property(b => b.SepaCreditorId).HasMaxLength(64);
+        builder.Property(b => b.ForeignCurrencyCode).HasMaxLength(8);
+        builder.Property(b => b.ImporterKey).HasMaxLength(64);
+
         builder.Property(b => b.CreatedAt).HasConversion(DateConverters.UtcConverter);
         builder.Property(b => b.UpdatedAt).HasConversion(DateConverters.UtcConverter);
 

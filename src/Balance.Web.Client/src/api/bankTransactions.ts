@@ -35,6 +35,14 @@ export type BankTransaction = {
     description: string;
     counterpartyName: string | null;
     counterpartyAccountNumber: string | null;
+    valueDate: string | null;
+    reference: string | null;
+    mandateId: string | null;
+    sepaCreditorId: string | null;
+    foreignAmount: number | null;
+    foreignCurrencyCode: string | null;
+    exchangeRate: number | null;
+    importerKey: string | null;
     journalEntryId: JournalEntryId | null;
     dismissedAt: string | null;
     dismissedReason: string | null;
@@ -56,6 +64,14 @@ function toBankTransaction(wire: WireBankTransaction): BankTransaction {
         description: wire.description,
         counterpartyName: wire.counterpartyName,
         counterpartyAccountNumber: wire.counterpartyAccountNumber,
+        valueDate: wire.valueDate,
+        reference: wire.reference,
+        mandateId: wire.mandateId,
+        sepaCreditorId: wire.sepaCreditorId,
+        foreignAmount: wire.foreignAmount === null ? null : Number(wire.foreignAmount),
+        foreignCurrencyCode: wire.foreignCurrencyCode,
+        exchangeRate: wire.exchangeRate === null ? null : Number(wire.exchangeRate),
+        importerKey: wire.importerKey,
         journalEntryId: wire.journalEntryId ? asJournalEntryId(wire.journalEntryId) : null,
         dismissedAt: wire.dismissedAt,
         dismissedReason: wire.dismissedReason,
