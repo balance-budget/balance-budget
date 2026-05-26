@@ -125,13 +125,14 @@ _Avoid_: internal transaction, transfer (bare), between-accounts entry. "Transac
 
 ## Editing policy (v1)
 
-- **JournalEntries** are editable, but the editable surface is intentionally narrow to avoid silently rewriting books:
+- **JournalEntries** are editable, with the editable surface gated **per-`JournalLine` by `ReconciliationStatus`** so that observed-against-the-bank state is never silently rewritten:
   - **Entry-level (editable):** `Date`, `Description`, `CounterpartyId`.
-  - **Entry-level (not editable):** `BankTransactionId`. Once an entry references a **BankTransaction**, that link is part of the audit trail and is not changed via edit — correct misattributions by deleting and recreating the entry.
-  - **Line-level (editable):** `JournalLine.Description` only.
-  - **Line-level (not editable):** `Amount`, `AccountId`, and the *set* of lines (no additions, no removals, no reordering). Correct these by deleting the **JournalEntry** and recreating.
-  - **Preserved across edits:** every **JournalLine**'s `Id`, `CreatedAt`, and `ReconciliationStatus` survive a **JournalEntry** edit — editing the entry's description never resets a line's `Cleared`/`Reconciled` state.
-  - **Trajectory:** this scope may tighten further to fully append-only with reversing entries; today's surface is the smallest set of edits that supports common typo-fixing without rewriting bookkeeping state.
+  - **Entry-level (not editable):** `BankTransactionId`. Once an entry references a **BankTransaction**, that link is part of the audit trail and is not changed via edit — and structurally, re-pointing would force the **Cleared** bank-side line's `AccountId` to change, which the per-line gate forbids. Correct misattributions by deleting and recreating the entry.
+  - **Line-level (editable on an `Uncleared` line):** `AccountId`, `Amount`, `Description`. The line may also be removed, and new lines may be added — i.e. the *set* of `Uncleared` lines is freely reshapeable.
+  - **Line-level (editable on a `Cleared` or `Reconciled` line):** `Description` only. `AccountId` and `Amount` are frozen and matched by `Id` against the existing entry. The line cannot be removed.
+  - **Preserved across edits:** `Cleared` and `Reconciled` lines keep their `Id`, `CreatedAt`, and `ReconciliationStatus`. `Uncleared` lines that the client re-references by `Id` keep theirs; lines dropped from the edit body are deleted; new lines get server-assigned `Id` and default to `ReconciliationStatus.Uncleared`. Editing never mutates `ReconciliationStatus` on existing lines — flipping status is the job of the (currently unimplemented) reconciliation pass.
+  - **Wire shape:** `PUT /api/journal-entries/{id}` with the desired final-state body. The server validates (a) every line with an `Id` whose current `ReconciliationStatus != Uncleared` appears unchanged in `AccountId` and `Amount`, (b) the line amounts sum to zero per `Currency`, (c) standard account / currency / counterparty checks.
+  - **Cash entries** (no `BankTransactionId`, no auto-`Cleared` bank-side line) are therefore fully editable — including the set of lines — while every line remains `Uncleared`. This is the intentional consequence of the per-line gate, and is effectively delete-and-recreate while preserving the entry's `Id`, `CreatedAt`, and any reference to it.
 - **BankTransactions** remain immutable in their bank-supplied fields (`BankAccountId`, `BookingDate`, `Money`, `Description`, `CounterpartyName`, `CounterpartyAccountNumber`, the promoted SEPA / FX columns — `ValueDate`, `Reference`, `MandateId`, `SepaCreditorId`, `ForeignAmount`, `ForeignCurrencyCode`, `ExchangeRate` — plus `ImporterKey`, `RawSource`, and `RowHash`) regardless of `JournalEntry` editability. Two surfaces are mutable post-import: (1) user-applied **Dismissed** metadata (`DismissedAt`, `DismissedReason`), set and cleared through a dedicated dismiss/undismiss action — see ADR 0013 — never via PATCH and never as a side effect of the **Categorisation flow**; and (2) the **BankTransactionMetadata** set, which is rebuilt by the extractor named in `ImporterKey` from `RawSource` and may be replaced wholesale on re-extraction (e.g. parser improvement, one-shot backfill).
 
 ## Deletion policy (v1)
@@ -142,4 +143,4 @@ _Avoid_: internal transaction, transfer (bare), between-accounts entry. "Transac
 
 ## Open questions
 
-_(none — foundational design complete)_
+- When the **reconciliation pass** lands and introduces a user-driven `Cleared` → `Uncleared` demotion, does demoting a line re-unlock its `AccountId` / `Amount` for editing? Today, with no demotion path implemented, the per-line editability gate is effectively "the counter-side is editable, the bank-side is frozen". The demotion-vs-editability interaction becomes load-bearing only when the reconciliation pass arrives.
