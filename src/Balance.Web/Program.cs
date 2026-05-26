@@ -1,3 +1,4 @@
+using Balance.Configuration.Helpers;
 using Balance.Data.Helpers;
 using Balance.Integration.Ing;
 using Balance.Services;
@@ -30,7 +31,11 @@ await app.MigrateDatabaseAsync(lifetime.ApplicationStopping);
 // invoked here so it runs once after migrations on every host start; a follow-up PR
 // removes this call alongside BankTransactionMetadataBackfillService and
 // IBankTransactionReExtractor once the production database has been backfilled.
-await BankTransactionMetadataBackfillService.RunAsync(app.Services, lifetime.ApplicationStopping);
+if (!builder.Environment.IsIntegrationTest())
+    await BankTransactionMetadataBackfillService.RunAsync(
+        app.Services,
+        lifetime.ApplicationStopping
+    );
 
 // Middleware pipeline, order matters here
 app.UseExceptionHandler();
