@@ -101,7 +101,9 @@ function toBankTransactionMetadataEntry(
     };
 }
 
-function toBankTransactionDetail(wire: WireBankTransactionDetail): BankTransactionDetail {
+export function toBankTransactionDetail(
+    wire: WireBankTransactionDetail,
+): BankTransactionDetail {
     return {
         ...toBankTransaction(wire),
         metadata: wire.metadata.map(toBankTransactionMetadataEntry),

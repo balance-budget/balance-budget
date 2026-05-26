@@ -589,6 +589,21 @@ export interface components {
             /** Format: int32 */
             skippedAsDuplicate: number | string;
         };
+        JournalEntryDetailOutput: {
+            id: components["schemas"]["JournalEntryId"];
+            /** Format: date */
+            date: string;
+            description: null | string;
+            bankTransactionId: null | components["schemas"]["BankTransactionId"];
+            counterpartyId: null | components["schemas"]["CounterpartyId"];
+            counterpartyName: null | string;
+            lines: components["schemas"]["JournalLineOutput"][];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            bankTransaction: null | components["schemas"]["BankTransactionDetailOutput"];
+        };
         /** Format: uuid */
         JournalEntryId: string;
         JournalEntryOutput: {
@@ -2266,7 +2281,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["JournalEntryOutput"];
+                    "application/json": components["schemas"]["JournalEntryDetailOutput"];
                 };
             };
             /** @description Bad Request */
@@ -2349,7 +2364,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["JournalEntryOutput"];
+                    "application/json": components["schemas"]["JournalEntryDetailOutput"];
                 };
             };
             /** @description Bad Request */
@@ -2407,7 +2422,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["JournalEntryOutput"];
+                    "application/json": components["schemas"]["JournalEntryDetailOutput"];
                 };
             };
             /** @description Bad Request */
@@ -2505,7 +2520,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["JournalEntryOutput"];
+                    "application/json": components["schemas"]["JournalEntryDetailOutput"];
                 };
             };
             /** @description Bad Request */

@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useAccounts, type Account } from '../api/accounts';
 import { useBankAccounts, type BankAccount } from '../api/bankAccounts';
@@ -7,7 +7,6 @@ import {
     useCategorizeBankTransaction,
     type BankTransaction,
     type BankTransactionDetail,
-    type BankTransactionMetadataEntry,
 } from '../api/bankTransactions';
 import {
     useCounterparties,
@@ -16,6 +15,9 @@ import {
     type SuggestedCounterAccount,
 } from '../api/counterparties';
 import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
+import { BankTransactionDetails } from '../components/BankTransactionDetails';
+import { Combobox } from '../components/Combobox';
+import { type ComboboxItem } from '../components/combobox.state';
 import { ErrorState } from '../components/ErrorState';
 import { FieldError } from '../components/FieldError';
 import { FormErrorBanner } from '../components/FormErrorBanner';
@@ -23,10 +25,8 @@ import { Icon } from '../components/Icon';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
-import { cx } from '../lib/cx';
 import {
     asAccountId,
-    asCounterpartyId,
     type AccountId,
     type AccountType,
     type BankAccountId,
@@ -332,7 +332,9 @@ function CategorizeForm({
                         </Link>
                     }
                 />
-                <BankTransactionSummary bt={bt} catalog={catalog} />
+                <div className="mb-4">
+                    <BankTransactionDetails bt={bt} catalog={catalog} />
+                </div>
                 <FormErrorBanner message={topError} />
                 <HeaderInputs
                     form={form}
@@ -379,102 +381,6 @@ function CategorizeForm({
                 </div>
             </Panel>
         </form>
-    );
-}
-
-function BankTransactionSummary({
-    bt,
-    catalog,
-}: {
-    bt: BankTransactionDetail;
-    catalog: CurrencyCatalog;
-}) {
-    const colour = bt.money.amount < 0 ? 'text-danger' : 'text-success';
-    return (
-        <div className="mb-4">
-            <div className="grid grid-cols-[100px_1fr_minmax(160px,1.2fr)_160px] gap-3 items-baseline px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-[13px]">
-                <span className="text-fg-3 tabular">{bt.bookingDate}</span>
-                <span className="text-fg-1 truncate">{bt.description}</span>
-                <div className="min-w-0 flex flex-col leading-tight">
-                    <span className="text-fg-2 truncate">{bt.counterpartyName ?? '—'}</span>
-                    {bt.counterpartyAccountNumber && (
-                        <span className="text-[11px] text-fg-3 truncate tabular">
-                            {bt.counterpartyAccountNumber}
-                        </span>
-                    )}
-                </div>
-                <span className={cx('font-mono tabular text-right', colour)}>
-                    {formatMoney(bt.money.amount, bt.money.currencyCode, catalog, {
-                        sign: true,
-                    })}
-                </span>
-            </div>
-            <BankTransactionMetadataDetails bt={bt} catalog={catalog} />
-            <BankTransactionMetadataEntries entries={bt.metadata} />
-        </div>
-    );
-}
-
-function BankTransactionMetadataEntries({
-    entries,
-}: {
-    entries: BankTransactionMetadataEntry[];
-}) {
-    if (entries.length === 0) return null;
-    return (
-        <dl className="mt-2 px-3 py-2 rounded-sm bg-surface-2 border border-border-soft grid grid-cols-[max-content_1fr] gap-x-3 gap-y-1 text-[12px]">
-            {entries.map(entry => (
-                <Fragment key={entry.key}>
-                    <dt className="text-fg-3 tabular">{entry.key}</dt>
-                    <dd className="text-fg-1 tabular truncate">
-                        {entry.integerValue !== null
-                            ? entry.integerValue.toString()
-                            : (entry.stringValue ?? '')}
-                    </dd>
-                </Fragment>
-            ))}
-        </dl>
-    );
-}
-
-function BankTransactionMetadataDetails({
-    bt,
-    catalog,
-}: {
-    bt: BankTransaction;
-    catalog: CurrencyCatalog;
-}) {
-    const fields: { label: string; value: string }[] = [];
-    if (bt.valueDate !== null) fields.push({ label: 'Value date', value: bt.valueDate });
-    if (bt.reference !== null) fields.push({ label: 'Reference', value: bt.reference });
-    if (bt.mandateId !== null) fields.push({ label: 'Mandate ID', value: bt.mandateId });
-    if (bt.sepaCreditorId !== null) {
-        fields.push({ label: 'SEPA creditor ID', value: bt.sepaCreditorId });
-    }
-    if (bt.foreignAmount !== null && bt.foreignCurrencyCode !== null) {
-        fields.push({
-            label: 'Foreign amount',
-            value: formatMoney(bt.foreignAmount, bt.foreignCurrencyCode, catalog, {
-                sign: false,
-            }),
-        });
-    }
-    if (bt.exchangeRate !== null) {
-        fields.push({ label: 'Exchange rate', value: bt.exchangeRate.toString() });
-    }
-    if (bt.importerKey !== null) fields.push({ label: 'Importer', value: bt.importerKey });
-
-    if (fields.length === 0) return null;
-
-    return (
-        <dl className="mt-2 px-3 py-2 rounded-sm bg-surface-2 border border-border-soft grid grid-cols-[max-content_1fr] gap-x-3 gap-y-1 text-[12px]">
-            {fields.map(f => (
-                <Fragment key={f.label}>
-                    <dt className="text-fg-3">{f.label}</dt>
-                    <dd className="text-fg-1 tabular truncate">{f.value}</dd>
-                </Fragment>
-            ))}
-        </dl>
     );
 }
 
