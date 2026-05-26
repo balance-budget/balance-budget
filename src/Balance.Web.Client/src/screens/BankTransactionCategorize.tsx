@@ -26,7 +26,6 @@ import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import {
-    asAccountId,
     type AccountId,
     type AccountType,
     type BankAccountId,
@@ -445,80 +444,65 @@ function CounterpartyInput({
     onPatch: (patch: Partial<CategorizeFormState>) => void;
     fieldErrors: FieldErrors | null;
 }) {
-    const sorted = useMemo(
-        () => [...counterparties].sort((a, b) => a.name.localeCompare(b.name)),
+    const items = useMemo<ComboboxItem<CounterpartyId | null>[]>(
+        () =>
+            [...counterparties]
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map(c => ({ key: c.id, label: c.name, value: c.id })),
         [counterparties],
     );
+
+    const effectiveItems = useMemo(() => {
+        if (form.counterpartyMode !== 'new' || form.newCounterpartyName.trim().length === 0) {
+            return items;
+        }
+        const pending: ComboboxItem<CounterpartyId | null> = {
+            key: '__pending__',
+            label: `${form.newCounterpartyName.trim()} (new)`,
+            value: null,
+        };
+        return [pending, ...items];
+    }, [form.counterpartyMode, form.newCounterpartyName, items]);
+
+    const value: CounterpartyId | null =
+        form.counterpartyMode === 'existing' ? form.counterpartyId : null;
 
     return (
         <div className="flex flex-col gap-1">
             <span className="text-[12px] font-medium text-fg-2">Counterparty</span>
-            {form.counterpartyMode === 'existing' ? (
-                <div className="flex items-stretch gap-2">
-                    <select
-                        value={form.counterpartyId ?? ''}
-                        onChange={e => {
-                            onPatch({
-                                counterpartyId:
-                                    e.target.value === ''
-                                        ? null
-                                        : asCounterpartyId(e.target.value),
-                            });
-                        }}
-                        className="flex-1 min-w-0 px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
-                    >
-                        <option value="">None (self-transfer)</option>
-                        {sorted.map(c => (
-                            <option key={c.id} value={c.id}>
-                                {c.name}
-                            </option>
-                        ))}
-                    </select>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            onPatch({
-                                counterpartyMode: 'new',
-                                counterpartyId: null,
-                            });
-                        }}
-                        title="Create a new counterparty"
-                        className="shrink-0 inline-flex items-center gap-1 px-2 rounded-sm bg-surface-2 border border-border-soft text-fg-2 hover:text-fg-1 hover:border-border-strong text-[13px]"
-                    >
-                        <Icon name="plus" size={14} strokeWidth={2} />
-                        New
-                    </button>
-                </div>
-            ) : (
-                <div className="flex items-stretch gap-2">
-                    <input
-                        type="text"
-                        value={form.newCounterpartyName}
-                        onChange={e => {
-                            onPatch({ newCounterpartyName: e.target.value });
-                        }}
-                        maxLength={200}
-                        autoFocus
-                        placeholder="New counterparty name"
-                        className="flex-1 min-w-0 px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
-                    />
-                    <button
-                        type="button"
-                        onClick={() => {
-                            onPatch({
-                                counterpartyMode: 'existing',
-                                newCounterpartyName: '',
-                            });
-                        }}
-                        title="Pick an existing counterparty"
-                        className="shrink-0 inline-flex items-center gap-1 px-2 rounded-sm bg-surface-2 border border-border-soft text-fg-2 hover:text-fg-1 hover:border-border-strong text-[13px]"
-                    >
-                        Pick
-                    </button>
-                </div>
-            )}
+            <Combobox
+                items={effectiveItems}
+                value={value}
+                onChange={id => {
+                    onPatch({
+                        counterpartyMode: 'existing',
+                        counterpartyId: id,
+                        newCounterpartyName: '',
+                    });
+                }}
+                onClear={() => {
+                    onPatch({
+                        counterpartyMode: 'existing',
+                        counterpartyId: null,
+                        newCounterpartyName: '',
+                    });
+                }}
+                onCreate={typed => {
+                    onPatch({
+                        counterpartyMode: 'new',
+                        counterpartyId: null,
+                        newCounterpartyName: typed,
+                    });
+                }}
+                noneLabel="── None (self-transfer)"
+                createLabel={typed => `+ Create '${typed}'`}
+                placeholder="Pick counterparty…"
+                ariaLabel="Counterparty"
+            />
             <FieldError
-                name={form.counterpartyMode === 'existing' ? 'CounterpartyId' : 'NewCounterparty.Name'}
+                name={
+                    form.counterpartyMode === 'existing' ? 'CounterpartyId' : 'NewCounterparty.Name'
+                }
                 errors={fieldErrors}
             />
         </div>
@@ -682,42 +666,26 @@ function AccountPicker({
     accounts: Account[];
     onChange: (accountId: AccountId | null) => void;
 }) {
-    const groups = useMemo(() => {
-        const buckets = new Map<AccountType, Account[]>();
-        for (const account of accounts) {
-            const list = buckets.get(account.type) ?? [];
-            list.push(account);
-            buckets.set(account.type, list);
-        }
-        for (const list of buckets.values()) {
-            list.sort((a, b) => a.name.localeCompare(b.name));
-        }
-        return ACCOUNT_TYPE_ORDER.filter(t => buckets.has(t)).map(t => ({
-            type: t,
-            accounts: buckets.get(t) ?? [],
-        }));
-    }, [accounts]);
+    const items = useMemo<ComboboxItem<AccountId>[]>(
+        () =>
+            [...accounts]
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map(a => ({ key: a.id, label: a.name, group: a.type, value: a.id })),
+        [accounts],
+    );
 
     return (
-        <select
-            value={value ?? ''}
-            onChange={e => {
-                const next = e.target.value;
-                onChange(next === '' ? null : asAccountId(next));
+        <Combobox
+            items={items}
+            value={value}
+            onChange={id => {
+                onChange(id);
             }}
-            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[13px] focus:outline-none focus:border-border-strong w-full"
-        >
-            <option value="">Select…</option>
-            {groups.map(g => (
-                <optgroup key={g.type} label={ACCOUNT_TYPE_LABEL[g.type]}>
-                    {g.accounts.map(a => (
-                        <option key={a.id} value={a.id}>
-                            {a.name}
-                        </option>
-                    ))}
-                </optgroup>
-            ))}
-        </select>
+            groupOrder={ACCOUNT_TYPE_ORDER}
+            groupLabels={ACCOUNT_TYPE_LABEL}
+            placeholder="Pick account…"
+            ariaLabel="Account"
+        />
     );
 }
 
