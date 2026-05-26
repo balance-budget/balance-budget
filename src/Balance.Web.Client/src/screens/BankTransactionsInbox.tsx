@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link, useBlocker } from '@tanstack/react-router';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { useAccounts, type Account } from '../api/accounts';
@@ -545,26 +545,40 @@ function InboxEditorReady({
         return m;
     }, [visibleBts, bankAccounts]);
 
-    // The cp we fire the per-row suggestion query for: user override wins,
+    // The cp we fire the suggestion query for, per row: user override wins,
     // otherwise the IBAN-resolved cp. Self-transfer (null) skips the fetch.
-    const cpIdsForSuggestions = useMemo(
-        () =>
-            visibleBts.map(bt => {
-                const override = userOverrides.get(bt.id);
-                if (override?.counterpartyMode === 'new') return null;
-                if (override && 'counterpartyId' in override) return override.counterpartyId ?? null;
-                return basePrefillByBt.get(bt.id)?.counterpartyId ?? null;
-            }),
-        [visibleBts, userOverrides, basePrefillByBt],
-    );
+    const cpIdByBt = useMemo(() => {
+        const m = new Map<BankTransactionId, CounterpartyId | null>();
+        for (const bt of visibleBts) {
+            const override = userOverrides.get(bt.id);
+            let cpId: CounterpartyId | null;
+            if (override?.counterpartyMode === 'new') {
+                cpId = null;
+            } else if (override && 'counterpartyId' in override) {
+                cpId = override.counterpartyId ?? null;
+            } else {
+                cpId = basePrefillByBt.get(bt.id)?.counterpartyId ?? null;
+            }
+            m.set(bt.id, cpId);
+        }
+        return m;
+    }, [visibleBts, userOverrides, basePrefillByBt]);
+
+    // Dedupe to unique non-null cpIds — multiple rows often share the same
+    // counterparty, and useQueries warns "Duplicate Queries found" (and churns
+    // observers on every render) if entries share a queryKey.
+    const uniqueCpIds = useMemo(() => {
+        const set = new Set<CounterpartyId>();
+        for (const cpId of cpIdByBt.values()) {
+            if (cpId !== null) set.add(cpId);
+        }
+        return [...set];
+    }, [cpIdByBt]);
 
     const suggestionQueries = useQueries({
-        queries: cpIdsForSuggestions.map(cpId => ({
-            queryKey: cpId
-                ? counterpartiesKeys.suggestedAccounts(cpId)
-                : ['counterparties', 'noop'],
+        queries: uniqueCpIds.map(cpId => ({
+            queryKey: counterpartiesKeys.suggestedAccounts(cpId),
             queryFn: async ({ signal }: { signal: AbortSignal }) => {
-                if (cpId === null) return [] as SuggestedCounterAccount[];
                 const wire = await getJson<WireSuggested[]>(
                     `/api/counterparties/${cpId}/suggested-accounts`,
                     signal,
@@ -575,32 +589,41 @@ function InboxEditorReady({
                     amount: typeof w.amount === 'string' ? Number(w.amount) : w.amount,
                 }));
             },
-            enabled: cpId !== null,
         })),
     });
+
+    const suggestionsByCpId = useMemo(() => {
+        const m = new Map<CounterpartyId, SuggestedCounterAccount[]>();
+        uniqueCpIds.forEach((cpId, i) => {
+            const data = suggestionQueries[i]?.data;
+            if (data) m.set(cpId, data);
+        });
+        return m;
+    }, [uniqueCpIds, suggestionQueries]);
 
     // Final prefill = base + suggestion-derived account (if any).
     const prefillByBt = useMemo(() => {
         const m = new Map<BankTransactionId, RowDraft>();
-        visibleBts.forEach((bt, i) => {
+        for (const bt of visibleBts) {
             const base = basePrefillByBt.get(bt.id);
-            if (!base) return;
-            const queryResult = suggestionQueries[i];
-            if (!queryResult?.data) {
+            if (!base) continue;
+            const cpId = cpIdByBt.get(bt.id) ?? null;
+            const data = cpId !== null ? suggestionsByCpId.get(cpId) : undefined;
+            if (!data) {
                 m.set(bt.id, base);
-                return;
+                continue;
             }
             const ownBankSide = bankAccountsById.get(bt.bankAccountId)?.accountId ?? null;
             const suggested = pickSuggestedAccountId(
-                queryResult.data,
+                data,
                 accountsById,
                 bt.money.currencyCode,
                 ownBankSide,
             );
             m.set(bt.id, withSuggestedAccount(base, suggested));
-        });
+        }
         return m;
-    }, [visibleBts, basePrefillByBt, suggestionQueries, accountsById, bankAccountsById]);
+    }, [visibleBts, basePrefillByBt, cpIdByBt, suggestionsByCpId, accountsById, bankAccountsById]);
 
     function draftFor(id: BankTransactionId): RowDraft {
         const prefill = prefillByBt.get(id) ?? emptyDraft();
@@ -1045,22 +1068,26 @@ function RowSelectCheckbox({
     onClick: (shiftKey: boolean) => void;
     ariaLabel: string;
 }) {
-    function handleClick(e: ReactMouseEvent<HTMLInputElement>) {
-        // Use onClick (mouse) for shift detection; native onChange doesn't
-        // carry the modifier flags.
-        e.preventDefault();
-        if (disabled) return;
-        onClick(e.shiftKey);
-    }
+    // Capture shift via mousedown/keydown — onChange doesn't carry modifier
+    // flags. We avoid the onClick + preventDefault pattern because it leaves
+    // the controlled checkbox's internal value tracker out of sync with React
+    // state in some browsers, which surfaced as the wrong row being toggled.
+    const shiftRef = useRef(false);
     return (
         <input
             type="checkbox"
             aria-label={ariaLabel}
             checked={selected}
             disabled={disabled}
-            onClick={handleClick}
+            onMouseDown={e => {
+                shiftRef.current = e.shiftKey;
+            }}
+            onKeyDown={e => {
+                shiftRef.current = e.shiftKey;
+            }}
             onChange={() => {
-                /* handled in onClick to capture shift */
+                onClick(shiftRef.current);
+                shiftRef.current = false;
             }}
             className="h-4 w-4 cursor-pointer accent-brand-primary disabled:opacity-40 disabled:cursor-not-allowed"
         />
