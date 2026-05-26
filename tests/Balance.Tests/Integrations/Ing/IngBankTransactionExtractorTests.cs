@@ -72,7 +72,7 @@ internal sealed class IngBankTransactionExtractorTests
     }
 
     [Test]
-    public async Task Description_prefers_structured_Omschrijving_from_Notifications_over_Naam(
+    public async Task Description_prefers_structured_description_from_notifications_over_name(
         CancellationToken cancellationToken
     )
     {
@@ -116,7 +116,7 @@ internal sealed class IngBankTransactionExtractorTests
     }
 
     [Test]
-    public async Task Savings_number_fallback_from_Naam_Omschrijving(
+    public async Task Savings_number_fallback_from_name_description(
         CancellationToken cancellationToken
     )
     {
@@ -134,7 +134,7 @@ internal sealed class IngBankTransactionExtractorTests
     }
 
     [Test]
-    public async Task Savings_number_fallback_from_Notifications_Other_when_Description_lacks_it(
+    public async Task Savings_number_fallback_from_other_notifications_when_description_lacks_it(
         CancellationToken cancellationToken
     )
     {
@@ -468,14 +468,15 @@ internal sealed class IngBankTransactionExtractorTests
 
         await Assert.That(result.IsSuccess).IsTrue();
         var row = result.Value![0];
-        var pairs = row
-            .Metadata.OrderBy(m => m.Key!.Name, StringComparer.Ordinal)
-            .Select(m => (m.Key!.Name, m.StringValue, m.IntegerValue))
-            .ToList();
+        var byName = row.Metadata.ToDictionary(
+            m => m.Key!.Name,
+            m => (m.StringValue, m.IntegerValue),
+            StringComparer.Ordinal
+        );
 
-        await Assert.That(pairs).Contains(("IngTag", "Groceries", (long?)null));
-        await Assert.That(pairs).Contains(("IngTransactionCode", "BA", (long?)null));
-        await Assert.That(pairs).Contains(("IngMutatiesoort", "Payment terminal", (long?)null));
+        await Assert.That(byName["Tags"].StringValue).IsEqualTo("Groceries");
+        await Assert.That(byName["Transaction Code"].StringValue).IsEqualTo("BA");
+        await Assert.That(byName["Transaction Type"].StringValue).IsEqualTo("Payment terminal");
     }
 
     [Test]
@@ -505,14 +506,9 @@ internal sealed class IngBankTransactionExtractorTests
             StringComparer.Ordinal
         );
 
-        await Assert.That(byName.ContainsKey("SepaCreditorName")).IsTrue();
-        await Assert.That(byName["SepaCreditorName"].StringValue).IsEqualTo("Spotify Sweden AB");
-
-        await Assert.That(byName.ContainsKey("OtherParty")).IsTrue();
-        await Assert.That(byName["OtherParty"].StringValue).IsEqualTo("SpotifyNL");
-
-        await Assert.That(byName.ContainsKey("IngTransactionCode")).IsTrue();
-        await Assert.That(byName["IngTransactionCode"].StringValue).IsEqualTo("IC");
+        await Assert.That(byName["SEPA Description"].StringValue).IsEqualTo("Spotify Sweden AB");
+        await Assert.That(byName["SEPA Other Party"].StringValue).IsEqualTo("SpotifyNL");
+        await Assert.That(byName["Transaction Code"].StringValue).IsEqualTo("IC");
     }
 
     [Test]
@@ -537,13 +533,13 @@ internal sealed class IngBankTransactionExtractorTests
             StringComparer.Ordinal
         );
 
-        await Assert.That(byName["ForeignMarkUp.Amount"].IntegerValue).IsEqualTo(45L);
-        await Assert.That(byName["ForeignMarkUp.CurrencyCode"].StringValue).IsEqualTo("EUR");
-        await Assert.That(byName["ForeignFee.Amount"].IntegerValue).IsEqualTo(225L);
-        await Assert.That(byName["ForeignFee.CurrencyCode"].StringValue).IsEqualTo("EUR");
-        await Assert.That(byName["CardSequence.Number"].IntegerValue).IsEqualTo(8L);
+        await Assert.That(byName["Foreign Currency Mark Up Amount"].IntegerValue).IsEqualTo(45L);
+        await Assert.That(byName["Foreign Currency Mark Up Code"].StringValue).IsEqualTo("EUR");
+        await Assert.That(byName["Foreign Currency Fee Amount"].IntegerValue).IsEqualTo(225L);
+        await Assert.That(byName["Foreign Currency Fee Code"].StringValue).IsEqualTo("EUR");
+        await Assert.That(byName["Card Sequence Number"].StringValue).IsEqualTo("008");
         await Assert.That(byName["Term"].StringValue).IsEqualTo("ATM12713");
-        await Assert.That(byName["IngTransactionCode"].StringValue).IsEqualTo("GM");
+        await Assert.That(byName["Transaction Code"].StringValue).IsEqualTo("GM");
     }
 
     [Test]
@@ -571,7 +567,7 @@ internal sealed class IngBankTransactionExtractorTests
         );
 
         await Assert
-            .That(byName["IngNote.Other"].StringValue)
+            .That(byName["Other Notes"].StringValue)
             .IsEqualTo("Transfer to D87654321 confirmed");
     }
 
@@ -594,9 +590,9 @@ internal sealed class IngBankTransactionExtractorTests
         // Only IngTransactionCode + (empty) Mutatiesoort skipped + (empty) Tag skipped.
         // The Code column is always present so at minimum IngTransactionCode lands.
         var names = row.Metadata.Select(m => m.Key!.Name).ToList();
-        await Assert.That(names).Contains("IngTransactionCode");
-        await Assert.That(names).DoesNotContain("IngTag");
-        await Assert.That(names).DoesNotContain("IngMutatiesoort");
-        await Assert.That(names).DoesNotContain("OtherParty");
+        await Assert.That(names).Contains("Transaction Code");
+        await Assert.That(names).DoesNotContain("Tags");
+        await Assert.That(names).DoesNotContain("Transaction Type");
+        await Assert.That(names).DoesNotContain("Other Party");
     }
 }
