@@ -18,7 +18,7 @@ import {
     clearVisibleSelection,
     collectNewCounterpartyNames,
     computeRangeSelection,
-    distinctSelectedCurrencies,
+    distinctRowCurrencies,
     emptyDraft,
     initialPrefill,
     isPristine,
@@ -601,30 +601,23 @@ describe('allVisibleSelectionState', () => {
     });
 });
 
-describe('distinctSelectedCurrencies', () => {
-    function row(id: BankTransactionId, currency: string) {
-        return { id, bt: { money: { currencyCode: currency } } };
+describe('distinctRowCurrencies', () => {
+    function row(currency: string) {
+        return { money: { currencyCode: currency } };
     }
 
-    it('returns the distinct currency set across selected rows (first-seen order)', () => {
-        const rows = [
-            row(id1, 'EUR'),
-            row(id2, 'EUR'),
-            row(id3, 'USD'),
-            row(id4, 'GBP'),
-        ];
-        const cs = distinctSelectedCurrencies(new Set([id1, id2, id3]), rows);
-        expect(cs).toEqual(['EUR', 'USD']);
+    it('returns the distinct currency set in first-seen order', () => {
+        const cs = distinctRowCurrencies([
+            row('EUR'),
+            row('EUR'),
+            row('USD'),
+            row('GBP'),
+        ]);
+        expect(cs).toEqual(['EUR', 'USD', 'GBP']);
     });
 
-    it('ignores rows not in the selection', () => {
-        const rows = [row(id1, 'EUR'), row(id2, 'USD')];
-        expect(distinctSelectedCurrencies(new Set([id1]), rows)).toEqual(['EUR']);
-    });
-
-    it('returns an empty list when nothing is selected', () => {
-        const rows = [row(id1, 'EUR'), row(id2, 'USD')];
-        expect(distinctSelectedCurrencies(new Set(), rows)).toEqual([]);
+    it('returns an empty list for no rows', () => {
+        expect(distinctRowCurrencies([])).toEqual([]);
     });
 });
 
