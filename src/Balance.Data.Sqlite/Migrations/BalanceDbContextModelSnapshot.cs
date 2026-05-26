@@ -169,8 +169,30 @@ namespace Balance.Data.Sqlite.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
+                    b.Property<decimal?>("ExchangeRate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("ForeignAmount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ForeignCurrencyCode")
+                        .HasMaxLength(8)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ImporterKey")
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("MandateId")
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("RawSource")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(256)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("RowHash")
@@ -179,7 +201,14 @@ namespace Balance.Data.Sqlite.Migrations
                         .HasColumnType("TEXT")
                         .IsFixedLength();
 
+                    b.Property<string>("SepaCreditorId")
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly?>("ValueDate")
                         .HasColumnType("TEXT");
 
                     b.ComplexProperty(typeof(Dictionary<string, object>), "Money", "Balance.Data.Entities.BankTransaction.Money#Money", b1 =>

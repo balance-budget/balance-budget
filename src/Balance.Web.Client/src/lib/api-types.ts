@@ -417,6 +417,17 @@ export interface components {
             description: string;
             counterpartyName: null | string;
             counterpartyAccountNumber: null | string;
+            /** Format: date */
+            valueDate: null | string;
+            reference: null | string;
+            mandateId: null | string;
+            sepaCreditorId: null | string;
+            /** Format: int64 */
+            foreignAmount: null | number | string;
+            foreignCurrencyCode: null | string;
+            /** Format: double */
+            exchangeRate: null | number | string;
+            importerKey: null | string;
             journalEntryId: null | components["schemas"]["JournalEntryId"];
             /** Format: date-time */
             dismissedAt: null | string;

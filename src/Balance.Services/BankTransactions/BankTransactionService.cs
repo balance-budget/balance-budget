@@ -67,6 +67,14 @@ internal sealed class BankTransactionService : IBankTransactionService
                 b.Description,
                 b.CounterpartyName,
                 b.CounterpartyAccountNumber,
+                b.ValueDate,
+                b.Reference,
+                b.MandateId,
+                b.SepaCreditorId,
+                b.ForeignAmount,
+                b.ForeignCurrencyCode,
+                b.ExchangeRate,
+                b.ImporterKey,
                 _dbContext
                     .JournalEntries.Where(j => j.BankTransactionId == b.Id)
                     .Select(j => (JournalEntryId?)j.Id)
@@ -94,6 +102,14 @@ internal sealed class BankTransactionService : IBankTransactionService
                 b.Description,
                 b.CounterpartyName,
                 b.CounterpartyAccountNumber,
+                b.ValueDate,
+                b.Reference,
+                b.MandateId,
+                b.SepaCreditorId,
+                b.ForeignAmount,
+                b.ForeignCurrencyCode,
+                b.ExchangeRate,
+                b.ImporterKey,
                 _dbContext
                     .JournalEntries.Where(j => j.BankTransactionId == b.Id)
                     .Select(j => (JournalEntryId?)j.Id)
@@ -301,6 +317,14 @@ internal sealed class BankTransactionService : IBankTransactionService
             bankTransaction.Description,
             bankTransaction.CounterpartyName,
             bankTransaction.CounterpartyAccountNumber,
+            bankTransaction.ValueDate,
+            bankTransaction.Reference,
+            bankTransaction.MandateId,
+            bankTransaction.SepaCreditorId,
+            bankTransaction.ForeignAmount,
+            bankTransaction.ForeignCurrencyCode,
+            bankTransaction.ExchangeRate,
+            bankTransaction.ImporterKey,
             null,
             bankTransaction.DismissedAt,
             bankTransaction.DismissedReason,

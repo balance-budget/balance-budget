@@ -23,6 +23,22 @@ internal sealed class BankAccountImportEndpointTests : EndpointsTestsBase
         "\"20260130\";\"Coolblue BV\";\"{0}\";\"NL22INGB3141592653\";\"GT\";"
         + "\"Credit\";\"59,95\";\"Online Banking\";\"Name: Coolblue BV\";\"1412,95\";\"\"";
 
+    private const string RowSepaDirectDebitTemplate =
+        "\"20260129\";\"SPOTIFY BY ADYEN\";\"{0}\";\"NL48ABNA0502830042\";\"IC\";"
+        + "\"Debit\";\"9,99\";\"SEPA Direct Debit\";"
+        + "\"Naam: SPOTIFY BY ADYEN Omschrijving: SpotifyNL P0102A103D "
+        + "IBAN: NL48ABNA0502830042 Kenmerk: SEPA-REF-001 "
+        + "Machtiging ID: MNDT-12345 Incassant ID: NL74ZZZ546978200017 "
+        + "Doorlopende incasso Valutadatum: 29-01-2026\";"
+        + "\"1352,96\";\"\"";
+
+    private const string RowForeignCurrencyTemplate =
+        "\"20260128\";\"ATM Belarus\";\"{0}\";\"\";\"GM\";\"Debit\";"
+        + "\"40,97\";\"Cash machine\";"
+        + "\"Pasvolgnr: 008 28-01-2026 14:20 Transactie: Q71243 Term: ATM12713 "
+        + "Valuta: 100,00 BYN Koers: 2,4406776 Opslag: 0,45 EUR Kosten: 2,25 EUR "
+        + "Valutadatum: 28-01-2026\";\"1311,99\";\"\"";
+
     [Test]
     public async Task ImportStatement_happy_path_returns_ok_with_counts()
     {
@@ -156,6 +172,80 @@ internal sealed class BankAccountImportEndpointTests : EndpointsTestsBase
         );
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.UnprocessableEntity);
+    }
+
+    [Test]
+    public async Task ImportStatement_populates_promoted_SEPA_and_FX_columns_and_ImporterKey()
+    {
+        using var client = Factory.CreateClient();
+        var iban = $"NL69INGB{NextDigits(10)}";
+        var account = await CreateAccountAsync(client, $"Checking-Metadata-{Guid.NewGuid():N}");
+        var bankAccount = await CreateBankAccountForAccountAsync(client, iban, account.Id);
+
+        var csvBytes = BuildCsvBytes(
+            iban,
+            RowEtosTemplate,
+            RowSepaDirectDebitTemplate,
+            RowForeignCurrencyTemplate
+        );
+        using var fileContent = new ByteArrayContent(csvBytes);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("text/csv");
+        using var multipart = new MultipartFormDataContent
+        {
+            { fileContent, "file", "statement.csv" },
+        };
+
+        using var importResponse = await client.PostAsync(
+            new Uri($"/api/bank-accounts/{bankAccount.Id}/imports", UriKind.Relative),
+            multipart
+        );
+        await Assert.That(importResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
+
+        var rows = new List<BankTransactionDto>();
+        for (var skip = 0; ; skip += 200)
+        {
+            using var listResponse = await client.GetAsync(
+                new Uri($"/api/bank-transactions?skip={skip}&take=200&filter=All", UriKind.Relative)
+            );
+            await Assert.That(listResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
+            var page = await listResponse.Content.ReadFromJsonAsync<
+                IReadOnlyList<BankTransactionDto>
+            >();
+            if (page is null || page.Count == 0)
+                break;
+            rows.AddRange(page.Where(r => r.BankAccountId == bankAccount.Id));
+            if (page.Count < 200)
+                break;
+        }
+
+        var sepa = rows.Single(r => r.Description == "SpotifyNL P0102A103D");
+        await Assert.That(sepa.ValueDate).IsEqualTo(new DateOnly(2026, 1, 29));
+        await Assert.That(sepa.Reference).IsEqualTo("SEPA-REF-001");
+        await Assert.That(sepa.MandateId).IsEqualTo("MNDT-12345");
+        await Assert.That(sepa.SepaCreditorId).IsEqualTo("NL74ZZZ546978200017");
+        await Assert.That(sepa.ForeignAmount).IsNull();
+        await Assert.That(sepa.ForeignCurrencyCode).IsNull();
+        await Assert.That(sepa.ExchangeRate).IsNull();
+        await Assert.That(sepa.ImporterKey).IsEqualTo("Ing.CurrentAccount.V1");
+
+        var fx = rows.Single(r => r.Description == "ATM Belarus");
+        await Assert.That(fx.ForeignAmount).IsEqualTo(10000L);
+        await Assert.That(fx.ForeignCurrencyCode).IsEqualTo("BYN");
+        await Assert.That(fx.ExchangeRate).IsEqualTo(2.4406776m);
+        await Assert.That(fx.ValueDate).IsEqualTo(new DateOnly(2026, 1, 28));
+        await Assert.That(fx.MandateId).IsNull();
+        await Assert.That(fx.SepaCreditorId).IsNull();
+        await Assert.That(fx.ImporterKey).IsEqualTo("Ing.CurrentAccount.V1");
+
+        var etos = rows.Single(r => r.Description == "Etos");
+        // Etos row has no SEPA / FX note fields — only the card-sequence date.
+        await Assert.That(etos.Reference).IsNull();
+        await Assert.That(etos.MandateId).IsNull();
+        await Assert.That(etos.SepaCreditorId).IsNull();
+        await Assert.That(etos.ForeignAmount).IsNull();
+        await Assert.That(etos.ForeignCurrencyCode).IsNull();
+        await Assert.That(etos.ExchangeRate).IsNull();
+        await Assert.That(etos.ImporterKey).IsEqualTo("Ing.CurrentAccount.V1");
     }
 
     [Test]
