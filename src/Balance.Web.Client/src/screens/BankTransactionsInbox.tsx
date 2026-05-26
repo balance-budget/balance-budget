@@ -65,6 +65,7 @@ import {
     type RowDraft,
     type RowStatus,
     type SaveAllOutcome,
+    type SaveAllSummary,
 } from './bankTransactionsInbox.state';
 import type { components } from '../lib/api-types';
 
@@ -1715,15 +1716,6 @@ function BulkDismissDialog({
     );
 }
 
-/** Issue #86: format the Save-all summary into a single-line toast. */
-function formatSaveAllToast(summary: {
-    categorised: number;
-    dismissed: number;
-    failed: number;
-}): string {
-    const parts: string[] = [];
-    parts.push(`${summary.categorised.toString()} categorised`);
-    parts.push(`${summary.dismissed.toString()} dismissed`);
-    parts.push(`${summary.failed.toString()} failed`);
-    return `${parts.join(', ')}.`;
+function formatSaveAllToast(summary: SaveAllSummary): string {
+    return `${summary.categorised.toString()} categorised, ${summary.dismissed.toString()} dismissed, ${summary.failed.toString()} failed.`;
 }

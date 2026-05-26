@@ -122,18 +122,16 @@ export function rowStatus(draft: RowDraft): RowStatus {
     return 'invalid';
 }
 
-/** Distinct (case-insensitive) new-counterparty names across all dirty rows.
- *  Used by the Save-all preflight to create each new CP once before any
- *  categorize call — required because parallel category calls that share an
- *  unseen-CP name would race on the server's name uniqueness. */
-export function collectNewCounterpartyNames(
-    rows: readonly { draft: RowDraft }[],
-): string[] {
+/** Distinct (case-insensitive) new-counterparty names across the given
+ *  drafts. Used by the Save-all preflight to create each new CP once before
+ *  any categorize call — required because parallel category calls that share
+ *  an unseen-CP name would race on the server's name uniqueness. */
+export function collectNewCounterpartyNames(drafts: Iterable<RowDraft>): string[] {
     const seen = new Set<string>();
     const out: string[] = [];
-    for (const row of rows) {
-        if (row.draft.counterpartyMode !== 'new') continue;
-        const trimmed = row.draft.newCounterpartyName.trim();
+    for (const draft of drafts) {
+        if (draft.counterpartyMode !== 'new') continue;
+        const trimmed = draft.newCounterpartyName.trim();
         if (trimmed.length === 0) continue;
         const key = trimmed.toLowerCase();
         if (seen.has(key)) continue;
@@ -240,11 +238,10 @@ export async function runSaveAll(
     deps: SaveAllDeps,
 ): Promise<SaveAllSummary> {
     // Preflight only looks at categorise rows; dismiss rows carry just a reason.
-    const categoriseDrafts = rows
-        .filter((r): r is SaveAllRow & { action: { kind: 'categorise'; draft: RowDraft } } =>
-            r.action.kind === 'categorise',
-        )
-        .map(r => ({ draft: r.action.draft }));
+    const categoriseDrafts: RowDraft[] = [];
+    for (const row of rows) {
+        if (row.action.kind === 'categorise') categoriseDrafts.push(row.action.draft);
+    }
     const names = collectNewCounterpartyNames(categoriseDrafts);
     const created = new Map<string, CounterpartyId>();
     const failedNames = new Map<string, string>();
@@ -496,19 +493,12 @@ export function setBulkDismissDrafts(
 
 /** Drop entries for the given keys from `map`. Returns the same instance when
  *  no key matched, so React state setters can short-circuit. */
-export function removeKeysFor<K, V>(
-    map: ReadonlyMap<K, V>,
-    keys: Iterable<K>,
-): Map<K, V> {
-    let mutated = false;
-    let next = map as Map<K, V>;
+export function removeKeysFor<K, V>(map: Map<K, V>, keys: Iterable<K>): Map<K, V> {
+    let next: Map<K, V> | null = null;
     for (const k of keys) {
-        if (!next.has(k)) continue;
-        if (!mutated) {
-            next = new Map(map);
-            mutated = true;
-        }
+        if (!(next ?? map).has(k)) continue;
+        next ??= new Map(map);
         next.delete(k);
     }
-    return next;
+    return next ?? map;
 }
