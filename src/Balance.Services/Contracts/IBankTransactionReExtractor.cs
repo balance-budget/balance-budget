@@ -19,7 +19,10 @@ public interface IBankTransactionReExtractor
     /// </summary>
     string ImporterKey { get; }
 
-    Result<BankTransactionReExtraction> ReExtract(string rawSource);
+    Task<Result<BankTransactionReExtraction>> ReExtractAsync(
+        string rawSource,
+        CancellationToken cancellationToken
+    );
 }
 
 /// <summary>

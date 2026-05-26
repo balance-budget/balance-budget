@@ -84,16 +84,20 @@ public static class BankTransactionMetadataBackfillService
                 continue;
             }
 
-            var result = extractor.ReExtract(row.RawSource);
+            var result = await extractor.ReExtractAsync(row.RawSource, cancellationToken);
             if (result.IsFailure)
             {
+                var errorMessage = result.Error switch
+                {
+                    InvariantError inv => inv.Message,
+                    ConflictError conf => conf.Message,
+                    _ => result.Error.Code,
+                };
                 logger.BankTransactionReExtractionExtractorError(
                     row.Id.Value,
                     row.ImporterKey,
                     result.Error.Code,
-                    result.Error is InvariantError inv ? inv.Message
-                        : result.Error is ConflictError conf ? conf.Message
-                        : result.Error.Code
+                    errorMessage
                 );
                 skippedExtractorError++;
                 continue;

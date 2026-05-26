@@ -155,7 +155,11 @@ internal sealed class IngBankTransactionExtractor
         var counterpartyName = NullIfBlank(row.Parsed.Description);
         var counterpartyAccountNumber = ResolveCounterpartyAccountNumber(row, note);
         var signedCents = ToSignedCents(row.Parsed.Amount, row.Parsed.DebitCredit);
-        var promoted = MapPromotedAndMetadata(row, note);
+
+        var foreignAmountMinor = ToMinorUnits(note.ForeignCurrencyAmount);
+        var foreignCurrencyCode = NullIfBlank(note.ForeignCurrencyAmount?.CurrencyCode);
+        var exchangeRate =
+            note.ForeignCurrencyRate == 0m ? (decimal?)null : note.ForeignCurrencyRate;
 
         return new BankTransaction
         {
@@ -168,15 +172,15 @@ internal sealed class IngBankTransactionExtractor
             CounterpartyAccountNumber = counterpartyAccountNumber,
             RawSource = RowHasher.Normalise(row.RawRecord),
             RowHash = RowHasher.Hash(row.RawRecord),
-            ValueDate = promoted.ValueDate,
-            Reference = promoted.Reference,
-            MandateId = promoted.MandateId,
-            SepaCreditorId = promoted.SepaCreditorId,
-            ForeignAmount = promoted.ForeignAmount,
-            ForeignCurrencyCode = promoted.ForeignCurrencyCode,
-            ExchangeRate = promoted.ExchangeRate,
+            ValueDate = note.ValueDate,
+            Reference = NullIfBlank(note.Reference),
+            MandateId = NullIfBlank(note.MandateId),
+            SepaCreditorId = NullIfBlank(note.Creditor?.Id),
+            ForeignAmount = foreignAmountMinor,
+            ForeignCurrencyCode = foreignCurrencyCode,
+            ExchangeRate = exchangeRate,
             ImporterKey = Key,
-            Metadata = (List<BankTransactionMetadataValue>)promoted.Metadata,
+            Metadata = BuildMetadata(row, note),
         };
     }
 
@@ -184,7 +188,10 @@ internal sealed class IngBankTransactionExtractor
     // backfill). Re-parses the row with the same CSV + note parsers and the same per-row
     // mapping as the live import — only the surrounding "load BankAccount + dedup" plumbing
     // and the (already-stable) identifying columns are skipped.
-    Result<BankTransactionReExtraction> IBankTransactionReExtractor.ReExtract(string rawSource)
+    async Task<Result<BankTransactionReExtraction>> IBankTransactionReExtractor.ReExtractAsync(
+        string rawSource,
+        CancellationToken cancellationToken
+    )
     {
         ArgumentNullException.ThrowIfNull(rawSource);
 
@@ -196,11 +203,7 @@ internal sealed class IngBankTransactionExtractor
         IReadOnlyList<IngStatementRow> rows;
         try
         {
-            rows = _ingStatementParser
-                .ParseStatementsAsync(stream, CancellationToken.None)
-                .AsTask()
-                .GetAwaiter()
-                .GetResult();
+            rows = await _ingStatementParser.ParseStatementsAsync(stream, cancellationToken);
         }
         catch (CsvHelperException ex)
         {
