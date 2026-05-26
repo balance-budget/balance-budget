@@ -18,7 +18,7 @@ internal sealed class IngBankTransactionExtractor
     : IBankTransactionExtractor,
         IBankTransactionReExtractor
 {
-    private const string Key = "Ing.CurrentAccount.V1";
+    internal const string Key = "Ing.CurrentAccount.V1";
 
     // CSV header used to re-parse a single stored RawSource row (issue #89 backfill).
     // CurrentAccountStatementRow tolerates both English and Dutch headers; we stick to Dutch
@@ -145,8 +145,8 @@ internal sealed class IngBankTransactionExtractor
             return new InvariantError(
                 ErrorCodes.ImportFormatInvalid,
                 $"Row dated {row.Parsed.Date:yyyy-MM-dd} has no usable description "
-                    + "('Name / Description' is blank and 'Notifications' carries no "
-                    + "'Description:' field)."
+                    + "('Naam / Omschrijving' is blank and 'Mededelingen' carries no "
+                    + "'Omschrijving:' field)."
             );
         }
 
@@ -154,7 +154,7 @@ internal sealed class IngBankTransactionExtractor
         var counterpartyAccountNumber = ResolveCounterpartyAccountNumber(row, note);
         var signedCents = ToSignedCents(row.Parsed.Amount, row.Parsed.DebitCredit);
 
-        var foreignAmountMinor = ToMinorUnits(note.ForeignCurrencyAmount?.Amount);
+        var foreignAmountMinor = ToMinorUnits(note.ForeignCurrencyAmount);
         var foreignCurrencyCode = NullIfBlank(note.ForeignCurrencyAmount?.CurrencyCode);
         var exchangeRate =
             note.ForeignCurrencyRate == 0m ? (decimal?)null : note.ForeignCurrencyRate;
@@ -229,7 +229,7 @@ internal sealed class IngBankTransactionExtractor
         IngNote note
     )
     {
-        var foreignAmountMinor = ToMinorUnits(note.ForeignCurrencyAmount?.Amount);
+        var foreignAmountMinor = ToMinorUnits(note.ForeignCurrencyAmount);
         var foreignCurrencyCode = NullIfBlank(note.ForeignCurrencyAmount?.CurrencyCode);
         var exchangeRate =
             note.ForeignCurrencyRate == 0m ? (decimal?)null : note.ForeignCurrencyRate;
@@ -256,41 +256,38 @@ internal sealed class IngBankTransactionExtractor
     {
         var entries = new List<BankTransactionMetadataValue>();
 
-        // ING-specific fields
         AddString(entries, "Transaction Code", TransactionCodeToString[row.Parsed.Code]);
         AddString(entries, "Transaction Type", row.Parsed.TransactionType);
         AddString(entries, "Tags", row.Parsed.Tag);
-
-        // Notes
-        AddString(entries, "Transaction", note.Transaction);
+        AddString(entries, "SEPA Creditor Name", note.Creditor?.Description);
+        AddString(entries, "Other Party", note.OtherParty);
         AddString(entries, "Term", note.Term);
 
         if (
-            note.ForeignCurrencyMarkUp is { } markUp
-            && ToMinorUnits(note.ForeignCurrencyRate) is { } rate
-            && ToMinorUnits(markUp.Amount) is { } markUpAmount
+            note.CardSequence is { } cardSequence
+            && int.TryParse(
+                cardSequence.SequenceNumber,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out var sequence
+            )
         )
         {
-            AddInteger(entries, "Foreign Currency Rate", rate);
-            AddInteger(entries, "Foreign Currency Mark Up Amount", markUpAmount);
-            AddString(entries, "Foreign Currency Mark Up Code", markUp.CurrencyCode);
+            AddInteger(entries, "Card Sequence Number", sequence);
         }
 
-        if (note.ForeignCurrencyFee is { } fee && ToMinorUnits(fee.Amount) is { } feeAmount)
+        if (note.ForeignCurrencyMarkUp is { } markUp)
         {
-            AddInteger(entries, "Foreign Currency Fee Amount", feeAmount);
-            AddString(entries, "Foreign Currency Fee Code", fee.CurrencyCode);
+            AddInteger(entries, "Foreign Mark-Up Amount", ToMinorUnits(markUp)!.Value);
+            AddString(entries, "Foreign Mark-Up Currency Code", markUp.CurrencyCode);
         }
 
-        AddString(entries, "SEPA Creditor", note.Creditor?.Description);
-        AddString(entries, "Card Sequence", note.CardSequence?.ToString() ?? null);
+        if (note.ForeignCurrencyFee is { } fee)
+        {
+            AddInteger(entries, "Foreign Fee Amount", ToMinorUnits(fee)!.Value);
+            AddString(entries, "Foreign Fee Currency Code", fee.CurrencyCode);
+        }
 
-        AddString(
-            entries,
-            "Date / Time",
-            note.DateTime?.ToString("o", CultureInfo.InvariantCulture)
-        );
-        AddString(entries, "Other Party", note.OtherParty);
         AddString(entries, "Other Notes", note.Other);
 
         return entries;
@@ -326,19 +323,18 @@ internal sealed class IngBankTransactionExtractor
             }
         );
 
-    private static long? ToMinorUnits(decimal? amount)
+    private static long? ToMinorUnits(CurrencyAmount? amount)
     {
         if (amount is null)
             return null;
-
-        // ING foreign amounts in 'Notifications' are quoted in the foreign currency's
+        // ING foreign amounts in 'Mededelingen' are quoted in the foreign currency's
         // major units. The promoted column carries minor units (paired with the
         // foreign currency code). We don't know the foreign currency's
         // MinorUnitScale here — Currency reference data lives in Balance.Data and
         // the extractor sits below that. The fixed-set columns assume scale 2 for
         // all practical SEPA-region currencies (USD/GBP/CHF/PLN/SEK/NOK etc.);
         // this matches what every other ING note value is parsed under.
-        return (long)decimal.Round(amount.Value * 100m);
+        return (long)decimal.Round(amount.Amount * 100m);
     }
 
     private static string? ResolveCounterpartyAccountNumber(IngStatementRow row, IngNote note)
@@ -346,8 +342,8 @@ internal sealed class IngBankTransactionExtractor
         if (!string.IsNullOrWhiteSpace(row.Parsed.CounterParty))
             return row.Parsed.CounterParty;
 
-        // ING own-savings transfers leave 'Counterparty' blank and embed the savings number
-        // (D########) in 'Name / Description' or in the parsed note's free-text leftover.
+        // ING own-savings transfers leave 'Tegenrekening' blank and embed the savings number
+        // (D########) in 'Naam / Omschrijving' or in the parsed note's free-text leftover.
         var pattern = IngPatterns.SavingsAccountPattern();
 
         var inDescription = pattern.Match(row.Parsed.Description);
