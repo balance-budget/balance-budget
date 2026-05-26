@@ -155,7 +155,7 @@ internal static class BankTransactionEndpoints
 
     private static async Task<
         Results<
-            Ok<JournalEntryOutput>,
+            Ok<JournalEntryDetailOutput>,
             NotFound<ProblemDetails>,
             Conflict<ProblemDetails>,
             UnprocessableEntity<ProblemDetails>,

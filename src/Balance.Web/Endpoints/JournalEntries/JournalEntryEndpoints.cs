@@ -28,7 +28,7 @@ internal static class JournalEntryEndpoints
                 JournalEntryId,
                 IJournalEntryService,
                 UpdateJournalEntryInput,
-                JournalEntryOutput
+                JournalEntryDetailOutput
             >(
                 "/{id}",
                 (svc, id, ct) => svc.GetSnapshotAsync(id, ct),
@@ -51,7 +51,7 @@ internal static class JournalEntryEndpoints
     }
 
     private static async Task<
-        Results<Ok<JournalEntryOutput>, NotFound<ProblemDetails>, ValidationProblem>
+        Results<Ok<JournalEntryDetailOutput>, NotFound<ProblemDetails>, ValidationProblem>
     > GetAsync(
         [FromRoute] JournalEntryId id,
         [FromServices] IJournalEntryService journalEntryService,
@@ -64,7 +64,7 @@ internal static class JournalEntryEndpoints
 
     private static async Task<
         Results<
-            Created<JournalEntryOutput>,
+            Created<JournalEntryDetailOutput>,
             NotFound<ProblemDetails>,
             Conflict<ProblemDetails>,
             UnprocessableEntity<ProblemDetails>,
