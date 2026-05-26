@@ -24,9 +24,7 @@ internal sealed class IngBankTransactionExtractor
     // CurrentAccountStatementRow tolerates both English and Dutch headers; we stick to Dutch
     // because that's what every real ING export and every stored RawSource uses today.
     private const string CsvHeader =
-        "\"Datum\";\"Naam / Omschrijving\";\"Rekening\";\"Tegenrekening\";\"Code\";"
-        + "\"Af Bij\";\"Bedrag (EUR)\";\"Mutatiesoort\";\"Mededelingen\";"
-        + "\"Saldo na mutatie\";\"Tag\"";
+        "\"Date\";\"Name / Description\";\"Account\";\"Counterparty\";\"Code\";\"Debit/credit\";\"Amount (EUR)\";\"Transaction type\";\"Notifications\";\"Resulting balance\";\"Tag\"";
 
     string IBankTransactionReExtractor.ImporterKey => Key;
 
@@ -258,11 +256,11 @@ internal sealed class IngBankTransactionExtractor
     {
         var entries = new List<BankTransactionMetadataValue>();
 
-        AddString(entries, "IngTransactionCode", TransactionCodeToString[row.Parsed.Code]);
-        AddString(entries, "IngMutatiesoort", row.Parsed.TransactionType);
-        AddString(entries, "IngTag", row.Parsed.Tag);
-        AddString(entries, "SepaCreditorName", note.Creditor?.Description);
-        AddString(entries, "OtherParty", note.OtherParty);
+        AddString(entries, "Transaction Code", TransactionCodeToString[row.Parsed.Code]);
+        AddString(entries, "Transaction Type", row.Parsed.TransactionType);
+        AddString(entries, "Tags", row.Parsed.Tag);
+        AddString(entries, "SEPA Creditor Name", note.Creditor?.Description);
+        AddString(entries, "Other Party", note.OtherParty);
         AddString(entries, "Term", note.Term);
 
         if (
@@ -275,22 +273,22 @@ internal sealed class IngBankTransactionExtractor
             )
         )
         {
-            AddInteger(entries, "CardSequence.Number", sequence);
+            AddInteger(entries, "Card Sequence Number", sequence);
         }
 
         if (note.ForeignCurrencyMarkUp is { } markUp)
         {
-            AddInteger(entries, "ForeignMarkUp.Amount", ToMinorUnits(markUp)!.Value);
-            AddString(entries, "ForeignMarkUp.CurrencyCode", markUp.CurrencyCode);
+            AddInteger(entries, "Foreign Mark-Up Amount", ToMinorUnits(markUp)!.Value);
+            AddString(entries, "Foreign Mark-Up Currency Code", markUp.CurrencyCode);
         }
 
         if (note.ForeignCurrencyFee is { } fee)
         {
-            AddInteger(entries, "ForeignFee.Amount", ToMinorUnits(fee)!.Value);
-            AddString(entries, "ForeignFee.CurrencyCode", fee.CurrencyCode);
+            AddInteger(entries, "Foreign Fee Amount", ToMinorUnits(fee)!.Value);
+            AddString(entries, "Foreign Fee Currency Code", fee.CurrencyCode);
         }
 
-        AddString(entries, "IngNote.Other", note.Other);
+        AddString(entries, "Other Notes", note.Other);
 
         return entries;
     }
