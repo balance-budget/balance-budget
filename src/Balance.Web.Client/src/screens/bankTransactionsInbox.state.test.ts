@@ -209,21 +209,19 @@ describe('withSuggestedAccount', () => {
 
 describe('collectNewCounterpartyNames', () => {
     it('returns each distinct (case-insensitive) name once, ignoring blank rows and existing-mode rows', () => {
-        const rows = [
-            { draft: { ...emptyDraft(), counterpartyMode: 'new', newCounterpartyName: 'Acme Co' } },
-            { draft: { ...emptyDraft(), counterpartyMode: 'new', newCounterpartyName: 'ACME CO' } },
-            { draft: { ...emptyDraft(), counterpartyMode: 'new', newCounterpartyName: '   ' } },
-            { draft: { ...emptyDraft(), counterpartyMode: 'new', newCounterpartyName: 'Beta' } },
+        const drafts: RowDraft[] = [
+            { ...emptyDraft(), counterpartyMode: 'new', newCounterpartyName: 'Acme Co' },
+            { ...emptyDraft(), counterpartyMode: 'new', newCounterpartyName: 'ACME CO' },
+            { ...emptyDraft(), counterpartyMode: 'new', newCounterpartyName: '   ' },
+            { ...emptyDraft(), counterpartyMode: 'new', newCounterpartyName: 'Beta' },
             {
-                draft: {
-                    ...emptyDraft(),
-                    counterpartyMode: 'existing',
-                    counterpartyId: cpA,
-                    newCounterpartyName: 'Ignored',
-                },
+                ...emptyDraft(),
+                counterpartyMode: 'existing',
+                counterpartyId: cpA,
+                newCounterpartyName: 'Ignored',
             },
-        ] as const;
-        expect(collectNewCounterpartyNames(rows)).toEqual(['Acme Co', 'Beta']);
+        ];
+        expect(collectNewCounterpartyNames(drafts)).toEqual(['Acme Co', 'Beta']);
     });
 });
 
