@@ -246,6 +246,56 @@ namespace Balance.Data.Sqlite.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Balance.Data.Entities.BankTransactionMetadataKey", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("UX_BankTransactionMetadataKeys_Name");
+
+                    b.ToTable("BankTransactionMetadataKeys", (string)null);
+                });
+
+            modelBuilder.Entity("Balance.Data.Entities.BankTransactionMetadataValue", b =>
+                {
+                    b.Property<Guid>("BankTransactionId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("KeyId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("IntegerValue")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("StringValue")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("BankTransactionId", "KeyId");
+
+                    b.HasIndex("KeyId")
+                        .HasDatabaseName("IX_BankTransactionMetadataValues_KeyId");
+
+                    b.ToTable("BankTransactionMetadataValues", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_BankTransactionMetadataValues_Value_Exactly_One", "(\"StringValue\" IS NULL) <> (\"IntegerValue\" IS NULL)");
+                        });
+                });
+
             modelBuilder.Entity("Balance.Data.Entities.Counterparty", b =>
                 {
                     b.Property<Guid>("Id")
@@ -482,6 +532,23 @@ namespace Balance.Data.Sqlite.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Balance.Data.Entities.BankTransactionMetadataValue", b =>
+                {
+                    b.HasOne("Balance.Data.Entities.BankTransaction", null)
+                        .WithMany("Metadata")
+                        .HasForeignKey("BankTransactionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Balance.Data.Entities.BankTransactionMetadataKey", "Key")
+                        .WithMany()
+                        .HasForeignKey("KeyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Key");
+                });
+
             modelBuilder.Entity("Balance.Data.Entities.JournalEntry", b =>
                 {
                     b.HasOne("Balance.Data.Entities.BankTransaction", null)
@@ -508,6 +575,11 @@ namespace Balance.Data.Sqlite.Migrations
                         .HasForeignKey("JournalEntryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Balance.Data.Entities.BankTransaction", b =>
+                {
+                    b.Navigation("Metadata");
                 });
 
             modelBuilder.Entity("Balance.Data.Entities.JournalEntry", b =>

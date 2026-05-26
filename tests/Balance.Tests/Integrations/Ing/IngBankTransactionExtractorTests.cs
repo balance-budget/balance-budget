@@ -452,4 +452,151 @@ internal sealed class IngBankTransactionExtractorTests
         // ImporterKey is always stamped, even for rows without note fields.
         await Assert.That(row.ImporterKey).IsEqualTo("Ing.CurrentAccount.V1");
     }
+
+    [Test]
+    public async Task Populates_metadata_entries_from_statement_columns(
+        CancellationToken cancellationToken
+    )
+    {
+        var bankAccount = OwnedEurAccount();
+        await using var stream = CsvStream(
+            "\"20260131\";\"Etos\";\"NL69INGB0123456789\";\"\";\"BA\";\"Debit\";"
+                + "\"10,00\";\"Payment terminal\";\"x\";\"100,00\";\"Groceries\""
+        );
+
+        var result = await BuildExtractor().ExtractAsync(bankAccount, stream, cancellationToken);
+
+        await Assert.That(result.IsSuccess).IsTrue();
+        var row = result.Value![0];
+        var pairs = row
+            .Metadata.OrderBy(m => m.Key!.Name, StringComparer.Ordinal)
+            .Select(m => (m.Key!.Name, m.StringValue, m.IntegerValue))
+            .ToList();
+
+        await Assert.That(pairs).Contains(("IngTag", "Groceries", (long?)null));
+        await Assert.That(pairs).Contains(("IngTransactionCode", "BA", (long?)null));
+        await Assert.That(pairs).Contains(("IngMutatiesoort", "Payment terminal", (long?)null));
+    }
+
+    [Test]
+    public async Task Populates_metadata_entries_for_sepa_direct_debit_row(
+        CancellationToken cancellationToken
+    )
+    {
+        var bankAccount = OwnedEurAccount();
+        // SEPA direct-debit row with a creditor name and OtherParty.
+        await using var stream = CsvStream(
+            "\"20260131\";\"SPOTIFY BY ADYEN\";\"NL69INGB0123456789\";\"NL48ABNA0502830042\";"
+                + "\"IC\";\"Debit\";\"9,99\";\"SEPA Direct Debit\";"
+                + "\"Naam: SPOTIFY BY ADYEN Omschrijving: SpotifyNL P0102A103D "
+                + "IBAN: NL48ABNA0502830042 Kenmerk: D1815340503797720C "
+                + "Machtiging ID: 4815225945787361 Incassant ID: NL74ZZZ546978200017 "
+                + "Spotify Sweden AB Overige partij: SpotifyNL Valutadatum: 31-01-2026\";"
+                + "\"500,00\";\"\""
+        );
+
+        var result = await BuildExtractor().ExtractAsync(bankAccount, stream, cancellationToken);
+
+        await Assert.That(result.IsSuccess).IsTrue();
+        var row = result.Value![0];
+        var byName = row.Metadata.ToDictionary(
+            m => m.Key!.Name,
+            m => (m.StringValue, m.IntegerValue),
+            StringComparer.Ordinal
+        );
+
+        await Assert.That(byName.ContainsKey("SepaCreditorName")).IsTrue();
+        await Assert.That(byName["SepaCreditorName"].StringValue).IsEqualTo("Spotify Sweden AB");
+
+        await Assert.That(byName.ContainsKey("OtherParty")).IsTrue();
+        await Assert.That(byName["OtherParty"].StringValue).IsEqualTo("SpotifyNL");
+
+        await Assert.That(byName.ContainsKey("IngTransactionCode")).IsTrue();
+        await Assert.That(byName["IngTransactionCode"].StringValue).IsEqualTo("IC");
+    }
+
+    [Test]
+    public async Task Populates_metadata_entries_for_fx_row(CancellationToken cancellationToken)
+    {
+        var bankAccount = OwnedEurAccount();
+        await using var stream = CsvStream(
+            "\"20261231\";\"ATM Belarus\";\"NL69INGB0123456789\";\"\";\"GM\";\"Debit\";"
+                + "\"40,97\";\"Cash machine\";"
+                + "\"Pasvolgnr: 008 30-12-2026 14:20 Transactie: Q71243 Term: ATM12713 "
+                + "Valuta: 100,00 BYN Koers: 2,4406776 Opslag: 0,45 EUR "
+                + "Kosten: 2,25 EUR Valutadatum: 31-12-2026\";\"459,03\";\"\""
+        );
+
+        var result = await BuildExtractor().ExtractAsync(bankAccount, stream, cancellationToken);
+
+        await Assert.That(result.IsSuccess).IsTrue();
+        var row = result.Value![0];
+        var byName = row.Metadata.ToDictionary(
+            m => m.Key!.Name,
+            m => (m.StringValue, m.IntegerValue),
+            StringComparer.Ordinal
+        );
+
+        await Assert.That(byName["ForeignMarkUp.Amount"].IntegerValue).IsEqualTo(45L);
+        await Assert.That(byName["ForeignMarkUp.CurrencyCode"].StringValue).IsEqualTo("EUR");
+        await Assert.That(byName["ForeignFee.Amount"].IntegerValue).IsEqualTo(225L);
+        await Assert.That(byName["ForeignFee.CurrencyCode"].StringValue).IsEqualTo("EUR");
+        await Assert.That(byName["CardSequence.Number"].IntegerValue).IsEqualTo(8L);
+        await Assert.That(byName["Term"].StringValue).IsEqualTo("ATM12713");
+        await Assert.That(byName["IngTransactionCode"].StringValue).IsEqualTo("GM");
+    }
+
+    [Test]
+    public async Task Metadata_preserves_unparsed_note_leftover_under_IngNote_Other(
+        CancellationToken cancellationToken
+    )
+    {
+        var bankAccount = OwnedEurAccount();
+        // 'Internal transfer' carries no D######## itself; 'Mededelingen' has it as free-text
+        // leftover (no known prefix), so it lands in IngNote.Other and we surface it for audit.
+        await using var stream = CsvStream(
+            "\"20260131\";\"Internal transfer\";\"NL69INGB0123456789\";\"\";\"OV\";\"Debit\";"
+                + "\"100,00\";\"Internal transfer\";\"Transfer to D87654321 confirmed\";"
+                + "\"500,00\";\"\""
+        );
+
+        var result = await BuildExtractor().ExtractAsync(bankAccount, stream, cancellationToken);
+
+        await Assert.That(result.IsSuccess).IsTrue();
+        var row = result.Value![0];
+        var byName = row.Metadata.ToDictionary(
+            m => m.Key!.Name,
+            m => (m.StringValue, m.IntegerValue),
+            StringComparer.Ordinal
+        );
+
+        await Assert
+            .That(byName["IngNote.Other"].StringValue)
+            .IsEqualTo("Transfer to D87654321 confirmed");
+    }
+
+    [Test]
+    public async Task Metadata_is_empty_when_no_optional_fields_present(
+        CancellationToken cancellationToken
+    )
+    {
+        var bankAccount = OwnedEurAccount();
+        // Bare row: empty Tag, empty Notifications, empty Counterparty.
+        await using var stream = CsvStream(
+            "\"20260131\";\"Etos\";\"NL69INGB0123456789\";\"\";\"BA\";\"Debit\";"
+                + "\"10,00\";\"\";\"\";\"100,00\";\"\""
+        );
+
+        var result = await BuildExtractor().ExtractAsync(bankAccount, stream, cancellationToken);
+
+        await Assert.That(result.IsSuccess).IsTrue();
+        var row = result.Value![0];
+        // Only IngTransactionCode + (empty) Mutatiesoort skipped + (empty) Tag skipped.
+        // The Code column is always present so at minimum IngTransactionCode lands.
+        var names = row.Metadata.Select(m => m.Key!.Name).ToList();
+        await Assert.That(names).Contains("IngTransactionCode");
+        await Assert.That(names).DoesNotContain("IngTag");
+        await Assert.That(names).DoesNotContain("IngMutatiesoort");
+        await Assert.That(names).DoesNotContain("OtherParty");
+    }
 }

@@ -27,6 +27,10 @@ public sealed class BalanceDbContext : DbContext, IDataProtectionKeyContext
 
     public DbSet<BankTransaction> BankTransactions { get; set; } = null!;
 
+    public DbSet<BankTransactionMetadataKey> BankTransactionMetadataKeys { get; set; } = null!;
+
+    public DbSet<BankTransactionMetadataValue> BankTransactionMetadataValues { get; set; } = null!;
+
     public DbSet<JournalEntry> JournalEntries { get; set; } = null!;
 
     public DbSet<JournalLine> JournalLines { get; set; } = null!;

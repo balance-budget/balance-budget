@@ -54,7 +54,7 @@ internal static class BankTransactionEndpoints
     }
 
     private static async Task<
-        Results<Ok<BankTransactionOutput>, NotFound<ProblemDetails>, ValidationProblem>
+        Results<Ok<BankTransactionDetailOutput>, NotFound<ProblemDetails>, ValidationProblem>
     > GetAsync(
         [FromRoute] BankTransactionId id,
         [FromServices] IBankTransactionService bankTransactionService,

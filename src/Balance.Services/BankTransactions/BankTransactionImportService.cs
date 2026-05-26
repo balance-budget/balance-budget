@@ -62,7 +62,7 @@ internal sealed class BankTransactionImportService : IBankTransactionImportServi
             if (attemptResult.Error is not ConflictError { Code: ErrorCodes.UniquenessConflict })
                 return attemptResult.Error;
 
-            DetachAddedBankTransactions();
+            DetachAddedEntities();
         }
 
         return new ConflictError(
@@ -102,12 +102,61 @@ internal sealed class BankTransactionImportService : IBankTransactionImportServi
         if (toInsert.Count == 0)
             return new ImportResult(0, skipped);
 
+        await ResolveMetadataKeysAsync(toInsert, now, cancellationToken);
+
         _dbContext.BankTransactions.AddRange(toInsert);
         var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
         if (saveResult.IsFailure)
             return saveResult.Error;
 
         return new ImportResult(toInsert.Count, skipped);
+    }
+
+    // Extractors stage metadata as values whose `Key` nav carries the key Name but no Id
+    // (they don't know which surrogate Id matches that Name). Resolve each Name against
+    // the existing BankTransactionMetadataKey rows; create the missing ones in this batch.
+    // The unique index on Name protects against concurrent inserts — the outer retry loop
+    // covers that race (same path as RowHash collisions).
+    private async Task ResolveMetadataKeysAsync(
+        IReadOnlyList<BankTransaction> rows,
+        DateTime now,
+        CancellationToken cancellationToken
+    )
+    {
+        var keyNames = rows.SelectMany(r => r.Metadata.Select(m => m.Key!.Name))
+            .ToHashSet(StringComparer.Ordinal);
+        if (keyNames.Count == 0)
+            return;
+
+        var existing = await _dbContext
+            .BankTransactionMetadataKeys.Where(k => keyNames.Contains(k.Name))
+            .ToDictionaryAsync(k => k.Name, StringComparer.Ordinal, cancellationToken);
+
+        foreach (var name in keyNames)
+        {
+            if (existing.ContainsKey(name))
+                continue;
+
+            var key = new BankTransactionMetadataKey
+            {
+                Id = new BankTransactionMetadataKeyId(Guid.CreateVersion7()),
+                Name = name,
+                CreatedAt = now,
+                UpdatedAt = now,
+            };
+            _dbContext.BankTransactionMetadataKeys.Add(key);
+            existing[name] = key;
+        }
+
+        foreach (var row in rows)
+        {
+            foreach (var value in row.Metadata)
+            {
+                var resolved = existing[value.Key!.Name];
+                value.Key = resolved;
+                value.KeyId = resolved.Id;
+            }
+        }
     }
 
     // The extractor returns unsaved entities without timestamps (persistence is the orchestrator's
@@ -135,12 +184,13 @@ internal sealed class BankTransactionImportService : IBankTransactionImportServi
             ImporterKey = row.ImporterKey,
             CreatedAt = now,
             UpdatedAt = now,
+            Metadata = row.Metadata,
         };
 
-    private void DetachAddedBankTransactions()
+    private void DetachAddedEntities()
     {
         var added = _dbContext
-            .ChangeTracker.Entries<BankTransaction>()
+            .ChangeTracker.Entries()
             .Where(e => e.State == EntityState.Added)
             .ToList();
         foreach (var entry in added)

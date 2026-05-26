@@ -87,14 +87,15 @@ internal sealed class BankTransactionService : IBankTransactionService
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<Result<BankTransactionOutput>> GetAsync(
+    public async Task<Result<BankTransactionDetailOutput>> GetAsync(
         BankTransactionId id,
         CancellationToken cancellationToken
     )
     {
         var output = await _dbContext
-            .BankTransactions.Where(b => b.Id == id)
-            .Select(b => new BankTransactionOutput(
+            .BankTransactions.AsNoTracking()
+            .Where(b => b.Id == id)
+            .Select(b => new BankTransactionDetailOutput(
                 b.Id,
                 b.BankAccountId,
                 b.BookingDate,
@@ -117,7 +118,14 @@ internal sealed class BankTransactionService : IBankTransactionService
                 b.DismissedAt,
                 b.DismissedReason,
                 b.CreatedAt,
-                b.UpdatedAt
+                b.UpdatedAt,
+                b.Metadata.OrderBy(m => m.Key!.Name)
+                    .Select(m => new BankTransactionMetadataEntryOutput(
+                        m.Key!.Name,
+                        m.StringValue,
+                        m.IntegerValue
+                    ))
+                    .ToList()
             ))
             .FirstOrDefaultAsync(cancellationToken);
         return output is null ? new NotFoundError("BankTransaction", id.Value.ToString()) : output;

@@ -404,10 +404,46 @@ export interface components {
             bic: null | string;
             bankName: null | string;
         };
+        BankTransactionDetailOutput: {
+            id: components["schemas"]["BankTransactionId"];
+            bankAccountId: components["schemas"]["BankAccountId"];
+            /** Format: date */
+            bookingDate: string;
+            money: components["schemas"]["Money"];
+            description: string;
+            counterpartyName: null | string;
+            counterpartyAccountNumber: null | string;
+            /** Format: date */
+            valueDate: null | string;
+            reference: null | string;
+            mandateId: null | string;
+            sepaCreditorId: null | string;
+            /** Format: int64 */
+            foreignAmount: null | number | string;
+            foreignCurrencyCode: null | string;
+            /** Format: double */
+            exchangeRate: null | number | string;
+            importerKey: null | string;
+            journalEntryId: null | components["schemas"]["JournalEntryId"];
+            /** Format: date-time */
+            dismissedAt: null | string;
+            dismissedReason: null | string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            metadata: components["schemas"]["BankTransactionMetadataEntryOutput"][];
+        };
         /** Format: uuid */
         BankTransactionId: string;
         /** @enum {unknown} */
         BankTransactionListFilter: "Inbox" | "Matched" | "Dismissed" | "All" | null;
+        BankTransactionMetadataEntryOutput: {
+            key: string;
+            stringValue: null | string;
+            /** Format: int64 */
+            integerValue: null | number | string;
+        };
         BankTransactionOutput: {
             id: components["schemas"]["BankTransactionId"];
             bankAccountId: components["schemas"]["BankAccountId"];
@@ -2010,7 +2046,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BankTransactionOutput"];
+                    "application/json": components["schemas"]["BankTransactionDetailOutput"];
                 };
             };
             /** @description Bad Request */

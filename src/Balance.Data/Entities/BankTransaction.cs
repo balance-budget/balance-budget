@@ -24,4 +24,6 @@ public sealed class BankTransaction : BaseEntity<BankTransactionId>
 
     public DateTime? DismissedAt { get; set; }
     public string? DismissedReason { get; set; }
+
+    public ICollection<BankTransactionMetadataValue> Metadata { get; init; } = [];
 }

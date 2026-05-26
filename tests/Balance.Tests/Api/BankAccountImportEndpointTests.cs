@@ -249,6 +249,80 @@ internal sealed class BankAccountImportEndpointTests : EndpointsTestsBase
     }
 
     [Test]
+    public async Task ImportStatement_populates_metadata_entries_exposed_via_detail_endpoint()
+    {
+        using var client = Factory.CreateClient();
+        var iban = $"NL69INGB{NextDigits(10)}";
+        var account = await CreateAccountAsync(client, $"Checking-MetaTable-{Guid.NewGuid():N}");
+        var bankAccount = await CreateBankAccountForAccountAsync(client, iban, account.Id);
+
+        var csvBytes = BuildCsvBytes(iban, RowSepaDirectDebitTemplate, RowForeignCurrencyTemplate);
+        using var fileContent = new ByteArrayContent(csvBytes);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("text/csv");
+        using var multipart = new MultipartFormDataContent
+        {
+            { fileContent, "file", "statement.csv" },
+        };
+
+        using var importResponse = await client.PostAsync(
+            new Uri($"/api/bank-accounts/{bankAccount.Id}/imports", UriKind.Relative),
+            multipart
+        );
+        await Assert.That(importResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
+
+        using var listResponse = await client.GetAsync(
+            new Uri($"/api/bank-transactions?skip=0&take=200&filter=All", UriKind.Relative)
+        );
+        var listRows = await listResponse.Content.ReadFromJsonAsync<
+            IReadOnlyList<BankTransactionDto>
+        >();
+        var sepa = listRows!.Single(r =>
+            r.BankAccountId == bankAccount.Id && r.Description == "SpotifyNL P0102A103D"
+        );
+        var fx = listRows!.Single(r =>
+            r.BankAccountId == bankAccount.Id && r.Description == "ATM Belarus"
+        );
+
+        // List payload does NOT include metadata. Verify by parsing the raw JSON.
+        var listJson = await listResponse.Content.ReadAsStringAsync();
+        await Assert.That(listJson).DoesNotContain("\"metadata\"");
+
+        using var sepaResponse = await client.GetAsync(
+            new Uri($"/api/bank-transactions/{sepa.Id}", UriKind.Relative)
+        );
+        await Assert.That(sepaResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var sepaDetail = await sepaResponse.Content.ReadFromJsonAsync<BankTransactionDetailDto>();
+        await Assert.That(sepaDetail).IsNotNull();
+        var sepaMeta = sepaDetail!.Metadata.ToDictionary(
+            m => m.Key,
+            m => (m.StringValue, m.IntegerValue),
+            StringComparer.Ordinal
+        );
+        await Assert.That(sepaMeta["IngTransactionCode"].StringValue).IsEqualTo("IC");
+        await Assert.That(sepaMeta["IngMutatiesoort"].StringValue).IsEqualTo("SEPA Direct Debit");
+        await Assert.That(sepaMeta.ContainsKey("ForeignMarkUp.Amount")).IsFalse();
+
+        using var fxResponse = await client.GetAsync(
+            new Uri($"/api/bank-transactions/{fx.Id}", UriKind.Relative)
+        );
+        await Assert.That(fxResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var fxDetail = await fxResponse.Content.ReadFromJsonAsync<BankTransactionDetailDto>();
+        await Assert.That(fxDetail).IsNotNull();
+        var fxMeta = fxDetail!.Metadata.ToDictionary(
+            m => m.Key,
+            m => (m.StringValue, m.IntegerValue),
+            StringComparer.Ordinal
+        );
+        await Assert.That(fxMeta["IngTransactionCode"].StringValue).IsEqualTo("GM");
+        await Assert.That(fxMeta["Term"].StringValue).IsEqualTo("ATM12713");
+        await Assert.That(fxMeta["CardSequence.Number"].IntegerValue).IsEqualTo(8L);
+        await Assert.That(fxMeta["ForeignMarkUp.Amount"].IntegerValue).IsEqualTo(45L);
+        await Assert.That(fxMeta["ForeignMarkUp.CurrencyCode"].StringValue).IsEqualTo("EUR");
+        await Assert.That(fxMeta["ForeignFee.Amount"].IntegerValue).IsEqualTo(225L);
+        await Assert.That(fxMeta["ForeignFee.CurrencyCode"].StringValue).IsEqualTo("EUR");
+    }
+
+    [Test]
     public async Task ImportStatement_empty_file_returns_400()
     {
         using var client = Factory.CreateClient();
@@ -366,3 +440,17 @@ internal sealed class BankAccountImportEndpointTests : EndpointsTestsBase
 }
 
 internal sealed record ImportResultDto(int Imported, int SkippedAsDuplicate);
+
+internal sealed record BankTransactionDetailDto(
+    Guid Id,
+    Guid BankAccountId,
+    DateOnly BookingDate,
+    string Description,
+    IReadOnlyList<BankTransactionMetadataEntryDto> Metadata
+);
+
+internal sealed record BankTransactionMetadataEntryDto(
+    string Key,
+    string? StringValue,
+    long? IntegerValue
+);

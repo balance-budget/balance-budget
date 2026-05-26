@@ -74,6 +74,12 @@ internal sealed class BankTransactionConfiguration : IEntityTypeConfiguration<Ba
             .HasForeignKey(b => b.BankAccountId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder
+            .HasMany(b => b.Metadata)
+            .WithOne()
+            .HasForeignKey(v => v.BankTransactionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.HasIndex(b => b.BankAccountId).HasDatabaseName("IX_BankTransactions_BankAccountId");
 
         builder.HasIndex(b => b.BookingDate).HasDatabaseName("IX_BankTransactions_BookingDate");

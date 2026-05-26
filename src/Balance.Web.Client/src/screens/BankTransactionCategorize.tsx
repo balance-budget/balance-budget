@@ -6,6 +6,8 @@ import {
     useBankTransaction,
     useCategorizeBankTransaction,
     type BankTransaction,
+    type BankTransactionDetail,
+    type BankTransactionMetadataEntry,
 } from '../api/bankTransactions';
 import {
     useCounterparties,
@@ -183,7 +185,7 @@ function CategorizeForm({
     bankAccounts,
     catalog,
 }: {
-    bt: BankTransaction;
+    bt: BankTransactionDetail;
     accounts: Account[];
     counterparties: Counterparty[];
     bankAccounts: BankAccount[];
@@ -384,7 +386,7 @@ function BankTransactionSummary({
     bt,
     catalog,
 }: {
-    bt: BankTransaction;
+    bt: BankTransactionDetail;
     catalog: CurrencyCatalog;
 }) {
     const colour = bt.money.amount < 0 ? 'text-danger' : 'text-success';
@@ -408,7 +410,30 @@ function BankTransactionSummary({
                 </span>
             </div>
             <BankTransactionMetadataDetails bt={bt} catalog={catalog} />
+            <BankTransactionMetadataEntries entries={bt.metadata} />
         </div>
+    );
+}
+
+function BankTransactionMetadataEntries({
+    entries,
+}: {
+    entries: BankTransactionMetadataEntry[];
+}) {
+    if (entries.length === 0) return null;
+    return (
+        <dl className="mt-2 px-3 py-2 rounded-sm bg-surface-2 border border-border-soft grid grid-cols-[max-content_1fr] gap-x-3 gap-y-1 text-[12px]">
+            {entries.map(entry => (
+                <Fragment key={entry.key}>
+                    <dt className="text-fg-3 tabular">{entry.key}</dt>
+                    <dd className="text-fg-1 tabular truncate">
+                        {entry.integerValue !== null
+                            ? entry.integerValue.toString()
+                            : (entry.stringValue ?? '')}
+                    </dd>
+                </Fragment>
+            ))}
+        </dl>
     );
 }
 
