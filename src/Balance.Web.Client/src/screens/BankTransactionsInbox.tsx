@@ -52,9 +52,11 @@ import {
     initialPrefill,
     isPristine,
     pickSuggestedAccountId,
+    removeKeysFor,
     rowStatus,
     runSaveAll,
     selectAllVisible,
+    setBulkDismissDrafts,
     toggleSelection,
     withSuggestedAccount,
     type AllVisibleSelectionState,
@@ -516,6 +518,10 @@ function InboxEditorReady({
     const [userOverrides, setUserOverrides] = useState<Map<BankTransactionId, Partial<RowDraft>>>(
         new Map(),
     );
+    // Issue #86: dismiss-draft buffer. Key presence means "this row will be
+    // dismissed at Save-all with the stored reason". Mutually exclusive with
+    // userOverrides — setting either side clears the other for that row.
+    const [dismissDrafts, setDismissDrafts] = useState<Map<BankTransactionId, string>>(new Map());
     const [rowErrors, setRowErrors] = useState<Map<BankTransactionId, string>>(new Map());
     // Optimistically hide rows we just saved — the BT query refetch will
     // exclude them once it lands, but we want them gone immediately so the
@@ -611,6 +617,8 @@ function InboxEditorReady({
 
     function patchDraft(id: BankTransactionId, patch: Partial<RowDraft>) {
         setRowErrors(prev => withoutKey(prev, id));
+        // Mutual exclusion: editing the categorise picker clears the dismiss draft.
+        setDismissDrafts(prev => withoutKey(prev, id));
         setUserOverrides(prev => {
             const next = new Map(prev);
             const existing = next.get(id) ?? {};
@@ -621,6 +629,7 @@ function InboxEditorReady({
 
     function resetRow(id: BankTransactionId) {
         setUserOverrides(prev => withoutKey(prev, id));
+        setDismissDrafts(prev => withoutKey(prev, id));
         setRowErrors(prev => withoutKey(prev, id));
     }
 
@@ -635,6 +644,7 @@ function InboxEditorReady({
 
     function discardAll() {
         setUserOverrides(new Map());
+        setDismissDrafts(new Map());
         setRowErrors(new Map());
         setSelection(new Set());
         setSelectionAnchor(null);
@@ -660,31 +670,39 @@ function InboxEditorReady({
         setSelectionAnchor(null);
     }
 
+    function visibleSelection(): BankTransactionId[] {
+        const out: BankTransactionId[] = [];
+        for (const id of selection) {
+            if (visibleIds.includes(id)) out.push(id);
+        }
+        return out;
+    }
+
     function applyBulk(input: BulkApplyInput) {
         if (input.counterparty === null && input.accountId === null) return;
+        const targets = visibleSelection();
         setUserOverrides(prev => {
             const next = new Map(prev);
-            for (const id of selection) {
-                if (!visibleIds.includes(id)) continue;
-                const updated = applyBulkPatchToOverride(prev.get(id), input);
-                next.set(id, updated);
+            for (const id of targets) {
+                next.set(id, applyBulkPatchToOverride(prev.get(id), input));
             }
             return next;
         });
-        // Clear any per-row error that was sitting on a now-bulk-applied row.
-        setRowErrors(prev => {
-            let mutated = false;
-            let next = prev;
-            for (const id of selection) {
-                if (!next.has(id)) continue;
-                if (!mutated) {
-                    next = new Map(next);
-                    mutated = true;
-                }
-                next.delete(id);
-            }
-            return mutated ? next : prev;
-        });
+        // Mutual exclusion: bulk-applying a CP / Account clears any dismiss draft
+        // on those rows (issue #86).
+        setDismissDrafts(prev => removeKeysFor(prev, targets));
+        setRowErrors(prev => removeKeysFor(prev, targets));
+    }
+
+    function applyBulkDismiss(reason: string) {
+        const trimmed = reason.trim();
+        if (trimmed.length === 0) return;
+        const targets = visibleSelection();
+        setDismissDrafts(prev => setBulkDismissDrafts(prev, targets, trimmed));
+        // Mutual exclusion: setting a dismiss draft clears any in-progress
+        // categorise draft for that row.
+        setUserOverrides(prev => removeKeysFor(prev, targets));
+        setRowErrors(prev => removeKeysFor(prev, targets));
     }
 
     // Filtered to visible rows: an entry can linger in the selection set after
@@ -712,25 +730,31 @@ function InboxEditorReady({
         () =>
             visibleBts
                 .map(bt => bt.id)
-                .filter(id => rowStatus(draftFor(id)) === 'ready'),
+                .filter(id =>
+                    dismissDrafts.has(id) || rowStatus(draftFor(id)) === 'ready',
+                ),
         // draftFor depends on userOverrides + prefillByBt
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [visibleBts, userOverrides, prefillByBt],
+        [visibleBts, userOverrides, dismissDrafts, prefillByBt],
     );
 
     const dirtyCount = useMemo(() => {
         let n = 0;
         for (const id of userOverrides.keys()) {
+            // A row with a dismiss-draft has its userOverride cleared, so it
+            // won't be in this iteration. Dismiss-drafts add to dirty below.
             if (!isRowPristine(id)) n += 1;
         }
+        n += dismissDrafts.size;
         return n;
         // isRowPristine depends on userOverrides + prefillByBt
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [userOverrides, prefillByBt]);
+    }, [userOverrides, dismissDrafts, prefillByBt]);
 
     const [saving, setSaving] = useState(false);
     const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
     const [discardOpen, setDiscardOpen] = useState(false);
+    const [bulkDismissOpen, setBulkDismissOpen] = useState(false);
 
     async function saveAll() {
         if (readyIds.length === 0) return;
@@ -740,7 +764,19 @@ function InboxEditorReady({
             .map(id => {
                 const bt = visibleBts.find(b => b.id === id);
                 if (!bt) return null;
-                return { id, bt, draft: draftFor(id) };
+                const dismissReason = dismissDrafts.get(id);
+                if (dismissReason !== undefined) {
+                    return {
+                        id,
+                        bt,
+                        action: { kind: 'dismiss' as const, reason: dismissReason },
+                    };
+                }
+                return {
+                    id,
+                    bt,
+                    action: { kind: 'categorise' as const, draft: draftFor(id) },
+                };
             })
             .filter((r): r is NonNullable<typeof r> => r !== null);
 
@@ -762,6 +798,14 @@ function InboxEditorReady({
                     'categorise bank transaction',
                 );
             },
+            dismiss: async (id, reason) => {
+                await postJson<components['schemas']['BankTransactionOutput']>(
+                    `/api/bank-transactions/${id}/dismiss`,
+                    { reason },
+                    new AbortController().signal,
+                    'dismiss bank transaction',
+                );
+            },
             onProgress: (done, total) => {
                 setProgress({ done, total });
             },
@@ -769,6 +813,7 @@ function InboxEditorReady({
                 if (outcome.ok) {
                     setSavedIds(prev => new Set(prev).add(id));
                     setUserOverrides(prev => withoutKey(prev, id));
+                    setDismissDrafts(prev => withoutKey(prev, id));
                 } else {
                     setRowErrors(prev => new Map(prev).set(id, outcome.error));
                 }
@@ -787,9 +832,7 @@ function InboxEditorReady({
         setSaving(false);
         setProgress(null);
         toast.push(
-            summary.failed === 0
-                ? `${summary.saved.toString()} categorised.`
-                : `${summary.saved.toString()} categorised, ${summary.failed.toString()} failed.`,
+            formatSaveAllToast(summary),
             summary.failed === 0 ? 'success' : 'error',
         );
     }
@@ -834,13 +877,14 @@ function InboxEditorReady({
                 const prefill = prefillByBt.get(bt.id);
                 if (!prefill) return null;
                 const draft = draftFor(bt.id);
-                const pristine = isRowPristine(bt.id);
+                const pristine = isRowPristine(bt.id) && !dismissDrafts.has(bt.id);
                 return (
                     <InboxRow
                         key={bt.id}
                         bankTransaction={bt}
                         draft={draft}
                         pristine={pristine}
+                        dismissDraft={dismissDrafts.get(bt.id) ?? null}
                         error={rowErrors.get(bt.id) ?? null}
                         counterpartyItems={counterpartyItems}
                         accountItems={buildAccountItems(
@@ -883,9 +927,25 @@ function InboxEditorReady({
                     )}
                     saving={saving}
                     onApply={applyBulk}
+                    onDismiss={() => {
+                        setBulkDismissOpen(true);
+                    }}
                     onClear={() => {
                         setSelection(new Set());
                         setSelectionAnchor(null);
+                    }}
+                />
+            )}
+
+            {bulkDismissOpen && (
+                <BulkDismissDialog
+                    selectionCount={selectionCount}
+                    onClose={() => {
+                        setBulkDismissOpen(false);
+                    }}
+                    onConfirm={reason => {
+                        applyBulkDismiss(reason);
+                        setBulkDismissOpen(false);
                     }}
                 />
             )}
@@ -899,7 +959,7 @@ function InboxEditorReady({
                     discardAll();
                     setDiscardOpen(false);
                 }}
-                title="Discard unsaved categorisations?"
+                title="Discard unsaved drafts?"
                 message={
                     dirtyCount > 0
                         ? `Reset all ${dirtyCount.toString()} unsaved drafts back to the server-suggested values.`
@@ -919,7 +979,7 @@ function InboxEditorReady({
                         blocker.proceed();
                     }}
                     title="Leave with unsaved drafts?"
-                    message={`You have ${dirtyCount.toString()} unsaved categorisation${
+                    message={`You have ${dirtyCount.toString()} unsaved draft${
                         dirtyCount === 1 ? '' : 's'
                     }. Leaving will discard them.`}
                     confirmLabel="Leave"
@@ -1038,6 +1098,7 @@ function BulkApplyFooter({
     accountItems,
     saving,
     onApply,
+    onDismiss,
     onClear,
 }: {
     selectionCount: number;
@@ -1046,6 +1107,7 @@ function BulkApplyFooter({
     accountItems: ComboboxItem<AccountId>[];
     saving: boolean;
     onApply: (input: BulkApplyInput) => void;
+    onDismiss: () => void;
     onClear: () => void;
 }) {
     const [counterparty, setCounterparty] = useState<BulkApplyCounterparty | null>(null);
@@ -1127,6 +1189,14 @@ function BulkApplyFooter({
                 </button>
                 <button
                     type="button"
+                    onClick={onDismiss}
+                    disabled={saving}
+                    className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-fg-1 border border-border-strong hover:bg-surface-2 disabled:opacity-60"
+                >
+                    Dismiss with reason…
+                </button>
+                <button
+                    type="button"
                     onClick={onClear}
                     disabled={saving}
                     className="px-2 py-[7px] rounded-sm text-[13px] font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
@@ -1201,6 +1271,7 @@ function InboxRow({
     bankTransaction,
     draft,
     pristine,
+    dismissDraft,
     error,
     counterpartyItems,
     accountItems,
@@ -1215,6 +1286,7 @@ function InboxRow({
     bankTransaction: BankTransaction;
     draft: RowDraft;
     pristine: boolean;
+    dismissDraft: string | null;
     error: string | null;
     counterpartyItems: ComboboxItem<CounterpartyId | null>[];
     accountItems: ComboboxItem<AccountId>[];
@@ -1227,6 +1299,7 @@ function InboxRow({
     onDismiss: (bt: BankTransaction) => void;
 }) {
     const status = rowStatus(draft);
+    const willDismiss = dismissDraft !== null;
 
     return (
         <div className="grid grid-cols-[28px_88px_1fr_minmax(180px,1.4fr)_minmax(180px,1.4fr)_120px_120px] gap-3 items-start px-2 py-2 border-b border-border-soft last:border-b-0">
@@ -1240,7 +1313,7 @@ function InboxRow({
             </div>
             <div className="flex flex-col leading-tight pt-2">
                 <span className="text-[12px] text-fg-3 tabular">{bankTransaction.bookingDate}</span>
-                <StatusIndicator status={status} />
+                {willDismiss ? <WillDismissIndicator /> : <StatusIndicator status={status} />}
             </div>
             <div className="min-w-0 flex flex-col leading-tight pt-2">
                 <span className="text-[13px] text-fg-1 truncate">
@@ -1251,19 +1324,24 @@ function InboxRow({
                         {bankTransaction.counterpartyAccountNumber}
                     </span>
                 )}
+                {dismissDraft !== null && (
+                    <span className="text-[11px] text-warning mt-1 truncate">
+                        Reason: {dismissDraft}
+                    </span>
+                )}
                 {error && <span className="text-[11px] text-danger mt-1">{error}</span>}
             </div>
             <CounterpartyPicker
                 draft={draft}
                 items={counterpartyItems}
                 onPatch={onPatch}
-                disabled={saving}
+                disabled={saving || willDismiss}
             />
             <AccountPicker
                 draft={draft}
                 items={accountItems}
                 onPatch={onPatch}
-                disabled={saving}
+                disabled={saving || willDismiss}
             />
             <div className="pt-2">
                 <AmountCell bankTransaction={bankTransaction} catalog={catalog} />
@@ -1297,6 +1375,14 @@ function StatusIndicator({ status }: { status: RowStatus }) {
     return (
         <span className="text-[11px] text-fg-3 tabular inline-flex items-center gap-1">
             <span aria-hidden>—</span>
+        </span>
+    );
+}
+
+function WillDismissIndicator() {
+    return (
+        <span className="text-[11px] text-warning tabular inline-flex items-center gap-1">
+            <span aria-hidden>●</span> will dismiss
         </span>
     );
 }
@@ -1558,4 +1644,86 @@ function DismissDialog({
             </form>
         </Modal>
     );
+}
+
+function BulkDismissDialog({
+    selectionCount,
+    onClose,
+    onConfirm,
+}: {
+    selectionCount: number;
+    onClose: () => void;
+    onConfirm: (reason: string) => void;
+}) {
+    const [reason, setReason] = useState('');
+    const trimmed = reason.trim();
+    const canSubmit = trimmed.length > 0;
+
+    function submit() {
+        if (!canSubmit) return;
+        onConfirm(trimmed);
+    }
+
+    return (
+        <Modal
+            open
+            onClose={onClose}
+            title={`Dismiss ${selectionCount.toString()} bank transaction${selectionCount === 1 ? '' : 's'}`}
+            description="Stage these rows for dismissal. Save-all to commit; until then you can review or reset per row."
+            width="sm"
+        >
+            <form
+                onSubmit={e => {
+                    e.preventDefault();
+                    submit();
+                }}
+                noValidate
+            >
+                <label className="flex flex-col gap-1">
+                    <span className="text-[12px] font-medium text-fg-2">Reason</span>
+                    <textarea
+                        value={reason}
+                        onChange={e => {
+                            setReason(e.target.value);
+                        }}
+                        required
+                        maxLength={500}
+                        rows={3}
+                        autoFocus
+                        placeholder="e.g. fee corrections, self-transfer siblings"
+                        className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong resize-none"
+                    />
+                </label>
+                <ModalFooter>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-fg-2 hover:text-fg-1"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={!canSubmit}
+                        className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
+                    >
+                        Dismiss {selectionCount.toString()} row{selectionCount === 1 ? '' : 's'}
+                    </button>
+                </ModalFooter>
+            </form>
+        </Modal>
+    );
+}
+
+/** Issue #86: format the Save-all summary into a single-line toast. */
+function formatSaveAllToast(summary: {
+    categorised: number;
+    dismissed: number;
+    failed: number;
+}): string {
+    const parts: string[] = [];
+    parts.push(`${summary.categorised.toString()} categorised`);
+    parts.push(`${summary.dismissed.toString()} dismissed`);
+    parts.push(`${summary.failed.toString()} failed`);
+    return `${parts.join(', ')}.`;
 }

@@ -186,10 +186,18 @@ export function buildRowRequest(
     };
 }
 
+/** Issue #86: a Save-all row can either categorise (existing draft pipeline)
+ *  or dismiss (new flow with a reason). The two are mutually exclusive at the
+ *  component level (setting a dismiss-draft clears any categorise override and
+ *  vice versa), so the orchestrator only sees one action per row. */
+export type SaveAllAction =
+    | { kind: 'categorise'; draft: RowDraft }
+    | { kind: 'dismiss'; reason: string };
+
 export type SaveAllRow = {
     id: BankTransactionId;
     bt: BankTransaction;
-    draft: RowDraft;
+    action: SaveAllAction;
 };
 
 export type SaveAllOutcome =
@@ -199,13 +207,15 @@ export type SaveAllOutcome =
 export type SaveAllDeps = {
     createCounterparty: (name: string) => Promise<CounterpartyId>;
     categorize: (id: BankTransactionId, request: WireCategorizeRequest) => Promise<void>;
+    dismiss: (id: BankTransactionId, reason: string) => Promise<void>;
     onProgress?: (done: number, total: number) => void;
     onCounterpartyCreated?: (name: string, id: CounterpartyId) => void;
     onRowResult?: (id: BankTransactionId, outcome: SaveAllOutcome) => void;
 };
 
 export type SaveAllSummary = {
-    saved: number;
+    categorised: number;
+    dismissed: number;
     failed: number;
 };
 
@@ -229,7 +239,13 @@ export async function runSaveAll(
     rows: readonly SaveAllRow[],
     deps: SaveAllDeps,
 ): Promise<SaveAllSummary> {
-    const names = collectNewCounterpartyNames(rows);
+    // Preflight only looks at categorise rows; dismiss rows carry just a reason.
+    const categoriseDrafts = rows
+        .filter((r): r is SaveAllRow & { action: { kind: 'categorise'; draft: RowDraft } } =>
+            r.action.kind === 'categorise',
+        )
+        .map(r => ({ draft: r.action.draft }));
+    const names = collectNewCounterpartyNames(categoriseDrafts);
     const created = new Map<string, CounterpartyId>();
     const failedNames = new Map<string, string>();
     for (const name of names) {
@@ -242,50 +258,65 @@ export async function runSaveAll(
         }
     }
 
-    let saved = 0;
+    let categorised = 0;
+    let dismissed = 0;
     let failed = 0;
     const total = rows.length;
     deps.onProgress?.(0, total);
 
     for (const row of rows) {
-        const status = rowStatus(row.draft);
-        if (status !== 'ready') {
-            failed += 1;
-            deps.onRowResult?.(row.id, { ok: false, error: 'Row is not ready' });
-            deps.onProgress?.(saved + failed, total);
+        if (row.action.kind === 'dismiss') {
+            try {
+                await deps.dismiss(row.id, row.action.reason);
+                dismissed += 1;
+                deps.onRowResult?.(row.id, { ok: true });
+            } catch (err) {
+                failed += 1;
+                deps.onRowResult?.(row.id, { ok: false, error: errorMessage(err) });
+            }
+            deps.onProgress?.(categorised + dismissed + failed, total);
             continue;
         }
 
-        if (row.draft.counterpartyMode === 'new') {
-            const key = row.draft.newCounterpartyName.trim().toLowerCase();
+        const draft = row.action.draft;
+        const status = rowStatus(draft);
+        if (status !== 'ready') {
+            failed += 1;
+            deps.onRowResult?.(row.id, { ok: false, error: 'Row is not ready' });
+            deps.onProgress?.(categorised + dismissed + failed, total);
+            continue;
+        }
+
+        if (draft.counterpartyMode === 'new') {
+            const key = draft.newCounterpartyName.trim().toLowerCase();
             const cpError = failedNames.get(key);
             if (cpError !== undefined) {
                 failed += 1;
                 deps.onRowResult?.(row.id, { ok: false, error: cpError });
-                deps.onProgress?.(saved + failed, total);
+                deps.onProgress?.(categorised + dismissed + failed, total);
                 continue;
             }
         }
 
-        const request = buildRowRequest(row.bt, row.draft, created);
+        const request = buildRowRequest(row.bt, draft, created);
         if (request === null) {
             failed += 1;
             deps.onRowResult?.(row.id, { ok: false, error: 'Row is not ready' });
-            deps.onProgress?.(saved + failed, total);
+            deps.onProgress?.(categorised + dismissed + failed, total);
             continue;
         }
         try {
             await deps.categorize(row.id, request);
-            saved += 1;
+            categorised += 1;
             deps.onRowResult?.(row.id, { ok: true });
         } catch (err) {
             failed += 1;
             deps.onRowResult?.(row.id, { ok: false, error: errorMessage(err) });
         }
-        deps.onProgress?.(saved + failed, total);
+        deps.onProgress?.(categorised + dismissed + failed, total);
     }
 
-    return { saved, failed };
+    return { categorised, dismissed, failed };
 }
 
 function errorMessage(err: unknown): string {
@@ -440,6 +471,44 @@ export function applyBulkPatchToOverride(
     }
     if (input.accountId !== null) {
         next.accountId = input.accountId;
+    }
+    return next;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bulk dismiss-draft helpers (issue #86). Pure helpers so the React component
+// owns only state wiring; mutual exclusion against the categorise override map
+// is enforced by the component, which composes these with `removeKeysFor`.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Stage the same dismiss reason on every id in `ids`. */
+export function setBulkDismissDrafts(
+    current: ReadonlyMap<BankTransactionId, string>,
+    ids: Iterable<BankTransactionId>,
+    reason: string,
+): Map<BankTransactionId, string> {
+    const next = new Map(current);
+    for (const id of ids) {
+        next.set(id, reason);
+    }
+    return next;
+}
+
+/** Drop entries for the given keys from `map`. Returns the same instance when
+ *  no key matched, so React state setters can short-circuit. */
+export function removeKeysFor<K, V>(
+    map: ReadonlyMap<K, V>,
+    keys: Iterable<K>,
+): Map<K, V> {
+    let mutated = false;
+    let next = map as Map<K, V>;
+    for (const k of keys) {
+        if (!next.has(k)) continue;
+        if (!mutated) {
+            next = new Map(map);
+            mutated = true;
+        }
+        next.delete(k);
     }
     return next;
 }

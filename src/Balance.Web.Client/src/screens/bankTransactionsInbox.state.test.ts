@@ -23,14 +23,17 @@ import {
     initialPrefill,
     isPristine,
     pickSuggestedAccountId,
+    removeKeysFor,
     resolveCounterpartyByIban,
     rowStatus,
     runSaveAll,
     selectAllVisible,
+    setBulkDismissDrafts,
     toggleSelection,
     withSuggestedAccount,
     type RowDraft,
     type SaveAllRow,
+    type SaveAllAction,
 } from './bankTransactionsInbox.state';
 
 const cpA = asCounterpartyId('11111111-1111-1111-1111-111111111111');
@@ -327,6 +330,23 @@ describe('buildRowRequest', () => {
 });
 
 describe('runSaveAll', () => {
+    function categoriseAction(draft: Partial<RowDraft> = {}): SaveAllAction {
+        return {
+            kind: 'categorise',
+            draft: {
+                counterpartyMode: 'existing',
+                counterpartyId: cpA,
+                newCounterpartyName: '',
+                accountId: accGroceries,
+                ...draft,
+            },
+        };
+    }
+
+    function dismissAction(reason: string): SaveAllAction {
+        return { kind: 'dismiss', reason };
+    }
+
     function readyRow(
         id: string,
         draft: Partial<RowDraft> = {},
@@ -335,13 +355,19 @@ describe('runSaveAll', () => {
         return {
             id: asBankTransactionId(id),
             bt: bt(btOverride),
-            draft: {
-                counterpartyMode: 'existing',
-                counterpartyId: cpA,
-                newCounterpartyName: '',
-                accountId: accGroceries,
-                ...draft,
-            },
+            action: categoriseAction(draft),
+        };
+    }
+
+    function dismissRow(
+        id: string,
+        reason: string,
+        btOverride: Partial<BankTransaction> = {},
+    ): SaveAllRow {
+        return {
+            id: asBankTransactionId(id),
+            bt: bt(btOverride),
+            action: dismissAction(reason),
         };
     }
 
@@ -364,8 +390,9 @@ describe('runSaveAll', () => {
         const summary = await runSaveAll(rows, {
             createCounterparty: vi.fn(),
             categorize,
+            dismiss: vi.fn(),
         });
-        expect(summary).toEqual({ saved: 3, failed: 0 });
+        expect(summary).toEqual({ categorised: 3, dismissed: 0, failed: 0 });
         expect(order).toEqual(rows.map(r => r.id));
         expect(maxInFlight).toBe(1);
     });
@@ -398,9 +425,13 @@ describe('runSaveAll', () => {
             }),
         ];
 
-        const summary = await runSaveAll(rows, { createCounterparty, categorize });
+        const summary = await runSaveAll(rows, {
+            createCounterparty,
+            categorize,
+            dismiss: vi.fn(),
+        });
 
-        expect(summary.saved).toBe(3);
+        expect(summary.categorised).toBe(3);
         expect(createCounterparty).toHaveBeenCalledTimes(2);
         expect(createCounterparty).toHaveBeenNthCalledWith(1, 'Acme Co');
         expect(createCounterparty).toHaveBeenNthCalledWith(2, 'Beta');
@@ -426,6 +457,7 @@ describe('runSaveAll', () => {
         const summary = await runSaveAll(rows, {
             createCounterparty: vi.fn(),
             categorize,
+            dismiss: vi.fn(),
             onRowResult: (id, outcome) =>
                 outcomes.push(
                     outcome.ok
@@ -433,7 +465,7 @@ describe('runSaveAll', () => {
                         : { id, ok: false, error: outcome.error },
                 ),
         });
-        expect(summary).toEqual({ saved: 2, failed: 1 });
+        expect(summary).toEqual({ categorised: 2, dismissed: 0, failed: 1 });
         expect(categorize).toHaveBeenCalledTimes(3);
         expect(outcomes).toEqual([
             { id: rows[0]?.id, ok: true },
@@ -469,11 +501,12 @@ describe('runSaveAll', () => {
         const summary = await runSaveAll(rows, {
             createCounterparty,
             categorize,
+            dismiss: vi.fn(),
             onRowResult: (id, outcome) => {
                 if (!outcome.ok) failures.push({ id, error: outcome.error });
             },
         });
-        expect(summary).toEqual({ saved: 1, failed: 2 });
+        expect(summary).toEqual({ categorised: 1, dismissed: 0, failed: 2 });
         expect(categorize).toHaveBeenCalledTimes(1);
         expect(failures.map(f => f.id)).toEqual([rows[0]?.id, rows[1]?.id]);
     });
@@ -487,6 +520,7 @@ describe('runSaveAll', () => {
         await runSaveAll(rows, {
             createCounterparty: vi.fn(),
             categorize: vi.fn(() => Promise.resolve()),
+            dismiss: vi.fn(),
             onProgress: (done, total) => progress.push([done, total]),
         });
         expect(progress).toEqual([
@@ -494,6 +528,99 @@ describe('runSaveAll', () => {
             [1, 2],
             [2, 2],
         ]);
+    });
+
+    it('routes dismiss-action rows to deps.dismiss with the row reason', async () => {
+        const dismiss = vi.fn(() => Promise.resolve());
+        const categorize = vi.fn(() => Promise.resolve());
+        const rows = [
+            dismissRow('bt000001-0000-0000-0000-000000000041', 'fee correction'),
+            dismissRow('bt000001-0000-0000-0000-000000000042', 'test transaction'),
+        ];
+        const summary = await runSaveAll(rows, {
+            createCounterparty: vi.fn(),
+            categorize,
+            dismiss,
+        });
+        expect(summary).toEqual({ categorised: 0, dismissed: 2, failed: 0 });
+        expect(categorize).not.toHaveBeenCalled();
+        expect(dismiss).toHaveBeenNthCalledWith(1, rows[0]?.id, 'fee correction');
+        expect(dismiss).toHaveBeenNthCalledWith(2, rows[1]?.id, 'test transaction');
+    });
+
+    it('mixes categorise and dismiss actions sequentially in row order', async () => {
+        const events: string[] = [];
+        const categorize = vi.fn((id: BankTransactionId) => {
+            events.push(`categorize:${id}`);
+            return Promise.resolve();
+        });
+        const dismiss = vi.fn((id: BankTransactionId, reason: string) => {
+            events.push(`dismiss:${id}:${reason}`);
+            return Promise.resolve();
+        });
+        const rows = [
+            readyRow('bt000001-0000-0000-0000-000000000051'),
+            dismissRow('bt000001-0000-0000-0000-000000000052', 'self-transfer sibling'),
+            readyRow('bt000001-0000-0000-0000-000000000053'),
+            dismissRow('bt000001-0000-0000-0000-000000000054', 'self-transfer sibling'),
+        ];
+        const summary = await runSaveAll(rows, {
+            createCounterparty: vi.fn(),
+            categorize,
+            dismiss,
+        });
+        expect(summary).toEqual({ categorised: 2, dismissed: 2, failed: 0 });
+        expect(events).toEqual([
+            `categorize:${rows[0]?.id ?? ''}`,
+            `dismiss:${rows[1]?.id ?? ''}:self-transfer sibling`,
+            `categorize:${rows[2]?.id ?? ''}`,
+            `dismiss:${rows[3]?.id ?? ''}:self-transfer sibling`,
+        ]);
+    });
+
+    it('continues past a failed dismiss and reports the failure per row', async () => {
+        const outcomes: { id: BankTransactionId; ok: boolean; error?: string }[] = [];
+        let call = 0;
+        const dismiss = vi.fn(() => {
+            call += 1;
+            if (call === 1) return Promise.reject(new Error('dismiss boom'));
+            return Promise.resolve();
+        });
+        const rows = [
+            dismissRow('bt000001-0000-0000-0000-000000000061', 'reason A'),
+            dismissRow('bt000001-0000-0000-0000-000000000062', 'reason B'),
+        ];
+        const summary = await runSaveAll(rows, {
+            createCounterparty: vi.fn(),
+            categorize: vi.fn(),
+            dismiss,
+            onRowResult: (id, outcome) =>
+                outcomes.push(
+                    outcome.ok
+                        ? { id, ok: true }
+                        : { id, ok: false, error: outcome.error },
+                ),
+        });
+        expect(summary).toEqual({ categorised: 0, dismissed: 1, failed: 1 });
+        expect(dismiss).toHaveBeenCalledTimes(2);
+        expect(outcomes).toEqual([
+            { id: rows[0]?.id, ok: false, error: 'dismiss boom' },
+            { id: rows[1]?.id, ok: true },
+        ]);
+    });
+
+    it('does not preflight new counterparties for dismiss-only rows', async () => {
+        const createCounterparty = vi.fn(() => Promise.resolve(cpB));
+        const rows = [
+            dismissRow('bt000001-0000-0000-0000-000000000071', 'reason'),
+            dismissRow('bt000001-0000-0000-0000-000000000072', 'reason'),
+        ];
+        await runSaveAll(rows, {
+            createCounterparty,
+            categorize: vi.fn(),
+            dismiss: vi.fn(() => Promise.resolve()),
+        });
+        expect(createCounterparty).not.toHaveBeenCalled();
     });
 });
 
@@ -694,5 +821,115 @@ describe('applyBulkPatchToOverride', () => {
         });
         expect(out).not.toBe(prior);
         expect(prior.accountId).toBe(accCurrent);
+    });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bulk dismiss-draft helpers (issue #86)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('setBulkDismissDrafts', () => {
+    it('stages the same reason on every id', () => {
+        const next = setBulkDismissDrafts(new Map(), [id1, id2, id3], 'fee correction');
+        expect(next.get(id1)).toBe('fee correction');
+        expect(next.get(id2)).toBe('fee correction');
+        expect(next.get(id3)).toBe('fee correction');
+    });
+
+    it('overwrites an existing reason for an id', () => {
+        const start = new Map<BankTransactionId, string>([[id1, 'old']]);
+        const next = setBulkDismissDrafts(start, [id1], 'new');
+        expect(next.get(id1)).toBe('new');
+    });
+
+    it('preserves entries outside the id list', () => {
+        const start = new Map<BankTransactionId, string>([[id5, 'kept']]);
+        const next = setBulkDismissDrafts(start, [id1], 'new');
+        expect(next.get(id5)).toBe('kept');
+        expect(next.get(id1)).toBe('new');
+    });
+
+    it('does not mutate the input map', () => {
+        const start = new Map<BankTransactionId, string>();
+        const next = setBulkDismissDrafts(start, [id1], 'r');
+        expect(start.has(id1)).toBe(false);
+        expect(next).not.toBe(start);
+    });
+});
+
+describe('removeKeysFor', () => {
+    it('drops entries that match', () => {
+        const start = new Map<BankTransactionId, string>([
+            [id1, 'a'],
+            [id2, 'b'],
+        ]);
+        const next = removeKeysFor(start, [id1]);
+        expect(next.has(id1)).toBe(false);
+        expect(next.get(id2)).toBe('b');
+    });
+
+    it('returns the same instance when no key matched (idempotent)', () => {
+        const start = new Map<BankTransactionId, string>([[id1, 'a']]);
+        const next = removeKeysFor(start, [id2, id3]);
+        expect(next).toBe(start);
+    });
+
+    it('handles a Set of keys', () => {
+        const start = new Map<BankTransactionId, string>([
+            [id1, 'a'],
+            [id2, 'b'],
+        ]);
+        const next = removeKeysFor(start, new Set([id1, id2]));
+        expect(next.size).toBe(0);
+    });
+});
+
+describe('bulk dismiss-draft mutual exclusion', () => {
+    // Compose the three helpers the React component composes when the user
+    // confirms a bulk-dismiss modal: write the reason to dismissDrafts and
+    // clear the same ids from userOverrides + rowErrors.
+    it('staging a dismiss reason and clearing categorise overrides+errors for those ids', () => {
+        const overrides = new Map<BankTransactionId, Partial<RowDraft>>([
+            [id1, { counterpartyMode: 'existing', counterpartyId: cpA }],
+            [id5, { counterpartyMode: 'existing', counterpartyId: cpB }],
+        ]);
+        const errors = new Map<BankTransactionId, string>([[id1, 'boom']]);
+        const drafts = new Map<BankTransactionId, string>();
+
+        const ids = [id1, id2];
+        const reason = 'fee correction';
+        const newDrafts = setBulkDismissDrafts(drafts, ids, reason);
+        const newOverrides = removeKeysFor(overrides, ids);
+        const newErrors = removeKeysFor(errors, ids);
+
+        // Reason carried per-row on every selected id.
+        expect(newDrafts.get(id1)).toBe('fee correction');
+        expect(newDrafts.get(id2)).toBe('fee correction');
+        // Mutual exclusion: categorise overrides + errors cleared for those ids.
+        expect(newOverrides.has(id1)).toBe(false);
+        expect(newErrors.has(id1)).toBe(false);
+        // Unrelated rows untouched.
+        expect(newOverrides.get(id5)?.counterpartyId).toBe(cpB);
+    });
+
+    it('applying a categorise patch clears the dismiss draft on those ids', () => {
+        const overrides = new Map<BankTransactionId, Partial<RowDraft>>();
+        const drafts = new Map<BankTransactionId, string>([
+            [id1, 'staged for dismiss'],
+            [id5, 'unrelated stay'],
+        ]);
+        const ids = [id1, id2];
+
+        const newOverride = applyBulkPatchToOverride(overrides.get(id1), {
+            counterparty: { kind: 'existing', counterpartyId: cpA },
+            accountId: null,
+        });
+        const newDrafts = removeKeysFor(drafts, ids);
+
+        expect(newOverride.counterpartyId).toBe(cpA);
+        // Mutual exclusion: dismiss-draft on id1 cleared.
+        expect(newDrafts.has(id1)).toBe(false);
+        // Other dismiss-drafts untouched.
+        expect(newDrafts.get(id5)).toBe('unrelated stay');
     });
 });
