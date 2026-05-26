@@ -1,4 +1,13 @@
-import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import {
+    useEffect,
+    useId,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
+    type KeyboardEvent,
+} from 'react';
+import { createPortal } from 'react-dom';
 import type { ReactNode } from 'react';
 import { Icon } from './Icon';
 import { cx } from '../lib/cx';
@@ -58,6 +67,9 @@ export function Combobox<T>({
     const [open, setOpen] = useState(false);
     const [active, setActive] = useState(-1);
     const wrapperRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const listboxRef = useRef<HTMLUListElement>(null);
+    const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
     const listboxId = useId();
     const inputId = useId();
 
@@ -76,18 +88,39 @@ export function Combobox<T>({
               ? active
               : 0;
 
+    // Capture the anchor rect synchronously before paint so the portalled
+    // listbox renders at the correct position on first open, even if the
+    // window has been scrolled since the previous open.
+    useLayoutEffect(() => {
+        if (!open) return;
+        const el = inputRef.current;
+        if (el) setAnchorRect(el.getBoundingClientRect());
+    }, [open]);
+
     useEffect(() => {
         if (!open) return;
         function onDocClick(e: MouseEvent) {
-            const wrap = wrapperRef.current;
-            if (wrap && !wrap.contains(e.target as Node)) {
-                setOpen(false);
-                setQuery('');
-            }
+            const target = e.target as Node;
+            // The listbox is rendered outside `wrapperRef` (via a portal) to
+            // escape the parent Panel's stacking context, so a click on it
+            // would otherwise be treated as "outside" and close the popup
+            // before the option's onMouseDown fires.
+            if (wrapperRef.current?.contains(target)) return;
+            if (listboxRef.current?.contains(target)) return;
+            setOpen(false);
+            setQuery('');
+        }
+        function updateRect() {
+            const el = inputRef.current;
+            if (el) setAnchorRect(el.getBoundingClientRect());
         }
         document.addEventListener('mousedown', onDocClick);
+        window.addEventListener('resize', updateRect);
+        window.addEventListener('scroll', updateRect, true);
         return () => {
             document.removeEventListener('mousedown', onDocClick);
+            window.removeEventListener('resize', updateRect);
+            window.removeEventListener('scroll', updateRect, true);
         };
     }, [open]);
 
@@ -138,6 +171,7 @@ export function Combobox<T>({
     return (
         <div ref={wrapperRef} className="relative">
             <input
+                ref={inputRef}
                 id={inputId}
                 type="text"
                 role="combobox"
@@ -162,18 +196,29 @@ export function Combobox<T>({
                     'focus:outline-none focus:border-border-strong disabled:opacity-60',
                 )}
             />
-            {open && options.length > 0 && (
-                <ul
-                    id={listboxId}
-                    role="listbox"
-                    className={cx(
-                        'absolute left-0 right-0 z-30 mt-1 max-h-64 overflow-y-auto',
-                        'rounded-sm bg-bg-1 border border-border-soft shadow-overlay text-[13px]',
-                    )}
-                >
-                    {renderOptions(options, effectiveActive, groupLabels, commit, setActive)}
-                </ul>
-            )}
+            {open &&
+                options.length > 0 &&
+                anchorRect &&
+                createPortal(
+                    <ul
+                        ref={listboxRef}
+                        id={listboxId}
+                        role="listbox"
+                        style={{
+                            position: 'fixed',
+                            top: anchorRect.bottom + 4,
+                            left: anchorRect.left,
+                            width: anchorRect.width,
+                        }}
+                        className={cx(
+                            'z-50 max-h-64 overflow-y-auto',
+                            'rounded-sm bg-bg-1 border border-border-soft shadow-overlay text-[13px]',
+                        )}
+                    >
+                        {renderOptions(options, effectiveActive, groupLabels, commit, setActive)}
+                    </ul>,
+                    document.body,
+                )}
         </div>
     );
 }
