@@ -12,6 +12,9 @@ import { getJson, postJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
 
 type WireBankTransaction = components['schemas']['BankTransactionOutput'];
+type WireBankTransactionDetail = components['schemas']['BankTransactionDetailOutput'];
+type WireBankTransactionMetadataEntry =
+    components['schemas']['BankTransactionMetadataEntryOutput'];
 type WireCategorizeRequest = components['schemas']['CategorizeBankTransactionRequest'];
 type WireJournalEntry = components['schemas']['JournalEntryOutput'];
 
@@ -48,6 +51,16 @@ export type BankTransaction = {
     dismissedReason: string | null;
 };
 
+export type BankTransactionMetadataEntry = {
+    key: string;
+    stringValue: string | null;
+    integerValue: number | null;
+};
+
+export type BankTransactionDetail = BankTransaction & {
+    metadata: BankTransactionMetadataEntry[];
+};
+
 export const bankTransactionsKeys = {
     all: ['bank-transactions'] as const,
     list: (skip: number, take: number, filter: BankTransactionFilter) =>
@@ -78,6 +91,23 @@ function toBankTransaction(wire: WireBankTransaction): BankTransaction {
     };
 }
 
+function toBankTransactionMetadataEntry(
+    wire: WireBankTransactionMetadataEntry,
+): BankTransactionMetadataEntry {
+    return {
+        key: wire.key,
+        stringValue: wire.stringValue,
+        integerValue: wire.integerValue === null ? null : Number(wire.integerValue),
+    };
+}
+
+function toBankTransactionDetail(wire: WireBankTransactionDetail): BankTransactionDetail {
+    return {
+        ...toBankTransaction(wire),
+        metadata: wire.metadata.map(toBankTransactionMetadataEntry),
+    };
+}
+
 export function useBankTransactions(skip: number, take: number, filter: BankTransactionFilter) {
     return useQuery({
         queryKey: bankTransactionsKeys.list(skip, take, filter),
@@ -96,12 +126,12 @@ export function useBankTransaction(id: BankTransactionId) {
     return useQuery({
         queryKey: bankTransactionsKeys.detail(id),
         queryFn: async ({ signal }) => {
-            const wire = await getJson<WireBankTransaction>(
+            const wire = await getJson<WireBankTransactionDetail>(
                 `/api/bank-transactions/${id}`,
                 signal,
                 'load bank transaction',
             );
-            return toBankTransaction(wire);
+            return toBankTransactionDetail(wire);
         },
     });
 }

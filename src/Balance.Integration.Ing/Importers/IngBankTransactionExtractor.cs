@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Reflection;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
 using Balance.Integration.Ing.Contracts;
@@ -7,6 +9,7 @@ using Balance.Integration.Ing.Models.Statements;
 using Balance.Services.BankTransactions;
 using Balance.Services.Contracts;
 using CsvHelper;
+using CsvHelper.Configuration.Attributes;
 
 namespace Balance.Integration.Ing.Importers;
 
@@ -15,6 +18,15 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
     internal const string Key = "Ing.CurrentAccount.V1";
 
     private static readonly CurrencyCode Eur = new("EUR");
+
+    private static readonly Dictionary<TransactionCode, string> TransactionCodeToString =
+        typeof(TransactionCode)
+            .GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Where(f => f.IsLiteral)
+            .ToDictionary(
+                f => (TransactionCode)f.GetValue(null)!,
+                f => f.GetCustomAttribute<NameAttribute>()?.Names.FirstOrDefault() ?? f.Name
+            );
 
     private readonly IIngStatementParser _ingStatementParser;
     private readonly IIngNoteParser _ingNoteParser;
@@ -155,8 +167,86 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
             ForeignCurrencyCode = foreignCurrencyCode,
             ExchangeRate = exchangeRate,
             ImporterKey = Key,
+            Metadata = BuildMetadata(row, note),
         };
     }
+
+    // Anything the extractor parses that is *not* promoted to a BankTransaction column lives
+    // here (ADR 0015). Keys are global namespace; bank-prefixed only for genuinely
+    // bank-specific extras. Nested values flatten with dotted keys.
+    private static List<BankTransactionMetadataValue> BuildMetadata(
+        IngStatementRow row,
+        IngNote note
+    )
+    {
+        var entries = new List<BankTransactionMetadataValue>();
+
+        AddString(entries, "IngTransactionCode", TransactionCodeToString[row.Parsed.Code]);
+        AddString(entries, "IngMutatiesoort", row.Parsed.TransactionType);
+        AddString(entries, "IngTag", row.Parsed.Tag);
+        AddString(entries, "SepaCreditorName", note.Creditor?.Description);
+        AddString(entries, "OtherParty", note.OtherParty);
+        AddString(entries, "Term", note.Term);
+
+        if (
+            note.CardSequence is { } cardSequence
+            && int.TryParse(
+                cardSequence.SequenceNumber,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out var sequence
+            )
+        )
+        {
+            AddInteger(entries, "CardSequence.Number", sequence);
+        }
+
+        if (note.ForeignCurrencyMarkUp is { } markUp)
+        {
+            AddInteger(entries, "ForeignMarkUp.Amount", ToMinorUnits(markUp)!.Value);
+            AddString(entries, "ForeignMarkUp.CurrencyCode", markUp.CurrencyCode);
+        }
+
+        if (note.ForeignCurrencyFee is { } fee)
+        {
+            AddInteger(entries, "ForeignFee.Amount", ToMinorUnits(fee)!.Value);
+            AddString(entries, "ForeignFee.CurrencyCode", fee.CurrencyCode);
+        }
+
+        AddString(entries, "IngNote.Other", note.Other);
+
+        return entries;
+    }
+
+    private static void AddString(
+        List<BankTransactionMetadataValue> entries,
+        string keyName,
+        string? value
+    )
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return;
+        entries.Add(
+            new BankTransactionMetadataValue
+            {
+                Key = new BankTransactionMetadataKey { Name = keyName },
+                StringValue = value,
+            }
+        );
+    }
+
+    private static void AddInteger(
+        List<BankTransactionMetadataValue> entries,
+        string keyName,
+        long value
+    ) =>
+        entries.Add(
+            new BankTransactionMetadataValue
+            {
+                Key = new BankTransactionMetadataKey { Name = keyName },
+                IntegerValue = value,
+            }
+        );
 
     private static long? ToMinorUnits(CurrencyAmount? amount)
     {

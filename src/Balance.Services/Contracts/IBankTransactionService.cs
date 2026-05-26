@@ -11,7 +11,7 @@ public interface IBankTransactionService
         CancellationToken cancellationToken
     );
 
-    Task<Result<BankTransactionOutput>> GetAsync(
+    Task<Result<BankTransactionDetailOutput>> GetAsync(
         BankTransactionId id,
         CancellationToken cancellationToken
     );
