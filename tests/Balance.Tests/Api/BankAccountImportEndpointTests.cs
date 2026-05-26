@@ -298,9 +298,9 @@ internal sealed class BankAccountImportEndpointTests : EndpointsTestsBase
             m => (m.StringValue, m.IntegerValue),
             StringComparer.Ordinal
         );
-        await Assert.That(sepaMeta["IngTransactionCode"].StringValue).IsEqualTo("IC");
-        await Assert.That(sepaMeta["IngMutatiesoort"].StringValue).IsEqualTo("SEPA Direct Debit");
-        await Assert.That(sepaMeta.ContainsKey("ForeignMarkUp.Amount")).IsFalse();
+        await Assert.That(sepaMeta["Transaction Code"].StringValue).IsEqualTo("IC");
+        await Assert.That(sepaMeta["Transaction Type"].StringValue).IsEqualTo("SEPA Direct Debit");
+        await Assert.That(sepaMeta.ContainsKey("Foreign Currency Mark Up Amount")).IsFalse();
 
         using var fxResponse = await client.GetAsync(
             new Uri($"/api/bank-transactions/{fx.Id}", UriKind.Relative)
@@ -313,13 +313,13 @@ internal sealed class BankAccountImportEndpointTests : EndpointsTestsBase
             m => (m.StringValue, m.IntegerValue),
             StringComparer.Ordinal
         );
-        await Assert.That(fxMeta["IngTransactionCode"].StringValue).IsEqualTo("GM");
+        await Assert.That(fxMeta["Transaction Code"].StringValue).IsEqualTo("GM");
         await Assert.That(fxMeta["Term"].StringValue).IsEqualTo("ATM12713");
-        await Assert.That(fxMeta["CardSequence.Number"].IntegerValue).IsEqualTo(8L);
-        await Assert.That(fxMeta["ForeignMarkUp.Amount"].IntegerValue).IsEqualTo(45L);
-        await Assert.That(fxMeta["ForeignMarkUp.CurrencyCode"].StringValue).IsEqualTo("EUR");
-        await Assert.That(fxMeta["ForeignFee.Amount"].IntegerValue).IsEqualTo(225L);
-        await Assert.That(fxMeta["ForeignFee.CurrencyCode"].StringValue).IsEqualTo("EUR");
+        await Assert.That(fxMeta["Card Sequence Number"].StringValue).IsEqualTo("008");
+        await Assert.That(fxMeta["Foreign Currency Mark Up Amount"].IntegerValue).IsEqualTo(45L);
+        await Assert.That(fxMeta["Foreign Currency Mark Up Code"].StringValue).IsEqualTo("EUR");
+        await Assert.That(fxMeta["Foreign Currency Fee Amount"].IntegerValue).IsEqualTo(225L);
+        await Assert.That(fxMeta["Foreign Currency Fee Code"].StringValue).IsEqualTo("EUR");
     }
 
     [Test]
