@@ -10,7 +10,7 @@ namespace Balance.Services.Contracts;
 /// </summary>
 public interface IBankTransactionCategorisationService
 {
-    Task<Result<JournalEntryOutput>> CategorizeAsync(
+    Task<Result<JournalEntryDetailOutput>> CategorizeAsync(
         BankTransactionId id,
         CategorizeBankTransactionInput input,
         CancellationToken cancellationToken

@@ -32,16 +32,17 @@ internal sealed class JournalEntryService : IJournalEntryService
             .ThenByDescending(e => e.CreatedAt)
             .Skip(skip)
             .Take(take);
-        return await ProjectOutput(_dbContext, page).ToListAsync(cancellationToken);
+        return await ProjectListOutput(_dbContext, page).ToListAsync(cancellationToken);
     }
 
-    public async Task<Result<JournalEntryOutput>> GetAsync(
+    public async Task<Result<JournalEntryDetailOutput>> GetAsync(
         JournalEntryId id,
         CancellationToken cancellationToken
     )
     {
         var query = _dbContext.JournalEntries.AsNoTracking().Where(e => e.Id == id);
-        var output = await ProjectOutput(_dbContext, query).FirstOrDefaultAsync(cancellationToken);
+        var output = await ProjectDetailOutput(_dbContext, query)
+            .FirstOrDefaultAsync(cancellationToken);
         if (output is null)
             return new NotFoundError("JournalEntry", id.Value.ToString());
         return output;
@@ -81,7 +82,7 @@ internal sealed class JournalEntryService : IJournalEntryService
         };
     }
 
-    public async Task<Result<JournalEntryOutput>> CreateAsync(
+    public async Task<Result<JournalEntryDetailOutput>> CreateAsync(
         CreateJournalEntryInput input,
         CancellationToken cancellationToken
     )
@@ -144,7 +145,7 @@ internal sealed class JournalEntryService : IJournalEntryService
         return await LoadDetailOrThrowAsync(entry.Id, cancellationToken);
     }
 
-    public async Task<Result<JournalEntryOutput>> UpdateAsync(
+    public async Task<Result<JournalEntryDetailOutput>> UpdateAsync(
         JournalEntryId id,
         UpdateJournalEntryInput input,
         CancellationToken cancellationToken
@@ -232,13 +233,14 @@ internal sealed class JournalEntryService : IJournalEntryService
         return Result.Success;
     }
 
-    private async Task<JournalEntryOutput> LoadDetailOrThrowAsync(
+    private async Task<JournalEntryDetailOutput> LoadDetailOrThrowAsync(
         JournalEntryId id,
         CancellationToken cancellationToken
     )
     {
         var query = _dbContext.JournalEntries.AsNoTracking().Where(e => e.Id == id);
-        var output = await ProjectOutput(_dbContext, query).FirstOrDefaultAsync(cancellationToken);
+        var output = await ProjectDetailOutput(_dbContext, query)
+            .FirstOrDefaultAsync(cancellationToken);
         if (output is null)
         {
             throw new InvalidOperationException(
@@ -250,12 +252,12 @@ internal sealed class JournalEntryService : IJournalEntryService
     }
 
     /// <summary>
-    /// EF projection from a JournalEntry queryable straight to the wire shape, with name
+    /// EF projection from a JournalEntry queryable to the list wire shape, with name
     /// joins for Counterparty and Account. The caller applies ordering/paging before
     /// projecting — the nested Lines collection blocks server-side ordering on the projected
     /// shape.
     /// </summary>
-    private static IQueryable<JournalEntryOutput> ProjectOutput(
+    private static IQueryable<JournalEntryOutput> ProjectListOutput(
         BalanceDbContext db,
         IQueryable<JournalEntry> source
     )
@@ -283,6 +285,79 @@ internal sealed class JournalEntryService : IJournalEntryService
                 .ToList(),
             e.CreatedAt,
             e.UpdatedAt
+        ));
+    }
+
+    /// <summary>
+    /// EF projection for the detail wire shape. Adds the linked bank-transaction
+    /// detail (with its metadata bag) when the entry was created from an import row;
+    /// otherwise that property is null. The metadata join is wasted work for the
+    /// list endpoint, so this variant is reserved for Get / Create / Update.
+    /// </summary>
+    private static IQueryable<JournalEntryDetailOutput> ProjectDetailOutput(
+        BalanceDbContext db,
+        IQueryable<JournalEntry> source
+    )
+    {
+        return source.Select(e => new JournalEntryDetailOutput(
+            e.Id,
+            e.Date,
+            e.Description,
+            e.BankTransactionId,
+            e.CounterpartyId,
+            e.CounterpartyId == null
+                ? null
+                : db
+                    .Counterparties.Where(c => c.Id == e.CounterpartyId)
+                    .Select(c => c.Name)
+                    .FirstOrDefault(),
+            e.Lines.Select(l => new JournalLineOutput(
+                    l.Id,
+                    l.AccountId,
+                    db.Accounts.Where(a => a.Id == l.AccountId).Select(a => a.Name).First(),
+                    l.Amount,
+                    l.ReconciliationStatus,
+                    l.Description
+                ))
+                .ToList(),
+            e.CreatedAt,
+            e.UpdatedAt,
+            e.BankTransactionId == null
+                ? null
+                : db
+                    .BankTransactions.Where(b => b.Id == e.BankTransactionId)
+                    .Select(b => new BankTransactionDetailOutput(
+                        b.Id,
+                        b.BankAccountId,
+                        b.BookingDate,
+                        b.Money,
+                        b.Description,
+                        b.CounterpartyName,
+                        b.CounterpartyAccountNumber,
+                        b.ValueDate,
+                        b.Reference,
+                        b.MandateId,
+                        b.SepaCreditorId,
+                        b.ForeignAmount,
+                        b.ForeignCurrencyCode,
+                        b.ExchangeRate,
+                        b.ImporterKey,
+                        db.JournalEntries.Where(j => j.BankTransactionId == b.Id)
+                            .Select(j => (JournalEntryId?)j.Id)
+                            .FirstOrDefault(),
+                        b.DismissedAt,
+                        b.DismissedReason,
+                        b.CreatedAt,
+                        b.UpdatedAt,
+                        b.Metadata.OrderBy(m => m.Key!.Name)
+                            .Select(m => new BankTransactionMetadataEntryOutput(
+                                m.Key!.Name,
+                                m.StringValue,
+                                m.IntegerValue
+                            ))
+                            .ToList()
+                    ))
+                    .FirstOrDefault()
         ));
     }
 

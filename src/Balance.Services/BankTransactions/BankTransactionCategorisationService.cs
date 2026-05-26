@@ -26,7 +26,7 @@ internal sealed class BankTransactionCategorisationService : IBankTransactionCat
         _journalEntryService = journalEntryService;
     }
 
-    public async Task<Result<JournalEntryOutput>> CategorizeAsync(
+    public async Task<Result<JournalEntryDetailOutput>> CategorizeAsync(
         BankTransactionId id,
         CategorizeBankTransactionInput input,
         CancellationToken cancellationToken
