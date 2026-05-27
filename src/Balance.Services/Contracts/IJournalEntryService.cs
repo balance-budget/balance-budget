@@ -33,7 +33,7 @@ public interface IJournalEntryService
         CancellationToken cancellationToken
     );
 
-    Task<Result<JournalEntryOutput>> ReplaceAsync(
+    Task<Result<JournalEntryDetailOutput>> ReplaceAsync(
         JournalEntryId id,
         ReplaceJournalEntryInput input,
         CancellationToken cancellationToken

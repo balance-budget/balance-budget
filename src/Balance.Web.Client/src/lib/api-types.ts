@@ -309,8 +309,7 @@ export interface paths {
         delete: operations["DeleteJournalEntry"];
         options?: never;
         head?: never;
-        /** @description Applies a JSON Patch (RFC 6902) document. The patchable surface is described by `UpdateJournalEntryInput`. The `path` enum lists the top-level patchable properties only; dictionary-valued properties (e.g. keyed line items) accept child paths like `/lines/{key}/description` at runtime but are not enumerated here. Consumers' codegen will not narrow those. */
-        patch: operations["UpdateJournalEntry"];
+        patch?: never;
         trace?: never;
     };
     "/api/dashboard/summary": {
@@ -718,24 +717,6 @@ export interface components {
             /** @enum {string} */
             path: "/name" | "/symbol";
         })[];
-        JsonPatchDocumentOfUpdateJournalEntryInput: ({
-            /** @enum {string} */
-            op: "add" | "replace" | "test";
-            /** @enum {string} */
-            path: "/date" | "/description" | "/counterpartyId" | "/lines";
-            value: unknown;
-        } | {
-            /** @enum {string} */
-            op: "move" | "copy";
-            /** @enum {string} */
-            path: "/date" | "/description" | "/counterpartyId" | "/lines";
-            from: string;
-        } | {
-            /** @enum {string} */
-            op: "remove";
-            /** @enum {string} */
-            path: "/date" | "/description" | "/counterpartyId" | "/lines";
-        })[];
         Money: {
             /** Format: int64 */
             amount?: number | string;
@@ -824,17 +805,6 @@ export interface components {
         UpdateCurrencyInput: {
             name: string;
             symbol?: null | string;
-        };
-        UpdateJournalEntryInput: {
-            /** Format: date */
-            date: string;
-            description?: null | string;
-            counterpartyId?: unknown;
-            lines: {
-                [key: string]: {
-                    description?: null | string;
-                };
-            };
         };
     };
     responses: never;
@@ -2482,7 +2452,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["JournalEntryOutput"];
+                    "application/json": components["schemas"]["JournalEntryDetailOutput"];
                 };
             };
             /** @description Bad Request */
@@ -2540,66 +2510,6 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    UpdateJournalEntry: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json-patch+json": components["schemas"]["JsonPatchDocumentOfUpdateJournalEntryInput"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["JournalEntryDetailOutput"];
-                };
             };
             /** @description Bad Request */
             400: {

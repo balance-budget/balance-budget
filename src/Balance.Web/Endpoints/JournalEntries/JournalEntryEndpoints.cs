@@ -23,6 +23,9 @@ internal static class JournalEntryEndpoints
             .MapPost("", CreateAsync)
             .WithValidation<CreateJournalEntryRequest>()
             .WithName("CreateJournalEntry");
+        // PATCH stays mounted as the legacy ADR 0005 surface (kept to avoid breaking existing
+        // bookmarks / clients) but is hidden from the OpenAPI document — ADR 0016 makes the
+        // PUT below the canonical edit surface, and the SPA no longer calls PATCH.
         group
             .MapPatchSnapshotted<
                 JournalEntryId,
@@ -34,6 +37,7 @@ internal static class JournalEntryEndpoints
                 (svc, id, ct) => svc.GetSnapshotAsync(id, ct),
                 (svc, id, input, ct) => svc.UpdateAsync(id, input, ct)
             )
+            .ExcludeFromDescription()
             .WithName("UpdateJournalEntry");
         group
             .MapPut("/{id}", ReplaceAsync)
@@ -105,7 +109,7 @@ internal static class JournalEntryEndpoints
 
     private static async Task<
         Results<
-            Ok<JournalEntryOutput>,
+            Ok<JournalEntryDetailOutput>,
             NotFound<ProblemDetails>,
             Conflict<ProblemDetails>,
             UnprocessableEntity<ProblemDetails>,

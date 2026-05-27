@@ -74,6 +74,24 @@ export async function postFormData<T>(
     return (await response.json()) as T;
 }
 
+export async function putJson<T>(
+    url: string,
+    body: unknown,
+    signal: AbortSignal,
+    label: string,
+): Promise<T> {
+    const response = await fetch(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal,
+    });
+    if (!response.ok) {
+        throw await toApiError(response, label);
+    }
+    return (await response.json()) as T;
+}
+
 /**
  * RFC 6902 JSON Patch. `patch` is the array of operations produced by
  * fast-json-patch's `compare()`. Server returns the updated resource.
