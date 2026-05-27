@@ -22,6 +22,8 @@ public sealed class BankTransaction : BaseEntity<BankTransactionId>
     public decimal? ExchangeRate { get; init; }
     public string? ImporterKey { get; init; }
 
+    public JournalEntryId? JournalEntryId { get; set; }
+
     public DateTime? DismissedAt { get; set; }
     public string? DismissedReason { get; set; }
 

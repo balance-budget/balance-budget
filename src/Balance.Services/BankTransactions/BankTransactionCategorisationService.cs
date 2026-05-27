@@ -12,18 +12,21 @@ internal sealed class BankTransactionCategorisationService : IBankTransactionCat
     private readonly IBankAccountService _bankAccountService;
     private readonly ICounterpartyService _counterpartyService;
     private readonly IJournalEntryService _journalEntryService;
+    private readonly TimeProvider _timeProvider;
 
     public BankTransactionCategorisationService(
         BalanceDbContext dbContext,
         IBankAccountService bankAccountService,
         ICounterpartyService counterpartyService,
-        IJournalEntryService journalEntryService
+        IJournalEntryService journalEntryService,
+        TimeProvider timeProvider
     )
     {
         _dbContext = dbContext;
         _bankAccountService = bankAccountService;
         _counterpartyService = counterpartyService;
         _journalEntryService = journalEntryService;
+        _timeProvider = timeProvider;
     }
 
     public async Task<Result<JournalEntryDetailOutput>> CategorizeAsync(
@@ -39,9 +42,10 @@ internal sealed class BankTransactionCategorisationService : IBankTransactionCat
         if (counterpartySelection.IsFailure)
             return counterpartySelection.Error;
 
-        var bankTransaction = await _dbContext
-            .BankTransactions.AsNoTracking()
-            .FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
+        var bankTransaction = await _dbContext.BankTransactions.FirstOrDefaultAsync(
+            b => b.Id == id,
+            cancellationToken
+        );
         if (bankTransaction is null)
             return new NotFoundError("BankTransaction", id.Value.ToString());
 
@@ -53,11 +57,7 @@ internal sealed class BankTransactionCategorisationService : IBankTransactionCat
             );
         }
 
-        var alreadyCategorised = await _dbContext.JournalEntries.AnyAsync(
-            j => j.BankTransactionId == id,
-            cancellationToken
-        );
-        if (alreadyCategorised)
+        if (bankTransaction.JournalEntryId is not null)
         {
             return new ConflictError(
                 ErrorCodes.BankTransactionAlreadyCategorised,
@@ -128,7 +128,6 @@ internal sealed class BankTransactionCategorisationService : IBankTransactionCat
             new CreateJournalEntryInput(
                 Date: input.Date,
                 Description: input.Description,
-                BankTransactionId: bankTransaction.Id,
                 CounterpartyId: counterpartyId,
                 Lines: lines
             ),
@@ -137,8 +136,25 @@ internal sealed class BankTransactionCategorisationService : IBankTransactionCat
         if (entryResult.IsFailure)
             return entryResult.Error;
 
+        // Per ADR 0013, the BT↔JE link lives on the BankTransaction side now. Set the
+        // newly-created JE's id on the tracked BT inside the same transaction so a JE
+        // creation failure rolls back cleanly, and a successful categorise hides the row
+        // from the Inbox via the `b.JournalEntryId IS NULL` filter.
+        bankTransaction.JournalEntryId = entryResult.Value!.Id;
+        bankTransaction.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
         await transaction.CommitAsync(cancellationToken);
-        return entryResult.Value!;
+
+        // Re-read the JE detail so its BankTransactions list reflects the link we just set;
+        // the projection inside CreateAsync ran before the BT was wired up.
+        var detailResult = await _journalEntryService.GetAsync(
+            entryResult.Value.Id,
+            cancellationToken
+        );
+        if (detailResult.IsFailure)
+            return detailResult.Error;
+        return detailResult.Value!;
     }
 
     private static Result ResolveCounterpartySelection(CategorizeBankTransactionInput input)

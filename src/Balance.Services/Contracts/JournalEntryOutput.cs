@@ -17,32 +17,31 @@ public sealed record JournalEntryOutput(
     JournalEntryId Id,
     DateOnly Date,
     string? Description,
-    BankTransactionId? BankTransactionId,
-    CounterpartyId? CounterpartyId,
-    string? CounterpartyName,
-    IReadOnlyList<JournalLineOutput> Lines,
-    DateTime CreatedAt,
-    DateTime UpdatedAt
-);
-
-/// <summary>
-/// Detail-endpoint shape: every <see cref="JournalEntryOutput"/> field plus the
-/// linked <see cref="BankTransactionDetailOutput"/> (when the entry was created
-/// from a bank import). Returned from <c>GET /api/journal-entries/{id}</c>,
-/// <c>POST</c>, <c>PUT</c>, and the categorize endpoint — same split as
-/// <c>BankTransactionOutput</c> vs <c>BankTransactionDetailOutput</c>.
-/// </summary>
-public sealed record JournalEntryDetailOutput(
-    JournalEntryId Id,
-    DateOnly Date,
-    string? Description,
-    BankTransactionId? BankTransactionId,
     CounterpartyId? CounterpartyId,
     string? CounterpartyName,
     IReadOnlyList<JournalLineOutput> Lines,
     DateTime CreatedAt,
     DateTime UpdatedAt,
-    BankTransactionDetailOutput? BankTransaction
+    bool HasBankTransactions
+);
+
+/// <summary>
+/// Detail-endpoint shape: every <see cref="JournalEntryOutput"/> field plus the
+/// <see cref="BankTransactions"/> list — zero, one, or (post-ADR-0013 Attach)
+/// many imported rows that reference this entry. The cardinality lives on the
+/// <c>BankTransaction</c> side now (<c>BankTransaction.JournalEntryId?</c>);
+/// today the list is 0 or 1 elements long.
+/// </summary>
+public sealed record JournalEntryDetailOutput(
+    JournalEntryId Id,
+    DateOnly Date,
+    string? Description,
+    CounterpartyId? CounterpartyId,
+    string? CounterpartyName,
+    IReadOnlyList<JournalLineOutput> Lines,
+    DateTime CreatedAt,
+    DateTime UpdatedAt,
+    IReadOnlyList<BankTransactionDetailOutput> BankTransactions
 );
 
 public sealed record JournalLineOutput(

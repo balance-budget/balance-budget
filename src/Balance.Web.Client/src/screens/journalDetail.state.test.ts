@@ -128,7 +128,6 @@ describe('buildReplaceRequest', () => {
         const result = buildReplaceRequest({
             date: '2026-05-27',
             description: 'AH groceries',
-            bankTransactionId: null,
             counterpartyId: null,
             lines,
             scale: 2,
@@ -157,7 +156,6 @@ describe('buildReplaceRequest', () => {
         const result = buildReplaceRequest({
             date: '2026-05-27',
             description: '',
-            bankTransactionId: null,
             counterpartyId: null,
             lines,
             scale: 2,
@@ -187,7 +185,6 @@ describe('buildReplaceRequest', () => {
         const result = buildReplaceRequest({
             date: '2026-05-27',
             description: '',
-            bankTransactionId: null,
             counterpartyId: null,
             lines: withNew,
             scale: 2,
@@ -212,7 +209,6 @@ describe('buildReplaceRequest', () => {
         const result = buildReplaceRequest({
             date: '2026-05-27',
             description: '',
-            bankTransactionId: null,
             counterpartyId: null,
             lines: edited,
             scale: 2,
@@ -231,7 +227,6 @@ describe('buildReplaceRequest', () => {
         const result = buildReplaceRequest({
             date: '2026-05-27',
             description: '',
-            bankTransactionId: null,
             counterpartyId: null,
             lines: edited,
             scale: 2,
@@ -246,7 +241,6 @@ describe('buildReplaceRequest', () => {
         const result = buildReplaceRequest({
             date: '2026-05-27',
             description: '',
-            bankTransactionId: null,
             counterpartyId: null,
             lines: [
                 {
@@ -264,19 +258,17 @@ describe('buildReplaceRequest', () => {
         expect(result.fieldErrors.lines).toBeDefined();
     });
 
-    it('echoes bankTransactionId and counterpartyId untouched when supplied', () => {
+    it('echoes counterpartyId untouched when supplied', () => {
         const lines = toEditLines(unclearedLoaded(), 2);
         const result = buildReplaceRequest({
             date: '2026-05-27',
             description: '',
-            bankTransactionId: null,
             counterpartyId: null,
             lines,
             scale: 2,
         });
         expect(result.ok).toBe(true);
         if (!result.ok) return;
-        expect(result.request.bankTransactionId).toBeNull();
         expect(result.request.counterpartyId).toBeNull();
     });
 });

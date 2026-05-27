@@ -199,7 +199,6 @@ internal sealed class AccountBalanceEndpointTests : EndpointsTestsBase
         var request = new CreateJournalEntryRequestDto(
             Date: new DateOnly(2026, 5, 17),
             Description: null,
-            BankTransactionId: null,
             CounterpartyId: null,
             Lines: lines
         );

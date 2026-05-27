@@ -457,7 +457,6 @@ internal sealed class DashboardSummaryEndpointTests : EndpointsTestsBase
         var request = new CreateJournalEntryRequestDto(
             Date: date,
             Description: null,
-            BankTransactionId: null,
             CounterpartyId: null,
             Lines: lines
         );

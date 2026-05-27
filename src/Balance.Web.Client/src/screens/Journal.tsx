@@ -146,7 +146,7 @@ function JournalRow({
         >
             <span className="text-[12px] text-fg-3 tabular">{entry.date}</span>
             <span className="flex items-center justify-center text-fg-3" aria-hidden="true">
-                {entry.bankTransactionId ? (
+                {entry.hasBankTransactions ? (
                     <Icon name="download" size={12} strokeWidth={2} />
                 ) : null}
             </span>

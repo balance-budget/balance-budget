@@ -7,7 +7,6 @@ public sealed class JournalEntry : BaseEntity<JournalEntryId>
 {
     public required DateOnly Date { get; set; }
     public string? Description { get; set; }
-    public BankTransactionId? BankTransactionId { get; set; }
     public CounterpartyId? CounterpartyId { get; set; }
 
     public Collection<JournalLine> Lines { get; } = [];

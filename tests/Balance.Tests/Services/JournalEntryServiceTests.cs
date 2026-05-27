@@ -41,7 +41,6 @@ internal sealed class JournalEntryServiceTests : EndpointsTestsBase
             new CreateJournalEntryInput(
                 Date: new DateOnly(2026, 5, 17),
                 Description: "svc round-trip",
-                BankTransactionId: null,
                 CounterpartyId: null,
                 Lines:
                 [

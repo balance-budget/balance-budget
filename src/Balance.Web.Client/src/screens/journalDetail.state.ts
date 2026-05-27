@@ -121,7 +121,6 @@ export function computeTotals(lines: readonly EditLine[], scale: number): Totals
 export type BuildReplaceContext = {
     date: string;
     description: string;
-    bankTransactionId: components['schemas']['BankTransactionId'] | null;
     counterpartyId: components['schemas']['CounterpartyId'] | null;
     lines: readonly EditLine[];
     scale: number;
@@ -202,7 +201,6 @@ export function buildReplaceRequest(ctx: BuildReplaceContext): BuildReplaceResul
         request: {
             date: ctx.date,
             description: trimmedDescription.length === 0 ? null : trimmedDescription,
-            bankTransactionId: ctx.bankTransactionId,
             counterpartyId: ctx.counterpartyId,
             lines: wireLines,
         },

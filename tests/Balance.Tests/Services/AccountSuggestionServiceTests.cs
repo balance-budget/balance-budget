@@ -101,7 +101,6 @@ internal sealed class AccountSuggestionServiceTests : EndpointsTestsBase
             new CreateJournalEntryInput(
                 Date: new DateOnly(2026, 4, 10),
                 Description: "AH",
-                BankTransactionId: null,
                 CounterpartyId: counterparty.Id,
                 Lines:
                 [
@@ -182,7 +181,6 @@ internal sealed class AccountSuggestionServiceTests : EndpointsTestsBase
             new CreateJournalEntryInput(
                 Date: new DateOnly(2026, 4, 12),
                 Description: "AH split",
-                BankTransactionId: null,
                 CounterpartyId: counterparty.Id,
                 Lines:
                 [
@@ -269,7 +267,6 @@ internal sealed class AccountSuggestionServiceTests : EndpointsTestsBase
             new CreateJournalEntryInput(
                 Date: new DateOnly(2026, 1, 5),
                 Description: "older",
-                BankTransactionId: null,
                 CounterpartyId: counterparty.Id,
                 Lines:
                 [
@@ -284,7 +281,6 @@ internal sealed class AccountSuggestionServiceTests : EndpointsTestsBase
             new CreateJournalEntryInput(
                 Date: new DateOnly(2026, 4, 30),
                 Description: "newer",
-                BankTransactionId: null,
                 CounterpartyId: counterparty.Id,
                 Lines:
                 [

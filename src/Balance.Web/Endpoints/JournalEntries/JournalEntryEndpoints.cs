@@ -97,7 +97,6 @@ internal static class JournalEntryEndpoints
             new CreateJournalEntryInput(
                 request.Date,
                 request.Description,
-                request.BankTransactionId,
                 request.CounterpartyId,
                 lineInputs
             ),
@@ -138,7 +137,6 @@ internal static class JournalEntryEndpoints
             new ReplaceJournalEntryInput(
                 request.Date,
                 request.Description,
-                request.BankTransactionId,
                 request.CounterpartyId,
                 lineInputs
             ),

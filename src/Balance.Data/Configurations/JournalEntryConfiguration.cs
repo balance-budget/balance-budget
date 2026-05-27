@@ -23,10 +23,6 @@ internal sealed class JournalEntryConfiguration : IEntityTypeConfiguration<Journ
         builder.Property(e => e.Description).HasMaxLength(512);
 
         builder
-            .Property(e => e.BankTransactionId)
-            .HasConversion<BankTransactionId.EfCoreValueConverter>();
-
-        builder
             .Property(e => e.CounterpartyId)
             .HasConversion<CounterpartyId.EfCoreValueConverter>();
 
@@ -40,23 +36,12 @@ internal sealed class JournalEntryConfiguration : IEntityTypeConfiguration<Journ
             .OnDelete(DeleteBehavior.Cascade);
 
         builder
-            .HasOne<BankTransaction>()
-            .WithMany()
-            .HasForeignKey(e => e.BankTransactionId)
-            .OnDelete(DeleteBehavior.SetNull);
-
-        builder
             .HasOne<Counterparty>()
             .WithMany()
             .HasForeignKey(e => e.CounterpartyId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(e => e.Date).HasDatabaseName("IX_JournalEntries_Date");
-        builder
-            .HasIndex(e => e.BankTransactionId)
-            .IsUnique()
-            .HasFilter("\"BankTransactionId\" IS NOT NULL")
-            .HasDatabaseName("IX_JournalEntries_BankTransactionId");
         builder.HasIndex(e => e.CounterpartyId).HasDatabaseName("IX_JournalEntries_CounterpartyId");
     }
 }
