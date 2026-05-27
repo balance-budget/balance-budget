@@ -6,9 +6,9 @@ using CsvHelper.Configuration;
 
 namespace Balance.Integration.Ing.Parsers;
 
-internal sealed class IngCurrentAccountStatementParser : IIngCurrentAccountStatementParser
+internal sealed class IngSavingsAccountStatementParser : IIngSavingsAccountStatementParser
 {
-    public async ValueTask<IReadOnlyList<CurrentAccountStatementRow>> ParseStatementsAsync(
+    public async ValueTask<IReadOnlyList<SavingsAccountStatementRow>> ParseStatementsAsync(
         Stream stream,
         CancellationToken cancellationToken
     )
@@ -19,12 +19,12 @@ internal sealed class IngCurrentAccountStatementParser : IIngCurrentAccountState
         await csv.ReadAsync();
         csv.ReadHeader();
 
-        var rows = new List<CurrentAccountStatementRow>();
+        var rows = new List<SavingsAccountStatementRow>();
         while (await csv.ReadAsync())
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var parsed = csv.GetRecord<CurrentAccountStatementRow>();
+            var parsed = csv.GetRecord<SavingsAccountStatementRow>();
             parsed.RawRecord = csv.Context.Parser?.RawRecord ?? string.Empty;
             rows.Add(parsed);
         }

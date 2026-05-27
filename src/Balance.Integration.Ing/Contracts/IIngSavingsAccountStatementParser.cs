@@ -2,9 +2,9 @@ using Balance.Integration.Ing.Models.BankAccount;
 
 namespace Balance.Integration.Ing.Contracts;
 
-internal interface IIngCurrentAccountStatementParser
+internal interface IIngSavingsAccountStatementParser
 {
-    public ValueTask<IReadOnlyList<CurrentAccountStatementRow>> ParseStatementsAsync(
+    public ValueTask<IReadOnlyList<SavingsAccountStatementRow>> ParseStatementsAsync(
         Stream stream,
         CancellationToken cancellationToken
     );
