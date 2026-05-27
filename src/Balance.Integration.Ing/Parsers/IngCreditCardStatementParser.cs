@@ -1,41 +1,18 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Balance.Integration.Ing.Contracts;
+using Balance.Integration.Ing.Helpers;
 using Balance.Integration.Ing.Models.CreditCard;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.Content;
 
 namespace Balance.Integration.Ing.Parsers;
 
-internal sealed partial class IngCreditCardStatementParser : IIngCreditCardStatementParser
+internal sealed class IngCreditCardStatementParser : IIngCreditCardStatementParser
 {
+    private static readonly CultureInfo Culture = CultureInfo.GetCultureInfo("nl-NL");
     private const double LineYTolerance = 0.5;
-
-    private static readonly string[] NoteWhitelistPrefixes =
-    [
-        "Transactiedatum:",
-        "Kaartnummer:",
-        "Bedrag:",
-        "Koers:",
-        "Koersopslag",
-    ];
-
-    [GeneratedRegex(
-        @"^(?<date>\d{2}-\d{2}-\d{4})\s+(?<name>.+?)\s+(?<type>Betaling|Ontvangst|Incasso|Geldopname|Kosten|Correctie)\s+(?<sign>[+-])\s*(?<amount>\d[\d.,]*\d{2})$"
-    )]
-    private static partial Regex TransactionLinePattern();
-
-    [GeneratedRegex(@"Geboekt op Naam", RegexOptions.IgnoreCase)]
-    private static partial Regex FooterGeboektOpNaam();
-
-    [GeneratedRegex(@"Overeenkomstnummer", RegexOptions.IgnoreCase)]
-    private static partial Regex FooterOvereenkomstnummer();
-
-    [GeneratedRegex(@"Dit product valt", RegexOptions.IgnoreCase)]
-    private static partial Regex FooterDitProductValt();
-
-    [GeneratedRegex(@"Op ING\.nl", RegexOptions.IgnoreCase)]
-    private static partial Regex FooterOpIngNl();
 
     public ValueTask<CreditCardStatement> ParseStatementsAsync(
         Stream stream,
@@ -58,7 +35,7 @@ internal sealed partial class IngCreditCardStatementParser : IIngCreditCardState
         var matches = new List<(int Index, Match Match)>();
         for (var i = 0; i < lines.Count; i++)
         {
-            var match = TransactionLinePattern().Match(lines[i].Trim());
+            var match = IngPatterns.CreditCardTransactionLine().Match(lines[i].Trim());
             if (match.Success)
                 matches.Add((i, match));
         }
@@ -83,9 +60,12 @@ internal sealed partial class IngCreditCardStatementParser : IIngCreditCardState
                 var stripped = lines[j].Trim();
                 if (stripped.Length == 0)
                     continue;
-                if (!IsNoteLine(stripped))
+
+                var noteMatch = IngPatterns.CreditCardNoteLine().Match(stripped);
+                if (!noteMatch.Success)
                     continue;
-                noteLines.Add(stripped);
+
+                noteLines.Add(noteMatch.Value);
             }
             var notes = string.Join('\n', noteLines);
 
@@ -94,10 +74,8 @@ internal sealed partial class IngCreditCardStatementParser : IIngCreditCardState
                 "dd-MM-yyyy",
                 CultureInfo.InvariantCulture
             );
-            var amount = NormaliseAmount(
-                match.Groups["sign"].ValueSpan,
-                match.Groups["amount"].Value
-            );
+
+            var amount = decimal.Parse(match.Groups["amount"].Value, Culture);
 
             var rawRecord =
                 noteLines.Count == 0
@@ -156,37 +134,10 @@ internal sealed partial class IngCreditCardStatementParser : IIngCreditCardState
         for (var i = startIndex; i < lines.Count; i++)
         {
             var text = lines[i];
-            if (
-                FooterGeboektOpNaam().IsMatch(text)
-                || FooterOvereenkomstnummer().IsMatch(text)
-                || FooterDitProductValt().IsMatch(text)
-                || FooterOpIngNl().IsMatch(text)
-            )
+            if (IngPatterns.CreditCardFooter().IsMatch(text))
                 return i;
         }
         return lines.Count;
-    }
-
-    private static bool IsNoteLine(string line)
-    {
-        foreach (var prefix in NoteWhitelistPrefixes)
-        {
-            if (line.StartsWith(prefix, StringComparison.Ordinal))
-                return true;
-        }
-        return false;
-    }
-
-    private static decimal NormaliseAmount(ReadOnlySpan<char> sign, string value)
-    {
-        // ING credit card statements quote amounts in nl-NL: '.' is the thousands
-        // separator and ',' is the decimal mark. Strip thousands, swap decimal, then
-        // parse invariantly so we don't depend on the host culture.
-        var canonical = value
-            .Replace(".", string.Empty, StringComparison.Ordinal)
-            .Replace(',', '.');
-        var amount = decimal.Parse(canonical, CultureInfo.InvariantCulture);
-        return sign.Length > 0 && sign[0] == '-' ? -amount : amount;
     }
 
     private static CreditCardTransactionType MapTransactionType(string type) =>
@@ -198,7 +149,7 @@ internal sealed partial class IngCreditCardStatementParser : IIngCreditCardState
             "Geldopname" => CreditCardTransactionType.CashWithdrawal,
             "Kosten" => CreditCardTransactionType.Fees,
             "Correctie" => CreditCardTransactionType.Correction,
-            _ => throw new InvalidOperationException(
+            _ => throw new UnreachableException(
                 $"Unrecognised ING credit-card transaction type '{type}'."
             ),
         };

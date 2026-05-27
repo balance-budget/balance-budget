@@ -287,7 +287,7 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
 
         // ING own-savings transfers leave 'Counterparty' blank and embed the savings number
         // (D########) in 'Name / Description' or in the parsed note's free-text leftover.
-        var pattern = IngPatterns.SavingsAccountPattern();
+        var pattern = IngPatterns.SavingsAccount();
 
         var inDescription = pattern.Match(row.Description);
         if (inDescription.Success)
