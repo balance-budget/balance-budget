@@ -2,7 +2,7 @@ using Balance.Integration.Ing.Parsers;
 
 namespace Balance.Tests.Integrations.Ing;
 
-internal sealed class IngStatementParserTests
+internal sealed class IngCurrentAccountStatementParserTests
 {
     [Test]
     public async Task ParsesDutchExport(CancellationToken cancellationToken)
@@ -14,7 +14,7 @@ internal sealed class IngStatementParserTests
             "NL69INGB0123456789_01-01-2026_31-01-2026.csv"
         );
         await using var stream = File.OpenRead(path);
-        var parser = new IngStatementParser();
+        var parser = new IngCurrentAccountStatementParser();
         var result = await parser.ParseStatementsAsync(stream, cancellationToken);
 
         await Assert.That(result).IsNotNull();
@@ -31,7 +31,7 @@ internal sealed class IngStatementParserTests
             "NL69INGB0123456789_01-03-2026_31-03-2026.csv"
         );
         await using var stream = File.OpenRead(path);
-        var parser = new IngStatementParser();
+        var parser = new IngCurrentAccountStatementParser();
         var result = await parser.ParseStatementsAsync(stream, cancellationToken);
 
         await Assert.That(result).IsNotNull();
@@ -48,7 +48,7 @@ internal sealed class IngStatementParserTests
             "NL69INGB0123456789_01-01-2026_31-01-2026.csv"
         );
         await using var stream = File.OpenRead(path);
-        var parser = new IngStatementParser();
+        var parser = new IngCurrentAccountStatementParser();
         var result = await parser.ParseStatementsAsync(stream, cancellationToken);
 
         var first = result[0];

@@ -14,25 +14,16 @@ using CsvHelper.Configuration.Attributes;
 
 namespace Balance.Integration.Ing.Importers;
 
-internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
+internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtractor
 {
-    private const string Key = "Ing.CurrentAccount.V1";
+    private const string Key = "Ing.CreditCard.V1";
 
     private static readonly CurrencyCode Eur = new("EUR");
-
-    private static readonly Dictionary<TransactionCode, string> TransactionCodeToString =
-        typeof(TransactionCode)
-            .GetFields(BindingFlags.Public | BindingFlags.Static)
-            .Where(f => f.IsLiteral)
-            .ToDictionary(
-                f => (TransactionCode)f.GetValue(null)!,
-                f => f.GetCustomAttribute<NameAttribute>()?.Names.FirstOrDefault() ?? f.Name
-            );
 
     private readonly IIngCurrentAccountStatementParser _ingCurrentAccountStatementParser;
     private readonly IIngNoteParser _ingNoteParser;
 
-    public IngBankTransactionExtractor(
+    public IngCreditCardTransactionExtractor(
         IIngCurrentAccountStatementParser ingCurrentAccountStatementParser,
         IIngNoteParser ingNoteParser
     )
@@ -47,9 +38,6 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
         CancellationToken cancellationToken
     )
     {
-        ArgumentNullException.ThrowIfNull(bankAccount);
-        ArgumentNullException.ThrowIfNull(stream);
-
         if (bankAccount.AccountId is null)
         {
             return new InvariantError(
@@ -186,7 +174,6 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
         var entries = new List<BankTransactionMetadataValue>();
 
         // ING-specific fields
-        AddString(entries, "Transaction Code", TransactionCodeToString[row.Parsed.Code]);
         AddString(entries, "Transaction Type", row.Parsed.TransactionType);
         AddString(entries, "Tags", row.Parsed.Tag);
 

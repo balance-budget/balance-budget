@@ -6,7 +6,7 @@ using CsvHelper.Configuration;
 
 namespace Balance.Integration.Ing.Parsers;
 
-internal sealed class IngStatementParser : IIngStatementParser
+internal sealed class IngCurrentAccountStatementParser : IIngCurrentAccountStatementParser
 {
     public async ValueTask<IReadOnlyList<IngStatementRow>> ParseStatementsAsync(
         Stream stream,
