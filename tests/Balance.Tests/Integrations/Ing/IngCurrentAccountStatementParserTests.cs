@@ -53,7 +53,7 @@ internal sealed class IngCurrentAccountStatementParserTests
 
         var first = result[0];
         await Assert.That(first.RawRecord).IsNotEmpty();
-        await Assert.That(first.RawRecord).Contains(first.Parsed.Account);
-        await Assert.That(first.RawRecord).Contains(first.Parsed.Description);
+        await Assert.That(first.RawRecord).Contains(first.Account);
+        await Assert.That(first.RawRecord).Contains(first.Description);
     }
 }
