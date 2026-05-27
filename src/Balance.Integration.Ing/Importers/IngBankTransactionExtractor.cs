@@ -5,8 +5,8 @@ using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
 using Balance.Integration.Ing.Contracts;
 using Balance.Integration.Ing.Helpers;
+using Balance.Integration.Ing.Models.BankAccount;
 using Balance.Integration.Ing.Models.Notes;
-using Balance.Integration.Ing.Models.Statements;
 using Balance.Services.BankTransactions;
 using Balance.Services.Contracts;
 using CsvHelper;
@@ -29,15 +29,15 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
                 f => f.GetCustomAttribute<NameAttribute>()?.Names.FirstOrDefault() ?? f.Name
             );
 
-    private readonly IIngStatementParser _ingStatementParser;
+    private readonly IIngCurrentAccountStatementParser _ingCurrentAccountStatementParser;
     private readonly IIngNoteParser _ingNoteParser;
 
     public IngBankTransactionExtractor(
-        IIngStatementParser ingStatementParser,
+        IIngCurrentAccountStatementParser ingCurrentAccountStatementParser,
         IIngNoteParser ingNoteParser
     )
     {
-        _ingStatementParser = ingStatementParser;
+        _ingCurrentAccountStatementParser = ingCurrentAccountStatementParser;
         _ingNoteParser = ingNoteParser;
     }
 
@@ -68,10 +68,13 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
             );
         }
 
-        IReadOnlyList<IngStatementRow> rows;
+        IReadOnlyList<CurrentAccountStatementRow> rows;
         try
         {
-            rows = await _ingStatementParser.ParseStatementsAsync(stream, cancellationToken);
+            rows = await _ingCurrentAccountStatementParser.ParseStatementsAsync(
+                stream,
+                cancellationToken
+            );
         }
         catch (CsvHelperException ex)
         {
@@ -85,20 +88,20 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
             return Array.Empty<BankTransaction>();
 
         var ownIdentifiers = OwnIdentifiers(bankAccount);
-        var firstAccount = Normalise(rows[0].Parsed.Account);
+        var firstAccount = Normalise(rows[0].Account);
 
         if (!ownIdentifiers.Contains(firstAccount))
         {
             return new InvariantError(
                 ErrorCodes.ImportIbanMismatch,
-                $"Statement Account '{rows[0].Parsed.Account}' does not match this "
+                $"Statement Account '{rows[0].Account}' does not match this "
                     + "BankAccount's Iban or AccountNumber."
             );
         }
 
         foreach (var row in rows)
         {
-            if (Normalise(row.Parsed.Account) != firstAccount)
+            if (Normalise(row.Account) != firstAccount)
             {
                 return new InvariantError(
                     ErrorCodes.ImportAccountColumnDivergence,
@@ -124,25 +127,25 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
 
     private Result<BankTransaction> ToBankTransaction(
         BankAccountId bankAccountId,
-        IngStatementRow row
+        CurrentAccountStatementRow row
     )
     {
-        var note = _ingNoteParser.ParseNote(row.Parsed.Notifications);
+        var note = _ingNoteParser.ParseNote(row.Notifications);
 
-        var description = FirstNonBlank(note.Description, row.Parsed.Description);
+        var description = FirstNonBlank(note.Description, row.Description);
         if (description is null)
         {
             return new InvariantError(
                 ErrorCodes.ImportFormatInvalid,
-                $"Row dated {row.Parsed.Date:yyyy-MM-dd} has no usable description "
+                $"Row dated {row.Date:yyyy-MM-dd} has no usable description "
                     + "('Name / Description' is blank and 'Notifications' carries no "
                     + "'Description:' field)."
             );
         }
 
-        var counterpartyName = NullIfBlank(row.Parsed.Description);
+        var counterpartyName = NullIfBlank(row.Description);
         var counterpartyAccountNumber = ResolveCounterpartyAccountNumber(row, note);
-        var signedCents = ToSignedCents(row.Parsed.Amount, row.Parsed.DebitCredit);
+        var signedCents = ToSignedCents(row.Amount, row.DebitCredit);
 
         var foreignAmountMinor = ToMinorUnits(note.ForeignCurrencyAmount?.Amount);
         var foreignCurrencyCode = NullIfBlank(note.ForeignCurrencyAmount?.CurrencyCode);
@@ -153,7 +156,7 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
         {
             Id = new BankTransactionId(Guid.CreateVersion7()),
             BankAccountId = bankAccountId,
-            BookingDate = row.Parsed.Date,
+            BookingDate = row.Date,
             Money = new Money(signedCents, Eur),
             Description = description,
             CounterpartyName = counterpartyName,
@@ -176,16 +179,16 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
     // here (ADR 0015). Keys are global namespace; bank-prefixed only for genuinely
     // bank-specific extras. Nested values flatten with dotted keys.
     private static List<BankTransactionMetadataValue> BuildMetadata(
-        IngStatementRow row,
+        CurrentAccountStatementRow row,
         IngNote note
     )
     {
         var entries = new List<BankTransactionMetadataValue>();
 
         // ING-specific fields
-        AddString(entries, "Transaction Code", TransactionCodeToString[row.Parsed.Code]);
-        AddString(entries, "Transaction Type", row.Parsed.TransactionType);
-        AddString(entries, "Tags", row.Parsed.Tag);
+        AddString(entries, "Transaction Code", TransactionCodeToString[row.Code]);
+        AddString(entries, "Transaction Type", row.TransactionType);
+        AddString(entries, "Tags", row.Tag);
 
         // Notes
         AddString(entries, "Transaction", note.Transaction);
@@ -274,16 +277,19 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
         return (long)decimal.Round(amount.Value * 100m);
     }
 
-    private static string? ResolveCounterpartyAccountNumber(IngStatementRow row, IngNote note)
+    private static string? ResolveCounterpartyAccountNumber(
+        CurrentAccountStatementRow row,
+        IngNote note
+    )
     {
-        if (!string.IsNullOrWhiteSpace(row.Parsed.CounterParty))
-            return row.Parsed.CounterParty;
+        if (!string.IsNullOrWhiteSpace(row.CounterParty))
+            return row.CounterParty;
 
         // ING own-savings transfers leave 'Counterparty' blank and embed the savings number
         // (D########) in 'Name / Description' or in the parsed note's free-text leftover.
-        var pattern = IngPatterns.SavingsAccountPattern();
+        var pattern = IngPatterns.SavingsAccount();
 
-        var inDescription = pattern.Match(row.Parsed.Description);
+        var inDescription = pattern.Match(row.Description);
         if (inDescription.Success)
             return inDescription.Value;
 

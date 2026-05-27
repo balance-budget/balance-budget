@@ -4,12 +4,26 @@ namespace Balance.Integration.Ing.Helpers;
 
 internal static partial class IngPatterns
 {
-    [GeneratedRegex(@"^(?<num>\w+)_")]
-    public static partial Regex ExportAccountNumberPattern();
-
     [GeneratedRegex(@"(D\d{8})")]
-    public static partial Regex SavingsAccountPattern();
+    public static partial Regex SavingsAccount();
 
-    [GeneratedRegex(@"^[A-Z]{2}\d{2}")]
-    public static partial Regex IbanPrefixPattern();
+    [GeneratedRegex(
+        @"^(?<date>\d{2}-\d{2}-\d{4})\s+(?<name>.+?)\s+(?<type>Betaling|Ontvangst|Incasso|Geldopname|Kosten|Correctie)\s+(?<amount>[+-]\s*\d[\d.,]*\d{2})$"
+    )]
+    public static partial Regex CreditCardTransactionLine();
+
+    [GeneratedRegex(@"^NL\d{2} INGB \d{4} \d{4} \d{2}$", RegexOptions.IgnoreCase)]
+    public static partial Regex CreditCardCounterParty();
+
+    [GeneratedRegex(
+        @"^(Transactiedatum: (?<date>\d{2}-\d{2}-\d{4})|Kaartnummer: (?<cardno>\d{4} \*\*\*\* \*\*\*\* \d{4})|Bedrag: (?<fcamount>\d+\,\d+) (?<fccode>[A-Z]{3})|Koers: (?<fcrate>\d+\,\d+)|Koersopslag \((?<fcmarkupcode>[A-Z]{3})\): (?<fcmarkupamount>\d+\,\d+))$",
+        RegexOptions.IgnoreCase
+    )]
+    public static partial Regex CreditCardNoteLine();
+
+    [GeneratedRegex(
+        @"Geboekt op Naam|Overeenkomstnummer|Dit product valt|Op ING\.nl",
+        RegexOptions.IgnoreCase
+    )]
+    public static partial Regex CreditCardFooter();
 }

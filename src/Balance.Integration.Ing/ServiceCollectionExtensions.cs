@@ -11,7 +11,8 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddBalanceIntegrationIng(this IServiceCollection services) =>
         services
             .AddScoped<IIngNoteParser, IngNoteParser>()
-            .AddScoped<IIngStatementParser, IngStatementParser>()
+            .AddScoped<IIngCurrentAccountStatementParser, IngCurrentAccountStatementParser>()
+            .AddScoped<IIngCreditCardStatementParser, IngCreditCardStatementParser>()
             .AddScoped<IngBankTransactionExtractor>()
             .AddScoped<IBankTransactionExtractor>(sp =>
                 sp.GetRequiredService<IngBankTransactionExtractor>()

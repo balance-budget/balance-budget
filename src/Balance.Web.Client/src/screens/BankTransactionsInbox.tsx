@@ -6,6 +6,7 @@ import { useBankAccounts, type BankAccount } from '../api/bankAccounts';
 import {
     BANK_TRANSACTION_FILTERS,
     bankTransactionsKeys,
+    useAttachBankTransaction,
     useBankTransactions,
     useDismissBankTransaction,
     useUndismissBankTransaction,
@@ -104,13 +105,7 @@ const EMPTY_HINT: Record<BankTransactionFilter, string> = {
     All: 'Import a bank statement from Bank imports to get started.',
 };
 
-const ACCOUNT_TYPE_ORDER: AccountType[] = [
-    'Asset',
-    'Liability',
-    'Income',
-    'Expense',
-    'Equity',
-];
+const ACCOUNT_TYPE_ORDER: AccountType[] = ['Asset', 'Liability', 'Income', 'Expense', 'Equity'];
 
 const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
     Asset: 'Assets',
@@ -443,7 +438,9 @@ function InboxEditor({
         );
     }
     if (accounts.isError) {
-        return <ErrorState message="Couldn't load accounts." onRetry={() => void accounts.refetch()} />;
+        return (
+            <ErrorState message="Couldn't load accounts." onRetry={() => void accounts.refetch()} />
+        );
     }
     if (counterparties.isError) {
         return (
@@ -736,10 +733,7 @@ function InboxEditorReady({
         () => visibleBts.filter(b => selection.has(b.id)),
         [visibleBts, selection],
     );
-    const selectedCurrencies = useMemo(
-        () => distinctRowCurrencies(selectedBts),
-        [selectedBts],
-    );
+    const selectedCurrencies = useMemo(() => distinctRowCurrencies(selectedBts), [selectedBts]);
     const ownBankSideAccountIdsInSelection = useMemo(() => {
         const s = new Set<AccountId>();
         for (const bt of selectedBts) {
@@ -754,9 +748,7 @@ function InboxEditorReady({
         () =>
             visibleBts
                 .map(bt => bt.id)
-                .filter(id =>
-                    dismissDrafts.has(id) || rowStatus(draftFor(id)) === 'ready',
-                ),
+                .filter(id => dismissDrafts.has(id) || rowStatus(draftFor(id)) === 'ready'),
         // draftFor depends on userOverrides + prefillByBt
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [visibleBts, userOverrides, dismissDrafts, prefillByBt],
@@ -855,10 +847,7 @@ function InboxEditorReady({
         setSavedIds(new Set());
         setSaving(false);
         setProgress(null);
-        toast.push(
-            formatSaveAllToast(summary),
-            summary.failed === 0 ? 'success' : 'error',
-        );
+        toast.push(formatSaveAllToast(summary), summary.failed === 0 ? 'success' : 'error');
     }
 
     const blocker = useBlocker({
@@ -1143,8 +1132,7 @@ function BulkApplyFooter({
 
     const mixedCurrency = selectedCurrencies.length > 1;
     const accountDisabled = saving || mixedCurrency;
-    const canApply =
-        !saving && (counterparty !== null || accountId !== null);
+    const canApply = !saving && (counterparty !== null || accountId !== null);
 
     const cpValue: CounterpartyId | null =
         counterparty?.kind === 'existing' ? counterparty.counterpartyId : null;
@@ -1288,7 +1276,9 @@ function SaveBar({
                     disabled={saving || readyCount === 0}
                     className="px-3 py-1 rounded-sm text-[13px] font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
                 >
-                    {saving ? 'Saving…' : `Save ${readyCount.toString()} row${readyCount === 1 ? '' : 's'}`}
+                    {saving
+                        ? 'Saving…'
+                        : `Save ${readyCount.toString()} row${readyCount === 1 ? '' : 's'}`}
                 </button>
             </div>
         </div>
@@ -1352,6 +1342,9 @@ function InboxRow({
                         {bankTransaction.counterpartyAccountNumber}
                     </span>
                 )}
+                {bankTransaction.matchingJournalEntry && (
+                    <AttachHintBadge hint={bankTransaction.matchingJournalEntry} />
+                )}
                 {dismissDraft !== null && (
                     <span className="text-[11px] text-warning mt-1 truncate">
                         Reason: {dismissDraft}
@@ -1403,6 +1396,18 @@ function StatusIndicator({ status }: { status: RowStatus }) {
     return (
         <span className="text-[11px] text-fg-3 tabular inline-flex items-center gap-1">
             <span aria-hidden>—</span>
+        </span>
+    );
+}
+
+function AttachHintBadge({ hint }: { hint: NonNullable<BankTransaction['matchingJournalEntry']> }) {
+    return (
+        <span
+            className="text-[11px] text-brand-primary mt-1 truncate inline-flex items-center gap-1"
+            title={`Auto-matched to JE on ${hint.date}`}
+        >
+            <Icon name="link" size={11} strokeWidth={2} />
+            Matches JE · {hint.otherAccountName}
         </span>
     );
 }
@@ -1517,8 +1522,40 @@ function InboxRowActions({
     onReset: () => void;
     onDismiss: (bt: BankTransaction) => void;
 }) {
+    const attach = useAttachBankTransaction();
+    const toast = useToast();
+    const hint = bankTransaction.matchingJournalEntry;
+
+    async function onAttachClick() {
+        if (!hint) return;
+        try {
+            await attach.mutateAsync({
+                id: bankTransaction.id,
+                journalEntryId: hint.id,
+            });
+            toast.success(`Attached to ${hint.otherAccountName}.`);
+        } catch (err) {
+            if (err instanceof Error) {
+                toast.error(err.message);
+            }
+        }
+    }
+
     return (
         <div className="flex items-center justify-end gap-1 pt-1">
+            {hint && (
+                <button
+                    type="button"
+                    onClick={() => void onAttachClick()}
+                    disabled={disabled || attach.isPending}
+                    aria-label={`Attach to ${hint.otherAccountName}`}
+                    title={`Attach to JE on ${hint.date} (${hint.otherAccountName})`}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-[12px] text-brand-primary hover:bg-brand-primary-soft disabled:opacity-60"
+                >
+                    <Icon name="link" size={14} strokeWidth={2} />
+                    Attach
+                </button>
+            )}
             <Link
                 to="/bank-transactions/$id/categorize"
                 params={{ id: bankTransaction.id }}

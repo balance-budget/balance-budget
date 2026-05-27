@@ -15,7 +15,7 @@ internal sealed class IngBankTransactionExtractorTests
         + "\"Resulting balance\";\"Tag\"";
 
     private static IngBankTransactionExtractor BuildExtractor() =>
-        new(new IngStatementParser(), new IngNoteParser());
+        new(new IngCurrentAccountStatementParser(), new IngNoteParser());
 
     private static BankAccount OwnedEurAccount(string iban = "NL69INGB0123456789") =>
         new()

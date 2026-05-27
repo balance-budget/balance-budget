@@ -1,6 +1,6 @@
 using CsvHelper.Configuration.Attributes;
 
-namespace Balance.Integration.Ing.Models.Statements;
+namespace Balance.Integration.Ing.Models.BankAccount;
 
 public sealed class CurrentAccountStatementRow
 {
@@ -37,4 +37,7 @@ public sealed class CurrentAccountStatementRow
 
     [Name("Tag")]
     public required string Tag { get; init; } = string.Empty;
+
+    [Ignore]
+    public required string RawRecord { get; set; } = string.Empty;
 }

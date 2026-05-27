@@ -1,6 +1,6 @@
 using CsvHelper.Configuration.Attributes;
 
-namespace Balance.Integration.Ing.Models.Statements;
+namespace Balance.Integration.Ing.Models.BankAccount;
 
 /// <remarks>
 /// Names are taken from Dutch and English descriptions used by ING

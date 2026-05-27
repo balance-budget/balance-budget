@@ -1,14 +1,14 @@
 using System.Globalization;
 using Balance.Integration.Ing.Contracts;
-using Balance.Integration.Ing.Models.Statements;
+using Balance.Integration.Ing.Models.BankAccount;
 using CsvHelper;
 using CsvHelper.Configuration;
 
 namespace Balance.Integration.Ing.Parsers;
 
-internal sealed class IngStatementParser : IIngStatementParser
+internal sealed class IngSavingsAccountStatementParser : IIngSavingsAccountStatementParser
 {
-    public async ValueTask<IReadOnlyList<IngStatementRow>> ParseStatementsAsync(
+    public async ValueTask<IReadOnlyList<SavingsAccountStatementRow>> ParseStatementsAsync(
         Stream stream,
         CancellationToken cancellationToken
     )
@@ -19,14 +19,14 @@ internal sealed class IngStatementParser : IIngStatementParser
         await csv.ReadAsync();
         csv.ReadHeader();
 
-        var rows = new List<IngStatementRow>();
+        var rows = new List<SavingsAccountStatementRow>();
         while (await csv.ReadAsync())
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var parsed = csv.GetRecord<CurrentAccountStatementRow>();
-            var rawRecord = csv.Context.Parser?.RawRecord ?? string.Empty;
-            rows.Add(new IngStatementRow(parsed, rawRecord));
+            var parsed = csv.GetRecord<SavingsAccountStatementRow>();
+            parsed.RawRecord = csv.Context.Parser?.RawRecord ?? string.Empty;
+            rows.Add(parsed);
         }
         return rows;
     }

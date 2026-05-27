@@ -9,6 +9,7 @@ import {
     type JournalEntryDetail,
     type JournalLine,
 } from '../api/journalEntries';
+import { useDetachBankTransaction, type BankTransactionDetail } from '../api/bankTransactions';
 import { useCounterparties } from '../api/counterparties';
 import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import { Amount } from '../components/Amount';
@@ -31,11 +32,7 @@ import {
     type JournalEntryId,
 } from '../lib/domain';
 import { ApiError } from '../lib/http';
-import {
-    formatLegLabel,
-    projectEntry,
-    type JournalProjection,
-} from '../lib/journalProjection';
+import { formatLegLabel, projectEntry, type JournalProjection } from '../lib/journalProjection';
 import { formatMoney } from '../lib/money';
 import {
     buildReplaceRequest,
@@ -48,13 +45,7 @@ import {
     type TotalsState,
 } from './journalDetail.state';
 
-const ACCOUNT_TYPE_ORDER: AccountType[] = [
-    'Asset',
-    'Liability',
-    'Income',
-    'Expense',
-    'Equity',
-];
+const ACCOUNT_TYPE_ORDER: AccountType[] = ['Asset', 'Liability', 'Income', 'Expense', 'Equity'];
 
 const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
     Asset: 'Assets',
@@ -131,10 +122,7 @@ export function JournalDetail({ id }: { id: JournalEntryId }) {
 
             {entry.bankTransactions.map(bt => (
                 <Panel key={bt.id}>
-                    <SectionHead
-                        title="Bank transaction"
-                        subtitle="Imported row this entry was categorised from."
-                    />
+                    <BankTransactionPanelHead bt={bt} />
                     <BankTransactionDetails bt={bt} catalog={catalog} />
                 </Panel>
             ))}
@@ -153,6 +141,42 @@ export function JournalDetail({ id }: { id: JournalEntryId }) {
                 />
             )}
         </>
+    );
+}
+
+function BankTransactionPanelHead({ bt }: { bt: BankTransactionDetail }) {
+    const detach = useDetachBankTransaction();
+    const toast = useToast();
+
+    async function onDetachClick() {
+        try {
+            await detach.mutateAsync(bt.id);
+            toast.success('Detached. Bank transaction returned to the inbox.');
+        } catch (err) {
+            if (err instanceof Error) {
+                toast.error(err.message);
+            }
+        }
+    }
+
+    return (
+        <div className="flex items-start justify-between gap-3 mb-2">
+            <SectionHead
+                title="Bank transaction"
+                subtitle="Imported row this entry was categorised from."
+            />
+            <button
+                type="button"
+                onClick={() => void onDetachClick()}
+                disabled={detach.isPending}
+                aria-label="Detach bank transaction"
+                title="Detach this BT — returns it to the inbox and clears the matching line back to Uncleared."
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-[12px] text-fg-2 border border-border-strong hover:bg-surface-2 disabled:opacity-60"
+            >
+                <Icon name="unlink" size={14} strokeWidth={2} />
+                {detach.isPending ? 'Detaching…' : 'Detach'}
+            </button>
+        </div>
     );
 }
 
@@ -268,13 +292,7 @@ function HeaderAmount({ projection }: { projection: JournalProjection }) {
     );
 }
 
-function LineTable({
-    entry,
-    projection,
-}: {
-    entry: JournalEntry;
-    projection: JournalProjection;
-}) {
+function LineTable({ entry, projection }: { entry: JournalEntry; projection: JournalProjection }) {
     const catalog = useCurrencyCatalog();
     return (
         <div className="flex flex-col">
@@ -527,11 +545,7 @@ function EditJournalEntry({
                     onAdd={addLine}
                     onRemove={removeLine}
                 />
-                <BalanceFooter
-                    totals={totals}
-                    currencyCode={currencyCode}
-                    catalog={catalog}
-                />
+                <BalanceFooter totals={totals} currencyCode={currencyCode} catalog={catalog} />
                 <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-border-soft">
                     <button
                         type="button"

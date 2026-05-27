@@ -47,9 +47,7 @@ export function BankTransactionDetails({
 
     for (const entry of bt.metadata) {
         const value =
-            entry.integerValue !== null
-                ? entry.integerValue.toString()
-                : (entry.stringValue ?? '');
+            entry.integerValue !== null ? entry.integerValue.toString() : (entry.stringValue ?? '');
         fields.push({ label: entry.key, value });
     }
 

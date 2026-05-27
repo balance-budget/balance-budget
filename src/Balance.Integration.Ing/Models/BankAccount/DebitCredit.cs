@@ -1,6 +1,6 @@
 using CsvHelper.Configuration.Attributes;
 
-namespace Balance.Integration.Ing.Models.Statements;
+namespace Balance.Integration.Ing.Models.BankAccount;
 
 public enum DebitCredit
 {
