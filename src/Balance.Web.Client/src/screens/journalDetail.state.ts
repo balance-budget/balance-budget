@@ -67,16 +67,13 @@ export function emptyLine(): EditLine {
     };
 }
 
-/** Format an absolute minor-units amount as a positive major-units string. */
-export function formatMagnitudeFor(scale: number): (minor: number) => string {
-    return (minor: number): string => {
-        const absMinor = Math.abs(minor);
-        const divisor = 10 ** scale;
-        const major = Math.floor(absMinor / divisor);
-        const remainder = absMinor - major * divisor;
-        if (scale === 0) return major.toString();
-        return `${major.toString()}.${remainder.toString().padStart(scale, '0')}`;
-    };
+function formatMagnitude(minor: number, scale: number): string {
+    const absMinor = Math.abs(minor);
+    const divisor = 10 ** scale;
+    const major = Math.floor(absMinor / divisor);
+    const remainder = absMinor - major * divisor;
+    if (scale === 0) return major.toString();
+    return `${major.toString()}.${remainder.toString().padStart(scale, '0')}`;
 }
 
 export type LoadedLine = {
@@ -87,17 +84,14 @@ export type LoadedLine = {
     reconciliationStatus: WireReconciliationStatus;
 };
 
-export function toEditLines(
-    lines: readonly LoadedLine[],
-    formatMagnitude: (minor: number) => string,
-): EditLine[] {
+export function toEditLines(lines: readonly LoadedLine[], scale: number): EditLine[] {
     return lines.map(line => ({
         key: line.id,
         serverId: line.id,
         status: line.reconciliationStatus,
         accountId: line.accountId,
         side: line.amount >= 0 ? 'debit' : 'credit',
-        amount: formatMagnitude(line.amount),
+        amount: formatMagnitude(line.amount, scale),
         description: line.description ?? '',
     }));
 }
