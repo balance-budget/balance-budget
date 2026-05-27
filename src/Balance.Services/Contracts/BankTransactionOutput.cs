@@ -23,5 +23,6 @@ public sealed record BankTransactionOutput(
     DateTime? DismissedAt,
     string? DismissedReason,
     DateTime CreatedAt,
-    DateTime UpdatedAt
+    DateTime UpdatedAt,
+    AttachHintOutput? MatchingJournalEntry = null
 );

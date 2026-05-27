@@ -68,6 +68,7 @@ function bt(overrides: Partial<BankTransaction> = {}): BankTransaction {
         journalEntryId: null,
         dismissedAt: null,
         dismissedReason: null,
+        matchingJournalEntry: null,
         ...overrides,
     };
 }
@@ -466,9 +467,7 @@ describe('runSaveAll', () => {
             dismiss: vi.fn(),
             onRowResult: (id, outcome) =>
                 outcomes.push(
-                    outcome.ok
-                        ? { id, ok: true }
-                        : { id, ok: false, error: outcome.error },
+                    outcome.ok ? { id, ok: true } : { id, ok: false, error: outcome.error },
                 ),
         });
         expect(summary).toEqual({ categorised: 2, dismissed: 0, failed: 1 });
@@ -602,9 +601,7 @@ describe('runSaveAll', () => {
             dismiss,
             onRowResult: (id, outcome) =>
                 outcomes.push(
-                    outcome.ok
-                        ? { id, ok: true }
-                        : { id, ok: false, error: outcome.error },
+                    outcome.ok ? { id, ok: true } : { id, ok: false, error: outcome.error },
                 ),
         });
         expect(summary).toEqual({ categorised: 0, dismissed: 1, failed: 1 });
@@ -674,12 +671,7 @@ describe('computeRangeSelection', () => {
     });
 
     it('deselects every id in the range when the target was already selected', () => {
-        const next = computeRangeSelection(
-            ordered,
-            new Set([id1, id2, id3, id4]),
-            id2,
-            id4,
-        );
+        const next = computeRangeSelection(ordered, new Set([id1, id2, id3, id4]), id2, id4);
         expect(next.has(id1)).toBe(true);
         expect(next.has(id2)).toBe(false);
         expect(next.has(id3)).toBe(false);
@@ -740,12 +732,7 @@ describe('distinctRowCurrencies', () => {
     }
 
     it('returns the distinct currency set in first-seen order', () => {
-        const cs = distinctRowCurrencies([
-            row('EUR'),
-            row('EUR'),
-            row('USD'),
-            row('GBP'),
-        ]);
+        const cs = distinctRowCurrencies([row('EUR'), row('EUR'), row('USD'), row('GBP')]);
         expect(cs).toEqual(['EUR', 'USD', 'GBP']);
     });
 

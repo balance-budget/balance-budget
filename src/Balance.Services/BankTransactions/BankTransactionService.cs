@@ -12,16 +12,19 @@ internal sealed class BankTransactionService : IBankTransactionService
 {
     private readonly BalanceDbContext _dbContext;
     private readonly ICurrencyService _currencyService;
+    private readonly IBankTransactionAttachService _attachService;
     private readonly TimeProvider _timeProvider;
 
     public BankTransactionService(
         BalanceDbContext dbContext,
         ICurrencyService currencyService,
+        IBankTransactionAttachService attachService,
         TimeProvider timeProvider
     )
     {
         _dbContext = dbContext;
         _currencyService = currencyService;
+        _attachService = attachService;
         _timeProvider = timeProvider;
     }
 
@@ -53,7 +56,7 @@ internal sealed class BankTransactionService : IBankTransactionService
             _ => throw new ArgumentOutOfRangeException(nameof(filter), filter, null),
         };
 
-        return await query
+        var rows = await query
             .Skip(skip)
             .Take(take)
             .Select(b => new BankTransactionOutput(
@@ -79,6 +82,20 @@ internal sealed class BankTransactionService : IBankTransactionService
                 b.UpdatedAt
             ))
             .ToListAsync(cancellationToken);
+
+        // The Inbox hint is the only filter where a MatchingJournalEntry is meaningful (other
+        // filters either show already-categorised rows or dismissed rows). Compute the predicate
+        // per row via the attach service so the 7-condition logic lives in one place.
+        if (filter != BankTransactionListFilter.Inbox || rows.Count == 0)
+            return rows;
+
+        var withHints = new List<BankTransactionOutput>(rows.Count);
+        foreach (var row in rows)
+        {
+            var hint = await _attachService.ComputeHintAsync(row.Id, cancellationToken);
+            withHints.Add(row with { MatchingJournalEntry = hint });
+        }
+        return withHints;
     }
 
     public async Task<Result<BankTransactionDetailOutput>> GetAsync(
