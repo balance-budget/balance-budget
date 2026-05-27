@@ -3,8 +3,11 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import { useAccounts, type Account } from '../api/accounts';
 import { useBankAccounts, type BankAccount } from '../api/bankAccounts';
 import {
+    useAttachBankTransaction,
+    useAttachCandidates,
     useBankTransaction,
     useCategorizeBankTransaction,
+    type AttachCandidate,
     type BankTransaction,
     type BankTransactionDetail,
 } from '../api/bankTransactions';
@@ -22,6 +25,7 @@ import { ErrorState } from '../components/ErrorState';
 import { FieldError } from '../components/FieldError';
 import { FormErrorBanner } from '../components/FormErrorBanner';
 import { Icon } from '../components/Icon';
+import { Modal, ModalFooter } from '../components/Modal';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
@@ -47,13 +51,7 @@ import {
     type LineInput,
 } from './bankTransactionCategorize.state';
 
-const ACCOUNT_TYPE_ORDER: AccountType[] = [
-    'Asset',
-    'Liability',
-    'Income',
-    'Expense',
-    'Equity',
-];
+const ACCOUNT_TYPE_ORDER: AccountType[] = ['Asset', 'Liability', 'Income', 'Expense', 'Equity'];
 
 const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
     Asset: 'Assets',
@@ -80,12 +78,7 @@ export function BankTransactionCategorize({ id }: Props) {
     const bankAccounts = useBankAccounts();
     const catalog = useCurrencyCatalog();
 
-    if (
-        bt.isPending ||
-        accounts.isPending ||
-        counterparties.isPending ||
-        bankAccounts.isPending
-    ) {
+    if (bt.isPending || accounts.isPending || counterparties.isPending || bankAccounts.isPending) {
         return (
             <Panel>
                 <Skeleton className="h-6 w-1/3 mb-3" />
@@ -231,8 +224,7 @@ function CategorizeForm({
         return m;
     }, [accounts]);
 
-    const activeCounterpartyId =
-        form.counterpartyMode === 'existing' ? form.counterpartyId : null;
+    const activeCounterpartyId = form.counterpartyMode === 'existing' ? form.counterpartyId : null;
     const suggestions = useSuggestedCounterAccounts(activeCounterpartyId);
 
     // Track whether the user has interacted with the lines so we don't clobber
@@ -340,6 +332,7 @@ function CategorizeForm({
                 <div className="mb-4">
                     <BankTransactionDetails bt={bt} catalog={catalog} />
                 </div>
+                <AttachOptionsPanel bt={bt} catalog={catalog} />
                 <FormErrorBanner message={topError} />
                 <HeaderInputs
                     form={form}
@@ -547,9 +540,7 @@ function Lines({
 
     const visibleAccounts = useMemo(
         () =>
-            accounts.filter(
-                a => a.currencyCode === currencyCode && a.id !== ownBankSideAccountId,
-            ),
+            accounts.filter(a => a.currencyCode === currencyCode && a.id !== ownBankSideAccountId),
         [accounts, currencyCode, ownBankSideAccountId],
     );
 
@@ -615,10 +606,7 @@ function LineRow({
                         onUpdate(index, { accountId });
                     }}
                 />
-                <FieldError
-                    name={`lines[${index.toString()}].accountId`}
-                    errors={fieldErrors}
-                />
+                <FieldError name={`lines[${index.toString()}].accountId`} errors={fieldErrors} />
             </div>
             <div className="flex flex-col gap-1">
                 <input
@@ -631,10 +619,7 @@ function LineRow({
                     placeholder="0.00"
                     className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] text-right font-mono tabular focus:outline-none focus:border-border-strong"
                 />
-                <FieldError
-                    name={`lines[${index.toString()}].amount`}
-                    errors={fieldErrors}
-                />
+                <FieldError name={`lines[${index.toString()}].amount`} errors={fieldErrors} />
             </div>
             <div>
                 <input
@@ -736,4 +721,206 @@ function filterSuggestionsByCurrency(
     currencyCode: string,
 ): SuggestedCounterAccount[] {
     return suggestions.filter(s => accountsById.get(s.accountId)?.currencyCode === currencyCode);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Attach options: three choices for a sibling-shaped BT (ADR 0014).
+//  1. Quick attach — only when the strict predicate hit a unique JE (the hint).
+//  2. Pick a JE — manual JE-picker over structural candidates with a widened
+//     date window the user controls.
+//  3. Create a new JE — the existing categorise form below this panel.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function AttachOptionsPanel({
+    bt,
+    catalog,
+}: {
+    bt: BankTransactionDetail;
+    catalog: CurrencyCatalog;
+}) {
+    const [pickerOpen, setPickerOpen] = useState(false);
+    const attach = useAttachBankTransaction();
+    const toast = useToast();
+    const navigate = useNavigate();
+    const hint = bt.matchingJournalEntry;
+
+    async function attachTo(journalEntryId: AttachCandidate['id']) {
+        try {
+            const detail = await attach.mutateAsync({ id: bt.id, journalEntryId });
+            toast.success('Attached.');
+            await navigate({ to: '/journal/$id', params: { id: detail.id } });
+        } catch (err) {
+            if (err instanceof Error) {
+                toast.error(err.message);
+            }
+        }
+    }
+
+    async function onQuickAttach() {
+        if (!hint) return;
+        await attachTo(hint.id);
+    }
+
+    return (
+        <div className="mb-4 px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-[12px]">
+            <div className="flex flex-wrap items-center gap-2">
+                <span className="text-fg-3">Sibling-of-self-transfer?</span>
+                {hint && (
+                    <button
+                        type="button"
+                        onClick={() => void onQuickAttach()}
+                        disabled={attach.isPending}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-brand-primary hover:bg-brand-primary-soft disabled:opacity-60"
+                    >
+                        <Icon name="link" size={13} strokeWidth={2} />
+                        Attach to JE on {hint.date} · {hint.otherAccountName}
+                    </button>
+                )}
+                <button
+                    type="button"
+                    onClick={() => {
+                        setPickerOpen(true);
+                    }}
+                    disabled={attach.isPending}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-fg-1 border border-border-strong hover:bg-surface-1 disabled:opacity-60"
+                >
+                    <Icon name="search" size={13} strokeWidth={2} />
+                    Pick a JE to attach to…
+                </button>
+                <span className="text-fg-3">or scroll down to create a new JE.</span>
+            </div>
+
+            {pickerOpen && (
+                <JePickerModal
+                    bt={bt}
+                    catalog={catalog}
+                    onClose={() => {
+                        setPickerOpen(false);
+                    }}
+                    onPick={id => {
+                        setPickerOpen(false);
+                        void attachTo(id);
+                    }}
+                />
+            )}
+        </div>
+    );
+}
+
+function JePickerModal({
+    bt,
+    catalog,
+    onClose,
+    onPick,
+}: {
+    bt: BankTransactionDetail;
+    catalog: CurrencyCatalog;
+    onClose: () => void;
+    onPick: (id: AttachCandidate['id']) => void;
+}) {
+    const [days, setDays] = useState(14);
+    const candidates = useAttachCandidates(bt.id, days);
+    const [query, setQuery] = useState('');
+
+    const filtered = useMemo(() => {
+        const data = candidates.data ?? [];
+        const q = query.trim().toLowerCase();
+        if (q.length === 0) return data;
+        return data.filter(
+            c =>
+                (c.description ?? '').toLowerCase().includes(q) ||
+                c.otherAccountName.toLowerCase().includes(q) ||
+                c.date.includes(q),
+        );
+    }, [candidates.data, query]);
+
+    return (
+        <Modal
+            open
+            onClose={onClose}
+            title="Pick a journal entry to attach to"
+            description="Structural matches with an Uncleared bank-side slot. Widen the date window to surface near-misses."
+            width="md"
+        >
+            <div className="flex flex-wrap items-center gap-3 mb-3">
+                <label className="flex items-center gap-2 text-[12px] text-fg-2">
+                    Date window (±days)
+                    <input
+                        type="number"
+                        min={0}
+                        max={365}
+                        value={days}
+                        onChange={e => {
+                            const n = Number.parseInt(e.target.value, 10);
+                            setDays(Number.isNaN(n) ? 0 : Math.max(0, Math.min(365, n)));
+                        }}
+                        className="w-20 px-2 py-1 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[12px]"
+                    />
+                </label>
+                <input
+                    type="text"
+                    value={query}
+                    onChange={e => {
+                        setQuery(e.target.value);
+                    }}
+                    placeholder="Filter…"
+                    className="flex-1 min-w-[160px] px-2 py-1 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[12px]"
+                />
+            </div>
+
+            {candidates.isPending && <Skeleton className="h-6 w-full mb-2" />}
+            {candidates.isError && (
+                <ErrorState
+                    message="Couldn't load candidates."
+                    onRetry={() => void candidates.refetch()}
+                />
+            )}
+            {candidates.data && filtered.length === 0 && (
+                <p className="text-[12px] text-fg-3">
+                    No structural matches in this window. Widen the date range or fall back to
+                    creating a new JE below.
+                </p>
+            )}
+
+            {filtered.length > 0 && (
+                <ul className="flex flex-col gap-1 max-h-80 overflow-auto">
+                    {filtered.map(candidate => (
+                        <li key={candidate.id}>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    onPick(candidate.id);
+                                }}
+                                className="w-full text-left px-3 py-2 rounded-sm border border-border-soft hover:bg-surface-2 flex items-baseline justify-between gap-2"
+                            >
+                                <span className="flex flex-col leading-tight min-w-0">
+                                    <span className="text-[13px] text-fg-1 truncate">
+                                        {candidate.description ?? '(no description)'}
+                                    </span>
+                                    <span className="text-[11px] text-fg-3 truncate">
+                                        {candidate.date} · {candidate.otherAccountName}
+                                    </span>
+                                </span>
+                                <span className="text-[12px] font-mono text-fg-2 tabular shrink-0">
+                                    {formatMoney(candidate.amount, bt.money.currencyCode, catalog, {
+                                        sign: true,
+                                    })}
+                                </span>
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            )}
+
+            <ModalFooter>
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-fg-2 hover:text-fg-1"
+                >
+                    Cancel
+                </button>
+            </ModalFooter>
+        </Modal>
+    );
 }
