@@ -4,7 +4,7 @@ namespace Balance.Integration.Ing.Contracts;
 
 internal interface IIngCreditCardStatementParser
 {
-    public ValueTask<IReadOnlyList<CreditCardStatementRow>> ParseStatementsAsync(
+    public ValueTask<CreditCardStatement> ParseStatementsAsync(
         Stream stream,
         CancellationToken cancellationToken
     );

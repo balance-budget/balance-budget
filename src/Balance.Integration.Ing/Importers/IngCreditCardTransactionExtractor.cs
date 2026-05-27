@@ -54,10 +54,10 @@ internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtrac
             );
         }
 
-        IReadOnlyList<CreditCardStatementRow> rows;
+        CreditCardStatement statement;
         try
         {
-            rows = await _ingCreditCardStatementParser.ParseStatementsAsync(
+            statement = await _ingCreditCardStatementParser.ParseStatementsAsync(
                 stream,
                 cancellationToken
             );
@@ -70,24 +70,22 @@ internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtrac
             );
         }
 
-        if (rows.Count == 0)
+        if (statement.Rows.Count == 0)
             return Array.Empty<BankTransaction>();
 
-        var ownIdentifiers = OwnIdentifiers(bankAccount);
-        var firstAccount = Normalise(rows[0].Account);
-
-        if (!ownIdentifiers.Contains(firstAccount))
+        var firstCardNumber = Normalise(statement.Rows[0].CardNumber);
+        if (bankAccount.AccountNumber != firstCardNumber)
         {
             return new InvariantError(
                 ErrorCodes.ImportIbanMismatch,
-                $"Statement Account '{rows[0].Account}' does not match this "
-                    + "BankAccount's Iban or AccountNumber."
+                $"Statement Account '{statement.Account}' does not match this "
+                    + "Card's AccountNumber."
             );
         }
 
-        foreach (var row in rows)
+        foreach (var row in statement.Rows)
         {
-            if (Normalise(row.Account) != firstAccount)
+            if (Normalise(row.CardNumber) != firstCardNumber)
             {
                 return new InvariantError(
                     ErrorCodes.ImportAccountColumnDivergence,
@@ -100,8 +98,8 @@ internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtrac
         // ING CSVs are most-recent-first. Reverse so insertion order — and the time-ordered
         // BankTransaction.Id we mint per row — matches BookingDate order; a list sorted by
         // (BookingDate, Id) then breaks intra-day ties in CSV-chronological order.
-        var bankTransactions = new List<BankTransaction>(rows.Count);
-        foreach (var row in rows.Reverse())
+        var bankTransactions = new List<BankTransaction>(statement.Rows.Count);
+        foreach (var row in statement.Rows.Reverse())
         {
             var mapped = ToBankTransaction(bankAccount.Id, row);
             if (mapped.IsFailure)
@@ -111,32 +109,18 @@ internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtrac
         return bankTransactions;
     }
 
-    private Result<BankTransaction> ToBankTransaction(
+    private static Result<BankTransaction> ToBankTransaction(
         BankAccountId bankAccountId,
         CreditCardStatementRow row
     )
     {
-        var note = _ingNoteParser.ParseNote(row.Notifications);
-
-        var description = FirstNonBlank(note.Description, row.Description);
-        if (description is null)
-        {
-            return new InvariantError(
-                ErrorCodes.ImportFormatInvalid,
-                $"Row dated {row.Date:yyyy-MM-dd} has no usable description "
-                    + "('Name / Description' is blank and 'Notifications' carries no "
-                    + "'Description:' field)."
-            );
-        }
-
+        var description = row.Description;
         var counterpartyName = NullIfBlank(row.Description);
-        var counterpartyAccountNumber = ResolveCounterpartyAccountNumber(row, note);
-        var signedCents = ToSignedCents(row.Amount, row.DebitCredit);
+        var signedCents = ToMinorUnits(row.Amount) ?? 0;
 
-        var foreignAmountMinor = ToMinorUnits(note.ForeignCurrencyAmount?.Amount);
-        var foreignCurrencyCode = NullIfBlank(note.ForeignCurrencyAmount?.CurrencyCode);
-        var exchangeRate =
-            note.ForeignCurrencyRate == 0m ? (decimal?)null : note.ForeignCurrencyRate;
+        var foreignAmountMinor = ToMinorUnits(row.ForeignCurrencyAmount?.Amount);
+        var foreignCurrencyCode = NullIfBlank(row.ForeignCurrencyAmount?.CurrencyCode);
+        var exchangeRate = row.ForeignCurrencyRate;
 
         return new BankTransaction
         {
@@ -146,42 +130,29 @@ internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtrac
             Money = new Money(signedCents, Eur),
             Description = description,
             CounterpartyName = counterpartyName,
-            CounterpartyAccountNumber = counterpartyAccountNumber,
             RawSource = RowHasher.Normalise(row.RawRecord),
             RowHash = RowHasher.Hash(row.RawRecord),
-            ValueDate = note.ValueDate,
-            Reference = NullIfBlank(note.Reference),
-            MandateId = NullIfBlank(note.MandateId),
-            SepaCreditorId = NullIfBlank(note.Creditor?.Id),
             ForeignAmount = foreignAmountMinor,
             ForeignCurrencyCode = foreignCurrencyCode,
             ExchangeRate = exchangeRate,
             ImporterKey = Key,
-            Metadata = BuildMetadata(row, note),
+            Metadata = BuildMetadata(row),
         };
     }
 
     // Anything the extractor parses that is *not* promoted to a BankTransaction column lives
     // here (ADR 0015). Keys are global namespace; bank-prefixed only for genuinely
     // bank-specific extras. Nested values flatten with dotted keys.
-    private static List<BankTransactionMetadataValue> BuildMetadata(
-        CreditCardStatementRow row,
-        IngNote note
-    )
+    private static List<BankTransactionMetadataValue> BuildMetadata(CreditCardStatementRow row)
     {
         var entries = new List<BankTransactionMetadataValue>();
 
         // ING-specific fields
         AddString(entries, "Transaction Type", row.TransactionType.ToString());
-        AddString(entries, "Tags", row.Tag);
-
-        // Notes
-        AddString(entries, "Transaction", note.Transaction);
-        AddString(entries, "Term", note.Term);
 
         if (
-            note.ForeignCurrencyMarkUp is { } markUp
-            && ToMinorUnits(note.ForeignCurrencyRate) is { } rate
+            row.ForeignCurrencyMarkUp is { } markUp
+            && ToMinorUnits(row.ForeignCurrencyRate) is { } rate
             && ToMinorUnits(markUp.Amount) is { } markUpAmount
         )
         {
@@ -190,29 +161,8 @@ internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtrac
             AddString(entries, "Foreign Currency Mark Up Code", markUp.CurrencyCode);
         }
 
-        if (note.ForeignCurrencyFee is { } fee && ToMinorUnits(fee.Amount) is { } feeAmount)
-        {
-            AddInteger(entries, "Foreign Currency Fee Amount", feeAmount);
-            AddString(entries, "Foreign Currency Fee Code", fee.CurrencyCode);
-        }
-
-        AddString(entries, "SEPA Description", note.Creditor?.Description);
-        AddString(entries, "SEPA Other Party", note.OtherParty);
-
-        // For card payments, use the card sequence for the exact date / time
-        if (note.CardSequence is { } cardSequence)
-        {
-            AddString(entries, "Card Sequence Number", cardSequence.SequenceNumber);
-            AddString(
-                entries,
-                "Date",
-                cardSequence.DateTime.ToString("o", CultureInfo.InvariantCulture)
-            );
-        }
-
         // For transfers, use the date / time field
-        AddString(entries, "Date", note.DateTime?.ToString("o", CultureInfo.InvariantCulture));
-        AddString(entries, "Other Notes", note.Other);
+        AddString(entries, "Date", row.TransactionDate.ToString("o", CultureInfo.InvariantCulture));
 
         return entries;
     }
@@ -247,62 +197,8 @@ internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtrac
             }
         );
 
-    private static long? ToMinorUnits(decimal? amount)
-    {
-        if (amount is null)
-            return null;
-
-        // ING foreign amounts in 'Notifications' are quoted in the foreign currency's
-        // major units. The promoted column carries minor units (paired with the
-        // foreign currency code). We don't know the foreign currency's
-        // MinorUnitScale here — Currency reference data lives in Balance.Data and
-        // the extractor sits below that. The fixed-set columns assume scale 2 for
-        // all practical SEPA-region currencies (USD/GBP/CHF/PLN/SEK/NOK etc.);
-        // this matches what every other ING note value is parsed under.
-        return (long)decimal.Round(amount.Value * 100m);
-    }
-
-    private static string? ResolveCounterpartyAccountNumber(
-        CreditCardStatementRow row,
-        IngNote note
-    )
-    {
-        if (!string.IsNullOrWhiteSpace(row.CounterParty))
-            return row.CounterParty;
-
-        // ING own-savings transfers leave 'Counterparty' blank and embed the savings number
-        // (D########) in 'Name / Description' or in the parsed note's free-text leftover.
-        var pattern = IngPatterns.SavingsAccountPattern();
-
-        var inDescription = pattern.Match(row.Description);
-        if (inDescription.Success)
-            return inDescription.Value;
-
-        if (!string.IsNullOrWhiteSpace(note.Other))
-        {
-            var inNoteOther = pattern.Match(note.Other);
-            if (inNoteOther.Success)
-                return inNoteOther.Value;
-        }
-
-        return null;
-    }
-
-    private static long ToSignedCents(decimal amount, DebitCredit debitCredit)
-    {
-        var cents = (long)decimal.Round(amount * 100m);
-        return debitCredit is DebitCredit.Debit ? -cents : cents;
-    }
-
-    private static HashSet<string> OwnIdentifiers(BankAccount bankAccount)
-    {
-        var identifiers = new HashSet<string>(StringComparer.Ordinal);
-        if (!string.IsNullOrWhiteSpace(bankAccount.Iban))
-            identifiers.Add(Normalise(bankAccount.Iban));
-        if (!string.IsNullOrWhiteSpace(bankAccount.AccountNumber))
-            identifiers.Add(Normalise(bankAccount.AccountNumber));
-        return identifiers;
-    }
+    private static long? ToMinorUnits(decimal? amount) =>
+        amount is null ? null : (long)decimal.Round(amount.Value * 100m);
 
     private static string Normalise(string? value) =>
         value is null
