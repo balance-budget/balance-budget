@@ -33,6 +33,12 @@ public interface IJournalEntryService
         CancellationToken cancellationToken
     );
 
+    Task<Result<JournalEntryOutput>> ReplaceAsync(
+        JournalEntryId id,
+        ReplaceJournalEntryInput input,
+        CancellationToken cancellationToken
+    );
+
     Task<Result> DeleteAsync(JournalEntryId id, CancellationToken cancellationToken);
 }
 
@@ -70,3 +76,30 @@ public sealed record UpdateJournalLineInput
 {
     public string? Description { get; set; }
 }
+
+/// <summary>
+/// Full-body replace surface of a <see cref="JournalEntry"/> (ADR 0016). The client sends the
+/// desired final state; the server validates that lines whose current
+/// <see cref="ReconciliationStatus"/> is not <see cref="ReconciliationStatus.Uncleared"/> appear
+/// in <see cref="Lines"/> with unchanged <see cref="ReplaceJournalLineInput.AccountId"/> and
+/// <see cref="ReplaceJournalLineInput.Amount"/>. Existing <c>Uncleared</c> lines omitted from
+/// <see cref="Lines"/> are deleted; lines without an <see cref="ReplaceJournalLineInput.Id"/> are
+/// inserted with a server-assigned id and default to <c>Uncleared</c>. <c>BankTransactionId</c>
+/// and per-line <c>ReconciliationStatus</c> are validated to match current when supplied (the PUT
+/// does not mutate either).
+/// </summary>
+public sealed record ReplaceJournalEntryInput(
+    DateOnly Date,
+    string? Description,
+    BankTransactionId? BankTransactionId,
+    CounterpartyId? CounterpartyId,
+    IReadOnlyList<ReplaceJournalLineInput> Lines
+);
+
+public sealed record ReplaceJournalLineInput(
+    JournalLineId? Id,
+    AccountId AccountId,
+    long Amount,
+    string? Description,
+    ReconciliationStatus? ReconciliationStatus = null
+);

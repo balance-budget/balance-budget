@@ -1,6 +1,7 @@
 using System.Globalization;
 using Balance.Data;
 using Balance.Data.Entities;
+using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
 using Balance.Data.Helpers;
 using Balance.Services.Contracts;
@@ -210,6 +211,188 @@ internal sealed class JournalEntryService : IJournalEntryService
         }
 
         entry.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
+        var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
+        if (saveResult.IsFailure)
+            return saveResult.Error;
+
+        return await LoadDetailOrThrowAsync(entry.Id, cancellationToken);
+    }
+
+    public async Task<Result<JournalEntryOutput>> ReplaceAsync(
+        JournalEntryId id,
+        ReplaceJournalEntryInput input,
+        CancellationToken cancellationToken
+    )
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(input.Lines);
+
+        var entry = await _dbContext
+            .JournalEntries.Include(e => e.Lines)
+            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+        if (entry is null)
+        {
+            return new NotFoundError("JournalEntry", id.Value.ToString());
+        }
+
+        // BankTransactionId is immutable. The PUT surface allows the body to repeat the current
+        // value (useful when echoing a snapshot back) but rejects any attempt to change it.
+        if (
+            input.BankTransactionId is not null
+            && input.BankTransactionId != entry.BankTransactionId
+        )
+        {
+            return new InvariantError(
+                ErrorCodes.JournalBankTransactionImmutable,
+                "JournalEntry.BankTransactionId is immutable; corrections go through delete-and-recreate."
+            );
+        }
+
+        var existingLines = entry.Lines.ToDictionary(l => l.Id);
+
+        // Editability gate (ADR 0016): every line whose current ReconciliationStatus != Uncleared
+        // must appear in the body with unchanged AccountId and Amount; existing non-Uncleared lines
+        // missing from the body are not deletable; new lines (no Id) default to Uncleared; body-
+        // supplied ReconciliationStatus is validated to match current (the PUT does not mutate it).
+        var referencedIds = new HashSet<JournalLineId>();
+        foreach (var lineInput in input.Lines)
+        {
+            if (lineInput.Id is not { } lineId)
+                continue;
+
+            if (!existingLines.TryGetValue(lineId, out var existing))
+            {
+                return new InvariantError(
+                    ErrorCodes.JournalLineUnknown,
+                    $"JournalLine {lineId.Value} does not belong to JournalEntry {id.Value}."
+                );
+            }
+
+            if (!referencedIds.Add(lineId))
+            {
+                return new InvariantError(
+                    ErrorCodes.JournalLineSetMismatch,
+                    $"JournalLine {lineId.Value} appears more than once in the body."
+                );
+            }
+
+            if (existing.ReconciliationStatus != ReconciliationStatus.Uncleared)
+            {
+                if (
+                    existing.AccountId != lineInput.AccountId
+                    || existing.Amount != lineInput.Amount
+                )
+                {
+                    return new InvariantError(
+                        ErrorCodes.JournalLineFrozen,
+                        $"JournalLine {lineId.Value} is {existing.ReconciliationStatus}; "
+                            + "AccountId and Amount are frozen — only Description is editable."
+                    );
+                }
+            }
+
+            if (
+                lineInput.ReconciliationStatus is { } status
+                && status != existing.ReconciliationStatus
+            )
+            {
+                return new InvariantError(
+                    ErrorCodes.JournalLineStatusMutation,
+                    $"JournalLine {lineId.Value} ReconciliationStatus is immutable on this endpoint."
+                );
+            }
+        }
+
+        foreach (var existing in entry.Lines)
+        {
+            if (
+                existing.ReconciliationStatus != ReconciliationStatus.Uncleared
+                && !referencedIds.Contains(existing.Id)
+            )
+            {
+                return new InvariantError(
+                    ErrorCodes.JournalLineSetMismatch,
+                    $"JournalLine {existing.Id.Value} is {existing.ReconciliationStatus} and "
+                        + "cannot be removed via PUT; only Uncleared lines may be deleted."
+                );
+            }
+        }
+
+        // Account / currency / sum-to-zero check on the *final* line set (the body shape).
+        IReadOnlyList<CreateJournalLineInput> draftInputs =
+        [
+            .. input.Lines.Select(l => new CreateJournalLineInput(
+                l.AccountId,
+                l.Amount,
+                l.Description
+            )),
+        ];
+        var draftsResult = await BuildDraftsAsync(draftInputs, cancellationToken);
+        if (draftsResult.IsFailure)
+            return draftsResult.Error;
+
+        var balanceCheck = JournalEntryValidator.Validate(draftsResult.Value);
+        if (balanceCheck.IsFailure)
+            return balanceCheck.Error;
+
+        if (input.CounterpartyId is not null && input.CounterpartyId != entry.CounterpartyId)
+        {
+            var referencesCheck = await EnsureOptionalReferencesExistAsync(
+                bankTransactionId: null,
+                input.CounterpartyId,
+                cancellationToken
+            );
+            if (referencesCheck.IsFailure)
+                return referencesCheck.Error;
+        }
+
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
+
+        entry.Date = input.Date;
+        entry.Description = input.Description.TrimToNull();
+        entry.CounterpartyId = input.CounterpartyId;
+        entry.UpdatedAt = now;
+
+        // Reshape the lines: update existing referenced ones, insert new ones (no Id),
+        // and delete existing Uncleared ones that the body omitted.
+        foreach (var lineInput in input.Lines)
+        {
+            if (lineInput.Id is { } lineId)
+            {
+                var existing = existingLines[lineId];
+                existing.AccountId = lineInput.AccountId;
+                existing.Amount = lineInput.Amount;
+                existing.Description = lineInput.Description.TrimToNull();
+                existing.UpdatedAt = now;
+                continue;
+            }
+
+            entry.Lines.Add(
+                new JournalLine
+                {
+                    Id = new JournalLineId(Guid.CreateVersion7()),
+                    JournalEntryId = entry.Id,
+                    AccountId = lineInput.AccountId,
+                    Amount = lineInput.Amount,
+                    ReconciliationStatus = ReconciliationStatus.Uncleared,
+                    Description = lineInput.Description.TrimToNull(),
+                    CreatedAt = now,
+                    UpdatedAt = now,
+                }
+            );
+        }
+
+        // Delete existing Uncleared lines that the body omitted. Newly-added lines have ids that
+        // aren't in `existingLines`, so they're naturally excluded; non-Uncleared lines were
+        // already guarded above (their omission would have returned an error).
+        foreach (var existing in existingLines.Values)
+        {
+            if (referencedIds.Contains(existing.Id))
+                continue;
+            entry.Lines.Remove(existing);
+            _dbContext.JournalLines.Remove(existing);
+        }
+
         var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
         if (saveResult.IsFailure)
             return saveResult.Error;

@@ -35,6 +35,10 @@ internal static class JournalEntryEndpoints
                 (svc, id, input, ct) => svc.UpdateAsync(id, input, ct)
             )
             .WithName("UpdateJournalEntry");
+        group
+            .MapPut("/{id}", ReplaceAsync)
+            .WithValidation<ReplaceJournalEntryRequest>()
+            .WithName("ReplaceJournalEntry");
         group.MapDelete("/{id}", DeleteAsync).WithName("DeleteJournalEntry");
     }
 
@@ -97,6 +101,47 @@ internal static class JournalEntryEndpoints
         );
 
         return result.ToCreatedAt(PathPrefix, v => v.Id.Value);
+    }
+
+    private static async Task<
+        Results<
+            Ok<JournalEntryOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > ReplaceAsync(
+        [FromRoute] JournalEntryId id,
+        [FromBody] ReplaceJournalEntryRequest request,
+        [FromServices] IJournalEntryService journalEntryService,
+        CancellationToken cancellationToken
+    )
+    {
+        IReadOnlyList<ReplaceJournalLineInput> lineInputs =
+        [
+            .. request.Lines.Select(l => new ReplaceJournalLineInput(
+                l.Id,
+                l.AccountId,
+                l.Amount,
+                l.Description,
+                l.ReconciliationStatus
+            )),
+        ];
+
+        var result = await journalEntryService.ReplaceAsync(
+            id,
+            new ReplaceJournalEntryInput(
+                request.Date,
+                request.Description,
+                request.BankTransactionId,
+                request.CounterpartyId,
+                lineInputs
+            ),
+            cancellationToken
+        );
+
+        return result.ToOk();
     }
 
     private static async Task<

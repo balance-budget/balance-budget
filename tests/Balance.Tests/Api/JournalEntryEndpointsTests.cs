@@ -407,6 +407,576 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
         await Assert.That(patchResponse.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
     }
 
+    [Test]
+    public async Task ReplaceJournalEntry_edits_uncleared_line_account_and_amount()
+    {
+        using var client = Factory.CreateClient();
+        var grocery = await CreateAccountAsync(client, "Put-Grocery", "Expense");
+        var dining = await CreateAccountAsync(client, "Put-Dining", "Expense");
+        var checking = await CreateAccountAsync(client, "Put-Checking", "Asset");
+
+        var created = await CreateEntryAsync(
+            client,
+            new DateOnly(2026, 5, 10),
+            "miscategorised",
+            lines:
+            [
+                new CreateJournalLineRequestDto(grocery.Id, 4000, "AH"),
+                new CreateJournalLineRequestDto(checking.Id, -4000, null),
+            ]
+        );
+        var groceryLine = created.Lines.Single(l => l.Amount == 4000);
+        var checkingLine = created.Lines.Single(l => l.Amount == -4000);
+
+        using var putResponse = await client.PutAsJsonAsync(
+            new Uri($"/api/journal-entries/{created.Id}", UriKind.Relative),
+            new ReplaceJournalEntryRequestDto(
+                Date: new DateOnly(2026, 5, 11),
+                Description: "fixed",
+                BankTransactionId: null,
+                CounterpartyId: null,
+                Lines:
+                [
+                    new ReplaceJournalLineRequestDto(
+                        groceryLine.Id,
+                        dining.Id,
+                        4500,
+                        "AH dinner",
+                        null
+                    ),
+                    new ReplaceJournalLineRequestDto(
+                        checkingLine.Id,
+                        checking.Id,
+                        -4500,
+                        null,
+                        null
+                    ),
+                ]
+            )
+        );
+
+        await Assert.That(putResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var updated = await putResponse.Content.ReadFromJsonAsync<JournalEntryDto>();
+        await Assert.That(updated!.Id).IsEqualTo(created.Id);
+        await Assert.That(updated.CreatedAt).IsEqualTo(created.CreatedAt);
+        await Assert.That(updated.Date).IsEqualTo(new DateOnly(2026, 5, 11));
+        await Assert.That(updated.Description).IsEqualTo("fixed");
+        var movedLine = updated.Lines.Single(l => l.Id == groceryLine.Id);
+        await Assert.That(movedLine.AccountId).IsEqualTo(dining.Id);
+        await Assert.That(movedLine.Amount).IsEqualTo(4500L);
+        await Assert.That(movedLine.Description).IsEqualTo("AH dinner");
+        await Assert.That(updated.Lines.Sum(l => l.Amount)).IsEqualTo(0L);
+    }
+
+    [Test]
+    public async Task ReplaceJournalEntry_rejects_account_change_on_cleared_line()
+    {
+        using var client = Factory.CreateClient();
+        var grocery = await CreateAccountAsync(client, "Put-Frozen-Grocery", "Expense");
+        var dining = await CreateAccountAsync(client, "Put-Frozen-Dining", "Expense");
+        var checking = await CreateAccountAsync(client, "Put-Frozen-Checking", "Asset");
+
+        var created = await CreateEntryAsync(
+            client,
+            new DateOnly(2026, 5, 12),
+            null,
+            lines:
+            [
+                new CreateJournalLineRequestDto(grocery.Id, 5000, null),
+                new CreateJournalLineRequestDto(checking.Id, -5000, null),
+            ]
+        );
+        var bankLine = created.Lines.Single(l => l.Amount == -5000);
+        var counterLine = created.Lines.Single(l => l.Amount == 5000);
+        await MarkLineClearedAsync(bankLine.Id);
+
+        using var putResponse = await client.PutAsJsonAsync(
+            new Uri($"/api/journal-entries/{created.Id}", UriKind.Relative),
+            new ReplaceJournalEntryRequestDto(
+                Date: created.Date,
+                Description: null,
+                BankTransactionId: null,
+                CounterpartyId: null,
+                Lines:
+                [
+                    new ReplaceJournalLineRequestDto(counterLine.Id, dining.Id, 5000, null, null),
+                    new ReplaceJournalLineRequestDto(bankLine.Id, dining.Id, -5000, null, null),
+                ]
+            )
+        );
+
+        await Assert.That(putResponse.StatusCode).IsEqualTo(HttpStatusCode.UnprocessableEntity);
+    }
+
+    [Test]
+    public async Task ReplaceJournalEntry_rejects_amount_change_on_cleared_line()
+    {
+        using var client = Factory.CreateClient();
+        var grocery = await CreateAccountAsync(client, "Put-Amount-Grocery", "Expense");
+        var checking = await CreateAccountAsync(client, "Put-Amount-Checking", "Asset");
+
+        var created = await CreateEntryAsync(
+            client,
+            new DateOnly(2026, 5, 13),
+            null,
+            lines:
+            [
+                new CreateJournalLineRequestDto(grocery.Id, 1000, null),
+                new CreateJournalLineRequestDto(checking.Id, -1000, null),
+            ]
+        );
+        var bankLine = created.Lines.Single(l => l.Amount == -1000);
+        var counterLine = created.Lines.Single(l => l.Amount == 1000);
+        await MarkLineClearedAsync(bankLine.Id);
+
+        using var putResponse = await client.PutAsJsonAsync(
+            new Uri($"/api/journal-entries/{created.Id}", UriKind.Relative),
+            new ReplaceJournalEntryRequestDto(
+                Date: created.Date,
+                Description: null,
+                BankTransactionId: null,
+                CounterpartyId: null,
+                Lines:
+                [
+                    new ReplaceJournalLineRequestDto(counterLine.Id, grocery.Id, 1500, null, null),
+                    new ReplaceJournalLineRequestDto(bankLine.Id, checking.Id, -1500, null, null),
+                ]
+            )
+        );
+
+        await Assert.That(putResponse.StatusCode).IsEqualTo(HttpStatusCode.UnprocessableEntity);
+    }
+
+    [Test]
+    public async Task ReplaceJournalEntry_rejects_omitting_a_cleared_line()
+    {
+        using var client = Factory.CreateClient();
+        var grocery = await CreateAccountAsync(client, "Put-Omit-Grocery", "Expense");
+        var dining = await CreateAccountAsync(client, "Put-Omit-Dining", "Expense");
+        var checking = await CreateAccountAsync(client, "Put-Omit-Checking", "Asset");
+
+        var created = await CreateEntryAsync(
+            client,
+            new DateOnly(2026, 5, 14),
+            null,
+            lines:
+            [
+                new CreateJournalLineRequestDto(grocery.Id, 800, null),
+                new CreateJournalLineRequestDto(checking.Id, -800, null),
+            ]
+        );
+        var bankLine = created.Lines.Single(l => l.Amount == -800);
+        var counterLine = created.Lines.Single(l => l.Amount == 800);
+        await MarkLineClearedAsync(bankLine.Id);
+
+        // Body omits the bank-side line entirely — that line is Cleared, so PUT must reject.
+        using var putResponse = await client.PutAsJsonAsync(
+            new Uri($"/api/journal-entries/{created.Id}", UriKind.Relative),
+            new ReplaceJournalEntryRequestDto(
+                Date: created.Date,
+                Description: null,
+                BankTransactionId: null,
+                CounterpartyId: null,
+                Lines:
+                [
+                    new ReplaceJournalLineRequestDto(counterLine.Id, dining.Id, 800, null, null),
+                    new ReplaceJournalLineRequestDto(null, checking.Id, -800, null, null),
+                ]
+            )
+        );
+
+        await Assert.That(putResponse.StatusCode).IsEqualTo(HttpStatusCode.UnprocessableEntity);
+    }
+
+    [Test]
+    public async Task ReplaceJournalEntry_inserts_new_line_with_server_assigned_id()
+    {
+        using var client = Factory.CreateClient();
+        var grocery = await CreateAccountAsync(client, "Put-New-Grocery", "Expense");
+        var dining = await CreateAccountAsync(client, "Put-New-Dining", "Expense");
+        var checking = await CreateAccountAsync(client, "Put-New-Checking", "Asset");
+
+        var created = await CreateEntryAsync(
+            client,
+            new DateOnly(2026, 5, 15),
+            null,
+            lines:
+            [
+                new CreateJournalLineRequestDto(grocery.Id, 3000, null),
+                new CreateJournalLineRequestDto(checking.Id, -3000, null),
+            ]
+        );
+        var groceryLine = created.Lines.Single(l => l.Amount == 3000);
+        var checkingLine = created.Lines.Single(l => l.Amount == -3000);
+
+        using var putResponse = await client.PutAsJsonAsync(
+            new Uri($"/api/journal-entries/{created.Id}", UriKind.Relative),
+            new ReplaceJournalEntryRequestDto(
+                Date: created.Date,
+                Description: null,
+                BankTransactionId: null,
+                CounterpartyId: null,
+                Lines:
+                [
+                    new ReplaceJournalLineRequestDto(groceryLine.Id, grocery.Id, 2000, null, null),
+                    new ReplaceJournalLineRequestDto(null, dining.Id, 1000, "split", null),
+                    new ReplaceJournalLineRequestDto(
+                        checkingLine.Id,
+                        checking.Id,
+                        -3000,
+                        null,
+                        null
+                    ),
+                ]
+            )
+        );
+
+        await Assert.That(putResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var updated = await putResponse.Content.ReadFromJsonAsync<JournalEntryDto>();
+        await Assert.That(updated!.Lines).Count().IsEqualTo(3);
+        var newLine = updated.Lines.Single(l => l.AccountId == dining.Id);
+        await Assert.That(newLine.Id).IsNotEqualTo(Guid.Empty);
+        await Assert.That(newLine.Amount).IsEqualTo(1000L);
+        await Assert.That(newLine.Description).IsEqualTo("split");
+        await Assert.That(newLine.ReconciliationStatus).IsEqualTo("Uncleared");
+    }
+
+    [Test]
+    public async Task ReplaceJournalEntry_removes_uncleared_line_omitted_from_body()
+    {
+        using var client = Factory.CreateClient();
+        var grocery = await CreateAccountAsync(client, "Put-Remove-Grocery", "Expense");
+        var dining = await CreateAccountAsync(client, "Put-Remove-Dining", "Expense");
+        var checking = await CreateAccountAsync(client, "Put-Remove-Checking", "Asset");
+
+        var created = await CreateEntryAsync(
+            client,
+            new DateOnly(2026, 5, 16),
+            null,
+            lines:
+            [
+                new CreateJournalLineRequestDto(grocery.Id, 1500, null),
+                new CreateJournalLineRequestDto(dining.Id, 500, null),
+                new CreateJournalLineRequestDto(checking.Id, -2000, null),
+            ]
+        );
+        var groceryLine = created.Lines.Single(l => l.AccountId == grocery.Id);
+        var checkingLine = created.Lines.Single(l => l.AccountId == checking.Id);
+
+        using var putResponse = await client.PutAsJsonAsync(
+            new Uri($"/api/journal-entries/{created.Id}", UriKind.Relative),
+            new ReplaceJournalEntryRequestDto(
+                Date: created.Date,
+                Description: null,
+                BankTransactionId: null,
+                CounterpartyId: null,
+                Lines:
+                [
+                    new ReplaceJournalLineRequestDto(groceryLine.Id, grocery.Id, 2000, null, null),
+                    new ReplaceJournalLineRequestDto(
+                        checkingLine.Id,
+                        checking.Id,
+                        -2000,
+                        null,
+                        null
+                    ),
+                ]
+            )
+        );
+
+        await Assert.That(putResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var updated = await putResponse.Content.ReadFromJsonAsync<JournalEntryDto>();
+        await Assert.That(updated!.Lines).Count().IsEqualTo(2);
+        await Assert.That(updated.Lines.All(l => l.AccountId != dining.Id)).IsTrue();
+    }
+
+    [Test]
+    public async Task ReplaceJournalEntry_edits_description_on_cleared_line()
+    {
+        using var client = Factory.CreateClient();
+        var grocery = await CreateAccountAsync(client, "Put-Desc-Grocery", "Expense");
+        var checking = await CreateAccountAsync(client, "Put-Desc-Checking", "Asset");
+
+        var created = await CreateEntryAsync(
+            client,
+            new DateOnly(2026, 5, 17),
+            null,
+            lines:
+            [
+                new CreateJournalLineRequestDto(grocery.Id, 700, "AH"),
+                new CreateJournalLineRequestDto(checking.Id, -700, "bank"),
+            ]
+        );
+        var bankLine = created.Lines.Single(l => l.AccountId == checking.Id);
+        var groceryLine = created.Lines.Single(l => l.AccountId == grocery.Id);
+        await MarkLineClearedAsync(bankLine.Id);
+
+        using var putResponse = await client.PutAsJsonAsync(
+            new Uri($"/api/journal-entries/{created.Id}", UriKind.Relative),
+            new ReplaceJournalEntryRequestDto(
+                Date: created.Date,
+                Description: null,
+                BankTransactionId: null,
+                CounterpartyId: null,
+                Lines:
+                [
+                    new ReplaceJournalLineRequestDto(
+                        groceryLine.Id,
+                        grocery.Id,
+                        700,
+                        "AH NL",
+                        null
+                    ),
+                    new ReplaceJournalLineRequestDto(
+                        bankLine.Id,
+                        checking.Id,
+                        -700,
+                        "renamed",
+                        null
+                    ),
+                ]
+            )
+        );
+
+        await Assert.That(putResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var updated = await putResponse.Content.ReadFromJsonAsync<JournalEntryDto>();
+        var bankPreserved = updated!.Lines.Single(l => l.Id == bankLine.Id);
+        await Assert.That(bankPreserved.Description).IsEqualTo("renamed");
+        await Assert.That(bankPreserved.ReconciliationStatus).IsEqualTo("Cleared");
+    }
+
+    [Test]
+    public async Task ReplaceJournalEntry_rejects_unbalanced_body()
+    {
+        using var client = Factory.CreateClient();
+        var grocery = await CreateAccountAsync(client, "Put-Unbalanced-Grocery", "Expense");
+        var checking = await CreateAccountAsync(client, "Put-Unbalanced-Checking", "Asset");
+
+        var created = await CreateEntryAsync(
+            client,
+            new DateOnly(2026, 5, 18),
+            null,
+            lines:
+            [
+                new CreateJournalLineRequestDto(grocery.Id, 100, null),
+                new CreateJournalLineRequestDto(checking.Id, -100, null),
+            ]
+        );
+        var groceryLine = created.Lines.Single(l => l.AccountId == grocery.Id);
+        var checkingLine = created.Lines.Single(l => l.AccountId == checking.Id);
+
+        using var putResponse = await client.PutAsJsonAsync(
+            new Uri($"/api/journal-entries/{created.Id}", UriKind.Relative),
+            new ReplaceJournalEntryRequestDto(
+                Date: created.Date,
+                Description: null,
+                BankTransactionId: null,
+                CounterpartyId: null,
+                Lines:
+                [
+                    new ReplaceJournalLineRequestDto(groceryLine.Id, grocery.Id, 200, null, null),
+                    new ReplaceJournalLineRequestDto(
+                        checkingLine.Id,
+                        checking.Id,
+                        -100,
+                        null,
+                        null
+                    ),
+                ]
+            )
+        );
+
+        await Assert.That(putResponse.StatusCode).IsEqualTo(HttpStatusCode.UnprocessableEntity);
+    }
+
+    [Test]
+    public async Task ReplaceJournalEntry_rejects_changing_bank_transaction_id()
+    {
+        using var client = Factory.CreateClient();
+        var grocery = await CreateAccountAsync(client, "Put-BT-Grocery", "Expense");
+        var checking = await CreateAccountAsync(client, "Put-BT-Checking", "Asset");
+
+        var created = await CreateEntryAsync(
+            client,
+            new DateOnly(2026, 5, 19),
+            null,
+            lines:
+            [
+                new CreateJournalLineRequestDto(grocery.Id, 600, null),
+                new CreateJournalLineRequestDto(checking.Id, -600, null),
+            ]
+        );
+        var groceryLine = created.Lines.Single(l => l.AccountId == grocery.Id);
+        var checkingLine = created.Lines.Single(l => l.AccountId == checking.Id);
+
+        using var putResponse = await client.PutAsJsonAsync(
+            new Uri($"/api/journal-entries/{created.Id}", UriKind.Relative),
+            new ReplaceJournalEntryRequestDto(
+                Date: created.Date,
+                Description: null,
+                BankTransactionId: Guid.NewGuid(),
+                CounterpartyId: null,
+                Lines:
+                [
+                    new ReplaceJournalLineRequestDto(groceryLine.Id, grocery.Id, 600, null, null),
+                    new ReplaceJournalLineRequestDto(
+                        checkingLine.Id,
+                        checking.Id,
+                        -600,
+                        null,
+                        null
+                    ),
+                ]
+            )
+        );
+
+        await Assert.That(putResponse.StatusCode).IsEqualTo(HttpStatusCode.UnprocessableEntity);
+    }
+
+    [Test]
+    public async Task ReplaceJournalEntry_rejects_changing_reconciliation_status()
+    {
+        using var client = Factory.CreateClient();
+        var grocery = await CreateAccountAsync(client, "Put-Status-Grocery", "Expense");
+        var checking = await CreateAccountAsync(client, "Put-Status-Checking", "Asset");
+
+        var created = await CreateEntryAsync(
+            client,
+            new DateOnly(2026, 5, 20),
+            null,
+            lines:
+            [
+                new CreateJournalLineRequestDto(grocery.Id, 250, null),
+                new CreateJournalLineRequestDto(checking.Id, -250, null),
+            ]
+        );
+        var groceryLine = created.Lines.Single(l => l.AccountId == grocery.Id);
+        var checkingLine = created.Lines.Single(l => l.AccountId == checking.Id);
+
+        using var putResponse = await client.PutAsJsonAsync(
+            new Uri($"/api/journal-entries/{created.Id}", UriKind.Relative),
+            new ReplaceJournalEntryRequestDto(
+                Date: created.Date,
+                Description: null,
+                BankTransactionId: null,
+                CounterpartyId: null,
+                Lines:
+                [
+                    new ReplaceJournalLineRequestDto(
+                        groceryLine.Id,
+                        grocery.Id,
+                        250,
+                        null,
+                        "Cleared"
+                    ),
+                    new ReplaceJournalLineRequestDto(
+                        checkingLine.Id,
+                        checking.Id,
+                        -250,
+                        null,
+                        null
+                    ),
+                ]
+            )
+        );
+
+        await Assert.That(putResponse.StatusCode).IsEqualTo(HttpStatusCode.UnprocessableEntity);
+    }
+
+    [Test]
+    public async Task ReplaceJournalEntry_reshapes_cash_entry_wholesale()
+    {
+        using var client = Factory.CreateClient();
+        var groceries = await CreateAccountAsync(client, "Put-Cash-Grocery", "Expense");
+        var travel = await CreateAccountAsync(client, "Put-Cash-Travel", "Expense");
+        var dining = await CreateAccountAsync(client, "Put-Cash-Dining", "Expense");
+        var checking = await CreateAccountAsync(client, "Put-Cash-Checking", "Asset");
+
+        var created = await CreateEntryAsync(
+            client,
+            new DateOnly(2026, 5, 21),
+            "cash misc",
+            lines:
+            [
+                new CreateJournalLineRequestDto(groceries.Id, 500, null),
+                new CreateJournalLineRequestDto(checking.Id, -500, null),
+            ]
+        );
+
+        using var putResponse = await client.PutAsJsonAsync(
+            new Uri($"/api/journal-entries/{created.Id}", UriKind.Relative),
+            new ReplaceJournalEntryRequestDto(
+                Date: new DateOnly(2026, 5, 22),
+                Description: "wholesale reshape",
+                BankTransactionId: null,
+                CounterpartyId: null,
+                Lines:
+                [
+                    new ReplaceJournalLineRequestDto(null, travel.Id, 300, "leg 1", null),
+                    new ReplaceJournalLineRequestDto(null, dining.Id, 500, "leg 2", null),
+                    new ReplaceJournalLineRequestDto(null, checking.Id, -800, null, null),
+                ]
+            )
+        );
+
+        await Assert.That(putResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var updated = await putResponse.Content.ReadFromJsonAsync<JournalEntryDto>();
+        await Assert.That(updated!.Id).IsEqualTo(created.Id);
+        await Assert.That(updated.CreatedAt).IsEqualTo(created.CreatedAt);
+        await Assert.That(updated.Lines).Count().IsEqualTo(3);
+        await Assert.That(updated.Lines.All(l => l.AccountId != groceries.Id)).IsTrue();
+        await Assert.That(updated.Description).IsEqualTo("wholesale reshape");
+        await Assert.That(updated.Lines.Sum(l => l.Amount)).IsEqualTo(0L);
+    }
+
+    [Test]
+    public async Task ReplaceJournalEntry_returns_404_when_unknown()
+    {
+        using var client = Factory.CreateClient();
+        var grocery = await CreateAccountAsync(client, "Put-404-Grocery", "Expense");
+        var checking = await CreateAccountAsync(client, "Put-404-Checking", "Asset");
+
+        using var putResponse = await client.PutAsJsonAsync(
+            new Uri($"/api/journal-entries/{Guid.NewGuid()}", UriKind.Relative),
+            new ReplaceJournalEntryRequestDto(
+                Date: new DateOnly(2026, 5, 23),
+                Description: null,
+                BankTransactionId: null,
+                CounterpartyId: null,
+                Lines:
+                [
+                    new ReplaceJournalLineRequestDto(null, grocery.Id, 100, null, null),
+                    new ReplaceJournalLineRequestDto(null, checking.Id, -100, null, null),
+                ]
+            )
+        );
+
+        await Assert.That(putResponse.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
+    }
+
+    private static async Task<JournalEntryDto> CreateEntryAsync(
+        HttpClient client,
+        DateOnly date,
+        string? description,
+        IReadOnlyList<CreateJournalLineRequestDto> lines
+    )
+    {
+        var request = new CreateJournalEntryRequestDto(
+            Date: date,
+            Description: description,
+            BankTransactionId: null,
+            CounterpartyId: null,
+            Lines: lines
+        );
+        using var response = await client.PostAsJsonAsync(
+            new Uri("/api/journal-entries", UriKind.Relative),
+            request
+        );
+        response.EnsureSuccessStatusCode();
+        var dto = await response.Content.ReadFromJsonAsync<JournalEntryDto>();
+        return dto!;
+    }
+
     private async Task MarkLineClearedAsync(Guid lineId)
     {
         using var scope = Factory.Services.CreateScope();
@@ -465,4 +1035,20 @@ internal sealed record CreateJournalLineRequestDto(
     Guid AccountId,
     long Amount,
     string? Description
+);
+
+internal sealed record ReplaceJournalEntryRequestDto(
+    DateOnly Date,
+    string? Description,
+    Guid? BankTransactionId,
+    Guid? CounterpartyId,
+    IReadOnlyList<ReplaceJournalLineRequestDto> Lines
+);
+
+internal sealed record ReplaceJournalLineRequestDto(
+    Guid? Id,
+    Guid AccountId,
+    long Amount,
+    string? Description,
+    string? ReconciliationStatus
 );

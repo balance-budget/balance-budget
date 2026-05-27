@@ -56,4 +56,8 @@ public static class ErrorCodes
     public const string JournalUnbalanced = "journal.unbalanced";
     public const string JournalLineKeyInvalid = "journal.line_key_invalid";
     public const string JournalLineSetMismatch = "journal.line_set_mismatch";
+    public const string JournalLineFrozen = "journal.line_frozen";
+    public const string JournalLineUnknown = "journal.line_unknown";
+    public const string JournalLineStatusMutation = "journal.line_status_mutation";
+    public const string JournalBankTransactionImmutable = "journal.bank_transaction_immutable";
 }
