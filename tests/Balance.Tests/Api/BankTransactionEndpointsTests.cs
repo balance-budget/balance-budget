@@ -381,20 +381,17 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
         var btx = await btxResponse.Content.ReadFromJsonAsync<BankTransactionDto>();
         var counter = await CreateAccountAsync(client, "Income-BTX-Cat1");
 
-        var jeRequest = new
+        // Per ADR 0013 the BT↔JE link lives on the BankTransaction side; categorise the BT
+        // through its own endpoint to establish that link (the JE PUT/POST surface no longer
+        // carries a BankTransactionId field).
+        var categorizeRequest = new
         {
             Date = new DateOnly(2026, 5, 17),
             Description = "Linked entry",
-            BankTransactionId = btx!.Id,
             CounterpartyId = (Guid?)null,
+            NewCounterparty = (object?)null,
             Lines = new[]
             {
-                new
-                {
-                    AccountId = account.Id,
-                    Amount = 1234L,
-                    Description = (string?)null,
-                },
                 new
                 {
                     AccountId = counter.Id,
@@ -403,11 +400,11 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
                 },
             },
         };
-        using var jeResponse = await client.PostAsJsonAsync(
-            new Uri("/api/journal-entries", UriKind.Relative),
-            jeRequest
+        using var categorize = await client.PostAsJsonAsync(
+            new Uri($"/api/bank-transactions/{btx!.Id}/categorize", UriKind.Relative),
+            categorizeRequest
         );
-        await Assert.That(jeResponse.StatusCode).IsEqualTo(HttpStatusCode.Created);
+        await Assert.That(categorize.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
         using var dismiss = await client.PostAsJsonAsync(
             new Uri($"/api/bank-transactions/{btx.Id}/dismiss", UriKind.Relative),
@@ -762,9 +759,14 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
         var dto = await response.Content.ReadFromJsonAsync<JournalEntryDto>();
-        await Assert.That(dto!.BankTransactionId).IsEqualTo(btx.Id);
-        await Assert.That(dto.Lines).Count().IsEqualTo(2);
+        await Assert.That(dto!.Lines).Count().IsEqualTo(2);
         await Assert.That(dto.Lines.Sum(l => l.Amount)).IsEqualTo(0L);
+
+        using var btxAfter = await client.GetAsync(
+            new Uri($"/api/bank-transactions/{btx.Id}", UriKind.Relative)
+        );
+        var btxAfterDto = await btxAfter.Content.ReadFromJsonAsync<BankTransactionDto>();
+        await Assert.That(btxAfterDto!.JournalEntryId).IsEqualTo(dto.Id);
     }
 
     [Test]
@@ -796,10 +798,15 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
         var dto = await response.Content.ReadFromJsonAsync<JournalEntryDto>();
-        await Assert.That(dto!.BankTransactionId).IsEqualTo(btx.Id);
-        await Assert.That(dto.CounterpartyId).IsNull();
+        await Assert.That(dto!.CounterpartyId).IsNull();
         await Assert.That(dto.Lines).Count().IsEqualTo(2);
         await Assert.That(dto.Lines.Sum(l => l.Amount)).IsEqualTo(0L);
+
+        using var btxAfter = await client.GetAsync(
+            new Uri($"/api/bank-transactions/{btx.Id}", UriKind.Relative)
+        );
+        var btxAfterDto = await btxAfter.Content.ReadFromJsonAsync<BankTransactionDto>();
+        await Assert.That(btxAfterDto!.JournalEntryId).IsEqualTo(dto.Id);
     }
 
     [Test]
@@ -898,20 +905,15 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
         long bankSideAmount
     )
     {
+        _ = bankSideAccountId; // The categorize endpoint resolves the bank-side AccountId itself.
         var request = new
         {
+            CounterpartyId = (Guid?)null,
+            NewCounterparty = (object?)null,
             Date = new DateOnly(2026, 5, 17),
             Description = "Linked-from-BTX",
-            BankTransactionId = bankTransactionId,
-            CounterpartyId = (Guid?)null,
             Lines = new[]
             {
-                new
-                {
-                    AccountId = bankSideAccountId,
-                    Amount = bankSideAmount,
-                    Description = (string?)null,
-                },
                 new
                 {
                     AccountId = counterAccountId,
@@ -921,7 +923,7 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
             },
         };
         using var response = await client.PostAsJsonAsync(
-            new Uri("/api/journal-entries", UriKind.Relative),
+            new Uri($"/api/bank-transactions/{bankTransactionId}/categorize", UriKind.Relative),
             request
         );
         response.EnsureSuccessStatusCode();

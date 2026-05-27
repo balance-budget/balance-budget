@@ -45,7 +45,6 @@ public interface IJournalEntryService
 public sealed record CreateJournalEntryInput(
     DateOnly Date,
     string? Description,
-    BankTransactionId? BankTransactionId,
     CounterpartyId? CounterpartyId,
     IReadOnlyList<CreateJournalLineInput> Lines
 );
@@ -61,8 +60,8 @@ public sealed record CreateJournalLineInput(
 /// Patchable surface of a <see cref="JournalEntry"/>. <see cref="Lines"/> is keyed by the
 /// <see cref="JournalLineId"/> rendered as a "D"-format Guid string; the service parses keys
 /// back to typed IDs and enforces key-set equality so lines cannot be added or removed via
-/// PATCH. <c>BankTransactionId</c> is intentionally not part of this surface — once an entry
-/// links to an import row, that link is part of the audit trail.
+/// PATCH. The BT↔JE link is mutated through Attach/Detach on the BankTransaction side
+/// (ADR 0013) and is not part of this surface.
 /// </summary>
 public sealed record UpdateJournalEntryInput
 {
@@ -84,14 +83,14 @@ public sealed record UpdateJournalLineInput
 /// in <see cref="Lines"/> with unchanged <see cref="ReplaceJournalLineInput.AccountId"/> and
 /// <see cref="ReplaceJournalLineInput.Amount"/>. Existing <c>Uncleared</c> lines omitted from
 /// <see cref="Lines"/> are deleted; lines without an <see cref="ReplaceJournalLineInput.Id"/> are
-/// inserted with a server-assigned id and default to <c>Uncleared</c>. <c>BankTransactionId</c>
-/// and per-line <c>ReconciliationStatus</c> are validated to match current when supplied (the PUT
-/// does not mutate either).
+/// inserted with a server-assigned id and default to <c>Uncleared</c>. Per-line
+/// <c>ReconciliationStatus</c> is validated to match current when supplied (the PUT does not
+/// mutate it). The BT↔JE link lives on the BankTransaction side now (ADR 0013) and is
+/// mutated via Attach/Detach, not this endpoint.
 /// </summary>
 public sealed record ReplaceJournalEntryInput(
     DateOnly Date,
     string? Description,
-    BankTransactionId? BankTransactionId,
     CounterpartyId? CounterpartyId,
     IReadOnlyList<ReplaceJournalLineInput> Lines
 );

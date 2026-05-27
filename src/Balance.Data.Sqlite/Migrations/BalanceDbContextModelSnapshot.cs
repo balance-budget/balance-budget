@@ -183,6 +183,9 @@ namespace Balance.Data.Sqlite.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("JournalEntryId")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("MandateId")
                         .HasMaxLength(64)
                         .HasColumnType("TEXT");
@@ -233,6 +236,9 @@ namespace Balance.Data.Sqlite.Migrations
 
                     b.HasIndex("BookingDate")
                         .HasDatabaseName("IX_BankTransactions_BookingDate");
+
+                    b.HasIndex("JournalEntryId")
+                        .HasDatabaseName("IX_BankTransactions_JournalEntryId");
 
                     b.HasIndex("BankAccountId", "RowHash")
                         .IsUnique()
@@ -401,9 +407,6 @@ namespace Balance.Data.Sqlite.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid?>("BankTransactionId")
-                        .HasColumnType("TEXT");
-
                     b.Property<Guid?>("CounterpartyId")
                         .HasColumnType("TEXT");
 
@@ -421,11 +424,6 @@ namespace Balance.Data.Sqlite.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("BankTransactionId")
-                        .IsUnique()
-                        .HasDatabaseName("IX_JournalEntries_BankTransactionId")
-                        .HasFilter("\"BankTransactionId\" IS NOT NULL");
 
                     b.HasIndex("CounterpartyId")
                         .HasDatabaseName("IX_JournalEntries_CounterpartyId");
@@ -530,6 +528,11 @@ namespace Balance.Data.Sqlite.Migrations
                         .HasForeignKey("BankAccountId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Balance.Data.Entities.JournalEntry", null)
+                        .WithMany()
+                        .HasForeignKey("JournalEntryId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("Balance.Data.Entities.BankTransactionMetadataValue", b =>
@@ -551,11 +554,6 @@ namespace Balance.Data.Sqlite.Migrations
 
             modelBuilder.Entity("Balance.Data.Entities.JournalEntry", b =>
                 {
-                    b.HasOne("Balance.Data.Entities.BankTransaction", null)
-                        .WithMany()
-                        .HasForeignKey("BankTransactionId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("Balance.Data.Entities.Counterparty", null)
                         .WithMany()
                         .HasForeignKey("CounterpartyId")

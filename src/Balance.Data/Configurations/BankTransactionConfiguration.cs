@@ -69,10 +69,20 @@ internal sealed class BankTransactionConfiguration : IEntityTypeConfiguration<Ba
         builder.Property(b => b.DismissedReason).HasMaxLength(500);
 
         builder
+            .Property(b => b.JournalEntryId)
+            .HasConversion<JournalEntryId.EfCoreValueConverter>();
+
+        builder
             .HasOne<BankAccount>()
             .WithMany()
             .HasForeignKey(b => b.BankAccountId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder
+            .HasOne<JournalEntry>()
+            .WithMany()
+            .HasForeignKey(b => b.JournalEntryId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder
             .HasMany(b => b.Metadata)
@@ -83,6 +93,10 @@ internal sealed class BankTransactionConfiguration : IEntityTypeConfiguration<Ba
         builder.HasIndex(b => b.BankAccountId).HasDatabaseName("IX_BankTransactions_BankAccountId");
 
         builder.HasIndex(b => b.BookingDate).HasDatabaseName("IX_BankTransactions_BookingDate");
+
+        builder
+            .HasIndex(b => b.JournalEntryId)
+            .HasDatabaseName("IX_BankTransactions_JournalEntryId");
 
         builder
             .HasIndex(b => new { b.BankAccountId, b.RowHash })

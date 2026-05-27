@@ -101,8 +101,7 @@ internal sealed class JournalEntryService : IJournalEntryService
         if (balanceCheck.IsFailure)
             return balanceCheck.Error;
 
-        var referencesCheck = await EnsureOptionalReferencesExistAsync(
-            input.BankTransactionId,
+        var referencesCheck = await EnsureCounterpartyExistsAsync(
             input.CounterpartyId,
             cancellationToken
         );
@@ -115,7 +114,6 @@ internal sealed class JournalEntryService : IJournalEntryService
             Id = new JournalEntryId(Guid.CreateVersion7()),
             Date = input.Date,
             Description = input.Description.TrimToNull(),
-            BankTransactionId = input.BankTransactionId,
             CounterpartyId = input.CounterpartyId,
             CreatedAt = now,
             UpdatedAt = now,
@@ -192,8 +190,7 @@ internal sealed class JournalEntryService : IJournalEntryService
 
         if (input.CounterpartyId != entry.CounterpartyId)
         {
-            var referencesCheck = await EnsureOptionalReferencesExistAsync(
-                bankTransactionId: null,
+            var referencesCheck = await EnsureCounterpartyExistsAsync(
                 input.CounterpartyId,
                 cancellationToken
             );
@@ -234,19 +231,6 @@ internal sealed class JournalEntryService : IJournalEntryService
         if (entry is null)
         {
             return new NotFoundError("JournalEntry", id.Value.ToString());
-        }
-
-        // BankTransactionId is immutable. The PUT surface allows the body to repeat the current
-        // value (useful when echoing a snapshot back) but rejects any attempt to change it.
-        if (
-            input.BankTransactionId is not null
-            && input.BankTransactionId != entry.BankTransactionId
-        )
-        {
-            return new InvariantError(
-                ErrorCodes.JournalBankTransactionImmutable,
-                "JournalEntry.BankTransactionId is immutable; corrections go through delete-and-recreate."
-            );
         }
 
         var existingLines = entry.Lines.ToDictionary(l => l.Id);
@@ -338,8 +322,7 @@ internal sealed class JournalEntryService : IJournalEntryService
 
         if (input.CounterpartyId is not null && input.CounterpartyId != entry.CounterpartyId)
         {
-            var referencesCheck = await EnsureOptionalReferencesExistAsync(
-                bankTransactionId: null,
+            var referencesCheck = await EnsureCounterpartyExistsAsync(
                 input.CounterpartyId,
                 cancellationToken
             );
@@ -449,44 +432,6 @@ internal sealed class JournalEntryService : IJournalEntryService
             e.Id,
             e.Date,
             e.Description,
-            e.BankTransactionId,
-            e.CounterpartyId,
-            e.CounterpartyId == null
-                ? null
-                : db
-                    .Counterparties.Where(c => c.Id == e.CounterpartyId)
-                    .Select(c => c.Name)
-                    .FirstOrDefault(),
-            e.Lines.Select(l => new JournalLineOutput(
-                    l.Id,
-                    l.AccountId,
-                    db.Accounts.Where(a => a.Id == l.AccountId).Select(a => a.Name).First(),
-                    l.Amount,
-                    l.ReconciliationStatus,
-                    l.Description
-                ))
-                .ToList(),
-            e.CreatedAt,
-            e.UpdatedAt
-        ));
-    }
-
-    /// <summary>
-    /// EF projection for the detail wire shape. Adds the linked bank-transaction
-    /// detail (with its metadata bag) when the entry was created from an import row;
-    /// otherwise that property is null. The metadata join is wasted work for the
-    /// list endpoint, so this variant is reserved for Get / Create / Update.
-    /// </summary>
-    private static IQueryable<JournalEntryDetailOutput> ProjectDetailOutput(
-        BalanceDbContext db,
-        IQueryable<JournalEntry> source
-    )
-    {
-        return source.Select(e => new JournalEntryDetailOutput(
-            e.Id,
-            e.Date,
-            e.Description,
-            e.BankTransactionId,
             e.CounterpartyId,
             e.CounterpartyId == null
                 ? null
@@ -505,42 +450,78 @@ internal sealed class JournalEntryService : IJournalEntryService
                 .ToList(),
             e.CreatedAt,
             e.UpdatedAt,
-            e.BankTransactionId == null
+            db.BankTransactions.Any(b => b.JournalEntryId == e.Id)
+        ));
+    }
+
+    /// <summary>
+    /// EF projection for the detail wire shape. Adds the list of bank-transactions
+    /// pointing at this entry via <c>BankTransaction.JournalEntryId</c> (each with its
+    /// metadata bag). The list is 0 or 1 elements today (per-BT FK cardinality); the
+    /// list shape is forward-compatible with ADR 0013's self-transfer Attach. The
+    /// metadata join is wasted work for the list endpoint, so this variant is
+    /// reserved for Get / Create / Update.
+    /// </summary>
+    private static IQueryable<JournalEntryDetailOutput> ProjectDetailOutput(
+        BalanceDbContext db,
+        IQueryable<JournalEntry> source
+    )
+    {
+        return source.Select(e => new JournalEntryDetailOutput(
+            e.Id,
+            e.Date,
+            e.Description,
+            e.CounterpartyId,
+            e.CounterpartyId == null
                 ? null
                 : db
-                    .BankTransactions.Where(b => b.Id == e.BankTransactionId)
-                    .Select(b => new BankTransactionDetailOutput(
-                        b.Id,
-                        b.BankAccountId,
-                        b.BookingDate,
-                        b.Money,
-                        b.Description,
-                        b.CounterpartyName,
-                        b.CounterpartyAccountNumber,
-                        b.ValueDate,
-                        b.Reference,
-                        b.MandateId,
-                        b.SepaCreditorId,
-                        b.ForeignAmount,
-                        b.ForeignCurrencyCode,
-                        b.ExchangeRate,
-                        b.ImporterKey,
-                        db.JournalEntries.Where(j => j.BankTransactionId == b.Id)
-                            .Select(j => (JournalEntryId?)j.Id)
-                            .FirstOrDefault(),
-                        b.DismissedAt,
-                        b.DismissedReason,
-                        b.CreatedAt,
-                        b.UpdatedAt,
-                        b.Metadata.OrderBy(m => m.Key!.Name)
-                            .Select(m => new BankTransactionMetadataEntryOutput(
-                                m.Key!.Name,
-                                m.StringValue,
-                                m.IntegerValue
-                            ))
-                            .ToList()
-                    ))
-                    .FirstOrDefault()
+                    .Counterparties.Where(c => c.Id == e.CounterpartyId)
+                    .Select(c => c.Name)
+                    .FirstOrDefault(),
+            e.Lines.Select(l => new JournalLineOutput(
+                    l.Id,
+                    l.AccountId,
+                    db.Accounts.Where(a => a.Id == l.AccountId).Select(a => a.Name).First(),
+                    l.Amount,
+                    l.ReconciliationStatus,
+                    l.Description
+                ))
+                .ToList(),
+            e.CreatedAt,
+            e.UpdatedAt,
+            db.BankTransactions.Where(b => b.JournalEntryId == e.Id)
+                .OrderBy(b => b.BookingDate)
+                .ThenBy(b => b.CreatedAt)
+                .Select(b => new BankTransactionDetailOutput(
+                    b.Id,
+                    b.BankAccountId,
+                    b.BookingDate,
+                    b.Money,
+                    b.Description,
+                    b.CounterpartyName,
+                    b.CounterpartyAccountNumber,
+                    b.ValueDate,
+                    b.Reference,
+                    b.MandateId,
+                    b.SepaCreditorId,
+                    b.ForeignAmount,
+                    b.ForeignCurrencyCode,
+                    b.ExchangeRate,
+                    b.ImporterKey,
+                    b.JournalEntryId,
+                    b.DismissedAt,
+                    b.DismissedReason,
+                    b.CreatedAt,
+                    b.UpdatedAt,
+                    b.Metadata.OrderBy(m => m.Key!.Name)
+                        .Select(m => new BankTransactionMetadataEntryOutput(
+                            m.Key!.Name,
+                            m.StringValue,
+                            m.IntegerValue
+                        ))
+                        .ToList()
+                ))
+                .ToList()
         ));
     }
 
@@ -574,24 +555,11 @@ internal sealed class JournalEntryService : IJournalEntryService
         return new Result<IReadOnlyList<JournalLineDraft>>(drafts);
     }
 
-    private async Task<Result> EnsureOptionalReferencesExistAsync(
-        BankTransactionId? bankTransactionId,
+    private async Task<Result> EnsureCounterpartyExistsAsync(
         CounterpartyId? counterpartyId,
         CancellationToken cancellationToken
     )
     {
-        if (bankTransactionId is { } btxId)
-        {
-            var exists = await _dbContext.BankTransactions.AnyAsync(
-                b => b.Id == btxId,
-                cancellationToken
-            );
-            if (!exists)
-            {
-                return new NotFoundError("BankTransaction", btxId.Value.ToString());
-            }
-        }
-
         if (counterpartyId is { } cpId)
         {
             var exists = await _dbContext.Counterparties.AnyAsync(

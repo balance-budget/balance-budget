@@ -187,14 +187,13 @@ function parseAmount(
 
 function headerWire(header: FormHeader): Pick<
     WireCreateRequest,
-    'date' | 'description' | 'counterpartyId' | 'bankTransactionId'
+    'date' | 'description' | 'counterpartyId'
 > {
     const trimmed = header.description.trim();
     return {
         date: header.date,
         description: trimmed.length === 0 ? null : trimmed,
         counterpartyId: header.counterpartyId,
-        bankTransactionId: null,
     };
 }
 

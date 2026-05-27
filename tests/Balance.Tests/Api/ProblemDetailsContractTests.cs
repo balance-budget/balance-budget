@@ -73,7 +73,6 @@ internal sealed class ProblemDetailsContractTests : EndpointsTestsBase
         var request = new CreateJournalEntryRequestDto(
             Date: new DateOnly(2026, 5, 17),
             Description: null,
-            BankTransactionId: null,
             CounterpartyId: null,
             Lines:
             [
@@ -105,7 +104,6 @@ internal sealed class ProblemDetailsContractTests : EndpointsTestsBase
         var request = new CreateJournalEntryRequestDto(
             Date: new DateOnly(2026, 5, 17),
             Description: null,
-            BankTransactionId: null,
             CounterpartyId: null,
             Lines: [new CreateJournalLineRequestDto(account.Id, 100, null)]
         );

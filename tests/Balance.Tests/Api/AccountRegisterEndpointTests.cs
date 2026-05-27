@@ -465,7 +465,6 @@ internal sealed class AccountRegisterEndpointTests : EndpointsTestsBase
         var request = new CreateJournalEntryRequestDto(
             Date: date,
             Description: null,
-            BankTransactionId: null,
             CounterpartyId: counterpartyId,
             Lines: lines
         );

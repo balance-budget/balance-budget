@@ -7,7 +7,6 @@ namespace Balance.Web.Endpoints.JournalEntries;
 internal sealed record CreateJournalEntryRequest(
     DateOnly Date,
     string? Description,
-    BankTransactionId? BankTransactionId,
     CounterpartyId? CounterpartyId,
     IReadOnlyList<CreateJournalLineRequest> Lines
 );

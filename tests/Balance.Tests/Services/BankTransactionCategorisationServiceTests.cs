@@ -50,7 +50,9 @@ internal sealed class BankTransactionCategorisationServiceTests : EndpointsTests
 
         await Assert.That(result.IsSuccess).IsTrue();
         var entry = result.Value!;
-        await Assert.That(entry.BankTransactionId).IsEqualTo(bankTransaction.Id);
+        await Assert.That(entry.BankTransactions).Count().IsEqualTo(1);
+        await Assert.That(entry.BankTransactions[0].Id).IsEqualTo(bankTransaction.Id);
+        await Assert.That(entry.BankTransactions[0].JournalEntryId).IsEqualTo(entry.Id);
         await Assert.That(entry.CounterpartyId).IsEqualTo(counterparty.Id);
         await Assert.That(entry.Lines).Count().IsEqualTo(2);
         await Assert.That(entry.Lines.Sum(l => l.Amount)).IsEqualTo(0L);
@@ -426,7 +428,9 @@ internal sealed class BankTransactionCategorisationServiceTests : EndpointsTests
 
         await Assert.That(result.IsSuccess).IsTrue();
         var entry = result.Value!;
-        await Assert.That(entry.BankTransactionId).IsEqualTo(bankTransaction.Id);
+        await Assert.That(entry.BankTransactions).Count().IsEqualTo(1);
+        await Assert.That(entry.BankTransactions[0].Id).IsEqualTo(bankTransaction.Id);
+        await Assert.That(entry.BankTransactions[0].JournalEntryId).IsEqualTo(entry.Id);
         await Assert.That(entry.CounterpartyId).IsNull();
         await Assert.That(entry.Lines).Count().IsEqualTo(2);
         await Assert.That(entry.Lines.Sum(l => l.Amount)).IsEqualTo(0L);

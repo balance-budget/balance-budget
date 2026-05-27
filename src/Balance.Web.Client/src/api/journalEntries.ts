@@ -6,12 +6,10 @@ import {
 import type { components } from '../lib/api-types';
 import {
     type AccountId,
-    type BankTransactionId,
     type CounterpartyId,
     type JournalEntryId,
     type JournalLineId,
     asAccountId,
-    asBankTransactionId,
     asCounterpartyId,
     asJournalEntryId,
     asJournalLineId,
@@ -38,14 +36,14 @@ export type JournalEntry = {
     id: JournalEntryId;
     date: string;
     description: string | null;
-    bankTransactionId: BankTransactionId | null;
     counterpartyId: CounterpartyId | null;
     counterpartyName: string | null;
     lines: JournalLine[];
+    hasBankTransactions: boolean;
 };
 
 export type JournalEntryDetail = JournalEntry & {
-    bankTransaction: BankTransactionDetail | null;
+    bankTransactions: BankTransactionDetail[];
 };
 
 export const journalEntriesKeys = {
@@ -72,22 +70,24 @@ function toEntry(wire: WireEntry): JournalEntry {
         id: asJournalEntryId(wire.id),
         date: wire.date,
         description: wire.description,
-        bankTransactionId: wire.bankTransactionId
-            ? asBankTransactionId(wire.bankTransactionId)
-            : null,
         counterpartyId: wire.counterpartyId ? asCounterpartyId(wire.counterpartyId) : null,
         counterpartyName: wire.counterpartyName,
         lines: wire.lines.map(toLine),
+        hasBankTransactions: wire.hasBankTransactions,
     };
 }
 
 function toEntryDetail(wire: WireEntryDetail): JournalEntryDetail {
+    const bankTransactions = wire.bankTransactions.map(toBankTransactionDetail);
     return {
-        ...toEntry(wire),
-        bankTransaction:
-            wire.bankTransaction === null
-                ? null
-                : toBankTransactionDetail(wire.bankTransaction),
+        id: asJournalEntryId(wire.id),
+        date: wire.date,
+        description: wire.description,
+        counterpartyId: wire.counterpartyId ? asCounterpartyId(wire.counterpartyId) : null,
+        counterpartyName: wire.counterpartyName,
+        lines: wire.lines.map(toLine),
+        hasBankTransactions: bankTransactions.length > 0,
+        bankTransactions,
     };
 }
 

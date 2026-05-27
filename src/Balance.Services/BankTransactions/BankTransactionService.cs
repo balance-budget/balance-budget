@@ -37,14 +37,11 @@ internal sealed class BankTransactionService : IBankTransactionService
         query = filter switch
         {
             BankTransactionListFilter.Inbox => query
-                .Where(b =>
-                    b.DismissedAt == null
-                    && !_dbContext.JournalEntries.Any(j => j.BankTransactionId == b.Id)
-                )
+                .Where(b => b.DismissedAt == null && b.JournalEntryId == null)
                 .OrderBy(b => b.BookingDate)
                 .ThenBy(b => b.CreatedAt),
             BankTransactionListFilter.Matched => query
-                .Where(b => _dbContext.JournalEntries.Any(j => j.BankTransactionId == b.Id))
+                .Where(b => b.JournalEntryId != null)
                 .OrderByDescending(b => b.BookingDate)
                 .ThenByDescending(b => b.CreatedAt),
             BankTransactionListFilter.Dismissed => query
@@ -75,10 +72,7 @@ internal sealed class BankTransactionService : IBankTransactionService
                 b.ForeignCurrencyCode,
                 b.ExchangeRate,
                 b.ImporterKey,
-                _dbContext
-                    .JournalEntries.Where(j => j.BankTransactionId == b.Id)
-                    .Select(j => (JournalEntryId?)j.Id)
-                    .FirstOrDefault(),
+                b.JournalEntryId,
                 b.DismissedAt,
                 b.DismissedReason,
                 b.CreatedAt,
@@ -111,10 +105,7 @@ internal sealed class BankTransactionService : IBankTransactionService
                 b.ForeignCurrencyCode,
                 b.ExchangeRate,
                 b.ImporterKey,
-                _dbContext
-                    .JournalEntries.Where(j => j.BankTransactionId == b.Id)
-                    .Select(j => (JournalEntryId?)j.Id)
-                    .FirstOrDefault(),
+                b.JournalEntryId,
                 b.DismissedAt,
                 b.DismissedReason,
                 b.CreatedAt,
@@ -193,7 +184,7 @@ internal sealed class BankTransactionService : IBankTransactionService
         if (saveResult.IsFailure)
             return saveResult.Error;
 
-        return ToOutputNoMatch(bankTransaction);
+        return ToOutput(bankTransaction);
     }
 
     private static string BuildManualRawSource(CreateBankTransactionInput input) =>
@@ -258,11 +249,7 @@ internal sealed class BankTransactionService : IBankTransactionService
             );
         }
 
-        var hasJournalEntry = await _dbContext.JournalEntries.AnyAsync(
-            j => j.BankTransactionId == id,
-            cancellationToken
-        );
-        if (hasJournalEntry)
+        if (bankTransaction.JournalEntryId is not null)
         {
             return new ConflictError(
                 ErrorCodes.BankTransactionAlreadyCategorised,
@@ -280,7 +267,7 @@ internal sealed class BankTransactionService : IBankTransactionService
         if (saveResult.IsFailure)
             return saveResult.Error;
 
-        return ToOutputNoMatch(bankTransaction);
+        return ToOutput(bankTransaction);
     }
 
     public async Task<Result<BankTransactionOutput>> UndismissAsync(
@@ -313,10 +300,10 @@ internal sealed class BankTransactionService : IBankTransactionService
         if (saveResult.IsFailure)
             return saveResult.Error;
 
-        return ToOutputNoMatch(bankTransaction);
+        return ToOutput(bankTransaction);
     }
 
-    private static BankTransactionOutput ToOutputNoMatch(BankTransaction bankTransaction) =>
+    private static BankTransactionOutput ToOutput(BankTransaction bankTransaction) =>
         new(
             bankTransaction.Id,
             bankTransaction.BankAccountId,
@@ -333,7 +320,7 @@ internal sealed class BankTransactionService : IBankTransactionService
             bankTransaction.ForeignCurrencyCode,
             bankTransaction.ExchangeRate,
             bankTransaction.ImporterKey,
-            null,
+            bankTransaction.JournalEntryId,
             bankTransaction.DismissedAt,
             bankTransaction.DismissedReason,
             bankTransaction.CreatedAt,

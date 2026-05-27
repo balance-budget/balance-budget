@@ -536,7 +536,6 @@ export interface components {
             /** Format: date */
             date: string;
             description: null | string;
-            bankTransactionId: null | components["schemas"]["BankTransactionId"];
             counterpartyId: null | components["schemas"]["CounterpartyId"];
             lines: components["schemas"]["CreateJournalLineRequest"][];
         };
@@ -593,7 +592,6 @@ export interface components {
             /** Format: date */
             date: string;
             description: null | string;
-            bankTransactionId: null | components["schemas"]["BankTransactionId"];
             counterpartyId: null | components["schemas"]["CounterpartyId"];
             counterpartyName: null | string;
             lines: components["schemas"]["JournalLineOutput"][];
@@ -601,7 +599,7 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
-            bankTransaction: null | components["schemas"]["BankTransactionDetailOutput"];
+            bankTransactions: components["schemas"]["BankTransactionDetailOutput"][];
         };
         /** Format: uuid */
         JournalEntryId: string;
@@ -610,7 +608,6 @@ export interface components {
             /** Format: date */
             date: string;
             description: null | string;
-            bankTransactionId: null | components["schemas"]["BankTransactionId"];
             counterpartyId: null | components["schemas"]["CounterpartyId"];
             counterpartyName: null | string;
             lines: components["schemas"]["JournalLineOutput"][];
@@ -618,6 +615,7 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+            hasBankTransactions: boolean;
         };
         /** Format: uuid */
         JournalLineId: string;
@@ -758,7 +756,6 @@ export interface components {
             /** Format: date */
             date: string;
             description: null | string;
-            bankTransactionId: null | components["schemas"]["BankTransactionId"];
             counterpartyId: null | components["schemas"]["CounterpartyId"];
             lines: components["schemas"]["ReplaceJournalLineRequest"][];
         };

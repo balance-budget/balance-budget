@@ -129,15 +129,15 @@ export function JournalDetail({ id }: { id: JournalEntryId }) {
                 />
             </Panel>
 
-            {entry.bankTransaction && (
-                <Panel>
+            {entry.bankTransactions.map(bt => (
+                <Panel key={bt.id}>
                     <SectionHead
                         title="Bank transaction"
                         subtitle="Imported row this entry was categorised from."
                     />
-                    <BankTransactionDetails bt={entry.bankTransaction} catalog={catalog} />
+                    <BankTransactionDetails bt={bt} catalog={catalog} />
                 </Panel>
-            )}
+            ))}
 
             <Panel>
                 <SectionHead title="Lines" subtitle="Double-entry detail." />
@@ -162,7 +162,7 @@ function DetailHeader({
     onEdit,
     onDelete,
 }: {
-    entry: JournalEntry;
+    entry: JournalEntryDetail;
     projection: JournalProjection;
     onEdit: () => void;
     onDelete: () => void;
@@ -181,7 +181,7 @@ function DetailHeader({
                     <h1 className="text-[22px] font-medium text-fg-1 truncate">
                         {entry.counterpartyName ?? entry.description ?? '—'}
                     </h1>
-                    {entry.bankTransactionId ? (
+                    {entry.bankTransactions.length > 0 ? (
                         <span
                             title="From bank import"
                             className="inline-flex items-center text-fg-3"
@@ -418,7 +418,6 @@ function EditJournalEntry({
         const result = buildReplaceRequest({
             date,
             description,
-            bankTransactionId: entry.bankTransactionId,
             counterpartyId,
             lines,
             scale,
@@ -455,15 +454,15 @@ function EditJournalEntry({
             }}
             noValidate
         >
-            {entry.bankTransaction && (
-                <Panel>
+            {entry.bankTransactions.map(bt => (
+                <Panel key={bt.id}>
                     <SectionHead
                         title="Bank transaction"
                         subtitle="Imported row this entry was categorised from."
                     />
-                    <BankTransactionDetails bt={entry.bankTransaction} catalog={catalog} />
+                    <BankTransactionDetails bt={bt} catalog={catalog} />
                 </Panel>
-            )}
+            ))}
 
             <Panel>
                 <SectionHead

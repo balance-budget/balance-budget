@@ -35,7 +35,6 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
         var request = new CreateJournalEntryRequestDto(
             Date: new DateOnly(2026, 5, 17),
             Description: "Groceries at AH",
-            BankTransactionId: null,
             CounterpartyId: null,
             Lines:
             [
@@ -75,7 +74,6 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
         var request = new CreateJournalEntryRequestDto(
             Date: new DateOnly(2026, 5, 17),
             Description: null,
-            BankTransactionId: null,
             CounterpartyId: null,
             Lines:
             [
@@ -100,7 +98,6 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
         var request = new CreateJournalEntryRequestDto(
             Date: new DateOnly(2026, 5, 17),
             Description: null,
-            BankTransactionId: null,
             CounterpartyId: null,
             Lines: [new CreateJournalLineRequestDto(account.Id, 100, null)]
         );
@@ -122,7 +119,6 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
         var request = new CreateJournalEntryRequestDto(
             Date: new DateOnly(2026, 5, 17),
             Description: null,
-            BankTransactionId: null,
             CounterpartyId: null,
             Lines:
             [
@@ -160,7 +156,6 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
         var request = new CreateJournalEntryRequestDto(
             Date: new DateOnly(2026, 5, 17),
             Description: null,
-            BankTransactionId: null,
             CounterpartyId: null,
             Lines:
             [
@@ -195,7 +190,6 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
         var create = new CreateJournalEntryRequestDto(
             Date: new DateOnly(2026, 5, 1),
             Description: "before",
-            BankTransactionId: null,
             CounterpartyId: null,
             Lines:
             [
@@ -234,7 +228,6 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
         var create = new CreateJournalEntryRequestDto(
             Date: new DateOnly(2026, 5, 5),
             Description: "entry",
-            BankTransactionId: null,
             CounterpartyId: null,
             Lines:
             [
@@ -277,7 +270,6 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
         var create = new CreateJournalEntryRequestDto(
             Date: new DateOnly(2026, 5, 6),
             Description: null,
-            BankTransactionId: null,
             CounterpartyId: null,
             Lines:
             [
@@ -311,7 +303,6 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
         var create = new CreateJournalEntryRequestDto(
             Date: new DateOnly(2026, 5, 7),
             Description: null,
-            BankTransactionId: null,
             CounterpartyId: null,
             Lines:
             [
@@ -344,7 +335,6 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
         var create = new CreateJournalEntryRequestDto(
             Date: new DateOnly(2026, 5, 8),
             Description: "groceries",
-            BankTransactionId: null,
             CounterpartyId: null,
             Lines:
             [
@@ -385,7 +375,6 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
         var create = new CreateJournalEntryRequestDto(
             Date: new DateOnly(2026, 5, 9),
             Description: null,
-            BankTransactionId: null,
             CounterpartyId: null,
             Lines:
             [
@@ -433,7 +422,6 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
             new ReplaceJournalEntryRequestDto(
                 Date: new DateOnly(2026, 5, 11),
                 Description: "fixed",
-                BankTransactionId: null,
                 CounterpartyId: null,
                 Lines:
                 [
@@ -495,7 +483,6 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
             new ReplaceJournalEntryRequestDto(
                 Date: created.Date,
                 Description: null,
-                BankTransactionId: null,
                 CounterpartyId: null,
                 Lines:
                 [
@@ -534,7 +521,6 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
             new ReplaceJournalEntryRequestDto(
                 Date: created.Date,
                 Description: null,
-                BankTransactionId: null,
                 CounterpartyId: null,
                 Lines:
                 [
@@ -575,7 +561,6 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
             new ReplaceJournalEntryRequestDto(
                 Date: created.Date,
                 Description: null,
-                BankTransactionId: null,
                 CounterpartyId: null,
                 Lines:
                 [
@@ -614,7 +599,6 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
             new ReplaceJournalEntryRequestDto(
                 Date: created.Date,
                 Description: null,
-                BankTransactionId: null,
                 CounterpartyId: null,
                 Lines:
                 [
@@ -668,7 +652,6 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
             new ReplaceJournalEntryRequestDto(
                 Date: created.Date,
                 Description: null,
-                BankTransactionId: null,
                 CounterpartyId: null,
                 Lines:
                 [
@@ -716,7 +699,6 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
             new ReplaceJournalEntryRequestDto(
                 Date: created.Date,
                 Description: null,
-                BankTransactionId: null,
                 CounterpartyId: null,
                 Lines:
                 [
@@ -770,7 +752,6 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
             new ReplaceJournalEntryRequestDto(
                 Date: created.Date,
                 Description: null,
-                BankTransactionId: null,
                 CounterpartyId: null,
                 Lines:
                 [
@@ -779,50 +760,6 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
                         checkingLine.Id,
                         checking.Id,
                         -100,
-                        null,
-                        null
-                    ),
-                ]
-            )
-        );
-
-        await Assert.That(putResponse.StatusCode).IsEqualTo(HttpStatusCode.UnprocessableEntity);
-    }
-
-    [Test]
-    public async Task ReplaceJournalEntry_rejects_changing_bank_transaction_id()
-    {
-        using var client = Factory.CreateClient();
-        var grocery = await CreateAccountAsync(client, "Put-BT-Grocery", "Expense");
-        var checking = await CreateAccountAsync(client, "Put-BT-Checking", "Asset");
-
-        var created = await CreateEntryAsync(
-            client,
-            new DateOnly(2026, 5, 19),
-            null,
-            lines:
-            [
-                new CreateJournalLineRequestDto(grocery.Id, 600, null),
-                new CreateJournalLineRequestDto(checking.Id, -600, null),
-            ]
-        );
-        var groceryLine = created.Lines.Single(l => l.AccountId == grocery.Id);
-        var checkingLine = created.Lines.Single(l => l.AccountId == checking.Id);
-
-        using var putResponse = await client.PutAsJsonAsync(
-            new Uri($"/api/journal-entries/{created.Id}", UriKind.Relative),
-            new ReplaceJournalEntryRequestDto(
-                Date: created.Date,
-                Description: null,
-                BankTransactionId: Guid.NewGuid(),
-                CounterpartyId: null,
-                Lines:
-                [
-                    new ReplaceJournalLineRequestDto(groceryLine.Id, grocery.Id, 600, null, null),
-                    new ReplaceJournalLineRequestDto(
-                        checkingLine.Id,
-                        checking.Id,
-                        -600,
                         null,
                         null
                     ),
@@ -858,7 +795,6 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
             new ReplaceJournalEntryRequestDto(
                 Date: created.Date,
                 Description: null,
-                BankTransactionId: null,
                 CounterpartyId: null,
                 Lines:
                 [
@@ -908,7 +844,6 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
             new ReplaceJournalEntryRequestDto(
                 Date: new DateOnly(2026, 5, 22),
                 Description: "wholesale reshape",
-                BankTransactionId: null,
                 CounterpartyId: null,
                 Lines:
                 [
@@ -941,7 +876,6 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
             new ReplaceJournalEntryRequestDto(
                 Date: new DateOnly(2026, 5, 23),
                 Description: null,
-                BankTransactionId: null,
                 CounterpartyId: null,
                 Lines:
                 [
@@ -964,7 +898,6 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
         var request = new CreateJournalEntryRequestDto(
             Date: date,
             Description: description,
-            BankTransactionId: null,
             CounterpartyId: null,
             Lines: lines
         );
@@ -1008,7 +941,6 @@ internal sealed record JournalEntryDto(
     Guid Id,
     DateOnly Date,
     string? Description,
-    Guid? BankTransactionId,
     Guid? CounterpartyId,
     IReadOnlyList<JournalLineDto> Lines,
     DateTime CreatedAt,
@@ -1026,7 +958,6 @@ internal sealed record JournalLineDto(
 internal sealed record CreateJournalEntryRequestDto(
     DateOnly Date,
     string? Description,
-    Guid? BankTransactionId,
     Guid? CounterpartyId,
     IReadOnlyList<CreateJournalLineRequestDto> Lines
 );
@@ -1040,7 +971,6 @@ internal sealed record CreateJournalLineRequestDto(
 internal sealed record ReplaceJournalEntryRequestDto(
     DateOnly Date,
     string? Description,
-    Guid? BankTransactionId,
     Guid? CounterpartyId,
     IReadOnlyList<ReplaceJournalLineRequestDto> Lines
 );
