@@ -29,7 +29,7 @@ public sealed record JournalEntryOutput(
 /// Detail-endpoint shape: every <see cref="JournalEntryOutput"/> field plus the
 /// linked <see cref="BankTransactionDetailOutput"/> (when the entry was created
 /// from a bank import). Returned from <c>GET /api/journal-entries/{id}</c>,
-/// <c>POST</c>, <c>PATCH</c>, and the categorize endpoint — same split as
+/// <c>POST</c>, <c>PUT</c>, and the categorize endpoint — same split as
 /// <c>BankTransactionOutput</c> vs <c>BankTransactionDetailOutput</c>.
 /// </summary>
 public sealed record JournalEntryDetailOutput(

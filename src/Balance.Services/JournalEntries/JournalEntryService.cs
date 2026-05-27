@@ -219,7 +219,7 @@ internal sealed class JournalEntryService : IJournalEntryService
         return await LoadDetailOrThrowAsync(entry.Id, cancellationToken);
     }
 
-    public async Task<Result<JournalEntryOutput>> ReplaceAsync(
+    public async Task<Result<JournalEntryDetailOutput>> ReplaceAsync(
         JournalEntryId id,
         ReplaceJournalEntryInput input,
         CancellationToken cancellationToken

@@ -2,10 +2,9 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useAccounts, type Account } from '../api/accounts';
 import {
-    toUpdateInput,
     useDeleteJournalEntry,
     useJournalEntry,
-    useUpdateJournalEntry,
+    useReplaceJournalEntry,
     type JournalEntry,
     type JournalEntryDetail,
     type JournalLine,
@@ -25,7 +24,12 @@ import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { cx } from '../lib/cx';
-import { type AccountId, type CounterpartyId, type JournalEntryId } from '../lib/domain';
+import {
+    type AccountId,
+    type AccountType,
+    type CounterpartyId,
+    type JournalEntryId,
+} from '../lib/domain';
 import { ApiError } from '../lib/http';
 import {
     formatLegLabel,
@@ -33,23 +37,32 @@ import {
     type JournalProjection,
 } from '../lib/journalProjection';
 import { formatMoney } from '../lib/money';
+import {
+    buildReplaceRequest,
+    computeTotals,
+    emptyLine,
+    formatMagnitudeFor,
+    isLineLocked,
+    toEditLines,
+    type EditLine,
+    type FieldErrors,
+} from './journalDetail.state';
 
-type DraftLine = { id: string; description: string };
-type Draft = {
-    date: string;
-    description: string;
-    counterpartyId: CounterpartyId | null;
-    lines: DraftLine[];
+const ACCOUNT_TYPE_ORDER: AccountType[] = [
+    'Asset',
+    'Liability',
+    'Income',
+    'Expense',
+    'Equity',
+];
+
+const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
+    Asset: 'Assets',
+    Liability: 'Liabilities',
+    Income: 'Income',
+    Expense: 'Expenses',
+    Equity: 'Equity',
 };
-
-function toDraft(entry: JournalEntry): Draft {
-    return {
-        date: entry.date,
-        description: entry.description ?? '',
-        counterpartyId: entry.counterpartyId,
-        lines: entry.lines.map(line => ({ id: line.id, description: line.description ?? '' })),
-    };
-}
 
 export function JournalDetail({ id }: { id: JournalEntryId }) {
     const query = useJournalEntry(id);
@@ -90,7 +103,7 @@ export function JournalDetail({ id }: { id: JournalEntryId }) {
         return (
             <EditJournalEntry
                 entry={entry}
-                projection={projection}
+                accounts={accounts.data ?? []}
                 onCancel={() => {
                     setEditing(false);
                 }}
@@ -127,10 +140,7 @@ export function JournalDetail({ id }: { id: JournalEntryId }) {
             )}
 
             <Panel>
-                <SectionHead
-                    title="Lines"
-                    subtitle="Double-entry detail. Edit the entry to change line descriptions."
-                />
+                <SectionHead title="Lines" subtitle="Double-entry detail." />
                 <LineTable entry={entry} projection={projection} />
             </Panel>
 
@@ -334,23 +344,50 @@ function ReconciliationChip({ status }: { status: JournalLine['reconciliationSta
 
 function EditJournalEntry({
     entry,
-    projection,
+    accounts,
     onCancel,
     onSaved,
 }: {
     entry: JournalEntryDetail;
-    projection: JournalProjection;
+    accounts: Account[];
     onCancel: () => void;
     onSaved: () => void;
 }) {
-    const update = useUpdateJournalEntry();
+    const replace = useReplaceJournalEntry();
     const counterparties = useCounterparties();
     const catalog = useCurrencyCatalog();
     const toast = useToast();
 
-    const [draft, setDraft] = useState<Draft>(() => toDraft(entry));
+    const accountsById = useMemo(
+        () => new Map<AccountId, Account>(accounts.map(a => [a.id, a])),
+        [accounts],
+    );
+
+    const currencyCode = useMemo(() => {
+        for (const line of entry.lines) {
+            const code = accountsById.get(line.accountId)?.currencyCode;
+            if (code) return code;
+        }
+        return 'EUR';
+    }, [entry.lines, accountsById]);
+
+    const scale = useMemo(() => {
+        const currency = catalog.get(currencyCode);
+        return currency?.minorUnitScale ?? 2;
+    }, [catalog, currencyCode]);
+
+    const formatMagnitude = useMemo(() => formatMagnitudeFor(scale), [scale]);
+
+    const [date, setDate] = useState(entry.date);
+    const [description, setDescription] = useState(entry.description ?? '');
+    const [counterpartyId, setCounterpartyId] = useState<CounterpartyId | null>(
+        entry.counterpartyId,
+    );
+    const [lines, setLines] = useState<EditLine[]>(() =>
+        toEditLines(entry.lines, formatMagnitude),
+    );
     const [topError, setTopError] = useState<string | null>(null);
-    const [fieldErrors, setFieldErrors] = useState<Record<string, string[]> | null>(null);
+    const [fieldErrors, setFieldErrors] = useState<FieldErrors | null>(null);
 
     const counterpartyItems = useMemo<ComboboxItem<CounterpartyId | null>[]>(
         () =>
@@ -360,35 +397,43 @@ function EditJournalEntry({
         [counterparties.data],
     );
 
-    function patch(patch: Partial<Draft>) {
-        setDraft(prev => ({ ...prev, ...patch }));
+    const visibleAccounts = useMemo(
+        () => accounts.filter(a => a.currencyCode === currencyCode),
+        [accounts, currencyCode],
+    );
+
+    function updateLine(key: string, patch: Partial<EditLine>) {
+        setLines(prev => prev.map(l => (l.key === key ? { ...l, ...patch } : l)));
     }
 
-    function patchLine(lineId: string, description: string) {
-        setDraft(prev => ({
-            ...prev,
-            lines: prev.lines.map(l => (l.id === lineId ? { ...l, description } : l)),
-        }));
+    function addLine() {
+        setLines(prev => [...prev, emptyLine()]);
     }
+
+    function removeLine(key: string) {
+        setLines(prev => prev.filter(l => l.key !== key));
+    }
+
+    const totals = computeTotals(lines, scale);
 
     async function submit() {
         setTopError(null);
         setFieldErrors(null);
+        const result = buildReplaceRequest({
+            date,
+            description,
+            bankTransactionId: entry.bankTransactionId,
+            counterpartyId,
+            lines,
+            scale,
+        });
+        if (!result.ok) {
+            setFieldErrors(result.fieldErrors);
+            if (result.topError) setTopError(result.topError);
+            return;
+        }
         try {
-            const original = toUpdateInput(entry);
-            const trimmedDescription = draft.description.trim();
-            const edited = {
-                date: draft.date,
-                description: trimmedDescription.length === 0 ? null : trimmedDescription,
-                counterpartyId: draft.counterpartyId,
-                lines: Object.fromEntries(
-                    draft.lines.map(line => {
-                        const trimmed = line.description.trim();
-                        return [line.id, { description: trimmed.length === 0 ? null : trimmed }];
-                    }),
-                ),
-            };
-            await update.mutateAsync({ id: entry.id, original, edited });
+            await replace.mutateAsync({ id: entry.id, request: result.request });
             toast.success('Journal entry saved.');
             onSaved();
         } catch (err) {
@@ -427,7 +472,7 @@ function EditJournalEntry({
             <Panel>
                 <SectionHead
                     title="Edit entry"
-                    subtitle="Account, debit, credit, and reconciliation status are fixed once an entry exists."
+                    subtitle="Cleared and Reconciled lines are frozen — only their description can be edited."
                 />
                 <FormErrorBanner message={topError} />
                 <div className="grid grid-cols-[140px_1fr_minmax(180px,260px)] gap-3 mb-4">
@@ -435,9 +480,9 @@ function EditJournalEntry({
                         <span className="text-[12px] font-medium text-fg-2">Date</span>
                         <input
                             type="date"
-                            value={draft.date}
+                            value={date}
                             onChange={e => {
-                                patch({ date: e.target.value });
+                                setDate(e.target.value);
                             }}
                             required
                             className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
@@ -448,9 +493,9 @@ function EditJournalEntry({
                         <span className="text-[12px] font-medium text-fg-2">Description</span>
                         <input
                             type="text"
-                            value={draft.description}
+                            value={description}
                             onChange={e => {
-                                patch({ description: e.target.value });
+                                setDescription(e.target.value);
                             }}
                             maxLength={500}
                             placeholder="Optional"
@@ -462,12 +507,12 @@ function EditJournalEntry({
                         <span className="text-[12px] font-medium text-fg-2">Counterparty</span>
                         <Combobox
                             items={counterpartyItems}
-                            value={draft.counterpartyId}
+                            value={counterpartyId}
                             onChange={id => {
-                                patch({ counterpartyId: id });
+                                setCounterpartyId(id);
                             }}
                             onClear={() => {
-                                patch({ counterpartyId: null });
+                                setCounterpartyId(null);
                             }}
                             noneLabel="── None"
                             placeholder="Pick counterparty…"
@@ -479,30 +524,34 @@ function EditJournalEntry({
             </Panel>
 
             <Panel>
-                <SectionHead title="Lines" subtitle="Only line descriptions are editable." />
-                <EditLineTable
-                    entry={entry}
-                    projection={projection}
-                    draft={draft}
-                    catalog={catalog}
-                    onLineDescription={patchLine}
+                <EditLines
+                    lines={lines}
+                    accounts={visibleAccounts}
                     fieldErrors={fieldErrors}
+                    onUpdate={updateLine}
+                    onAdd={addLine}
+                    onRemove={removeLine}
+                />
+                <BalanceFooter
+                    totals={totals}
+                    currencyCode={currencyCode}
+                    catalog={catalog}
                 />
                 <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-border-soft">
                     <button
                         type="button"
                         onClick={onCancel}
-                        disabled={update.isPending}
+                        disabled={replace.isPending}
                         className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
-                        disabled={update.isPending}
+                        disabled={replace.isPending || !totals.balanced}
                         className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
                     >
-                        {update.isPending ? 'Saving…' : 'Save'}
+                        {replace.isPending ? 'Saving…' : 'Save'}
                     </button>
                 </div>
             </Panel>
@@ -510,70 +559,191 @@ function EditJournalEntry({
     );
 }
 
-function EditLineTable({
-    entry,
-    projection,
-    draft,
-    catalog,
-    onLineDescription,
+function EditLines({
+    lines,
+    accounts,
     fieldErrors,
+    onUpdate,
+    onAdd,
+    onRemove,
 }: {
-    entry: JournalEntry;
-    projection: JournalProjection;
-    draft: Draft;
-    catalog: CurrencyCatalog;
-    onLineDescription: (lineId: string, description: string) => void;
-    fieldErrors: Record<string, string[]> | null;
+    lines: EditLine[];
+    accounts: Account[];
+    fieldErrors: FieldErrors | null;
+    onUpdate: (key: string, patch: Partial<EditLine>) => void;
+    onAdd: () => void;
+    onRemove: (key: string) => void;
 }) {
-    const currencyCode = projection.netWorthChange.currencyCode;
-    const linesById = new Map<string, JournalLine>(entry.lines.map(l => [l.id, l]));
-
     return (
         <div className="flex flex-col">
-            <div className="grid grid-cols-[1fr_120px_120px_140px_minmax(160px,1.4fr)] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
+            <div className="grid grid-cols-[1fr_90px_140px_140px_minmax(140px,1fr)_32px] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
                 <span>Account</span>
-                <span className="text-right">Debit</span>
-                <span className="text-right">Credit</span>
+                <span>Side</span>
+                <span className="text-right">Amount</span>
                 <span>Status</span>
                 <span>Description</span>
+                <span />
             </div>
-            {draft.lines.map(draftLine => {
-                const line = linesById.get(draftLine.id);
-                if (!line) return null;
-                const isDebit = line.amount > 0;
-                const magnitude = Math.abs(line.amount);
-                return (
-                    <div
-                        key={draftLine.id}
-                        className="grid grid-cols-[1fr_120px_120px_140px_minmax(160px,1.4fr)] gap-3 items-center px-2 py-2 border-b border-border-soft last:border-b-0"
+            {lines.map((line, i) => (
+                <EditLineRow
+                    key={line.key}
+                    line={line}
+                    index={i}
+                    accounts={accounts}
+                    fieldErrors={fieldErrors}
+                    onUpdate={onUpdate}
+                    onRemove={onRemove}
+                />
+            ))}
+            <FieldError name="lines" errors={fieldErrors} />
+            <div className="mt-2">
+                <button
+                    type="button"
+                    onClick={onAdd}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-[12px] text-fg-2 hover:text-fg-1 hover:bg-surface-2"
+                >
+                    <Icon name="plus" size={12} strokeWidth={2} />
+                    Add line
+                </button>
+            </div>
+        </div>
+    );
+}
+
+function EditLineRow({
+    line,
+    index,
+    accounts,
+    fieldErrors,
+    onUpdate,
+    onRemove,
+}: {
+    line: EditLine;
+    index: number;
+    accounts: Account[];
+    fieldErrors: FieldErrors | null;
+    onUpdate: (key: string, patch: Partial<EditLine>) => void;
+    onRemove: (key: string) => void;
+}) {
+    const locked = isLineLocked(line);
+    const accountItems = useMemo<ComboboxItem<AccountId>[]>(
+        () =>
+            [...accounts]
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map(a => ({ key: a.id, label: a.name, group: a.type, value: a.id })),
+        [accounts],
+    );
+    const selectedAccount = useMemo(
+        () => accounts.find(a => a.id === line.accountId),
+        [accounts, line.accountId],
+    );
+    return (
+        <div className="grid grid-cols-[1fr_90px_140px_140px_minmax(140px,1fr)_32px] gap-3 items-start px-2 py-2 border-b border-border-soft last:border-b-0">
+            <div className="flex flex-col gap-1">
+                {locked ? (
+                    <span
+                        className="px-3 py-2 rounded-sm bg-surface-1 border border-border-soft text-fg-2 text-[13px] truncate"
+                        title="Frozen — line is Cleared or Reconciled"
                     >
-                        <span className="text-[13px] text-fg-1 truncate">{line.accountName}</span>
-                        <span className="font-mono text-[13px] tabular text-right text-fg-1">
-                            {isDebit ? formatMoney(magnitude, currencyCode, catalog) : ''}
-                        </span>
-                        <span className="font-mono text-[13px] tabular text-right text-fg-1">
-                            {!isDebit ? formatMoney(magnitude, currencyCode, catalog) : ''}
-                        </span>
-                        <ReconciliationChip status={line.reconciliationStatus} />
-                        <div className="flex flex-col gap-1">
-                            <input
-                                type="text"
-                                value={draftLine.description}
-                                onChange={e => {
-                                    onLineDescription(draftLine.id, e.target.value);
-                                }}
-                                maxLength={500}
-                                placeholder="Optional"
-                                className="px-2 py-1 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[13px] focus:outline-none focus:border-border-strong"
-                            />
-                            <FieldError
-                                name={`Lines[${draftLine.id}].Description`}
-                                errors={fieldErrors}
-                            />
-                        </div>
-                    </div>
-                );
-            })}
+                        {selectedAccount?.name ?? '—'}
+                    </span>
+                ) : (
+                    <Combobox
+                        items={accountItems}
+                        value={line.accountId}
+                        onChange={id => {
+                            onUpdate(line.key, { accountId: id });
+                        }}
+                        groupOrder={ACCOUNT_TYPE_ORDER}
+                        groupLabels={ACCOUNT_TYPE_LABEL}
+                        placeholder="Pick account…"
+                        ariaLabel="Account"
+                    />
+                )}
+                <FieldError name={`lines[${index.toString()}].accountId`} errors={fieldErrors} />
+            </div>
+            <select
+                value={line.side}
+                disabled={locked}
+                onChange={e => {
+                    onUpdate(line.key, { side: e.target.value as EditLine['side'] });
+                }}
+                className="px-2 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[13px] focus:outline-none focus:border-border-strong disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+                <option value="debit">Debit</option>
+                <option value="credit">Credit</option>
+            </select>
+            <div className="flex flex-col gap-1">
+                <input
+                    type="text"
+                    inputMode="decimal"
+                    value={line.amount}
+                    disabled={locked}
+                    onChange={e => {
+                        onUpdate(line.key, { amount: e.target.value });
+                    }}
+                    placeholder="0.00"
+                    className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] text-right font-mono tabular focus:outline-none focus:border-border-strong disabled:opacity-60 disabled:cursor-not-allowed"
+                />
+                <FieldError name={`lines[${index.toString()}].amount`} errors={fieldErrors} />
+            </div>
+            <ReconciliationChip status={line.status} />
+            <input
+                type="text"
+                value={line.description}
+                onChange={e => {
+                    onUpdate(line.key, { description: e.target.value });
+                }}
+                maxLength={500}
+                placeholder="Optional"
+                className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[13px] focus:outline-none focus:border-border-strong"
+            />
+            <button
+                type="button"
+                onClick={() => {
+                    onRemove(line.key);
+                }}
+                disabled={locked}
+                title={locked ? 'Frozen — line cannot be removed' : 'Remove this line'}
+                className="self-start mt-[6px] p-1 text-fg-3 hover:text-danger disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+                <Icon name="trash" size={14} strokeWidth={2} />
+            </button>
+        </div>
+    );
+}
+
+function BalanceFooter({
+    totals,
+    currencyCode,
+    catalog,
+}: {
+    totals: ReturnType<typeof computeTotals>;
+    currencyCode: string;
+    catalog: CurrencyCatalog;
+}) {
+    const debitStr = formatMoney(totals.debitMinor, currencyCode, catalog);
+    const creditStr = formatMoney(totals.creditMinor, currencyCode, catalog);
+    const diff = Math.abs(totals.debitMinor - totals.creditMinor);
+    const diffStr = formatMoney(diff, currencyCode, catalog);
+    return (
+        <div className="flex items-center justify-end gap-4 mt-3 text-[12px] tabular">
+            <span className="text-fg-3">
+                Σ Debit <span className="font-mono text-fg-1">{debitStr}</span>
+            </span>
+            <span className="text-fg-3">
+                Σ Credit <span className="font-mono text-fg-1">{creditStr}</span>
+            </span>
+            {totals.balanced ? (
+                <span className="inline-flex items-center gap-1 text-success">
+                    <Icon name="check-circle" size={12} strokeWidth={2} /> Balanced
+                </span>
+            ) : (
+                <span className="inline-flex items-center gap-1 text-danger">
+                    <Icon name="alert-circle" size={12} strokeWidth={2} />
+                    Off by {diffStr}
+                </span>
+            )}
         </div>
     );
 }

@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { compare } from 'fast-json-patch';
 import {
     toBankTransactionDetail,
     type BankTransactionDetail,
@@ -17,10 +16,10 @@ import {
     asJournalEntryId,
     asJournalLineId,
 } from '../lib/domain';
-import { deleteRequest, getJson, patchJson, postJson } from '../lib/http';
+import { deleteRequest, getJson, postJson, putJson } from '../lib/http';
 
 type WireCreateRequest = components['schemas']['CreateJournalEntryRequest'];
-type WireUpdateInput = components['schemas']['UpdateJournalEntryInput'];
+type WireReplaceRequest = components['schemas']['ReplaceJournalEntryRequest'];
 type WireEntry = components['schemas']['JournalEntryOutput'];
 type WireEntryDetail = components['schemas']['JournalEntryDetailOutput'];
 type WireLine = components['schemas']['JournalLineOutput'];
@@ -120,22 +119,6 @@ export function useJournalEntry(id: JournalEntryId) {
     });
 }
 
-/**
- * Builds the `UpdateJournalEntryInput` shape from a loaded entry. Lines are
- * keyed by line id (D-format Guid string, matching what the server expects)
- * so that `compare()` produces stable `/lines/{id}/description` paths.
- */
-export function toUpdateInput(entry: JournalEntry): WireUpdateInput {
-    return {
-        date: entry.date,
-        description: entry.description,
-        counterpartyId: entry.counterpartyId,
-        lines: Object.fromEntries(
-            entry.lines.map(line => [line.id, { description: line.description }]),
-        ),
-    };
-}
-
 export function useCreateJournalEntry() {
     const queryClient = useQueryClient();
     return useMutation({
@@ -154,18 +137,13 @@ export function useCreateJournalEntry() {
     });
 }
 
-export function useUpdateJournalEntry() {
+export function useReplaceJournalEntry() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async (args: {
-            id: JournalEntryId;
-            original: WireUpdateInput;
-            edited: WireUpdateInput;
-        }) => {
-            const patch = compare(args.original, args.edited);
-            const wire = await patchJson<WireEntryDetail>(
+        mutationFn: async (args: { id: JournalEntryId; request: WireReplaceRequest }) => {
+            const wire = await putJson<WireEntryDetail>(
                 `/api/journal-entries/${args.id}`,
-                patch,
+                args.request,
                 new AbortController().signal,
                 'update journal entry',
             );
