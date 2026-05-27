@@ -37,13 +37,15 @@ internal sealed partial class IngCreditCardStatementParser : IIngCreditCardState
     [GeneratedRegex(@"Op ING\.nl", RegexOptions.IgnoreCase)]
     private static partial Regex FooterOpIngNl();
 
-    public ValueTask<IReadOnlyList<CreditCardStatementRow>> ParseStatementsAsync(
+    public ValueTask<CreditCardStatement> ParseStatementsAsync(
         Stream stream,
         CancellationToken cancellationToken
     )
     {
         var rows = Parse(stream, cancellationToken);
-        return new ValueTask<IReadOnlyList<CreditCardStatementRow>>(rows);
+        return new ValueTask<CreditCardStatement>(
+            new CreditCardStatement { Account = "", Rows = rows }
+        );
     }
 
     private static IReadOnlyList<CreditCardStatementRow> Parse(
@@ -104,6 +106,7 @@ internal sealed partial class IngCreditCardStatementParser : IIngCreditCardState
 
             var parsed = new CreditCardStatementRow
             {
+                CardNumber = "",
                 Date = date,
                 Description = match.Groups["name"].Value.Trim(),
                 TransactionType = MapTransactionType(match.Groups["type"].Value),
