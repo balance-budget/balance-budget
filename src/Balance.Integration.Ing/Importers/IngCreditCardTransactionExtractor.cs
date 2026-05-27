@@ -78,7 +78,7 @@ internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtrac
         {
             return new InvariantError(
                 ErrorCodes.ImportIbanMismatch,
-                $"Statement Account '{statement.Account}' does not match this "
+                $"Statement Account '{statement.Counterparty}' does not match this "
                     + "Card's AccountNumber."
             );
         }
