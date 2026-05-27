@@ -13,10 +13,12 @@ import { toMoney, type Money } from '../lib/money';
 
 type WireBankTransaction = components['schemas']['BankTransactionOutput'];
 type WireBankTransactionDetail = components['schemas']['BankTransactionDetailOutput'];
-type WireBankTransactionMetadataEntry =
-    components['schemas']['BankTransactionMetadataEntryOutput'];
+type WireBankTransactionMetadataEntry = components['schemas']['BankTransactionMetadataEntryOutput'];
 type WireCategorizeRequest = components['schemas']['CategorizeBankTransactionRequest'];
 type WireJournalEntry = components['schemas']['JournalEntryOutput'];
+type WireJournalEntryDetail = components['schemas']['JournalEntryDetailOutput'];
+type WireAttachHint = components['schemas']['AttachHintOutput'];
+type WireAttachCandidate = components['schemas']['AttachCandidateOutput'];
 
 // Mirrors the BankTransactionListFilter enum on the server. The wire type
 // allows null (openapi-typescript marks query-string enums as nullable), so we
@@ -49,6 +51,22 @@ export type BankTransaction = {
     journalEntryId: JournalEntryId | null;
     dismissedAt: string | null;
     dismissedReason: string | null;
+    matchingJournalEntry: AttachHint | null;
+};
+
+export type AttachHint = {
+    id: JournalEntryId;
+    date: string;
+    description: string | null;
+    otherAccountName: string;
+};
+
+export type AttachCandidate = {
+    id: JournalEntryId;
+    date: string;
+    description: string | null;
+    otherAccountName: string;
+    amount: number;
 };
 
 export type BankTransactionMetadataEntry = {
@@ -88,6 +106,28 @@ function toBankTransaction(wire: WireBankTransaction): BankTransaction {
         journalEntryId: wire.journalEntryId ? asJournalEntryId(wire.journalEntryId) : null,
         dismissedAt: wire.dismissedAt,
         dismissedReason: wire.dismissedReason,
+        matchingJournalEntry: wire.matchingJournalEntry
+            ? toAttachHint(wire.matchingJournalEntry)
+            : null,
+    };
+}
+
+function toAttachHint(wire: WireAttachHint): AttachHint {
+    return {
+        id: asJournalEntryId(wire.id),
+        date: wire.date,
+        description: wire.description,
+        otherAccountName: wire.otherAccountName,
+    };
+}
+
+function toAttachCandidate(wire: WireAttachCandidate): AttachCandidate {
+    return {
+        id: asJournalEntryId(wire.id),
+        date: wire.date,
+        description: wire.description,
+        otherAccountName: wire.otherAccountName,
+        amount: Number(wire.amount),
     };
 }
 
@@ -101,9 +141,7 @@ function toBankTransactionMetadataEntry(
     };
 }
 
-export function toBankTransactionDetail(
-    wire: WireBankTransactionDetail,
-): BankTransactionDetail {
+export function toBankTransactionDetail(wire: WireBankTransactionDetail): BankTransactionDetail {
     return {
         ...toBankTransaction(wire),
         metadata: wire.metadata.map(toBankTransactionMetadataEntry),
@@ -173,6 +211,57 @@ export function useDismissBankTransaction() {
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: bankTransactionsKeys.all });
+        },
+    });
+}
+
+export function useAttachBankTransaction() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (args: { id: BankTransactionId; journalEntryId: JournalEntryId }) => {
+            return await postJson<WireJournalEntryDetail>(
+                `/api/bank-transactions/${args.id}/attach`,
+                { journalEntryId: args.journalEntryId },
+                new AbortController().signal,
+                'attach bank transaction',
+            );
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: bankTransactionsKeys.all });
+            await queryClient.invalidateQueries({ queryKey: ['journalEntries'] });
+        },
+    });
+}
+
+export function useDetachBankTransaction() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (id: BankTransactionId) => {
+            return await postJson<WireJournalEntryDetail>(
+                `/api/bank-transactions/${id}/detach`,
+                {},
+                new AbortController().signal,
+                'detach bank transaction',
+            );
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: bankTransactionsKeys.all });
+            await queryClient.invalidateQueries({ queryKey: ['journalEntries'] });
+        },
+    });
+}
+
+export function useAttachCandidates(id: BankTransactionId | null, dateWindowDays: number) {
+    return useQuery({
+        queryKey: [...bankTransactionsKeys.all, 'attach-candidates', id, dateWindowDays] as const,
+        enabled: id !== null,
+        queryFn: async ({ signal }) => {
+            const wire = await getJson<WireAttachCandidate[]>(
+                `/api/bank-transactions/${id}/attach-candidates?dateWindowDays=${dateWindowDays}`,
+                signal,
+                'load attach candidates',
+            );
+            return wire.map(toAttachCandidate);
         },
     });
 }

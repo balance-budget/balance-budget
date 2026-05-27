@@ -33,6 +33,15 @@ internal static class BankTransactionEndpoints
             .MapPost("/{id}/categorize", CategorizeAsync)
             .WithValidation<CategorizeBankTransactionRequest>()
             .WithName("CategorizeBankTransaction");
+        group
+            .MapPost("/{id}/attach", AttachAsync)
+            .WithValidation<AttachBankTransactionRequest>()
+            .WithName("AttachBankTransaction");
+        group.MapPost("/{id}/detach", DetachAsync).WithName("DetachBankTransaction");
+        group
+            .MapGet("/{id}/attach-candidates", ListAttachCandidatesAsync)
+            .WithValidation<ListAttachCandidatesRequest>()
+            .WithName("ListAttachCandidates");
     }
 
     private static async Task<Ok<IReadOnlyList<BankTransactionOutput>>> ListAsync(
@@ -150,6 +159,63 @@ internal static class BankTransactionEndpoints
     )
     {
         var result = await bankTransactionService.UndismissAsync(id, cancellationToken);
+        return result.ToOk();
+    }
+
+    private static async Task<
+        Results<
+            Ok<JournalEntryDetailOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > AttachAsync(
+        [FromRoute] BankTransactionId id,
+        [FromBody] AttachBankTransactionRequest request,
+        [FromServices] IBankTransactionAttachService attachService,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await attachService.AttachAsync(id, request.JournalEntryId, cancellationToken);
+        return result.ToOk();
+    }
+
+    private static async Task<
+        Results<
+            Ok<JournalEntryDetailOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > DetachAsync(
+        [FromRoute] BankTransactionId id,
+        [FromServices] IBankTransactionAttachService attachService,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await attachService.DetachAsync(id, cancellationToken);
+        return result.ToOk();
+    }
+
+    private static async Task<
+        Results<
+            Ok<IReadOnlyList<AttachCandidateOutput>>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > ListAttachCandidatesAsync(
+        [FromRoute] BankTransactionId id,
+        [AsParameters] ListAttachCandidatesRequest request,
+        [FromServices] IBankTransactionAttachService attachService,
+        CancellationToken cancellationToken
+    )
+    {
+        var days = request.DateWindowDays ?? ListAttachCandidatesRequest.DefaultDateWindowDays;
+        var result = await attachService.ListCandidatesAsync(id, days, cancellationToken);
         return result.ToOk();
     }
 

@@ -35,7 +35,12 @@ public static class ErrorCodes
     public const string BankTransactionNotDismissed = "bank_transaction.not_dismissed";
     public const string BankTransactionAlreadyCategorised = "bank_transaction.already_categorised";
     public const string BankTransactionDismissed = "bank_transaction.dismissed";
+    public const string BankTransactionNotAttached = "bank_transaction.not_attached";
     public const string CategoriseCounterpartySelection = "categorise.counterparty_selection";
+
+    // BankTransaction Attach (ADR 0013)
+    public const string AttachPredicateFailed = "attach.predicate_failed";
+    public const string AttachSelfTransferGuard = "attach.self_transfer_guard";
 
     // BankTransaction import
     public const string ImportIbanMismatch = "import.iban_mismatch";
