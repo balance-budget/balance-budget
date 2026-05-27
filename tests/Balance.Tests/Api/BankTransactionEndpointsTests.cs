@@ -512,13 +512,7 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
         );
 
         var counter = await CreateAccountAsync(client, "Income-LIST-Default-Matched");
-        await CreateJournalEntryForBankTransactionAsync(
-            client,
-            btx.Id,
-            account.Id,
-            counter.Id,
-            500L
-        );
+        await CreateJournalEntryForBankTransactionAsync(client, btx.Id, counter.Id, 500L);
 
         var rows = await ListBankTransactionsAsync(client);
         await Assert.That(rows.Any(b => b.Id == btx.Id)).IsFalse();
@@ -570,7 +564,6 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
         var je = await CreateJournalEntryForBankTransactionAsync(
             client,
             matched.Id,
-            account.Id,
             counter.Id,
             777L
         );
@@ -619,13 +612,7 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
             "All-filter matched"
         );
         var counter = await CreateAccountAsync(client, "Income-LIST-All");
-        await CreateJournalEntryForBankTransactionAsync(
-            client,
-            matched.Id,
-            account.Id,
-            counter.Id,
-            42L
-        );
+        await CreateJournalEntryForBankTransactionAsync(client, matched.Id, counter.Id, 42L);
 
         var dismissed = await CreateOwnedBankTransactionAsync(client, "NL25RABO0BTX02041", -50L);
         using var dismiss = await client.PostAsJsonAsync(
@@ -900,12 +887,10 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
     private static async Task<Guid> CreateJournalEntryForBankTransactionAsync(
         HttpClient client,
         Guid bankTransactionId,
-        Guid bankSideAccountId,
         Guid counterAccountId,
         long bankSideAmount
     )
     {
-        _ = bankSideAccountId; // The categorize endpoint resolves the bank-side AccountId itself.
         var request = new
         {
             CounterpartyId = (Guid?)null,
