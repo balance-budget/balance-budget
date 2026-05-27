@@ -12,6 +12,9 @@ internal static partial class IngPatterns
     )]
     public static partial Regex CreditCardTransactionLine();
 
+    [GeneratedRegex(@"^NL\d{2} INGB \d{4} \d{4} \d{2}$", RegexOptions.IgnoreCase)]
+    public static partial Regex CreditCardCounterParty();
+
     [GeneratedRegex(
         @"^(Transactiedatum: (?<date>\d{2}-\d{2}-\d{4})|Kaartnummer: (?<cardno>\d{4} \*\*\*\* \*\*\*\* \d{4})|Bedrag: (?<fcamount>\d+\,\d+) (?<fccode>[A-Z]{3})|Koers: (?<fcrate>\d+\,\d+)|Koersopslag \((?<fcmarkupcode>[A-Z]{3})\): (?<fcmarkupamount>\d+\,\d+))$",
         RegexOptions.IgnoreCase

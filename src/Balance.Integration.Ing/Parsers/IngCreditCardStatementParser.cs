@@ -1,9 +1,10 @@
-using System.Diagnostics;
+using System.Collections.Frozen;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Balance.Integration.Ing.Contracts;
 using Balance.Integration.Ing.Helpers;
 using Balance.Integration.Ing.Models.CreditCard;
+using Balance.Integration.Ing.Models.Notes;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.Content;
 
@@ -11,92 +12,179 @@ namespace Balance.Integration.Ing.Parsers;
 
 internal sealed class IngCreditCardStatementParser : IIngCreditCardStatementParser
 {
-    private static readonly CultureInfo Culture = CultureInfo.GetCultureInfo("nl-NL");
     private const double LineYTolerance = 0.5;
+
+    private static readonly CultureInfo NlCulture = CultureInfo.GetCultureInfo("nl-NL");
+
+    private static readonly FrozenDictionary<string, CreditCardTransactionType> TransactionTypes =
+        new Dictionary<string, CreditCardTransactionType>(StringComparer.Ordinal)
+        {
+            ["Betaling"] = CreditCardTransactionType.Payment,
+            ["Ontvangst"] = CreditCardTransactionType.Receipt,
+            ["Incasso"] = CreditCardTransactionType.DirectDebit,
+            ["Geldopname"] = CreditCardTransactionType.CashWithdrawal,
+            ["Kosten"] = CreditCardTransactionType.Fees,
+            ["Correctie"] = CreditCardTransactionType.Correction,
+        }.ToFrozenDictionary();
 
     public ValueTask<CreditCardStatement> ParseStatementsAsync(
         Stream stream,
         CancellationToken cancellationToken
     )
     {
-        var rows = Parse(stream, cancellationToken);
-        return new ValueTask<CreditCardStatement>(
-            new CreditCardStatement { Account = "", Rows = rows }
+        var lines = ExtractLines(stream, cancellationToken);
+        var counterParty = FindCounterPartyLine(lines);
+        var rows = ParseRows(lines, cancellationToken);
+        return ValueTask.FromResult(
+            new CreditCardStatement { Counterparty = counterParty, Rows = rows }
         );
     }
 
-    private static IReadOnlyList<CreditCardStatementRow> Parse(
-        Stream stream,
+    private static List<CreditCardStatementRow> ParseRows(
+        IReadOnlyList<string> lines,
         CancellationToken cancellationToken
     )
     {
-        var lines = ExtractLines(stream, cancellationToken);
+        var transactions = FindTransactionLines(lines).ToList();
+        if (transactions.Count == 0)
+            return [];
 
-        var matches = new List<(int Index, Match Match)>();
+        var tableEnd = FindTableEnd(lines, transactions[^1].LineIndex);
+        var rows = new List<CreditCardStatementRow>(transactions.Count);
+
+        for (var i = 0; i < transactions.Count; i++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var noteStart = transactions[i].LineIndex + 1;
+            var noteEnd = i + 1 < transactions.Count ? transactions[i + 1].LineIndex : tableEnd;
+            var notes = ParseNotes(lines, noteStart, Math.Min(noteEnd, tableEnd));
+
+            rows.Add(BuildRow(transactions[i], lines, notes));
+        }
+
+        return rows;
+    }
+
+    private static IEnumerable<MatchedLine> FindTransactionLines(IReadOnlyList<string> lines)
+    {
         for (var i = 0; i < lines.Count; i++)
         {
             var match = IngPatterns.CreditCardTransactionLine().Match(lines[i].Trim());
             if (match.Success)
-                matches.Add((i, match));
+                yield return new MatchedLine(i, match);
         }
+    }
 
-        if (matches.Count == 0)
-            return Array.Empty<CreditCardStatementRow>();
-
-        var tableEnd = FindTableEnd(lines, matches[^1].Index);
-        var rows = new List<CreditCardStatementRow>(matches.Count);
-
-        for (var i = 0; i < matches.Count; i++)
+    private static string FindCounterPartyLine(IReadOnlyList<string> lines)
+    {
+        foreach (var line in lines)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            var match = IngPatterns.CreditCardCounterParty().Match(line);
+            if (!match.Success)
+                continue;
 
-            var (lineIndex, match) = matches[i];
-            var nextIndex = i + 1 < matches.Count ? matches[i + 1].Index : tableEnd;
-            var endIndex = Math.Min(nextIndex, tableEnd);
-
-            var noteLines = new List<string>();
-            for (var j = lineIndex + 1; j < endIndex; j++)
-            {
-                var stripped = lines[j].Trim();
-                if (stripped.Length == 0)
-                    continue;
-
-                var noteMatch = IngPatterns.CreditCardNoteLine().Match(stripped);
-                if (!noteMatch.Success)
-                    continue;
-
-                noteLines.Add(noteMatch.Value);
-            }
-            var notes = string.Join('\n', noteLines);
-
-            var date = DateOnly.ParseExact(
-                match.Groups["date"].Value,
-                "dd-MM-yyyy",
-                CultureInfo.InvariantCulture
-            );
-
-            var amount = decimal.Parse(match.Groups["amount"].Value, Culture);
-
-            var rawRecord =
-                noteLines.Count == 0
-                    ? lines[lineIndex]
-                    : string.Concat(lines[lineIndex], "\n", notes);
-
-            var parsed = new CreditCardStatementRow
-            {
-                CardNumber = "",
-                Date = date,
-                Description = match.Groups["name"].Value.Trim(),
-                TransactionType = MapTransactionType(match.Groups["type"].Value),
-                Amount = amount,
-                Notes = notes,
-                RawRecord = rawRecord,
-            };
-
-            rows.Add(parsed);
+            return match.Value.Replace(" ", "", StringComparison.Ordinal).ToUpperInvariant();
         }
 
-        return rows;
+        throw new InvalidOperationException("No counter-party line found");
+    }
+
+    private static CreditCardStatementRow BuildRow(
+        MatchedLine transaction,
+        IReadOnlyList<string> lines,
+        ParsedNotes notes
+    )
+    {
+        var transactionLine = lines[transaction.LineIndex];
+        var bookingDate = ParseDate(transaction.Match.Groups["date"].Value);
+        var notesText = string.Join('\n', notes.Lines);
+
+        return new CreditCardStatementRow
+        {
+            Date = bookingDate,
+            Description = transaction.Match.Groups["name"].Value.Trim(),
+            TransactionType = TransactionTypes[transaction.Match.Groups["type"].Value],
+            Amount = ParseAmount(transaction.Match.Groups["amount"].Value),
+            CardNumber = notes.CardNumber ?? string.Empty,
+            TransactionDate = notes.TransactionDate ?? bookingDate,
+            ForeignCurrencyAmount = notes.ForeignCurrencyAmount,
+            ForeignCurrencyRate = notes.ForeignCurrencyRate,
+            ForeignCurrencyMarkUp = notes.ForeignCurrencyMarkUp,
+            Notes = notesText,
+            RawRecord =
+                notes.Lines.Count == 0 ? transactionLine : $"{transactionLine}\n{notesText}",
+        };
+    }
+
+    private static ParsedNotes ParseNotes(IReadOnlyList<string> lines, int start, int end)
+    {
+        var notes = new ParsedNotes();
+
+        for (var i = start; i < end; i++)
+        {
+            var trimmed = lines[i].Trim();
+            if (trimmed.Length == 0)
+                continue;
+
+            var match = IngPatterns.CreditCardNoteLine().Match(trimmed);
+            if (!match.Success)
+                continue;
+
+            notes.Lines.Add(match.Value);
+            ApplyNoteGroups(notes, match);
+        }
+
+        return notes;
+    }
+
+    private static void ApplyNoteGroups(ParsedNotes notes, Match match)
+    {
+        if (TryGroup(match, "date", out var date))
+            notes.TransactionDate = ParseDate(date);
+
+        if (TryGroup(match, "cardno", out var cardNumber))
+            notes.CardNumber = cardNumber;
+
+        if (
+            TryGroup(match, "fcamount", out var fcAmount)
+            && TryGroup(match, "fccode", out var fcCode)
+        )
+            notes.ForeignCurrencyAmount = CurrencyAmount.TryParse($"{fcAmount} {fcCode}");
+
+        if (
+            TryGroup(match, "fcrate", out var fcRate)
+            && decimal.TryParse(fcRate, NumberStyles.Number, NlCulture, out var rate)
+        )
+            notes.ForeignCurrencyRate = rate;
+
+        if (
+            TryGroup(match, "fcmarkupamount", out var markUp)
+            && TryGroup(match, "fcmarkupcode", out var markUpCode)
+        )
+            notes.ForeignCurrencyMarkUp = CurrencyAmount.TryParse($"{markUp} {markUpCode}");
+    }
+
+    private static bool TryGroup(Match match, string name, out string value)
+    {
+        var group = match.Groups[name];
+        if (group.Success)
+        {
+            value = group.Value;
+            return true;
+        }
+        value = string.Empty;
+        return false;
+    }
+
+    private static int FindTableEnd(IReadOnlyList<string> lines, int startIndex)
+    {
+        for (var i = startIndex; i < lines.Count; i++)
+        {
+            if (IngPatterns.CreditCardFooter().IsMatch(lines[i]))
+                return i;
+        }
+        return lines.Count;
     }
 
     private static List<string> ExtractLines(Stream stream, CancellationToken cancellationToken)
@@ -113,44 +201,37 @@ internal sealed class IngCreditCardStatementParser : IIngCreditCardStatementPars
         return lines;
     }
 
-    private static IEnumerable<string> ExtractPageLines(Page page)
-    {
-        var words = page.GetWords().ToList();
-        if (words.Count == 0)
-            return Array.Empty<string>();
-
-        // Group words by Y position (with tolerance) to reconstruct visual lines, then
-        // order top-down (PDF coordinates put origin at the bottom-left, so larger Y
-        // is higher on the page) and left-to-right within each line.
-        return words
+    // Group words by Y (with tolerance) to reconstruct visual lines. PDF coordinates put
+    // the origin at the bottom-left, so larger Y is higher on the page — order descending
+    // for top-down, then ascending X within each line for left-to-right.
+    private static IEnumerable<string> ExtractPageLines(Page page) =>
+        page.GetWords()
             .GroupBy(w => Math.Round(w.BoundingBox.Bottom / LineYTolerance))
             .OrderByDescending(g => g.Key)
-            .Select(g => string.Join(' ', g.OrderBy(w => w.BoundingBox.Left).Select(w => w.Text)))
-            .ToList();
-    }
+            .Select(g => string.Join(' ', g.OrderBy(w => w.BoundingBox.Left).Select(w => w.Text)));
 
-    private static int FindTableEnd(List<string> lines, int startIndex)
+    private static DateOnly ParseDate(string value) =>
+        DateOnly.ParseExact(value, "dd-MM-yyyy", CultureInfo.InvariantCulture);
+
+    // The transaction-line amount includes the leading +/- and may carry whitespace
+    // between sign and digits (e.g. "+ 12,34"). Collapse the space so decimal.Parse with
+    // nl-NL handles the sign and comma decimal mark in one shot.
+    private static decimal ParseAmount(string captured) =>
+        decimal.Parse(
+            captured.Replace(" ", string.Empty, StringComparison.Ordinal),
+            NumberStyles.Number | NumberStyles.AllowLeadingSign,
+            NlCulture
+        );
+
+    private readonly record struct MatchedLine(int LineIndex, Match Match);
+
+    private sealed class ParsedNotes
     {
-        for (var i = startIndex; i < lines.Count; i++)
-        {
-            var text = lines[i];
-            if (IngPatterns.CreditCardFooter().IsMatch(text))
-                return i;
-        }
-        return lines.Count;
+        public List<string> Lines { get; } = [];
+        public string? CardNumber { get; set; }
+        public DateOnly? TransactionDate { get; set; }
+        public CurrencyAmount? ForeignCurrencyAmount { get; set; }
+        public decimal? ForeignCurrencyRate { get; set; }
+        public CurrencyAmount? ForeignCurrencyMarkUp { get; set; }
     }
-
-    private static CreditCardTransactionType MapTransactionType(string type) =>
-        type switch
-        {
-            "Betaling" => CreditCardTransactionType.Payment,
-            "Ontvangst" => CreditCardTransactionType.Receipt,
-            "Incasso" => CreditCardTransactionType.DirectDebit,
-            "Geldopname" => CreditCardTransactionType.CashWithdrawal,
-            "Kosten" => CreditCardTransactionType.Fees,
-            "Correctie" => CreditCardTransactionType.Correction,
-            _ => throw new UnreachableException(
-                $"Unrecognised ING credit-card transaction type '{type}'."
-            ),
-        };
 }
