@@ -304,7 +304,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["GetJournalEntry"];
-        put?: never;
+        put: operations["ReplaceJournalEntry"];
         post?: never;
         delete: operations["DeleteJournalEntry"];
         options?: never;
@@ -772,6 +772,22 @@ export interface components {
             reconciliationStatus: components["schemas"]["ReconciliationStatus"];
             amount: components["schemas"]["Money"];
             counter: components["schemas"]["RegisterRowCounterLeg"][];
+        };
+        ReplaceJournalEntryRequest: {
+            /** Format: date */
+            date: string;
+            description: null | string;
+            bankTransactionId: null | components["schemas"]["BankTransactionId"];
+            counterpartyId: null | components["schemas"]["CounterpartyId"];
+            lines: components["schemas"]["ReplaceJournalLineRequest"][];
+        };
+        ReplaceJournalLineRequest: {
+            id: null | components["schemas"]["JournalLineId"];
+            accountId: components["schemas"]["AccountId"];
+            /** Format: int64 */
+            amount: number | string;
+            description: null | string;
+            reconciliationStatus: null | components["schemas"]["ReconciliationStatus"];
         };
         SuggestedCounterAccountOutput: {
             accountId: components["schemas"]["AccountId"];
@@ -2436,6 +2452,68 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ReplaceJournalEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["JournalEntryId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplaceJournalEntryRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalEntryOutput"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
