@@ -41,6 +41,7 @@ import {
     emptyLine,
     formatMagnitudeFor,
     initialForm,
+    resolveOpenContext,
     type CategorizeFormState,
     type FieldErrors,
     type LineInput,
@@ -194,10 +195,14 @@ function CategorizeForm({
     const toast = useToast();
     const navigate = useNavigate();
 
-    const resolvedCounterpartyId = useMemo(
-        () => resolveCounterpartyByIban(bt.counterpartyAccountNumber, bankAccounts),
+    const openContext = useMemo(
+        () => resolveOpenContext(bt.counterpartyAccountNumber, bankAccounts),
         [bt.counterpartyAccountNumber, bankAccounts],
     );
+    const resolvedCounterpartyId =
+        openContext.kind === 'counterparty' ? openContext.counterpartyId : null;
+    const prefilledAccountId =
+        openContext.kind === 'self-transfer' ? openContext.prefilledAccountId : null;
 
     const scale = useMemo(() => {
         const currency = catalog.get(bt.money.currencyCode);
@@ -212,6 +217,7 @@ function CategorizeForm({
             bookingDate: bt.bookingDate,
             description: bt.description,
             resolvedCounterpartyId,
+            prefilledAccountId,
             btAmountMinor: bt.money.amount,
             formatMagnitude,
         }),
@@ -722,20 +728,6 @@ function UnallocatedFooter({
             )}
         </div>
     );
-}
-
-function resolveCounterpartyByIban(
-    iban: string | null,
-    bankAccounts: BankAccount[],
-): CounterpartyId | null {
-    if (!iban) return null;
-    const normalised = iban.replace(/\s+/g, '').toUpperCase();
-    for (const ba of bankAccounts) {
-        if (!ba.iban) continue;
-        if (ba.iban.replace(/\s+/g, '').toUpperCase() !== normalised) continue;
-        if (ba.counterpartyId !== null) return ba.counterpartyId;
-    }
-    return null;
 }
 
 function filterSuggestionsByCurrency(

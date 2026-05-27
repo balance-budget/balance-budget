@@ -12,6 +12,7 @@
 import type { components } from '../lib/api-types';
 import type { AccountId, CounterpartyId } from '../lib/domain';
 import { parseMoney } from '../lib/money';
+import type { BankAccount } from '../api/bankAccounts';
 import type { SuggestedCounterAccount } from '../api/counterparties';
 
 type WireCategorizeRequest = components['schemas']['CategorizeBankTransactionRequest'];
@@ -69,11 +70,13 @@ export function initialForm(args: {
     bookingDate: string;
     description: string;
     resolvedCounterpartyId: CounterpartyId | null;
+    prefilledAccountId: AccountId | null;
     btAmountMinor: number;
     formatMagnitude: (minor: number) => string;
 }): CategorizeFormState {
     const seedLine: LineInput = {
         ...emptyLine(),
+        accountId: args.prefilledAccountId,
         amount: args.formatMagnitude(args.btAmountMinor),
     };
     return {
@@ -84,6 +87,54 @@ export function initialForm(args: {
         newCounterpartyName: '',
         lines: [seedLine],
     };
+}
+
+/**
+ * Resolve the "open BT" projection per ADR 0014 step 1 / step 2.
+ *
+ *   1. If the BT's CounterpartyAccountNumber exact-matches a BankAccount whose
+ *      AccountId IS NOT NULL, this is a *self-transfer in progress*: the
+ *      counter-side line is pre-filled with that own-Account and the form
+ *      submits with CounterpartyId = null.
+ *   2. Else if the matched BankAccount has CounterpartyId IS NOT NULL, the
+ *      counterparty is identified and the suggestions effect supplies the
+ *      last-used counter-side Account(s) (existing behaviour).
+ *   3. Otherwise (null IBAN, no match, or a BankAccount with neither side
+ *      set) the resolver returns `none` and the form opens empty.
+ *
+ * Whitespace and casing are normalised before comparison to match the import
+ * paths' lenient IBAN handling.
+ */
+export type OpenContext =
+    | { kind: 'self-transfer'; prefilledAccountId: AccountId }
+    | { kind: 'counterparty'; counterpartyId: CounterpartyId }
+    | { kind: 'none' };
+
+export function resolveOpenContext(
+    counterpartyAccountNumber: string | null,
+    bankAccounts: readonly BankAccount[],
+): OpenContext {
+    if (counterpartyAccountNumber === null) return { kind: 'none' };
+    const normalised = counterpartyAccountNumber.replace(/\s+/g, '').toUpperCase();
+    if (normalised.length === 0) return { kind: 'none' };
+
+    // Two passes: self-transfer wins over a same-IBAN counterparty row if both
+    // exist (ADR 0011 keeps them mutually exclusive on one BankAccount, but
+    // we don't want the order of `bankAccounts` deciding which side wins).
+    let counterpartyCandidate: CounterpartyId | null = null;
+    for (const ba of bankAccounts) {
+        if (!ba.iban) continue;
+        if (ba.iban.replace(/\s+/g, '').toUpperCase() !== normalised) continue;
+        if (ba.accountId !== null) {
+            return { kind: 'self-transfer', prefilledAccountId: ba.accountId };
+        }
+        if (ba.counterpartyId !== null && counterpartyCandidate === null) {
+            counterpartyCandidate = ba.counterpartyId;
+        }
+    }
+    return counterpartyCandidate === null
+        ? { kind: 'none' }
+        : { kind: 'counterparty', counterpartyId: counterpartyCandidate };
 }
 
 /**
