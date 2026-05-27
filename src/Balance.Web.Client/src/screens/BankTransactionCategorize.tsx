@@ -7,7 +7,6 @@ import {
     useAttachCandidates,
     useBankTransaction,
     useCategorizeBankTransaction,
-    type AttachCandidate,
     type BankTransaction,
     type BankTransactionDetail,
 } from '../api/bankTransactions';
@@ -35,6 +34,7 @@ import {
     type BankAccountId,
     type BankTransactionId,
     type CounterpartyId,
+    type JournalEntryId,
 } from '../lib/domain';
 import { ApiError } from '../lib/http';
 import { formatMoney } from '../lib/money';
@@ -752,7 +752,7 @@ function AttachOptionsPanel({
     const navigate = useNavigate();
     const hint = bt.matchingJournalEntry;
 
-    async function attachTo(journalEntryId: AttachCandidate['id']) {
+    async function attachTo(journalEntryId: JournalEntryId) {
         try {
             const detail = await attach.mutateAsync({ id: bt.id, journalEntryId });
             toast.success('Attached.');
@@ -764,11 +764,6 @@ function AttachOptionsPanel({
         }
     }
 
-    async function onQuickAttach() {
-        if (!hint) return;
-        await attachTo(hint.id);
-    }
-
     return (
         <div className="mb-4 px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-[12px]">
             <div className="flex flex-wrap items-center gap-2">
@@ -776,7 +771,7 @@ function AttachOptionsPanel({
                 {hint && (
                     <button
                         type="button"
-                        onClick={() => void onQuickAttach()}
+                        onClick={() => void attachTo(hint.id)}
                         disabled={attach.isPending}
                         className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-brand-primary hover:bg-brand-primary-soft disabled:opacity-60"
                     >
@@ -824,7 +819,7 @@ function JePickerModal({
     bt: BankTransactionDetail;
     catalog: CurrencyCatalog;
     onClose: () => void;
-    onPick: (id: AttachCandidate['id']) => void;
+    onPick: (id: JournalEntryId) => void;
 }) {
     const [days, setDays] = useState(14);
     const candidates = useAttachCandidates(bt.id, days);
