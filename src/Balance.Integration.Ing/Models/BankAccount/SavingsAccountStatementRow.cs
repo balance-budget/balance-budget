@@ -1,6 +1,6 @@
 using CsvHelper.Configuration.Attributes;
 
-namespace Balance.Integration.Ing.Models.Statements;
+namespace Balance.Integration.Ing.Models.BankAccount;
 
 public sealed class SavingsAccountStatementRow
 {
@@ -37,4 +37,6 @@ public sealed class SavingsAccountStatementRow
 
     [Name("Resulting balance")]
     public required decimal ResultingBalance { get; init; }
+
+    public required string RawRecord { get; set; } = string.Empty;
 }
