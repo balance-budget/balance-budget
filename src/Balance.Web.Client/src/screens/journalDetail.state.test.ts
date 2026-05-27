@@ -4,14 +4,11 @@ import {
     buildReplaceRequest,
     computeTotals,
     emptyLine,
-    formatMagnitudeFor,
     isLineLocked,
     toEditLines,
     type EditLine,
     type LoadedLine,
 } from './journalDetail.state';
-
-const formatTwoDecimals = formatMagnitudeFor(2);
 
 const groceries = asAccountId('11111111-1111-1111-1111-111111111111');
 const checking = asAccountId('22222222-2222-2222-2222-222222222222');
@@ -60,7 +57,7 @@ function clearedBankSideLoaded(): LoadedLine[] {
 
 describe('toEditLines', () => {
     it('projects existing lines, preserving id and status, splitting amount into side+magnitude', () => {
-        const lines = toEditLines(unclearedLoaded(), formatTwoDecimals);
+        const lines = toEditLines(unclearedLoaded(), 2);
         expect(lines).toHaveLength(2);
         expect(lines[0]).toMatchObject({
             serverId: lineA,
@@ -78,7 +75,7 @@ describe('toEditLines', () => {
     });
 
     it('uses the JournalLineId as the React key so frozen rows stay stable', () => {
-        const lines = toEditLines(unclearedLoaded(), formatTwoDecimals);
+        const lines = toEditLines(unclearedLoaded(), 2);
         expect(lines[0]?.key).toBe(lineA);
         expect(lines[1]?.key).toBe(lineB);
     });
@@ -99,7 +96,7 @@ describe('isLineLocked', () => {
 
 describe('computeTotals', () => {
     it('sums debit and credit magnitudes and flags balanced when equal', () => {
-        const lines = toEditLines(unclearedLoaded(), formatTwoDecimals);
+        const lines = toEditLines(unclearedLoaded(), 2);
         const totals = computeTotals(lines, 2);
         expect(totals.debitMinor).toBe(4000);
         expect(totals.creditMinor).toBe(4000);
@@ -107,7 +104,7 @@ describe('computeTotals', () => {
     });
 
     it('flags imbalanced when user edits one side magnitude', () => {
-        const lines = toEditLines(unclearedLoaded(), formatTwoDecimals);
+        const lines = toEditLines(unclearedLoaded(), 2);
         const edited: EditLine[] = lines.map((l, i) =>
             i === 0 ? { ...l, amount: '50.00' } : l,
         );
@@ -127,7 +124,7 @@ describe('computeTotals', () => {
 
 describe('buildReplaceRequest', () => {
     it('emits a balanced full-body PUT echoing existing line ids', () => {
-        const lines = toEditLines(unclearedLoaded(), formatTwoDecimals);
+        const lines = toEditLines(unclearedLoaded(), 2);
         const result = buildReplaceRequest({
             date: '2026-05-27',
             description: 'AH groceries',
@@ -156,7 +153,7 @@ describe('buildReplaceRequest', () => {
     });
 
     it('round-trips a Cleared bank-side line with its status and original AccountId/Amount', () => {
-        const lines = toEditLines(clearedBankSideLoaded(), formatTwoDecimals);
+        const lines = toEditLines(clearedBankSideLoaded(), 2);
         const result = buildReplaceRequest({
             date: '2026-05-27',
             description: '',
@@ -176,7 +173,7 @@ describe('buildReplaceRequest', () => {
     });
 
     it('emits null serverId on newly added lines', () => {
-        const lines = toEditLines(unclearedLoaded(), formatTwoDecimals);
+        const lines = toEditLines(unclearedLoaded(), 2);
         const newLine: EditLine = {
             ...emptyLine(),
             accountId: savings,
@@ -208,7 +205,7 @@ describe('buildReplaceRequest', () => {
     });
 
     it('rejects an unbalanced edit with a top-level error', () => {
-        const lines = toEditLines(unclearedLoaded(), formatTwoDecimals);
+        const lines = toEditLines(unclearedLoaded(), 2);
         const edited: EditLine[] = lines.map((l, i) =>
             i === 0 ? { ...l, amount: '50.00' } : l,
         );
@@ -227,7 +224,7 @@ describe('buildReplaceRequest', () => {
     });
 
     it('rejects when a line is missing an account', () => {
-        const lines = toEditLines(unclearedLoaded(), formatTwoDecimals);
+        const lines = toEditLines(unclearedLoaded(), 2);
         const edited: EditLine[] = lines.map((l, i) =>
             i === 0 ? { ...l, accountId: null } : l,
         );
@@ -268,7 +265,7 @@ describe('buildReplaceRequest', () => {
     });
 
     it('echoes bankTransactionId and counterpartyId untouched when supplied', () => {
-        const lines = toEditLines(unclearedLoaded(), formatTwoDecimals);
+        const lines = toEditLines(unclearedLoaded(), 2);
         const result = buildReplaceRequest({
             date: '2026-05-27',
             description: '',

@@ -41,11 +41,11 @@ import {
     buildReplaceRequest,
     computeTotals,
     emptyLine,
-    formatMagnitudeFor,
     isLineLocked,
     toEditLines,
     type EditLine,
     type FieldErrors,
+    type TotalsState,
 } from './journalDetail.state';
 
 const ACCOUNT_TYPE_ORDER: AccountType[] = [
@@ -376,16 +376,12 @@ function EditJournalEntry({
         return currency?.minorUnitScale ?? 2;
     }, [catalog, currencyCode]);
 
-    const formatMagnitude = useMemo(() => formatMagnitudeFor(scale), [scale]);
-
     const [date, setDate] = useState(entry.date);
     const [description, setDescription] = useState(entry.description ?? '');
     const [counterpartyId, setCounterpartyId] = useState<CounterpartyId | null>(
         entry.counterpartyId,
     );
-    const [lines, setLines] = useState<EditLine[]>(() =>
-        toEditLines(entry.lines, formatMagnitude),
-    );
+    const [lines, setLines] = useState<EditLine[]>(() => toEditLines(entry.lines, scale));
     const [topError, setTopError] = useState<string | null>(null);
     const [fieldErrors, setFieldErrors] = useState<FieldErrors | null>(null);
 
@@ -718,7 +714,7 @@ function BalanceFooter({
     currencyCode,
     catalog,
 }: {
-    totals: ReturnType<typeof computeTotals>;
+    totals: TotalsState;
     currencyCode: string;
     catalog: CurrencyCatalog;
 }) {
