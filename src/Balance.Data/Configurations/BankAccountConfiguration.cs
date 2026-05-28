@@ -1,4 +1,5 @@
 using Balance.Data.Entities;
+using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
 using Balance.Data.Helpers;
 using Microsoft.EntityFrameworkCore;
@@ -21,8 +22,14 @@ internal sealed class BankAccountConfiguration : IEntityTypeConfiguration<BankAc
                     "(\"AccountId\" IS NULL) <> (\"CounterpartyId\" IS NULL)"
                 );
                 t.HasCheckConstraint(
-                    "CK_BankAccounts_IbanOrAccountNumber",
-                    "\"Iban\" IS NOT NULL OR \"AccountNumber\" IS NOT NULL"
+                    "CK_BankAccounts_IdentifierByType",
+                    "(\"Type\" = 'Current' AND \"Iban\" IS NOT NULL)"
+                        + " OR (\"Type\" = 'Savings' AND (\"Iban\" IS NOT NULL OR \"AccountNumber\" IS NOT NULL))"
+                        + " OR (\"Type\" = 'Card' AND \"CardIdentifier\" IS NOT NULL)"
+                );
+                t.HasCheckConstraint(
+                    "CK_BankAccounts_CardOwnedOnly",
+                    "\"Type\" <> 'Card' OR \"AccountId\" IS NOT NULL"
                 );
                 t.HasCheckConstraint(
                     "CK_BankAccounts_CurrencyRequiredWhenOwned",
@@ -35,11 +42,20 @@ internal sealed class BankAccountConfiguration : IEntityTypeConfiguration<BankAc
 
         builder.Property(b => b.Id).HasConversion<BankAccountId.EfCoreValueConverter>();
 
+        builder
+            .Property(b => b.Type)
+            .HasConversion<string>()
+            .HasMaxLength(16)
+            .HasDefaultValue(BankAccountType.Current)
+            .IsRequired();
+
         builder.Property(b => b.Iban).HasMaxLength(34);
         builder.Property(b => b.AccountNumber).HasMaxLength(64);
+        builder.Property(b => b.CardIdentifier).HasMaxLength(64);
         builder.Property(b => b.Bic).HasMaxLength(11);
         builder.Property(b => b.BankName).HasMaxLength(128);
         builder.Property(b => b.AccountHolderName).HasMaxLength(128);
+        builder.Property(b => b.ImporterKey).HasMaxLength(64);
 
         builder
             .Property(b => b.CurrencyCode)
