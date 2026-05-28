@@ -178,36 +178,55 @@ function AccountsGroup() {
     );
 }
 
-export function Sidebar() {
+export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
     const pathname = useRouterState({ select: s => s.location.pathname });
 
     return (
-        <aside className="w-60 shrink-0 h-screen sticky top-0 flex flex-col gap-5 px-4 py-6 border-r border-border-soft bg-surface-1 backdrop-blur-card">
-            <div className="flex items-center gap-[10px] px-[10px] py-1">
-                <img src={logo} alt="" className="w-8 h-8 rounded-[6px]" />
-                <span className="text-[18px] font-normal tracking-[-0.01em]">
-                    Balance<span className="text-brand-primary">.</span>
-                </span>
-            </div>
-
-            <nav className="flex flex-col gap-1 overflow-y-auto">
-                <NavGroup title="Main" items={NAV_MAIN} currentPath={pathname} />
-                <AccountsGroup />
-                <NavGroup title="Plan" items={NAV_PLAN} currentPath={pathname} />
-                <NavGroup title="Other" items={NAV_OTHER} currentPath={pathname} />
-            </nav>
-
-            {/* TODO: replace placeholder identity once auth lands (see auth memory / ADR). */}
-            <div className="mt-auto flex items-center gap-[10px] p-[10px] rounded-sm bg-surface-2">
-                <div className="w-8 h-8 rounded-full bg-brand-primary-soft text-brand-primary flex items-center justify-center text-[12px] font-semibold">
-                    MR
+        <>
+            <div
+                aria-hidden="true"
+                onClick={onClose}
+                className={cx(
+                    'md:hidden fixed inset-0 z-30 bg-surface-overlay backdrop-blur-sm transition-opacity duration-base',
+                    open ? 'opacity-100' : 'opacity-0 pointer-events-none',
+                )}
+            />
+            <aside
+                className={cx(
+                    'w-60 shrink-0 h-screen flex flex-col gap-5 px-4 py-6 border-r border-border-soft bg-surface-1 backdrop-blur-card',
+                    'fixed top-0 left-0 z-40 transition-transform duration-base',
+                    open ? 'translate-x-0' : '-translate-x-full',
+                    'md:sticky md:top-0 md:left-auto md:z-auto md:translate-x-0 md:transition-none',
+                )}
+            >
+                <div className="flex items-center gap-[10px] px-[10px] py-1">
+                    <img src={logo} alt="" className="w-8 h-8 rounded-[6px]" />
+                    <span className="text-[18px] font-normal tracking-[-0.01em]">
+                        Balance<span className="text-brand-primary">.</span>
+                    </span>
                 </div>
-                <div className="flex-1 flex flex-col leading-tight min-w-0">
-                    <span className="text-[13px] font-medium text-fg-1 truncate">Maya Rivera</span>
-                    <span className="text-[14px] text-fg-3 truncate">maya@balance.app</span>
+
+                <nav className="flex flex-col gap-1 overflow-y-auto">
+                    <NavGroup title="Main" items={NAV_MAIN} currentPath={pathname} />
+                    <AccountsGroup />
+                    <NavGroup title="Plan" items={NAV_PLAN} currentPath={pathname} />
+                    <NavGroup title="Other" items={NAV_OTHER} currentPath={pathname} />
+                </nav>
+
+                {/* TODO: replace placeholder identity once auth lands (see auth memory / ADR). */}
+                <div className="mt-auto flex items-center gap-[10px] p-[10px] rounded-sm bg-surface-2">
+                    <div className="w-8 h-8 rounded-full bg-brand-primary-soft text-brand-primary flex items-center justify-center text-[12px] font-semibold">
+                        MR
+                    </div>
+                    <div className="flex-1 flex flex-col leading-tight min-w-0">
+                        <span className="text-[13px] font-medium text-fg-1 truncate">
+                            Maya Rivera
+                        </span>
+                        <span className="text-[14px] text-fg-3 truncate">maya@balance.app</span>
+                    </div>
+                    <Icon name="chevron-right" size={16} className="text-fg-3" />
                 </div>
-                <Icon name="chevron-right" size={16} className="text-fg-3" />
-            </div>
-        </aside>
+            </aside>
+        </>
     );
 }

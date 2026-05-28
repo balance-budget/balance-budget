@@ -273,7 +273,7 @@ function ReadOnlyList({
 }) {
     return (
         <div className="flex flex-col">
-            <div className="grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px_minmax(180px,200px)] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
+            <div className="hidden md:grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px_minmax(180px,200px)] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
                 <span>Date</span>
                 <span>Description</span>
                 <span>Counterparty</span>
@@ -308,17 +308,35 @@ function ReadOnlyRow({
     onDismiss: (bt: BankTransaction) => void;
 }) {
     return (
-        <div className="grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px_minmax(180px,200px)] gap-3 items-center px-2 py-2 border-b border-border-soft last:border-b-0">
-            <span className="text-[12px] text-fg-3 tabular">{bankTransaction.bookingDate}</span>
-            <div className="min-w-0 flex flex-col leading-tight">
+        <div className="border-b border-border-soft last:border-b-0">
+            <div className="hidden md:grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px_minmax(180px,200px)] gap-3 items-center px-2 py-2">
+                <span className="text-[12px] text-fg-3 tabular">{bankTransaction.bookingDate}</span>
+                <div className="min-w-0 flex flex-col leading-tight">
+                    <span className="text-[13px] text-fg-1 truncate">
+                        {bankTransaction.description}
+                    </span>
+                    <StateChip bankTransaction={bankTransaction} />
+                </div>
+                <CounterpartyCell bankTransaction={bankTransaction} />
+                <AmountCell bankTransaction={bankTransaction} catalog={catalog} />
+                <ReadOnlyActions bankTransaction={bankTransaction} onDismiss={onDismiss} />
+            </div>
+            <div className="md:hidden flex flex-col gap-1 px-2 py-3">
+                <div className="flex items-center justify-between gap-3">
+                    <span className="text-[12px] text-fg-3 tabular">
+                        {bankTransaction.bookingDate}
+                    </span>
+                    <AmountCell bankTransaction={bankTransaction} catalog={catalog} />
+                </div>
                 <span className="text-[13px] text-fg-1 truncate">
                     {bankTransaction.description}
                 </span>
+                <CounterpartyCell bankTransaction={bankTransaction} />
                 <StateChip bankTransaction={bankTransaction} />
+                <div className="pt-1">
+                    <ReadOnlyActions bankTransaction={bankTransaction} onDismiss={onDismiss} />
+                </div>
             </div>
-            <CounterpartyCell bankTransaction={bankTransaction} />
-            <AmountCell bankTransaction={bankTransaction} catalog={catalog} />
-            <ReadOnlyActions bankTransaction={bankTransaction} onDismiss={onDismiss} />
         </div>
     );
 }
@@ -863,92 +881,103 @@ function InboxEditorReady({
 
     return (
         <div className="flex flex-col">
-            <SaveBar
-                dirtyCount={dirtyCount}
-                readyCount={readyIds.length}
-                saving={saving}
-                progress={progress}
-                onSave={() => void saveAll()}
-                onDiscard={() => {
-                    setDiscardOpen(true);
-                }}
-            />
-            <div className="grid grid-cols-[28px_88px_1fr_minmax(180px,1.4fr)_minmax(180px,1.4fr)_120px_120px] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
-                <HeaderSelectAllCheckbox
-                    state={allVisibleSelectionState(selection, visibleIds)}
-                    onClick={onHeaderCheckboxClick}
-                    disabled={saving || visibleIds.length === 0}
+            <div className="hidden md:flex flex-col">
+                <SaveBar
+                    dirtyCount={dirtyCount}
+                    readyCount={readyIds.length}
+                    saving={saving}
+                    progress={progress}
+                    onSave={() => void saveAll()}
+                    onDiscard={() => {
+                        setDiscardOpen(true);
+                    }}
                 />
-                <span>Date</span>
-                <span>Description</span>
-                <span>Counterparty</span>
-                <span>Account</span>
-                <span className="text-right">Amount</span>
-                <span className="text-right">Actions</span>
+                <div className="grid grid-cols-[28px_88px_1fr_minmax(180px,1.4fr)_minmax(180px,1.4fr)_120px_120px] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
+                    <HeaderSelectAllCheckbox
+                        state={allVisibleSelectionState(selection, visibleIds)}
+                        onClick={onHeaderCheckboxClick}
+                        disabled={saving || visibleIds.length === 0}
+                    />
+                    <span>Date</span>
+                    <span>Description</span>
+                    <span>Counterparty</span>
+                    <span>Account</span>
+                    <span className="text-right">Amount</span>
+                    <span className="text-right">Actions</span>
+                </div>
+                {visibleBts.map(bt => {
+                    const prefill = prefillByBt.get(bt.id);
+                    if (!prefill) return null;
+                    const draft = draftFor(bt.id);
+                    const pristine = isRowPristine(bt.id) && !dismissDrafts.has(bt.id);
+                    return (
+                        <InboxRow
+                            key={bt.id}
+                            bankTransaction={bt}
+                            draft={draft}
+                            pristine={pristine}
+                            dismissDraft={dismissDrafts.get(bt.id) ?? null}
+                            error={rowErrors.get(bt.id) ?? null}
+                            counterpartyItems={counterpartyItems}
+                            accountItems={buildAccountItems(
+                                accounts,
+                                bt.money.currencyCode,
+                                bankAccountsById.get(bt.bankAccountId)?.accountId ?? null,
+                            )}
+                            catalog={catalog}
+                            saving={saving}
+                            selected={selection.has(bt.id)}
+                            onCheckboxClick={shiftKey => {
+                                onRowCheckboxClick(bt.id, shiftKey);
+                            }}
+                            onPatch={patch => {
+                                patchDraft(bt.id, patch);
+                            }}
+                            onReset={() => {
+                                resetRow(bt.id);
+                            }}
+                            onDismiss={onDismiss}
+                        />
+                    );
+                })}
+                {selectionCount > 0 && (
+                    <BulkApplyFooter
+                        selectionCount={selectionCount}
+                        selectedCurrencies={selectedCurrencies}
+                        counterpartyItems={counterpartyItems}
+                        accountItems={buildBulkAccountItems(
+                            accounts,
+                            selectedCurrencies,
+                            ownBankSideAccountIdsInSelection,
+                        )}
+                        saving={saving}
+                        onApply={applyBulk}
+                        onDismiss={() => {
+                            setBulkDismissOpen(true);
+                        }}
+                        onClear={() => {
+                            setSelection(new Set());
+                            setSelectionAnchor(null);
+                        }}
+                    />
+                )}
             </div>
-            {visibleBts.map(bt => {
-                const prefill = prefillByBt.get(bt.id);
-                if (!prefill) return null;
-                const draft = draftFor(bt.id);
-                const pristine = isRowPristine(bt.id) && !dismissDrafts.has(bt.id);
-                return (
-                    <InboxRow
+            <div className="md:hidden flex flex-col">
+                {visibleBts.map(bt => (
+                    <ReadOnlyRow
                         key={bt.id}
                         bankTransaction={bt}
-                        draft={draft}
-                        pristine={pristine}
-                        dismissDraft={dismissDrafts.get(bt.id) ?? null}
-                        error={rowErrors.get(bt.id) ?? null}
-                        counterpartyItems={counterpartyItems}
-                        accountItems={buildAccountItems(
-                            accounts,
-                            bt.money.currencyCode,
-                            bankAccountsById.get(bt.bankAccountId)?.accountId ?? null,
-                        )}
                         catalog={catalog}
-                        saving={saving}
-                        selected={selection.has(bt.id)}
-                        onCheckboxClick={shiftKey => {
-                            onRowCheckboxClick(bt.id, shiftKey);
-                        }}
-                        onPatch={patch => {
-                            patchDraft(bt.id, patch);
-                        }}
-                        onReset={() => {
-                            resetRow(bt.id);
-                        }}
                         onDismiss={onDismiss}
                     />
-                );
-            })}
+                ))}
+            </div>
             <Pagination
                 page={page}
                 pageSize={PAGE_SIZE}
                 count={visibleBts.length}
                 onPageChange={onPageChange}
             />
-
-            {selectionCount > 0 && (
-                <BulkApplyFooter
-                    selectionCount={selectionCount}
-                    selectedCurrencies={selectedCurrencies}
-                    counterpartyItems={counterpartyItems}
-                    accountItems={buildBulkAccountItems(
-                        accounts,
-                        selectedCurrencies,
-                        ownBankSideAccountIdsInSelection,
-                    )}
-                    saving={saving}
-                    onApply={applyBulk}
-                    onDismiss={() => {
-                        setBulkDismissOpen(true);
-                    }}
-                    onClear={() => {
-                        setSelection(new Set());
-                        setSelectionAnchor(null);
-                    }}
-                />
-            )}
 
             {bulkDismissOpen && (
                 <BulkDismissDialog

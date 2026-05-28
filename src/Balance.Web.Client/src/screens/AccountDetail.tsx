@@ -154,7 +154,7 @@ function RegisterTable({ account }: { account: Account }) {
 
     return (
         <div className="flex flex-col">
-            <div className="grid grid-cols-[100px_1fr_180px_120px] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
+            <div className="hidden md:grid grid-cols-[100px_1fr_180px_120px] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
                 <span>Date</span>
                 <span>Description</span>
                 <span>Counter</span>
@@ -182,29 +182,49 @@ function RegisterRowView({
     const counter = row.counter[0];
     const extra = row.counter.length - 1;
     const negative = row.amount.amount < 0;
+    const heading = row.counterpartyName ?? row.entryDescription ?? '—';
+    const amount = (
+        <span
+            className={cx(
+                'font-mono text-[13px] tabular text-right',
+                negative ? 'text-fg-1' : 'text-success',
+            )}
+        >
+            {formatMoney(row.amount.amount, row.amount.currencyCode, catalog, { sign: true })}
+        </span>
+    );
+    const counterLabel = (
+        <span className="text-[12px] text-fg-2 truncate">
+            {counter ? counter.accountName : '—'}
+            {extra > 0 ? <span className="text-fg-3"> +{extra}</span> : null}
+        </span>
+    );
     return (
-        <div className="grid grid-cols-[100px_1fr_180px_120px] gap-3 items-center px-2 py-2 border-b border-border-soft last:border-b-0 hover:bg-surface-2">
-            <span className="text-[12px] text-fg-3 tabular">{row.date}</span>
-            <div className="flex flex-col min-w-0">
-                <span className="text-[13px] text-fg-1 truncate">
-                    {row.counterpartyName ?? row.entryDescription ?? '—'}
-                </span>
+        <div className="border-b border-border-soft last:border-b-0 hover:bg-surface-2">
+            <div className="hidden md:grid grid-cols-[100px_1fr_180px_120px] gap-3 items-center px-2 py-2">
+                <span className="text-[12px] text-fg-3 tabular">{row.date}</span>
+                <div className="flex flex-col min-w-0">
+                    <span className="text-[13px] text-fg-1 truncate">{heading}</span>
+                    {row.lineDescription ? (
+                        <span className="text-[12px] text-fg-3 truncate">
+                            {row.lineDescription}
+                        </span>
+                    ) : null}
+                </div>
+                {counterLabel}
+                {amount}
+            </div>
+            <div className="md:hidden flex flex-col gap-1 px-2 py-3">
+                <div className="flex items-center justify-between gap-3">
+                    <span className="text-[12px] text-fg-3 tabular">{row.date}</span>
+                    {amount}
+                </div>
+                <span className="text-[13px] text-fg-1 truncate">{heading}</span>
                 {row.lineDescription ? (
                     <span className="text-[12px] text-fg-3 truncate">{row.lineDescription}</span>
                 ) : null}
+                {counterLabel}
             </div>
-            <span className="text-[12px] text-fg-2 truncate">
-                {counter ? counter.accountName : '—'}
-                {extra > 0 ? <span className="text-fg-3"> +{extra}</span> : null}
-            </span>
-            <span
-                className={cx(
-                    'font-mono text-[13px] tabular text-right',
-                    negative ? 'text-fg-1' : 'text-success',
-                )}
-            >
-                {formatMoney(row.amount.amount, row.amount.currencyCode, catalog, { sign: true })}
-            </span>
         </div>
     );
 }

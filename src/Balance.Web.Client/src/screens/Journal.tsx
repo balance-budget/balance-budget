@@ -10,16 +10,18 @@ import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { cx } from '../lib/cx';
 import { type AccountId } from '../lib/domain';
-import {
-    formatLegLabel,
-    projectEntry,
-    type JournalProjection,
-} from '../lib/journalProjection';
+import { formatLegLabel, projectEntry, type JournalProjection } from '../lib/journalProjection';
 import { formatMoney } from '../lib/money';
 
 const PAGE_SIZE = 50;
 
-export function Journal({ page, onPageChange }: { page: number; onPageChange: (p: number) => void }) {
+export function Journal({
+    page,
+    onPageChange,
+}: {
+    page: number;
+    onPageChange: (p: number) => void;
+}) {
     const skip = (page - 1) * PAGE_SIZE;
     const entries = useJournalEntries(skip, PAGE_SIZE);
     const accounts = useAccounts();
@@ -103,7 +105,7 @@ function JournalBody({
 
     return (
         <div className="flex flex-col">
-            <div className="grid grid-cols-[100px_24px_1fr_minmax(180px,1.2fr)_140px] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
+            <div className="hidden md:grid grid-cols-[100px_24px_1fr_minmax(180px,1.2fr)_140px] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
                 <span>Date</span>
                 <span />
                 <span>Counterparty</span>
@@ -138,23 +140,42 @@ function JournalRow({
     catalog: CurrencyCatalog;
 }) {
     const projection = projectEntry(entry, accountById);
+    const heading = entry.counterpartyName ?? entry.description ?? '—';
     return (
         <Link
             to="/journal/$id"
             params={{ id: entry.id }}
-            className="grid grid-cols-[100px_24px_1fr_minmax(180px,1.2fr)_140px] gap-3 items-center px-2 py-2 border-b border-border-soft last:border-b-0 hover:bg-surface-2"
+            className="block border-b border-border-soft last:border-b-0 hover:bg-surface-2"
         >
-            <span className="text-[12px] text-fg-3 tabular">{entry.date}</span>
-            <span className="flex items-center justify-center text-fg-3" aria-hidden="true">
-                {entry.hasBankTransactions ? (
-                    <Icon name="download" size={12} strokeWidth={2} />
-                ) : null}
-            </span>
-            <span className="text-[13px] text-fg-1 truncate">
-                {entry.counterpartyName ?? entry.description ?? '—'}
-            </span>
-            <FromToCell projection={projection} lineCount={entry.lines.length} />
-            <AmountCell projection={projection} catalog={catalog} />
+            <div className="hidden md:grid grid-cols-[100px_24px_1fr_minmax(180px,1.2fr)_140px] gap-3 items-center px-2 py-2">
+                <span className="text-[12px] text-fg-3 tabular">{entry.date}</span>
+                <span className="flex items-center justify-center text-fg-3" aria-hidden="true">
+                    {entry.hasBankTransactions ? (
+                        <Icon name="download" size={12} strokeWidth={2} />
+                    ) : null}
+                </span>
+                <span className="text-[13px] text-fg-1 truncate">{heading}</span>
+                <FromToCell projection={projection} lineCount={entry.lines.length} />
+                <AmountCell projection={projection} catalog={catalog} />
+            </div>
+            <div className="md:hidden flex flex-col gap-1 px-2 py-3">
+                <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-[12px] text-fg-3 tabular shrink-0">{entry.date}</span>
+                        {entry.hasBankTransactions ? (
+                            <Icon
+                                name="download"
+                                size={12}
+                                strokeWidth={2}
+                                className="text-fg-3 shrink-0"
+                            />
+                        ) : null}
+                    </div>
+                    <AmountCell projection={projection} catalog={catalog} />
+                </div>
+                <span className="text-[13px] text-fg-1 truncate">{heading}</span>
+                <FromToCell projection={projection} lineCount={entry.lines.length} />
+            </div>
         </Link>
     );
 }
@@ -176,12 +197,7 @@ function FromToCell({
     return (
         <span className="text-[12px] text-fg-2 truncate flex items-center gap-1">
             <span className="truncate">{fromLabel}</span>
-            <Icon
-                name="chevron-right"
-                size={10}
-                strokeWidth={2}
-                className="text-fg-3 shrink-0"
-            />
+            <Icon name="chevron-right" size={10} strokeWidth={2} className="text-fg-3 shrink-0" />
             <span className="truncate">{toLabel}</span>
         </span>
     );
@@ -212,4 +228,3 @@ function AmountCell({
         </span>
     );
 }
-
