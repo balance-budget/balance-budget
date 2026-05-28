@@ -199,15 +199,17 @@ internal static class AuthEndpoints
         );
     }
 
-    private static NoContent AntiforgeryTokenAsync(
+    private static Ok<AntiforgeryTokenResponse> AntiforgeryTokenAsync(
         HttpContext httpContext,
         [FromServices] IAntiforgery antiforgery
     )
     {
-        // Issues the XSRF-TOKEN cookie (JS-readable) and stores the matching request token.
-        // The SPA reads the cookie value and echoes it as the X-XSRF-TOKEN header on writes.
-        antiforgery.GetAndStoreTokens(httpContext);
-        return TypedResults.NoContent();
+        // ASP.NET Core's antiforgery uses a paired token: a HttpOnly cookie token (written
+        // here as a Set-Cookie side effect) plus a request token that the client must echo
+        // as the X-XSRF-TOKEN header on writes. The two values are cryptographically linked
+        // but not equal — so the SPA needs the *request token* from the body, not the cookie.
+        var tokens = antiforgery.GetAndStoreTokens(httpContext);
+        return TypedResults.Ok(new AntiforgeryTokenResponse(tokens.RequestToken ?? string.Empty));
     }
 
     private static ClaimsPrincipal BuildCookiePrincipal(BalanceUser user)

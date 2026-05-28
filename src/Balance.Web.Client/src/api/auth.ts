@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { components } from '../lib/api-types';
-import { getJson, postJsonNoContent, primeAntiforgeryCookie } from '../lib/http';
+import { getJson, postJsonNoContent, refreshAntiforgeryToken } from '../lib/http';
 
 type WireCurrentUser = components['schemas']['CurrentUserResponse'];
 type WireLoginRequest = components['schemas']['LoginRequest'];
@@ -59,8 +59,8 @@ export function useLogin() {
         mutationFn: async (request: WireLoginRequest) => {
             const ctrl = new AbortController();
             await postJsonNoContent('/api/auth/login', request, ctrl.signal, 'log in');
-            // Prime the antiforgery cookie so subsequent writes succeed on the first try.
-            await primeAntiforgeryCookie(ctrl.signal);
+            // Identity changed — the antiforgery token cached before login is now invalid.
+            await refreshAntiforgeryToken(ctrl.signal);
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: authKeys.me });
@@ -88,7 +88,7 @@ export function useSetup() {
         mutationFn: async (request: WireSetupRequest) => {
             const ctrl = new AbortController();
             await postJsonNoContent('/api/auth/setup', request, ctrl.signal, 'set up');
-            await primeAntiforgeryCookie(ctrl.signal);
+            await refreshAntiforgeryToken(ctrl.signal);
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: authKeys.me });

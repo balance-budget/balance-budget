@@ -588,6 +588,9 @@ export interface components {
         };
         /** @enum {unknown} */
         AccountType: "Asset" | "Liability" | "Equity" | "Income" | "Expense";
+        AntiforgeryTokenResponse: {
+            token: string;
+        };
         /** Format: uuid */
         ApiTokenId: string;
         AttachBankTransactionRequest: {
@@ -1106,12 +1109,14 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description No Content */
-            204: {
+            /** @description OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["AntiforgeryTokenResponse"];
+                };
             };
         };
     };
