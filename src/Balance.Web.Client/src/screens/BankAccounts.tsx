@@ -127,8 +127,14 @@ function BankAccountRow({
     bankAccount: BankAccount;
     ownerLabel: string;
 }) {
-    const label = bankAccount.bankName ?? bankAccount.iban ?? bankAccount.accountNumber ?? '—';
-    const identifier = bankAccount.iban ?? bankAccount.accountNumber;
+    const label =
+        bankAccount.bankName ??
+        bankAccount.iban ??
+        bankAccount.accountNumber ??
+        bankAccount.cardIdentifier ??
+        '—';
+    const identifier =
+        bankAccount.iban ?? bankAccount.accountNumber ?? bankAccount.cardIdentifier;
     const ownerKind = bankAccount.accountId ? 'Account' : 'Counterparty';
 
     return (
@@ -248,12 +254,15 @@ export function BankAccountDetail({ id }: { id: BankAccountId }) {
 function BankAccountDetails({ bankAccount }: { bankAccount: BankAccount }) {
     return (
         <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-[13px]">
+            <Field label="Type" value={bankAccount.type} />
             <Field label="IBAN" value={bankAccount.iban} />
             <Field label="Account number" value={bankAccount.accountNumber} />
+            <Field label="Card identifier" value={bankAccount.cardIdentifier} />
             <Field label="BIC" value={bankAccount.bic} />
             <Field label="Bank name" value={bankAccount.bankName} />
             <Field label="Account holder" value={bankAccount.accountHolderName} />
             <Field label="Currency" value={bankAccount.currencyCode} />
+            <Field label="Importer" value={bankAccount.importerKey} />
         </dl>
     );
 }

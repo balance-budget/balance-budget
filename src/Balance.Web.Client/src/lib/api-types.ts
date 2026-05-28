@@ -327,6 +327,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/bank-accounts/importers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListBankAccountImporters"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/bank-accounts/{id}": {
         parameters: {
             query?: never;
@@ -614,14 +630,21 @@ export interface components {
         };
         /** Format: uuid */
         BankAccountId: string;
+        BankAccountImporterOutput: {
+            key: string;
+            supportedType: components["schemas"]["BankAccountType"];
+        };
         BankAccountOutput: {
             id: components["schemas"]["BankAccountId"];
+            type: components["schemas"]["BankAccountType"];
             iban: null | string;
             accountNumber: null | string;
+            cardIdentifier: null | string;
             bic: null | string;
             bankName: null | string;
             accountHolderName: null | string;
             currencyCode: null | components["schemas"]["CurrencyCode"];
+            importerKey: null | string;
             accountId: null | components["schemas"]["AccountId"];
             counterpartyId: null | components["schemas"]["CounterpartyId"];
             /** Format: date-time */
@@ -635,6 +658,8 @@ export interface components {
             bic: null | string;
             bankName: null | string;
         };
+        /** @enum {unknown} */
+        BankAccountType: "Current" | "Savings" | "Card";
         BankTransactionDetailOutput: {
             id: components["schemas"]["BankTransactionId"];
             bankAccountId: components["schemas"]["BankAccountId"];
@@ -735,12 +760,15 @@ export interface components {
             currencyCode: components["schemas"]["CurrencyCode"];
         };
         CreateBankAccountRequest: {
+            type: components["schemas"]["BankAccountType"];
             iban: null | string;
             accountNumber: null | string;
+            cardIdentifier: null | string;
             bic: null | string;
             bankName: null | string;
             accountHolderName: null | string;
             currencyCode: null | components["schemas"]["CurrencyCode"];
+            importerKey: null | string;
             accountId: null | components["schemas"]["AccountId"];
             counterpartyId: null | components["schemas"]["CounterpartyId"];
         };
@@ -918,19 +946,19 @@ export interface components {
             /** @enum {string} */
             op: "add" | "replace" | "test";
             /** @enum {string} */
-            path: "/iban" | "/accountNumber" | "/bic" | "/bankName" | "/accountHolderName" | "/currencyCode" | "/accountId" | "/counterpartyId";
+            path: "/type" | "/iban" | "/accountNumber" | "/cardIdentifier" | "/bic" | "/bankName" | "/accountHolderName" | "/currencyCode" | "/importerKey" | "/accountId" | "/counterpartyId";
             value: unknown;
         } | {
             /** @enum {string} */
             op: "move" | "copy";
             /** @enum {string} */
-            path: "/iban" | "/accountNumber" | "/bic" | "/bankName" | "/accountHolderName" | "/currencyCode" | "/accountId" | "/counterpartyId";
+            path: "/type" | "/iban" | "/accountNumber" | "/cardIdentifier" | "/bic" | "/bankName" | "/accountHolderName" | "/currencyCode" | "/importerKey" | "/accountId" | "/counterpartyId";
             from: string;
         } | {
             /** @enum {string} */
             op: "remove";
             /** @enum {string} */
-            path: "/iban" | "/accountNumber" | "/bic" | "/bankName" | "/accountHolderName" | "/currencyCode" | "/accountId" | "/counterpartyId";
+            path: "/type" | "/iban" | "/accountNumber" | "/cardIdentifier" | "/bic" | "/bankName" | "/accountHolderName" | "/currencyCode" | "/importerKey" | "/accountId" | "/counterpartyId";
         })[];
         JsonPatchDocumentOfUpdateCounterpartyInput: ({
             /** @enum {string} */
@@ -1065,12 +1093,16 @@ export interface components {
             currencyCode: string;
         };
         UpdateBankAccountInput: {
+            /** @enum {unknown} */
+            type?: "Current" | "Savings" | "Card";
             iban?: null | string;
             accountNumber?: null | string;
+            cardIdentifier?: null | string;
             bic?: null | string;
             bankName?: null | string;
             accountHolderName?: null | string;
             currencyCode?: unknown;
+            importerKey?: null | string;
             accountId?: unknown;
             counterpartyId?: unknown;
         };
@@ -2330,6 +2362,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ListBankAccountImporters: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankAccountImporterOutput"][];
                 };
             };
         };
