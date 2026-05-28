@@ -12,20 +12,31 @@ import {
 import { deleteRequest, getJson, patchJson, postFormData, postJson } from '../lib/http';
 
 type WireBankAccount = components['schemas']['BankAccountOutput'];
+type WireBankAccountImporter = components['schemas']['BankAccountImporterOutput'];
 type WireCreateRequest = components['schemas']['CreateBankAccountRequest'];
 type WireUpdateInput = components['schemas']['UpdateBankAccountInput'];
 type WireImportResult = components['schemas']['ImportResult'];
 
+export type BankAccountType = 'Current' | 'Savings' | 'Card';
+
 export type BankAccount = {
     id: BankAccountId;
+    type: BankAccountType;
     iban: string | null;
     accountNumber: string | null;
+    cardIdentifier: string | null;
     bic: string | null;
     bankName: string | null;
     accountHolderName: string | null;
     currencyCode: string | null;
+    importerKey: string | null;
     accountId: AccountId | null;
     counterpartyId: CounterpartyId | null;
+};
+
+export type BankAccountImporter = {
+    key: string;
+    supportedType: BankAccountType;
 };
 
 export type ImportResult = {
@@ -37,6 +48,7 @@ export const bankAccountsKeys = {
     all: ['bank-accounts'] as const,
     list: () => [...bankAccountsKeys.all, 'list'] as const,
     detail: (id: BankAccountId) => [...bankAccountsKeys.all, 'detail', id] as const,
+    importers: () => [...bankAccountsKeys.all, 'importers'] as const,
 };
 
 function fetchBankAccounts(signal: AbortSignal): Promise<WireBankAccount[]> {
@@ -46,15 +58,22 @@ function fetchBankAccounts(signal: AbortSignal): Promise<WireBankAccount[]> {
 function toBankAccount(wire: WireBankAccount): BankAccount {
     return {
         id: asBankAccountId(wire.id),
+        type: wire.type,
         iban: wire.iban,
         accountNumber: wire.accountNumber,
+        cardIdentifier: wire.cardIdentifier,
         bic: wire.bic,
         bankName: wire.bankName,
         accountHolderName: wire.accountHolderName,
         currencyCode: wire.currencyCode,
+        importerKey: wire.importerKey,
         accountId: wire.accountId ? asAccountId(wire.accountId) : null,
         counterpartyId: wire.counterpartyId ? asCounterpartyId(wire.counterpartyId) : null,
     };
+}
+
+function toBankAccountImporter(wire: WireBankAccountImporter): BankAccountImporter {
+    return { key: wire.key, supportedType: wire.supportedType };
 }
 
 function toCount(raw: number | string): number {
@@ -75,6 +94,21 @@ export function useBankAccounts() {
             const wire = await fetchBankAccounts(signal);
             return wire.map(toBankAccount);
         },
+    });
+}
+
+export function useBankAccountImporters() {
+    return useQuery({
+        queryKey: bankAccountsKeys.importers(),
+        queryFn: async ({ signal }) => {
+            const wire = await getJson<WireBankAccountImporter[]>(
+                '/api/bank-accounts/importers',
+                signal,
+                'load bank account importers',
+            );
+            return wire.map(toBankAccountImporter);
+        },
+        staleTime: 60_000,
     });
 }
 

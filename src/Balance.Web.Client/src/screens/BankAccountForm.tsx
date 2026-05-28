@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { useCreateBankAccount, useUpdateBankAccount, type BankAccount } from '../api/bankAccounts';
+import {
+    useBankAccountImporters,
+    useCreateBankAccount,
+    useUpdateBankAccount,
+    type BankAccount,
+    type BankAccountType,
+} from '../api/bankAccounts';
 import { useAccounts } from '../api/accounts';
 import { useCounterparties } from '../api/counterparties';
 import { useCurrencies } from '../api/currencies';
@@ -21,12 +27,15 @@ type Props = { onClose: () => void } & (
 );
 
 type FormState = {
+    type: BankAccountType;
     iban: string;
     accountNumber: string;
+    cardIdentifier: string;
     bic: string;
     bankName: string;
     accountHolderName: string;
     currencyCode: string;
+    importerKey: string;
     ownerKind: OwnerKind;
     accountId: string;
     counterpartyId: string;
@@ -37,12 +46,15 @@ function initialState(props: Props): FormState {
         const ba = props.bankAccount;
         const ownerKind: OwnerKind = ba.accountId !== null ? 'account' : 'counterparty';
         return {
+            type: ba.type,
             iban: ba.iban ?? '',
             accountNumber: ba.accountNumber ?? '',
+            cardIdentifier: ba.cardIdentifier ?? '',
             bic: ba.bic ?? '',
             bankName: ba.bankName ?? '',
             accountHolderName: ba.accountHolderName ?? '',
             currencyCode: ba.currencyCode ?? '',
+            importerKey: ba.importerKey ?? '',
             ownerKind,
             accountId: ba.accountId ?? '',
             counterpartyId: ba.counterpartyId ?? '',
@@ -51,12 +63,15 @@ function initialState(props: Props): FormState {
     const pre = props.ownerPrefill;
     const ownerKind: OwnerKind = pre && 'accountId' in pre ? 'account' : 'counterparty';
     return {
+        type: 'Current',
         iban: '',
         accountNumber: '',
+        cardIdentifier: '',
         bic: '',
         bankName: '',
         accountHolderName: '',
         currencyCode: '',
+        importerKey: '',
         ownerKind,
         accountId: pre && 'accountId' in pre ? pre.accountId : '',
         counterpartyId: pre && 'counterpartyId' in pre ? pre.counterpartyId : '',
@@ -70,6 +85,7 @@ export function BankAccountFormModal(props: Props) {
     const accounts = useAccounts();
     const counterparties = useCounterparties();
     const currencies = useCurrencies();
+    const importers = useBankAccountImporters();
 
     const [form, setForm] = useState<FormState>(() => initialState(props));
     const [topError, setTopError] = useState<string | null>(null);
@@ -80,6 +96,16 @@ export function BankAccountFormModal(props: Props) {
 
     function update_(patch: Partial<FormState>) {
         setForm(prev => ({ ...prev, ...patch }));
+    }
+
+    function changeType(next: BankAccountType) {
+        // Card BankAccounts are owned-only (ADR 0019). Snap ownerKind back to 'account'
+        // and clear any incompatible ImporterKey when the user picks Card.
+        const nextOwner: OwnerKind = next === 'Card' ? 'account' : form.ownerKind;
+        const currentImporter = importers.data?.find(i => i.key === form.importerKey);
+        const nextImporter =
+            currentImporter && currentImporter.supportedType === next ? form.importerKey : '';
+        update_({ type: next, ownerKind: nextOwner, importerKey: nextImporter });
     }
 
     async function submit() {
@@ -98,24 +124,30 @@ export function BankAccountFormModal(props: Props) {
         try {
             if (props.mode === 'create') {
                 await create.mutateAsync({
+                    type: form.type,
                     iban: emptyToNull(form.iban),
                     accountNumber: emptyToNull(form.accountNumber),
+                    cardIdentifier: emptyToNull(form.cardIdentifier),
                     bic: emptyToNull(form.bic),
                     bankName: emptyToNull(form.bankName),
                     accountHolderName: emptyToNull(form.accountHolderName),
                     currencyCode: payloadCurrency,
+                    importerKey: emptyToNull(form.importerKey),
                     accountId: accountIdValue,
                     counterpartyId: counterpartyIdValue,
                 });
             } else {
                 const original = bankAccountToUpdateInput(props.bankAccount);
                 const edited = {
+                    type: form.type,
                     iban: emptyToNull(form.iban),
                     accountNumber: emptyToNull(form.accountNumber),
+                    cardIdentifier: emptyToNull(form.cardIdentifier),
                     bic: emptyToNull(form.bic),
                     bankName: emptyToNull(form.bankName),
                     accountHolderName: emptyToNull(form.accountHolderName),
                     currencyCode: payloadCurrency,
+                    importerKey: emptyToNull(form.importerKey),
                     accountId: accountIdValue,
                     counterpartyId: counterpartyIdValue,
                 };
@@ -140,6 +172,8 @@ export function BankAccountFormModal(props: Props) {
     const ledgerAccounts = (accounts.data ?? []).filter(isLedgerAccount);
     const counterpartyList = counterparties.data ?? [];
     const currencyList = Array.from(currencies.data?.values() ?? []);
+    const importerOptions = (importers.data ?? []).filter(i => i.supportedType === form.type);
+    const ownerKindLocked = ownerLocked || form.type === 'Card';
 
     return (
         <Modal
@@ -158,12 +192,40 @@ export function BankAccountFormModal(props: Props) {
                 <FormErrorBanner message={topError} />
 
                 <fieldset className="mb-4">
+                    <legend className="text-[12px] font-medium text-fg-2 mb-2">Type</legend>
+                    <div className="flex gap-4">
+                        <RadioOption
+                            label="Current"
+                            checked={form.type === 'Current'}
+                            onChange={() => {
+                                changeType('Current');
+                            }}
+                        />
+                        <RadioOption
+                            label="Savings"
+                            checked={form.type === 'Savings'}
+                            onChange={() => {
+                                changeType('Savings');
+                            }}
+                        />
+                        <RadioOption
+                            label="Card"
+                            checked={form.type === 'Card'}
+                            onChange={() => {
+                                changeType('Card');
+                            }}
+                        />
+                    </div>
+                    <FieldError name="Type" errors={fieldErrors} />
+                </fieldset>
+
+                <fieldset className="mb-4">
                     <legend className="text-[12px] font-medium text-fg-2 mb-2">Owner</legend>
                     <div className="flex gap-4 mb-2">
                         <RadioOption
                             label="Account"
                             checked={form.ownerKind === 'account'}
-                            disabled={ownerLocked}
+                            disabled={ownerKindLocked}
                             onChange={() => {
                                 update_({ ownerKind: 'account' });
                             }}
@@ -171,7 +233,7 @@ export function BankAccountFormModal(props: Props) {
                         <RadioOption
                             label="Counterparty"
                             checked={form.ownerKind === 'counterparty'}
-                            disabled={ownerLocked}
+                            disabled={ownerKindLocked}
                             onChange={() => {
                                 update_({ ownerKind: 'counterparty' });
                             }}
@@ -217,25 +279,41 @@ export function BankAccountFormModal(props: Props) {
                 </fieldset>
 
                 <div className="grid grid-cols-2 gap-3">
-                    <TextField
-                        label="IBAN"
-                        value={form.iban}
-                        onChange={v => {
-                            update_({ iban: v });
-                        }}
-                        errorName="Iban"
-                        errors={fieldErrors}
-                        autoFocus
-                    />
-                    <TextField
-                        label="Account number"
-                        value={form.accountNumber}
-                        onChange={v => {
-                            update_({ accountNumber: v });
-                        }}
-                        errorName="AccountNumber"
-                        errors={fieldErrors}
-                    />
+                    {form.type !== 'Card' ? (
+                        <TextField
+                            label={`IBAN${form.type === 'Current' ? ' *' : ''}`}
+                            value={form.iban}
+                            onChange={v => {
+                                update_({ iban: v });
+                            }}
+                            errorName="Iban"
+                            errors={fieldErrors}
+                            autoFocus
+                        />
+                    ) : null}
+                    {form.type === 'Savings' ? (
+                        <TextField
+                            label="Account number"
+                            value={form.accountNumber}
+                            onChange={v => {
+                                update_({ accountNumber: v });
+                            }}
+                            errorName="AccountNumber"
+                            errors={fieldErrors}
+                        />
+                    ) : null}
+                    {form.type === 'Card' ? (
+                        <TextField
+                            label="Card identifier *"
+                            value={form.cardIdentifier}
+                            onChange={v => {
+                                update_({ cardIdentifier: v });
+                            }}
+                            errorName="CardIdentifier"
+                            errors={fieldErrors}
+                            autoFocus
+                        />
+                    ) : null}
                     <TextField
                         label="BIC"
                         value={form.bic}
@@ -289,10 +367,36 @@ export function BankAccountFormModal(props: Props) {
                         </select>
                         <FieldError name="CurrencyCode" errors={fieldErrors} />
                     </label>
+                    {form.ownerKind === 'account' ? (
+                        <label className="flex flex-col gap-1">
+                            <span className="text-[12px] font-medium text-fg-2">
+                                Statement importer
+                            </span>
+                            <select
+                                value={form.importerKey}
+                                onChange={e => {
+                                    update_({ importerKey: e.target.value });
+                                }}
+                                className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
+                            >
+                                <option value="">(none)</option>
+                                {importerOptions.map(i => (
+                                    <option key={i.key} value={i.key}>
+                                        {i.key}
+                                    </option>
+                                ))}
+                            </select>
+                            <FieldError name="ImporterKey" errors={fieldErrors} />
+                        </label>
+                    ) : null}
                 </div>
 
                 <p className="mt-3 text-[12px] text-fg-3">
-                    At least one of IBAN or Account number is required.
+                    {form.type === 'Current'
+                        ? 'IBAN is required.'
+                        : form.type === 'Savings'
+                          ? 'IBAN or Account number is required.'
+                          : 'Card identifier is required. Card accounts are owned-only.'}
                 </p>
 
                 <ModalFooter>
@@ -324,12 +428,15 @@ function emptyToNull(v: string): string | null {
 
 function bankAccountToUpdateInput(ba: BankAccount) {
     return {
+        type: ba.type,
         iban: ba.iban,
         accountNumber: ba.accountNumber,
+        cardIdentifier: ba.cardIdentifier,
         bic: ba.bic,
         bankName: ba.bankName,
         accountHolderName: ba.accountHolderName,
         currencyCode: ba.currencyCode,
+        importerKey: ba.importerKey,
         accountId: ba.accountId,
         counterpartyId: ba.counterpartyId,
     };
