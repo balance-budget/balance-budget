@@ -350,12 +350,15 @@ internal sealed class BankTransactionImportServiceTests : EndpointsTestsBase
 
         var bankAccountResult = await bankAccountService.CreateAsync(
             new CreateBankAccountInput(
+                Type: BankAccountType.Current,
                 Iban: iban,
                 AccountNumber: null,
+                CardIdentifier: null,
                 Bic: null,
                 BankName: null,
                 AccountHolderName: null,
                 CurrencyCode: new CurrencyCode("EUR"),
+                ImporterKey: "Ing.CurrentAccount.V1",
                 AccountId: accountResult.Value!.Id,
                 CounterpartyId: null
             ),
@@ -386,12 +389,15 @@ internal sealed class BankTransactionImportServiceTests : EndpointsTestsBase
 
         var bankAccountResult = await bankAccountService.CreateAsync(
             new CreateBankAccountInput(
+                Type: BankAccountType.Current,
                 Iban: iban,
                 AccountNumber: null,
+                CardIdentifier: null,
                 Bic: null,
                 BankName: null,
                 AccountHolderName: null,
                 CurrencyCode: null,
+                ImporterKey: null,
                 AccountId: null,
                 CounterpartyId: counterpartyResult.Value!.Id
             ),
@@ -399,7 +405,16 @@ internal sealed class BankTransactionImportServiceTests : EndpointsTestsBase
         );
         await Assert.That(bankAccountResult.IsSuccess).IsTrue();
 
+        // Force-stamp ImporterKey on this counterparty-owned BankAccount so the dispatcher hands
+        // off to the extractor; that's the layer the rejects_counterparty_owned_bank_account test
+        // exercises (extractor enforces AccountId IS NOT NULL).
         var db = serviceProvider.GetRequiredService<BalanceDbContext>();
+        var row = await db.BankAccounts.FirstAsync(
+            b => b.Id == bankAccountResult.Value!.Id,
+            cancellationToken
+        );
+        row.ImporterKey = "Ing.CurrentAccount.V1";
+        await db.SaveChangesAsync(cancellationToken);
         return await db
             .BankAccounts.AsNoTracking()
             .FirstAsync(b => b.Id == bankAccountResult.Value!.Id, cancellationToken);

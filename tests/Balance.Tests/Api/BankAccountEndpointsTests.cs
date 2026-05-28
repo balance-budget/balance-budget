@@ -154,7 +154,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
     }
 
     [Test]
-    public async Task CreateBankAccount_only_account_number_succeeds()
+    public async Task CreateBankAccount_savings_with_only_account_number_succeeds()
     {
         using var client = Factory.CreateClient();
         var account = await CreateAccountAsync(client, "ING-Savings");
@@ -167,7 +167,8 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
             AccountHolderName: null,
             CurrencyCode: "EUR",
             AccountId: account.Id,
-            CounterpartyId: null
+            CounterpartyId: null,
+            Type: "Savings"
         );
         using var response = await client.PostAsJsonAsync(
             new Uri("/api/bank-accounts", UriKind.Relative),
@@ -175,6 +176,117 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
         );
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Created);
+    }
+
+    [Test]
+    public async Task CreateBankAccount_card_requires_card_identifier()
+    {
+        using var client = Factory.CreateClient();
+        var account = await CreateAccountAsync(
+            client,
+            $"Card-NoId-{Guid.NewGuid():N}",
+            "Liability"
+        );
+
+        var request = new CreateBankAccountRequestDto(
+            Iban: null,
+            AccountNumber: null,
+            Bic: null,
+            BankName: "ING",
+            AccountHolderName: null,
+            CurrencyCode: "EUR",
+            AccountId: account.Id,
+            CounterpartyId: null,
+            Type: "Card"
+        );
+        using var response = await client.PostAsJsonAsync(
+            new Uri("/api/bank-accounts", UriKind.Relative),
+            request
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.UnprocessableEntity);
+    }
+
+    [Test]
+    public async Task CreateBankAccount_card_rejects_counterparty_owner()
+    {
+        using var client = Factory.CreateClient();
+        var counterpartyResponse = await client.PostAsJsonAsync(
+            new Uri("/api/counterparties", UriKind.Relative),
+            new CreateCounterpartyRequestDto($"CP-Card-{Guid.NewGuid():N}")
+        );
+        await Assert.That(counterpartyResponse.StatusCode).IsEqualTo(HttpStatusCode.Created);
+        var counterparty = await counterpartyResponse.Content.ReadFromJsonAsync<CounterpartyDto>();
+
+        var request = new CreateBankAccountRequestDto(
+            Iban: null,
+            AccountNumber: null,
+            Bic: null,
+            BankName: "ING",
+            AccountHolderName: null,
+            CurrencyCode: null,
+            AccountId: null,
+            CounterpartyId: counterparty!.Id,
+            Type: "Card",
+            CardIdentifier: "1234************5678"
+        );
+        using var response = await client.PostAsJsonAsync(
+            new Uri("/api/bank-accounts", UriKind.Relative),
+            request
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.UnprocessableEntity);
+    }
+
+    [Test]
+    public async Task CreateBankAccount_rejects_importer_with_type_mismatch()
+    {
+        using var client = Factory.CreateClient();
+        var account = await CreateAccountAsync(
+            client,
+            $"Type-Mismatch-{Guid.NewGuid():N}",
+            "Asset"
+        );
+
+        var request = new CreateBankAccountRequestDto(
+            Iban: $"NL40INGB{Guid.NewGuid():N}".ToUpperInvariant()[..18],
+            AccountNumber: null,
+            Bic: null,
+            BankName: "ING",
+            AccountHolderName: null,
+            CurrencyCode: "EUR",
+            AccountId: account.Id,
+            CounterpartyId: null,
+            Type: "Current",
+            ImporterKey: "Ing.CreditCard.V1"
+        );
+        using var response = await client.PostAsJsonAsync(
+            new Uri("/api/bank-accounts", UriKind.Relative),
+            request
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.UnprocessableEntity);
+    }
+
+    [Test]
+    public async Task ListImporters_returns_registered_extractors()
+    {
+        using var client = Factory.CreateClient();
+        using var response = await client.GetAsync(
+            new Uri("/api/bank-accounts/importers", UriKind.Relative)
+        );
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+
+        var importers = await response.Content.ReadFromJsonAsync<List<BankAccountImporterDto>>();
+        await Assert.That(importers).IsNotNull();
+        await Assert.That(importers!.Any(i => i.Key == "Ing.CurrentAccount.V1")).IsTrue();
+        await Assert.That(importers.Any(i => i.Key == "Ing.CreditCard.V1")).IsTrue();
+        await Assert
+            .That(importers.Single(i => i.Key == "Ing.CurrentAccount.V1").SupportedType)
+            .IsEqualTo("Current");
+        await Assert
+            .That(importers.Single(i => i.Key == "Ing.CreditCard.V1").SupportedType)
+            .IsEqualTo("Card");
     }
 
     [Test]
@@ -521,9 +633,13 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Created);
     }
 
-    private static async Task<AccountDto> CreateAccountAsync(HttpClient client, string name)
+    private static async Task<AccountDto> CreateAccountAsync(
+        HttpClient client,
+        string name,
+        string type = "Asset"
+    )
     {
-        var req = new CreateAccountRequestDto(name, "Asset", "EUR");
+        var req = new CreateAccountRequestDto(name, type, "EUR");
         using var response = await client.PostAsJsonAsync(
             new Uri("/api/accounts", UriKind.Relative),
             req
@@ -561,6 +677,8 @@ internal sealed record BankAccountDto(
     Guid? CounterpartyId
 );
 
+internal sealed record BankAccountImporterDto(string Key, string SupportedType);
+
 internal sealed record CreateBankAccountRequestDto(
     string? Iban,
     string? AccountNumber,
@@ -569,5 +687,8 @@ internal sealed record CreateBankAccountRequestDto(
     string? AccountHolderName,
     string? CurrencyCode,
     Guid? AccountId,
-    Guid? CounterpartyId
+    Guid? CounterpartyId,
+    string Type = "Current",
+    string? CardIdentifier = null,
+    string? ImporterKey = null
 );

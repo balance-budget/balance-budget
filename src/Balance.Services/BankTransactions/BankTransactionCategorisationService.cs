@@ -219,12 +219,15 @@ internal sealed class BankTransactionCategorisationService : IBankTransactionCat
 
         var created = await _bankAccountService.CreateAsync(
             new CreateBankAccountInput(
+                Type: BankAccountType.Current,
                 Iban: iban,
                 AccountNumber: null,
+                CardIdentifier: null,
                 Bic: null,
                 BankName: null,
                 AccountHolderName: accountHolderName,
                 CurrencyCode: null,
+                ImporterKey: null,
                 AccountId: null,
                 CounterpartyId: counterpartyId
             ),

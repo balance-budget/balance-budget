@@ -262,7 +262,8 @@ internal sealed class AccountEndpointsTests : EndpointsTestsBase
             AccountHolderName: null,
             CurrencyCode: "EUR",
             AccountId: account.Id,
-            CounterpartyId: null
+            CounterpartyId: null,
+            Type: "Savings"
         );
         using var createBank = await client.PostAsJsonAsync(
             new Uri("/api/bank-accounts", UriKind.Relative),

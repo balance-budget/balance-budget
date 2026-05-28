@@ -25,8 +25,11 @@ public static class ErrorCodes
     public const string BankAccountSlotTaken = "bank_account.slot_taken";
     public const string BankAccountOwnershipXor = "bank_account.ownership_xor";
     public const string BankAccountIdentifierMissing = "bank_account.identifier_missing";
+    public const string BankAccountCardOwnedOnly = "bank_account.card_owned_only";
     public const string BankAccountCurrencyRequiredWhenOwned =
         "bank_account.currency_required_when_owned";
+    public const string BankAccountImporterUnknown = "bank_account.importer_unknown";
+    public const string BankAccountImporterTypeMismatch = "bank_account.importer_type_mismatch";
 
     // BankTransaction
     public const string BankTransactionAmountZero = "bank_transaction.amount_zero";
@@ -47,6 +50,8 @@ public static class ErrorCodes
     public const string ImportAccountColumnDivergence = "import.account_column_divergence";
     public const string ImportCurrencyMismatch = "import.currency_mismatch";
     public const string ImportBankAccountNotOwned = "import.bank_account_not_owned";
+    public const string ImportBankAccountNotImportable = "import.bank_account_not_importable";
+    public const string ImportBankAccountWrongImporter = "import.bank_account_wrong_importer";
     public const string ImportFormatInvalid = "import.format_invalid";
     public const string ImportConcurrentConflict = "import.concurrent_conflict";
 

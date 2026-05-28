@@ -79,8 +79,14 @@ function belongsTo(ba: BankAccount, owner: Owner): boolean {
 }
 
 function LinkedRow({ bankAccount }: { bankAccount: BankAccount }) {
-    const label = bankAccount.bankName ?? bankAccount.iban ?? bankAccount.accountNumber ?? '—';
-    const identifier = bankAccount.iban ?? bankAccount.accountNumber;
+    const label =
+        bankAccount.bankName ??
+        bankAccount.iban ??
+        bankAccount.accountNumber ??
+        bankAccount.cardIdentifier ??
+        '—';
+    const identifier =
+        bankAccount.iban ?? bankAccount.accountNumber ?? bankAccount.cardIdentifier;
     return (
         <Link
             to="/settings/bank-accounts/$id"

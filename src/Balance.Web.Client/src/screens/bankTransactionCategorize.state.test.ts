@@ -103,12 +103,15 @@ describe('resolveOpenContext', () => {
     }): BankAccount {
         return {
             id: asBankAccountId(args.id),
+            type: 'Current',
             iban: args.iban,
             accountNumber: null,
+            cardIdentifier: null,
             bic: null,
             bankName: null,
             accountHolderName: null,
             currencyCode: null,
+            importerKey: null,
             accountId: args.accountId ?? null,
             counterpartyId: args.counterpartyId ?? null,
         };

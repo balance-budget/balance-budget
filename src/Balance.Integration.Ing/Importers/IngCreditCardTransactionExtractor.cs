@@ -1,5 +1,6 @@
 using System.Globalization;
 using Balance.Data.Entities;
+using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
 using Balance.Integration.Ing.Contracts;
 using Balance.Integration.Ing.Helpers;
@@ -14,7 +15,10 @@ namespace Balance.Integration.Ing.Importers;
 
 internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtractor
 {
-    private const string Key = "Ing.CreditCard.V1";
+    private const string ImporterKey = "Ing.CreditCard.V1";
+
+    public string Key => ImporterKey;
+    public BankAccountType SupportedType => BankAccountType.Card;
 
     private static readonly CurrencyCode Eur = new("EUR");
 
@@ -74,12 +78,12 @@ internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtrac
             return Array.Empty<BankTransaction>();
 
         var firstCardNumber = Normalise(statement.Rows[0].CardNumber);
-        if (bankAccount.AccountNumber != firstCardNumber)
+        if (Normalise(bankAccount.CardIdentifier) != firstCardNumber)
         {
             return new InvariantError(
                 ErrorCodes.ImportIbanMismatch,
-                $"Statement Account '{statement.Counterparty}' does not match this "
-                    + "Card's AccountNumber."
+                $"Statement card number '{statement.Rows[0].CardNumber}' does not match this "
+                    + "Card's CardIdentifier."
             );
         }
 
@@ -101,7 +105,7 @@ internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtrac
         var bankTransactions = new List<BankTransaction>(statement.Rows.Count);
         foreach (var row in statement.Rows.Reverse())
         {
-            var mapped = ToBankTransaction(bankAccount.Id, row);
+            var mapped = ToBankTransaction(bankAccount.Id, row, statement.Counterparty);
             if (mapped.IsFailure)
                 return mapped.Error;
             bankTransactions.Add(mapped.Value);
@@ -111,12 +115,23 @@ internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtrac
 
     private static Result<BankTransaction> ToBankTransaction(
         BankAccountId bankAccountId,
-        CreditCardStatementRow row
+        CreditCardStatementRow row,
+        string fundingAccountIban
     )
     {
         var description = row.Description;
         var counterpartyName = NullIfBlank(row.Description);
         var signedCents = ToMinorUnits(row.Amount) ?? 0;
+
+        // Only the DirectDebit (pay-down) row genuinely moves money from the funding current
+        // account into the card; merchant rows (Payment, CashWithdrawal etc.) have the merchant
+        // as the counterparty and no per-row counterparty IBAN. Populating the funding IBAN
+        // here lets ADR 0013's Attach predicate fire on the card-side pay-down without
+        // amending clause (3).
+        var counterpartyAccountNumber =
+            row.TransactionType is CreditCardTransactionType.DirectDebit
+                ? NullIfBlank(fundingAccountIban)
+                : null;
 
         var foreignAmountMinor = ToMinorUnits(row.ForeignCurrencyAmount?.Amount);
         var foreignCurrencyCode = NullIfBlank(row.ForeignCurrencyAmount?.CurrencyCode);
@@ -130,12 +145,13 @@ internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtrac
             Money = new Money(signedCents, Eur),
             Description = description,
             CounterpartyName = counterpartyName,
+            CounterpartyAccountNumber = counterpartyAccountNumber,
             RawSource = RowHasher.Normalise(row.RawRecord),
             RowHash = RowHasher.Hash(row.RawRecord),
             ForeignAmount = foreignAmountMinor,
             ForeignCurrencyCode = foreignCurrencyCode,
             ExchangeRate = exchangeRate,
-            ImporterKey = Key,
+            ImporterKey = ImporterKey,
             Metadata = BuildMetadata(row),
         };
     }

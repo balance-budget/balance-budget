@@ -1,4 +1,5 @@
 using Balance.Data;
+using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
 using Microsoft.EntityFrameworkCore;
@@ -46,15 +47,19 @@ internal sealed class AccountSuggestionService : IAccountSuggestionService
             );
         }
 
-        // Project non-bank-side lines: an Account is "bank-side" iff it is the owning Account
-        // of some BankAccount (BankAccount.AccountId IS NOT NULL pointing at it). The
-        // categorisation flow always creates one such bank-side line plus N counter-side
-        // lines, so excluding bank-side reproduces the counter-side shape we want to suggest.
+        // Project counter-side lines. We exclude lines whose Account is `Cleared` on the most
+        // recent JE — that line was the bank-side line auto-created by the categorisation
+        // flow, and re-suggesting it would round-trip noise back into the form. We do NOT
+        // exclude every Account that happens to have a BankAccount linked, because a counter-
+        // side line can legitimately reference an own-Account (e.g. paying down a Liability
+        // **Account** with a Card **BankAccount** linked, or Current → Savings); blanket-
+        // excluding those would hide the very accounts the flow most wants to suggest for
+        // self-transfers.
         var suggestions = await _dbContext
             .JournalLines.AsNoTracking()
             .Where(l =>
                 l.JournalEntryId == mostRecentEntryId
-                && !_dbContext.BankAccounts.Any(ba => ba.AccountId == l.AccountId)
+                && l.ReconciliationStatus != ReconciliationStatus.Cleared
             )
             .OrderBy(l => l.Id)
             .Select(l => new SuggestedCounterAccountOutput(l.AccountId, l.Amount))

@@ -99,12 +99,15 @@ describe('resolveCounterpartyByIban', () => {
         const bankAccounts: BankAccount[] = [
             {
                 id: baExternal,
+                type: 'Current',
                 iban: 'nl00 bank 1234 5678 90',
                 accountNumber: null,
+                cardIdentifier: null,
                 bic: null,
                 bankName: null,
                 accountHolderName: null,
                 currencyCode: 'EUR',
+                importerKey: null,
                 accountId: null,
                 counterpartyId: cpA,
             },
@@ -239,12 +242,15 @@ describe('initialPrefill', () => {
         const bankAccounts: BankAccount[] = [
             {
                 id: baExternal,
+                type: 'Current',
                 iban: 'NL00BANK1234567890',
                 accountNumber: null,
+                cardIdentifier: null,
                 bic: null,
                 bankName: null,
                 accountHolderName: null,
                 currencyCode: 'EUR',
+                importerKey: null,
                 accountId: null,
                 counterpartyId: cpB,
             },

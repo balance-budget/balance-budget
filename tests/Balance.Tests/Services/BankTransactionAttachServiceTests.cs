@@ -446,12 +446,15 @@ internal sealed class BankTransactionAttachServiceTests : EndpointsTestsBase
         var currentBank = (
             await bankAccountService.CreateAsync(
                 new CreateBankAccountInput(
+                    Type: BankAccountType.Current,
                     Iban: currentIban,
                     AccountNumber: null,
+                    CardIdentifier: null,
                     Bic: null,
                     BankName: null,
                     AccountHolderName: null,
                     CurrencyCode: new CurrencyCode("EUR"),
+                    ImporterKey: null,
                     AccountId: currentAccount.Id,
                     CounterpartyId: null
                 ),
@@ -462,12 +465,15 @@ internal sealed class BankTransactionAttachServiceTests : EndpointsTestsBase
         var savingsBank = (
             await bankAccountService.CreateAsync(
                 new CreateBankAccountInput(
+                    Type: BankAccountType.Current,
                     Iban: savingsIban,
                     AccountNumber: null,
+                    CardIdentifier: null,
                     Bic: null,
                     BankName: null,
                     AccountHolderName: null,
                     CurrencyCode: new CurrencyCode("EUR"),
+                    ImporterKey: null,
                     AccountId: savingsAccount.Id,
                     CounterpartyId: null
                 ),

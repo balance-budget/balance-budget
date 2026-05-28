@@ -509,12 +509,15 @@ internal sealed class BankTransactionCategorisationServiceTests : EndpointsTests
         var ownedBankAccount = (
             await bankAccountService.CreateAsync(
                 new CreateBankAccountInput(
+                    Type: BankAccountType.Current,
                     Iban: $"NL69INGB{NextDigits(10)}",
                     AccountNumber: null,
+                    CardIdentifier: null,
                     Bic: null,
                     BankName: null,
                     AccountHolderName: null,
                     CurrencyCode: new CurrencyCode("EUR"),
+                    ImporterKey: null,
                     AccountId: ownedAccount.Id,
                     CounterpartyId: null
                 ),
