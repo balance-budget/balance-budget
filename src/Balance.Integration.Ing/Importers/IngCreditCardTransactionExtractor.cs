@@ -1,5 +1,6 @@
 using System.Globalization;
 using Balance.Data.Entities;
+using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
 using Balance.Integration.Ing.Contracts;
 using Balance.Integration.Ing.Helpers;
@@ -14,7 +15,10 @@ namespace Balance.Integration.Ing.Importers;
 
 internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtractor
 {
-    private const string Key = "Ing.CreditCard.V1";
+    private const string ImporterKey = "Ing.CreditCard.V1";
+
+    public string Key => ImporterKey;
+    public BankAccountType SupportedType => BankAccountType.Card;
 
     private static readonly CurrencyCode Eur = new("EUR");
 
@@ -135,7 +139,7 @@ internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtrac
             ForeignAmount = foreignAmountMinor,
             ForeignCurrencyCode = foreignCurrencyCode,
             ExchangeRate = exchangeRate,
-            ImporterKey = Key,
+            ImporterKey = ImporterKey,
             Metadata = BuildMetadata(row),
         };
     }
