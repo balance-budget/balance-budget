@@ -40,6 +40,15 @@ namespace Balance.Data.Sqlite.Migrations
                 defaultValue: "Current"
             );
 
+            // Backfill: existing BankAccounts whose only identifier is AccountNumber are the
+            // credit-card BankAccounts created before ADR 0019 (PAN was stuffed into
+            // AccountNumber to satisfy the legacy CHECK). Reclassify them as Card and move the
+            // value into CardIdentifier so the new CK_BankAccounts_IdentifierByType holds.
+            migrationBuilder.Sql(
+                "UPDATE \"BankAccounts\" SET \"Type\" = 'Card', \"CardIdentifier\" = \"AccountNumber\", \"AccountNumber\" = NULL "
+                    + "WHERE \"Iban\" IS NULL AND \"AccountNumber\" IS NOT NULL"
+            );
+
             migrationBuilder.AddCheckConstraint(
                 name: "CK_BankAccounts_CardOwnedOnly",
                 table: "BankAccounts",
