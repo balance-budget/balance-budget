@@ -7,7 +7,7 @@ namespace Balance.Web.Auth;
 /// transparently lets PAT-authenticated calls through (ADR 0018: CSRF is a browser-only
 /// concern). Endpoints that explicitly call <c>.DisableAntiforgery()</c> are honoured.
 /// </summary>
-internal class AntiforgeryEndpointFilter : IEndpointFilter
+internal sealed class AntiforgeryEndpointFilter : IEndpointFilter
 {
     private static readonly HashSet<string> SafeMethods = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -24,7 +24,7 @@ internal class AntiforgeryEndpointFilter : IEndpointFilter
         _antiforgery = antiforgery;
     }
 
-    public virtual async ValueTask<object?> InvokeAsync(
+    public async ValueTask<object?> InvokeAsync(
         EndpointFilterInvocationContext context,
         EndpointFilterDelegate next
     )

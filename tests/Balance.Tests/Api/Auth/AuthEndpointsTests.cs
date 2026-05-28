@@ -270,36 +270,49 @@ internal sealed class AuthEndpointsTests : RealAuthEndpointsTestsBase
                     request.RequestUri ?? new Uri("/", UriKind.Relative)
                 );
 
-            // Auto-prime on every write: antiforgery tokens are tied to the current user
-            // identity, so a token issued anonymously is invalid once the user logs in.
-            // Re-priming on each mutation keeps the wrapper simple and correct.
+            // Mutating requests need the antiforgery request token in the X-XSRF-TOKEN
+            // header. Tokens are identity-bound, so we refetch on every write — the same
+            // robustness pattern the SPA uses across identity transitions. The cookie
+            // token rides along automatically via the CookieContainer.
             if (!SafeMethods.Contains(request.Method.Method))
             {
-                using var primeRequest = new HttpRequestMessage(
-                    HttpMethod.Get,
-                    new Uri(requestUri, "/api/antiforgery/token")
-                );
-                ApplyCookies(primeRequest, requestUri);
-                using var primeResponse = await base.SendAsync(primeRequest, cancellationToken)
+                var token = await FetchAntiforgeryTokenAsync(requestUri, cancellationToken)
                     .ConfigureAwait(false);
-                StoreCookies(primeResponse, requestUri);
+                ApplyCookies(request, requestUri);
+                request.Headers.Remove("X-XSRF-TOKEN");
+                request.Headers.Add("X-XSRF-TOKEN", token);
             }
-
-            ApplyCookies(request, requestUri);
-            if (!SafeMethods.Contains(request.Method.Method))
+            else
             {
-                var xsrf = GetCookieValue(requestUri, "XSRF-TOKEN");
-                if (!string.IsNullOrEmpty(xsrf))
-                {
-                    request.Headers.Remove("X-XSRF-TOKEN");
-                    request.Headers.Add("X-XSRF-TOKEN", xsrf);
-                }
+                ApplyCookies(request, requestUri);
             }
 
             var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
             StoreCookies(response, requestUri);
             return response;
         }
+
+        private async Task<string> FetchAntiforgeryTokenAsync(
+            Uri requestUri,
+            CancellationToken cancellationToken
+        )
+        {
+            using var primeRequest = new HttpRequestMessage(
+                HttpMethod.Get,
+                new Uri(requestUri, "/api/antiforgery/token")
+            );
+            ApplyCookies(primeRequest, requestUri);
+            using var primeResponse = await base.SendAsync(primeRequest, cancellationToken)
+                .ConfigureAwait(false);
+            StoreCookies(primeResponse, requestUri);
+            primeResponse.EnsureSuccessStatusCode();
+            var body = await primeResponse
+                .Content.ReadFromJsonAsync<AntiforgeryTokenBody>(cancellationToken)
+                .ConfigureAwait(false);
+            return body?.Token ?? string.Empty;
+        }
+
+        private sealed record AntiforgeryTokenBody(string Token);
 
         private void ApplyCookies(HttpRequestMessage request, Uri requestUri)
         {
@@ -320,18 +333,6 @@ internal sealed class AuthEndpointsTests : RealAuthEndpointsTestsBase
                     _container.SetCookies(requestUri, value);
                 }
             }
-        }
-
-        private string? GetCookieValue(Uri requestUri, string name)
-        {
-            foreach (System.Net.Cookie cookie in _container.GetCookies(requestUri))
-            {
-                if (string.Equals(cookie.Name, name, StringComparison.Ordinal))
-                {
-                    return cookie.Value;
-                }
-            }
-            return null;
         }
     }
 

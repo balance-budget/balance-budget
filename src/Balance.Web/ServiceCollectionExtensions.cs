@@ -82,12 +82,10 @@ internal static class ServiceCollectionExtensions
 
         services.AddAntiforgery(options =>
         {
-            // Double-submit cookie pattern (ADR 0018): server sets XSRF-TOKEN (JS-readable);
-            // SPA echoes it via X-XSRF-TOKEN header on writes.
+            // Canonical ASP.NET pattern: the cookie token stays server-only (HttpOnly), the
+            // SPA echoes the matching *request* token from /api/antiforgery/token as the
+            // X-XSRF-TOKEN header on writes.
             options.HeaderName = "X-XSRF-TOKEN";
-            options.Cookie.Name = "XSRF-TOKEN";
-            options.Cookie.HttpOnly = false;
-            options.Cookie.SameSite = SameSiteMode.Lax;
         });
         services.AddCors();
         services.AddHealthChecks().AddDbContextCheck<BalanceDbContext>(tags: ["readiness"]);

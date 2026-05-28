@@ -36,23 +36,56 @@ type ProblemDetails = {
 };
 
 /**
- * Reads the XSRF-TOKEN cookie set by the server's antiforgery double-submit pattern
- * and returns it. Returns null when no cookie is present — the call site decides
- * whether to fail-open (e.g. before login) or prime the cookie via /api/antiforgery/token.
+ * ASP.NET Core antiforgery uses a paired token: a HttpOnly cookie token plus a *request
+ * token* that the client must send as <c>X-XSRF-TOKEN</c> on writes. The request token
+ * is delivered as the JSON body of <c>/api/antiforgery/token</c>; we cache it in
+ * module memory (not localStorage — XSS-exfiltratable) and refresh whenever the server
+ * rejects a write as 400 Bad Request (typically after an identity change).
  */
-function readXsrfCookie(): string | null {
-    if (typeof document === 'undefined') return null;
-    const match = /(?:^|; )XSRF-TOKEN=([^;]+)/.exec(document.cookie);
-    const value = match?.[1];
-    return value ? decodeURIComponent(value) : null;
+let cachedRequestToken: string | null = null;
+let inflightTokenFetch: Promise<string> | null = null;
+
+async function fetchRequestToken(signal: AbortSignal): Promise<string> {
+    if (inflightTokenFetch) return inflightTokenFetch;
+    inflightTokenFetch = (async () => {
+        try {
+            const response = await fetch('/api/antiforgery/token', {
+                ...baseRequestInit,
+                signal,
+            });
+            if (!response.ok) {
+                throw new ApiError(
+                    `Failed to fetch antiforgery token (${response.status})`,
+                    response.status,
+                    null,
+                    null,
+                );
+            }
+            const body = (await response.json()) as { token: string };
+            cachedRequestToken = body.token;
+            return body.token;
+        } finally {
+            inflightTokenFetch = null;
+        }
+    })();
+    return inflightTokenFetch;
 }
 
-function withXsrfHeader(headers: Record<string, string>): Record<string, string> {
-    const token = readXsrfCookie();
-    if (token) {
-        return { ...headers, 'X-XSRF-TOKEN': token };
-    }
-    return headers;
+async function ensureRequestToken(signal: AbortSignal): Promise<string> {
+    if (cachedRequestToken) return cachedRequestToken;
+    return fetchRequestToken(signal);
+}
+
+function clearRequestTokenCache(): void {
+    cachedRequestToken = null;
+}
+
+async function withXsrfHeader(
+    headers: Record<string, string>,
+    signal: AbortSignal,
+): Promise<Record<string, string>> {
+    const token = await ensureRequestToken(signal);
+    return { ...headers, 'X-XSRF-TOKEN': token };
 }
 
 const baseRequestInit: RequestInit = { credentials: 'same-origin' };
@@ -65,22 +98,53 @@ export async function getJson<T>(url: string, signal: AbortSignal, label: string
     return (await response.json()) as T;
 }
 
+/**
+ * Sends a mutating request with the X-XSRF-TOKEN header attached. If the server
+ * rejects with 400 (typical when the antiforgery token is identity-bound and the
+ * caller's identity has changed since the cached token was issued), the helper
+ * refetches the token once and retries before surfacing the failure.
+ */
+async function sendMutation(
+    url: string,
+    method: string,
+    body: BodyInit | null,
+    headers: Record<string, string>,
+    signal: AbortSignal,
+    label: string,
+): Promise<Response> {
+    async function attempt(): Promise<Response> {
+        const finalHeaders = await withXsrfHeader(headers, signal);
+        return fetch(url, { ...baseRequestInit, method, headers: finalHeaders, body, signal });
+    }
+
+    let response = await attempt();
+    if (response.status === 400 && cachedRequestToken) {
+        // Drain the failing body so the underlying connection is released, then refresh
+        // the token and retry exactly once.
+        await response.text().catch(() => undefined);
+        clearRequestTokenCache();
+        response = await attempt();
+    }
+    if (!response.ok) {
+        throw await toApiError(response, label);
+    }
+    return response;
+}
+
 export async function postJson<T>(
     url: string,
     body: unknown,
     signal: AbortSignal,
     label: string,
 ): Promise<T> {
-    const response = await fetch(url, {
-        ...baseRequestInit,
-        method: 'POST',
-        headers: withXsrfHeader({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify(body),
+    const response = await sendMutation(
+        url,
+        'POST',
+        JSON.stringify(body),
+        { 'Content-Type': 'application/json' },
         signal,
-    });
-    if (!response.ok) {
-        throw await toApiError(response, label);
-    }
+        label,
+    );
     return (await response.json()) as T;
 }
 
@@ -90,16 +154,14 @@ export async function postJsonNoContent(
     signal: AbortSignal,
     label: string,
 ): Promise<void> {
-    const response = await fetch(url, {
-        ...baseRequestInit,
-        method: 'POST',
-        headers: withXsrfHeader({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify(body),
+    await sendMutation(
+        url,
+        'POST',
+        JSON.stringify(body),
+        { 'Content-Type': 'application/json' },
         signal,
-    });
-    if (!response.ok) {
-        throw await toApiError(response, label);
-    }
+        label,
+    );
 }
 
 export async function postFormData<T>(
@@ -108,16 +170,7 @@ export async function postFormData<T>(
     signal: AbortSignal,
     label: string,
 ): Promise<T> {
-    const response = await fetch(url, {
-        ...baseRequestInit,
-        method: 'POST',
-        headers: withXsrfHeader({}),
-        body: formData,
-        signal,
-    });
-    if (!response.ok) {
-        throw await toApiError(response, label);
-    }
+    const response = await sendMutation(url, 'POST', formData, {}, signal, label);
     return (await response.json()) as T;
 }
 
@@ -127,16 +180,14 @@ export async function putJson<T>(
     signal: AbortSignal,
     label: string,
 ): Promise<T> {
-    const response = await fetch(url, {
-        ...baseRequestInit,
-        method: 'PUT',
-        headers: withXsrfHeader({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify(body),
+    const response = await sendMutation(
+        url,
+        'PUT',
+        JSON.stringify(body),
+        { 'Content-Type': 'application/json' },
         signal,
-    });
-    if (!response.ok) {
-        throw await toApiError(response, label);
-    }
+        label,
+    );
     return (await response.json()) as T;
 }
 
@@ -150,16 +201,14 @@ export async function patchJson<T>(
     signal: AbortSignal,
     label: string,
 ): Promise<T> {
-    const response = await fetch(url, {
-        ...baseRequestInit,
-        method: 'PATCH',
-        headers: withXsrfHeader({ 'Content-Type': 'application/json-patch+json' }),
-        body: JSON.stringify(patch),
+    const response = await sendMutation(
+        url,
+        'PATCH',
+        JSON.stringify(patch),
+        { 'Content-Type': 'application/json-patch+json' },
         signal,
-    });
-    if (!response.ok) {
-        throw await toApiError(response, label);
-    }
+        label,
+    );
     return (await response.json()) as T;
 }
 
@@ -168,25 +217,17 @@ export async function deleteRequest(
     signal: AbortSignal,
     label: string,
 ): Promise<void> {
-    const response = await fetch(url, {
-        ...baseRequestInit,
-        method: 'DELETE',
-        headers: withXsrfHeader({}),
-        signal,
-    });
-    if (!response.ok) {
-        throw await toApiError(response, label);
-    }
+    await sendMutation(url, 'DELETE', null, {}, signal, label);
 }
 
 /**
- * Primes the XSRF-TOKEN cookie by hitting /api/antiforgery/token. The cookie is
- * JS-readable; mutation helpers above echo it back as X-XSRF-TOKEN automatically.
- * Call this once after login (or once on app load) so the first write does not
- * race the cookie.
+ * Refreshes the cached antiforgery request token. Call after any operation that changes
+ * the caller's identity (login, logout, setup) — the server's tokens are bound to the
+ * current user and the previously-cached token will fail validation after a transition.
  */
-export async function primeAntiforgeryCookie(signal: AbortSignal): Promise<void> {
-    await fetch('/api/antiforgery/token', { ...baseRequestInit, signal });
+export async function refreshAntiforgeryToken(signal: AbortSignal): Promise<void> {
+    clearRequestTokenCache();
+    await fetchRequestToken(signal);
 }
 
 async function toApiError(response: Response, label: string): Promise<ApiError> {
