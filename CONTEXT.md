@@ -122,6 +122,7 @@ _Avoid_: internal transaction, transfer (bare), between-accounts entry. "Transac
 
 - "account" is used in everyday speech to mean both a ledger **Account** and a bank account. Inside the domain, **Account** always means the ledger account (debit-normal or credit-normal, with an **AccountType**); the banking product is a **BankAccount** (carries IBAN / account number / bank metadata). An **Account** may be linked to a **BankAccount** when it represents a real bank product.
 - "transaction" is overloaded in everyday speech (DB transactions, bank-statement rows, payment-API events). Inside the domain, the bookkeeping event is a **JournalEntry**; the immutable record of a bank-statement row is a **BankTransaction**. "Transaction" as a bare term is avoided.
+- "user" is an *access-control* concept, not a domain one. A user is a human login (`AspNetUsers` row) that gates entry to the app; multiple users share one ledger (ADR 0017), and the ledger has no per-user data. A user is *not* a **Counterparty** (the real-world party on the other side of a **JournalEntry**), is *not* an **Account** (a ledger account), and is *not* the **AccountHolderName** on a **BankAccount** (which is statement-row metadata about whoever owns a bank product). When the codebase says "user" it always means the logged-in human; when it means a counterparty or account-holder, it says so explicitly.
 
 ## Editing policy (v1)
 
