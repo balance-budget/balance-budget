@@ -16,6 +16,7 @@ using Balance.Web.Endpoints.Dashboard;
 using Balance.Web.Endpoints.JournalEntries;
 using Balance.Web.Logging;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Mvc;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateSlimBuilder(args);
@@ -39,25 +40,31 @@ app.UseRouting();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseAntiforgery();
+
+// Antiforgery is a browser-only concern. The built-in middleware doesn't differentiate
+// by auth scheme, so wrap it in UseWhen to skip when the request authenticated via a
+// PAT (no ambient credential = no CSRF surface).
+app.UseWhen(
+    ctx =>
+        !string.Equals(
+            ctx.User.Identity?.AuthenticationType,
+            AuthSchemes.ApiToken,
+            StringComparison.Ordinal
+        ),
+    branch => branch.UseAntiforgery()
+);
 
 // Serve Balance.Web.Client SPA
 app.MapStaticAssets();
 app.MapFallbackToFile("index.html");
 
-// Prefix all Balance.Web endpoints with /api. The group defaults to RequireAuthorization
-// + the AntiforgeryEndpointFilter; individual endpoints opt back to anonymous via
-// AllowAnonymous and out of antiforgery via DisableAntiforgery (ADR 0018).
+// Prefix all Balance.Web endpoints with /api. The group requires authentication and
+// stamps every endpoint with AutoValidateAntiforgeryTokenAttribute so the built-in
+// UseAntiforgery() middleware enforces XSRF on unsafe HTTP methods. Individual endpoints
+// opt back via AllowAnonymous and DisableAntiforgery (ADR 0018).
 var api = app.MapGroup("/api")
     .RequireAuthorization()
-    .AddEndpointFilterFactory(
-        (context, next) =>
-        {
-            var filter =
-                context.ApplicationServices.GetRequiredService<AntiforgeryEndpointFilter>();
-            return ctx => filter.InvokeAsync(ctx, next);
-        }
-    );
+    .WithMetadata(new AutoValidateAntiforgeryTokenAttribute());
 
 // Liveness / readiness probes and OpenAPI surfaces stay anonymous so probes from a
 // reverse proxy / Scalar UI keep working when no user is logged in.
