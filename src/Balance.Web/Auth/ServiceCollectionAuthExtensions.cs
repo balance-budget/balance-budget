@@ -95,5 +95,4 @@ internal static class ServiceCollectionAuthExtensions
                 return Task.CompletedTask;
             },
         };
-
 }
