@@ -28,12 +28,14 @@ internal static class AuthEndpoints
         group
             .MapPost("/setup", SetupAsync)
             .AllowAnonymous()
+            .DisableAntiforgery() // anonymous POST — no session to forge (ADR 0018)
             .WithValidation<SetupRequest>()
             .WithName("Setup");
 
         group
             .MapPost("/login", LoginAsync)
             .AllowAnonymous()
+            .DisableAntiforgery() // anonymous POST — no session to forge (ADR 0018)
             .WithValidation<LoginRequest>()
             .WithName("Login");
 

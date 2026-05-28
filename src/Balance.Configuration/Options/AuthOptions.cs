@@ -15,9 +15,11 @@ public sealed class AuthOptions : IOptionsSection
     public string? SetupToken { get; init; }
 
     /// <summary>
-    /// SameSite policy for the auth cookie. Default: <c>Lax</c> (ADR 0018).
+    /// SameSite policy for the auth cookie. Default: <c>Strict</c> (ADR 0018) — this is a
+    /// self-hosted personal app, no marketing email deep-links, and Strict still works for
+    /// bookmarks and typed URLs (top-level user-initiated navigations send the cookie).
     /// </summary>
-    public string CookieSameSite { get; init; } = "Lax";
+    public string CookieSameSite { get; init; } = "Strict";
 
     /// <summary>
     /// Whether the auth cookie should be marked Secure. Default: <c>true</c>.
