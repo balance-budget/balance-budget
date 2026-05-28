@@ -30,18 +30,28 @@ internal static class AdminUserEndpoints
     )
     {
         var now = timeProvider.GetUtcNow();
-        var users = await db
+        // SQLite cannot translate a DateTimeOffset comparison on LockoutEnd in the projection,
+        // so materialise the rows first and compute IsActive in memory.
+        var rows = await db
             .Users.AsNoTracking()
             .OrderBy(u => u.Email)
-            .Select(u => new UserResponse(
+            .Select(u => new
+            {
                 u.Id,
-                u.Email ?? string.Empty,
+                u.Email,
                 u.DisplayName,
-                u.LockoutEnd == null || u.LockoutEnd <= now,
-                u.LockoutEnd
-            ))
+                u.LockoutEnd,
+            })
             .ToListAsync(cancellationToken);
-        return TypedResults.Ok<IReadOnlyList<UserResponse>>(users);
+        IReadOnlyList<UserResponse> users = rows.Select(r => new UserResponse(
+                r.Id,
+                r.Email ?? string.Empty,
+                r.DisplayName,
+                r.LockoutEnd == null || r.LockoutEnd <= now,
+                r.LockoutEnd
+            ))
+            .ToList();
+        return TypedResults.Ok(users);
     }
 
     private static async Task<
@@ -111,10 +121,11 @@ internal static class AdminUserEndpoints
         }
 
         var now = timeProvider.GetUtcNow();
-        var activeCount = await db.Users.CountAsync(
-            u => u.LockoutEnd == null || u.LockoutEnd <= now,
-            cancellationToken
-        );
+        // SQLite cannot translate a DateTimeOffset comparison on LockoutEnd; project to a
+        // boolean form the provider can handle by pulling each user's LockoutEnd into
+        // memory. The user set is tiny (single-tenant household app).
+        var lockoutEnds = await db.Users.Select(u => u.LockoutEnd).ToListAsync(cancellationToken);
+        var activeCount = lockoutEnds.Count(end => end == null || end <= now);
         if (activeCount <= 1)
         {
             return TypedResults.BadRequest(
