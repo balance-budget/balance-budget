@@ -1,8 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-    toBankTransactionDetail,
-    type BankTransactionDetail,
-} from './bankTransactions';
+import { toBankTransactionDetail, type BankTransactionDetail } from './bankTransactions';
 import type { components } from '../lib/api-types';
 import {
     type AccountId,

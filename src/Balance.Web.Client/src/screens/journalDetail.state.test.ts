@@ -105,9 +105,7 @@ describe('computeTotals', () => {
 
     it('flags imbalanced when user edits one side magnitude', () => {
         const lines = toEditLines(unclearedLoaded(), 2);
-        const edited: EditLine[] = lines.map((l, i) =>
-            i === 0 ? { ...l, amount: '50.00' } : l,
-        );
+        const edited: EditLine[] = lines.map((l, i) => (i === 0 ? { ...l, amount: '50.00' } : l));
         const totals = computeTotals(edited, 2);
         expect(totals.balanced).toBe(false);
         expect(totals.debitMinor).toBe(5000);
@@ -178,9 +176,7 @@ describe('buildReplaceRequest', () => {
             side: 'debit',
             amount: '10.00',
         };
-        const edited: EditLine[] = lines.map((l, i) =>
-            i === 0 ? { ...l, amount: '30.00' } : l,
-        );
+        const edited: EditLine[] = lines.map((l, i) => (i === 0 ? { ...l, amount: '30.00' } : l));
         const withNew = [...edited, newLine];
         const result = buildReplaceRequest({
             date: '2026-05-27',
@@ -203,9 +199,7 @@ describe('buildReplaceRequest', () => {
 
     it('rejects an unbalanced edit with a top-level error', () => {
         const lines = toEditLines(unclearedLoaded(), 2);
-        const edited: EditLine[] = lines.map((l, i) =>
-            i === 0 ? { ...l, amount: '50.00' } : l,
-        );
+        const edited: EditLine[] = lines.map((l, i) => (i === 0 ? { ...l, amount: '50.00' } : l));
         const result = buildReplaceRequest({
             date: '2026-05-27',
             description: '',
@@ -221,9 +215,7 @@ describe('buildReplaceRequest', () => {
 
     it('rejects when a line is missing an account', () => {
         const lines = toEditLines(unclearedLoaded(), 2);
-        const edited: EditLine[] = lines.map((l, i) =>
-            i === 0 ? { ...l, accountId: null } : l,
-        );
+        const edited: EditLine[] = lines.map((l, i) => (i === 0 ? { ...l, accountId: null } : l));
         const result = buildReplaceRequest({
             date: '2026-05-27',
             description: '',

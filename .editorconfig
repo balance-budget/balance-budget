@@ -10,3 +10,8 @@ dotnet_diagnostic.CA2225.severity = none # Operator overloads have named alterna
 dotnet_diagnostic.CA1062.severity = none
 dotnet_diagnostic.CA1861.severity = none
 dotnet_diagnostic.CA1825.severity = none
+
+# Tests routinely build HttpClient(handler, disposeHandler:true) chains where ownership
+# transfers but CA2000 cannot trace the transfer through the constructor.
+[tests/**/*.cs]
+dotnet_diagnostic.CA2000.severity = none

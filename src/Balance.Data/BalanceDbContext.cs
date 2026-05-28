@@ -1,7 +1,9 @@
 using Balance.Configuration.Options;
 using Balance.Data.Entities;
+using Balance.Data.Entities.Ids;
 using Balance.Data.Helpers;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -9,7 +11,9 @@ using Microsoft.Extensions.Options;
 
 namespace Balance.Data;
 
-public sealed class BalanceDbContext : DbContext, IDataProtectionKeyContext
+public sealed class BalanceDbContext
+    : IdentityUserContext<BalanceUser, UserId>,
+        IDataProtectionKeyContext
 {
     private readonly IHostEnvironment _environment;
     private readonly ILoggerFactory _loggerFactory;
@@ -34,6 +38,8 @@ public sealed class BalanceDbContext : DbContext, IDataProtectionKeyContext
     public DbSet<JournalEntry> JournalEntries { get; set; } = null!;
 
     public DbSet<JournalLine> JournalLines { get; set; } = null!;
+
+    public DbSet<ApiToken> ApiTokens { get; set; } = null!;
 
     public DatabaseProvider Provider => _options.Provider;
 
@@ -64,10 +70,20 @@ public sealed class BalanceDbContext : DbContext, IDataProtectionKeyContext
             .EnableSensitiveDataLogging(_environment.IsDevelopment());
     }
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(BalanceDbContext).Assembly);
-        modelBuilder.ApplyProviderConventions(_options.Provider);
+        ArgumentNullException.ThrowIfNull(configurationBuilder);
+        // Apply the UserId converter globally so Identity's join tables
+        // (IdentityUserClaim<UserId>, IdentityUserLogin<UserId>, IdentityUserToken<UserId>)
+        // round-trip the typed key without per-entity wiring.
+        configurationBuilder.Properties<UserId>().HaveConversion<UserId.EfCoreValueConverter>();
+    }
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        base.OnModelCreating(builder);
+        builder.ApplyConfigurationsFromAssembly(typeof(BalanceDbContext).Assembly);
+        builder.ApplyProviderConventions(_options.Provider);
     }
 }

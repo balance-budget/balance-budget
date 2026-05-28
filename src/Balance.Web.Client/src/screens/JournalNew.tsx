@@ -37,13 +37,7 @@ import {
     type SimpleLeg,
 } from './journalNew.state';
 
-const ACCOUNT_TYPE_ORDER: AccountType[] = [
-    'Asset',
-    'Liability',
-    'Income',
-    'Expense',
-    'Equity',
-];
+const ACCOUNT_TYPE_ORDER: AccountType[] = ['Asset', 'Liability', 'Income', 'Expense', 'Equity'];
 
 const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
     Asset: 'Assets',
@@ -349,9 +343,7 @@ function HeaderInputs({
                         onChange={e => {
                             onPatch({
                                 counterpartyId:
-                                    e.target.value === ''
-                                        ? null
-                                        : asCounterpartyId(e.target.value),
+                                    e.target.value === '' ? null : asCounterpartyId(e.target.value),
                             });
                         }}
                         className="flex-1 min-w-0 px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
@@ -424,14 +416,8 @@ function ModeToggle({
     );
 }
 
-function pickAnchorCurrency(
-    form: FormState,
-    accountsById: Map<AccountId, Account>,
-): string | null {
-    const legs =
-        form.mode === 'simple'
-            ? [...form.simple.from, ...form.simple.to]
-            : form.advanced;
+function pickAnchorCurrency(form: FormState, accountsById: Map<AccountId, Account>): string | null {
+    const legs = form.mode === 'simple' ? [...form.simple.from, ...form.simple.to] : form.advanced;
     for (const leg of legs) {
         if (leg.accountId === null) continue;
         const account = accountsById.get(leg.accountId);
@@ -771,12 +757,10 @@ function AdvancedTotalsFooter({
     return (
         <div className="flex items-center gap-4 text-[12px] tabular">
             <span className="text-fg-3">
-                Σ Debit{' '}
-                <span className="font-mono text-fg-1">{debitStr}</span>
+                Σ Debit <span className="font-mono text-fg-1">{debitStr}</span>
             </span>
             <span className="text-fg-3">
-                Σ Credit{' '}
-                <span className="font-mono text-fg-1">{creditStr}</span>
+                Σ Credit <span className="font-mono text-fg-1">{creditStr}</span>
             </span>
             {totals.balanced ? (
                 <span className="inline-flex items-center gap-1 text-success">

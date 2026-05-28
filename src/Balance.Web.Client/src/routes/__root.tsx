@@ -1,15 +1,31 @@
 import { useEffect, useState } from 'react';
-import { createRootRoute, Outlet, useRouterState } from '@tanstack/react-router';
+import { createRootRoute, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
+import { useCurrentUser } from '../api/auth';
 import { Sidebar } from '../components/Sidebar';
 import { TopBar } from '../components/TopBar';
 
 export const Route = createRootRoute({
     component: function RootLayout() {
-        // The deepest matched route owns the page title via its staticData.
+        const navigate = useNavigate();
+        const pathname = useRouterState({ select: s => s.location.pathname });
         const title = useRouterState({
             select: s => s.matches.at(-1)?.staticData.title ?? 'Balance',
         });
-        const pathname = useRouterState({ select: s => s.location.pathname });
+
+        const isAuthRoute = pathname === '/login' || pathname === '/setup';
+        const currentUserQuery = useCurrentUser();
+
+        useEffect(() => {
+            if (currentUserQuery.isLoading) return;
+            if (isAuthRoute) return;
+            if (currentUserQuery.data === null) {
+                void navigate({
+                    to: '/login',
+                    search: { returnTo: pathname },
+                    replace: true,
+                });
+            }
+        }, [currentUserQuery.isLoading, currentUserQuery.data, isAuthRoute, navigate, pathname]);
 
         const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -27,6 +43,22 @@ export const Route = createRootRoute({
                 window.removeEventListener('keydown', onKeyDown);
             };
         }, [drawerOpen]);
+
+        if (isAuthRoute) {
+            return (
+                <div className="min-h-screen flex items-center justify-center px-4">
+                    <Outlet />
+                </div>
+            );
+        }
+
+        if (currentUserQuery.isLoading || currentUserQuery.data === null) {
+            return (
+                <div className="min-h-screen flex items-center justify-center text-[13px] text-fg-3">
+                    Loading…
+                </div>
+            );
+        }
 
         return (
             <div className="flex min-h-screen">

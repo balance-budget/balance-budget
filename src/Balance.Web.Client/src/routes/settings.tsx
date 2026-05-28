@@ -6,9 +6,18 @@ export const Route = createFileRoute('/settings')({
     staticData: { title: 'Settings' },
 });
 
-const SUB_NAV: { to: '/settings/counterparties' | '/settings/bank-accounts'; label: string }[] = [
+const SUB_NAV: {
+    to:
+        | '/settings/counterparties'
+        | '/settings/bank-accounts'
+        | '/settings/users'
+        | '/settings/tokens';
+    label: string;
+}[] = [
     { to: '/settings/counterparties', label: 'Counterparties' },
     { to: '/settings/bank-accounts', label: 'Bank accounts' },
+    { to: '/settings/users', label: 'Users' },
+    { to: '/settings/tokens', label: 'API tokens' },
 ];
 
 // eslint-disable-next-line react-refresh/only-export-components -- TanStack file routes export `Route` (metadata) alongside the component; that's the documented pattern.

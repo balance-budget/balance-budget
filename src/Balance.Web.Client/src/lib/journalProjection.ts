@@ -79,9 +79,7 @@ export function projectJournalEntry(
     const isTransfer = netWorthChange === 0;
     const isSimplifiable = debitAccounts.size === 1 || creditAccounts.size === 1;
 
-    const fromLegs: ProjectionLeg[] = isSimplifiable
-        ? sortLegs(creditAccounts)
-        : [];
+    const fromLegs: ProjectionLeg[] = isSimplifiable ? sortLegs(creditAccounts) : [];
     const toLegs: ProjectionLeg[] = isSimplifiable ? sortLegs(debitAccounts) : [];
 
     return {
@@ -99,7 +97,9 @@ function sortLegs(accounts: ReadonlyMap<AccountId, string>): ProjectionLeg[] {
     for (const [accountId, accountName] of accounts) {
         legs.push({ accountId, accountName });
     }
-    legs.sort((a, b) => (a.accountName < b.accountName ? -1 : a.accountName > b.accountName ? 1 : 0));
+    legs.sort((a, b) =>
+        a.accountName < b.accountName ? -1 : a.accountName > b.accountName ? 1 : 0,
+    );
     return legs;
 }
 
@@ -113,9 +113,7 @@ export function projectEntry(
     entry: JournalEntry,
     accountById: ReadonlyMap<AccountId, Account>,
 ): JournalProjection {
-    const firstLineAccount = entry.lines[0]
-        ? accountById.get(entry.lines[0].accountId)
-        : undefined;
+    const firstLineAccount = entry.lines[0] ? accountById.get(entry.lines[0].accountId) : undefined;
     const currencyCode = firstLineAccount?.currencyCode ?? 'XXX';
     const projectionLines: ProjectionLine[] = entry.lines.map(line => ({
         id: line.id,

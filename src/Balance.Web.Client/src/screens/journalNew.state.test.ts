@@ -26,10 +26,7 @@ describe('tryAdvancedToSimple', () => {
     });
 
     it('skips account-only (no amount) rows', () => {
-        const rows = [
-            line({ accountId: A }),
-            line({ accountId: B, debit: '100' }),
-        ];
+        const rows = [line({ accountId: A }), line({ accountId: B, debit: '100' })];
         const result = tryAdvancedToSimple(rows);
         expect(result).not.toBeNull();
         expect(result?.to).toHaveLength(1);

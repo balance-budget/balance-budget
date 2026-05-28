@@ -7,11 +7,7 @@ import {
     type AccountId,
     type CounterpartyId,
 } from '../lib/domain';
-import {
-    buildRequest,
-    initialForm,
-    resolveOpenContext,
-} from './bankTransactionCategorize.state';
+import { buildRequest, initialForm, resolveOpenContext } from './bankTransactionCategorize.state';
 
 const formatTwoDecimals = (minor: number): string => {
     const major = Math.floor(Math.abs(minor) / 100);

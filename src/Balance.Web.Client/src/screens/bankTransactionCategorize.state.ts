@@ -294,9 +294,7 @@ export function buildRequest(
 
     const counterpartyId = form.counterpartyMode === 'existing' ? form.counterpartyId : null;
     const newCounterparty =
-        form.counterpartyMode === 'new'
-            ? { name: form.newCounterpartyName.trim() }
-            : null;
+        form.counterpartyMode === 'new' ? { name: form.newCounterpartyName.trim() } : null;
     const trimmedDescription = form.description.trim();
 
     return {
