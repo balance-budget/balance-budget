@@ -40,19 +40,6 @@ namespace Balance.Data.PostgreSql.Migrations
                 defaultValue: "Current"
             );
 
-            // Backfill: existing BankAccounts whose only identifier is AccountNumber are the
-            // credit-card BankAccounts created before ADR 0019 (PAN was stuffed into
-            // AccountNumber to satisfy the legacy CHECK). Reclassify them as Card and copy the
-            // value into CardIdentifier so the new CK_BankAccounts_IdentifierByType holds. We
-            // intentionally leave AccountNumber populated — the legacy CHECK is still in scope
-            // until the new constraints are added; AccountNumber on a Card BankAccount is
-            // harmless duplicate data after this migration since CardIdentifier is the
-            // canonical column the extractor matches against.
-            migrationBuilder.Sql(
-                "UPDATE \"BankAccounts\" SET \"Type\" = 'Card', \"CardIdentifier\" = \"AccountNumber\" "
-                    + "WHERE \"Iban\" IS NULL AND \"AccountNumber\" IS NOT NULL"
-            );
-
             migrationBuilder.AddCheckConstraint(
                 name: "CK_BankAccounts_CardOwnedOnly",
                 table: "BankAccounts",
