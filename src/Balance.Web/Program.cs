@@ -5,6 +5,8 @@ using Balance.Services;
 using Balance.Services.BankTransactions;
 using Balance.Web;
 using Balance.Web.Endpoints.Accounts;
+using Balance.Web.Endpoints.Admin;
+using Balance.Web.Endpoints.Auth;
 using Balance.Web.Endpoints.BankAccounts;
 using Balance.Web.Endpoints.BankTransactions;
 using Balance.Web.Endpoints.Counterparties;
@@ -60,6 +62,10 @@ api.MapScalarApiReference(
     }
 );
 
+api.MapAuth();
+api.MapAntiforgery();
+api.MapAdminUsers();
+api.MapAdminTokens();
 api.MapCurrencies();
 api.MapAccounts();
 api.MapCounterparties();
