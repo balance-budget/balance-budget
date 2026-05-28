@@ -126,9 +126,7 @@ export function formatMoney(
     return `${m.sign}${m.symbol}${m.integer}${sep}${m.fraction}`;
 }
 
-export type ParseMoneyResult =
-    | { ok: true; minor: number }
-    | { ok: false; error: string };
+export type ParseMoneyResult = { ok: true; minor: number } | { ok: false; error: string };
 
 /**
  * User-input boundary parser. Takes a major-units string ("12.34", "1,234.50",

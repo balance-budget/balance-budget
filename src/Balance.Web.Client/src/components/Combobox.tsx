@@ -58,10 +58,7 @@ export function Combobox<T>({
     disabled,
     ariaLabel,
 }: ComboboxProps<T>) {
-    const selectedItem = useMemo(
-        () => items.find(i => i.value === value) ?? null,
-        [items, value],
-    );
+    const selectedItem = useMemo(() => items.find(i => i.value === value) ?? null, [items, value]);
 
     const [query, setQuery] = useState('');
     const [open, setOpen] = useState(false);
@@ -82,11 +79,7 @@ export function Combobox<T>({
     // filter shrinks the option list, the previous `active` may dangle off
     // the end (or below zero), so resolve it here.
     const effectiveActive =
-        options.length === 0
-            ? -1
-            : active >= 0 && active < options.length
-              ? active
-              : 0;
+        options.length === 0 ? -1 : active >= 0 && active < options.length ? active : 0;
 
     // Capture the anchor rect synchronously before paint so the portalled
     // listbox renders at the correct position on first open, even if the

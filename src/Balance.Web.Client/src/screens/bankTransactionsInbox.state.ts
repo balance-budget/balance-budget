@@ -69,7 +69,10 @@ export function resolveCounterpartyByIban(
 /** Build the initial server-derived prefill for a BT row: counterparty from
  *  IBAN match (if any), no account yet. The account is filled async once the
  *  per-counterparty suggestion query resolves — see `applyAccountSuggestion`. */
-export function initialPrefill(bt: BankTransaction, bankAccounts: readonly BankAccount[]): RowDraft {
+export function initialPrefill(
+    bt: BankTransaction,
+    bankAccounts: readonly BankAccount[],
+): RowDraft {
     return {
         counterpartyMode: 'existing',
         counterpartyId: resolveCounterpartyByIban(bt.counterpartyAccountNumber, bankAccounts),
@@ -110,8 +113,7 @@ export function rowStatus(draft: RowDraft): RowStatus {
     const hasAccount = draft.accountId !== null;
     const hasNewName =
         draft.counterpartyMode === 'new' && draft.newCounterpartyName.trim().length > 0;
-    const hasExistingCp =
-        draft.counterpartyMode === 'existing' && draft.counterpartyId !== null;
+    const hasExistingCp = draft.counterpartyMode === 'existing' && draft.counterpartyId !== null;
     // Self-transfer: existing mode with null counterpartyId is legal (CONTEXT.md,
     // ADR 0014(e)) — counts as "counterparty side resolved" as long as the
     // user has explicitly set an account.
@@ -159,7 +161,9 @@ export function buildRowRequest(
 
     let counterpartyId: CounterpartyId | null;
     if (draft.counterpartyMode === 'new') {
-        const resolved = createdCounterpartiesByName.get(draft.newCounterpartyName.trim().toLowerCase());
+        const resolved = createdCounterpartiesByName.get(
+            draft.newCounterpartyName.trim().toLowerCase(),
+        );
         if (!resolved) return null;
         counterpartyId = resolved;
     } else {
@@ -198,9 +202,7 @@ export type SaveAllRow = {
     action: SaveAllAction;
 };
 
-export type SaveAllOutcome =
-    | { ok: true }
-    | { ok: false; error: string };
+export type SaveAllOutcome = { ok: true } | { ok: false; error: string };
 
 export type SaveAllDeps = {
     createCounterparty: (name: string) => Promise<CounterpartyId>;
@@ -360,8 +362,7 @@ export function computeRangeSelection(
         return toggleSelection(current, targetId);
     }
     const newState = !current.has(targetId);
-    const [lo, hi] =
-        anchorIdx <= targetIdx ? [anchorIdx, targetIdx] : [targetIdx, anchorIdx];
+    const [lo, hi] = anchorIdx <= targetIdx ? [anchorIdx, targetIdx] : [targetIdx, anchorIdx];
     const next = new Set(current);
     for (let i = lo; i <= hi; i += 1) {
         const id = orderedIds[i];

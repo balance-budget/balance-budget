@@ -185,10 +185,9 @@ function parseAmount(
     return parsed.minor;
 }
 
-function headerWire(header: FormHeader): Pick<
-    WireCreateRequest,
-    'date' | 'description' | 'counterpartyId'
-> {
+function headerWire(
+    header: FormHeader,
+): Pick<WireCreateRequest, 'date' | 'description' | 'counterpartyId'> {
     const trimmed = header.description.trim();
     return {
         date: header.date,
@@ -232,7 +231,9 @@ export function simpleStateToCreateRequest(
         return { ok: false, fieldErrors: errors };
     }
 
-    const fromSum = lines.filter(l => Number(l.amount) < 0).reduce((s, l) => s + Number(l.amount), 0);
+    const fromSum = lines
+        .filter(l => Number(l.amount) < 0)
+        .reduce((s, l) => s + Number(l.amount), 0);
     const toSum = lines.filter(l => Number(l.amount) > 0).reduce((s, l) => s + Number(l.amount), 0);
     if (fromSum + toSum !== 0) {
         return {

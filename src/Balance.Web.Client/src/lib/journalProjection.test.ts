@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-    asAccountId,
-    asJournalLineId,
-    type AccountId,
-    type AccountType,
-} from './domain';
+import { asAccountId, asJournalLineId, type AccountId, type AccountType } from './domain';
 import { projectJournalEntry, type ProjectionLine } from './journalProjection';
 
 // Account ids used across cases. Distinct UUID-shaped strings; the branded type
@@ -38,11 +33,7 @@ const accountNames: ReadonlyMap<AccountId, string> = new Map([
 const CURRENCY = 'EUR';
 
 let lineCounter = 0;
-function line(
-    accountId: AccountId,
-    accountType: AccountType,
-    amount: number,
-): ProjectionLine {
+function line(accountId: AccountId, accountType: AccountType, amount: number): ProjectionLine {
     lineCounter += 1;
     const idHex = lineCounter.toString(16).padStart(12, '0');
     return {
@@ -57,10 +48,7 @@ function line(
 describe('projectJournalEntry', () => {
     it('Asset_to_Expense_is_loss_simplifiable', () => {
         const result = projectJournalEntry(
-            [
-                line(Checking, 'Asset', -4000),
-                line(Groceries, 'Expense', 4000),
-            ],
+            [line(Checking, 'Asset', -4000), line(Groceries, 'Expense', 4000)],
             CURRENCY,
         );
 
@@ -74,10 +62,7 @@ describe('projectJournalEntry', () => {
 
     it('Income_to_Asset_is_gain_simplifiable', () => {
         const result = projectJournalEntry(
-            [
-                line(Checking, 'Asset', 250000),
-                line(Salary, 'Income', -250000),
-            ],
+            [line(Checking, 'Asset', 250000), line(Salary, 'Income', -250000)],
             CURRENCY,
         );
 
@@ -91,10 +76,7 @@ describe('projectJournalEntry', () => {
 
     it('Asset_to_Asset_transfer_is_zero_change', () => {
         const result = projectJournalEntry(
-            [
-                line(Checking, 'Asset', -100000),
-                line(Savings, 'Asset', 100000),
-            ],
+            [line(Checking, 'Asset', -100000), line(Savings, 'Asset', 100000)],
             CURRENCY,
         );
 
@@ -108,10 +90,7 @@ describe('projectJournalEntry', () => {
 
     it('Asset_to_Liability_credit_card_payment_is_zero_change', () => {
         const result = projectJournalEntry(
-            [
-                line(Checking, 'Asset', -20000),
-                line(CreditCard, 'Liability', 20000),
-            ],
+            [line(Checking, 'Asset', -20000), line(CreditCard, 'Liability', 20000)],
             CURRENCY,
         );
 
@@ -123,10 +102,7 @@ describe('projectJournalEntry', () => {
 
     it('Liability_to_Asset_loan_disbursement_is_zero_change', () => {
         const result = projectJournalEntry(
-            [
-                line(Checking, 'Asset', 500000),
-                line(Mortgage, 'Liability', -500000),
-            ],
+            [line(Checking, 'Asset', 500000), line(Mortgage, 'Liability', -500000)],
             CURRENCY,
         );
 
@@ -138,10 +114,7 @@ describe('projectJournalEntry', () => {
 
     it('Equity_to_Asset_opening_balance_is_gain', () => {
         const result = projectJournalEntry(
-            [
-                line(Checking, 'Asset', 100000),
-                line(OpeningBalance, 'Equity', -100000),
-            ],
+            [line(Checking, 'Asset', 100000), line(OpeningBalance, 'Equity', -100000)],
             CURRENCY,
         );
 
