@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useSetup } from '../api/auth';
+import { FormErrorBanner } from '../components/FormErrorBanner';
 import { ApiError } from '../lib/http';
+import logo from '../assets/logo.svg';
 
 export const Route = createFileRoute('/setup')({
     component: SetupPage,
@@ -34,88 +36,97 @@ function SetupPage() {
     const errorMessage =
         setup.error instanceof ApiError
             ? setup.error.status === 404
-                ? 'Setup is unavailable. The wizard refused this request — either a user already exists, or the setup token does not match.'
+                ? 'Setup is unavailable. Either a user already exists, or the setup token does not match.'
                 : setup.error.message
             : setup.error instanceof Error
               ? setup.error.message
               : null;
 
     return (
-        <div className="w-full max-w-md bg-white rounded-2xl shadow p-8">
-            <h1 className="text-xl font-semibold mb-2">Set up Balance</h1>
-            <p className="text-sm text-neutral-500 mb-6">
-                Create the first account. This wizard becomes unavailable as soon as one user
-                exists.
-            </p>
-            <form
-                onSubmit={e => {
-                    e.preventDefault();
-                    void submit();
-                }}
-                className="flex flex-col gap-4"
-            >
-                <label className="flex flex-col gap-1 text-sm">
-                    <span className="font-medium">Email</span>
-                    <input
-                        type="email"
-                        required
-                        value={email}
-                        onChange={e => {
-                            setEmail(e.target.value);
-                        }}
-                        className="border border-neutral-300 rounded-md px-3 py-2"
-                    />
-                </label>
-                <label className="flex flex-col gap-1 text-sm">
-                    <span className="font-medium">Display name</span>
-                    <input
-                        type="text"
-                        required
-                        value={displayName}
-                        onChange={e => {
-                            setDisplayName(e.target.value);
-                        }}
-                        className="border border-neutral-300 rounded-md px-3 py-2"
-                    />
-                </label>
-                <label className="flex flex-col gap-1 text-sm">
-                    <span className="font-medium">Password</span>
-                    <input
-                        type="password"
-                        required
-                        minLength={12}
-                        autoComplete="new-password"
-                        value={password}
-                        onChange={e => {
-                            setPassword(e.target.value);
-                        }}
-                        className="border border-neutral-300 rounded-md px-3 py-2"
-                    />
-                    <span className="text-xs text-neutral-500">Minimum 12 characters.</span>
-                </label>
-                <label className="flex flex-col gap-1 text-sm">
-                    <span className="font-medium">Setup token</span>
-                    <input
-                        type="text"
-                        value={setupToken}
-                        onChange={e => {
-                            setSetupToken(e.target.value);
-                        }}
-                        className="border border-neutral-300 rounded-md px-3 py-2 font-mono text-xs"
-                    />
-                    <span className="text-xs text-neutral-500">
-                        Required when configured at deploy time via <code>Auth:SetupToken</code>.
-                    </span>
-                </label>
-                {errorMessage ? <div className="text-sm text-rose-600">{errorMessage}</div> : null}
-                <button
-                    type="submit"
-                    disabled={setup.isPending}
-                    className="bg-neutral-900 text-white rounded-md py-2 font-medium disabled:opacity-50"
+        <div className="w-full max-w-[480px] bg-bg-1 border border-border-soft rounded-md shadow-overlay">
+            <header className="flex items-center gap-[10px] px-5 pt-5 pb-3">
+                <img src={logo} alt="" className="w-8 h-8 rounded-[6px]" />
+                <span className="text-[18px] font-normal tracking-[-0.01em]">
+                    Balance<span className="text-brand-primary">.</span>
+                </span>
+            </header>
+            <div className="px-5 pt-1 pb-5">
+                <h1 className="text-16 font-semibold leading-snug mb-1">First-run setup</h1>
+                <p className="text-[13px] text-fg-3 mb-4">
+                    Create the first account. This wizard becomes unavailable once a user exists.
+                </p>
+                <form
+                    onSubmit={e => {
+                        e.preventDefault();
+                        void submit();
+                    }}
+                    noValidate
                 >
-                    {setup.isPending ? 'Creating…' : 'Create account'}
-                </button>
-            </form>
+                    <FormErrorBanner message={errorMessage} />
+                    <label className="flex flex-col gap-1 mb-3">
+                        <span className="text-[12px] font-medium text-fg-2">Email</span>
+                        <input
+                            type="email"
+                            required
+                            autoFocus
+                            value={email}
+                            onChange={e => {
+                                setEmail(e.target.value);
+                            }}
+                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
+                        />
+                    </label>
+                    <label className="flex flex-col gap-1 mb-3">
+                        <span className="text-[12px] font-medium text-fg-2">Display name</span>
+                        <input
+                            type="text"
+                            required
+                            value={displayName}
+                            onChange={e => {
+                                setDisplayName(e.target.value);
+                            }}
+                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
+                        />
+                    </label>
+                    <label className="flex flex-col gap-1 mb-3">
+                        <span className="text-[12px] font-medium text-fg-2">Password</span>
+                        <input
+                            type="password"
+                            required
+                            minLength={12}
+                            autoComplete="new-password"
+                            value={password}
+                            onChange={e => {
+                                setPassword(e.target.value);
+                            }}
+                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
+                        />
+                        <span className="text-[12px] text-fg-3">Minimum 12 characters.</span>
+                    </label>
+                    <label className="flex flex-col gap-1 mb-4">
+                        <span className="text-[12px] font-medium text-fg-2">Setup token</span>
+                        <input
+                            type="text"
+                            value={setupToken}
+                            onChange={e => {
+                                setSetupToken(e.target.value);
+                            }}
+                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] font-mono focus:outline-none focus:border-border-strong"
+                        />
+                        <span className="text-[12px] text-fg-3">
+                            Required when configured at deploy time via{' '}
+                            <code className="font-mono">Auth:SetupToken</code>.
+                        </span>
+                    </label>
+                    <button
+                        type="submit"
+                        disabled={setup.isPending}
+                        className="w-full px-3 py-[7px] rounded-sm text-[13px] font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
+                    >
+                        {setup.isPending ? 'Creating…' : 'Create account'}
+                    </button>
+                </form>
+            </div>
         </div>
     );
 }

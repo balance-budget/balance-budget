@@ -46,7 +46,7 @@ export const Route = createRootRoute({
 
         if (isAuthRoute) {
             return (
-                <div className="min-h-screen flex items-center justify-center bg-neutral-50 px-4">
+                <div className="min-h-screen flex items-center justify-center px-4">
                     <Outlet />
                 </div>
             );
@@ -54,7 +54,7 @@ export const Route = createRootRoute({
 
         if (currentUserQuery.isLoading || currentUserQuery.data === null) {
             return (
-                <div className="min-h-screen flex items-center justify-center text-sm text-neutral-500">
+                <div className="min-h-screen flex items-center justify-center text-[13px] text-fg-3">
                     Loading…
                 </div>
             );
