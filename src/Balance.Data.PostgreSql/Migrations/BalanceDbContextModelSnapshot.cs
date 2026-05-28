@@ -220,6 +220,10 @@ namespace Balance.Data.PostgreSql.Migrations
                         .HasMaxLength(11)
                         .HasColumnType("character varying(11)");
 
+                    b.Property<string>("CardIdentifier")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<Guid?>("CounterpartyId")
                         .HasColumnType("uuid");
 
@@ -233,6 +237,17 @@ namespace Balance.Data.PostgreSql.Migrations
                     b.Property<string>("Iban")
                         .HasMaxLength(34)
                         .HasColumnType("character varying(34)");
+
+                    b.Property<string>("ImporterKey")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasDefaultValue("Current");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -256,9 +271,11 @@ namespace Balance.Data.PostgreSql.Migrations
 
                     b.ToTable("BankAccounts", null, t =>
                         {
+                            t.HasCheckConstraint("CK_BankAccounts_CardOwnedOnly", "\"Type\" <> 'Card' OR \"AccountId\" IS NOT NULL");
+
                             t.HasCheckConstraint("CK_BankAccounts_CurrencyRequiredWhenOwned", "\"AccountId\" IS NULL OR \"CurrencyCode\" IS NOT NULL");
 
-                            t.HasCheckConstraint("CK_BankAccounts_IbanOrAccountNumber", "\"Iban\" IS NOT NULL OR \"AccountNumber\" IS NOT NULL");
+                            t.HasCheckConstraint("CK_BankAccounts_IdentifierByType", "(\"Type\" = 'Current' AND \"Iban\" IS NOT NULL) OR (\"Type\" = 'Savings' AND (\"Iban\" IS NOT NULL OR \"AccountNumber\" IS NOT NULL)) OR (\"Type\" = 'Card' AND \"CardIdentifier\" IS NOT NULL)");
 
                             t.HasCheckConstraint("CK_BankAccounts_OwnershipXor", "(\"AccountId\" IS NULL) <> (\"CounterpartyId\" IS NULL)");
                         });
