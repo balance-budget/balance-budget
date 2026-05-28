@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
-import { Link, useRouterState } from '@tanstack/react-router';
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import logo from '../assets/logo.svg';
 import { Icon } from './Icon';
 import { accountIdentifier, useAccounts, type Account } from '../api/accounts';
+import { useCurrentUser, useLogout } from '../api/auth';
 import { useCurrencyCatalog } from '../api/currencies';
 import { AccountAvatar } from './AccountAvatar';
 import { Skeleton } from './Skeleton';
@@ -178,6 +179,57 @@ function AccountsGroup() {
     );
 }
 
+function initials(name: string): string {
+    const parts = name.split(/\s+/).filter(Boolean);
+    const first = parts[0];
+    const last = parts[parts.length - 1];
+    if (!first) return '?';
+    if (parts.length === 1 || !last) return first.slice(0, 2).toUpperCase();
+    return ((first[0] ?? '') + (last[0] ?? '')).toUpperCase();
+}
+
+function CurrentUserCard() {
+    const me = useCurrentUser();
+    const logout = useLogout();
+    const navigate = useNavigate();
+
+    if (!me.data) return null;
+    const displayName = me.data.displayName;
+    const email = me.data.email;
+
+    async function signOut() {
+        try {
+            await logout.mutateAsync();
+        } finally {
+            await navigate({ to: '/login', replace: true });
+        }
+    }
+
+    return (
+        <div className="mt-auto flex items-center gap-[10px] p-[10px] rounded-sm bg-surface-2">
+            <div className="w-8 h-8 rounded-full bg-brand-primary-soft text-brand-primary flex items-center justify-center text-[12px] font-semibold">
+                {initials(displayName)}
+            </div>
+            <div className="flex-1 flex flex-col leading-tight min-w-0">
+                <span className="text-[13px] font-medium text-fg-1 truncate">{displayName}</span>
+                <span className="text-[14px] text-fg-3 truncate">{email}</span>
+            </div>
+            <button
+                type="button"
+                onClick={() => {
+                    void signOut();
+                }}
+                disabled={logout.isPending}
+                className="text-fg-3 hover:text-fg-1"
+                aria-label="Sign out"
+                title="Sign out"
+            >
+                <Icon name="log-out" size={16} />
+            </button>
+        </div>
+    );
+}
+
 export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
     const pathname = useRouterState({ select: s => s.location.pathname });
 
@@ -213,19 +265,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
                     <NavGroup title="Other" items={NAV_OTHER} currentPath={pathname} />
                 </nav>
 
-                {/* TODO: replace placeholder identity once auth lands (see auth memory / ADR). */}
-                <div className="mt-auto flex items-center gap-[10px] p-[10px] rounded-sm bg-surface-2">
-                    <div className="w-8 h-8 rounded-full bg-brand-primary-soft text-brand-primary flex items-center justify-center text-[12px] font-semibold">
-                        MR
-                    </div>
-                    <div className="flex-1 flex flex-col leading-tight min-w-0">
-                        <span className="text-[13px] font-medium text-fg-1 truncate">
-                            Maya Rivera
-                        </span>
-                        <span className="text-[14px] text-fg-3 truncate">maya@balance.app</span>
-                    </div>
-                    <Icon name="chevron-right" size={16} className="text-fg-3" />
-                </div>
+                <CurrentUserCard />
             </aside>
         </>
     );
