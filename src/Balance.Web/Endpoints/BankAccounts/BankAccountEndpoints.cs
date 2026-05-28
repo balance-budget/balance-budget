@@ -15,6 +15,7 @@ internal static class BankAccountEndpoints
     {
         var group = app.MapGroup(PathPrefix).WithTags("BankAccounts");
         group.MapGet("", ListAsync).WithName("ListBankAccounts");
+        group.MapGet("/importers", ListImportersAsync).WithName("ListBankAccountImporters");
         group.MapGet("/{id}", GetAsync).WithName("GetBankAccount");
         group
             .MapPost("", CreateAsync)
@@ -48,6 +49,17 @@ internal static class BankAccountEndpoints
     {
         var bankAccounts = await bankAccountService.ListAsync(cancellationToken);
         return TypedResults.Ok(bankAccounts);
+    }
+
+    private static Ok<IReadOnlyList<BankAccountImporterOutput>> ListImportersAsync(
+        [FromServices] IEnumerable<IBankTransactionExtractor> extractors
+    )
+    {
+        var registry = extractors
+            .Select(e => new BankAccountImporterOutput(e.Key, e.SupportedType))
+            .OrderBy(e => e.Key, StringComparer.Ordinal)
+            .ToList();
+        return TypedResults.Ok<IReadOnlyList<BankAccountImporterOutput>>(registry);
     }
 
     private static async Task<
