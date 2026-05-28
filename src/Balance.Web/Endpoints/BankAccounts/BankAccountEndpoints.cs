@@ -78,12 +78,15 @@ internal static class BankAccountEndpoints
     {
         var result = await bankAccountService.CreateAsync(
             new CreateBankAccountInput(
+                request.Type,
                 request.Iban,
                 request.AccountNumber,
+                request.CardIdentifier,
                 request.Bic,
                 request.BankName,
                 request.AccountHolderName,
                 request.CurrencyCode,
+                request.ImporterKey,
                 request.AccountId,
                 request.CounterpartyId
             ),

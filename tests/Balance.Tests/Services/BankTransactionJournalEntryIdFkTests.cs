@@ -159,12 +159,15 @@ internal sealed class BankTransactionJournalEntryIdFkTests : EndpointsTestsBase
     {
         var result = await bankAccountService.CreateAsync(
             new CreateBankAccountInput(
+                Type: BankAccountType.Current,
                 Iban: $"NL00BANK{Guid.NewGuid():N}"[..18],
                 AccountNumber: null,
+                CardIdentifier: null,
                 Bic: null,
                 BankName: null,
                 AccountHolderName: null,
                 CurrencyCode: new CurrencyCode("EUR"),
+                ImporterKey: null,
                 AccountId: accountId,
                 CounterpartyId: null
             ),

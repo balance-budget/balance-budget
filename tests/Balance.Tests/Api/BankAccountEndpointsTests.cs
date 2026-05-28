@@ -154,7 +154,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
     }
 
     [Test]
-    public async Task CreateBankAccount_only_account_number_succeeds()
+    public async Task CreateBankAccount_savings_with_only_account_number_succeeds()
     {
         using var client = Factory.CreateClient();
         var account = await CreateAccountAsync(client, "ING-Savings");
@@ -167,7 +167,8 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
             AccountHolderName: null,
             CurrencyCode: "EUR",
             AccountId: account.Id,
-            CounterpartyId: null
+            CounterpartyId: null,
+            Type: "Savings"
         );
         using var response = await client.PostAsJsonAsync(
             new Uri("/api/bank-accounts", UriKind.Relative),
@@ -569,5 +570,8 @@ internal sealed record CreateBankAccountRequestDto(
     string? AccountHolderName,
     string? CurrencyCode,
     Guid? AccountId,
-    Guid? CounterpartyId
+    Guid? CounterpartyId,
+    string Type = "Current",
+    string? CardIdentifier = null,
+    string? ImporterKey = null
 );

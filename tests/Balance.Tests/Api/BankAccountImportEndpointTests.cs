@@ -394,7 +394,9 @@ internal sealed class BankAccountImportEndpointTests : EndpointsTestsBase
             AccountHolderName: null,
             CurrencyCode: "EUR",
             AccountId: accountId,
-            CounterpartyId: null
+            CounterpartyId: null,
+            Type: "Current",
+            ImporterKey: "Ing.CurrentAccount.V1"
         );
         using var response = await client.PostAsJsonAsync(
             new Uri("/api/bank-accounts", UriKind.Relative),

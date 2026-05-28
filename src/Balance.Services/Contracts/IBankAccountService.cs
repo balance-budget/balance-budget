@@ -1,3 +1,4 @@
+using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
 
 namespace Balance.Services.Contracts;
@@ -28,24 +29,30 @@ public interface IBankAccountService
 }
 
 public sealed record CreateBankAccountInput(
+    BankAccountType Type,
     string? Iban,
     string? AccountNumber,
+    string? CardIdentifier,
     string? Bic,
     string? BankName,
     string? AccountHolderName,
     CurrencyCode? CurrencyCode,
+    string? ImporterKey,
     AccountId? AccountId,
     CounterpartyId? CounterpartyId
 );
 
 public sealed record UpdateBankAccountInput
 {
+    public BankAccountType Type { get; set; }
     public string? Iban { get; set; }
     public string? AccountNumber { get; set; }
+    public string? CardIdentifier { get; set; }
     public string? Bic { get; set; }
     public string? BankName { get; set; }
     public string? AccountHolderName { get; set; }
     public CurrencyCode? CurrencyCode { get; set; }
+    public string? ImporterKey { get; set; }
     public AccountId? AccountId { get; set; }
     public CounterpartyId? CounterpartyId { get; set; }
 }

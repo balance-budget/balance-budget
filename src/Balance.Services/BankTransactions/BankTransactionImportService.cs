@@ -13,17 +13,17 @@ internal sealed class BankTransactionImportService : IBankTransactionImportServi
     private const int MaxRetries = 1;
 
     private readonly BalanceDbContext _dbContext;
-    private readonly IBankTransactionExtractor _extractor;
+    private readonly Dictionary<string, IBankTransactionExtractor> _extractorsByKey;
     private readonly TimeProvider _timeProvider;
 
     public BankTransactionImportService(
         BalanceDbContext dbContext,
-        IBankTransactionExtractor extractor,
+        IEnumerable<IBankTransactionExtractor> extractors,
         TimeProvider timeProvider
     )
     {
         _dbContext = dbContext;
-        _extractor = extractor;
+        _extractorsByKey = extractors.ToDictionary(e => e.Key, StringComparer.Ordinal);
         _timeProvider = timeProvider;
     }
 
@@ -41,7 +41,33 @@ internal sealed class BankTransactionImportService : IBankTransactionImportServi
         if (bankAccount is null)
             return new NotFoundError("BankAccount", bankAccountId.Value.ToString());
 
-        var extractResult = await _extractor.ExtractAsync(bankAccount, stream, cancellationToken);
+        if (bankAccount.ImporterKey is null)
+        {
+            return new InvariantError(
+                ErrorCodes.ImportBankAccountNotImportable,
+                "This BankAccount has no ImporterKey configured; pick an importer on the "
+                    + "BankAccount before uploading a statement."
+            );
+        }
+
+        if (!_extractorsByKey.TryGetValue(bankAccount.ImporterKey, out var extractor))
+        {
+            return new InvariantError(
+                ErrorCodes.ImportBankAccountNotImportable,
+                $"No extractor is registered for ImporterKey '{bankAccount.ImporterKey}'."
+            );
+        }
+
+        if (extractor.SupportedType != bankAccount.Type)
+        {
+            return new InvariantError(
+                ErrorCodes.ImportBankAccountWrongImporter,
+                $"Extractor '{extractor.Key}' supports BankAccountType "
+                    + $"'{extractor.SupportedType}', but this BankAccount is '{bankAccount.Type}'."
+            );
+        }
+
+        var extractResult = await extractor.ExtractAsync(bankAccount, stream, cancellationToken);
         if (extractResult.IsFailure)
             return extractResult.Error;
 
