@@ -23,6 +23,8 @@ internal static class ServiceCollectionAuthExtensions
         // (the cookie scheme handler etc.) that Balance.Data does not reference.
         services.AddIdentityCore<Balance.Data.Entities.BalanceUser>().AddSignInManager();
 
+        services.AddSingleton<AntiforgeryEndpointFilter>();
+
         // Disable a user (LockoutEnd > now) takes effect on existing SPA sessions within
         // ~5 minutes — short enough to be operationally usable, long enough to avoid a DB
         // roundtrip on every request (ADR 0018).
