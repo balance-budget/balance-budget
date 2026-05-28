@@ -83,7 +83,7 @@ function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
                     ref={inputRef}
                     id={inputId}
                     type="file"
-                    accept=".csv,text/csv"
+                    accept=".csv,text/csv,.pdf,application/pdf"
                     className="sr-only"
                     onChange={e => {
                         const file = e.target.files?.[0];
