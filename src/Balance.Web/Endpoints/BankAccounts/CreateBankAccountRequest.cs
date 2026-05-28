@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
 using Balance.Web.Filters;
@@ -7,12 +8,15 @@ using FluentValidation;
 namespace Balance.Web.Endpoints.BankAccounts;
 
 internal sealed record CreateBankAccountRequest(
+    BankAccountType Type,
     string? Iban,
     string? AccountNumber,
+    string? CardIdentifier,
     string? Bic,
     string? BankName,
     string? AccountHolderName,
     CurrencyCode? CurrencyCode,
+    string? ImporterKey,
     AccountId? AccountId,
     CounterpartyId? CounterpartyId
 );
@@ -29,6 +33,9 @@ internal sealed partial class CreateBankAccountRequestValidator
         RuleFor(x => x.AccountNumber!)
             .MaximumLength(64)
             .When(x => !string.IsNullOrWhiteSpace(x.AccountNumber));
+        RuleFor(x => x.CardIdentifier!)
+            .MaximumLength(64)
+            .When(x => !string.IsNullOrWhiteSpace(x.CardIdentifier));
         RuleFor(x => x.Bic!).MaximumLength(11).When(x => !string.IsNullOrWhiteSpace(x.Bic));
         RuleFor(x => x.BankName!)
             .MaximumLength(128)
@@ -39,6 +46,9 @@ internal sealed partial class CreateBankAccountRequestValidator
         RuleFor(x => x.CurrencyCode!.Value.Value)
             .IsCurrencyCode()
             .When(x => x.CurrencyCode is not null);
+        RuleFor(x => x.ImporterKey!)
+            .MaximumLength(64)
+            .When(x => !string.IsNullOrWhiteSpace(x.ImporterKey));
     }
 
     [GeneratedRegex(@"^[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}$", RegexOptions.CultureInvariant)]
@@ -56,6 +66,9 @@ internal sealed class UpdateBankAccountInputValidator : AbstractValidator<Update
         RuleFor(x => x.AccountNumber!)
             .MaximumLength(64)
             .When(x => !string.IsNullOrWhiteSpace(x.AccountNumber));
+        RuleFor(x => x.CardIdentifier!)
+            .MaximumLength(64)
+            .When(x => !string.IsNullOrWhiteSpace(x.CardIdentifier));
         RuleFor(x => x.Bic!).MaximumLength(11).When(x => !string.IsNullOrWhiteSpace(x.Bic));
         RuleFor(x => x.BankName!)
             .MaximumLength(128)
@@ -66,5 +79,8 @@ internal sealed class UpdateBankAccountInputValidator : AbstractValidator<Update
         RuleFor(x => x.CurrencyCode!.Value.Value)
             .IsCurrencyCode()
             .When(x => x.CurrencyCode is not null);
+        RuleFor(x => x.ImporterKey!)
+            .MaximumLength(64)
+            .When(x => !string.IsNullOrWhiteSpace(x.ImporterKey));
     }
 }

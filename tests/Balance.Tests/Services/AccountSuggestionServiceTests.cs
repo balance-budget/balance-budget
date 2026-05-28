@@ -81,12 +81,15 @@ internal sealed class AccountSuggestionServiceTests : EndpointsTestsBase
 
         await bankAccountService.CreateAsync(
             new CreateBankAccountInput(
+                Type: BankAccountType.Current,
                 Iban: $"NL69INGB{NextDigits(10)}",
                 AccountNumber: null,
+                CardIdentifier: null,
                 Bic: null,
                 BankName: null,
                 AccountHolderName: null,
                 CurrencyCode: new CurrencyCode("EUR"),
+                ImporterKey: null,
                 AccountId: checking.Id,
                 CounterpartyId: null
             ),
@@ -161,12 +164,15 @@ internal sealed class AccountSuggestionServiceTests : EndpointsTestsBase
 
         await bankAccountService.CreateAsync(
             new CreateBankAccountInput(
+                Type: BankAccountType.Current,
                 Iban: $"NL69INGB{NextDigits(10)}",
                 AccountNumber: null,
+                CardIdentifier: null,
                 Bic: null,
                 BankName: null,
                 AccountHolderName: null,
                 CurrencyCode: new CurrencyCode("EUR"),
+                ImporterKey: null,
                 AccountId: checking.Id,
                 CounterpartyId: null
             ),
@@ -244,12 +250,15 @@ internal sealed class AccountSuggestionServiceTests : EndpointsTestsBase
 
         await bankAccountService.CreateAsync(
             new CreateBankAccountInput(
+                Type: BankAccountType.Current,
                 Iban: $"NL69INGB{NextDigits(10)}",
                 AccountNumber: null,
+                CardIdentifier: null,
                 Bic: null,
                 BankName: null,
                 AccountHolderName: null,
                 CurrencyCode: new CurrencyCode("EUR"),
+                ImporterKey: null,
                 AccountId: checking.Id,
                 CounterpartyId: null
             ),

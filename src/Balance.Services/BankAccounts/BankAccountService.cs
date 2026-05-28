@@ -1,5 +1,6 @@
 using Balance.Data;
 using Balance.Data.Entities;
+using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
 using Balance.Data.Helpers;
 using Balance.Services.Contracts;
@@ -12,16 +13,19 @@ internal sealed class BankAccountService : IBankAccountService
 {
     private readonly BalanceDbContext _dbContext;
     private readonly ICurrencyService _currencyService;
+    private readonly Dictionary<string, IBankTransactionExtractor> _extractorsByKey;
     private readonly TimeProvider _timeProvider;
 
     public BankAccountService(
         BalanceDbContext dbContext,
         ICurrencyService currencyService,
+        IEnumerable<IBankTransactionExtractor> extractors,
         TimeProvider timeProvider
     )
     {
         _dbContext = dbContext;
         _currencyService = currencyService;
+        _extractorsByKey = extractors.ToDictionary(e => e.Key, StringComparer.Ordinal);
         _timeProvider = timeProvider;
     }
 
@@ -32,12 +36,15 @@ internal sealed class BankAccountService : IBankAccountService
             .BankAccounts.OrderBy(b => b.CreatedAt)
             .Select(b => new BankAccountOutput(
                 b.Id,
+                b.Type,
                 b.Iban,
                 b.AccountNumber,
+                b.CardIdentifier,
                 b.Bic,
                 b.BankName,
                 b.AccountHolderName,
                 b.CurrencyCode,
+                b.ImporterKey,
                 b.AccountId,
                 b.CounterpartyId,
                 b.CreatedAt,
@@ -54,12 +61,15 @@ internal sealed class BankAccountService : IBankAccountService
             .BankAccounts.Where(b => b.Id == id)
             .Select(b => new BankAccountOutput(
                 b.Id,
+                b.Type,
                 b.Iban,
                 b.AccountNumber,
+                b.CardIdentifier,
                 b.Bic,
                 b.BankName,
                 b.AccountHolderName,
                 b.CurrencyCode,
+                b.ImporterKey,
                 b.AccountId,
                 b.CounterpartyId,
                 b.CreatedAt,
@@ -79,12 +89,15 @@ internal sealed class BankAccountService : IBankAccountService
             .Where(b => b.Id == id)
             .Select(b => new UpdateBankAccountInput
             {
+                Type = b.Type,
                 Iban = b.Iban,
                 AccountNumber = b.AccountNumber,
+                CardIdentifier = b.CardIdentifier,
                 Bic = b.Bic,
                 BankName = b.BankName,
                 AccountHolderName = b.AccountHolderName,
                 CurrencyCode = b.CurrencyCode,
+                ImporterKey = b.ImporterKey,
                 AccountId = b.AccountId,
                 CounterpartyId = b.CounterpartyId,
             })
@@ -101,21 +114,33 @@ internal sealed class BankAccountService : IBankAccountService
 
         var iban = input.Iban.TrimToNull();
         var accountNumber = input.AccountNumber.TrimToNull();
+        var cardIdentifier = input.CardIdentifier.TrimToNull();
         var bic = input.Bic.TrimToNull();
         var bankName = input.BankName.TrimToNull();
         var accountHolderName = input.AccountHolderName.TrimToNull();
+        var importerKey = input.ImporterKey.TrimToNull();
 
         var ownershipCheck = EnsureOwnershipXor(input.AccountId, input.CounterpartyId);
         if (ownershipCheck.IsFailure)
             return ownershipCheck.Error;
 
-        var identifierCheck = EnsureIbanOrAccountNumber(iban, accountNumber);
-        if (identifierCheck.IsFailure)
-            return identifierCheck.Error;
+        var typeCheck = EnsureValidForType(
+            input.Type,
+            iban,
+            accountNumber,
+            cardIdentifier,
+            input.AccountId
+        );
+        if (typeCheck.IsFailure)
+            return typeCheck.Error;
 
         var currencyCheck = EnsureCurrencyWhenOwned(input.AccountId, input.CurrencyCode);
         if (currencyCheck.IsFailure)
             return currencyCheck.Error;
+
+        var importerCheck = EnsureImporterMatchesType(importerKey, input.Type);
+        if (importerCheck.IsFailure)
+            return importerCheck.Error;
 
         var referencesCheck = await EnsureReferencedRowsExistAsync(
             input.CurrencyCode,
@@ -142,12 +167,15 @@ internal sealed class BankAccountService : IBankAccountService
         var bankAccount = new BankAccount
         {
             Id = new BankAccountId(Guid.CreateVersion7()),
+            Type = input.Type,
             Iban = iban,
             AccountNumber = accountNumber,
+            CardIdentifier = cardIdentifier,
             Bic = bic,
             BankName = bankName,
             AccountHolderName = accountHolderName,
             CurrencyCode = input.CurrencyCode,
+            ImporterKey = importerKey,
             AccountId = input.AccountId,
             CounterpartyId = input.CounterpartyId,
             CreatedAt = now,
@@ -181,21 +209,33 @@ internal sealed class BankAccountService : IBankAccountService
 
         var iban = input.Iban.TrimToNull();
         var accountNumber = input.AccountNumber.TrimToNull();
+        var cardIdentifier = input.CardIdentifier.TrimToNull();
         var bic = input.Bic.TrimToNull();
         var bankName = input.BankName.TrimToNull();
         var accountHolderName = input.AccountHolderName.TrimToNull();
+        var importerKey = input.ImporterKey.TrimToNull();
 
         var ownershipCheck = EnsureOwnershipXor(input.AccountId, input.CounterpartyId);
         if (ownershipCheck.IsFailure)
             return ownershipCheck.Error;
 
-        var identifierCheck = EnsureIbanOrAccountNumber(iban, accountNumber);
-        if (identifierCheck.IsFailure)
-            return identifierCheck.Error;
+        var typeCheck = EnsureValidForType(
+            input.Type,
+            iban,
+            accountNumber,
+            cardIdentifier,
+            input.AccountId
+        );
+        if (typeCheck.IsFailure)
+            return typeCheck.Error;
 
         var currencyCheck = EnsureCurrencyWhenOwned(input.AccountId, input.CurrencyCode);
         if (currencyCheck.IsFailure)
             return currencyCheck.Error;
+
+        var importerCheck = EnsureImporterMatchesType(importerKey, input.Type);
+        if (importerCheck.IsFailure)
+            return importerCheck.Error;
 
         var referencesCheck = await EnsureReferencedRowsExistAsync(
             input.CurrencyCode,
@@ -218,12 +258,15 @@ internal sealed class BankAccountService : IBankAccountService
         if (slotCheck.IsFailure)
             return slotCheck.Error;
 
+        bankAccount.Type = input.Type;
         bankAccount.Iban = iban;
         bankAccount.AccountNumber = accountNumber;
+        bankAccount.CardIdentifier = cardIdentifier;
         bankAccount.Bic = bic;
         bankAccount.BankName = bankName;
         bankAccount.AccountHolderName = accountHolderName;
         bankAccount.CurrencyCode = input.CurrencyCode;
+        bankAccount.ImporterKey = importerKey;
         bankAccount.AccountId = input.AccountId;
         bankAccount.CounterpartyId = input.CounterpartyId;
         bankAccount.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
@@ -252,12 +295,15 @@ internal sealed class BankAccountService : IBankAccountService
     private static BankAccountOutput ToOutput(BankAccount bankAccount) =>
         new(
             bankAccount.Id,
+            bankAccount.Type,
             bankAccount.Iban,
             bankAccount.AccountNumber,
+            bankAccount.CardIdentifier,
             bankAccount.Bic,
             bankAccount.BankName,
             bankAccount.AccountHolderName,
             bankAccount.CurrencyCode,
+            bankAccount.ImporterKey,
             bankAccount.AccountId,
             bankAccount.CounterpartyId,
             bankAccount.CreatedAt,
@@ -279,14 +325,55 @@ internal sealed class BankAccountService : IBankAccountService
         return Result.Success;
     }
 
-    private static Result EnsureIbanOrAccountNumber(string? iban, string? accountNumber)
+    private static Result EnsureValidForType(
+        BankAccountType type,
+        string? iban,
+        string? accountNumber,
+        string? cardIdentifier,
+        AccountId? accountId
+    )
     {
-        if (iban is null && accountNumber is null)
+        switch (type)
         {
-            return new InvariantError(
-                ErrorCodes.BankAccountIdentifierMissing,
-                "A BankAccount must have at least one of Iban or AccountNumber."
-            );
+            case BankAccountType.Current:
+                if (iban is null)
+                {
+                    return new InvariantError(
+                        ErrorCodes.BankAccountIdentifierMissing,
+                        "A Current BankAccount requires an Iban."
+                    );
+                }
+                break;
+            case BankAccountType.Savings:
+                if (iban is null && accountNumber is null)
+                {
+                    return new InvariantError(
+                        ErrorCodes.BankAccountIdentifierMissing,
+                        "A Savings BankAccount requires an Iban or AccountNumber."
+                    );
+                }
+                break;
+            case BankAccountType.Card:
+                if (cardIdentifier is null)
+                {
+                    return new InvariantError(
+                        ErrorCodes.BankAccountIdentifierMissing,
+                        "A Card BankAccount requires a CardIdentifier."
+                    );
+                }
+                if (!accountId.HasValue)
+                {
+                    return new InvariantError(
+                        ErrorCodes.BankAccountCardOwnedOnly,
+                        "A Card BankAccount must be owned by an Account (counterparty Cards are not supported)."
+                    );
+                }
+                break;
+            default:
+                return new InvariantError(
+                    ErrorCodes.RequestInvalid,
+                    $"Unknown BankAccountType '{type}'."
+                );
         }
 
         return Result.Success;
@@ -299,6 +386,31 @@ internal sealed class BankAccountService : IBankAccountService
             return new InvariantError(
                 ErrorCodes.BankAccountCurrencyRequiredWhenOwned,
                 "A BankAccount that represents one of your own Accounts must have a CurrencyCode."
+            );
+        }
+
+        return Result.Success;
+    }
+
+    private Result EnsureImporterMatchesType(string? importerKey, BankAccountType type)
+    {
+        if (importerKey is null)
+            return Result.Success;
+
+        if (!_extractorsByKey.TryGetValue(importerKey, out var extractor))
+        {
+            return new InvariantError(
+                ErrorCodes.BankAccountImporterUnknown,
+                $"No extractor is registered for ImporterKey '{importerKey}'."
+            );
+        }
+
+        if (extractor.SupportedType != type)
+        {
+            return new InvariantError(
+                ErrorCodes.BankAccountImporterTypeMismatch,
+                $"Importer '{importerKey}' supports BankAccountType '{extractor.SupportedType}', "
+                    + $"which does not match this BankAccount's Type '{type}'."
             );
         }
 
