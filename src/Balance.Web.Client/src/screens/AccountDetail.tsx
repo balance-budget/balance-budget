@@ -183,11 +183,12 @@ function RegisterRowView({
     const extra = row.counter.length - 1;
     const negative = row.amount.amount < 0;
     const heading = row.counterpartyName ?? row.entryDescription ?? '—';
+    // Match the journal-list amount-coloring convention: in = success, out = danger.
     const amount = (
         <span
             className={cx(
                 'font-mono text-[13px] tabular text-right',
-                negative ? 'text-fg-1' : 'text-success',
+                negative ? 'text-danger' : 'text-success',
             )}
         >
             {formatMoney(row.amount.amount, row.amount.currencyCode, catalog, { sign: true })}
@@ -200,7 +201,11 @@ function RegisterRowView({
         </span>
     );
     return (
-        <div className="border-b border-border-soft last:border-b-0 hover:bg-surface-2">
+        <Link
+            to="/journal/$id"
+            params={{ id: row.journalEntryId }}
+            className="block border-b border-border-soft last:border-b-0 hover:bg-surface-2"
+        >
             <div className="hidden md:grid grid-cols-[100px_1fr_180px_120px] gap-3 items-center px-2 py-2">
                 <span className="text-[12px] text-fg-3 tabular">{row.date}</span>
                 <div className="flex flex-col min-w-0">
@@ -225,7 +230,7 @@ function RegisterRowView({
                 ) : null}
                 {counterLabel}
             </div>
-        </div>
+        </Link>
     );
 }
 
