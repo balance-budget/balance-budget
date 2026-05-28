@@ -10,7 +10,10 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddBalanceConfiguration(
         this IServiceCollection services,
         IConfiguration configuration
-    ) => services.AddSettings<DatabaseOptions>(configuration);
+    ) =>
+        services
+            .AddSettings<DatabaseOptions>(configuration)
+            .AddSettings<AuthOptions>(configuration);
 
     private static IServiceCollection AddSettings<T>(
         this IServiceCollection services,
