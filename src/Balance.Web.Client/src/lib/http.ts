@@ -35,8 +35,30 @@ type ProblemDetails = {
     errors?: Record<string, string[]>;
 };
 
+/**
+ * Reads the XSRF-TOKEN cookie set by the server's antiforgery double-submit pattern
+ * and returns it. Returns null when no cookie is present — the call site decides
+ * whether to fail-open (e.g. before login) or prime the cookie via /api/antiforgery/token.
+ */
+function readXsrfCookie(): string | null {
+    if (typeof document === 'undefined') return null;
+    const match = /(?:^|; )XSRF-TOKEN=([^;]+)/.exec(document.cookie);
+    const value = match?.[1];
+    return value ? decodeURIComponent(value) : null;
+}
+
+function withXsrfHeader(headers: Record<string, string>): Record<string, string> {
+    const token = readXsrfCookie();
+    if (token) {
+        return { ...headers, 'X-XSRF-TOKEN': token };
+    }
+    return headers;
+}
+
+const baseRequestInit: RequestInit = { credentials: 'same-origin' };
+
 export async function getJson<T>(url: string, signal: AbortSignal, label: string): Promise<T> {
-    const response = await fetch(url, { signal });
+    const response = await fetch(url, { ...baseRequestInit, signal });
     if (!response.ok) {
         throw await toApiError(response, label);
     }
@@ -50,8 +72,9 @@ export async function postJson<T>(
     label: string,
 ): Promise<T> {
     const response = await fetch(url, {
+        ...baseRequestInit,
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: withXsrfHeader({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(body),
         signal,
     });
@@ -61,13 +84,37 @@ export async function postJson<T>(
     return (await response.json()) as T;
 }
 
+export async function postJsonNoContent(
+    url: string,
+    body: unknown,
+    signal: AbortSignal,
+    label: string,
+): Promise<void> {
+    const response = await fetch(url, {
+        ...baseRequestInit,
+        method: 'POST',
+        headers: withXsrfHeader({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(body),
+        signal,
+    });
+    if (!response.ok) {
+        throw await toApiError(response, label);
+    }
+}
+
 export async function postFormData<T>(
     url: string,
     formData: FormData,
     signal: AbortSignal,
     label: string,
 ): Promise<T> {
-    const response = await fetch(url, { method: 'POST', body: formData, signal });
+    const response = await fetch(url, {
+        ...baseRequestInit,
+        method: 'POST',
+        headers: withXsrfHeader({}),
+        body: formData,
+        signal,
+    });
     if (!response.ok) {
         throw await toApiError(response, label);
     }
@@ -81,8 +128,9 @@ export async function putJson<T>(
     label: string,
 ): Promise<T> {
     const response = await fetch(url, {
+        ...baseRequestInit,
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: withXsrfHeader({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(body),
         signal,
     });
@@ -103,8 +151,9 @@ export async function patchJson<T>(
     label: string,
 ): Promise<T> {
     const response = await fetch(url, {
+        ...baseRequestInit,
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json-patch+json' },
+        headers: withXsrfHeader({ 'Content-Type': 'application/json-patch+json' }),
         body: JSON.stringify(patch),
         signal,
     });
@@ -119,10 +168,25 @@ export async function deleteRequest(
     signal: AbortSignal,
     label: string,
 ): Promise<void> {
-    const response = await fetch(url, { method: 'DELETE', signal });
+    const response = await fetch(url, {
+        ...baseRequestInit,
+        method: 'DELETE',
+        headers: withXsrfHeader({}),
+        signal,
+    });
     if (!response.ok) {
         throw await toApiError(response, label);
     }
+}
+
+/**
+ * Primes the XSRF-TOKEN cookie by hitting /api/antiforgery/token. The cookie is
+ * JS-readable; mutation helpers above echo it back as X-XSRF-TOKEN automatically.
+ * Call this once after login (or once on app load) so the first write does not
+ * race the cookie.
+ */
+export async function primeAntiforgeryCookie(signal: AbortSignal): Promise<void> {
+    await fetch('/api/antiforgery/token', { ...baseRequestInit, signal });
 }
 
 async function toApiError(response: Response, label: string): Promise<ApiError> {
