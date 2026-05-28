@@ -1,5 +1,3 @@
-using Balance.Configuration.Helpers;
-using Balance.Configuration.Options;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
@@ -15,13 +13,11 @@ internal static class ServiceCollectionAuthExtensions
     )
     {
         ArgumentNullException.ThrowIfNull(configuration);
-
-        var authOptions = configuration.GetSectionOrDefault<AuthOptions>() ?? new AuthOptions();
-        var sameSite = ParseSameSite(authOptions.CookieSameSite);
+        _ = configuration;
 
         // SignInManager lives on the web side because it brings in scheme dependencies
         // (the cookie scheme handler etc.) that Balance.Data does not reference.
-        services.AddIdentityCore<Balance.Data.Entities.BalanceUser>().AddSignInManager();
+        services.AddIdentityCore<Data.Entities.BalanceUser>().AddSignInManager();
 
         // Disable a user (LockoutEnd > now) takes effect on existing SPA sessions within
         // ~5 minutes — short enough to be operationally usable, long enough to avoid a DB
@@ -67,10 +63,7 @@ internal static class ServiceCollectionAuthExtensions
                 {
                     cookie.Cookie.Name = AuthSchemes.CookieName;
                     cookie.Cookie.HttpOnly = true;
-                    cookie.Cookie.SecurePolicy = authOptions.CookieSecure
-                        ? CookieSecurePolicy.Always
-                        : CookieSecurePolicy.None;
-                    cookie.Cookie.SameSite = sameSite;
+                    cookie.Cookie.SameSite = SameSiteMode.Strict;
                     cookie.ExpireTimeSpan = TimeSpan.FromDays(30);
                     cookie.SlidingExpiration = true;
                     cookie.Events = CookieAuthenticationEvents();
@@ -103,12 +96,4 @@ internal static class ServiceCollectionAuthExtensions
             },
         };
 
-    private static SameSiteMode ParseSameSite(string value) =>
-        value switch
-        {
-            "Strict" => SameSiteMode.Strict,
-            "None" => SameSiteMode.None,
-            "Unspecified" => SameSiteMode.Unspecified,
-            _ => SameSiteMode.Lax,
-        };
 }
