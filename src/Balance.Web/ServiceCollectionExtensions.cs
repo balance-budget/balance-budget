@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Balance.Configuration.Helpers;
 using Balance.Configuration.Options;
 using Balance.Data;
+using Balance.Web.Auth;
 using Balance.Web.OpenApi;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.Features;
@@ -76,11 +77,18 @@ internal static class ServiceCollectionExtensions
             }
         });
 
-        services.AddAuthentication().AddCookie(); // Default scheme for browser access
-
+        services.AddBalanceAuth(configuration);
         services.AddAuthorization();
 
-        services.AddAntiforgery();
+        services.AddAntiforgery(options =>
+        {
+            // Double-submit cookie pattern (ADR 0018): server sets XSRF-TOKEN (JS-readable);
+            // SPA echoes it via X-XSRF-TOKEN header on writes.
+            options.HeaderName = "X-XSRF-TOKEN";
+            options.Cookie.Name = "XSRF-TOKEN";
+            options.Cookie.HttpOnly = false;
+            options.Cookie.SameSite = SameSiteMode.Lax;
+        });
         services.AddCors();
         services.AddHealthChecks().AddDbContextCheck<BalanceDbContext>(tags: ["readiness"]);
         services.AddValidatorsFromAssemblyContaining<IWebAssemblyMarker>(
