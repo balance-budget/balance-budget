@@ -107,7 +107,12 @@ internal sealed class AccountSuggestionServiceTests : EndpointsTestsBase
                 CounterpartyId: counterparty.Id,
                 Lines:
                 [
-                    new CreateJournalLineInput(checking.Id, -4000, null),
+                    new CreateJournalLineInput(
+                        checking.Id,
+                        -4000,
+                        null,
+                        ReconciliationStatus.Cleared
+                    ),
                     new CreateJournalLineInput(groceries.Id, 4000, null),
                 ]
             ),
@@ -190,7 +195,12 @@ internal sealed class AccountSuggestionServiceTests : EndpointsTestsBase
                 CounterpartyId: counterparty.Id,
                 Lines:
                 [
-                    new CreateJournalLineInput(checking.Id, -8743, null),
+                    new CreateJournalLineInput(
+                        checking.Id,
+                        -8743,
+                        null,
+                        ReconciliationStatus.Cleared
+                    ),
                     new CreateJournalLineInput(groceries.Id, 6000, null),
                     new CreateJournalLineInput(household.Id, 2743, null),
                 ]
@@ -279,7 +289,12 @@ internal sealed class AccountSuggestionServiceTests : EndpointsTestsBase
                 CounterpartyId: counterparty.Id,
                 Lines:
                 [
-                    new CreateJournalLineInput(checking.Id, -1500, null),
+                    new CreateJournalLineInput(
+                        checking.Id,
+                        -1500,
+                        null,
+                        ReconciliationStatus.Cleared
+                    ),
                     new CreateJournalLineInput(groceries.Id, 1500, null),
                 ]
             ),
@@ -293,7 +308,12 @@ internal sealed class AccountSuggestionServiceTests : EndpointsTestsBase
                 CounterpartyId: counterparty.Id,
                 Lines:
                 [
-                    new CreateJournalLineInput(checking.Id, -2500, null),
+                    new CreateJournalLineInput(
+                        checking.Id,
+                        -2500,
+                        null,
+                        ReconciliationStatus.Cleared
+                    ),
                     new CreateJournalLineInput(dining.Id, 2500, null),
                 ]
             ),
