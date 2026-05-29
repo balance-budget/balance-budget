@@ -14,6 +14,7 @@ using Balance.Web.Endpoints.Counterparties;
 using Balance.Web.Endpoints.Currencies;
 using Balance.Web.Endpoints.Dashboard;
 using Balance.Web.Endpoints.JournalEntries;
+using Balance.Web.Endpoints.Search;
 using Balance.Web.Logging;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
@@ -98,6 +99,7 @@ api.MapBankAccounts();
 api.MapBankTransactions();
 api.MapJournalEntries();
 api.MapDashboard();
+api.MapSearch();
 
 await app.RunAsync(lifetime.ApplicationStopping);
 
