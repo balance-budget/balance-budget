@@ -84,6 +84,7 @@ public sealed class BalanceDbContext
         ArgumentNullException.ThrowIfNull(builder);
         base.OnModelCreating(builder);
         builder.ApplyConfigurationsFromAssembly(typeof(BalanceDbContext).Assembly);
+        builder.AddCaseInsensitiveLike(_options.Provider);
         builder.ApplyProviderConventions(_options.Provider);
     }
 }

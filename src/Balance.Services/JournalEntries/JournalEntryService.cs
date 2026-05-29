@@ -38,7 +38,8 @@ internal sealed class JournalEntryService : IJournalEntryService
         if (!string.IsNullOrEmpty(needle))
         {
             filtered = filtered.Where(e =>
-                e.Description != null && EF.Functions.Like(e.Description, $"%{needle}%")
+                e.Description != null
+                && DbFunction.CaseInsensitiveLike(e.Description, $"%{needle}%")
             );
         }
 

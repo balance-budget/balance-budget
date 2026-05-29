@@ -1,4 +1,5 @@
 using Balance.Data;
+using Balance.Data.Helpers;
 using Balance.Services.Contracts;
 using Microsoft.EntityFrameworkCore;
 
@@ -52,7 +53,7 @@ internal sealed class SearchService : ISearchService
     {
         var query = _dbContext
             .Accounts.AsNoTracking()
-            .Where(a => EF.Functions.Like(a.Name, likePattern));
+            .Where(a => DbFunction.CaseInsensitiveLike(a.Name, likePattern));
         var totalCount = await query.CountAsync(cancellationToken);
         var items = await query
             .OrderBy(a => a.Name)
@@ -69,7 +70,7 @@ internal sealed class SearchService : ISearchService
     {
         var query = _dbContext
             .Counterparties.AsNoTracking()
-            .Where(c => EF.Functions.Like(c.Name, likePattern));
+            .Where(c => DbFunction.CaseInsensitiveLike(c.Name, likePattern));
         var totalCount = await query.CountAsync(cancellationToken);
         var items = await query
             .OrderBy(c => c.Name)
@@ -88,15 +89,19 @@ internal sealed class SearchService : ISearchService
         var query = _dbContext
             .BankAccounts.AsNoTracking()
             .Where(b =>
-                (b.Iban != null && EF.Functions.Like(b.Iban, likePattern))
-                || (b.AccountNumber != null && EF.Functions.Like(b.AccountNumber, likePattern))
+                (b.Iban != null && DbFunction.CaseInsensitiveLike(b.Iban, likePattern))
                 || (
-                    b.CardIdentifier != null && EF.Functions.Like(b.CardIdentifier, cardLikePattern)
+                    b.AccountNumber != null
+                    && DbFunction.CaseInsensitiveLike(b.AccountNumber, likePattern)
                 )
-                || (b.BankName != null && EF.Functions.Like(b.BankName, likePattern))
+                || (
+                    b.CardIdentifier != null
+                    && DbFunction.CaseInsensitiveLike(b.CardIdentifier, cardLikePattern)
+                )
+                || (b.BankName != null && DbFunction.CaseInsensitiveLike(b.BankName, likePattern))
                 || (
                     b.AccountHolderName != null
-                    && EF.Functions.Like(b.AccountHolderName, likePattern)
+                    && DbFunction.CaseInsensitiveLike(b.AccountHolderName, likePattern)
                 )
             );
         var totalCount = await query.CountAsync(cancellationToken);
@@ -123,7 +128,9 @@ internal sealed class SearchService : ISearchService
     {
         var query = _dbContext
             .JournalEntries.AsNoTracking()
-            .Where(e => e.Description != null && EF.Functions.Like(e.Description, likePattern));
+            .Where(e =>
+                e.Description != null && DbFunction.CaseInsensitiveLike(e.Description, likePattern)
+            );
         var totalCount = await query.CountAsync(cancellationToken);
         var items = await query
             .OrderByDescending(e => e.Date)
