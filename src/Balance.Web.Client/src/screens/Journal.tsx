@@ -123,7 +123,7 @@ function JournalBody({
             <Pagination
                 page={page}
                 pageSize={PAGE_SIZE}
-                count={entries.data.items.length}
+                totalCount={entries.data.totalCount}
                 onPageChange={onPageChange}
             />
         </div>
