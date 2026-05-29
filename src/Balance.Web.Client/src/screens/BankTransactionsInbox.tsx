@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useBlocker } from '@tanstack/react-router';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { useAccounts, type Account } from '../api/accounts';
@@ -1209,7 +1210,11 @@ function BulkApplyFooter({
         setAccountId(null);
     }
 
-    return (
+    // Portal to body to escape the Panel's `backdrop-blur-card` — backdrop-filter
+    // creates a containing block for fixed descendants, which would anchor the
+    // bar to the Panel rather than the viewport and put it offscreen when
+    // scrolled to the top of a long list.
+    return createPortal(
         <div className="fixed bottom-6 left-[calc(15rem+2rem)] right-8 z-30 px-3 py-2 rounded-sm bg-bg-1 border border-brand-primary/30 shadow-overlay">
             <div className="flex flex-wrap items-center gap-3">
                 <span className="text-[12px] font-medium text-fg-1">
@@ -1289,7 +1294,8 @@ function BulkApplyFooter({
                     bulk-applied.
                 </p>
             )}
-        </div>
+        </div>,
+        document.body,
     );
 }
 
