@@ -239,6 +239,7 @@ function Body({
         return (
             <InboxEditor
                 bankTransactions={query.data.items}
+                totalCount={query.data.totalCount}
                 catalog={catalog}
                 page={page}
                 onPageChange={onPageChange}
@@ -250,6 +251,7 @@ function Body({
     return (
         <ReadOnlyList
             bankTransactions={query.data.items}
+            totalCount={query.data.totalCount}
             catalog={catalog}
             page={page}
             onPageChange={onPageChange}
@@ -260,12 +262,14 @@ function Body({
 
 function ReadOnlyList({
     bankTransactions,
+    totalCount,
     catalog,
     page,
     onPageChange,
     onDismiss,
 }: {
     bankTransactions: BankTransaction[];
+    totalCount: number;
     catalog: CurrencyCatalog;
     page: number;
     onPageChange: (page: number) => void;
@@ -291,7 +295,7 @@ function ReadOnlyList({
             <Pagination
                 page={page}
                 pageSize={PAGE_SIZE}
-                count={bankTransactions.length}
+                totalCount={totalCount}
                 onPageChange={onPageChange}
             />
         </div>
@@ -431,12 +435,14 @@ function ReadOnlyActions({
 
 function InboxEditor({
     bankTransactions,
+    totalCount,
     catalog,
     page,
     onPageChange,
     onDismiss,
 }: {
     bankTransactions: BankTransaction[];
+    totalCount: number;
     catalog: CurrencyCatalog;
     page: number;
     onPageChange: (page: number) => void;
@@ -480,6 +486,7 @@ function InboxEditor({
     return (
         <InboxEditorReady
             bankTransactions={bankTransactions}
+            totalCount={totalCount}
             accounts={accounts.data}
             counterparties={counterparties.data}
             bankAccounts={bankAccounts.data}
@@ -493,6 +500,7 @@ function InboxEditor({
 
 function InboxEditorReady({
     bankTransactions,
+    totalCount,
     accounts,
     counterparties,
     bankAccounts,
@@ -502,6 +510,7 @@ function InboxEditorReady({
     onDismiss,
 }: {
     bankTransactions: BankTransaction[];
+    totalCount: number;
     accounts: Account[];
     counterparties: Counterparty[];
     bankAccounts: BankAccount[];
@@ -999,7 +1008,7 @@ function InboxEditorReady({
             <Pagination
                 page={page}
                 pageSize={PAGE_SIZE}
-                count={visibleBts.length}
+                totalCount={totalCount}
                 onPageChange={onPageChange}
             />
 
