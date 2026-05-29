@@ -15,12 +15,12 @@ import {
     allVisibleSelectionState,
     applyBulkPatchToOverride,
     buildRowRequest,
+    buildSuggestionOverride,
     clearVisibleSelection,
     collectNewCounterpartyNames,
     computeRangeSelection,
     distinctRowCurrencies,
     emptyDraft,
-    initialPrefill,
     isPristine,
     pickSuggestedAccountId,
     removeKeysFor,
@@ -30,11 +30,11 @@ import {
     selectAllVisible,
     setBulkDismissDrafts,
     toggleSelection,
-    withSuggestedAccount,
     type RowDraft,
     type SaveAllRow,
     type SaveAllAction,
 } from './bankTransactionsInbox.state';
+import type { SuggestedCounterAccount } from '../api/counterparties';
 
 const cpA = asCounterpartyId('11111111-1111-1111-1111-111111111111');
 const cpB = asCounterpartyId('22222222-2222-2222-2222-222222222222');
@@ -206,19 +206,6 @@ describe('pickSuggestedAccountId', () => {
     });
 });
 
-describe('withSuggestedAccount', () => {
-    it('fills the account when prefill has none', () => {
-        const updated = withSuggestedAccount(emptyDraft(), accGroceries);
-        expect(updated.accountId).toBe(accGroceries);
-    });
-
-    it('does not overwrite an existing account', () => {
-        const start: RowDraft = { ...emptyDraft(), accountId: accCurrent };
-        const updated = withSuggestedAccount(start, accGroceries);
-        expect(updated.accountId).toBe(accCurrent);
-    });
-});
-
 describe('collectNewCounterpartyNames', () => {
     it('returns each distinct (case-insensitive) name once, ignoring blank rows and existing-mode rows', () => {
         const drafts: RowDraft[] = [
@@ -237,30 +224,59 @@ describe('collectNewCounterpartyNames', () => {
     });
 });
 
-describe('initialPrefill', () => {
-    it('seeds counterpartyId from an IBAN match against BankAccounts', () => {
-        const bankAccounts: BankAccount[] = [
-            {
-                id: baExternal,
-                type: 'Current',
-                iban: 'NL00BANK1234567890',
-                accountNumber: null,
-                cardIdentifier: null,
-                bic: null,
-                bankName: null,
-                accountHolderName: null,
-                currencyCode: 'EUR',
-                importerKey: null,
-                accountId: null,
-                counterpartyId: cpB,
-            },
-        ];
-        const prefill = initialPrefill(bt(), bankAccounts);
-        expect(prefill).toEqual({
+describe('buildSuggestionOverride', () => {
+    const externalBankAccount: BankAccount = {
+        id: baExternal,
+        type: 'Current',
+        iban: 'NL00BANK1234567890',
+        accountNumber: null,
+        cardIdentifier: null,
+        bic: null,
+        bankName: null,
+        accountHolderName: null,
+        currencyCode: 'EUR',
+        importerKey: null,
+        accountId: null,
+        counterpartyId: cpB,
+    };
+
+    it('returns null when neither IBAN matches a CP nor a suggestion is available', () => {
+        const patch = buildSuggestionOverride(bt(), [], new Map(), new Map(), null);
+        expect(patch).toBeNull();
+    });
+
+    it('produces a CP-only patch when the IBAN matches but no account suggestion exists', () => {
+        const patch = buildSuggestionOverride(
+            bt(),
+            [externalBankAccount],
+            new Map(),
+            new Map(),
+            null,
+        );
+        expect(patch).toEqual({
             counterpartyMode: 'existing',
             counterpartyId: cpB,
             newCounterpartyName: '',
-            accountId: null,
+        });
+    });
+
+    it('combines the IBAN-matched CP with the picked last-used account', () => {
+        const suggestions = new Map<CounterpartyId, readonly SuggestedCounterAccount[]>([
+            [cpB, [{ accountId: accGroceries, amount: -100 }]],
+        ]);
+        const accountsById = new Map<AccountId, Account>([[accGroceries, account(accGroceries)]]);
+        const patch = buildSuggestionOverride(
+            bt(),
+            [externalBankAccount],
+            suggestions,
+            accountsById,
+            null,
+        );
+        expect(patch).toEqual({
+            counterpartyMode: 'existing',
+            counterpartyId: cpB,
+            newCounterpartyName: '',
+            accountId: accGroceries,
         });
     });
 });

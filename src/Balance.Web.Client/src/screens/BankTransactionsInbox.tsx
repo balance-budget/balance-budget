@@ -46,20 +46,19 @@ import { formatMoney } from '../lib/money';
 import {
     allVisibleSelectionState,
     applyBulkPatchToOverride,
+    buildSuggestionOverride,
     clearVisibleSelection,
     computeRangeSelection,
     distinctRowCurrencies,
     emptyDraft,
-    initialPrefill,
     isPristine,
-    pickSuggestedAccountId,
     removeKeysFor,
+    resolveCounterpartyByIban,
     rowStatus,
     runSaveAll,
     selectAllVisible,
     setBulkDismissDrafts,
     toggleSelection,
-    withSuggestedAccount,
     type AllVisibleSelectionState,
     type BulkApplyCounterparty,
     type BulkApplyInput,
@@ -549,13 +548,14 @@ function InboxEditorReady({
         [bankTransactions, savedIds],
     );
 
-    // Base prefill = IBAN-resolved counterparty + null account. Doesn't depend
-    // on the async per-CP suggestions, which keeps the cpId list below from
-    // becoming circular with the draft.
-    const basePrefillByBt = useMemo(() => {
-        const m = new Map<BankTransactionId, RowDraft>();
+    // Inbox-suggestion-gating amendment to ADR 0014: rows render pristine —
+    // no IBAN→counterparty pre-fill, no last-used-account pre-fill. The
+    // IBAN-resolved cp is still computed here so the suggestion queries can
+    // pre-warm the cache for the user's eventual "Apply suggestions" click.
+    const ibanResolvedCpByBt = useMemo(() => {
+        const m = new Map<BankTransactionId, CounterpartyId | null>();
         for (const bt of visibleBts) {
-            m.set(bt.id, initialPrefill(bt, bankAccounts));
+            m.set(bt.id, resolveCounterpartyByIban(bt.counterpartyAccountNumber, bankAccounts));
         }
         return m;
     }, [visibleBts, bankAccounts]);
@@ -572,12 +572,12 @@ function InboxEditorReady({
             } else if (override && 'counterpartyId' in override) {
                 cpId = override.counterpartyId ?? null;
             } else {
-                cpId = basePrefillByBt.get(bt.id)?.counterpartyId ?? null;
+                cpId = ibanResolvedCpByBt.get(bt.id) ?? null;
             }
             m.set(bt.id, cpId);
         }
         return m;
-    }, [visibleBts, userOverrides, basePrefillByBt]);
+    }, [visibleBts, userOverrides, ibanResolvedCpByBt]);
 
     // Dedupe to unique non-null cpIds — multiple rows often share the same
     // counterparty, and useQueries warns "Duplicate Queries found" (and churns
@@ -616,29 +616,17 @@ function InboxEditorReady({
         return m;
     }, [uniqueCpIds, suggestionQueries]);
 
-    // Final prefill = base + suggestion-derived account (if any).
+    // Prefill stays empty for every row — see the gating amendment to ADR
+    // 0014. The user's override layer is the only thing that fills the draft;
+    // until the user manually picks or clicks Apply suggestions on a
+    // selection, the row stays pristine and Save-all leaves it alone.
     const prefillByBt = useMemo(() => {
         const m = new Map<BankTransactionId, RowDraft>();
         for (const bt of visibleBts) {
-            const base = basePrefillByBt.get(bt.id);
-            if (!base) continue;
-            const cpId = cpIdByBt.get(bt.id) ?? null;
-            const data = cpId !== null ? suggestionsByCpId.get(cpId) : undefined;
-            if (!data) {
-                m.set(bt.id, base);
-                continue;
-            }
-            const ownBankSide = bankAccountsById.get(bt.bankAccountId)?.accountId ?? null;
-            const suggested = pickSuggestedAccountId(
-                data,
-                accountsById,
-                bt.money.currencyCode,
-                ownBankSide,
-            );
-            m.set(bt.id, withSuggestedAccount(base, suggested));
+            m.set(bt.id, emptyDraft());
         }
         return m;
-    }, [visibleBts, basePrefillByBt, cpIdByBt, suggestionsByCpId, accountsById, bankAccountsById]);
+    }, [visibleBts]);
 
     function draftFor(id: BankTransactionId): RowDraft {
         const prefill = prefillByBt.get(id) ?? emptyDraft();
@@ -731,6 +719,33 @@ function InboxEditorReady({
         // on those rows (issue #86).
         setDismissDrafts(prev => removeKeysFor(prev, targets));
         setRowErrors(prev => removeKeysFor(prev, targets));
+    }
+
+    function applyBulkSuggestions() {
+        const targets = visibleSelection();
+        if (targets.length === 0) return;
+        const touched: BankTransactionId[] = [];
+        setUserOverrides(prev => {
+            const next = new Map(prev);
+            for (const id of targets) {
+                const bt = visibleBts.find(b => b.id === id);
+                if (!bt) continue;
+                const ownBankSide = bankAccountsById.get(bt.bankAccountId)?.accountId ?? null;
+                const patch = buildSuggestionOverride(
+                    bt,
+                    bankAccounts,
+                    suggestionsByCpId,
+                    accountsById,
+                    ownBankSide,
+                );
+                if (patch === null) continue;
+                touched.push(id);
+                next.set(id, { ...(prev.get(id) ?? {}), ...patch });
+            }
+            return next;
+        });
+        setDismissDrafts(prev => removeKeysFor(prev, touched));
+        setRowErrors(prev => removeKeysFor(prev, touched));
     }
 
     function applyBulkDismiss(reason: string) {
@@ -952,6 +967,7 @@ function InboxEditorReady({
                         )}
                         saving={saving}
                         onApply={applyBulk}
+                        onApplySuggestions={applyBulkSuggestions}
                         onDismiss={() => {
                             setBulkDismissOpen(true);
                         }}
@@ -1144,6 +1160,7 @@ function BulkApplyFooter({
     accountItems,
     saving,
     onApply,
+    onApplySuggestions,
     onDismiss,
     onClear,
 }: {
@@ -1153,6 +1170,7 @@ function BulkApplyFooter({
     accountItems: ComboboxItem<AccountId>[];
     saving: boolean;
     onApply: (input: BulkApplyInput) => void;
+    onApplySuggestions: () => void;
     onDismiss: () => void;
     onClear: () => void;
 }) {
@@ -1231,6 +1249,15 @@ function BulkApplyFooter({
                     className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
                 >
                     Apply to {selectionCount.toString()} selected
+                </button>
+                <button
+                    type="button"
+                    onClick={onApplySuggestions}
+                    disabled={saving}
+                    title="Fill the selected rows with the IBAN-matched counterparty and the last-used account for that counterparty."
+                    className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-fg-1 border border-border-strong hover:bg-surface-2 disabled:opacity-60"
+                >
+                    Apply suggestions
                 </button>
                 <button
                     type="button"
