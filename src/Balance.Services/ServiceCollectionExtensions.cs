@@ -10,6 +10,7 @@ using Balance.Services.Currencies;
 using Balance.Services.Dashboard;
 using Balance.Services.Jobs;
 using Balance.Services.JournalEntries;
+using Balance.Services.Search;
 using FluentValidation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -53,6 +54,7 @@ public static class ServiceCollectionExtensions
             >()
             .AddScoped<IBankTransactionAttachService, BankTransactionAttachService>()
             .AddScoped<IJournalEntryService, JournalEntryService>()
+            .AddScoped<ISearchService, SearchService>()
             .AddScoped<IDashboardService, DashboardService>()
             .AddScoped<IDatabaseMaintenanceService, DatabaseMaintenanceService>()
             .AddSingleton(TimeProvider.System)
