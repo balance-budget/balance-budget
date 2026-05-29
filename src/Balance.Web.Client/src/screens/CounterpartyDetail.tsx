@@ -42,7 +42,7 @@ export function CounterpartyDetail({ id }: { id: CounterpartyId }) {
     return (
         <>
             <Panel>
-                <div className="flex items-start justify-between gap-3 mb-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between mb-4">
                     <div className="flex flex-col gap-[2px] min-w-0">
                         <Link
                             to="/settings/counterparties"
@@ -52,7 +52,7 @@ export function CounterpartyDetail({ id }: { id: CounterpartyId }) {
                         </Link>
                         <h1 className="text-[22px] font-medium text-fg-1 truncate">{cp.name}</h1>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2 lg:shrink-0">
                         <button
                             type="button"
                             onClick={() => {

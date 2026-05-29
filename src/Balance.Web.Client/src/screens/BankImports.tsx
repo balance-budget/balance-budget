@@ -1,18 +1,17 @@
 import { useId, useRef, useState } from 'react';
-import { useBankAccounts, useImportStatement, type BankAccount } from '../api/bankAccounts';
+import {
+    bankAccountTypeIcon,
+    formatBankAccountLabel,
+    formatBankAccountSubline,
+    useBankAccounts,
+    useImportStatement,
+    type BankAccount,
+} from '../api/bankAccounts';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { ApiError } from '../lib/http';
-
-function bankAccountLabel(ba: BankAccount): string {
-    return ba.bankName ?? ba.iban ?? ba.accountNumber ?? 'Bank account';
-}
-
-function bankAccountIdentifier(ba: BankAccount): string | null {
-    return ba.iban ?? ba.accountNumber;
-}
 
 type ImportFeedback =
     | { kind: 'success'; imported: number; skipped: number }
@@ -50,21 +49,20 @@ function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
         }
     }
 
-    const identifier = bankAccountIdentifier(bankAccount);
     const isUploading = importStatement.isPending;
 
     return (
         <div className="py-4 first:pt-0 last:pb-0 flex flex-col gap-2 border-b border-border-soft last:border-b-0">
             <div className="flex items-center gap-3">
                 <span className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-md bg-brand-primary-soft text-brand-primary">
-                    <Icon name="landmark" size={16} strokeWidth={2} />
+                    <Icon name={bankAccountTypeIcon(bankAccount.type)} size={16} strokeWidth={2} />
                 </span>
                 <div className="flex-1 min-w-0 flex flex-col leading-tight">
                     <span className="text-14 font-medium text-fg-1 truncate">
-                        {bankAccountLabel(bankAccount)}
+                        {formatBankAccountLabel(bankAccount)}
                     </span>
                     <span className="text-[12px] text-fg-3 truncate tabular">
-                        {identifier ? `${identifier} · ${bankAccount.currencyCode ?? '—'}` : '—'}
+                        {formatBankAccountSubline(bankAccount)}
                     </span>
                 </div>
                 <label

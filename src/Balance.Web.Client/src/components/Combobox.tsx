@@ -5,10 +5,43 @@ import {
     useMemo,
     useRef,
     useState,
+    type CSSProperties,
     type KeyboardEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
 import type { ReactNode } from 'react';
+
+const LISTBOX_MAX_HEIGHT = 256; // matches the design's max-h-64
+const LISTBOX_GAP = 4;
+const LISTBOX_DOWN_MIN_SPACE = 160; // prefer popping up when below has less than this
+
+/** Decide whether the listbox should drop down below the input or pop up above.
+ *  Pops up when the space below the anchor is too small to comfortably show a
+ *  useful slice of options *and* the space above is more generous — which is
+ *  exactly the situation the BulkApplyFooter at the bottom of the viewport
+ *  creates for its inline comboboxes. */
+function listboxStyle(anchorRect: DOMRect): CSSProperties {
+    const spaceBelow = window.innerHeight - anchorRect.bottom - LISTBOX_GAP;
+    const spaceAbove = anchorRect.top - LISTBOX_GAP;
+    const popUp = spaceBelow < LISTBOX_DOWN_MIN_SPACE && spaceAbove > spaceBelow;
+    const maxHeight = Math.min(LISTBOX_MAX_HEIGHT, popUp ? spaceAbove : spaceBelow);
+    if (popUp) {
+        return {
+            position: 'fixed',
+            bottom: window.innerHeight - anchorRect.top + LISTBOX_GAP,
+            left: anchorRect.left,
+            width: anchorRect.width,
+            maxHeight,
+        };
+    }
+    return {
+        position: 'fixed',
+        top: anchorRect.bottom + LISTBOX_GAP,
+        left: anchorRect.left,
+        width: anchorRect.width,
+        maxHeight,
+    };
+}
 import { Icon } from './Icon';
 import { cx } from '../lib/cx';
 import {
@@ -197,14 +230,9 @@ export function Combobox<T>({
                         ref={listboxRef}
                         id={listboxId}
                         role="listbox"
-                        style={{
-                            position: 'fixed',
-                            top: anchorRect.bottom + 4,
-                            left: anchorRect.left,
-                            width: anchorRect.width,
-                        }}
+                        style={listboxStyle(anchorRect)}
                         className={cx(
-                            'z-50 max-h-64 overflow-y-auto',
+                            'z-50 overflow-y-auto',
                             'rounded-sm bg-bg-1 border border-border-soft shadow-overlay text-[13px]',
                         )}
                     >

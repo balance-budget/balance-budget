@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { useBankAccounts, type BankAccount } from '../api/bankAccounts';
+import {
+    bankAccountTypeIcon,
+    formatBankAccountLabel,
+    formatBankAccountSubline,
+    useBankAccounts,
+    type BankAccount,
+} from '../api/bankAccounts';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Skeleton } from '../components/Skeleton';
@@ -79,14 +85,6 @@ function belongsTo(ba: BankAccount, owner: Owner): boolean {
 }
 
 function LinkedRow({ bankAccount }: { bankAccount: BankAccount }) {
-    const label =
-        bankAccount.bankName ??
-        bankAccount.iban ??
-        bankAccount.accountNumber ??
-        bankAccount.cardIdentifier ??
-        '—';
-    const identifier =
-        bankAccount.iban ?? bankAccount.accountNumber ?? bankAccount.cardIdentifier;
     return (
         <Link
             to="/settings/bank-accounts/$id"
@@ -94,13 +92,14 @@ function LinkedRow({ bankAccount }: { bankAccount: BankAccount }) {
             className="py-3 first:pt-0 flex items-center gap-3 hover:text-brand-primary border-b border-border-soft last:border-b-0"
         >
             <span className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-md bg-brand-primary-soft text-brand-primary">
-                <Icon name="landmark" size={16} strokeWidth={2} />
+                <Icon name={bankAccountTypeIcon(bankAccount.type)} size={16} strokeWidth={2} />
             </span>
             <div className="flex-1 min-w-0 flex flex-col leading-tight">
-                <span className="text-14 font-medium text-fg-1 truncate">{label}</span>
+                <span className="text-14 font-medium text-fg-1 truncate">
+                    {formatBankAccountLabel(bankAccount)}
+                </span>
                 <span className="text-[12px] text-fg-3 tabular truncate">
-                    {identifier ?? '—'}
-                    {bankAccount.currencyCode ? ` · ${bankAccount.currencyCode}` : ''}
+                    {formatBankAccountSubline(bankAccount)}
                 </span>
             </div>
             <Icon name="chevron-right" size={14} className="text-fg-3" />

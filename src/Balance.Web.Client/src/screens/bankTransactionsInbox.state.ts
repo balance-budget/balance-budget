@@ -66,21 +66,6 @@ export function resolveCounterpartyByIban(
     return null;
 }
 
-/** Build the initial server-derived prefill for a BT row: counterparty from
- *  IBAN match (if any), no account yet. The account is filled async once the
- *  per-counterparty suggestion query resolves — see `applyAccountSuggestion`. */
-export function initialPrefill(
-    bt: BankTransaction,
-    bankAccounts: readonly BankAccount[],
-): RowDraft {
-    return {
-        counterpartyMode: 'existing',
-        counterpartyId: resolveCounterpartyByIban(bt.counterpartyAccountNumber, bankAccounts),
-        newCounterpartyName: '',
-        accountId: null,
-    };
-}
-
 /** Pick the best suggested counter-side account for a single-line bulk row,
  *  honouring the per-row currency filter and excluding the BT's own bank-side
  *  account. Returns null when no suggestion fits. */
@@ -100,13 +85,40 @@ export function pickSuggestedAccountId(
     return null;
 }
 
-/** Update a prefill with the resolved suggested account. The bulk editor uses
- *  a single counter-line for the full BT amount, so we collapse the suggested
- *  set down to a single pick — splits land on the detail page. */
-export function withSuggestedAccount(prefill: RowDraft, accountId: AccountId | null): RowDraft {
-    if (accountId === null) return prefill;
-    if (prefill.accountId !== null) return prefill;
-    return { ...prefill, accountId };
+/** Build the per-row user-override patch produced by the "Apply suggestions"
+ *  action — IBAN→Counterparty exact match plus the last-used-Account heuristic,
+ *  combined into a single override the row gets layered on top of an empty
+ *  prefill. Returns null when neither the IBAN match nor the account
+ *  suggestion produced anything useful, so the caller can skip the row.
+ *
+ *  Per the inbox-suggestion-gating amendment to ADR 0014, this is only called
+ *  on user demand — not at render time. */
+export function buildSuggestionOverride(
+    bt: BankTransaction,
+    bankAccounts: readonly BankAccount[],
+    suggestionsByCpId: ReadonlyMap<CounterpartyId, readonly SuggestedCounterAccount[]>,
+    accountsById: ReadonlyMap<AccountId, Account>,
+    ownBankSideAccountId: AccountId | null,
+): Partial<RowDraft> | null {
+    const cpId = resolveCounterpartyByIban(bt.counterpartyAccountNumber, bankAccounts);
+    const suggestions = cpId !== null ? suggestionsByCpId.get(cpId) : undefined;
+    const accountId =
+        suggestions !== undefined
+            ? pickSuggestedAccountId(
+                  suggestions,
+                  accountsById,
+                  bt.money.currencyCode,
+                  ownBankSideAccountId,
+              )
+            : null;
+    if (cpId === null && accountId === null) return null;
+    const patch: Partial<RowDraft> = {
+        counterpartyMode: 'existing',
+        counterpartyId: cpId,
+        newCounterpartyName: '',
+    };
+    if (accountId !== null) patch.accountId = accountId;
+    return patch;
 }
 
 export function rowStatus(draft: RowDraft): RowStatus {

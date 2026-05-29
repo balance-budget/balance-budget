@@ -47,7 +47,7 @@ export function AccountDetail({ id }: { id: AccountId }) {
     return (
         <>
             <Panel>
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="flex items-center gap-3 min-w-0">
                         <AccountAvatar account={account} size="md" />
                         <div className="flex flex-col gap-[2px] min-w-0">
@@ -62,7 +62,7 @@ export function AccountDetail({ id }: { id: AccountId }) {
                             </span>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex items-center justify-between gap-3 lg:shrink-0">
                         <Amount
                             minor={account.balance.amount}
                             currencyCode={account.balance.currencyCode}
@@ -154,7 +154,7 @@ function RegisterTable({ account }: { account: Account }) {
 
     return (
         <div className="flex flex-col">
-            <div className="hidden md:grid grid-cols-[100px_1fr_180px_120px] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
+            <div className="hidden lg:grid grid-cols-[100px_1fr_180px_120px] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
                 <span>Date</span>
                 <span>Description</span>
                 <span>Counter</span>
@@ -206,7 +206,7 @@ function RegisterRowView({
             params={{ id: row.journalEntryId }}
             className="block border-b border-border-soft last:border-b-0 hover:bg-surface-2"
         >
-            <div className="hidden md:grid grid-cols-[100px_1fr_180px_120px] gap-3 items-center px-2 py-2">
+            <div className="hidden lg:grid grid-cols-[100px_1fr_180px_120px] gap-3 items-center px-2 py-2">
                 <span className="text-[12px] text-fg-3 tabular">{row.date}</span>
                 <div className="flex flex-col min-w-0">
                     <span className="text-[13px] text-fg-1 truncate">{heading}</span>
@@ -219,7 +219,7 @@ function RegisterRowView({
                 {counterLabel}
                 {amount}
             </div>
-            <div className="md:hidden flex flex-col gap-1 px-2 py-3">
+            <div className="lg:hidden flex flex-col gap-1 px-2 py-3">
                 <div className="flex items-center justify-between gap-3">
                     <span className="text-[12px] text-fg-3 tabular">{row.date}</span>
                     {amount}
