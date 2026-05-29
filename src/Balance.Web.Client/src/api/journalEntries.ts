@@ -12,11 +12,13 @@ import {
     asJournalLineId,
 } from '../lib/domain';
 import { deleteRequest, getJson, postJson, putJson } from '../lib/http';
+import type { Page } from '../lib/paging';
 
 type WireCreateRequest = components['schemas']['CreateJournalEntryRequest'];
 type WireReplaceRequest = components['schemas']['ReplaceJournalEntryRequest'];
 type WireEntry = components['schemas']['JournalEntryOutput'];
 type WireEntryDetail = components['schemas']['JournalEntryDetailOutput'];
+type WirePagedEntries = components['schemas']['PagedOutputOfJournalEntryOutput'];
 type WireLine = components['schemas']['JournalLineOutput'];
 type WireReconciliationStatus = components['schemas']['ReconciliationStatus'];
 
@@ -45,8 +47,8 @@ export type JournalEntryDetail = JournalEntry & {
 
 export const journalEntriesKeys = {
     all: ['journalEntries'] as const,
-    list: (skip: number, take: number) =>
-        [...journalEntriesKeys.all, 'list', { skip, take }] as const,
+    list: (skip: number, take: number, q: string, counterpartyId: CounterpartyId | null) =>
+        [...journalEntriesKeys.all, 'list', { skip, take, q, counterpartyId }] as const,
     detail: (id: JournalEntryId) => [...journalEntriesKeys.all, 'detail', id] as const,
 };
 
@@ -88,16 +90,31 @@ function toEntryDetail(wire: WireEntryDetail): JournalEntryDetail {
     };
 }
 
-export function useJournalEntries(skip: number, take: number) {
+export function useJournalEntries(
+    skip: number,
+    take: number,
+    q: string,
+    counterpartyId: CounterpartyId | null = null,
+) {
     return useQuery({
-        queryKey: journalEntriesKeys.list(skip, take),
-        queryFn: async ({ signal }) => {
-            const wire = await getJson<WireEntry[]>(
-                `/api/journal-entries?skip=${skip}&take=${take}`,
+        queryKey: journalEntriesKeys.list(skip, take, q, counterpartyId),
+        queryFn: async ({ signal }): Promise<Page<JournalEntry>> => {
+            const params = new URLSearchParams({ skip: String(skip), take: String(take) });
+            if (q !== '') {
+                params.set('q', q);
+            }
+            if (counterpartyId !== null) {
+                params.set('counterpartyId', counterpartyId);
+            }
+            const wire = await getJson<WirePagedEntries>(
+                `/api/journal-entries?${params.toString()}`,
                 signal,
                 'load journal entries',
             );
-            return wire.map(toEntry);
+            return {
+                items: wire.items.map(toEntry),
+                totalCount: Number(wire.totalCount),
+            };
         },
     });
 }

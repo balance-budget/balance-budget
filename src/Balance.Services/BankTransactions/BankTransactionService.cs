@@ -28,35 +28,54 @@ internal sealed class BankTransactionService : IBankTransactionService
         _timeProvider = timeProvider;
     }
 
-    public async Task<IReadOnlyList<BankTransactionOutput>> ListAsync(
+    public async Task<PagedOutput<BankTransactionOutput>> ListAsync(
         int skip,
         int take,
         BankTransactionListFilter filter,
+        string? search,
         CancellationToken cancellationToken
     )
     {
-        var query = _dbContext.BankTransactions.AsNoTracking().AsQueryable();
-
-        query = filter switch
+        IQueryable<BankTransaction> filtered = filter switch
         {
-            BankTransactionListFilter.Inbox => query
-                .Where(b => b.DismissedAt == null && b.JournalEntryId == null)
-                .OrderBy(b => b.BookingDate)
-                .ThenBy(b => b.CreatedAt),
-            BankTransactionListFilter.Matched => query
-                .Where(b => b.JournalEntryId != null)
-                .OrderByDescending(b => b.BookingDate)
-                .ThenByDescending(b => b.CreatedAt),
-            BankTransactionListFilter.Dismissed => query
-                .Where(b => b.DismissedAt != null)
-                .OrderByDescending(b => b.DismissedAt),
-            BankTransactionListFilter.All => query
-                .OrderByDescending(b => b.BookingDate)
-                .ThenByDescending(b => b.CreatedAt),
+            BankTransactionListFilter.Inbox => _dbContext.BankTransactions.Where(b =>
+                b.DismissedAt == null && b.JournalEntryId == null
+            ),
+            BankTransactionListFilter.Matched => _dbContext.BankTransactions.Where(b =>
+                b.JournalEntryId != null
+            ),
+            BankTransactionListFilter.Dismissed => _dbContext.BankTransactions.Where(b =>
+                b.DismissedAt != null
+            ),
+            BankTransactionListFilter.All => _dbContext.BankTransactions,
             _ => throw new ArgumentOutOfRangeException(nameof(filter), filter, null),
         };
 
-        var rows = await query
+        var needle = search?.Trim();
+        if (!string.IsNullOrEmpty(needle))
+        {
+            filtered = filtered.Where(b =>
+                EF.Functions.Like(b.Description, $"%{needle}%")
+                || (
+                    b.CounterpartyName != null
+                    && EF.Functions.Like(b.CounterpartyName, $"%{needle}%")
+                )
+            );
+        }
+
+        var totalCount = await filtered.CountAsync(cancellationToken);
+
+        var ordered = filter switch
+        {
+            BankTransactionListFilter.Inbox => filtered
+                .OrderBy(b => b.BookingDate)
+                .ThenBy(b => b.CreatedAt),
+            BankTransactionListFilter.Dismissed => filtered.OrderByDescending(b => b.DismissedAt),
+            _ => filtered.OrderByDescending(b => b.BookingDate).ThenByDescending(b => b.CreatedAt),
+        };
+
+        var rows = await ordered
+            .AsNoTracking()
             .Skip(skip)
             .Take(take)
             .Select(b => new BankTransactionOutput(
@@ -87,7 +106,7 @@ internal sealed class BankTransactionService : IBankTransactionService
         // filters either show already-categorised rows or dismissed rows). Compute the predicate
         // per row via the attach service so the 7-condition logic lives in one place.
         if (filter != BankTransactionListFilter.Inbox || rows.Count == 0)
-            return rows;
+            return new PagedOutput<BankTransactionOutput>(rows, totalCount);
 
         var withHints = new List<BankTransactionOutput>(rows.Count);
         foreach (var row in rows)
@@ -95,7 +114,7 @@ internal sealed class BankTransactionService : IBankTransactionService
             var hint = await _attachService.ComputeHintAsync(row.Id, cancellationToken);
             withHints.Add(row with { MatchingJournalEntry = hint });
         }
-        return withHints;
+        return new PagedOutput<BankTransactionOutput>(withHints, totalCount);
     }
 
     public async Task<Result<BankTransactionDetailOutput>> GetAsync(

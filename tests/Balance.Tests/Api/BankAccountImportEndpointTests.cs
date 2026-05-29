@@ -208,10 +208,8 @@ internal sealed class BankAccountImportEndpointTests : EndpointsTestsBase
                 new Uri($"/api/bank-transactions?skip={skip}&take=200&filter=All", UriKind.Relative)
             );
             await Assert.That(listResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
-            var page = await listResponse.Content.ReadFromJsonAsync<
-                IReadOnlyList<BankTransactionDto>
-            >();
-            if (page is null || page.Count == 0)
+            var page = await listResponse.Content.ReadPagedItemsAsync<BankTransactionDto>();
+            if (page.Count == 0)
                 break;
             rows.AddRange(page.Where(r => r.BankAccountId == bankAccount.Id));
             if (page.Count < 200)
@@ -273,13 +271,11 @@ internal sealed class BankAccountImportEndpointTests : EndpointsTestsBase
         using var listResponse = await client.GetAsync(
             new Uri($"/api/bank-transactions?skip=0&take=200&filter=All", UriKind.Relative)
         );
-        var listRows = await listResponse.Content.ReadFromJsonAsync<
-            IReadOnlyList<BankTransactionDto>
-        >();
-        var sepa = listRows!.Single(r =>
+        var listRows = await listResponse.Content.ReadPagedItemsAsync<BankTransactionDto>();
+        var sepa = listRows.Single(r =>
             r.BankAccountId == bankAccount.Id && r.Description == "SpotifyNL P0102A103D"
         );
-        var fx = listRows!.Single(r =>
+        var fx = listRows.Single(r =>
             r.BankAccountId == bankAccount.Id && r.Description == "ATM Belarus"
         );
 

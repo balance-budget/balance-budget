@@ -146,7 +146,7 @@ function RegisterTable({ account }: { account: Account }) {
         );
     }
 
-    if (register.data.length === 0) {
+    if (register.data.items.length === 0) {
         return (
             <div className="py-6 text-center text-[13px] text-fg-3">No journal entries yet.</div>
         );
@@ -160,12 +160,13 @@ function RegisterTable({ account }: { account: Account }) {
                 <span>Counter</span>
                 <span className="text-right">Amount</span>
             </div>
-            {register.data.map(row => (
+            {register.data.items.map(row => (
                 <RegisterRowView key={row.journalLineId} row={row} catalog={catalog} />
             ))}
-            {register.data.length === REGISTER_PAGE_SIZE && (
+            {register.data.totalCount > REGISTER_PAGE_SIZE && (
                 <p className="pt-3 text-center text-[12px] text-fg-3">
-                    Showing the most recent {REGISTER_PAGE_SIZE} entries.
+                    Showing the most recent {REGISTER_PAGE_SIZE} of {register.data.totalCount}{' '}
+                    entries.
                 </p>
             )}
         </div>

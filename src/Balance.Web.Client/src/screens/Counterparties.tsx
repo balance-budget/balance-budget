@@ -126,7 +126,8 @@ function CounterpartyRow({
     return (
         <div className="py-3 first:pt-0 last:pb-0 flex items-center gap-3 border-b border-border-soft last:border-b-0">
             <Link
-                to="/settings/counterparties/$id"
+                to="/counterparties/$id"
+                search={{ page: 1 }}
                 params={{ id: counterparty.id }}
                 className="flex-1 min-w-0 text-14 font-medium text-fg-1 hover:text-brand-primary truncate"
             >

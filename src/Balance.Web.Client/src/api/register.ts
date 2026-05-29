@@ -12,9 +12,11 @@ import {
 } from '../lib/domain';
 import { getJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
+import type { Page } from '../lib/paging';
 import { accountsKeys } from './accounts';
 
 type WireRegisterRow = components['schemas']['RegisterRowOutput'];
+type WirePagedRegisterRows = components['schemas']['PagedOutputOfRegisterRowOutput'];
 type WireCounterLeg = components['schemas']['RegisterRowCounterLeg'];
 
 export type ReconciliationStatus = 'Uncleared' | 'Cleared' | 'Reconciled';
@@ -49,8 +51,8 @@ function fetchRegister(
     skip: number,
     take: number,
     signal: AbortSignal,
-): Promise<WireRegisterRow[]> {
-    return getJson<WireRegisterRow[]>(
+): Promise<WirePagedRegisterRows> {
+    return getJson<WirePagedRegisterRows>(
         `/api/accounts/${accountId}/register?skip=${skip}&take=${take}`,
         signal,
         'load register',
@@ -84,9 +86,12 @@ function toRegisterRow(wire: WireRegisterRow): RegisterRow {
 export function useAccountRegister(accountId: AccountId, skip: number, take: number) {
     return useQuery({
         queryKey: registerKeys.list(accountId, skip, take),
-        queryFn: async ({ signal }) => {
+        queryFn: async ({ signal }): Promise<Page<RegisterRow>> => {
             const wire = await fetchRegister(accountId, skip, take, signal);
-            return wire.map(toRegisterRow);
+            return {
+                items: wire.items.map(toRegisterRow),
+                totalCount: Number(wire.totalCount),
+            };
         },
     });
 }

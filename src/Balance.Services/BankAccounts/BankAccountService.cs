@@ -29,10 +29,9 @@ internal sealed class BankAccountService : IBankAccountService
         _timeProvider = timeProvider;
     }
 
-    public async Task<IReadOnlyList<BankAccountOutput>> ListAsync(
-        CancellationToken cancellationToken
-    ) =>
-        await _dbContext
+    public async Task<PagedOutput<BankAccountOutput>> ListAsync(CancellationToken cancellationToken)
+    {
+        var items = await _dbContext
             .BankAccounts.OrderBy(b => b.CreatedAt)
             .Select(b => new BankAccountOutput(
                 b.Id,
@@ -51,6 +50,8 @@ internal sealed class BankAccountService : IBankAccountService
                 b.UpdatedAt
             ))
             .ToListAsync(cancellationToken);
+        return new PagedOutput<BankAccountOutput>(items, items.Count);
+    }
 
     public async Task<Result<BankAccountOutput>> GetAsync(
         BankAccountId id,

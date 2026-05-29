@@ -10,8 +10,10 @@ import {
 } from '../lib/domain';
 import { getJson, postJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
+import type { Page } from '../lib/paging';
 
 type WireBankTransaction = components['schemas']['BankTransactionOutput'];
+type WirePagedBankTransactions = components['schemas']['PagedOutputOfBankTransactionOutput'];
 type WireBankTransactionDetail = components['schemas']['BankTransactionDetailOutput'];
 type WireBankTransactionMetadataEntry = components['schemas']['BankTransactionMetadataEntryOutput'];
 type WireCategorizeRequest = components['schemas']['CategorizeBankTransactionRequest'];
@@ -81,8 +83,8 @@ export type BankTransactionDetail = BankTransaction & {
 
 export const bankTransactionsKeys = {
     all: ['bank-transactions'] as const,
-    list: (skip: number, take: number, filter: BankTransactionFilter) =>
-        [...bankTransactionsKeys.all, 'list', { skip, take, filter }] as const,
+    list: (skip: number, take: number, filter: BankTransactionFilter, q: string) =>
+        [...bankTransactionsKeys.all, 'list', { skip, take, filter, q }] as const,
     detail: (id: BankTransactionId) => [...bankTransactionsKeys.all, 'detail', id] as const,
 };
 
@@ -148,16 +150,32 @@ export function toBankTransactionDetail(wire: WireBankTransactionDetail): BankTr
     };
 }
 
-export function useBankTransactions(skip: number, take: number, filter: BankTransactionFilter) {
+export function useBankTransactions(
+    skip: number,
+    take: number,
+    filter: BankTransactionFilter,
+    q: string,
+) {
     return useQuery({
-        queryKey: bankTransactionsKeys.list(skip, take, filter),
-        queryFn: async ({ signal }) => {
-            const wire = await getJson<WireBankTransaction[]>(
-                `/api/bank-transactions?skip=${skip}&take=${take}&filter=${filter}`,
+        queryKey: bankTransactionsKeys.list(skip, take, filter, q),
+        queryFn: async ({ signal }): Promise<Page<BankTransaction>> => {
+            const params = new URLSearchParams({
+                skip: String(skip),
+                take: String(take),
+                filter,
+            });
+            if (q !== '') {
+                params.set('q', q);
+            }
+            const wire = await getJson<WirePagedBankTransactions>(
+                `/api/bank-transactions?${params.toString()}`,
                 signal,
                 'load bank transactions',
             );
-            return wire.map(toBankTransaction);
+            return {
+                items: wire.items.map(toBankTransaction),
+                totalCount: Number(wire.totalCount),
+            };
         },
     });
 }

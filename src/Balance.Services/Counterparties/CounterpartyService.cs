@@ -18,13 +18,16 @@ internal sealed class CounterpartyService : ICounterpartyService
         _timeProvider = timeProvider;
     }
 
-    public async Task<IReadOnlyList<CounterpartyOutput>> ListAsync(
+    public async Task<PagedOutput<CounterpartyOutput>> ListAsync(
         CancellationToken cancellationToken
-    ) =>
-        await _dbContext
+    )
+    {
+        var items = await _dbContext
             .Counterparties.OrderBy(c => c.Name)
             .Select(c => new CounterpartyOutput(c.Id, c.Name, c.CreatedAt, c.UpdatedAt))
             .ToListAsync(cancellationToken);
+        return new PagedOutput<CounterpartyOutput>(items, items.Count);
+    }
 
     public async Task<Result<CounterpartyOutput>> GetAsync(
         CounterpartyId id,

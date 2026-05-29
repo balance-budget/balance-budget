@@ -196,7 +196,7 @@ function DetailHeader({
             <div className="flex flex-col gap-[2px] min-w-0">
                 <Link
                     to="/journal"
-                    search={{ page: 1 }}
+                    search={{ page: 1, q: '' }}
                     className="text-[12px] text-fg-3 hover:text-fg-1 inline-flex items-center gap-1"
                 >
                     ← Journal entries
@@ -794,7 +794,7 @@ function DeleteJournalEntryDialog({
         try {
             await del.mutateAsync(entry.id);
             toast.success(`Deleted journal entry “${label}”.`);
-            await navigate({ to: '/journal', search: { page: 1 } });
+            await navigate({ to: '/journal', search: { page: 1, q: '' } });
         } catch (err) {
             if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
                 setError(err.message);

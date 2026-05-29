@@ -21,8 +21,133 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
         );
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-        var list = await response.Content.ReadFromJsonAsync<IReadOnlyList<JournalEntryDto>>();
+        var list = await response.Content.ReadPagedItemsAsync<JournalEntryDto>();
         await Assert.That(list).IsNotNull();
+    }
+
+    [Test]
+    public async Task ListJournalEntries_q_filters_by_description_case_insensitive()
+    {
+        using var client = Factory.CreateClient();
+        var groceries = await CreateAccountAsync(
+            client,
+            $"Groceries-Search-{Guid.NewGuid():N}",
+            "Expense"
+        );
+        var checking = await CreateAccountAsync(
+            client,
+            $"Checking-Search-{Guid.NewGuid():N}",
+            "Asset"
+        );
+
+        await PostJeAsync(
+            client,
+            new CreateJournalEntryRequestDto(
+                Date: new DateOnly(2026, 1, 1),
+                Description: "Albert Heijn weekly shop",
+                CounterpartyId: null,
+                Lines:
+                [
+                    new CreateJournalLineRequestDto(groceries.Id, 1000, null),
+                    new CreateJournalLineRequestDto(checking.Id, -1000, null),
+                ]
+            )
+        );
+        await PostJeAsync(
+            client,
+            new CreateJournalEntryRequestDto(
+                Date: new DateOnly(2026, 1, 2),
+                Description: "Vattenfall energy",
+                CounterpartyId: null,
+                Lines:
+                [
+                    new CreateJournalLineRequestDto(groceries.Id, 2000, null),
+                    new CreateJournalLineRequestDto(checking.Id, -2000, null),
+                ]
+            )
+        );
+
+        using var filtered = await client.GetAsync(
+            new Uri("/api/journal-entries?q=albert", UriKind.Relative)
+        );
+        var rows = await filtered.Content.ReadPagedItemsAsync<JournalEntryDto>();
+        await Assert.That(rows.Count).IsEqualTo(1);
+        await Assert.That(rows[0].Description).IsEqualTo("Albert Heijn weekly shop");
+    }
+
+    [Test]
+    public async Task ListJournalEntries_counterpartyId_filters_to_that_counterparty()
+    {
+        using var client = Factory.CreateClient();
+        var expense = await CreateAccountAsync(client, $"E-{Guid.NewGuid():N}", "Expense");
+        var checking = await CreateAccountAsync(client, $"C-{Guid.NewGuid():N}", "Asset");
+        var alice = await PostCounterpartyAsync(client, $"Alice-{Guid.NewGuid():N}");
+        var bob = await PostCounterpartyAsync(client, $"Bob-{Guid.NewGuid():N}");
+
+        await PostJeAsync(
+            client,
+            new CreateJournalEntryRequestDto(
+                Date: new DateOnly(2026, 1, 1),
+                Description: "From Alice",
+                CounterpartyId: alice.Id,
+                Lines:
+                [
+                    new CreateJournalLineRequestDto(expense.Id, 1000, null),
+                    new CreateJournalLineRequestDto(checking.Id, -1000, null),
+                ]
+            )
+        );
+        await PostJeAsync(
+            client,
+            new CreateJournalEntryRequestDto(
+                Date: new DateOnly(2026, 1, 2),
+                Description: "From Bob",
+                CounterpartyId: bob.Id,
+                Lines:
+                [
+                    new CreateJournalLineRequestDto(expense.Id, 2000, null),
+                    new CreateJournalLineRequestDto(checking.Id, -2000, null),
+                ]
+            )
+        );
+
+        using var response = await client.GetAsync(
+            new Uri($"/api/journal-entries?counterpartyId={alice.Id}", UriKind.Relative)
+        );
+        var rows = await response.Content.ReadPagedItemsAsync<JournalEntryDto>();
+        await Assert.That(rows.Count).IsEqualTo(1);
+        await Assert.That(rows[0].Description).IsEqualTo("From Alice");
+    }
+
+    [Test]
+    public async Task ListJournalEntries_q_above_max_length_returns_400()
+    {
+        using var client = Factory.CreateClient();
+        var tooLong = new string('a', 201);
+        using var response = await client.GetAsync(
+            new Uri($"/api/journal-entries?q={tooLong}", UriKind.Relative)
+        );
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+    }
+
+    private static async Task PostJeAsync(HttpClient client, CreateJournalEntryRequestDto request)
+    {
+        using var response = await client.PostAsJsonAsync(
+            new Uri("/api/journal-entries", UriKind.Relative),
+            request
+        );
+        response.EnsureSuccessStatusCode();
+    }
+
+    private static async Task<CounterpartyDto> PostCounterpartyAsync(HttpClient client, string name)
+    {
+        using var response = await client.PostAsJsonAsync(
+            new Uri("/api/counterparties", UriKind.Relative),
+            new CreateCounterpartyRequestDto(name)
+        );
+        response.EnsureSuccessStatusCode();
+        var dto = await response.Content.ReadFromJsonAsync<CounterpartyDto>();
+        return dto ?? throw new InvalidOperationException("Counterparty create returned no body.");
     }
 
     [Test]

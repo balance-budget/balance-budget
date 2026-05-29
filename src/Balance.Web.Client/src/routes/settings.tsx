@@ -7,14 +7,9 @@ export const Route = createFileRoute('/settings')({
 });
 
 const SUB_NAV: {
-    to:
-        | '/settings/counterparties'
-        | '/settings/bank-accounts'
-        | '/settings/users'
-        | '/settings/tokens';
+    to: '/settings/bank-accounts' | '/settings/users' | '/settings/tokens';
     label: string;
 }[] = [
-    { to: '/settings/counterparties', label: 'Counterparties' },
     { to: '/settings/bank-accounts', label: 'Bank accounts' },
     { to: '/settings/users', label: 'Users' },
     { to: '/settings/tokens', label: 'API tokens' },

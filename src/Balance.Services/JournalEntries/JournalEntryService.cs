@@ -21,19 +21,36 @@ internal sealed class JournalEntryService : IJournalEntryService
         _timeProvider = timeProvider;
     }
 
-    public async Task<IReadOnlyList<JournalEntryOutput>> ListAsync(
+    public async Task<PagedOutput<JournalEntryOutput>> ListAsync(
         int skip,
         int take,
+        string? search,
+        CounterpartyId? counterpartyId,
         CancellationToken cancellationToken
     )
     {
-        var page = _dbContext
-            .JournalEntries.AsNoTracking()
+        IQueryable<JournalEntry> filtered = _dbContext.JournalEntries;
+        if (counterpartyId is not null)
+        {
+            filtered = filtered.Where(e => e.CounterpartyId == counterpartyId);
+        }
+        var needle = search?.Trim();
+        if (!string.IsNullOrEmpty(needle))
+        {
+            filtered = filtered.Where(e =>
+                e.Description != null && EF.Functions.Like(e.Description, $"%{needle}%")
+            );
+        }
+
+        var totalCount = await filtered.CountAsync(cancellationToken);
+        var page = filtered
+            .AsNoTracking()
             .OrderByDescending(e => e.Date)
             .ThenByDescending(e => e.CreatedAt)
             .Skip(skip)
             .Take(take);
-        return await ProjectListOutput(_dbContext, page).ToListAsync(cancellationToken);
+        var items = await ProjectListOutput(_dbContext, page).ToListAsync(cancellationToken);
+        return new PagedOutput<JournalEntryOutput>(items, totalCount);
     }
 
     public async Task<Result<JournalEntryDetailOutput>> GetAsync(
