@@ -394,7 +394,7 @@ function HeaderInputs({
     fieldErrors: FieldErrors | null;
 }) {
     return (
-        <div className="grid grid-cols-[140px_1fr_minmax(220px,300px)] gap-3">
+        <div className="grid grid-cols-1 lg:grid-cols-[140px_1fr_minmax(220px,300px)] gap-3">
             <label className="flex flex-col gap-1">
                 <span className="text-[12px] font-medium text-fg-2">Date</span>
                 <input
@@ -546,7 +546,7 @@ function Lines({
 
     return (
         <div className="flex flex-col">
-            <div className="grid grid-cols-[1fr_140px_minmax(140px,1fr)_32px] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
+            <div className="hidden lg:grid grid-cols-[1fr_140px_minmax(140px,1fr)_32px] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
                 <span>Account</span>
                 <span className="text-right">Amount</span>
                 <span>Description</span>
@@ -597,7 +597,7 @@ function LineRow({
     onRemove: (index: number) => void;
 }) {
     return (
-        <div className="grid grid-cols-[1fr_140px_minmax(140px,1fr)_32px] gap-3 items-start px-2 py-2 border-b border-border-soft last:border-b-0">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_140px_minmax(140px,1fr)_32px] gap-3 items-start px-2 py-2 border-b border-border-soft last:border-b-0">
             <div className="flex flex-col gap-1">
                 <AccountPicker
                     value={line.accountId}
@@ -640,7 +640,7 @@ function LineRow({
                 }}
                 disabled={!canRemove}
                 title="Remove this line"
-                className="self-start mt-[6px] p-1 text-fg-3 hover:text-danger disabled:opacity-40 disabled:cursor-not-allowed"
+                className="self-end lg:self-start mt-[6px] p-1 text-fg-3 hover:text-danger disabled:opacity-40 disabled:cursor-not-allowed"
             >
                 <Icon name="trash" size={14} strokeWidth={2} />
             </button>

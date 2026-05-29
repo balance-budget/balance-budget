@@ -192,7 +192,7 @@ function DetailHeader({
     onDelete: () => void;
 }) {
     return (
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex flex-col gap-[2px] min-w-0">
                 <Link
                     to="/journal"
@@ -220,7 +220,7 @@ function DetailHeader({
                 </span>
                 <FromToSummary projection={projection} lineCount={entry.lines.length} />
             </div>
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center justify-between gap-3 lg:shrink-0">
                 <HeaderAmount projection={projection} />
                 <div className="flex items-center gap-2">
                     <button
@@ -296,7 +296,7 @@ function LineTable({ entry, projection }: { entry: JournalEntry; projection: Jou
     const catalog = useCurrencyCatalog();
     return (
         <div className="flex flex-col">
-            <div className="grid grid-cols-[1fr_120px_120px_140px_minmax(120px,1.4fr)] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
+            <div className="hidden lg:grid grid-cols-[1fr_120px_120px_140px_minmax(120px,1.4fr)] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
                 <span>Account</span>
                 <span className="text-right">Debit</span>
                 <span className="text-right">Credit</span>
@@ -326,17 +326,35 @@ function LineRow({
 }) {
     const isDebit = line.amount > 0;
     const magnitude = Math.abs(line.amount);
+    const moneyStr = formatMoney(magnitude, currencyCode, catalog);
     return (
-        <div className="grid grid-cols-[1fr_120px_120px_140px_minmax(120px,1.4fr)] gap-3 items-center px-2 py-2 border-b border-border-soft last:border-b-0">
-            <span className="text-[13px] text-fg-1 truncate">{line.accountName}</span>
-            <span className="font-mono text-[13px] tabular text-right text-fg-1">
-                {isDebit ? formatMoney(magnitude, currencyCode, catalog) : ''}
-            </span>
-            <span className="font-mono text-[13px] tabular text-right text-fg-1">
-                {!isDebit ? formatMoney(magnitude, currencyCode, catalog) : ''}
-            </span>
-            <ReconciliationChip status={line.reconciliationStatus} />
-            <span className="text-[12px] text-fg-3 truncate">{line.description ?? ''}</span>
+        <div className="border-b border-border-soft last:border-b-0">
+            <div className="hidden lg:grid grid-cols-[1fr_120px_120px_140px_minmax(120px,1.4fr)] gap-3 items-center px-2 py-2">
+                <span className="text-[13px] text-fg-1 truncate">{line.accountName}</span>
+                <span className="font-mono text-[13px] tabular text-right text-fg-1">
+                    {isDebit ? moneyStr : ''}
+                </span>
+                <span className="font-mono text-[13px] tabular text-right text-fg-1">
+                    {!isDebit ? moneyStr : ''}
+                </span>
+                <ReconciliationChip status={line.reconciliationStatus} />
+                <span className="text-[12px] text-fg-3 truncate">{line.description ?? ''}</span>
+            </div>
+            <div className="lg:hidden flex flex-col gap-1 px-2 py-3">
+                <div className="flex items-baseline justify-between gap-3">
+                    <span className="text-[13px] text-fg-1 truncate">{line.accountName}</span>
+                    <span className="font-mono text-[13px] tabular shrink-0 text-fg-1">
+                        {isDebit ? 'Dr ' : 'Cr '}
+                        {moneyStr}
+                    </span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                    <ReconciliationChip status={line.reconciliationStatus} />
+                    {line.description ? (
+                        <span className="text-[12px] text-fg-3 truncate">{line.description}</span>
+                    ) : null}
+                </div>
+            </div>
         </div>
     );
 }
@@ -488,7 +506,7 @@ function EditJournalEntry({
                     subtitle="Cleared and Reconciled lines are frozen — only their description can be edited."
                 />
                 <FormErrorBanner message={topError} />
-                <div className="grid grid-cols-[140px_1fr_minmax(180px,260px)] gap-3 mb-4">
+                <div className="grid grid-cols-1 lg:grid-cols-[140px_1fr_minmax(180px,260px)] gap-3 mb-4">
                     <label className="flex flex-col gap-1">
                         <span className="text-[12px] font-medium text-fg-2">Date</span>
                         <input
@@ -585,7 +603,7 @@ function EditLines({
 }) {
     return (
         <div className="flex flex-col">
-            <div className="grid grid-cols-[1fr_90px_140px_140px_minmax(140px,1fr)_32px] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
+            <div className="hidden lg:grid grid-cols-[1fr_90px_140px_140px_minmax(140px,1fr)_32px] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
                 <span>Account</span>
                 <span>Side</span>
                 <span className="text-right">Amount</span>
@@ -647,7 +665,7 @@ function EditLineRow({
         [accounts, line.accountId],
     );
     return (
-        <div className="grid grid-cols-[1fr_90px_140px_140px_minmax(140px,1fr)_32px] gap-3 items-start px-2 py-2 border-b border-border-soft last:border-b-0">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_90px_140px_140px_minmax(140px,1fr)_32px] gap-3 items-start px-2 py-2 border-b border-border-soft last:border-b-0">
             <div className="flex flex-col gap-1">
                 {locked ? (
                     <span
@@ -714,7 +732,7 @@ function EditLineRow({
                 }}
                 disabled={locked}
                 title={locked ? 'Frozen — line cannot be removed' : 'Remove this line'}
-                className="self-start mt-[6px] p-1 text-fg-3 hover:text-danger disabled:opacity-40 disabled:cursor-not-allowed"
+                className="self-end lg:self-start mt-[6px] p-1 text-fg-3 hover:text-danger disabled:opacity-40 disabled:cursor-not-allowed"
             >
                 <Icon name="trash" size={14} strokeWidth={2} />
             </button>

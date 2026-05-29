@@ -247,7 +247,7 @@ export function BankAccountDetail({ id }: { id: BankAccountId }) {
     return (
         <>
             <Panel>
-                <div className="flex items-start justify-between gap-3 mb-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between mb-4">
                     <div className="flex flex-col gap-[2px] min-w-0">
                         <Link
                             to="/settings/bank-accounts"
@@ -260,7 +260,7 @@ export function BankAccountDetail({ id }: { id: BankAccountId }) {
                             {formatBankAccountLabel(ba)}
                         </h1>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2 lg:shrink-0">
                         <button
                             type="button"
                             onClick={() => {
@@ -309,7 +309,7 @@ export function BankAccountDetail({ id }: { id: BankAccountId }) {
 
 function BankAccountDetails({ bankAccount }: { bankAccount: BankAccount }) {
     return (
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-[13px]">
+        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-[13px]">
             <Field label="Type" value={bankAccount.type} />
             <Field label="IBAN" value={bankAccount.iban} />
             <Field label="Account number" value={bankAccount.accountNumber} />
