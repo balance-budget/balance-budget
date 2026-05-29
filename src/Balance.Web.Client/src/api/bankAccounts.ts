@@ -12,6 +12,7 @@ import {
 import { deleteRequest, getJson, patchJson, postFormData, postJson } from '../lib/http';
 
 type WireBankAccount = components['schemas']['BankAccountOutput'];
+type WirePagedBankAccounts = components['schemas']['PagedOutputOfBankAccountOutput'];
 type WireBankAccountImporter = components['schemas']['BankAccountImporterOutput'];
 type WireCreateRequest = components['schemas']['CreateBankAccountRequest'];
 type WireUpdateInput = components['schemas']['UpdateBankAccountInput'];
@@ -82,8 +83,13 @@ export const bankAccountsKeys = {
     importers: () => [...bankAccountsKeys.all, 'importers'] as const,
 };
 
-function fetchBankAccounts(signal: AbortSignal): Promise<WireBankAccount[]> {
-    return getJson<WireBankAccount[]>('/api/bank-accounts', signal, 'load bank accounts');
+async function fetchBankAccounts(signal: AbortSignal): Promise<WireBankAccount[]> {
+    const wire = await getJson<WirePagedBankAccounts>(
+        '/api/bank-accounts',
+        signal,
+        'load bank accounts',
+    );
+    return wire.items;
 }
 
 function toBankAccount(wire: WireBankAccount): BankAccount {

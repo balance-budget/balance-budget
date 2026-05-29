@@ -42,7 +42,7 @@ internal static class BankAccountEndpoints
             .WithName("ImportBankAccountStatement");
     }
 
-    private static async Task<Ok<IReadOnlyList<BankAccountOutput>>> ListAsync(
+    private static async Task<Ok<PagedOutput<BankAccountOutput>>> ListAsync(
         [FromServices] IBankAccountService bankAccountService,
         CancellationToken cancellationToken
     )

@@ -62,7 +62,7 @@ function RecentActivity({ account }: { account: Account }) {
         );
     }
 
-    const rows = register.data;
+    const rows = register.data.items;
     if (rows.length === 0) {
         return null;
     }

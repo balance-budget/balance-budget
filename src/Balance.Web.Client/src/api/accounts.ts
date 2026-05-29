@@ -6,6 +6,7 @@ import { deleteRequest, getJson, patchJson, postJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
 
 type WireAccount = components['schemas']['AccountOutput'];
+type WirePagedAccounts = components['schemas']['PagedOutputOfAccountOutput'];
 type WireBankAccountSummary = components['schemas']['BankAccountSummary'];
 type WireCreateRequest = components['schemas']['CreateAccountRequest'];
 type WireUpdateInput = components['schemas']['UpdateAccountInput'];
@@ -34,8 +35,9 @@ export const accountsKeys = {
     detail: (id: AccountId) => [...accountsKeys.all, 'detail', id] as const,
 };
 
-function fetchAccounts(signal: AbortSignal): Promise<WireAccount[]> {
-    return getJson<WireAccount[]>('/api/accounts', signal, 'load accounts');
+async function fetchAccounts(signal: AbortSignal): Promise<WireAccount[]> {
+    const wire = await getJson<WirePagedAccounts>('/api/accounts', signal, 'load accounts');
+    return wire.items;
 }
 
 function toBankAccountSummary(wire: WireBankAccountSummary | null): BankAccountSummary | null {

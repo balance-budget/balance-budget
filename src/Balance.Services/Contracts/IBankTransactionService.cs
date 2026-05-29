@@ -4,7 +4,7 @@ namespace Balance.Services.Contracts;
 
 public interface IBankTransactionService
 {
-    Task<IReadOnlyList<BankTransactionOutput>> ListAsync(
+    Task<PagedOutput<BankTransactionOutput>> ListAsync(
         int skip,
         int take,
         BankTransactionListFilter filter,

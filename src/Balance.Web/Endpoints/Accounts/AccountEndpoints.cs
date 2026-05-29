@@ -36,7 +36,7 @@ internal static class AccountEndpoints
         group.MapDelete("/{id}", DeleteAsync).WithName("DeleteAccount");
     }
 
-    private static async Task<Ok<IReadOnlyList<AccountOutput>>> ListAsync(
+    private static async Task<Ok<PagedOutput<AccountOutput>>> ListAsync(
         [FromServices] IAccountService accountService,
         CancellationToken cancellationToken
     )
@@ -58,7 +58,7 @@ internal static class AccountEndpoints
     }
 
     private static async Task<
-        Results<Ok<IReadOnlyList<RegisterRowOutput>>, NotFound<ProblemDetails>, ValidationProblem>
+        Results<Ok<PagedOutput<RegisterRowOutput>>, NotFound<ProblemDetails>, ValidationProblem>
     > ListRegisterAsync(
         [FromRoute] AccountId id,
         [AsParameters] ListAccountRegisterRequest request,

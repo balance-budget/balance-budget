@@ -5,6 +5,7 @@ import { asAccountId, asCounterpartyId, type AccountId, type CounterpartyId } fr
 import { deleteRequest, getJson, patchJson, postJson } from '../lib/http';
 
 type WireCounterparty = components['schemas']['CounterpartyOutput'];
+type WirePagedCounterparties = components['schemas']['PagedOutputOfCounterpartyOutput'];
 type WireCreateRequest = components['schemas']['CreateCounterpartyRequest'];
 type WireUpdateInput = components['schemas']['UpdateCounterpartyInput'];
 type WireSuggestedCounterAccount = components['schemas']['SuggestedCounterAccountOutput'];
@@ -35,12 +36,12 @@ export function useCounterparties() {
     return useQuery({
         queryKey: counterpartiesKeys.list(),
         queryFn: async ({ signal }) => {
-            const wire = await getJson<WireCounterparty[]>(
+            const wire = await getJson<WirePagedCounterparties>(
                 '/api/counterparties',
                 signal,
                 'load counterparties',
             );
-            return wire.map(toCounterparty);
+            return wire.items.map(toCounterparty);
         },
     });
 }

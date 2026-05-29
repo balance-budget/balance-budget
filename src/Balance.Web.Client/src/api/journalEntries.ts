@@ -12,11 +12,13 @@ import {
     asJournalLineId,
 } from '../lib/domain';
 import { deleteRequest, getJson, postJson, putJson } from '../lib/http';
+import type { Page } from '../lib/paging';
 
 type WireCreateRequest = components['schemas']['CreateJournalEntryRequest'];
 type WireReplaceRequest = components['schemas']['ReplaceJournalEntryRequest'];
 type WireEntry = components['schemas']['JournalEntryOutput'];
 type WireEntryDetail = components['schemas']['JournalEntryDetailOutput'];
+type WirePagedEntries = components['schemas']['PagedOutputOfJournalEntryOutput'];
 type WireLine = components['schemas']['JournalLineOutput'];
 type WireReconciliationStatus = components['schemas']['ReconciliationStatus'];
 
@@ -91,13 +93,16 @@ function toEntryDetail(wire: WireEntryDetail): JournalEntryDetail {
 export function useJournalEntries(skip: number, take: number) {
     return useQuery({
         queryKey: journalEntriesKeys.list(skip, take),
-        queryFn: async ({ signal }) => {
-            const wire = await getJson<WireEntry[]>(
+        queryFn: async ({ signal }): Promise<Page<JournalEntry>> => {
+            const wire = await getJson<WirePagedEntries>(
                 `/api/journal-entries?skip=${skip}&take=${take}`,
                 signal,
                 'load journal entries',
             );
-            return wire.map(toEntry);
+            return {
+                items: wire.items.map(toEntry),
+                totalCount: Number(wire.totalCount),
+            };
         },
     });
 }

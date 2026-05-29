@@ -21,7 +21,7 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
         );
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-        var list = await response.Content.ReadFromJsonAsync<IReadOnlyList<JournalEntryDto>>();
+        var list = await response.Content.ReadPagedItemsAsync<JournalEntryDto>();
         await Assert.That(list).IsNotNull();
     }
 
