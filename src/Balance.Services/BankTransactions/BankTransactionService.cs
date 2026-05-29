@@ -2,6 +2,7 @@ using System.Globalization;
 using Balance.Data;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
+using Balance.Data.Helpers;
 using Balance.Services.Contracts;
 using Balance.Services.Helpers;
 using Microsoft.EntityFrameworkCore;
@@ -55,10 +56,10 @@ internal sealed class BankTransactionService : IBankTransactionService
         if (!string.IsNullOrEmpty(needle))
         {
             filtered = filtered.Where(b =>
-                EF.Functions.Like(b.Description, $"%{needle}%")
+                DbFunction.CaseInsensitiveLike(b.Description, $"%{needle}%")
                 || (
                     b.CounterpartyName != null
-                    && EF.Functions.Like(b.CounterpartyName, $"%{needle}%")
+                    && DbFunction.CaseInsensitiveLike(b.CounterpartyName, $"%{needle}%")
                 )
             );
         }
