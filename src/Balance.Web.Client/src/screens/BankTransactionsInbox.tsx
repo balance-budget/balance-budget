@@ -1,5 +1,4 @@
 import { useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { Link, useBlocker } from '@tanstack/react-router';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { useAccounts, type Account } from '../api/accounts';
@@ -645,6 +644,14 @@ function InboxEditorReady({
         return m;
     }, [uniqueCpIds, suggestionQueries]);
 
+    const suggestionPendingByCpId = useMemo(() => {
+        const m = new Set<CounterpartyId>();
+        uniqueCpIds.forEach((cpId, i) => {
+            if (suggestionQueries[i]?.isPending) m.add(cpId);
+        });
+        return m;
+    }, [uniqueCpIds, suggestionQueries]);
+
     // Prefill stays empty for every row — see the gating amendment to ADR
     // 0014. The user's override layer is the only thing that fills the draft;
     // until the user manually picks or clicks Apply suggestions on a
@@ -692,6 +699,11 @@ function InboxEditorReady({
     // ── Selection ────────────────────────────────────────────────────────────
     const [selection, setSelection] = useState<Set<BankTransactionId>>(new Set());
     const selectionAnchorRef = useRef<BankTransactionId | null>(null);
+    // Bulk picker values live here so they survive Apply, Clear, and pagination
+    // — re-applying the same CP+Account across page after page of similar rows
+    // is the common categorisation flow.
+    const [bulkCounterparty, setBulkCounterparty] = useState<BulkApplyCounterparty | null>(null);
+    const [bulkAccountId, setBulkAccountId] = useState<AccountId | null>(null);
     function setSelectionAnchor(id: BankTransactionId | null) {
         selectionAnchorRef.current = id;
     }
@@ -753,28 +765,58 @@ function InboxEditorReady({
     function applyBulkSuggestions() {
         const targets = visibleSelection();
         if (targets.length === 0) return;
-        const touched: BankTransactionId[] = [];
-        setUserOverrides(prev => {
-            const next = new Map(prev);
-            for (const id of targets) {
-                const bt = visibleBts.find(b => b.id === id);
-                if (!bt) continue;
-                const ownBankSide = bankAccountsById.get(bt.bankAccountId)?.accountId ?? null;
-                const patch = buildSuggestionOverride(
-                    bt,
-                    bankAccounts,
-                    suggestionsByCpId,
-                    accountsById,
-                    ownBankSide,
-                );
-                if (patch === null) continue;
-                touched.push(id);
-                next.set(id, { ...(prev.get(id) ?? {}), ...patch });
+
+        let filled = 0;
+        let cpOnly = 0;
+        let pending = 0;
+        let noMatch = 0;
+        const patches = new Map<BankTransactionId, Partial<RowDraft>>();
+        for (const id of targets) {
+            const bt = visibleBts.find(b => b.id === id);
+            if (!bt) continue;
+            const ibanCpId = ibanResolvedCpByBt.get(id) ?? null;
+            if (ibanCpId !== null && suggestionPendingByCpId.has(ibanCpId)) {
+                pending += 1;
+                continue;
             }
-            return next;
-        });
-        setDismissDrafts(prev => removeKeysFor(prev, touched));
-        setRowErrors(prev => removeKeysFor(prev, touched));
+            const ownBankSide = bankAccountsById.get(bt.bankAccountId)?.accountId ?? null;
+            const patch = buildSuggestionOverride(
+                bt,
+                bankAccounts,
+                suggestionsByCpId,
+                accountsById,
+                ownBankSide,
+            );
+            if (patch === null) {
+                noMatch += 1;
+                continue;
+            }
+            if (patch.accountId !== undefined) filled += 1;
+            else cpOnly += 1;
+            patches.set(id, patch);
+        }
+
+        if (patches.size > 0) {
+            const touched = [...patches.keys()];
+            setUserOverrides(prev => {
+                const next = new Map(prev);
+                for (const [id, patch] of patches) {
+                    next.set(id, { ...(prev.get(id) ?? {}), ...patch });
+                }
+                return next;
+            });
+            setDismissDrafts(prev => removeKeysFor(prev, touched));
+            setRowErrors(prev => removeKeysFor(prev, touched));
+        }
+
+        const parts: string[] = [];
+        if (filled > 0) parts.push(`${filled.toString()} filled`);
+        if (cpOnly > 0) parts.push(`${cpOnly.toString()} got counterparty only`);
+        if (pending > 0) parts.push(`${pending.toString()} still loading`);
+        if (noMatch > 0) parts.push(`${noMatch.toString()} had no suggestion`);
+        const msg = parts.length > 0 ? parts.join(', ') : 'No suggestions to apply.';
+        if (filled === 0 && cpOnly === 0) toast.error(msg);
+        else toast.success(msg);
     }
 
     function applyBulkDismiss(reason: string) {
@@ -923,26 +965,44 @@ function InboxEditorReady({
         [counterparties],
     );
 
+    const actionBarProps: ActionBarProps = {
+        selectionCount,
+        selectedCurrencies,
+        bulkCounterparty,
+        bulkAccountId,
+        counterpartyItems,
+        accountItems: buildBulkAccountItems(
+            accounts,
+            selectedCurrencies,
+            ownBankSideAccountIdsInSelection,
+        ),
+        saving,
+        progress,
+        dirtyCount,
+        readyCount: readyIds.length,
+        onBulkCounterpartyChange: setBulkCounterparty,
+        onBulkAccountIdChange: setBulkAccountId,
+        onApply: () => {
+            applyBulk({ counterparty: bulkCounterparty, accountId: bulkAccountId });
+        },
+        onApplySuggestions: applyBulkSuggestions,
+        onBulkDismiss: () => {
+            setBulkDismissOpen(true);
+        },
+        onClearSelection: () => {
+            setSelection(new Set());
+            setSelectionAnchor(null);
+        },
+        onSave: () => void saveAll(),
+        onDiscard: () => {
+            setDiscardOpen(true);
+        },
+    };
+
     return (
-        <div
-            className={cx(
-                'flex flex-col',
-                // Reserve clearance under the fixed BulkApplyFooter so it doesn't
-                // overlap Pagination or the last row when scrolled to the bottom.
-                selectionCount > 0 && 'lg:pb-24',
-            )}
-        >
+        <div className="flex flex-col">
+            <ActionBar {...actionBarProps} />
             <div className="hidden lg:flex flex-col">
-                <SaveBar
-                    dirtyCount={dirtyCount}
-                    readyCount={readyIds.length}
-                    saving={saving}
-                    progress={progress}
-                    onSave={() => void saveAll()}
-                    onDiscard={() => {
-                        setDiscardOpen(true);
-                    }}
-                />
                 <div className="grid grid-cols-[28px_88px_1fr_minmax(180px,1.4fr)_minmax(180px,1.4fr)_120px_120px] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
                     <HeaderSelectAllCheckbox
                         state={allVisibleSelectionState(selection, visibleIds)}
@@ -991,28 +1051,6 @@ function InboxEditorReady({
                         />
                     );
                 })}
-                {selectionCount > 0 && (
-                    <BulkApplyFooter
-                        selectionCount={selectionCount}
-                        selectedCurrencies={selectedCurrencies}
-                        counterpartyItems={counterpartyItems}
-                        accountItems={buildBulkAccountItems(
-                            accounts,
-                            selectedCurrencies,
-                            ownBankSideAccountIdsInSelection,
-                        )}
-                        saving={saving}
-                        onApply={applyBulk}
-                        onApplySuggestions={applyBulkSuggestions}
-                        onDismiss={() => {
-                            setBulkDismissOpen(true);
-                        }}
-                        onClear={() => {
-                            setSelection(new Set());
-                            setSelectionAnchor(null);
-                        }}
-                    />
-                )}
             </div>
             <div className="lg:hidden flex flex-col">
                 {visibleBts.map(bt => (
@@ -1189,195 +1227,207 @@ function HeaderSelectAllCheckbox({
     );
 }
 
-function BulkApplyFooter({
-    selectionCount,
-    selectedCurrencies,
-    counterpartyItems,
-    accountItems,
-    saving,
-    onApply,
-    onApplySuggestions,
-    onDismiss,
-    onClear,
-}: {
+type ActionBarProps = {
     selectionCount: number;
     selectedCurrencies: readonly string[];
+    bulkCounterparty: BulkApplyCounterparty | null;
+    bulkAccountId: AccountId | null;
     counterpartyItems: ComboboxItem<CounterpartyId | null>[];
     accountItems: ComboboxItem<AccountId>[];
     saving: boolean;
-    onApply: (input: BulkApplyInput) => void;
+    progress: { done: number; total: number } | null;
+    dirtyCount: number;
+    readyCount: number;
+    onBulkCounterpartyChange: (cp: BulkApplyCounterparty | null) => void;
+    onBulkAccountIdChange: (id: AccountId | null) => void;
+    onApply: () => void;
     onApplySuggestions: () => void;
-    onDismiss: () => void;
-    onClear: () => void;
-}) {
-    const [counterparty, setCounterparty] = useState<BulkApplyCounterparty | null>(null);
-    const [accountId, setAccountId] = useState<AccountId | null>(null);
+    onBulkDismiss: () => void;
+    onClearSelection: () => void;
+    onSave: () => void;
+    onDiscard: () => void;
+};
+
+/**
+ * Combined selection-actions + save-controls bar, rendered inline above the
+ * inbox list. Selection row shows when there are selected rows; save row
+ * shows when there are unsaved drafts or a save is in flight. Either or both
+ * may render, with a divider between.
+ *
+ * Picker values (`bulkCounterparty`, `bulkAccountId`) are owned by the parent
+ * so they survive Apply, Clear, and pagination — re-applying the same
+ * counterparty + account across multiple pages of similar rows is the common
+ * categorisation flow.
+ */
+function ActionBar({
+    selectionCount,
+    selectedCurrencies,
+    bulkCounterparty,
+    bulkAccountId,
+    counterpartyItems,
+    accountItems,
+    saving,
+    progress,
+    dirtyCount,
+    readyCount,
+    onBulkCounterpartyChange,
+    onBulkAccountIdChange,
+    onApply,
+    onApplySuggestions,
+    onBulkDismiss,
+    onClearSelection,
+    onSave,
+    onDiscard,
+}: ActionBarProps) {
+    const showSelection = selectionCount > 0;
+    const showSave = dirtyCount > 0 || saving;
 
     const mixedCurrency = selectedCurrencies.length > 1;
     const accountDisabled = saving || mixedCurrency;
-    const canApply = !saving && (counterparty !== null || accountId !== null);
+    const canApply = !saving && (bulkCounterparty !== null || bulkAccountId !== null);
 
     const cpValue: CounterpartyId | null =
-        counterparty?.kind === 'existing' ? counterparty.counterpartyId : null;
+        bulkCounterparty?.kind === 'existing' ? bulkCounterparty.counterpartyId : null;
     const cpItemsWithPending = useMemo(() => {
-        if (counterparty?.kind !== 'new' || counterparty.name.trim().length === 0) {
+        if (bulkCounterparty?.kind !== 'new' || bulkCounterparty.name.trim().length === 0) {
             return counterpartyItems;
         }
         const pending: ComboboxItem<CounterpartyId | null> = {
             key: '__pending_bulk__',
-            label: `${counterparty.name.trim()} (new)`,
+            label: `${bulkCounterparty.name.trim()} (new)`,
             value: null,
         };
         return [pending, ...counterpartyItems];
-    }, [counterparty, counterpartyItems]);
+    }, [bulkCounterparty, counterpartyItems]);
 
-    function handleApply() {
-        if (!canApply) return;
-        onApply({ counterparty, accountId });
-        setCounterparty(null);
-        setAccountId(null);
-    }
+    if (!showSelection && !showSave) return null;
 
-    // Portal to body to escape the Panel's `backdrop-blur-card` — backdrop-filter
-    // creates a containing block for fixed descendants, which would anchor the
-    // bar to the Panel rather than the viewport and put it offscreen when
-    // scrolled to the top of a long list.
-    return createPortal(
-        <div className="fixed bottom-6 left-[calc(15rem+2rem)] right-8 z-30 px-3 py-2 rounded-sm bg-bg-1 border border-brand-primary/30 shadow-overlay">
-            <div className="flex flex-wrap items-center gap-3">
-                <span className="text-[12px] font-medium text-fg-1">
-                    {selectionCount.toString()} selected
-                </span>
-                <div className="min-w-[180px] flex-1 max-w-[260px]">
-                    <Combobox
-                        items={cpItemsWithPending}
-                        value={cpValue}
-                        onChange={id => {
-                            setCounterparty({ kind: 'existing', counterpartyId: id });
-                        }}
-                        onClear={() => {
-                            setCounterparty({ kind: 'existing', counterpartyId: null });
-                        }}
-                        onCreate={typed => {
-                            setCounterparty({ kind: 'new', name: typed });
-                        }}
-                        noneLabel="── None (self-transfer)"
-                        createLabel={typed => `+ Create '${typed}'`}
-                        placeholder="Counterparty…"
-                        disabled={saving}
-                        ariaLabel="Bulk counterparty"
-                    />
-                </div>
-                <div className="min-w-[180px] flex-1 max-w-[260px]">
-                    <Combobox
-                        items={accountItems}
-                        value={accountId}
-                        onChange={id => {
-                            setAccountId(id);
-                        }}
-                        groupOrder={ACCOUNT_TYPE_ORDER}
-                        groupLabels={ACCOUNT_TYPE_LABEL}
-                        placeholder={mixedCurrency ? 'Account (mixed currencies)' : 'Account…'}
-                        disabled={accountDisabled}
-                        ariaLabel="Bulk account"
-                    />
-                </div>
-                <button
-                    type="button"
-                    onClick={handleApply}
-                    disabled={!canApply}
-                    className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
-                >
-                    Apply to {selectionCount.toString()} selected
-                </button>
-                <button
-                    type="button"
-                    onClick={onApplySuggestions}
-                    disabled={saving}
-                    title="Fill the selected rows with the IBAN-matched counterparty and the last-used account for that counterparty."
-                    className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-fg-1 border border-border-strong hover:bg-surface-2 disabled:opacity-60"
-                >
-                    Apply suggestions
-                </button>
-                <button
-                    type="button"
-                    onClick={onDismiss}
-                    disabled={saving}
-                    className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-fg-1 border border-border-strong hover:bg-surface-2 disabled:opacity-60"
-                >
-                    Dismiss with reason…
-                </button>
-                <button
-                    type="button"
-                    onClick={onClear}
-                    disabled={saving}
-                    className="px-2 py-[7px] rounded-sm text-[13px] font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
-                >
-                    Clear
-                </button>
-            </div>
-            {mixedCurrency && (
-                <p className="mt-1 text-[11px] text-fg-3">
-                    Selected rows span {selectedCurrencies.join(' + ')} — Account can&apos;t be
-                    bulk-applied.
-                </p>
-            )}
-        </div>,
-        document.body,
-    );
-}
-
-function SaveBar({
-    dirtyCount,
-    readyCount,
-    saving,
-    progress,
-    onSave,
-    onDiscard,
-}: {
-    dirtyCount: number;
-    readyCount: number;
-    saving: boolean;
-    progress: { done: number; total: number } | null;
-    onSave: () => void;
-    onDiscard: () => void;
-}) {
-    if (dirtyCount === 0 && !saving) {
-        return null;
-    }
     return (
-        <div className="flex items-center justify-between gap-3 mb-3 px-3 py-2 rounded-sm bg-brand-primary-soft border border-brand-primary/30">
-            <div className="flex items-center gap-3 text-[12px] text-fg-2">
-                {saving && progress ? (
-                    <span className="tabular">
-                        Saving {progress.done.toString()}/{progress.total.toString()}…
-                    </span>
-                ) : (
-                    <span>
-                        {dirtyCount.toString()} unsaved · {readyCount.toString()} ready
-                    </span>
-                )}
-            </div>
-            <div className="flex items-center gap-2">
-                <button
-                    type="button"
-                    onClick={onDiscard}
-                    disabled={saving}
-                    className="px-3 py-1 rounded-sm text-[13px] font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
-                >
-                    Discard
-                </button>
-                <button
-                    type="button"
-                    onClick={onSave}
-                    disabled={saving || readyCount === 0}
-                    className="px-3 py-1 rounded-sm text-[13px] font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
-                >
-                    {saving
-                        ? 'Saving…'
-                        : `Save ${readyCount.toString()} row${readyCount === 1 ? '' : 's'}`}
-                </button>
-            </div>
+        <div className="hidden lg:block mb-3 rounded-sm bg-brand-primary-soft border border-brand-primary/30">
+            {showSelection && (
+                <div className="px-3 py-2">
+                    <div className="flex flex-wrap items-center gap-3">
+                        <span className="text-[12px] font-medium text-fg-1">
+                            {selectionCount.toString()} selected
+                        </span>
+                        <div className="min-w-[180px] flex-1 max-w-[260px]">
+                            <Combobox
+                                items={cpItemsWithPending}
+                                value={cpValue}
+                                onChange={id => {
+                                    onBulkCounterpartyChange({
+                                        kind: 'existing',
+                                        counterpartyId: id,
+                                    });
+                                }}
+                                onClear={() => {
+                                    onBulkCounterpartyChange({
+                                        kind: 'existing',
+                                        counterpartyId: null,
+                                    });
+                                }}
+                                onCreate={typed => {
+                                    onBulkCounterpartyChange({ kind: 'new', name: typed });
+                                }}
+                                noneLabel="── None (self-transfer)"
+                                createLabel={typed => `+ Create '${typed}'`}
+                                placeholder="Counterparty…"
+                                disabled={saving}
+                                ariaLabel="Bulk counterparty"
+                            />
+                        </div>
+                        <div className="min-w-[180px] flex-1 max-w-[260px]">
+                            <Combobox
+                                items={accountItems}
+                                value={bulkAccountId}
+                                onChange={id => {
+                                    onBulkAccountIdChange(id);
+                                }}
+                                groupOrder={ACCOUNT_TYPE_ORDER}
+                                groupLabels={ACCOUNT_TYPE_LABEL}
+                                placeholder={mixedCurrency ? 'Account (mixed currencies)' : 'Account…'}
+                                disabled={accountDisabled}
+                                ariaLabel="Bulk account"
+                            />
+                        </div>
+                        <button
+                            type="button"
+                            onClick={onApply}
+                            disabled={!canApply}
+                            className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
+                        >
+                            Apply to {selectionCount.toString()} selected
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onApplySuggestions}
+                            disabled={saving}
+                            title="Fill the selected rows with the IBAN-matched counterparty and the last-used account for that counterparty."
+                            className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-fg-1 border border-border-strong hover:bg-surface-2 disabled:opacity-60"
+                        >
+                            Apply suggestions
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onBulkDismiss}
+                            disabled={saving}
+                            className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-fg-1 border border-border-strong hover:bg-surface-2 disabled:opacity-60"
+                        >
+                            Dismiss with reason…
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onClearSelection}
+                            disabled={saving}
+                            className="px-2 py-[7px] rounded-sm text-[13px] font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
+                        >
+                            Clear
+                        </button>
+                    </div>
+                    {mixedCurrency && (
+                        <p className="mt-1 text-[11px] text-fg-3">
+                            Selected rows span {selectedCurrencies.join(' + ')} — Account can&apos;t
+                            be bulk-applied.
+                        </p>
+                    )}
+                </div>
+            )}
+            {showSelection && showSave && <div className="border-t border-border-soft" />}
+            {showSave && (
+                <div className="flex items-center justify-between gap-3 px-3 py-2">
+                    <div className="flex items-center gap-3 text-[12px] text-fg-2">
+                        {saving && progress ? (
+                            <span className="tabular">
+                                Saving {progress.done.toString()}/{progress.total.toString()}…
+                            </span>
+                        ) : (
+                            <span>
+                                {dirtyCount.toString()} unsaved · {readyCount.toString()} ready
+                            </span>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={onDiscard}
+                            disabled={saving}
+                            className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
+                        >
+                            Discard
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onSave}
+                            disabled={saving || readyCount === 0}
+                            className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
+                        >
+                            {saving
+                                ? 'Saving…'
+                                : `Save ${readyCount.toString()} row${readyCount === 1 ? '' : 's'}`}
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
