@@ -14,6 +14,7 @@ internal static class PageCatalog
     [
         new PageEntry("Dashboard", "/", ["home", "overview"]),
         new PageEntry("Accounts", "/accounts", ["ledger"]),
+        new PageEntry("Counterparties", "/counterparties", ["payees"]),
         new PageEntry("Journal", "/journal", ["entries", "ledger"]),
         new PageEntry(
             "Bank transactions",
@@ -27,7 +28,6 @@ internal static class PageCatalog
         new PageEntry("Reports", "/reports", []),
         new PageEntry("Settings", "/settings", []),
         new PageEntry("Settings · Bank accounts", "/settings/bank-accounts", ["iban", "ledger"]),
-        new PageEntry("Settings · Counterparties", "/settings/counterparties", ["payees"]),
         new PageEntry("Settings · Users", "/settings/users", ["accounts", "people"]),
         new PageEntry("Settings · Tokens", "/settings/tokens", ["api", "pat"]),
     ];

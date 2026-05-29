@@ -10,6 +10,7 @@ public interface IJournalEntryService
         int skip,
         int take,
         string? search,
+        CounterpartyId? counterpartyId,
         CancellationToken cancellationToken
     );
 

@@ -47,8 +47,8 @@ export type JournalEntryDetail = JournalEntry & {
 
 export const journalEntriesKeys = {
     all: ['journalEntries'] as const,
-    list: (skip: number, take: number, q: string) =>
-        [...journalEntriesKeys.all, 'list', { skip, take, q }] as const,
+    list: (skip: number, take: number, q: string, counterpartyId: CounterpartyId | null) =>
+        [...journalEntriesKeys.all, 'list', { skip, take, q, counterpartyId }] as const,
     detail: (id: JournalEntryId) => [...journalEntriesKeys.all, 'detail', id] as const,
 };
 
@@ -90,13 +90,21 @@ function toEntryDetail(wire: WireEntryDetail): JournalEntryDetail {
     };
 }
 
-export function useJournalEntries(skip: number, take: number, q: string) {
+export function useJournalEntries(
+    skip: number,
+    take: number,
+    q: string,
+    counterpartyId: CounterpartyId | null = null,
+) {
     return useQuery({
-        queryKey: journalEntriesKeys.list(skip, take, q),
+        queryKey: journalEntriesKeys.list(skip, take, q, counterpartyId),
         queryFn: async ({ signal }): Promise<Page<JournalEntry>> => {
             const params = new URLSearchParams({ skip: String(skip), take: String(take) });
             if (q !== '') {
                 params.set('q', q);
+            }
+            if (counterpartyId !== null) {
+                params.set('counterpartyId', counterpartyId);
             }
             const wire = await getJson<WirePagedEntries>(
                 `/api/journal-entries?${params.toString()}`,

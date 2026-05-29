@@ -25,10 +25,15 @@ internal sealed class JournalEntryService : IJournalEntryService
         int skip,
         int take,
         string? search,
+        CounterpartyId? counterpartyId,
         CancellationToken cancellationToken
     )
     {
         IQueryable<JournalEntry> filtered = _dbContext.JournalEntries;
+        if (counterpartyId is not null)
+        {
+            filtered = filtered.Where(e => e.CounterpartyId == counterpartyId);
+        }
         var needle = search?.Trim();
         if (!string.IsNullOrEmpty(needle))
         {
