@@ -57,6 +57,7 @@ internal static class BankTransactionEndpoints
             skip,
             take,
             filter,
+            request.Q,
             cancellationToken
         );
         return TypedResults.Ok(bankTransactions);
