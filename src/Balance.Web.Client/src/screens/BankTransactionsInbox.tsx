@@ -273,7 +273,7 @@ function ReadOnlyList({
 }) {
     return (
         <div className="flex flex-col">
-            <div className="hidden md:grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px_minmax(180px,200px)] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
+            <div className="hidden lg:grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px_minmax(180px,200px)] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
                 <span>Date</span>
                 <span>Description</span>
                 <span>Counterparty</span>
@@ -309,7 +309,7 @@ function ReadOnlyRow({
 }) {
     return (
         <div className="border-b border-border-soft last:border-b-0">
-            <div className="hidden md:grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px_minmax(180px,200px)] gap-3 items-center px-2 py-2">
+            <div className="hidden lg:grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px_minmax(180px,200px)] gap-3 items-center px-2 py-2">
                 <span className="text-[12px] text-fg-3 tabular">{bankTransaction.bookingDate}</span>
                 <div className="min-w-0 flex flex-col leading-tight">
                     <span className="text-[13px] text-fg-1 truncate">
@@ -321,7 +321,7 @@ function ReadOnlyRow({
                 <AmountCell bankTransaction={bankTransaction} catalog={catalog} />
                 <ReadOnlyActions bankTransaction={bankTransaction} onDismiss={onDismiss} />
             </div>
-            <div className="md:hidden flex flex-col gap-1 px-2 py-3">
+            <div className="lg:hidden flex flex-col gap-1 px-2 py-3">
                 <div className="flex items-center justify-between gap-3">
                     <span className="text-[12px] text-fg-3 tabular">
                         {bankTransaction.bookingDate}
@@ -881,7 +881,7 @@ function InboxEditorReady({
 
     return (
         <div className="flex flex-col">
-            <div className="hidden md:flex flex-col">
+            <div className="hidden lg:flex flex-col">
                 <SaveBar
                     dirtyCount={dirtyCount}
                     readyCount={readyIds.length}
@@ -962,7 +962,7 @@ function InboxEditorReady({
                     />
                 )}
             </div>
-            <div className="md:hidden flex flex-col">
+            <div className="lg:hidden flex flex-col">
                 {visibleBts.map(bt => (
                     <ReadOnlyRow
                         key={bt.id}
