@@ -9,6 +9,7 @@ public interface IJournalEntryService
     Task<PagedOutput<JournalEntryOutput>> ListAsync(
         int skip,
         int take,
+        string? search,
         CancellationToken cancellationToken
     );
 

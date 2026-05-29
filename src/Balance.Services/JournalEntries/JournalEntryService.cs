@@ -24,12 +24,22 @@ internal sealed class JournalEntryService : IJournalEntryService
     public async Task<PagedOutput<JournalEntryOutput>> ListAsync(
         int skip,
         int take,
+        string? search,
         CancellationToken cancellationToken
     )
     {
-        var totalCount = await _dbContext.JournalEntries.CountAsync(cancellationToken);
-        var page = _dbContext
-            .JournalEntries.AsNoTracking()
+        IQueryable<JournalEntry> filtered = _dbContext.JournalEntries;
+        var needle = search?.Trim();
+        if (!string.IsNullOrEmpty(needle))
+        {
+            filtered = filtered.Where(e =>
+                e.Description != null && EF.Functions.Like(e.Description, $"%{needle}%")
+            );
+        }
+
+        var totalCount = await filtered.CountAsync(cancellationToken);
+        var page = filtered
+            .AsNoTracking()
             .OrderByDescending(e => e.Date)
             .ThenByDescending(e => e.CreatedAt)
             .Skip(skip)

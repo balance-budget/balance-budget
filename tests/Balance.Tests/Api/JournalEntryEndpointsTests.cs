@@ -26,6 +26,76 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
     }
 
     [Test]
+    public async Task ListJournalEntries_q_filters_by_description_case_insensitive()
+    {
+        using var client = Factory.CreateClient();
+        var groceries = await CreateAccountAsync(
+            client,
+            $"Groceries-Search-{Guid.NewGuid():N}",
+            "Expense"
+        );
+        var checking = await CreateAccountAsync(
+            client,
+            $"Checking-Search-{Guid.NewGuid():N}",
+            "Asset"
+        );
+
+        await PostJeAsync(
+            client,
+            new CreateJournalEntryRequestDto(
+                Date: new DateOnly(2026, 1, 1),
+                Description: "Albert Heijn weekly shop",
+                CounterpartyId: null,
+                Lines:
+                [
+                    new CreateJournalLineRequestDto(groceries.Id, 1000, null),
+                    new CreateJournalLineRequestDto(checking.Id, -1000, null),
+                ]
+            )
+        );
+        await PostJeAsync(
+            client,
+            new CreateJournalEntryRequestDto(
+                Date: new DateOnly(2026, 1, 2),
+                Description: "Vattenfall energy",
+                CounterpartyId: null,
+                Lines:
+                [
+                    new CreateJournalLineRequestDto(groceries.Id, 2000, null),
+                    new CreateJournalLineRequestDto(checking.Id, -2000, null),
+                ]
+            )
+        );
+
+        using var filtered = await client.GetAsync(
+            new Uri("/api/journal-entries?q=albert", UriKind.Relative)
+        );
+        var rows = await filtered.Content.ReadPagedItemsAsync<JournalEntryDto>();
+        await Assert.That(rows.Count).IsEqualTo(1);
+        await Assert.That(rows[0].Description).IsEqualTo("Albert Heijn weekly shop");
+    }
+
+    [Test]
+    public async Task ListJournalEntries_q_above_max_length_returns_400()
+    {
+        using var client = Factory.CreateClient();
+        var tooLong = new string('a', 201);
+        using var response = await client.GetAsync(
+            new Uri($"/api/journal-entries?q={tooLong}", UriKind.Relative)
+        );
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+    }
+
+    private static async Task PostJeAsync(HttpClient client, CreateJournalEntryRequestDto request)
+    {
+        using var response = await client.PostAsJsonAsync(
+            new Uri("/api/journal-entries", UriKind.Relative),
+            request
+        );
+        response.EnsureSuccessStatusCode();
+    }
+
+    [Test]
     public async Task CreateJournalEntry_balanced_two_line_round_trips()
     {
         using var client = Factory.CreateClient();

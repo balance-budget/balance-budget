@@ -215,7 +215,7 @@ function JournalNewForm({
                         action={
                             <Link
                                 to="/journal"
-                                search={{ page: 1 }}
+                                search={{ page: 1, q: '' }}
                                 className="text-[12px] text-fg-3 hover:text-fg-1"
                             >
                                 ← Cancel
@@ -265,7 +265,7 @@ function JournalNewForm({
                     <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-border-soft">
                         <Link
                             to="/journal"
-                            search={{ page: 1 }}
+                            search={{ page: 1, q: '' }}
                             className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-fg-2 hover:text-fg-1"
                         >
                             Cancel

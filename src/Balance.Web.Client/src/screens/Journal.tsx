@@ -7,23 +7,30 @@ import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Pagination } from '../components/Pagination';
 import { Panel, SectionHead } from '../components/Panel';
+import { SearchInput } from '../components/SearchInput';
 import { Skeleton } from '../components/Skeleton';
 import { cx } from '../lib/cx';
 import { type AccountId } from '../lib/domain';
 import { formatLegLabel, projectEntry, type JournalProjection } from '../lib/journalProjection';
 import { formatMoney } from '../lib/money';
+import { useDebouncedValue } from '../lib/useDebouncedValue';
 
 const PAGE_SIZE = 50;
 
 export function Journal({
     page,
+    q,
     onPageChange,
+    onSearchChange,
 }: {
     page: number;
+    q: string;
     onPageChange: (p: number) => void;
+    onSearchChange: (q: string) => void;
 }) {
     const skip = (page - 1) * PAGE_SIZE;
-    const entries = useJournalEntries(skip, PAGE_SIZE);
+    const debouncedQ = useDebouncedValue(q, 200);
+    const entries = useJournalEntries(skip, PAGE_SIZE, debouncedQ);
     const accounts = useAccounts();
     const catalog = useCurrencyCatalog();
 
@@ -42,6 +49,13 @@ export function Journal({
                     </Link>
                 }
             />
+            <div className="mb-4">
+                <SearchInput
+                    value={q}
+                    onChange={onSearchChange}
+                    placeholder="Search description…"
+                />
+            </div>
             <JournalBody
                 entries={entries}
                 accounts={accounts.data ?? []}
