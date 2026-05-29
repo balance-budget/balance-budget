@@ -38,7 +38,7 @@ internal static class CounterpartyEndpoints
         group.MapDelete("/{id}", DeleteAsync).WithName("DeleteCounterparty");
     }
 
-    private static async Task<Ok<IReadOnlyList<CounterpartyOutput>>> ListAsync(
+    private static async Task<Ok<PagedOutput<CounterpartyOutput>>> ListAsync(
         [FromServices] ICounterpartyService counterpartyService,
         CancellationToken cancellationToken
     )

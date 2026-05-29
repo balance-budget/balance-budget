@@ -21,19 +21,21 @@ internal sealed class JournalEntryService : IJournalEntryService
         _timeProvider = timeProvider;
     }
 
-    public async Task<IReadOnlyList<JournalEntryOutput>> ListAsync(
+    public async Task<PagedOutput<JournalEntryOutput>> ListAsync(
         int skip,
         int take,
         CancellationToken cancellationToken
     )
     {
+        var totalCount = await _dbContext.JournalEntries.CountAsync(cancellationToken);
         var page = _dbContext
             .JournalEntries.AsNoTracking()
             .OrderByDescending(e => e.Date)
             .ThenByDescending(e => e.CreatedAt)
             .Skip(skip)
             .Take(take);
-        return await ProjectListOutput(_dbContext, page).ToListAsync(cancellationToken);
+        var items = await ProjectListOutput(_dbContext, page).ToListAsync(cancellationToken);
+        return new PagedOutput<JournalEntryOutput>(items, totalCount);
     }
 
     public async Task<Result<JournalEntryDetailOutput>> GetAsync(

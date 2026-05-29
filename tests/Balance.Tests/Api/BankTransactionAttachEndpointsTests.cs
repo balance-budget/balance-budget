@@ -123,10 +123,10 @@ internal sealed class BankTransactionAttachEndpointsTests : EndpointsTestsBase
             cancellationToken
         );
         await Assert.That(list.StatusCode).IsEqualTo(HttpStatusCode.OK);
-        var rows = await list.Content.ReadFromJsonAsync<IReadOnlyList<BankTransactionWithHintDto>>(
+        var paged = await list.Content.ReadFromJsonAsync<PagedDto<BankTransactionWithHintDto>>(
             cancellationToken
         );
-        var siblingRow = rows!.Single(r => r.Id == scenario.SiblingBtId);
+        var siblingRow = paged!.Items.Single(r => r.Id == scenario.SiblingBtId);
         await Assert.That(siblingRow.MatchingJournalEntry).IsNotNull();
         await Assert.That(siblingRow.MatchingJournalEntry!.Id).IsEqualTo(scenario.SelfTransferJeId);
     }

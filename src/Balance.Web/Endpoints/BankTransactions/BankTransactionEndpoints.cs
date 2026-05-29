@@ -44,7 +44,7 @@ internal static class BankTransactionEndpoints
             .WithName("ListAttachCandidates");
     }
 
-    private static async Task<Ok<IReadOnlyList<BankTransactionOutput>>> ListAsync(
+    private static async Task<Ok<PagedOutput<BankTransactionOutput>>> ListAsync(
         [AsParameters] ListBankTransactionsRequest request,
         [FromServices] IBankTransactionService bankTransactionService,
         CancellationToken cancellationToken

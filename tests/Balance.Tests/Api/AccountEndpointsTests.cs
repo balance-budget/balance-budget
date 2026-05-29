@@ -14,9 +14,8 @@ internal sealed class AccountEndpointsTests : EndpointsTestsBase
         using var response = await client.GetAsync(new Uri("/api/accounts", UriKind.Relative));
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-        var accounts = await response.Content.ReadFromJsonAsync<IReadOnlyList<AccountDto>>();
-        await Assert.That(accounts).IsNotNull();
-        await Assert.That(accounts!.Select(a => a.Name)).Contains("Opening Balances");
+        var accounts = await response.Content.ReadPagedItemsAsync<AccountDto>();
+        await Assert.That(accounts.Select(a => a.Name)).Contains("Opening Balances");
 
         var openingBalances = accounts.Single(a => a.Name == "Opening Balances");
         await Assert.That(openingBalances.AccountType).IsEqualTo("Equity");
@@ -166,8 +165,8 @@ internal sealed class AccountEndpointsTests : EndpointsTestsBase
         await Assert.That(createResponse.StatusCode).IsEqualTo(HttpStatusCode.Created);
 
         using var listResponse = await client.GetAsync(new Uri("/api/accounts", UriKind.Relative));
-        var accounts = await listResponse.Content.ReadFromJsonAsync<IReadOnlyList<AccountDto>>();
-        var account = accounts!.Single(a => a.Name == name);
+        var accounts = await listResponse.Content.ReadPagedItemsAsync<AccountDto>();
+        var account = accounts.Single(a => a.Name == name);
 
         await Assert.That(account.Balance).IsNotNull();
         await Assert.That(account.Balance!.Amount).IsEqualTo(0L);
@@ -207,8 +206,8 @@ internal sealed class AccountEndpointsTests : EndpointsTestsBase
         );
 
         using var listResponse = await client.GetAsync(new Uri("/api/accounts", UriKind.Relative));
-        var accounts = await listResponse.Content.ReadFromJsonAsync<IReadOnlyList<AccountDto>>();
-        var byId = accounts!.ToDictionary(a => a.Id);
+        var accounts = await listResponse.Content.ReadPagedItemsAsync<AccountDto>();
+        var byId = accounts.ToDictionary(a => a.Id);
 
         await Assert.That(byId[groceries.Id].Balance!.Amount).IsEqualTo(4_000L);
         await Assert.That(byId[checking.Id].Balance!.Amount).IsEqualTo(246_000L);
@@ -238,8 +237,8 @@ internal sealed class AccountEndpointsTests : EndpointsTestsBase
         await Assert.That(createBank.StatusCode).IsEqualTo(HttpStatusCode.Created);
 
         using var listResponse = await client.GetAsync(new Uri("/api/accounts", UriKind.Relative));
-        var accounts = await listResponse.Content.ReadFromJsonAsync<IReadOnlyList<AccountDto>>();
-        var found = accounts!.Single(a => a.Id == account.Id);
+        var accounts = await listResponse.Content.ReadPagedItemsAsync<AccountDto>();
+        var found = accounts.Single(a => a.Id == account.Id);
 
         await Assert.That(found.BankAccount).IsNotNull();
         await Assert.That(found.BankAccount!.Iban).IsEqualTo(iban);

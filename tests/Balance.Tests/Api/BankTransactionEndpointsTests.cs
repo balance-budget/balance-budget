@@ -16,7 +16,7 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
         );
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-        var list = await response.Content.ReadFromJsonAsync<IReadOnlyList<BankTransactionDto>>();
+        var list = await response.Content.ReadPagedItemsAsync<BankTransactionDto>();
         await Assert.That(list).IsNotNull();
     }
 
@@ -641,8 +641,8 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
             new Uri("/api/bank-transactions?filter=Inbox&take=2", UriKind.Relative)
         );
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-        var rows = await response.Content.ReadFromJsonAsync<IReadOnlyList<BankTransactionDto>>();
-        await Assert.That(rows!.Count).IsLessThanOrEqualTo(2);
+        var rows = await response.Content.ReadPagedItemsAsync<BankTransactionDto>();
+        await Assert.That(rows.Count).IsLessThanOrEqualTo(2);
     }
 
     [Test]
@@ -665,18 +665,14 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
         using var pageOne = await client.GetAsync(
             new Uri("/api/bank-transactions?filter=Inbox&skip=0&take=1", UriKind.Relative)
         );
-        var pageOneRows = await pageOne.Content.ReadFromJsonAsync<
-            IReadOnlyList<BankTransactionDto>
-        >();
+        var pageOneRows = await pageOne.Content.ReadPagedItemsAsync<BankTransactionDto>();
         using var pageTwo = await client.GetAsync(
             new Uri("/api/bank-transactions?filter=Inbox&skip=1&take=200", UriKind.Relative)
         );
-        var pageTwoRows = await pageTwo.Content.ReadFromJsonAsync<
-            IReadOnlyList<BankTransactionDto>
-        >();
+        var pageTwoRows = await pageTwo.Content.ReadPagedItemsAsync<BankTransactionDto>();
 
         // The two pages must not contain the same row by ID (they're disjoint).
-        var overlap = pageOneRows!.Select(r => r.Id).Intersect(pageTwoRows!.Select(r => r.Id));
+        var overlap = pageOneRows.Select(r => r.Id).Intersect(pageTwoRows.Select(r => r.Id));
         await Assert.That(overlap).IsEmpty();
     }
 
@@ -856,8 +852,8 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
             new Uri($"/api/bank-transactions{query}", UriKind.Relative)
         );
         response.EnsureSuccessStatusCode();
-        var rows = await response.Content.ReadFromJsonAsync<IReadOnlyList<BankTransactionDto>>();
-        return rows!;
+        var rows = await response.Content.ReadPagedItemsAsync<BankTransactionDto>();
+        return rows;
     }
 
     private static async Task<BankTransactionDto> CreateBankTransactionAsync(

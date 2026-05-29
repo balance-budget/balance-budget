@@ -16,7 +16,7 @@ internal sealed class RegisterService : IRegisterService
         _dbContext = dbContext;
     }
 
-    public async Task<Result<IReadOnlyList<RegisterRowOutput>>> ListAsync(
+    public async Task<Result<PagedOutput<RegisterRowOutput>>> ListAsync(
         AccountId accountId,
         int skip,
         int take,
@@ -33,9 +33,16 @@ internal sealed class RegisterService : IRegisterService
             return new NotFoundError("Account", accountId.Value.ToString());
         }
 
+        var totalCount = await _dbContext
+            .JournalLines.AsNoTracking()
+            .Where(l => l.AccountId == accountId)
+            .CountAsync(cancellationToken);
+
         if (take <= 0)
         {
-            return new Result<IReadOnlyList<RegisterRowOutput>>(Array.Empty<RegisterRowOutput>());
+            return new Result<PagedOutput<RegisterRowOutput>>(
+                new PagedOutput<RegisterRowOutput>(Array.Empty<RegisterRowOutput>(), totalCount)
+            );
         }
 
         var isCreditNormal = AccountSignConvention.IsCreditNormal(account.AccountType);
@@ -76,7 +83,9 @@ internal sealed class RegisterService : IRegisterService
 
         if (focalRows.Count == 0)
         {
-            return new Result<IReadOnlyList<RegisterRowOutput>>(Array.Empty<RegisterRowOutput>());
+            return new Result<PagedOutput<RegisterRowOutput>>(
+                new PagedOutput<RegisterRowOutput>(Array.Empty<RegisterRowOutput>(), totalCount)
+            );
         }
 
         var entryIds = focalRows.Select(r => r.EntryId).Distinct().ToList();
@@ -146,7 +155,9 @@ internal sealed class RegisterService : IRegisterService
             );
         }
 
-        return new Result<IReadOnlyList<RegisterRowOutput>>(output);
+        return new Result<PagedOutput<RegisterRowOutput>>(
+            new PagedOutput<RegisterRowOutput>(output, totalCount)
+        );
     }
 
     private sealed record FocalRow(

@@ -25,11 +25,12 @@ internal sealed class AccountService : IAccountService
         _timeProvider = timeProvider;
     }
 
-    public async Task<IReadOnlyList<AccountOutput>> ListAsync(CancellationToken cancellationToken)
+    public async Task<PagedOutput<AccountOutput>> ListAsync(CancellationToken cancellationToken)
     {
         var rows = await ProjectAccounts(_dbContext.Accounts.OrderBy(a => a.Name))
             .ToListAsync(cancellationToken);
-        return rows.Select(ToOutput).ToList();
+        var items = rows.Select(ToOutput).ToList();
+        return new PagedOutput<AccountOutput>(items, items.Count);
     }
 
     public async Task<Result<AccountOutput>> GetAsync(

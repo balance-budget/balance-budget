@@ -1009,6 +1009,36 @@ export interface components {
         NewCounterpartyRequest: {
             name: string;
         };
+        PagedOutputOfAccountOutput: {
+            items: components["schemas"]["AccountOutput"][];
+            /** Format: int32 */
+            totalCount: number | string;
+        };
+        PagedOutputOfBankAccountOutput: {
+            items: components["schemas"]["BankAccountOutput"][];
+            /** Format: int32 */
+            totalCount: number | string;
+        };
+        PagedOutputOfBankTransactionOutput: {
+            items: components["schemas"]["BankTransactionOutput"][];
+            /** Format: int32 */
+            totalCount: number | string;
+        };
+        PagedOutputOfCounterpartyOutput: {
+            items: components["schemas"]["CounterpartyOutput"][];
+            /** Format: int32 */
+            totalCount: number | string;
+        };
+        PagedOutputOfJournalEntryOutput: {
+            items: components["schemas"]["JournalEntryOutput"][];
+            /** Format: int32 */
+            totalCount: number | string;
+        };
+        PagedOutputOfRegisterRowOutput: {
+            items: components["schemas"]["RegisterRowOutput"][];
+            /** Format: int32 */
+            totalCount: number | string;
+        };
         ProblemDetails: {
             type?: null | string;
             title?: null | string;
@@ -1706,7 +1736,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AccountOutput"][];
+                    "application/json": components["schemas"]["PagedOutputOfAccountOutput"];
                 };
             };
         };
@@ -1987,7 +2017,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RegisterRowOutput"][];
+                    "application/json": components["schemas"]["PagedOutputOfRegisterRowOutput"];
                 };
             };
             /** @description Bad Request */
@@ -2025,7 +2055,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CounterpartyOutput"][];
+                    "application/json": components["schemas"]["PagedOutputOfCounterpartyOutput"];
                 };
             };
         };
@@ -2301,7 +2331,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BankAccountOutput"][];
+                    "application/json": components["schemas"]["PagedOutputOfBankAccountOutput"];
                 };
             };
         };
@@ -2625,7 +2655,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BankTransactionOutput"][];
+                    "application/json": components["schemas"]["PagedOutputOfBankTransactionOutput"];
                 };
             };
         };
@@ -3166,7 +3196,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["JournalEntryOutput"][];
+                    "application/json": components["schemas"]["PagedOutputOfJournalEntryOutput"];
                 };
             };
         };

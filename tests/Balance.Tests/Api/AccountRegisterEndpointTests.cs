@@ -419,8 +419,8 @@ internal sealed class AccountRegisterEndpointTests : EndpointsTestsBase
             new Uri($"/api/accounts/{accountId}/register{query}", UriKind.Relative)
         );
         response.EnsureSuccessStatusCode();
-        var rows = await response.Content.ReadFromJsonAsync<IReadOnlyList<RegisterRowDto>>();
-        return rows!;
+        var rows = await response.Content.ReadPagedItemsAsync<RegisterRowDto>();
+        return rows;
     }
 
     private static async Task<AccountDto> CreateAccountAsync(

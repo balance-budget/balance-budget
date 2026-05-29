@@ -16,9 +16,7 @@ internal sealed class CounterpartyEndpointsTests : EndpointsTestsBase
         );
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-        var counterparties = await response.Content.ReadFromJsonAsync<
-            IReadOnlyList<CounterpartyDto>
-        >();
+        var counterparties = await response.Content.ReadPagedItemsAsync<CounterpartyDto>();
         await Assert.That(counterparties).IsNotNull();
     }
 
@@ -49,8 +47,8 @@ internal sealed class CounterpartyEndpointsTests : EndpointsTestsBase
         using var listResponse = await client.GetAsync(
             new Uri("/api/counterparties", UriKind.Relative)
         );
-        var list = await listResponse.Content.ReadFromJsonAsync<IReadOnlyList<CounterpartyDto>>();
-        await Assert.That(list!.Select(c => c.Name)).Contains("Albert Heijn");
+        var list = await listResponse.Content.ReadPagedItemsAsync<CounterpartyDto>();
+        await Assert.That(list.Select(c => c.Name)).Contains("Albert Heijn");
     }
 
     [Test]

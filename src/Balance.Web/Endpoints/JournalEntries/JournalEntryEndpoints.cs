@@ -46,7 +46,7 @@ internal static class JournalEntryEndpoints
         group.MapDelete("/{id}", DeleteAsync).WithName("DeleteJournalEntry");
     }
 
-    private static async Task<Ok<IReadOnlyList<JournalEntryOutput>>> ListAsync(
+    private static async Task<Ok<PagedOutput<JournalEntryOutput>>> ListAsync(
         [AsParameters] ListJournalEntriesRequest request,
         [FromServices] IJournalEntryService journalEntryService,
         CancellationToken cancellationToken

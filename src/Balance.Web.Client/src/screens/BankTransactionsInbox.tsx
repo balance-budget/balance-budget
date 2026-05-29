@@ -226,7 +226,7 @@ function Body({
         );
     }
 
-    if (query.data.length === 0 && page === 1) {
+    if (query.data.items.length === 0 && page === 1) {
         return (
             <div className="py-8 flex flex-col items-center gap-2 text-center">
                 <span className="text-[14px] text-fg-2">{EMPTY_TITLE[filter]}</span>
@@ -238,7 +238,7 @@ function Body({
     if (filter === 'Inbox') {
         return (
             <InboxEditor
-                bankTransactions={query.data}
+                bankTransactions={query.data.items}
                 catalog={catalog}
                 page={page}
                 onPageChange={onPageChange}
@@ -249,7 +249,7 @@ function Body({
 
     return (
         <ReadOnlyList
-            bankTransactions={query.data}
+            bankTransactions={query.data.items}
             catalog={catalog}
             page={page}
             onPageChange={onPageChange}

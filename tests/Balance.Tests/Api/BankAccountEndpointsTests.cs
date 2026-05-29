@@ -14,9 +14,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
         using var response = await client.GetAsync(new Uri("/api/bank-accounts", UriKind.Relative));
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-        var bankAccounts = await response.Content.ReadFromJsonAsync<
-            IReadOnlyList<BankAccountDto>
-        >();
+        var bankAccounts = await response.Content.ReadPagedItemsAsync<BankAccountDto>();
         await Assert.That(bankAccounts).IsNotNull();
     }
 

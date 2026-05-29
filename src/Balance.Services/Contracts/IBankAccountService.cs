@@ -5,7 +5,7 @@ namespace Balance.Services.Contracts;
 
 public interface IBankAccountService
 {
-    Task<IReadOnlyList<BankAccountOutput>> ListAsync(CancellationToken cancellationToken);
+    Task<PagedOutput<BankAccountOutput>> ListAsync(CancellationToken cancellationToken);
 
     Task<Result<BankAccountOutput>> GetAsync(BankAccountId id, CancellationToken cancellationToken);
 

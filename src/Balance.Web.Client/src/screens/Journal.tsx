@@ -92,7 +92,7 @@ function JournalBody({
         );
     }
 
-    if (entries.data.length === 0 && page === 1) {
+    if (entries.data.items.length === 0 && page === 1) {
         return (
             <div className="py-8 flex flex-col items-center gap-2 text-center">
                 <span className="text-[14px] text-fg-2">No journal entries yet.</span>
@@ -112,7 +112,7 @@ function JournalBody({
                 <span>From → To</span>
                 <span className="text-right">Amount</span>
             </div>
-            {entries.data.map(entry => (
+            {entries.data.items.map(entry => (
                 <JournalRow
                     key={entry.id}
                     entry={entry}
@@ -123,7 +123,7 @@ function JournalBody({
             <Pagination
                 page={page}
                 pageSize={PAGE_SIZE}
-                count={entries.data.length}
+                count={entries.data.items.length}
                 onPageChange={onPageChange}
             />
         </div>
