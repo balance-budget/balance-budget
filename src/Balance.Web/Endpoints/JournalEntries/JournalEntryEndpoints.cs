@@ -54,7 +54,7 @@ internal static class JournalEntryEndpoints
     {
         var skip = request.Skip ?? 0;
         var take = request.Take ?? ListJournalEntriesRequest.DefaultPageSize;
-        var entries = await journalEntryService.ListAsync(skip, take, cancellationToken);
+        var entries = await journalEntryService.ListAsync(skip, take, request.Q, cancellationToken);
         return TypedResults.Ok(entries);
     }
 
