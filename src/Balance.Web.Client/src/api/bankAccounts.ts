@@ -58,6 +58,17 @@ export function formatBankAccountLabel(ba: BankAccount): string {
     return ba.bankName ?? formatBankAccountIdentifier(ba) ?? 'Bank account';
 }
 
+export function bankAccountTypeIcon(type: BankAccountType): string {
+    switch (type) {
+        case 'Savings':
+            return 'piggy-bank';
+        case 'Card':
+            return 'credit-card';
+        case 'Current':
+            return 'landmark';
+    }
+}
+
 export function formatBankAccountSubline(ba: BankAccount): string {
     const parts = [BANK_ACCOUNT_TYPE_LABEL[ba.type], formatBankAccountIdentifier(ba) ?? '—'];
     if (ba.currencyCode) parts.push(ba.currencyCode);

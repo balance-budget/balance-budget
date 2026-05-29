@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import {
+    bankAccountTypeIcon,
     formatBankAccountLabel,
     formatBankAccountSubline,
     useBankAccount,
@@ -16,11 +17,26 @@ import { Icon } from '../components/Icon';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
+import { cx } from '../lib/cx';
 import type { BankAccountId } from '../lib/domain';
 import { ApiError } from '../lib/http';
 import { BankAccountFormModal } from './BankAccountForm';
 
-export function BankAccounts() {
+export type BankAccountOwnerFilter = 'mine' | 'others';
+
+export const BANK_ACCOUNT_OWNER_FILTERS: readonly BankAccountOwnerFilter[] = ['mine', 'others'];
+
+const OWNER_FILTER_LABEL: Record<BankAccountOwnerFilter, string> = {
+    mine: 'Mine',
+    others: 'Others',
+};
+
+type Props = {
+    owner: BankAccountOwnerFilter;
+    onOwnerChange: (owner: BankAccountOwnerFilter) => void;
+};
+
+export function BankAccounts({ owner, onOwnerChange }: Props) {
     const [creating, setCreating] = useState(false);
 
     return (
@@ -42,7 +58,8 @@ export function BankAccounts() {
                         </button>
                     }
                 />
-                <BankAccountList />
+                <OwnerFilterChips value={owner} onChange={onOwnerChange} />
+                <BankAccountList owner={owner} />
             </Panel>
 
             {creating && (
@@ -57,7 +74,42 @@ export function BankAccounts() {
     );
 }
 
-function BankAccountList() {
+function OwnerFilterChips({
+    value,
+    onChange,
+}: {
+    value: BankAccountOwnerFilter;
+    onChange: (owner: BankAccountOwnerFilter) => void;
+}) {
+    return (
+        <div className="flex items-center gap-2 mb-4" role="tablist" aria-label="Owner filter">
+            {BANK_ACCOUNT_OWNER_FILTERS.map(o => {
+                const active = o === value;
+                return (
+                    <button
+                        key={o}
+                        type="button"
+                        role="tab"
+                        aria-selected={active}
+                        onClick={() => {
+                            onChange(o);
+                        }}
+                        className={cx(
+                            'px-3 py-1 rounded-sm text-[12px] font-medium select-none transition-colors',
+                            active
+                                ? 'bg-brand-primary-soft text-brand-primary'
+                                : 'text-fg-2 hover:bg-surface-2 hover:text-fg-1',
+                        )}
+                    >
+                        {OWNER_FILTER_LABEL[o]}
+                    </button>
+                );
+            })}
+        </div>
+    );
+}
+
+function BankAccountList({ owner }: { owner: BankAccountOwnerFilter }) {
     const query = useBankAccounts();
     const accounts = useAccounts();
     const counterparties = useCounterparties();
@@ -81,13 +133,21 @@ function BankAccountList() {
         );
     }
 
-    if (query.data.length === 0) {
+    const filtered = query.data.filter(ba =>
+        owner === 'mine' ? ba.accountId !== null : ba.counterpartyId !== null,
+    );
+
+    if (filtered.length === 0) {
+        const title =
+            owner === 'mine' ? 'No bank accounts of your own yet.' : 'No counterparty bank accounts.';
+        const hint =
+            owner === 'mine'
+                ? 'Add one to attach to a ledger account.'
+                : 'Counterparty bank accounts appear as you categorise imported transactions.';
         return (
             <div className="py-8 flex flex-col items-center gap-2 text-center">
-                <span className="text-[14px] text-fg-2">No bank accounts yet.</span>
-                <span className="text-[12px] text-fg-3">
-                    Add one to attach to a ledger account or counterparty.
-                </span>
+                <span className="text-[14px] text-fg-2">{title}</span>
+                <span className="text-[12px] text-fg-3">{hint}</span>
             </div>
         );
     }
@@ -97,7 +157,7 @@ function BankAccountList() {
 
     return (
         <div>
-            {query.data.map(ba => (
+            {filtered.map(ba => (
                 <BankAccountRow
                     key={ba.id}
                     bankAccount={ba}
@@ -138,7 +198,7 @@ function BankAccountRow({
             className="py-3 first:pt-0 last:pb-0 flex items-center gap-3 border-b border-border-soft last:border-b-0 hover:bg-surface-2 px-1 -mx-1 rounded-sm"
         >
             <span className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-md bg-brand-primary-soft text-brand-primary">
-                <Icon name="landmark" size={16} strokeWidth={2} />
+                <Icon name={bankAccountTypeIcon(bankAccount.type)} size={16} strokeWidth={2} />
             </span>
             <div className="flex-1 min-w-0 flex flex-col leading-tight">
                 <span className="text-14 font-medium text-fg-1 truncate">
@@ -191,6 +251,7 @@ export function BankAccountDetail({ id }: { id: BankAccountId }) {
                     <div className="flex flex-col gap-[2px] min-w-0">
                         <Link
                             to="/settings/bank-accounts"
+                            search={{ owner: 'mine' }}
                             className="text-[12px] text-fg-3 hover:text-fg-1"
                         >
                             ← Bank accounts

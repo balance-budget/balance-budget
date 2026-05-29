@@ -1,5 +1,6 @@
 import { useId, useRef, useState } from 'react';
 import {
+    bankAccountTypeIcon,
     formatBankAccountLabel,
     formatBankAccountSubline,
     useBankAccounts,
@@ -54,7 +55,7 @@ function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
         <div className="py-4 first:pt-0 last:pb-0 flex flex-col gap-2 border-b border-border-soft last:border-b-0">
             <div className="flex items-center gap-3">
                 <span className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-md bg-brand-primary-soft text-brand-primary">
-                    <Icon name="landmark" size={16} strokeWidth={2} />
+                    <Icon name={bankAccountTypeIcon(bankAccount.type)} size={16} strokeWidth={2} />
                 </span>
                 <div className="flex-1 min-w-0 flex flex-col leading-tight">
                     <span className="text-14 font-medium text-fg-1 truncate">

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import {
+    bankAccountTypeIcon,
     formatBankAccountLabel,
     formatBankAccountSubline,
     useBankAccounts,
@@ -91,7 +92,7 @@ function LinkedRow({ bankAccount }: { bankAccount: BankAccount }) {
             className="py-3 first:pt-0 flex items-center gap-3 hover:text-brand-primary border-b border-border-soft last:border-b-0"
         >
             <span className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-md bg-brand-primary-soft text-brand-primary">
-                <Icon name="landmark" size={16} strokeWidth={2} />
+                <Icon name={bankAccountTypeIcon(bankAccount.type)} size={16} strokeWidth={2} />
             </span>
             <div className="flex-1 min-w-0 flex flex-col leading-tight">
                 <span className="text-14 font-medium text-fg-1 truncate">
