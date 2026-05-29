@@ -689,6 +689,81 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
     }
 
     [Test]
+    public async Task ListBankTransactions_q_filters_by_description_and_counterparty_name()
+    {
+        using var client = Factory.CreateClient();
+        var account = await CreateAccountAsync(client, $"Search-{Guid.NewGuid():N}");
+        var iban = ("NL91TEST" + Guid.NewGuid().ToString("N").ToUpperInvariant())[..34];
+        var bankAccount = await CreateBankAccountForAccountAsync(
+            client,
+            iban: iban,
+            accountId: account.Id
+        );
+
+        // Three BTs: matches by Description, matches by CounterpartyName, no match.
+        await PostBtAsync(
+            client,
+            new CreateBankTransactionRequestDto(
+                BankAccountId: bankAccount.Id,
+                BookingDate: new DateOnly(2026, 1, 1),
+                Amount: -10L,
+                CurrencyCode: "EUR",
+                Description: "Albert Heijn weekly shop"
+            )
+        );
+        await PostBtAsync(
+            client,
+            new CreateBankTransactionRequestDto(
+                BankAccountId: bankAccount.Id,
+                BookingDate: new DateOnly(2026, 1, 2),
+                Amount: -20L,
+                CurrencyCode: "EUR",
+                Description: "Groceries",
+                CounterpartyName: "Albert Heijn B.V."
+            )
+        );
+        await PostBtAsync(
+            client,
+            new CreateBankTransactionRequestDto(
+                BankAccountId: bankAccount.Id,
+                BookingDate: new DateOnly(2026, 1, 3),
+                Amount: -30L,
+                CurrencyCode: "EUR",
+                Description: "Vattenfall energy"
+            )
+        );
+
+        using var unfiltered = await client.GetAsync(
+            new Uri("/api/bank-transactions?filter=All&take=200", UriKind.Relative)
+        );
+        var allRows = await unfiltered.Content.ReadPagedItemsAsync<BankTransactionDto>();
+        var allByAccount = allRows.Where(r => r.BankAccountId == bankAccount.Id).ToList();
+        await Assert.That(allByAccount.Count).IsEqualTo(3);
+
+        using var filtered = await client.GetAsync(
+            new Uri("/api/bank-transactions?filter=All&take=200&q=albert", UriKind.Relative)
+        );
+        var filteredRows = await filtered.Content.ReadPagedItemsAsync<BankTransactionDto>();
+        var filteredByAccount = filteredRows.Where(r => r.BankAccountId == bankAccount.Id).ToList();
+        await Assert.That(filteredByAccount.Count).IsEqualTo(2);
+        await Assert
+            .That(filteredByAccount.Select(r => r.Description))
+            .Contains("Albert Heijn weekly shop");
+        await Assert.That(filteredByAccount.Select(r => r.Description)).Contains("Groceries");
+    }
+
+    [Test]
+    public async Task ListBankTransactions_q_above_max_length_returns_400()
+    {
+        using var client = Factory.CreateClient();
+        var tooLong = new string('a', 201);
+        using var response = await client.GetAsync(
+            new Uri($"/api/bank-transactions?q={tooLong}", UriKind.Relative)
+        );
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+    }
+
+    [Test]
     public async Task ListBankTransactions_negative_skip_returns_400()
     {
         using var client = Factory.CreateClient();
@@ -854,6 +929,18 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
         response.EnsureSuccessStatusCode();
         var rows = await response.Content.ReadPagedItemsAsync<BankTransactionDto>();
         return rows;
+    }
+
+    private static async Task PostBtAsync(
+        HttpClient client,
+        CreateBankTransactionRequestDto request
+    )
+    {
+        using var response = await client.PostAsJsonAsync(
+            new Uri("/api/bank-transactions", UriKind.Relative),
+            request
+        );
+        response.EnsureSuccessStatusCode();
     }
 
     private static async Task<BankTransactionDto> CreateBankTransactionAsync(

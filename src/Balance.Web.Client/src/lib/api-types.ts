@@ -2642,6 +2642,7 @@ export interface operations {
                 Skip?: number | string;
                 Take?: number | string;
                 Filter?: components["schemas"]["BankTransactionListFilter"];
+                Q?: string;
             };
             header?: never;
             path?: never;

@@ -157,7 +157,7 @@ function NotCategorisableState({ bt }: { bt: BankTransaction }) {
                 action={
                     <Link
                         to="/bank-transactions"
-                        search={{ page: 1, filter: 'Inbox' }}
+                        search={{ page: 1, filter: 'Inbox', q: '' }}
                         className="text-[12px] text-fg-3 hover:text-fg-1"
                     >
                         ← Back to inbox
@@ -322,7 +322,7 @@ function CategorizeForm({
                     action={
                         <Link
                             to="/bank-transactions"
-                            search={{ page: 1, filter: 'Inbox' }}
+                            search={{ page: 1, filter: 'Inbox', q: '' }}
                             className="text-[12px] text-fg-3 hover:text-fg-1"
                         >
                             ← Cancel
@@ -364,7 +364,7 @@ function CategorizeForm({
                 <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-border-soft">
                     <Link
                         to="/bank-transactions"
-                        search={{ page: 1, filter: 'Inbox' }}
+                        search={{ page: 1, filter: 'Inbox', q: '' }}
                         className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-fg-2 hover:text-fg-1"
                     >
                         Cancel

@@ -32,6 +32,7 @@ internal sealed class BankTransactionService : IBankTransactionService
         int skip,
         int take,
         BankTransactionListFilter filter,
+        string? search,
         CancellationToken cancellationToken
     )
     {
@@ -49,6 +50,18 @@ internal sealed class BankTransactionService : IBankTransactionService
             BankTransactionListFilter.All => _dbContext.BankTransactions,
             _ => throw new ArgumentOutOfRangeException(nameof(filter), filter, null),
         };
+
+        var needle = search?.Trim();
+        if (!string.IsNullOrEmpty(needle))
+        {
+            filtered = filtered.Where(b =>
+                EF.Functions.Like(b.Description, $"%{needle}%")
+                || (
+                    b.CounterpartyName != null
+                    && EF.Functions.Like(b.CounterpartyName, $"%{needle}%")
+                )
+            );
+        }
 
         var totalCount = await filtered.CountAsync(cancellationToken);
 

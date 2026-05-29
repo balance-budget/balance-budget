@@ -7,11 +7,13 @@ namespace Balance.Web.Endpoints.BankTransactions;
 internal sealed record ListBankTransactionsRequest(
     [FromQuery] int? Skip,
     [FromQuery] int? Take,
-    [FromQuery] BankTransactionListFilter? Filter
+    [FromQuery] BankTransactionListFilter? Filter,
+    [FromQuery] string? Q
 )
 {
     public const int DefaultPageSize = 50;
     public const int MaxPageSize = 200;
+    public const int MaxSearchLength = 200;
 }
 
 internal sealed class ListBankTransactionsRequestValidator
@@ -25,5 +27,8 @@ internal sealed class ListBankTransactionsRequestValidator
             .LessThanOrEqualTo(ListBankTransactionsRequest.MaxPageSize)
             .When(x => x.Take is not null);
         RuleFor(x => x.Filter!.Value).IsInEnum().When(x => x.Filter is not null);
+        RuleFor(x => x.Q!)
+            .MaximumLength(ListBankTransactionsRequest.MaxSearchLength)
+            .When(x => x.Q is not null);
     }
 }

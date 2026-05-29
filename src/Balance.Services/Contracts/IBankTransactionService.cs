@@ -8,6 +8,7 @@ public interface IBankTransactionService
         int skip,
         int take,
         BankTransactionListFilter filter,
+        string? search,
         CancellationToken cancellationToken
     );
 

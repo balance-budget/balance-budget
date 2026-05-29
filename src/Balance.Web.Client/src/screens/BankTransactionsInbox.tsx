@@ -31,6 +31,7 @@ import { Icon } from '../components/Icon';
 import { Modal, ModalFooter } from '../components/Modal';
 import { Pagination } from '../components/Pagination';
 import { Panel, SectionHead } from '../components/Panel';
+import { SearchInput } from '../components/SearchInput';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { cx } from '../lib/cx';
@@ -44,6 +45,7 @@ import {
 } from '../lib/domain';
 import { ApiError, getJson, postJson } from '../lib/http';
 import { formatMoney } from '../lib/money';
+import { useDebouncedValue } from '../lib/useDebouncedValue';
 import {
     allVisibleSelectionState,
     applyBulkPatchToOverride,
@@ -118,13 +120,23 @@ const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
 type Props = {
     page: number;
     filter: BankTransactionFilter;
+    q: string;
     onPageChange: (page: number) => void;
     onFilterChange: (filter: BankTransactionFilter) => void;
+    onSearchChange: (q: string) => void;
 };
 
-export function BankTransactionsInbox({ page, filter, onPageChange, onFilterChange }: Props) {
+export function BankTransactionsInbox({
+    page,
+    filter,
+    q,
+    onPageChange,
+    onFilterChange,
+    onSearchChange,
+}: Props) {
     const skip = (page - 1) * PAGE_SIZE;
-    const query = useBankTransactions(skip, PAGE_SIZE, filter);
+    const debouncedQ = useDebouncedValue(q, 200);
+    const query = useBankTransactions(skip, PAGE_SIZE, filter, debouncedQ);
     const catalog = useCurrencyCatalog();
     const [dismissing, setDismissing] = useState<BankTransaction | null>(null);
 
@@ -132,7 +144,14 @@ export function BankTransactionsInbox({ page, filter, onPageChange, onFilterChan
         <>
             <Panel>
                 <SectionHead title="Bank transactions" subtitle={SUBTITLE[filter]} />
-                <FilterChips value={filter} onChange={onFilterChange} />
+                <div className="flex flex-col gap-3 mb-4">
+                    <FilterChips value={filter} onChange={onFilterChange} />
+                    <SearchInput
+                        value={q}
+                        onChange={onSearchChange}
+                        placeholder="Search description or counterparty…"
+                    />
+                </div>
                 <Body
                     query={query}
                     catalog={catalog}
@@ -163,7 +182,7 @@ function FilterChips({
     onChange: (filter: BankTransactionFilter) => void;
 }) {
     return (
-        <div className="flex items-center gap-2 mb-4" role="tablist" aria-label="Filter">
+        <div className="flex items-center gap-2" role="tablist" aria-label="Filter">
             {BANK_TRANSACTION_FILTERS.map(filter => {
                 const active = filter === value;
                 return (
