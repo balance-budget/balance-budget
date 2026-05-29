@@ -3261,6 +3261,7 @@ export interface operations {
                 Skip?: number | string;
                 Take?: number | string;
                 Q?: string;
+                CounterpartyId?: components["schemas"]["CounterpartyId"];
             };
             header?: never;
             path?: never;

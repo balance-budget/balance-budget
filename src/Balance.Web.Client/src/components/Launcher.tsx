@@ -79,8 +79,9 @@ export function Launcher({ open, onClose }: LauncherProps) {
                 break;
             case 'counterparty':
                 void navigate({
-                    to: '/settings/counterparties/$id',
+                    to: '/counterparties/$id',
                     params: { id: row.hit.id },
+                    search: { page: 1 },
                 });
                 break;
             case 'bankAccount':

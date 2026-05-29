@@ -1,3 +1,4 @@
+using Balance.Data.Entities.Ids;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,7 +7,8 @@ namespace Balance.Web.Endpoints.JournalEntries;
 internal sealed record ListJournalEntriesRequest(
     [FromQuery] int? Skip,
     [FromQuery] int? Take,
-    [FromQuery] string? Q
+    [FromQuery] string? Q,
+    [FromQuery] CounterpartyId? CounterpartyId
 )
 {
     public const int DefaultPageSize = 50;
