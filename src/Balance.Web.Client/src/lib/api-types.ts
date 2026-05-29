@@ -568,6 +568,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["Search"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -580,6 +596,11 @@ export interface components {
             periodEnd: string;
             range: components["schemas"]["TrendRange"];
             currencyCode: components["schemas"]["CurrencyCode"];
+        };
+        AccountHit: {
+            id: components["schemas"]["AccountId"];
+            name: string;
+            accountType: components["schemas"]["AccountType"];
         };
         /** Format: uuid */
         AccountId: string;
@@ -627,6 +648,15 @@ export interface components {
             date: string;
             description: null | string;
             otherAccountName: string;
+        };
+        BankAccountHit: {
+            id: components["schemas"]["BankAccountId"];
+            type: components["schemas"]["BankAccountType"];
+            iban: null | string;
+            accountNumber: null | string;
+            cardIdentifier: null | string;
+            bankName: null | string;
+            accountHolderName: null | string;
         };
         /** Format: uuid */
         BankAccountId: string;
@@ -743,6 +773,10 @@ export interface components {
             date: string;
             description: null | string;
             lines: components["schemas"]["CategorizeBankTransactionLineRequest"][];
+        };
+        CounterpartyHit: {
+            id: components["schemas"]["CounterpartyId"];
+            name: string;
         };
         /** Format: uuid */
         CounterpartyId: string;
@@ -881,6 +915,12 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
             bankTransactions: components["schemas"]["BankTransactionDetailOutput"][];
+        };
+        JournalEntryHit: {
+            id: components["schemas"]["JournalEntryId"];
+            /** Format: date */
+            date: string;
+            description: null | string;
         };
         /** Format: uuid */
         JournalEntryId: string;
@@ -1039,6 +1079,10 @@ export interface components {
             /** Format: int32 */
             totalCount: number | string;
         };
+        PageHit: {
+            label: string;
+            route: string;
+        };
         ProblemDetails: {
             type?: null | string;
             title?: null | string;
@@ -1081,6 +1125,38 @@ export interface components {
             amount: number | string;
             description: null | string;
             reconciliationStatus: null | components["schemas"]["ReconciliationStatus"];
+        };
+        SearchOutput: {
+            accounts: components["schemas"]["SearchSectionOfAccountHit"];
+            counterparties: components["schemas"]["SearchSectionOfCounterpartyHit"];
+            bankAccounts: components["schemas"]["SearchSectionOfBankAccountHit"];
+            journalEntries: components["schemas"]["SearchSectionOfJournalEntryHit"];
+            pages: components["schemas"]["SearchSectionOfPageHit"];
+        };
+        SearchSectionOfAccountHit: {
+            items: components["schemas"]["AccountHit"][];
+            /** Format: int32 */
+            totalCount: number | string;
+        };
+        SearchSectionOfBankAccountHit: {
+            items: components["schemas"]["BankAccountHit"][];
+            /** Format: int32 */
+            totalCount: number | string;
+        };
+        SearchSectionOfCounterpartyHit: {
+            items: components["schemas"]["CounterpartyHit"][];
+            /** Format: int32 */
+            totalCount: number | string;
+        };
+        SearchSectionOfJournalEntryHit: {
+            items: components["schemas"]["JournalEntryHit"][];
+            /** Format: int32 */
+            totalCount: number | string;
+        };
+        SearchSectionOfPageHit: {
+            items: components["schemas"]["PageHit"][];
+            /** Format: int32 */
+            totalCount: number | string;
         };
         SetupRequest: {
             email: string;
@@ -3184,6 +3260,7 @@ export interface operations {
             query?: {
                 Skip?: number | string;
                 Take?: number | string;
+                Q?: string;
             };
             header?: never;
             path?: never;
@@ -3533,6 +3610,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    Search: {
+        parameters: {
+            query: {
+                Q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchOutput"];
                 };
             };
         };
