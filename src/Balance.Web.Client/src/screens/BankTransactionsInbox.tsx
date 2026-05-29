@@ -895,7 +895,14 @@ function InboxEditorReady({
     );
 
     return (
-        <div className="flex flex-col">
+        <div
+            className={cx(
+                'flex flex-col',
+                // Reserve clearance under the fixed BulkApplyFooter so it doesn't
+                // overlap Pagination or the last row when scrolled to the bottom.
+                selectionCount > 0 && 'lg:pb-24',
+            )}
+        >
             <div className="hidden lg:flex flex-col">
                 <SaveBar
                     dirtyCount={dirtyCount}
@@ -1203,7 +1210,7 @@ function BulkApplyFooter({
     }
 
     return (
-        <div className="sticky bottom-0 z-20 -mx-1 mt-3 px-3 py-2 rounded-sm bg-bg-1 border border-brand-primary/30 shadow-overlay">
+        <div className="fixed bottom-6 left-[calc(15rem+2rem)] right-8 z-30 px-3 py-2 rounded-sm bg-bg-1 border border-brand-primary/30 shadow-overlay">
             <div className="flex flex-wrap items-center gap-3">
                 <span className="text-[12px] font-medium text-fg-1">
                     {selectionCount.toString()} selected
