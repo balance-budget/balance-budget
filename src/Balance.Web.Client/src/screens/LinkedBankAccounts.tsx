@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { useBankAccounts, type BankAccount } from '../api/bankAccounts';
+import {
+    formatBankAccountLabel,
+    formatBankAccountSubline,
+    useBankAccounts,
+    type BankAccount,
+} from '../api/bankAccounts';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Skeleton } from '../components/Skeleton';
@@ -79,14 +84,6 @@ function belongsTo(ba: BankAccount, owner: Owner): boolean {
 }
 
 function LinkedRow({ bankAccount }: { bankAccount: BankAccount }) {
-    const label =
-        bankAccount.bankName ??
-        bankAccount.iban ??
-        bankAccount.accountNumber ??
-        bankAccount.cardIdentifier ??
-        '—';
-    const identifier =
-        bankAccount.iban ?? bankAccount.accountNumber ?? bankAccount.cardIdentifier;
     return (
         <Link
             to="/settings/bank-accounts/$id"
@@ -97,10 +94,11 @@ function LinkedRow({ bankAccount }: { bankAccount: BankAccount }) {
                 <Icon name="landmark" size={16} strokeWidth={2} />
             </span>
             <div className="flex-1 min-w-0 flex flex-col leading-tight">
-                <span className="text-14 font-medium text-fg-1 truncate">{label}</span>
+                <span className="text-14 font-medium text-fg-1 truncate">
+                    {formatBankAccountLabel(bankAccount)}
+                </span>
                 <span className="text-[12px] text-fg-3 tabular truncate">
-                    {identifier ?? '—'}
-                    {bankAccount.currencyCode ? ` · ${bankAccount.currencyCode}` : ''}
+                    {formatBankAccountSubline(bankAccount)}
                 </span>
             </div>
             <Icon name="chevron-right" size={14} className="text-fg-3" />

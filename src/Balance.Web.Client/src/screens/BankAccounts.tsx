@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import {
+    formatBankAccountLabel,
+    formatBankAccountSubline,
     useBankAccount,
     useBankAccounts,
     useDeleteBankAccount,
@@ -127,14 +129,6 @@ function BankAccountRow({
     bankAccount: BankAccount;
     ownerLabel: string;
 }) {
-    const label =
-        bankAccount.bankName ??
-        bankAccount.iban ??
-        bankAccount.accountNumber ??
-        bankAccount.cardIdentifier ??
-        '—';
-    const identifier =
-        bankAccount.iban ?? bankAccount.accountNumber ?? bankAccount.cardIdentifier;
     const ownerKind = bankAccount.accountId ? 'Account' : 'Counterparty';
 
     return (
@@ -147,10 +141,11 @@ function BankAccountRow({
                 <Icon name="landmark" size={16} strokeWidth={2} />
             </span>
             <div className="flex-1 min-w-0 flex flex-col leading-tight">
-                <span className="text-14 font-medium text-fg-1 truncate">{label}</span>
+                <span className="text-14 font-medium text-fg-1 truncate">
+                    {formatBankAccountLabel(bankAccount)}
+                </span>
                 <span className="text-[12px] text-fg-3 tabular truncate">
-                    {identifier ?? '—'}
-                    {bankAccount.currencyCode ? ` · ${bankAccount.currencyCode}` : ''}
+                    {formatBankAccountSubline(bankAccount)}
                 </span>
             </div>
             <div className="shrink-0 flex flex-col items-end leading-tight">
@@ -201,7 +196,7 @@ export function BankAccountDetail({ id }: { id: BankAccountId }) {
                             ← Bank accounts
                         </Link>
                         <h1 className="text-[22px] font-medium text-fg-1 truncate">
-                            {ba.bankName ?? ba.iban ?? ba.accountNumber ?? 'Bank account'}
+                            {formatBankAccountLabel(ba)}
                         </h1>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
