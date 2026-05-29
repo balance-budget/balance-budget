@@ -1,18 +1,16 @@
 import { useId, useRef, useState } from 'react';
-import { useBankAccounts, useImportStatement, type BankAccount } from '../api/bankAccounts';
+import {
+    formatBankAccountLabel,
+    formatBankAccountSubline,
+    useBankAccounts,
+    useImportStatement,
+    type BankAccount,
+} from '../api/bankAccounts';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { ApiError } from '../lib/http';
-
-function bankAccountLabel(ba: BankAccount): string {
-    return ba.bankName ?? ba.iban ?? ba.accountNumber ?? 'Bank account';
-}
-
-function bankAccountIdentifier(ba: BankAccount): string | null {
-    return ba.iban ?? ba.accountNumber;
-}
 
 type ImportFeedback =
     | { kind: 'success'; imported: number; skipped: number }
@@ -50,7 +48,6 @@ function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
         }
     }
 
-    const identifier = bankAccountIdentifier(bankAccount);
     const isUploading = importStatement.isPending;
 
     return (
@@ -61,10 +58,10 @@ function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
                 </span>
                 <div className="flex-1 min-w-0 flex flex-col leading-tight">
                     <span className="text-14 font-medium text-fg-1 truncate">
-                        {bankAccountLabel(bankAccount)}
+                        {formatBankAccountLabel(bankAccount)}
                     </span>
                     <span className="text-[12px] text-fg-3 truncate tabular">
-                        {identifier ? `${identifier} · ${bankAccount.currencyCode ?? '—'}` : '—'}
+                        {formatBankAccountSubline(bankAccount)}
                     </span>
                 </div>
                 <label
