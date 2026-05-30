@@ -346,6 +346,7 @@ function ReadOnlyRow({
                     <span className="text-[13px] text-fg-1 truncate">
                         {bankTransaction.description}
                     </span>
+                    <ReferenceLine reference={bankTransaction.reference} />
                     <StateChip bankTransaction={bankTransaction} />
                 </div>
                 <CounterpartyCell bankTransaction={bankTransaction} />
@@ -362,6 +363,7 @@ function ReadOnlyRow({
                 <span className="text-[13px] text-fg-1 truncate">
                     {bankTransaction.description}
                 </span>
+                <ReferenceLine reference={bankTransaction.reference} />
                 <CounterpartyCell bankTransaction={bankTransaction} />
                 <StateChip bankTransaction={bankTransaction} />
                 <div className="pt-1">
@@ -395,8 +397,14 @@ function CounterpartyCell({ bankTransaction }: { bankTransaction: BankTransactio
     }
     return (
         <div className="min-w-0 flex flex-col leading-tight">
-            <span className="text-[12px] text-fg-2 truncate">{name ?? '—'}</span>
-            {iban && <span className="text-[11px] text-fg-3 truncate tabular">{iban}</span>}
+            <span className="text-[12px] text-fg-2 truncate" title={name ?? undefined}>
+                {name ?? '—'}
+            </span>
+            {iban && (
+                <span className="text-[11px] text-fg-3 truncate tabular" title={iban}>
+                    {iban}
+                </span>
+            )}
         </div>
     );
 }
