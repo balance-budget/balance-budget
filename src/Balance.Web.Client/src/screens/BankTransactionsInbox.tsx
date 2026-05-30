@@ -401,6 +401,18 @@ function CounterpartyCell({ bankTransaction }: { bankTransaction: BankTransactio
     );
 }
 
+/** The bank-supplied payment reference, rendered as a muted sub-line under the
+ *  description. Truncates to one line with the full value in a hover tooltip —
+ *  bank references can be long, structured SEPA blobs. */
+function ReferenceLine({ reference }: { reference: string | null }) {
+    if (!reference) return null;
+    return (
+        <span className="text-[11px] text-fg-3 truncate" title={reference}>
+            Ref: {reference}
+        </span>
+    );
+}
+
 function AmountCell({
     bankTransaction,
     catalog,
@@ -1495,11 +1507,23 @@ function InboxRow({
                 <span className="text-[13px] text-fg-1 truncate">
                     {bankTransaction.description}
                 </span>
+                {bankTransaction.counterpartyName && (
+                    <span
+                        className="text-[11px] text-fg-3 truncate"
+                        title={bankTransaction.counterpartyName}
+                    >
+                        {bankTransaction.counterpartyName}
+                    </span>
+                )}
                 {bankTransaction.counterpartyAccountNumber && (
-                    <span className="text-[11px] text-fg-3 truncate tabular">
+                    <span
+                        className="text-[11px] text-fg-3 truncate tabular"
+                        title={bankTransaction.counterpartyAccountNumber}
+                    >
                         {bankTransaction.counterpartyAccountNumber}
                     </span>
                 )}
+                <ReferenceLine reference={bankTransaction.reference} />
                 {bankTransaction.matchingJournalEntry && (
                     <AttachHintBadge hint={bankTransaction.matchingJournalEntry} />
                 )}
