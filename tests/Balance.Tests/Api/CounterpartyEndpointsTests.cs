@@ -52,6 +52,50 @@ internal sealed class CounterpartyEndpointsTests : EndpointsTestsBase
     }
 
     [Test]
+    public async Task ListCounterparties_q_filters_on_name_case_insensitively()
+    {
+        using var client = Factory.CreateClient();
+
+        var token = Guid.NewGuid().ToString("N")[..8];
+        var match = new CreateCounterpartyRequestDto($"Albert Heijn {token}");
+        var other = new CreateCounterpartyRequestDto($"Jumbo {token}");
+        using (
+            var r1 = await client.PostAsJsonAsync(
+                new Uri("/api/counterparties", UriKind.Relative),
+                match
+            )
+        )
+            await Assert.That(r1.StatusCode).IsEqualTo(HttpStatusCode.Created);
+        using (
+            var r2 = await client.PostAsJsonAsync(
+                new Uri("/api/counterparties", UriKind.Relative),
+                other
+            )
+        )
+            await Assert.That(r2.StatusCode).IsEqualTo(HttpStatusCode.Created);
+
+        using var response = await client.GetAsync(
+            new Uri($"/api/counterparties?q=ALBERT+HEIJN+{token}", UriKind.Relative)
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var rows = await response.Content.ReadPagedItemsAsync<CounterpartyDto>();
+        await Assert.That(rows.Select(c => c.Name)).Contains($"Albert Heijn {token}");
+        await Assert.That(rows.Select(c => c.Name)).DoesNotContain($"Jumbo {token}");
+    }
+
+    [Test]
+    public async Task ListCounterparties_q_above_max_length_returns_400()
+    {
+        using var client = Factory.CreateClient();
+        var tooLong = new string('a', 201);
+        using var response = await client.GetAsync(
+            new Uri($"/api/counterparties?q={tooLong}", UriKind.Relative)
+        );
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+    }
+
+    [Test]
     public async Task CreateCounterparty_duplicate_name_case_insensitive_returns_409()
     {
         using var client = Factory.CreateClient();

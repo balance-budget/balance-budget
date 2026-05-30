@@ -14,7 +14,10 @@ internal static class CounterpartyEndpoints
     public static void MapCounterparties(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup(PathPrefix).WithTags("Counterparties");
-        group.MapGet("", ListAsync).WithName("ListCounterparties");
+        group
+            .MapGet("", ListAsync)
+            .WithValidation<ListCounterpartiesRequest>()
+            .WithName("ListCounterparties");
         group.MapGet("/{id}", GetAsync).WithName("GetCounterparty");
         group
             .MapGet("/{id}/suggested-accounts", GetSuggestedAccountsAsync)
@@ -39,11 +42,17 @@ internal static class CounterpartyEndpoints
     }
 
     private static async Task<Ok<PagedOutput<CounterpartyOutput>>> ListAsync(
+        [AsParameters] ListCounterpartiesRequest request,
         [FromServices] ICounterpartyService counterpartyService,
         CancellationToken cancellationToken
     )
     {
-        var counterparties = await counterpartyService.ListAsync(cancellationToken);
+        var counterparties = await counterpartyService.ListAsync(
+            request.Skip ?? 0,
+            request.Take,
+            request.Q,
+            cancellationToken
+        );
         return TypedResults.Ok(counterparties);
     }
 

@@ -3,6 +3,7 @@ import { compare } from 'fast-json-patch';
 import type { components } from '../lib/api-types';
 import { asAccountId, asCounterpartyId, type AccountId, type CounterpartyId } from '../lib/domain';
 import { deleteRequest, getJson, patchJson, postJson } from '../lib/http';
+import type { Page } from '../lib/paging';
 
 type WireCounterparty = components['schemas']['CounterpartyOutput'];
 type WirePagedCounterparties = components['schemas']['PagedOutputOfCounterpartyOutput'];
@@ -23,6 +24,8 @@ export type SuggestedCounterAccount = {
 export const counterpartiesKeys = {
     all: ['counterparties'] as const,
     list: () => [...counterpartiesKeys.all, 'list'] as const,
+    page: (skip: number, take: number, q: string) =>
+        [...counterpartiesKeys.all, 'page', { skip, take, q }] as const,
     detail: (id: CounterpartyId) => [...counterpartiesKeys.all, 'detail', id] as const,
     suggestedAccounts: (id: CounterpartyId) =>
         [...counterpartiesKeys.all, 'suggested-accounts', id] as const,
@@ -32,6 +35,10 @@ function toCounterparty(wire: WireCounterparty): Counterparty {
     return { id: asCounterpartyId(wire.id), name: wire.name };
 }
 
+/**
+ * Full, unpaginated list of counterparties (sorted by name) for picker/dropdown use.
+ * The list screen uses {@link useCounterpartiesPage} for server-side search + paging.
+ */
 export function useCounterparties() {
     return useQuery({
         queryKey: counterpartiesKeys.list(),
@@ -42,6 +49,27 @@ export function useCounterparties() {
                 'load counterparties',
             );
             return wire.items.map(toCounterparty);
+        },
+    });
+}
+
+export function useCounterpartiesPage(skip: number, take: number, q: string) {
+    return useQuery({
+        queryKey: counterpartiesKeys.page(skip, take, q),
+        queryFn: async ({ signal }): Promise<Page<Counterparty>> => {
+            const params = new URLSearchParams({ skip: String(skip), take: String(take) });
+            if (q !== '') {
+                params.set('q', q);
+            }
+            const wire = await getJson<WirePagedCounterparties>(
+                `/api/counterparties?${params.toString()}`,
+                signal,
+                'load counterparties',
+            );
+            return {
+                items: wire.items.map(toCounterparty),
+                totalCount: Number(wire.totalCount),
+            };
         },
     });
 }

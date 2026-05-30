@@ -61,6 +61,7 @@ export function CounterpartyDetail({ id, page, onPageChange }: Props) {
                     <div className="flex flex-col gap-[2px] min-w-0">
                         <Link
                             to="/counterparties"
+                            search={{ page: 1, q: '' }}
                             className="text-[12px] text-fg-3 hover:text-fg-1 inline-flex items-center gap-1"
                         >
                             ← Counterparties
@@ -300,7 +301,7 @@ function DeleteCounterpartyDialog({
         try {
             await del.mutateAsync(id);
             toast.success(`Deleted “${name}”.`);
-            await navigate({ to: '/counterparties' });
+            await navigate({ to: '/counterparties', search: { page: 1, q: '' } });
         } catch (err) {
             if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
                 setError(err.message);
