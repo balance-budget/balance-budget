@@ -1512,7 +1512,10 @@ function InboxRow({
                 {willDismiss ? <WillDismissIndicator /> : <StatusIndicator status={status} />}
             </div>
             <div className="min-w-0 flex flex-col leading-tight pt-2">
-                <span className="text-[13px] text-fg-1 truncate">
+                <span
+                    className="text-[13px] text-fg-1 truncate"
+                    title={bankTransaction.description}
+                >
                     {bankTransaction.description}
                 </span>
                 {bankTransaction.counterpartyName && (
