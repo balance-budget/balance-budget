@@ -156,6 +156,7 @@ export function BankTransactionsInbox({
                     catalog={catalog}
                     filter={filter}
                     page={page}
+                    search={debouncedQ}
                     onPageChange={onPageChange}
                     onDismiss={setDismissing}
                 />
@@ -213,6 +214,7 @@ function Body({
     catalog,
     filter,
     page,
+    search,
     onPageChange,
     onDismiss,
 }: {
@@ -220,6 +222,7 @@ function Body({
     catalog: CurrencyCatalog;
     filter: BankTransactionFilter;
     page: number;
+    search: string;
     onPageChange: (page: number) => void;
     onDismiss: (bt: BankTransaction) => void;
 }) {
@@ -241,6 +244,12 @@ function Body({
                 message="Couldn't load bank transactions."
                 onRetry={() => void query.refetch()}
             />
+        );
+    }
+
+    if (query.data.items.length === 0 && search !== '') {
+        return (
+            <div className="py-8 text-center text-[14px] text-fg-2">No matches for “{search}”.</div>
         );
     }
 
@@ -1345,7 +1354,9 @@ function ActionBar({
                                 }}
                                 groupOrder={ACCOUNT_TYPE_ORDER}
                                 groupLabels={ACCOUNT_TYPE_LABEL}
-                                placeholder={mixedCurrency ? 'Account (mixed currencies)' : 'Account…'}
+                                placeholder={
+                                    mixedCurrency ? 'Account (mixed currencies)' : 'Account…'
+                                }
                                 disabled={accountDisabled}
                                 ariaLabel="Bulk account"
                             />

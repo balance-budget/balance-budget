@@ -182,7 +182,9 @@ function RegisterTable({
 
     if (register.data.items.length === 0) {
         return (
-            <div className="py-6 text-center text-[13px] text-fg-3">No journal entries yet.</div>
+            <div className="py-6 text-center text-[13px] text-fg-3">
+                {debouncedQ !== '' ? `No matches for “${debouncedQ}”.` : 'No journal entries yet.'}
+            </div>
         );
     }
 
