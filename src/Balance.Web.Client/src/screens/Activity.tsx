@@ -61,6 +61,7 @@ export function Activity({
                 accounts={accounts.data ?? []}
                 catalog={catalog}
                 page={page}
+                query={debouncedQ}
                 onPageChange={onPageChange}
             />
         </Panel>
@@ -72,12 +73,14 @@ function JournalBody({
     accounts,
     catalog,
     page,
+    query,
     onPageChange,
 }: {
     entries: ReturnType<typeof useJournalEntries>;
     accounts: Account[];
     catalog: CurrencyCatalog;
     page: number;
+    query: string;
     onPageChange: (p: number) => void;
 }) {
     const accountById = useMemo(
@@ -103,6 +106,12 @@ function JournalBody({
                 message="Couldn't load journal entries."
                 onRetry={() => void entries.refetch()}
             />
+        );
+    }
+
+    if (entries.data.items.length === 0 && query !== '') {
+        return (
+            <div className="py-8 text-center text-[14px] text-fg-2">No matches for “{query}”.</div>
         );
     }
 

@@ -202,7 +202,7 @@ function LauncherBody({
 
     if (rows.length === 0) {
         return (
-            <p className="px-4 py-6 text-center text-[12px] text-fg-3">No results for “{query}”.</p>
+            <p className="px-4 py-6 text-center text-[12px] text-fg-3">No matches for “{query}”.</p>
         );
     }
 
