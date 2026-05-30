@@ -37,9 +37,19 @@ internal sealed class JournalEntryService : IJournalEntryService
         var needle = search?.Trim();
         if (!string.IsNullOrEmpty(needle))
         {
+            // Match the entry Description or its linked Counterparty's Name. ADR-0020's
+            // item (g) originally excluded counterparty-name matching from the list filter;
+            // that half is superseded now that the Counterparty detail view exists, and it
+            // brings this filter in line with the BankTransaction list filter.
+            var pattern = $"%{needle}%";
             filtered = filtered.Where(e =>
-                e.Description != null
-                && DbFunction.CaseInsensitiveLike(e.Description, $"%{needle}%")
+                (e.Description != null && DbFunction.CaseInsensitiveLike(e.Description, pattern))
+                || (
+                    e.CounterpartyId != null
+                    && _dbContext.Counterparties.Any(c =>
+                        c.Id == e.CounterpartyId && DbFunction.CaseInsensitiveLike(c.Name, pattern)
+                    )
+                )
             );
         }
 

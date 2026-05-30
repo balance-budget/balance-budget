@@ -51,9 +51,21 @@ internal sealed class RegisterService : IRegisterService
         var needle = search?.Trim();
         if (!string.IsNullOrEmpty(needle))
         {
+            // Match the entry Description or its linked Counterparty's Name, mirroring the
+            // journal-entries list filter (see the ADR-0020 item (g) amendment).
+            var pattern = $"%{needle}%";
             lines = lines.Where(x =>
-                x.Entry.Description != null
-                && DbFunction.CaseInsensitiveLike(x.Entry.Description, $"%{needle}%")
+                (
+                    x.Entry.Description != null
+                    && DbFunction.CaseInsensitiveLike(x.Entry.Description, pattern)
+                )
+                || (
+                    x.Entry.CounterpartyId != null
+                    && _dbContext.Counterparties.Any(c =>
+                        c.Id == x.Entry.CounterpartyId
+                        && DbFunction.CaseInsensitiveLike(c.Name, pattern)
+                    )
+                )
             );
         }
 

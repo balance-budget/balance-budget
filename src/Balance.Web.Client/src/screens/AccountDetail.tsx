@@ -121,7 +121,7 @@ export function AccountDetail({
                     <SearchInput
                         value={q}
                         onChange={onSearchChange}
-                        placeholder="Search description…"
+                        placeholder="Search description or counterparty…"
                     />
                 </div>
                 <RegisterTable account={account} page={page} q={q} onPageChange={onPageChange} />

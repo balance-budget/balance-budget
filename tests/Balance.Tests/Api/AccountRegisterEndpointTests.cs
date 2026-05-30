@@ -390,6 +390,55 @@ internal sealed class AccountRegisterEndpointTests : EndpointsTestsBase
     }
 
     [Test]
+    public async Task GetRegister_q_matches_linked_counterparty_name()
+    {
+        using var client = Factory.CreateClient();
+        var currency = await CreateIsolatedCurrencyAsync(client);
+        var checking = await CreateAccountAsync(
+            client,
+            $"Reg-QCP-Checking-{Guid.NewGuid():N}",
+            "Asset",
+            currency
+        );
+        var groceries = await CreateAccountAsync(
+            client,
+            $"Reg-QCP-Groc-{Guid.NewGuid():N}",
+            "Expense",
+            currency
+        );
+        // Token only present in one counterparty's name and in no description.
+        var token = Guid.NewGuid().ToString("N")[..10];
+        var named = await CreateCounterpartyAsync(client, $"Supermarket {token}");
+        var other = await CreateCounterpartyAsync(client, $"Utility-{Guid.NewGuid():N}");
+
+        await PostJournalEntryAsync(
+            client,
+            new DateOnly(2026, 5, 22),
+            [
+                new CreateJournalLineRequestDto(checking.Id, -3_000L, null),
+                new CreateJournalLineRequestDto(groceries.Id, 3_000L, null),
+            ],
+            counterpartyId: named.Id,
+            description: "Weekly shop"
+        );
+        await PostJournalEntryAsync(
+            client,
+            new DateOnly(2026, 5, 23),
+            [
+                new CreateJournalLineRequestDto(checking.Id, -7_000L, null),
+                new CreateJournalLineRequestDto(groceries.Id, 7_000L, null),
+            ],
+            counterpartyId: other.Id,
+            description: "Energy bill"
+        );
+
+        var matches = await GetRegisterAsync(client, checking.Id, q: token.ToUpperInvariant());
+
+        await Assert.That(matches.Count).IsEqualTo(1);
+        await Assert.That(matches[0].CounterpartyId).IsEqualTo(named.Id);
+    }
+
+    [Test]
     public async Task GetRegister_includes_counterparty_name_when_set()
     {
         using var client = Factory.CreateClient();
