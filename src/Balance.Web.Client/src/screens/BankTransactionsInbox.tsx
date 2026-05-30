@@ -156,6 +156,7 @@ export function BankTransactionsInbox({
                     catalog={catalog}
                     filter={filter}
                     page={page}
+                    search={debouncedQ}
                     onPageChange={onPageChange}
                     onDismiss={setDismissing}
                 />
@@ -213,6 +214,7 @@ function Body({
     catalog,
     filter,
     page,
+    search,
     onPageChange,
     onDismiss,
 }: {
@@ -220,6 +222,7 @@ function Body({
     catalog: CurrencyCatalog;
     filter: BankTransactionFilter;
     page: number;
+    search: string;
     onPageChange: (page: number) => void;
     onDismiss: (bt: BankTransaction) => void;
 }) {
@@ -241,6 +244,12 @@ function Body({
                 message="Couldn't load bank transactions."
                 onRetry={() => void query.refetch()}
             />
+        );
+    }
+
+    if (query.data.items.length === 0 && search !== '') {
+        return (
+            <div className="py-8 text-center text-[14px] text-fg-2">No matches for “{search}”.</div>
         );
     }
 
@@ -337,6 +346,7 @@ function ReadOnlyRow({
                     <span className="text-[13px] text-fg-1 truncate">
                         {bankTransaction.description}
                     </span>
+                    <ReferenceLine reference={bankTransaction.reference} />
                     <StateChip bankTransaction={bankTransaction} />
                 </div>
                 <CounterpartyCell bankTransaction={bankTransaction} />
@@ -353,6 +363,7 @@ function ReadOnlyRow({
                 <span className="text-[13px] text-fg-1 truncate">
                     {bankTransaction.description}
                 </span>
+                <ReferenceLine reference={bankTransaction.reference} />
                 <CounterpartyCell bankTransaction={bankTransaction} />
                 <StateChip bankTransaction={bankTransaction} />
                 <div className="pt-1">
@@ -386,9 +397,27 @@ function CounterpartyCell({ bankTransaction }: { bankTransaction: BankTransactio
     }
     return (
         <div className="min-w-0 flex flex-col leading-tight">
-            <span className="text-[12px] text-fg-2 truncate">{name ?? '—'}</span>
-            {iban && <span className="text-[11px] text-fg-3 truncate tabular">{iban}</span>}
+            <span className="text-[12px] text-fg-2 truncate" title={name ?? undefined}>
+                {name ?? '—'}
+            </span>
+            {iban && (
+                <span className="text-[11px] text-fg-3 truncate tabular" title={iban}>
+                    {iban}
+                </span>
+            )}
         </div>
+    );
+}
+
+/** The bank-supplied payment reference, rendered as a muted sub-line under the
+ *  description. Truncates to one line with the full value in a hover tooltip —
+ *  bank references can be long, structured SEPA blobs. */
+function ReferenceLine({ reference }: { reference: string | null }) {
+    if (!reference) return null;
+    return (
+        <span className="text-[11px] text-fg-3 truncate" title={reference}>
+            Ref: {reference}
+        </span>
     );
 }
 
@@ -1345,7 +1374,9 @@ function ActionBar({
                                 }}
                                 groupOrder={ACCOUNT_TYPE_ORDER}
                                 groupLabels={ACCOUNT_TYPE_LABEL}
-                                placeholder={mixedCurrency ? 'Account (mixed currencies)' : 'Account…'}
+                                placeholder={
+                                    mixedCurrency ? 'Account (mixed currencies)' : 'Account…'
+                                }
                                 disabled={accountDisabled}
                                 ariaLabel="Bulk account"
                             />
@@ -1484,11 +1515,23 @@ function InboxRow({
                 <span className="text-[13px] text-fg-1 truncate">
                     {bankTransaction.description}
                 </span>
+                {bankTransaction.counterpartyName && (
+                    <span
+                        className="text-[11px] text-fg-3 truncate"
+                        title={bankTransaction.counterpartyName}
+                    >
+                        {bankTransaction.counterpartyName}
+                    </span>
+                )}
                 {bankTransaction.counterpartyAccountNumber && (
-                    <span className="text-[11px] text-fg-3 truncate tabular">
+                    <span
+                        className="text-[11px] text-fg-3 truncate tabular"
+                        title={bankTransaction.counterpartyAccountNumber}
+                    >
                         {bankTransaction.counterpartyAccountNumber}
                     </span>
                 )}
+                <ReferenceLine reference={bankTransaction.reference} />
                 {bankTransaction.matchingJournalEntry && (
                     <AttachHintBadge hint={bankTransaction.matchingJournalEntry} />
                 )}

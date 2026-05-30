@@ -60,9 +60,11 @@ export function Launcher({ open, onClose }: LauncherProps) {
         if (!search.data) return [];
         const flat: FlatRow[] = [];
         for (const hit of search.data.accounts.items) flat.push({ kind: 'account', hit });
-        for (const hit of search.data.counterparties.items) flat.push({ kind: 'counterparty', hit });
+        for (const hit of search.data.counterparties.items)
+            flat.push({ kind: 'counterparty', hit });
         for (const hit of search.data.bankAccounts.items) flat.push({ kind: 'bankAccount', hit });
-        for (const hit of search.data.journalEntries.items) flat.push({ kind: 'journalEntry', hit });
+        for (const hit of search.data.journalEntries.items)
+            flat.push({ kind: 'journalEntry', hit });
         for (const hit of search.data.pages.items) flat.push({ kind: 'page', hit });
         return flat;
     }, [search.data]);
@@ -75,7 +77,11 @@ export function Launcher({ open, onClose }: LauncherProps) {
         onClose();
         switch (row.kind) {
             case 'account':
-                void navigate({ to: '/accounts/$id', params: { id: row.hit.id } });
+                void navigate({
+                    to: '/accounts/$id',
+                    params: { id: row.hit.id },
+                    search: { page: 1, q: '' },
+                });
                 break;
             case 'counterparty':
                 void navigate({
@@ -196,7 +202,7 @@ function LauncherBody({
 
     if (rows.length === 0) {
         return (
-            <p className="px-4 py-6 text-center text-[12px] text-fg-3">No results for “{query}”.</p>
+            <p className="px-4 py-6 text-center text-[12px] text-fg-3">No matches for “{query}”.</p>
         );
     }
 
@@ -306,11 +312,7 @@ function LauncherBody({
                     );
                 })}
             </Section>
-            <Section
-                title="Pages"
-                shown={data.pages.items.length}
-                total={data.pages.totalCount}
-            >
+            <Section title="Pages" shown={data.pages.items.length} total={data.pages.totalCount}>
                 {data.pages.items.map(hit => {
                     const i = runningIndex++;
                     return (
@@ -349,9 +351,7 @@ function Section({
     const moreCount = total - shown;
     return (
         <div className="px-2 pb-2">
-            <div className="px-2 py-1 text-[11px] uppercase tracking-wider text-fg-3">
-                {title}
-            </div>
+            <div className="px-2 py-1 text-[11px] uppercase tracking-wider text-fg-3">{title}</div>
             {children}
             {moreCount > 0 ? (
                 <div className="px-2 pt-1 text-[11px] text-fg-3">

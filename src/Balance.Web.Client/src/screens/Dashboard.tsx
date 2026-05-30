@@ -40,7 +40,7 @@ function RecentRow({ row }: { row: RegisterRow }) {
 }
 
 function RecentActivity({ account }: { account: Account }) {
-    const register = useAccountRegister(account.id, 0, 5);
+    const register = useAccountRegister(account.id, 0, 5, '');
 
     if (register.isPending) {
         return (

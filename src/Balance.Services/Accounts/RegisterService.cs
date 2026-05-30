@@ -2,6 +2,7 @@ using Balance.Data;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
+using Balance.Data.Helpers;
 using Balance.Services.Contracts;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,6 +21,7 @@ internal sealed class RegisterService : IRegisterService
         AccountId accountId,
         int skip,
         int take,
+        string? search,
         CancellationToken cancellationToken
     )
     {
@@ -33,10 +35,41 @@ internal sealed class RegisterService : IRegisterService
             return new NotFoundError("Account", accountId.Value.ToString());
         }
 
-        var totalCount = await _dbContext
+        // Focal lines on this account, joined to their entry so the optional `?q=`
+        // filter (and ordering) can read the entry header. The same query backs both
+        // the count and the page so they never disagree.
+        var lines = _dbContext
             .JournalLines.AsNoTracking()
             .Where(l => l.AccountId == accountId)
-            .CountAsync(cancellationToken);
+            .Join(
+                _dbContext.JournalEntries.AsNoTracking(),
+                l => l.JournalEntryId,
+                e => e.Id,
+                (l, e) => new { Line = l, Entry = e }
+            );
+
+        var needle = search?.Trim();
+        if (!string.IsNullOrEmpty(needle))
+        {
+            // Match the entry Description or its linked Counterparty's Name, mirroring the
+            // journal-entries list filter (see the ADR-0020 item (g) amendment).
+            var pattern = $"%{needle}%";
+            lines = lines.Where(x =>
+                (
+                    x.Entry.Description != null
+                    && DbFunction.CaseInsensitiveLike(x.Entry.Description, pattern)
+                )
+                || (
+                    x.Entry.CounterpartyId != null
+                    && _dbContext.Counterparties.Any(c =>
+                        c.Id == x.Entry.CounterpartyId
+                        && DbFunction.CaseInsensitiveLike(c.Name, pattern)
+                    )
+                )
+            );
+        }
+
+        var totalCount = await lines.CountAsync(cancellationToken);
 
         if (take <= 0)
         {
@@ -50,15 +83,7 @@ internal sealed class RegisterService : IRegisterService
         // Page focal lines, ordered Date DESC then JournalEntryId DESC per ADR-0008.
         // The CounterpartyName is fetched via a correlated subquery so one round-trip
         // captures everything needed for the page header columns.
-        var focalRows = await _dbContext
-            .JournalLines.AsNoTracking()
-            .Where(l => l.AccountId == accountId)
-            .Join(
-                _dbContext.JournalEntries.AsNoTracking(),
-                l => l.JournalEntryId,
-                e => e.Id,
-                (l, e) => new { Line = l, Entry = e }
-            )
+        var focalRows = await lines
             .OrderByDescending(x => x.Entry.Date)
             .ThenByDescending(x => x.Entry.Id)
             .Skip(skip)

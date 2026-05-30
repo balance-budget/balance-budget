@@ -17,7 +17,7 @@ import { useDebouncedValue } from '../lib/useDebouncedValue';
 
 const PAGE_SIZE = 50;
 
-export function Journal({
+export function Activity({
     page,
     q,
     onPageChange,
@@ -37,7 +37,7 @@ export function Journal({
     return (
         <Panel>
             <SectionHead
-                title="Journal entries"
+                title="Activity"
                 subtitle="Every bookkeeping event, newest first."
                 action={
                     <Link
@@ -53,7 +53,7 @@ export function Journal({
                 <SearchInput
                     value={q}
                     onChange={onSearchChange}
-                    placeholder="Search description…"
+                    placeholder="Search description or counterparty…"
                 />
             </div>
             <JournalBody
@@ -61,6 +61,7 @@ export function Journal({
                 accounts={accounts.data ?? []}
                 catalog={catalog}
                 page={page}
+                query={debouncedQ}
                 onPageChange={onPageChange}
             />
         </Panel>
@@ -72,12 +73,14 @@ function JournalBody({
     accounts,
     catalog,
     page,
+    query,
     onPageChange,
 }: {
     entries: ReturnType<typeof useJournalEntries>;
     accounts: Account[];
     catalog: CurrencyCatalog;
     page: number;
+    query: string;
     onPageChange: (p: number) => void;
 }) {
     const accountById = useMemo(
@@ -103,6 +106,12 @@ function JournalBody({
                 message="Couldn't load journal entries."
                 onRetry={() => void entries.refetch()}
             />
+        );
+    }
+
+    if (entries.data.items.length === 0 && query !== '') {
+        return (
+            <div className="py-8 text-center text-[14px] text-fg-2">No matches for “{query}”.</div>
         );
     }
 

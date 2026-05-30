@@ -26,7 +26,7 @@ const NAV_MAIN: NavLink[] = [
     { to: '/', label: 'Dashboard', iconName: 'layout-dashboard' },
     { to: '/accounts', label: 'Accounts', iconName: 'wallet' },
     { to: '/counterparties', label: 'Counterparties', iconName: 'user' },
-    { to: '/journal', label: 'Journal', iconName: 'book-open' },
+    { to: '/activity', label: 'Activity', iconName: 'book-open' },
     { to: '/bank-transactions', label: 'Bank transactions', iconName: 'inbox' },
     { to: '/bank-imports', label: 'Bank imports', iconName: 'download' },
 ];
@@ -91,6 +91,7 @@ function AccountRow({ account }: { account: Account }) {
         <Link
             to="/accounts/$id"
             params={{ id: account.id }}
+            search={{ page: 1, q: '' }}
             className="flex items-center gap-3 px-3 py-2 rounded-sm text-fg-1 hover:bg-surface-2 transition-colors"
             activeProps={{ className: 'bg-brand-primary-soft text-brand-primary' }}
         >

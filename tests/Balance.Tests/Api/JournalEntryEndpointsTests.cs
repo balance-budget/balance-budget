@@ -76,6 +76,53 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
     }
 
     [Test]
+    public async Task ListJournalEntries_q_matches_linked_counterparty_name()
+    {
+        using var client = Factory.CreateClient();
+        var expense = await CreateAccountAsync(client, $"E-CPQ-{Guid.NewGuid():N}", "Expense");
+        var checking = await CreateAccountAsync(client, $"C-CPQ-{Guid.NewGuid():N}", "Asset");
+        // A token that lives only in one counterparty's name and in no description, so a
+        // match can only come from counterparty-name matching.
+        var token = Guid.NewGuid().ToString("N")[..10];
+        var named = await PostCounterpartyAsync(client, $"Supermarket {token}");
+        var other = await PostCounterpartyAsync(client, $"Utility-{Guid.NewGuid():N}");
+
+        await PostJeAsync(
+            client,
+            new CreateJournalEntryRequestDto(
+                Date: new DateOnly(2026, 2, 1),
+                Description: "Weekly shop",
+                CounterpartyId: named.Id,
+                Lines:
+                [
+                    new CreateJournalLineRequestDto(expense.Id, 1000, null),
+                    new CreateJournalLineRequestDto(checking.Id, -1000, null),
+                ]
+            )
+        );
+        await PostJeAsync(
+            client,
+            new CreateJournalEntryRequestDto(
+                Date: new DateOnly(2026, 2, 2),
+                Description: "Energy bill",
+                CounterpartyId: other.Id,
+                Lines:
+                [
+                    new CreateJournalLineRequestDto(expense.Id, 2000, null),
+                    new CreateJournalLineRequestDto(checking.Id, -2000, null),
+                ]
+            )
+        );
+
+        using var filtered = await client.GetAsync(
+            new Uri($"/api/journal-entries?q={token.ToUpperInvariant()}", UriKind.Relative)
+        );
+        var rows = await filtered.Content.ReadPagedItemsAsync<JournalEntryDto>();
+        await Assert.That(rows.Count).IsEqualTo(1);
+        await Assert.That(rows[0].Description).IsEqualTo("Weekly shop");
+    }
+
+    [Test]
     public async Task ListJournalEntries_counterpartyId_filters_to_that_counterparty()
     {
         using var client = Factory.CreateClient();
