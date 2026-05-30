@@ -68,7 +68,7 @@ internal static class AccountEndpoints
     {
         var skip = request.Skip ?? 0;
         var take = request.Take ?? ListAccountRegisterRequest.DefaultPageSize;
-        var result = await registerService.ListAsync(id, skip, take, cancellationToken);
+        var result = await registerService.ListAsync(id, skip, take, request.Q, cancellationToken);
         return result.ToOkReadOnly();
     }
 

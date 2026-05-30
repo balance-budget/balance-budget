@@ -2,6 +2,7 @@ using Balance.Data;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
+using Balance.Data.Helpers;
 using Balance.Services.Contracts;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,6 +21,7 @@ internal sealed class RegisterService : IRegisterService
         AccountId accountId,
         int skip,
         int take,
+        string? search,
         CancellationToken cancellationToken
     )
     {
@@ -33,10 +35,29 @@ internal sealed class RegisterService : IRegisterService
             return new NotFoundError("Account", accountId.Value.ToString());
         }
 
-        var totalCount = await _dbContext
+        // Focal lines on this account, joined to their entry so the optional `?q=`
+        // filter (and ordering) can read the entry header. The same query backs both
+        // the count and the page so they never disagree.
+        var lines = _dbContext
             .JournalLines.AsNoTracking()
             .Where(l => l.AccountId == accountId)
-            .CountAsync(cancellationToken);
+            .Join(
+                _dbContext.JournalEntries.AsNoTracking(),
+                l => l.JournalEntryId,
+                e => e.Id,
+                (l, e) => new { Line = l, Entry = e }
+            );
+
+        var needle = search?.Trim();
+        if (!string.IsNullOrEmpty(needle))
+        {
+            lines = lines.Where(x =>
+                x.Entry.Description != null
+                && DbFunction.CaseInsensitiveLike(x.Entry.Description, $"%{needle}%")
+            );
+        }
+
+        var totalCount = await lines.CountAsync(cancellationToken);
 
         if (take <= 0)
         {
@@ -50,15 +71,7 @@ internal sealed class RegisterService : IRegisterService
         // Page focal lines, ordered Date DESC then JournalEntryId DESC per ADR-0008.
         // The CounterpartyName is fetched via a correlated subquery so one round-trip
         // captures everything needed for the page header columns.
-        var focalRows = await _dbContext
-            .JournalLines.AsNoTracking()
-            .Where(l => l.AccountId == accountId)
-            .Join(
-                _dbContext.JournalEntries.AsNoTracking(),
-                l => l.JournalEntryId,
-                e => e.Id,
-                (l, e) => new { Line = l, Entry = e }
-            )
+        var focalRows = await lines
             .OrderByDescending(x => x.Entry.Date)
             .ThenByDescending(x => x.Entry.Id)
             .Skip(skip)
