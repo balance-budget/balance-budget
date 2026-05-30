@@ -1,16 +1,35 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { useCounterparties, useDeleteCounterparty, type Counterparty } from '../api/counterparties';
+import {
+    useCounterpartiesPage,
+    useDeleteCounterparty,
+    type Counterparty,
+} from '../api/counterparties';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
+import { Pagination } from '../components/Pagination';
 import { Panel, SectionHead } from '../components/Panel';
+import { SearchInput } from '../components/SearchInput';
 import { Skeleton } from '../components/Skeleton';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useToast } from '../components/Toast';
 import { ApiError } from '../lib/http';
+import { useDebouncedValue } from '../lib/useDebouncedValue';
 import { CounterpartyFormModal } from './CounterpartyForm';
 
-export function Counterparties() {
+const PAGE_SIZE = 50;
+
+export function Counterparties({
+    page,
+    q,
+    onPageChange,
+    onSearchChange,
+}: {
+    page: number;
+    q: string;
+    onPageChange: (p: number) => void;
+    onSearchChange: (q: string) => void;
+}) {
     const [creating, setCreating] = useState(false);
     const [editing, setEditing] = useState<Counterparty | null>(null);
     const [deleting, setDeleting] = useState<Counterparty | null>(null);
@@ -34,7 +53,20 @@ export function Counterparties() {
                         </button>
                     }
                 />
-                <CounterpartyList onEdit={setEditing} onDelete={setDeleting} />
+                <div className="mb-4">
+                    <SearchInput
+                        value={q}
+                        onChange={onSearchChange}
+                        placeholder="Search counterparties…"
+                    />
+                </div>
+                <CounterpartyList
+                    page={page}
+                    q={q}
+                    onPageChange={onPageChange}
+                    onEdit={setEditing}
+                    onDelete={setDeleting}
+                />
             </Panel>
 
             {creating && (
@@ -67,13 +99,21 @@ export function Counterparties() {
 }
 
 function CounterpartyList({
+    page,
+    q,
+    onPageChange,
     onEdit,
     onDelete,
 }: {
+    page: number;
+    q: string;
+    onPageChange: (p: number) => void;
     onEdit: (c: Counterparty) => void;
     onDelete: (c: Counterparty) => void;
 }) {
-    const query = useCounterparties();
+    const skip = (page - 1) * PAGE_SIZE;
+    const debouncedQ = useDebouncedValue(q, 200);
+    const query = useCounterpartiesPage(skip, PAGE_SIZE, debouncedQ);
 
     if (query.isPending) {
         return (
@@ -94,7 +134,15 @@ function CounterpartyList({
         );
     }
 
-    if (query.data.length === 0) {
+    if (query.data.items.length === 0 && debouncedQ !== '') {
+        return (
+            <div className="py-8 text-center text-[14px] text-fg-2">
+                No matches for “{debouncedQ}”.
+            </div>
+        );
+    }
+
+    if (query.data.items.length === 0 && page === 1) {
         return (
             <div className="py-8 flex flex-col items-center gap-2 text-center">
                 <span className="text-[14px] text-fg-2">No counterparties yet.</span>
@@ -107,9 +155,15 @@ function CounterpartyList({
 
     return (
         <div>
-            {query.data.map(c => (
+            {query.data.items.map(c => (
                 <CounterpartyRow key={c.id} counterparty={c} onEdit={onEdit} onDelete={onDelete} />
             ))}
+            <Pagination
+                page={page}
+                pageSize={PAGE_SIZE}
+                totalCount={query.data.totalCount}
+                onPageChange={onPageChange}
+            />
         </div>
     );
 }

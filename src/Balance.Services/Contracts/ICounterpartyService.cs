@@ -4,7 +4,12 @@ namespace Balance.Services.Contracts;
 
 public interface ICounterpartyService
 {
-    Task<PagedOutput<CounterpartyOutput>> ListAsync(CancellationToken cancellationToken);
+    Task<PagedOutput<CounterpartyOutput>> ListAsync(
+        int skip,
+        int? take,
+        string? search,
+        CancellationToken cancellationToken
+    );
 
     Task<Result<CounterpartyOutput>> GetAsync(
         CounterpartyId id,

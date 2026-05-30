@@ -23,6 +23,7 @@ type Owner = { kind: 'account'; id: AccountId } | { kind: 'counterparty'; id: Co
 export function LinkedBankAccountsSection({ owner }: { owner: Owner }) {
     const query = useBankAccounts();
     const [creating, setCreating] = useState(false);
+    const [reassigning, setReassigning] = useState<BankAccount | null>(null);
 
     if (query.isPending) {
         return (
@@ -51,7 +52,15 @@ export function LinkedBankAccountsSection({ owner }: { owner: Owner }) {
                 {linked.length === 0 ? (
                     <div className="py-3 text-[13px] text-fg-3">No bank accounts linked yet.</div>
                 ) : (
-                    linked.map(ba => <LinkedRow key={ba.id} bankAccount={ba} />)
+                    linked.map(ba => (
+                        <LinkedRow
+                            key={ba.id}
+                            bankAccount={ba}
+                            onReassign={() => {
+                                setReassigning(ba);
+                            }}
+                        />
+                    ))
                 )}
                 <div className="pt-3 mt-3 border-t border-border-soft">
                     <button
@@ -75,6 +84,15 @@ export function LinkedBankAccountsSection({ owner }: { owner: Owner }) {
                     }}
                 />
             )}
+            {reassigning && (
+                <BankAccountFormModal
+                    mode="edit"
+                    bankAccount={reassigning}
+                    onClose={() => {
+                        setReassigning(null);
+                    }}
+                />
+            )}
         </>
     );
 }
@@ -84,25 +102,41 @@ function belongsTo(ba: BankAccount, owner: Owner): boolean {
     return ba.counterpartyId === owner.id;
 }
 
-function LinkedRow({ bankAccount }: { bankAccount: BankAccount }) {
+function LinkedRow({
+    bankAccount,
+    onReassign,
+}: {
+    bankAccount: BankAccount;
+    onReassign: () => void;
+}) {
     return (
-        <Link
-            to="/settings/bank-accounts/$id"
-            params={{ id: bankAccount.id }}
-            className="py-3 first:pt-0 flex items-center gap-3 hover:text-brand-primary border-b border-border-soft last:border-b-0"
-        >
-            <span className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-md bg-brand-primary-soft text-brand-primary">
-                <Icon name={bankAccountTypeIcon(bankAccount.type)} size={16} strokeWidth={2} />
-            </span>
-            <div className="flex-1 min-w-0 flex flex-col leading-tight">
-                <span className="text-14 font-medium text-fg-1 truncate">
-                    {formatBankAccountLabel(bankAccount)}
+        <div className="py-3 first:pt-0 flex items-center gap-3 border-b border-border-soft last:border-b-0">
+            <Link
+                to="/settings/bank-accounts/$id"
+                params={{ id: bankAccount.id }}
+                className="flex-1 min-w-0 flex items-center gap-3 hover:text-brand-primary"
+            >
+                <span className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-md bg-brand-primary-soft text-brand-primary">
+                    <Icon name={bankAccountTypeIcon(bankAccount.type)} size={16} strokeWidth={2} />
                 </span>
-                <span className="text-[12px] text-fg-3 tabular truncate">
-                    {formatBankAccountSubline(bankAccount)}
-                </span>
-            </div>
-            <Icon name="chevron-right" size={14} className="text-fg-3" />
-        </Link>
+                <div className="flex-1 min-w-0 flex flex-col leading-tight">
+                    <span className="text-14 font-medium text-fg-1 truncate">
+                        {formatBankAccountLabel(bankAccount)}
+                    </span>
+                    <span className="text-[12px] text-fg-3 tabular truncate">
+                        {formatBankAccountSubline(bankAccount)}
+                    </span>
+                </div>
+            </Link>
+            <button
+                type="button"
+                onClick={onReassign}
+                aria-label="Reassign"
+                title="Reassign to a different owner"
+                className="shrink-0 p-2 rounded-sm text-fg-3 hover:text-fg-1 hover:bg-surface-2"
+            >
+                <Icon name="arrow-left-right" size={14} strokeWidth={2} />
+            </button>
+        </div>
     );
 }

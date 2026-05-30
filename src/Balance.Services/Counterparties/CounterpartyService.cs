@@ -1,6 +1,7 @@
 using Balance.Data;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
+using Balance.Data.Helpers;
 using Balance.Services.Contracts;
 using Balance.Services.Helpers;
 using Microsoft.EntityFrameworkCore;
@@ -19,14 +20,34 @@ internal sealed class CounterpartyService : ICounterpartyService
     }
 
     public async Task<PagedOutput<CounterpartyOutput>> ListAsync(
+        int skip,
+        int? take,
+        string? search,
         CancellationToken cancellationToken
     )
     {
-        var items = await _dbContext
-            .Counterparties.OrderBy(c => c.Name)
-            .Select(c => new CounterpartyOutput(c.Id, c.Name, c.CreatedAt, c.UpdatedAt))
+        IQueryable<Counterparty> filtered = _dbContext.Counterparties;
+        var needle = search?.Trim();
+        if (!string.IsNullOrEmpty(needle))
+        {
+            var pattern = $"%{needle}%";
+            filtered = filtered.Where(c => DbFunction.CaseInsensitiveLike(c.Name, pattern));
+        }
+
+        var totalCount = await filtered.CountAsync(cancellationToken);
+        var page = filtered.OrderBy(c => c.Name).Skip(skip);
+        // A null Take means "return everything" — the dropdown callers rely on the full,
+        // unpaginated list; the list screen always passes an explicit page size.
+        if (take is { } pageSize)
+            page = page.Take(pageSize);
+        var items = await page.Select(c => new CounterpartyOutput(
+                c.Id,
+                c.Name,
+                c.CreatedAt,
+                c.UpdatedAt
+            ))
             .ToListAsync(cancellationToken);
-        return new PagedOutput<CounterpartyOutput>(items, items.Count);
+        return new PagedOutput<CounterpartyOutput>(items, totalCount);
     }
 
     public async Task<Result<CounterpartyOutput>> GetAsync(
