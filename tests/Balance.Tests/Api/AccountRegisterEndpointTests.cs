@@ -347,6 +347,49 @@ internal sealed class AccountRegisterEndpointTests : EndpointsTestsBase
     }
 
     [Test]
+    public async Task GetRegister_q_filters_by_entry_description_case_insensitively()
+    {
+        using var client = Factory.CreateClient();
+        var currency = await CreateIsolatedCurrencyAsync(client);
+        var checking = await CreateAccountAsync(
+            client,
+            $"Reg-Q-Checking-{Guid.NewGuid():N}",
+            "Asset",
+            currency
+        );
+        var groceries = await CreateAccountAsync(
+            client,
+            $"Reg-Q-Groc-{Guid.NewGuid():N}",
+            "Expense",
+            currency
+        );
+
+        await PostJournalEntryAsync(
+            client,
+            new DateOnly(2026, 5, 20),
+            [
+                new CreateJournalLineRequestDto(checking.Id, -3_000L, null),
+                new CreateJournalLineRequestDto(groceries.Id, 3_000L, null),
+            ],
+            description: "Weekly groceries run"
+        );
+        await PostJournalEntryAsync(
+            client,
+            new DateOnly(2026, 5, 21),
+            [
+                new CreateJournalLineRequestDto(checking.Id, -5_000L, null),
+                new CreateJournalLineRequestDto(groceries.Id, 5_000L, null),
+            ],
+            description: "Cinema tickets"
+        );
+
+        var matches = await GetRegisterAsync(client, checking.Id, q: "GROCERIES");
+
+        await Assert.That(matches.Count).IsEqualTo(1);
+        await Assert.That(matches[0].EntryDescription).IsEqualTo("Weekly groceries run");
+    }
+
+    [Test]
     public async Task GetRegister_includes_counterparty_name_when_set()
     {
         using var client = Factory.CreateClient();
@@ -405,7 +448,8 @@ internal sealed class AccountRegisterEndpointTests : EndpointsTestsBase
         HttpClient client,
         Guid accountId,
         int? skip = null,
-        int? take = null
+        int? take = null,
+        string? q = null
     )
     {
         var queryParts = new List<string>();
@@ -413,6 +457,8 @@ internal sealed class AccountRegisterEndpointTests : EndpointsTestsBase
             queryParts.Add($"skip={skip}");
         if (take is not null)
             queryParts.Add($"take={take}");
+        if (q is not null)
+            queryParts.Add($"q={Uri.EscapeDataString(q)}");
         var query = queryParts.Count == 0 ? string.Empty : "?" + string.Join("&", queryParts);
 
         using var response = await client.GetAsync(
@@ -459,12 +505,13 @@ internal sealed class AccountRegisterEndpointTests : EndpointsTestsBase
         HttpClient client,
         DateOnly date,
         IReadOnlyList<CreateJournalLineRequestDto> lines,
-        Guid? counterpartyId = null
+        Guid? counterpartyId = null,
+        string? description = null
     )
     {
         var request = new CreateJournalEntryRequestDto(
             Date: date,
-            Description: null,
+            Description: description,
             CounterpartyId: counterpartyId,
             Lines: lines
         );
