@@ -170,6 +170,7 @@ function AccountRow({
             <Link
                 to="/accounts/$id"
                 params={{ id: account.id }}
+                search={{ page: 1, q: '' }}
                 className="flex items-center gap-3 flex-1 min-w-0 hover:text-brand-primary"
             >
                 <AccountAvatar account={account} size="md" />
