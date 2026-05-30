@@ -42,18 +42,23 @@ export type RegisterRow = {
 
 export const registerKeys = {
     all: [...accountsKeys.all, 'register'] as const,
-    list: (accountId: AccountId, skip: number, take: number) =>
-        [...registerKeys.all, accountId, { skip, take }] as const,
+    list: (accountId: AccountId, skip: number, take: number, q: string) =>
+        [...registerKeys.all, accountId, { skip, take, q }] as const,
 };
 
 function fetchRegister(
     accountId: AccountId,
     skip: number,
     take: number,
+    q: string,
     signal: AbortSignal,
 ): Promise<WirePagedRegisterRows> {
+    const params = new URLSearchParams({ skip: String(skip), take: String(take) });
+    if (q !== '') {
+        params.set('q', q);
+    }
     return getJson<WirePagedRegisterRows>(
-        `/api/accounts/${accountId}/register?skip=${skip}&take=${take}`,
+        `/api/accounts/${accountId}/register?${params.toString()}`,
         signal,
         'load register',
     );
@@ -83,11 +88,11 @@ function toRegisterRow(wire: WireRegisterRow): RegisterRow {
     };
 }
 
-export function useAccountRegister(accountId: AccountId, skip: number, take: number) {
+export function useAccountRegister(accountId: AccountId, skip: number, take: number, q: string) {
     return useQuery({
-        queryKey: registerKeys.list(accountId, skip, take),
+        queryKey: registerKeys.list(accountId, skip, take, q),
         queryFn: async ({ signal }): Promise<Page<RegisterRow>> => {
-            const wire = await fetchRegister(accountId, skip, take, signal);
+            const wire = await fetchRegister(accountId, skip, take, q, signal);
             return {
                 items: wire.items.map(toRegisterRow),
                 totalCount: Number(wire.totalCount),

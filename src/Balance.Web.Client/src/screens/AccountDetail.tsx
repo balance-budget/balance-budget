@@ -8,19 +8,34 @@ import { Amount } from '../components/Amount';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
+import { Pagination } from '../components/Pagination';
 import { Panel, SectionHead } from '../components/Panel';
+import { SearchInput } from '../components/SearchInput';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { cx } from '../lib/cx';
 import type { AccountId } from '../lib/domain';
 import { ApiError } from '../lib/http';
 import { formatMoney } from '../lib/money';
+import { useDebouncedValue } from '../lib/useDebouncedValue';
 import { AccountFormModal } from './AccountForm';
 import { LinkedBankAccountsSection } from './LinkedBankAccounts';
 
-const REGISTER_PAGE_SIZE = 100;
+const REGISTER_PAGE_SIZE = 50;
 
-export function AccountDetail({ id }: { id: AccountId }) {
+export function AccountDetail({
+    id,
+    page,
+    q,
+    onPageChange,
+    onSearchChange,
+}: {
+    id: AccountId;
+    page: number;
+    q: string;
+    onPageChange: (p: number) => void;
+    onSearchChange: (q: string) => void;
+}) {
     const query = useAccount(id);
     const [editing, setEditing] = useState(false);
     const [deleting, setDeleting] = useState(false);
@@ -102,7 +117,14 @@ export function AccountDetail({ id }: { id: AccountId }) {
 
             <Panel>
                 <SectionHead title="Register" subtitle="Chronological activity on this account." />
-                <RegisterTable account={account} />
+                <div className="mb-4">
+                    <SearchInput
+                        value={q}
+                        onChange={onSearchChange}
+                        placeholder="Search description…"
+                    />
+                </div>
+                <RegisterTable account={account} page={page} q={q} onPageChange={onPageChange} />
             </Panel>
 
             {editing && (
@@ -126,8 +148,20 @@ export function AccountDetail({ id }: { id: AccountId }) {
     );
 }
 
-function RegisterTable({ account }: { account: Account }) {
-    const register = useAccountRegister(account.id, 0, REGISTER_PAGE_SIZE);
+function RegisterTable({
+    account,
+    page,
+    q,
+    onPageChange,
+}: {
+    account: Account;
+    page: number;
+    q: string;
+    onPageChange: (p: number) => void;
+}) {
+    const skip = (page - 1) * REGISTER_PAGE_SIZE;
+    const debouncedQ = useDebouncedValue(q, 200);
+    const register = useAccountRegister(account.id, skip, REGISTER_PAGE_SIZE, debouncedQ);
     const catalog = useCurrencyCatalog();
 
     if (register.isPending) {
@@ -163,12 +197,12 @@ function RegisterTable({ account }: { account: Account }) {
             {register.data.items.map(row => (
                 <RegisterRowView key={row.journalLineId} row={row} catalog={catalog} />
             ))}
-            {register.data.totalCount > REGISTER_PAGE_SIZE && (
-                <p className="pt-3 text-center text-[12px] text-fg-3">
-                    Showing the most recent {REGISTER_PAGE_SIZE} of {register.data.totalCount}{' '}
-                    entries.
-                </p>
-            )}
+            <Pagination
+                page={page}
+                pageSize={REGISTER_PAGE_SIZE}
+                totalCount={register.data.totalCount}
+                onPageChange={onPageChange}
+            />
         </div>
     );
 }

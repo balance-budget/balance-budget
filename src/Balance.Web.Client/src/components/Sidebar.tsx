@@ -91,6 +91,7 @@ function AccountRow({ account }: { account: Account }) {
         <Link
             to="/accounts/$id"
             params={{ id: account.id }}
+            search={{ page: 1, q: '' }}
             className="flex items-center gap-3 px-3 py-2 rounded-sm text-fg-1 hover:bg-surface-2 transition-colors"
             activeProps={{ className: 'bg-brand-primary-soft text-brand-primary' }}
         >
