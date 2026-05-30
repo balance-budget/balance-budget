@@ -1,14 +1,14 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { Journal } from '../screens/Journal';
+import { Activity } from '../screens/Activity';
 
-type JournalSearch = { page: number; q: string };
+type ActivitySearch = { page: number; q: string };
 
-export const Route = createFileRoute('/journal/')({
-    component: function JournalRoute() {
+export const Route = createFileRoute('/activity')({
+    component: function ActivityRoute() {
         const { page, q } = Route.useSearch();
         const navigate = useNavigate({ from: Route.fullPath });
         return (
-            <Journal
+            <Activity
                 page={page}
                 q={q}
                 onPageChange={p => {
@@ -20,8 +20,8 @@ export const Route = createFileRoute('/journal/')({
             />
         );
     },
-    staticData: { title: 'Journal entries' },
-    validateSearch: (raw: Record<string, unknown>): JournalSearch => {
+    staticData: { title: 'Activity' },
+    validateSearch: (raw: Record<string, unknown>): ActivitySearch => {
         const candidate = Number(raw.page);
         const page = Number.isInteger(candidate) && candidate >= 1 ? candidate : 1;
         const q = typeof raw.q === 'string' ? raw.q : '';

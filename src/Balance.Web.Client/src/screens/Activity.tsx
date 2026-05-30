@@ -17,7 +17,7 @@ import { useDebouncedValue } from '../lib/useDebouncedValue';
 
 const PAGE_SIZE = 50;
 
-export function Journal({
+export function Activity({
     page,
     q,
     onPageChange,
@@ -37,7 +37,7 @@ export function Journal({
     return (
         <Panel>
             <SectionHead
-                title="Journal entries"
+                title="Activity"
                 subtitle="Every bookkeeping event, newest first."
                 action={
                     <Link
