@@ -53,7 +53,7 @@ export function Activity({
                 <SearchInput
                     value={q}
                     onChange={onSearchChange}
-                    placeholder="Search description…"
+                    placeholder="Search description or counterparty…"
                 />
             </div>
             <JournalBody
