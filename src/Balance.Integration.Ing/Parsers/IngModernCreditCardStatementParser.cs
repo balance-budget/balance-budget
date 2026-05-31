@@ -1,21 +1,14 @@
 using System.Collections.Frozen;
 using System.Globalization;
 using System.Text.RegularExpressions;
-using Balance.Integration.Ing.Contracts;
 using Balance.Integration.Ing.Helpers;
 using Balance.Integration.Ing.Models.CreditCard;
 using Balance.Integration.Ing.Models.Notes;
-using UglyToad.PdfPig;
-using UglyToad.PdfPig.Content;
 
 namespace Balance.Integration.Ing.Parsers;
 
-internal sealed class IngModernCreditCardStatementParser : IIngCreditCardStatementParser
+internal sealed class IngModernCreditCardStatementParser : IngCreditCardStatementParser
 {
-    private const double LineYTolerance = 0.5;
-
-    private static readonly CultureInfo NlCulture = CultureInfo.GetCultureInfo("nl-NL");
-
     private static readonly FrozenDictionary<string, CreditCardTransactionType> TransactionTypes =
         new Dictionary<string, CreditCardTransactionType>(StringComparer.Ordinal)
         {
@@ -27,18 +20,15 @@ internal sealed class IngModernCreditCardStatementParser : IIngCreditCardStateme
             ["Correctie"] = CreditCardTransactionType.Correction,
         }.ToFrozenDictionary();
 
-    public ValueTask<CreditCardStatement> ParseStatementsAsync(
-        Stream stream,
+    protected override CreditCardStatement ParseStatement(
+        IReadOnlyList<string> lines,
         CancellationToken cancellationToken
-    )
-    {
-        var lines = ExtractLines(stream, cancellationToken);
-        var linkedAccount = FindLinkedAccountLine(lines);
-        var rows = ParseRows(lines, cancellationToken);
-        return ValueTask.FromResult(
-            new CreditCardStatement { LinkedAccount = linkedAccount, Rows = rows }
-        );
-    }
+    ) =>
+        new()
+        {
+            LinkedAccount = FindLinkedAccountLine(lines),
+            Rows = ParseRows(lines, cancellationToken),
+        };
 
     private static List<CreditCardStatementRow> ParseRows(
         IReadOnlyList<string> lines,
@@ -84,7 +74,7 @@ internal sealed class IngModernCreditCardStatementParser : IIngCreditCardStateme
             if (!match.Success)
                 continue;
 
-            return match.Value.Replace(" ", "", StringComparison.Ordinal).ToUpperInvariant();
+            return NormaliseLinkedAccount(match.Value);
         }
 
         throw new InvalidOperationException("No counter-party line found");
@@ -186,42 +176,6 @@ internal sealed class IngModernCreditCardStatementParser : IIngCreditCardStateme
         }
         return lines.Count;
     }
-
-    private static List<string> ExtractLines(Stream stream, CancellationToken cancellationToken)
-    {
-        using var document = PdfDocument.Open(stream);
-        var lines = new List<string>();
-
-        foreach (var page in document.GetPages())
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            lines.AddRange(ExtractPageLines(page));
-        }
-
-        return lines;
-    }
-
-    // Group words by Y (with tolerance) to reconstruct visual lines. PDF coordinates put
-    // the origin at the bottom-left, so larger Y is higher on the page — order descending
-    // for top-down, then ascending X within each line for left-to-right.
-    private static IEnumerable<string> ExtractPageLines(Page page) =>
-        page.GetWords()
-            .GroupBy(w => Math.Round(w.BoundingBox.Bottom / LineYTolerance))
-            .OrderByDescending(g => g.Key)
-            .Select(g => string.Join(' ', g.OrderBy(w => w.BoundingBox.Left).Select(w => w.Text)));
-
-    private static DateOnly ParseDate(string value) =>
-        DateOnly.ParseExact(value, "dd-MM-yyyy", CultureInfo.InvariantCulture);
-
-    // The transaction-line amount includes the leading +/- and may carry whitespace
-    // between sign and digits (e.g. "+ 12,34"). Collapse the space so decimal.Parse with
-    // nl-NL handles the sign and comma decimal mark in one shot.
-    private static decimal ParseAmount(string captured) =>
-        decimal.Parse(
-            captured.Replace(" ", string.Empty, StringComparison.Ordinal),
-            NumberStyles.Number | NumberStyles.AllowLeadingSign,
-            NlCulture
-        );
 
     private readonly record struct MatchedLine(int LineIndex, Match Match);
 

@@ -1,31 +1,23 @@
-using System.Globalization;
 using System.Text.RegularExpressions;
-using Balance.Integration.Ing.Contracts;
 using Balance.Integration.Ing.Helpers;
 using Balance.Integration.Ing.Models.CreditCard;
 using Balance.Integration.Ing.Models.Notes;
-using UglyToad.PdfPig;
-using UglyToad.PdfPig.Content;
 
 namespace Balance.Integration.Ing.Parsers;
 
-internal sealed class IngLegacyCreditCardStatementParser : IIngCreditCardStatementParser
+internal sealed class IngLegacyCreditCardStatementParser : IngCreditCardStatementParser
 {
-    private const double LineYTolerance = 0.5;
-
-    private static readonly CultureInfo NlCulture = CultureInfo.GetCultureInfo("nl-NL");
-
-    public ValueTask<CreditCardStatement> ParseStatementsAsync(
-        Stream stream,
+    protected override CreditCardStatement ParseStatement(
+        IReadOnlyList<string> lines,
         CancellationToken cancellationToken
     )
     {
-        var lines = ExtractLines(stream, cancellationToken);
         var header = ParseHeader(lines);
-        var rows = ParseRows(lines, header, cancellationToken);
-        return ValueTask.FromResult(
-            new CreditCardStatement { LinkedAccount = header.LinkedAccount, Rows = rows }
-        );
+        return new CreditCardStatement
+        {
+            LinkedAccount = header.LinkedAccount,
+            Rows = ParseRows(lines, header, cancellationToken),
+        };
     }
 
     private static List<CreditCardStatementRow> ParseRows(
@@ -70,9 +62,7 @@ internal sealed class IngLegacyCreditCardStatementParser : IIngCreditCardStateme
             var linkedAccountMatch = IngPatterns.CreditCardLinkedAccount().Match(line);
             if (linkedAccountMatch.Success)
             {
-                linkedAccount = linkedAccountMatch
-                    .Value.Replace(" ", "", StringComparison.Ordinal)
-                    .ToUpperInvariant();
+                linkedAccount = NormaliseLinkedAccount(linkedAccountMatch.Value);
             }
 
             var cardNumberMatch = IngPatterns.LegacyCreditCardNumberLine().Match(line);
@@ -87,7 +77,7 @@ internal sealed class IngLegacyCreditCardStatementParser : IIngCreditCardStateme
             var repaymentDateMatch = IngPatterns.LegacyCreditCardRepaymentDateLine().Match(line);
             if (repaymentDateMatch.Success)
             {
-                repaymentDate = ParseHaderDate(repaymentDateMatch.Groups["date"].Value);
+                repaymentDate = ParseDate(repaymentDateMatch.Groups["date"].Value);
             }
         }
 
@@ -151,44 +141,8 @@ internal sealed class IngLegacyCreditCardStatementParser : IIngCreditCardStateme
         };
     }
 
-    private static List<string> ExtractLines(Stream stream, CancellationToken cancellationToken)
-    {
-        using var document = PdfDocument.Open(stream);
-        var lines = new List<string>();
-
-        foreach (var page in document.GetPages())
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            lines.AddRange(ExtractPageLines(page));
-        }
-
-        return lines;
-    }
-
-    // Group words by Y (with tolerance) to reconstruct visual lines. PDF coordinates put
-    // the origin at the bottom-left, so larger Y is higher on the page — order descending
-    // for top-down, then ascending X within each line for left-to-right.
-    private static IEnumerable<string> ExtractPageLines(Page page) =>
-        page.GetWords()
-            .GroupBy(w => Math.Round(w.BoundingBox.Bottom / LineYTolerance))
-            .OrderByDescending(g => g.Key)
-            .Select(g => string.Join(' ', g.OrderBy(w => w.BoundingBox.Left).Select(w => w.Text)));
-
-    private static DateOnly ParseHaderDate(string value) =>
-        DateOnly.ParseExact(value, "dd-MM-yyyy", CultureInfo.InvariantCulture);
-
     private static DateOnly ParseLineDate(string value) =>
         DateOnly.ParseExact(value, "dd MMM", NlCulture);
-
-    // The transaction-line amount includes the leading +/- and may carry whitespace
-    // between sign and digits (e.g. "+ 12,34"). Collapse the space so decimal.Parse with
-    // nl-NL handles the sign and comma decimal mark in one shot.
-    private static decimal ParseAmount(string captured) =>
-        decimal.Parse(
-            captured.Replace(" ", string.Empty, StringComparison.Ordinal),
-            NumberStyles.Number | NumberStyles.AllowLeadingSign,
-            NlCulture
-        );
 
     private readonly record struct Header(
         string LinkedAccount,

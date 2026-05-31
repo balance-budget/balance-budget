@@ -12,8 +12,8 @@ public static class ServiceCollectionExtensions
         services
             .AddScoped<IIngNoteParser, IngNoteParser>()
             .AddScoped<IIngCurrentAccountStatementParser, IngCurrentAccountStatementParser>()
-            .AddScoped<IIngCreditCardStatementParser, IngModernCreditCardStatementParser>()
-            .AddScoped<IIngCreditCardStatementParser, IngLegacyCreditCardStatementParser>()
+            .AddScoped<IngModernCreditCardStatementParser>()
+            .AddScoped<IngLegacyCreditCardStatementParser>()
             .AddScoped<IBankTransactionExtractor, IngBankTransactionExtractor>()
             .AddScoped<IBankTransactionExtractor, IngModernCreditCardTransactionExtractor>()
             .AddScoped<IBankTransactionExtractor, IngLegacyCreditCardTransactionExtractor>();
