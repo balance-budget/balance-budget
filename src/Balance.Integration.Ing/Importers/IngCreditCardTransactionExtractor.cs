@@ -3,36 +3,35 @@ using Balance.Data.Entities;
 using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
 using Balance.Integration.Ing.Contracts;
-using Balance.Integration.Ing.Helpers;
-using Balance.Integration.Ing.Models.BankAccount;
 using Balance.Integration.Ing.Models.CreditCard;
-using Balance.Integration.Ing.Models.Notes;
 using Balance.Services.BankTransactions;
 using Balance.Services.Contracts;
 using CsvHelper;
 
 namespace Balance.Integration.Ing.Importers;
 
-internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtractor
+// Shared extraction pipeline for the ING credit-card layouts. Both layouts parse into the same
+// CreditCardStatement and map identically to BankTransactions; subclasses only supply their
+// importer Key, the layout-specific parser, and (optionally) the row insertion order.
+internal abstract class IngCreditCardTransactionExtractor : IBankTransactionExtractor
 {
-    private const string ImporterKey = "Ing.CreditCard.V1";
-
-    public string Key => ImporterKey;
-    public BankAccountType SupportedType => BankAccountType.Card;
-
     private static readonly CurrencyCode Eur = new("EUR");
 
-    private readonly IIngCreditCardStatementParser _ingCreditCardStatementParser;
-    private readonly IIngNoteParser _ingNoteParser;
+    private readonly IIngCreditCardStatementParser _parser;
 
-    public IngCreditCardTransactionExtractor(
-        IIngCreditCardStatementParser ingCreditCardStatementParser,
-        IIngNoteParser ingNoteParser
-    )
-    {
-        _ingCreditCardStatementParser = ingCreditCardStatementParser;
-        _ingNoteParser = ingNoteParser;
-    }
+    protected IngCreditCardTransactionExtractor(IIngCreditCardStatementParser parser) =>
+        _parser = parser;
+
+    public abstract string Key { get; }
+    public BankAccountType SupportedType => BankAccountType.Card;
+
+    // ING statements list the most recent transaction first. Layouts that need insertion order —
+    // and the time-ordered BankTransaction.Id minted per row — to follow BookingDate override
+    // this to reverse, so a list sorted by (BookingDate, Id) breaks intra-day ties in
+    // chronological order.
+    protected virtual IEnumerable<CreditCardStatementRow> OrderForInsertion(
+        IReadOnlyList<CreditCardStatementRow> rows
+    ) => rows;
 
     public async Task<Result<IReadOnlyList<BankTransaction>>> ExtractAsync(
         BankAccount bankAccount,
@@ -61,10 +60,7 @@ internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtrac
         CreditCardStatement statement;
         try
         {
-            statement = await _ingCreditCardStatementParser.ParseStatementsAsync(
-                stream,
-                cancellationToken
-            );
+            statement = await _parser.ParseStatementsAsync(stream, cancellationToken);
         }
         catch (CsvHelperException ex)
         {
@@ -99,13 +95,10 @@ internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtrac
             }
         }
 
-        // ING CSVs are most-recent-first. Reverse so insertion order — and the time-ordered
-        // BankTransaction.Id we mint per row — matches BookingDate order; a list sorted by
-        // (BookingDate, Id) then breaks intra-day ties in CSV-chronological order.
         var bankTransactions = new List<BankTransaction>(statement.Rows.Count);
-        foreach (var row in statement.Rows.Reverse())
+        foreach (var row in OrderForInsertion(statement.Rows))
         {
-            var mapped = ToBankTransaction(bankAccount.Id, row, statement.Counterparty);
+            var mapped = ToBankTransaction(bankAccount.Id, row, statement.LinkedAccount);
             if (mapped.IsFailure)
                 return mapped.Error;
             bankTransactions.Add(mapped.Value);
@@ -113,7 +106,7 @@ internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtrac
         return bankTransactions;
     }
 
-    private static Result<BankTransaction> ToBankTransaction(
+    private Result<BankTransaction> ToBankTransaction(
         BankAccountId bankAccountId,
         CreditCardStatementRow row,
         string fundingAccountIban
@@ -151,7 +144,7 @@ internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtrac
             ForeignAmount = foreignAmountMinor,
             ForeignCurrencyCode = foreignCurrencyCode,
             ExchangeRate = exchangeRate,
-            ImporterKey = ImporterKey,
+            ImporterKey = Key,
             Metadata = BuildMetadata(row),
         };
     }
@@ -220,15 +213,6 @@ internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtrac
         value is null
             ? string.Empty
             : value.Replace(" ", "", StringComparison.Ordinal).ToUpperInvariant();
-
-    private static string? FirstNonBlank(string? a, string? b)
-    {
-        if (!string.IsNullOrWhiteSpace(a))
-            return a;
-        if (!string.IsNullOrWhiteSpace(b))
-            return b;
-        return null;
-    }
 
     private static string? NullIfBlank(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value;
