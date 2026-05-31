@@ -7,7 +7,7 @@ internal sealed class CurrencyAmount
     public decimal Amount { get; }
     public string CurrencyCode { get; }
 
-    private CurrencyAmount(decimal amount, string currencyCode)
+    public CurrencyAmount(decimal amount, string currencyCode)
     {
         Amount = amount;
         CurrencyCode = currencyCode;
