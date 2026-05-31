@@ -113,7 +113,7 @@ internal sealed class IngLegacyCreditCardStatementParser : IngCreditCardStatemen
             };
         }
 
-        var bookingDate = ParseLineDate(match.Groups["date"].Value);
+        var bookingDate = ParseLineDate(match.Groups["date"].Value, header.RepaymentDate.Year);
         CurrencyAmount? foreignCurrencyAmount = null;
         decimal? foreignCurrencyRate = null;
 
@@ -141,8 +141,11 @@ internal sealed class IngLegacyCreditCardStatementParser : IngCreditCardStatemen
         };
     }
 
-    private static DateOnly ParseLineDate(string value) =>
-        DateOnly.ParseExact(value, "dd MMM", NlCulture);
+    private static DateOnly ParseLineDate(string value, int year)
+    {
+        var parsed = DateOnly.ParseExact(value, "dd MMM", NlCulture);
+        return new DateOnly(year, parsed.Month, parsed.Day);
+    }
 
     private readonly record struct Header(
         string LinkedAccount,
