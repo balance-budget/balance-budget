@@ -109,7 +109,7 @@ internal sealed class IngLegacyCreditCardStatementParser : IngCreditCardStatemen
                 TransactionType = CreditCardTransactionType.DirectDebit,
                 Amount = amount,
                 Notes = "",
-                RawRecord = $"{header.RepaymentDate.Year}|match.Value",
+                RawRecord = $"{header.RepaymentDate.Year}|{match.Value}",
             };
         }
 
@@ -137,7 +137,7 @@ internal sealed class IngLegacyCreditCardStatementParser : IngCreditCardStatemen
             ForeignCurrencyRate = foreignCurrencyRate,
             TransactionDate = bookingDate,
             Notes = "",
-            RawRecord = $"{header.RepaymentDate.Year}|match.Value",
+            RawRecord = $"{header.RepaymentDate.Year}|{match.Value}",
         };
     }
 
