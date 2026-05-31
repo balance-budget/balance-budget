@@ -33,10 +33,10 @@ internal sealed class IngCreditCardStatementParser : IIngCreditCardStatementPars
     )
     {
         var lines = ExtractLines(stream, cancellationToken);
-        var counterParty = FindCounterPartyLine(lines);
+        var linkedAccount = FindLinkedAccountLine(lines);
         var rows = ParseRows(lines, cancellationToken);
         return ValueTask.FromResult(
-            new CreditCardStatement { Counterparty = counterParty, Rows = rows }
+            new CreditCardStatement { LinkedAccount = linkedAccount, Rows = rows }
         );
     }
 

@@ -105,7 +105,7 @@ internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtrac
         var bankTransactions = new List<BankTransaction>(statement.Rows.Count);
         foreach (var row in statement.Rows.Reverse())
         {
-            var mapped = ToBankTransaction(bankAccount.Id, row, statement.Counterparty);
+            var mapped = ToBankTransaction(bankAccount.Id, row, statement.LinkedAccount);
             if (mapped.IsFailure)
                 return mapped.Error;
             bankTransactions.Add(mapped.Value);
