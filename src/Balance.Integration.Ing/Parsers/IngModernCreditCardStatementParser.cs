@@ -10,7 +10,7 @@ using UglyToad.PdfPig.Content;
 
 namespace Balance.Integration.Ing.Parsers;
 
-internal sealed class IngCreditCardStatementParser : IIngCreditCardStatementParser
+internal sealed class IngModernCreditCardStatementParser : IIngCreditCardStatementParser
 {
     private const double LineYTolerance = 0.5;
 
@@ -70,17 +70,17 @@ internal sealed class IngCreditCardStatementParser : IIngCreditCardStatementPars
     {
         for (var i = 0; i < lines.Count; i++)
         {
-            var match = IngPatterns.CreditCardTransactionLine().Match(lines[i].Trim());
+            var match = IngPatterns.ModernCreditCardTransactionLine().Match(lines[i].Trim());
             if (match.Success)
                 yield return new MatchedLine(i, match);
         }
     }
 
-    private static string FindCounterPartyLine(IReadOnlyList<string> lines)
+    private static string FindLinkedAccountLine(IReadOnlyList<string> lines)
     {
         foreach (var line in lines)
         {
-            var match = IngPatterns.CreditCardCounterParty().Match(line);
+            var match = IngPatterns.CreditCardLinkedAccount().Match(line);
             if (!match.Success)
                 continue;
 
@@ -127,7 +127,7 @@ internal sealed class IngCreditCardStatementParser : IIngCreditCardStatementPars
             if (trimmed.Length == 0)
                 continue;
 
-            var match = IngPatterns.CreditCardNoteLine().Match(trimmed);
+            var match = IngPatterns.ModernCreditCardNoteLine().Match(trimmed);
             if (!match.Success)
                 continue;
 
@@ -181,7 +181,7 @@ internal sealed class IngCreditCardStatementParser : IIngCreditCardStatementPars
     {
         for (var i = startIndex; i < lines.Count; i++)
         {
-            if (IngPatterns.CreditCardFooter().IsMatch(lines[i]))
+            if (IngPatterns.ModernCreditCardFooter().IsMatch(lines[i]))
                 return i;
         }
         return lines.Count;

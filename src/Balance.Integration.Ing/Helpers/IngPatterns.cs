@@ -10,16 +10,16 @@ internal static partial class IngPatterns
     [GeneratedRegex(
         @"^(?<date>\d{2}-\d{2}-\d{4})\s+(?<name>.+?)\s+(?<type>Betaling|Ontvangst|Incasso|Geldopname|Kosten|Correctie)\s+(?<amount>[+-]\s*\d[\d.,]*\d{2})$"
     )]
-    public static partial Regex CreditCardTransactionLine();
+    public static partial Regex ModernCreditCardTransactionLine();
 
     [GeneratedRegex(@"^NL\d{2} INGB \d{4} \d{4} \d{2}$", RegexOptions.IgnoreCase)]
-    public static partial Regex CreditCardCounterParty();
+    public static partial Regex CreditCardLinkedAccount();
 
     [GeneratedRegex(
         @"^(Transactiedatum: (?<date>\d{2}-\d{2}-\d{4})|Kaartnummer: (?<cardno>\d{4} \*\*\*\* \*\*\*\* \d{4})|Bedrag: (?<fcamount>\d+\,\d+) (?<fccode>[A-Z]{3})|Koers: (?<fcrate>\d+\,\d+)|Koersopslag \((?<fcmarkupcode>[A-Z]{3})\): (?<fcmarkupamount>\d+\,\d+))$",
         RegexOptions.IgnoreCase
     )]
-    public static partial Regex CreditCardNoteLine();
+    public static partial Regex ModernCreditCardNoteLine();
 
     [GeneratedRegex(
         @"Geboekt op Naam|Overeenkomstnummer|Dit product valt|Op ING\.nl",

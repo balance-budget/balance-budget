@@ -2,16 +2,21 @@ using Balance.Integration.Ing.Parsers;
 
 namespace Balance.Tests.Integrations.Ing;
 
-internal sealed class IngCreditCardStatementParserTests
+internal sealed class IngModernCreditCardStatementParserTests
 {
     [Test]
     [Skip("Requires file to be present")]
     public async Task ParsesStatement(CancellationToken cancellationToken)
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "Integrations", "Ing", "creditcard.pdf");
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Integrations",
+            "Ing",
+            "creditcard-modern.pdf"
+        );
 
         await using var stream = File.OpenRead(path);
-        var parser = new IngCreditCardStatementParser();
+        var parser = new IngModernCreditCardStatementParser();
         var result = await parser.ParseStatementsAsync(stream, cancellationToken);
 
         await Assert.That(result).IsNotNull();
