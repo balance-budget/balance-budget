@@ -3,19 +3,16 @@ using Balance.Data.Entities;
 using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
 using Balance.Integration.Ing.Contracts;
-using Balance.Integration.Ing.Helpers;
-using Balance.Integration.Ing.Models.BankAccount;
 using Balance.Integration.Ing.Models.CreditCard;
-using Balance.Integration.Ing.Models.Notes;
 using Balance.Services.BankTransactions;
 using Balance.Services.Contracts;
 using CsvHelper;
 
 namespace Balance.Integration.Ing.Importers;
 
-internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtractor
+internal sealed class IngModernCreditCardTransactionExtractor : IBankTransactionExtractor
 {
-    private const string ImporterKey = "Ing.CreditCard.V1";
+    private const string ImporterKey = "Ing.CreditCard.V2";
 
     public string Key => ImporterKey;
     public BankAccountType SupportedType => BankAccountType.Card;
@@ -23,16 +20,10 @@ internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtrac
     private static readonly CurrencyCode Eur = new("EUR");
 
     private readonly IIngCreditCardStatementParser _ingCreditCardStatementParser;
-    private readonly IIngNoteParser _ingNoteParser;
 
-    public IngCreditCardTransactionExtractor(
-        IIngCreditCardStatementParser ingCreditCardStatementParser,
-        IIngNoteParser ingNoteParser
-    )
-    {
-        _ingCreditCardStatementParser = ingCreditCardStatementParser;
-        _ingNoteParser = ingNoteParser;
-    }
+    public IngModernCreditCardTransactionExtractor(
+        IIngCreditCardStatementParser ingCreditCardStatementParser
+    ) => _ingCreditCardStatementParser = ingCreditCardStatementParser;
 
     public async Task<Result<IReadOnlyList<BankTransaction>>> ExtractAsync(
         BankAccount bankAccount,
@@ -220,15 +211,6 @@ internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtrac
         value is null
             ? string.Empty
             : value.Replace(" ", "", StringComparison.Ordinal).ToUpperInvariant();
-
-    private static string? FirstNonBlank(string? a, string? b)
-    {
-        if (!string.IsNullOrWhiteSpace(a))
-            return a;
-        if (!string.IsNullOrWhiteSpace(b))
-            return b;
-        return null;
-    }
 
     private static string? NullIfBlank(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value;
