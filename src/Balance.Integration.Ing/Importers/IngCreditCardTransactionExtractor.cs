@@ -121,10 +121,11 @@ internal abstract class IngCreditCardTransactionExtractor : IBankTransactionExtr
         // as the counterparty and no per-row counterparty IBAN. Populating the funding IBAN
         // here lets ADR 0013's Attach predicate fire on the card-side pay-down without
         // amending clause (3).
-        var counterpartyAccountNumber =
-            row.TransactionType is CreditCardTransactionType.DirectDebit
-                ? NullIfBlank(fundingAccountIban)
-                : null;
+        var counterpartyAccountNumber = row.TransactionType
+            is CreditCardTransactionType.DirectDebit
+                or CreditCardTransactionType.Repayment
+            ? NullIfBlank(fundingAccountIban)
+            : null;
 
         var foreignAmountMinor = ToMinorUnits(row.ForeignCurrencyAmount?.Amount);
         var foreignCurrencyCode = NullIfBlank(row.ForeignCurrencyAmount?.CurrencyCode);
