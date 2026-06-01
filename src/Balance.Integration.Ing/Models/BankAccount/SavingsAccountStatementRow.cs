@@ -38,5 +38,6 @@ public sealed class SavingsAccountStatementRow
     [Name("Resulting balance")]
     public required decimal ResultingBalance { get; init; }
 
+    [Ignore]
     public required string RawRecord { get; set; } = string.Empty;
 }
