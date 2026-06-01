@@ -10,9 +10,9 @@ namespace Balance.Services.BankTransactions;
 internal sealed class BankTransactionAttachService : IBankTransactionAttachService
 {
     /// <summary>
-    /// The strict 3-day window for the auto-hint (ADR 0013 condition 4).
+    /// The strict 7-day window for the auto-hint (ADR 0013 condition 4).
     /// </summary>
-    private const int HintDateWindowDays = 3;
+    private const int HintDateWindowDays = 7;
 
     private readonly BalanceDbContext _dbContext;
     private readonly IJournalEntryService _journalEntryService;
@@ -281,7 +281,7 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
             );
         }
 
-        // (4) |BT.BookingDate - JE.Date| <= 3 days.
+        // (4) |BT.BookingDate - JE.Date| <= 7 days.
         if (
             Math.Abs(bankTransaction.BookingDate.DayNumber - entry.Date.DayNumber)
             > HintDateWindowDays
