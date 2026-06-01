@@ -16,6 +16,11 @@ internal enum CreditCardTransactionType
     Receipt,
 
     /// <summary>
+    /// Aflossing
+    /// </summary>
+    Repayment,
+
+    /// <summary>
     /// Incasso
     /// </summary>
     DirectDebit,
