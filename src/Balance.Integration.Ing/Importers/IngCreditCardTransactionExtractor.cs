@@ -124,6 +124,7 @@ internal abstract class IngCreditCardTransactionExtractor : IBankTransactionExtr
         var counterpartyAccountNumber = row.TransactionType
             is CreditCardTransactionType.DirectDebit
                 or CreditCardTransactionType.Repayment
+                or CreditCardTransactionType.Correction
             ? NullIfBlank(fundingAccountIban)
             : null;
 
