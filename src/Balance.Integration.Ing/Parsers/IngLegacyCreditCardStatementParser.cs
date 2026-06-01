@@ -113,7 +113,7 @@ internal sealed class IngLegacyCreditCardStatementParser : IngCreditCardStatemen
             };
         }
 
-        var bookingDate = ParseLineDate(match.Groups["date"].Value, header.RepaymentDate.Year);
+        var bookingDate = ParseLineDate(match.Groups["date"].Value, header.RepaymentDate);
         CurrencyAmount? foreignCurrencyAmount = null;
         decimal? foreignCurrencyRate = null;
 
@@ -137,13 +137,21 @@ internal sealed class IngLegacyCreditCardStatementParser : IngCreditCardStatemen
             ForeignCurrencyRate = foreignCurrencyRate,
             TransactionDate = bookingDate,
             Notes = "",
-            RawRecord = $"{header.RepaymentDate.Year}|{match.Value}",
+            RawRecord = $"{bookingDate.Year}|{match.Value}",
         };
     }
 
-    private static DateOnly ParseLineDate(string value, int year)
+    private static DateOnly ParseLineDate(string value, DateOnly repaymentDate)
     {
         var parsed = DateOnly.ParseExact(value, "dd MMM", NlCulture);
+
+        // The line date is just "dd MMM" and lacks a year, so we need to use the year of the repayment date
+        var year = repaymentDate.Year;
+
+        // Statement from jan will have transactions from the previous year
+        if (repaymentDate.Month == 1 && parsed.Month == 12)
+            year--;
+
         return new DateOnly(year, parsed.Month, parsed.Day);
     }
 
