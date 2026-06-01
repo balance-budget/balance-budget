@@ -14,6 +14,7 @@ internal sealed class IngModernCreditCardStatementParser : IngCreditCardStatemen
         {
             ["Betaling"] = CreditCardTransactionType.Payment,
             ["Ontvangst"] = CreditCardTransactionType.Receipt,
+            ["Aflossing"] = CreditCardTransactionType.Repayment,
             ["Incasso"] = CreditCardTransactionType.DirectDebit,
             ["Geldopname"] = CreditCardTransactionType.CashWithdrawal,
             ["Kosten"] = CreditCardTransactionType.Fees,

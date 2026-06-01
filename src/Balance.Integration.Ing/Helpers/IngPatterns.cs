@@ -11,7 +11,7 @@ internal static partial class IngPatterns
     public static partial Regex CreditCardLinkedAccount();
 
     [GeneratedRegex(
-        @"^(?<date>\d{2}-\d{2}-\d{4})\s+(?<name>.+?)\s+(?<type>Betaling|Ontvangst|Incasso|Geldopname|Kosten|Correctie)\s+(?<amount>[+-]\s*\d[\d.,]*\d{2})$"
+        @"^(?<date>\d{2}-\d{2}-\d{4})\s+(?<name>.+?)\s+(?<type>Betaling|Ontvangst|Incasso|Aflossing|Geldopname|Kosten|Correctie)\s+(?<amount>[+-]\s*\d[\d.,]*\d{2})$"
     )]
     public static partial Regex ModernCreditCardTransactionLine();
 
