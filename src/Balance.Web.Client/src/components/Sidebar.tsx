@@ -87,6 +87,10 @@ function AccountRow({ account }: { account: Account }) {
     const catalog = useCurrencyCatalog();
     const identifier = accountIdentifier(account);
     const isNegative = account.balance.amount < 0;
+    // Income/Expense are category accounts: their "balance" is the lifetime
+    // accumulated total, which isn't a meaningful figure in personal finance.
+    // Only ledger (Asset/Liability) accounts have a balance worth showing here.
+    const showBalance = isLedgerAccount(account);
     return (
         <Link
             to="/accounts/$id"
@@ -102,16 +106,18 @@ function AccountRow({ account }: { account: Account }) {
                     <span className="text-[11px] text-fg-3 truncate tabular">{identifier}</span>
                 )}
             </div>
-            <span
-                className={cx(
-                    'shrink-0 text-[12px] tabular-nums',
-                    isNegative ? 'text-danger' : 'text-fg-2',
-                )}
-            >
-                {formatMoney(account.balance.amount, account.balance.currencyCode, catalog, {
-                    decimals: false,
-                })}
-            </span>
+            {showBalance && (
+                <span
+                    className={cx(
+                        'shrink-0 text-[12px] tabular-nums',
+                        isNegative ? 'text-danger' : 'text-fg-2',
+                    )}
+                >
+                    {formatMoney(account.balance.amount, account.balance.currencyCode, catalog, {
+                        decimals: false,
+                    })}
+                </span>
+            )}
         </Link>
     );
 }
