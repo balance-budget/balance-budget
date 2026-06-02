@@ -11,8 +11,8 @@ type AmountProps = {
 } & FormatOptions;
 
 const SIZE_CLASS: Record<NonNullable<AmountProps['size']>, string> = {
-    big: 'text-[44px] font-medium leading-none tracking-[-0.01em]',
-    medium: 'text-[22px] font-medium leading-tight',
+    big: 'text-44 font-medium leading-none tracking-[-0.01em]',
+    medium: 'text-22 font-medium leading-tight',
     inline: 'text-14 font-medium leading-none',
 };
 

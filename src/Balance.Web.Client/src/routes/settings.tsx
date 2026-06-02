@@ -28,7 +28,7 @@ function SettingsLayout() {
                             key={item.to}
                             to={item.to}
                             className={cx(
-                                'px-3 py-[7px] rounded-sm text-[13px] font-medium transition-colors',
+                                'px-3 py-[7px] rounded-sm text-13 font-medium transition-colors',
                                 isActive
                                     ? 'bg-brand-primary-soft text-brand-primary'
                                     : 'text-fg-2 hover:bg-surface-2 hover:text-fg-1',

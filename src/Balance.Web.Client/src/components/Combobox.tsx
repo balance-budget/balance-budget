@@ -218,7 +218,7 @@ export function Combobox<T>({
                 placeholder={placeholder}
                 autoComplete="off"
                 className={cx(
-                    'w-full px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[13px]',
+                    'w-full px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-13',
                     'focus:outline-none focus:border-border-strong disabled:opacity-60',
                 )}
             />
@@ -233,7 +233,7 @@ export function Combobox<T>({
                         style={listboxStyle(anchorRect)}
                         className={cx(
                             'z-50 overflow-y-auto',
-                            'rounded-sm bg-bg-1 border border-border-soft shadow-overlay text-[13px]',
+                            'rounded-sm bg-bg-1 border border-border-soft shadow-overlay text-13',
                         )}
                     >
                         {renderOptions(options, effectiveActive, groupLabels, commit, setActive)}
@@ -261,7 +261,7 @@ function renderOptions<T>(
                     <li
                         key={`group-${option.group}`}
                         role="presentation"
-                        className="px-3 py-1 text-[11px] text-fg-3 uppercase tracking-wider bg-surface-2 border-b border-border-soft"
+                        className="px-3 py-1 text-11 text-fg-3 uppercase tracking-wider bg-surface-2 border-b border-border-soft"
                     >
                         {groupLabels?.[option.group] ?? option.group}
                     </li>,

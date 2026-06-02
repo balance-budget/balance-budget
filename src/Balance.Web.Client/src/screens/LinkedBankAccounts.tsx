@@ -50,7 +50,7 @@ export function LinkedBankAccountsSection({ owner }: { owner: Owner }) {
         <>
             <div>
                 {linked.length === 0 ? (
-                    <div className="py-3 text-[13px] text-fg-3">No bank accounts linked yet.</div>
+                    <div className="py-3 text-13 text-fg-3">No bank accounts linked yet.</div>
                 ) : (
                     linked.map(ba => (
                         <LinkedRow
@@ -68,7 +68,7 @@ export function LinkedBankAccountsSection({ owner }: { owner: Owner }) {
                         onClick={() => {
                             setCreating(true);
                         }}
-                        className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm text-[13px] font-medium text-brand-primary hover:bg-brand-primary-soft"
+                        className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm text-13 font-medium text-brand-primary hover:bg-brand-primary-soft"
                     >
                         <Icon name="plus" size={14} strokeWidth={2} />
                         Add bank account
@@ -123,7 +123,7 @@ function LinkedRow({
                     <span className="text-14 font-medium text-fg-1 truncate">
                         {formatBankAccountLabel(bankAccount)}
                     </span>
-                    <span className="text-[12px] text-fg-3 tabular truncate">
+                    <span className="text-12 text-fg-3 tabular truncate">
                         {formatBankAccountSubline(bankAccount)}
                     </span>
                 </div>

@@ -40,13 +40,13 @@ export function Setup() {
         <div className="w-full max-w-[480px] bg-bg-1 border border-border-soft rounded-md shadow-overlay">
             <header className="flex items-center gap-[10px] px-5 pt-5 pb-3">
                 <img src={logo} alt="" className="w-8 h-8 rounded-[6px]" />
-                <span className="text-[18px] font-normal tracking-[-0.01em]">
+                <span className="text-18 font-normal tracking-[-0.01em]">
                     Balance<span className="text-brand-primary">.</span>
                 </span>
             </header>
             <div className="px-5 pt-1 pb-5">
                 <h1 className="text-16 font-semibold leading-snug mb-1">First-run setup</h1>
-                <p className="text-[13px] text-fg-3 mb-4">
+                <p className="text-13 text-fg-3 mb-4">
                     Create the first account. This wizard becomes unavailable once a user exists.
                 </p>
                 <form
@@ -58,7 +58,7 @@ export function Setup() {
                 >
                     <FormErrorBanner message={errorMessage} />
                     <label className="flex flex-col gap-1 mb-3">
-                        <span className="text-[12px] font-medium text-fg-2">Email</span>
+                        <span className="text-12 font-medium text-fg-2">Email</span>
                         <input
                             type="email"
                             required
@@ -67,11 +67,11 @@ export function Setup() {
                             onChange={e => {
                                 setEmail(e.target.value);
                             }}
-                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
+                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
                         />
                     </label>
                     <label className="flex flex-col gap-1 mb-3">
-                        <span className="text-[12px] font-medium text-fg-2">Display name</span>
+                        <span className="text-12 font-medium text-fg-2">Display name</span>
                         <input
                             type="text"
                             required
@@ -79,11 +79,11 @@ export function Setup() {
                             onChange={e => {
                                 setDisplayName(e.target.value);
                             }}
-                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
+                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
                         />
                     </label>
                     <label className="flex flex-col gap-1 mb-3">
-                        <span className="text-[12px] font-medium text-fg-2">Password</span>
+                        <span className="text-12 font-medium text-fg-2">Password</span>
                         <input
                             type="password"
                             required
@@ -93,21 +93,21 @@ export function Setup() {
                             onChange={e => {
                                 setPassword(e.target.value);
                             }}
-                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
+                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
                         />
-                        <span className="text-[12px] text-fg-3">Minimum 12 characters.</span>
+                        <span className="text-12 text-fg-3">Minimum 12 characters.</span>
                     </label>
                     <label className="flex flex-col gap-1 mb-4">
-                        <span className="text-[12px] font-medium text-fg-2">Setup token</span>
+                        <span className="text-12 font-medium text-fg-2">Setup token</span>
                         <input
                             type="text"
                             value={setupToken}
                             onChange={e => {
                                 setSetupToken(e.target.value);
                             }}
-                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] font-mono focus:outline-none focus:border-border-strong"
+                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 font-mono focus:outline-none focus:border-border-strong"
                         />
-                        <span className="text-[12px] text-fg-3">
+                        <span className="text-12 text-fg-3">
                             Required when configured at deploy time via{' '}
                             <code className="font-mono">Auth:SetupToken</code>.
                         </span>
@@ -115,7 +115,7 @@ export function Setup() {
                     <button
                         type="submit"
                         disabled={setup.isPending}
-                        className="w-full px-3 py-[7px] rounded-sm text-[13px] font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
+                        className="w-full px-3 py-[7px] rounded-sm text-13 font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
                     >
                         {setup.isPending ? 'Creating…' : 'Create account'}
                     </button>

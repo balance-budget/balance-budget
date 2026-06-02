@@ -26,12 +26,9 @@ function RecentRow({ row }: { row: RegisterRow }) {
     const negative = row.amount.amount < 0;
     return (
         <div className="flex items-center justify-between gap-2">
-            <span className="text-[12px] text-fg-2 truncate">{label}</span>
+            <span className="text-12 text-fg-2 truncate">{label}</span>
             <span
-                className={cx(
-                    'font-mono text-[11px] tabular',
-                    negative ? 'text-fg-2' : 'text-success',
-                )}
+                className={cx('font-mono text-11 tabular', negative ? 'text-fg-2' : 'text-success')}
             >
                 {formatMoney(row.amount.amount, row.amount.currencyCode, catalog, { sign: true })}
             </span>
@@ -85,7 +82,7 @@ function AccountRow({ account }: { account: Account }) {
                 <AccountAvatar account={account} size="md" />
                 <div className="flex flex-col gap-[2px] flex-1 min-w-0">
                     <span className="text-14 font-medium text-fg-1 truncate">{account.name}</span>
-                    <span className="text-[12px] text-fg-3 truncate">
+                    <span className="text-12 text-fg-3 truncate">
                         {account.type}
                         {identifier ? ` · ${identifier}` : ''}
                     </span>
@@ -125,7 +122,7 @@ function AccountsPanel() {
     const ledgerAccounts = accounts.data.filter(isLedgerAccount);
 
     if (ledgerAccounts.length === 0) {
-        return <span className="text-[13px] text-fg-3">No accounts yet.</span>;
+        return <span className="text-13 text-fg-3">No accounts yet.</span>;
     }
 
     return (
@@ -244,7 +241,7 @@ function AccountBalanceTrendPanel() {
                         setRange(p);
                     }}
                     className={cx(
-                        'px-[10px] py-[5px] rounded-full text-[11px] font-medium select-none',
+                        'px-[10px] py-[5px] rounded-full text-11 font-medium select-none',
                         p === range
                             ? 'bg-brand-primary-soft text-brand-primary'
                             : 'text-fg-3 hover:text-fg-1',
@@ -267,7 +264,7 @@ function AccountBalanceTrendPanel() {
                     onRetry={() => void trend.refetch()}
                 />
             ) : trend.data.series.length === 0 ? (
-                <div className="h-[240px] flex items-center justify-center text-[13px] text-fg-3">
+                <div className="h-[240px] flex items-center justify-center text-13 text-fg-3">
                     No balance history yet.
                 </div>
             ) : (
@@ -297,7 +294,7 @@ export function Dashboard() {
                         action={
                             <Link
                                 to="/accounts"
-                                className="text-[13px] font-medium text-fg-2 hover:text-brand-primary"
+                                className="text-13 font-medium text-fg-2 hover:text-brand-primary"
                             >
                                 All →
                             </Link>

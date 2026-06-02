@@ -101,15 +101,15 @@ function AccountRow({ account }: { account: Account }) {
         >
             <AccountAvatar account={account} />
             <div className="flex-1 min-w-0 flex flex-col leading-tight">
-                <span className="truncate text-[13px]">{account.name}</span>
+                <span className="truncate text-13">{account.name}</span>
                 {identifier && (
-                    <span className="text-[11px] text-fg-3 truncate tabular">{identifier}</span>
+                    <span className="text-11 text-fg-3 truncate tabular">{identifier}</span>
                 )}
             </div>
             {showBalance && (
                 <span
                     className={cx(
-                        'shrink-0 text-[12px] tabular-nums',
+                        'shrink-0 text-12 tabular-nums',
                         isNegative ? 'text-danger' : 'text-fg-2',
                     )}
                 >
@@ -173,7 +173,7 @@ function AccountsGroup() {
         return (
             <div className="flex flex-col gap-[2px]">
                 <SectionLabel>Accounts</SectionLabel>
-                <div className="px-3 py-2 text-[12px] text-fg-3">No accounts yet.</div>
+                <div className="px-3 py-2 text-12 text-fg-3">No accounts yet.</div>
             </div>
         );
     }
@@ -215,12 +215,12 @@ function CurrentUserCard() {
 
     return (
         <div className="mt-auto flex items-center gap-[10px] p-[10px] rounded-sm bg-surface-2">
-            <div className="w-8 h-8 rounded-full bg-brand-primary-soft text-brand-primary flex items-center justify-center text-[12px] font-semibold">
+            <div className="w-8 h-8 rounded-full bg-brand-primary-soft text-brand-primary flex items-center justify-center text-12 font-semibold">
                 {initials(displayName)}
             </div>
             <div className="flex-1 flex flex-col leading-tight min-w-0">
-                <span className="text-[13px] font-medium text-fg-1 truncate">{displayName}</span>
-                <span className="text-[14px] text-fg-3 truncate">{email}</span>
+                <span className="text-13 font-medium text-fg-1 truncate">{displayName}</span>
+                <span className="text-14 text-fg-3 truncate">{email}</span>
             </div>
             <button
                 type="button"
@@ -261,7 +261,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
             >
                 <div className="flex items-center gap-[10px] px-[10px] py-1">
                     <img src={logo} alt="" className="w-8 h-8 rounded-[6px]" />
-                    <span className="text-[18px] font-normal tracking-[-0.01em]">
+                    <span className="text-18 font-normal tracking-[-0.01em]">
                         Balance<span className="text-brand-primary">.</span>
                     </span>
                 </div>
