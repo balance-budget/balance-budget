@@ -1,8 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { AccountDetail } from '../screens/AccountDetail';
 import { asAccountId } from '../lib/domain';
-
-type RegisterSearch = { page: number; q: string };
+import { parsePage, parseQ, type PageQSearch } from '../lib/routeSearch';
 
 export const Route = createFileRoute('/accounts/$id')({
     component: function AccountDetailRoute() {
@@ -24,10 +23,8 @@ export const Route = createFileRoute('/accounts/$id')({
         );
     },
     staticData: { title: 'Account' },
-    validateSearch: (raw: Record<string, unknown>): RegisterSearch => {
-        const candidate = Number(raw.page);
-        const page = Number.isInteger(candidate) && candidate >= 1 ? candidate : 1;
-        const q = typeof raw.q === 'string' ? raw.q : '';
-        return { page, q };
-    },
+    validateSearch: (raw: Record<string, unknown>): PageQSearch => ({
+        page: parsePage(raw.page),
+        q: parseQ(raw.q),
+    }),
 });
