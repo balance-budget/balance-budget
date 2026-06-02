@@ -169,12 +169,11 @@ ExceptionHandler → StatusCodePages → ForwardedHeaders → DefaultFiles → R
   1. `dotnet tool restore`
   2. `dotnet restore`
   3. `dotnet csharpier check .`
-  4. `dotnet build --no-restore` (builds the SPA via the esproj — installs npm deps and generates the route tree, and emits the OpenAPI document to `artifacts/openapi`)
+  4. `dotnet build --no-restore` (builds the SPA via the esproj — installs npm deps and generates the route tree)
   5. `npm run lint` in `src/Balance.Web.Client` (ESLint, reusing the build's `node_modules` + generated route tree)
-  6. `npm run codegen` + `git diff --exit-code src/lib/api-types.ts` — fails if the committed wire types are stale vs. the just-built OpenAPI document (ADR-0007 keeps the types generated, not hand-written)
-  7. CodeQL analyze (public repos only)
-  8. `dotnet test` with cobertura coverage
-  9. Sticky PR comments for test results and coverage
+  6. CodeQL analyze (public repos only)
+  7. `dotnet test` with cobertura coverage
+  8. Sticky PR comments for test results and coverage
 - A separate `codeql.yml` re-runs CodeQL on a weekly cron.
 
 ## Known oddities

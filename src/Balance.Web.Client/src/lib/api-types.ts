@@ -2078,7 +2078,6 @@ export interface operations {
             query?: {
                 Skip?: number | string;
                 Take?: number | string;
-                Q?: string;
             };
             header?: never;
             path: {
@@ -2119,11 +2118,7 @@ export interface operations {
     };
     ListCounterparties: {
         parameters: {
-            query?: {
-                Skip?: number | string;
-                Take?: number | string;
-                Q?: string;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;

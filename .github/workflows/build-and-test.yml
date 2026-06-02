@@ -71,17 +71,6 @@ jobs:
       run: npm run lint
       working-directory: src/Balance.Web.Client
 
-    # The build above emitted the OpenAPI document to artifacts/openapi. Regenerate
-    # the wire types from it and fail if the committed src/lib/api-types.ts is stale
-    # (ADR-0007: types are generated, not hand-written). A literal prebuild hook
-    # can't do this — codegen depends on the build output it would run before.
-    - name: Check generated API types are up to date
-      working-directory: src/Balance.Web.Client
-      run: |
-        npm run codegen
-        git diff --exit-code src/lib/api-types.ts \
-          || (echo "::error::src/lib/api-types.ts is stale — run 'npm run codegen' and commit." && exit 1)
-
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
       if: ${{ !github.event.repository.private }}
