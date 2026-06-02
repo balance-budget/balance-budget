@@ -103,8 +103,7 @@ export function BankAccountFormModal(props: Props) {
         // and clear any incompatible ImporterKey when the user picks Card.
         const nextOwner: OwnerKind = next === 'Card' ? 'account' : form.ownerKind;
         const currentImporter = importers.data?.find(i => i.key === form.importerKey);
-        const nextImporter =
-            currentImporter && currentImporter.supportedType === next ? form.importerKey : '';
+        const nextImporter = currentImporter?.supportedType === next ? form.importerKey : '';
         update_({ type: next, ownerKind: nextOwner, importerKey: nextImporter });
     }
 

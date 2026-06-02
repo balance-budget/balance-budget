@@ -169,10 +169,11 @@ ExceptionHandler → StatusCodePages → ForwardedHeaders → DefaultFiles → R
   1. `dotnet tool restore`
   2. `dotnet restore`
   3. `dotnet csharpier check .`
-  4. `dotnet build --no-restore`
-  5. CodeQL analyze (public repos only)
-  6. `dotnet test` with cobertura coverage
-  7. Sticky PR comments for test results and coverage
+  4. `dotnet build --no-restore` (builds the SPA via the esproj — installs npm deps and generates the route tree)
+  5. `npm run lint` in `src/Balance.Web.Client` (ESLint, reusing the build's `node_modules` + generated route tree)
+  6. CodeQL analyze (public repos only)
+  7. `dotnet test` with cobertura coverage
+  8. Sticky PR comments for test results and coverage
 - A separate `codeql.yml` re-runs CodeQL on a weekly cron.
 
 ## Known oddities

@@ -20,6 +20,11 @@ type WireImportResult = components['schemas']['ImportResult'];
 
 export type BankAccountType = 'Current' | 'Savings' | 'Card';
 
+/** Owner facet for the bank-accounts list: your own BankAccounts vs. counterparties'. */
+export type BankAccountOwnerFilter = 'mine' | 'others';
+
+export const BANK_ACCOUNT_OWNER_FILTERS: readonly BankAccountOwnerFilter[] = ['mine', 'others'];
+
 export type BankAccount = {
     id: BankAccountId;
     type: BankAccountType;
