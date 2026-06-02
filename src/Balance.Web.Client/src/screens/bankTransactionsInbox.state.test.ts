@@ -77,8 +77,11 @@ function account(id: AccountId, overrides: Partial<Account> = {}): Account {
     return {
         id,
         name: 'Account',
+        code: '5000',
         type: 'Expense',
         currencyCode: 'EUR',
+        isPostable: true,
+        parentId: null,
         balance: { amount: 0, currencyCode: 'EUR' },
         bankAccount: null,
         ...overrides,

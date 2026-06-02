@@ -99,9 +99,15 @@ internal static class AccountEndpoints
     )
     {
         var result = await accountService.CreateAsync(
-            request.Name,
-            request.AccountType,
-            request.CurrencyCode,
+            new CreateAccountInput
+            {
+                Name = request.Name,
+                Code = request.Code,
+                AccountType = request.AccountType,
+                CurrencyCode = request.CurrencyCode,
+                IsPostable = request.IsPostable,
+                ParentAccountId = request.ParentAccountId,
+            },
             cancellationToken
         );
         return result.ToCreatedAt(PathPrefix, v => v.Id.Value);

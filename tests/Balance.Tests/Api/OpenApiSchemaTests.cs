@@ -66,7 +66,16 @@ internal sealed class OpenApiSchemaTests : EndpointsTestsBase
             .Select(e => e.GetString() ?? string.Empty)
             .ToArray();
 
-        await Assert.That(pathEnum).IsEquivalentTo(["/name", "/accountType", "/currencyCode"]);
+        await Assert
+            .That(pathEnum)
+            .IsEquivalentTo([
+                "/name",
+                "/code",
+                "/accountType",
+                "/currencyCode",
+                "/isPostable",
+                "/parentAccountId",
+            ]);
     }
 
     [Test]
@@ -81,7 +90,16 @@ internal sealed class OpenApiSchemaTests : EndpointsTestsBase
             .EnumerateObject()
             .Select(p => p.Name)
             .ToArray();
-        await Assert.That(propertyNames).IsEquivalentTo(["name", "accountType", "currencyCode"]);
+        await Assert
+            .That(propertyNames)
+            .IsEquivalentTo([
+                "name",
+                "code",
+                "accountType",
+                "currencyCode",
+                "isPostable",
+                "parentAccountId",
+            ]);
     }
 
     private async Task<JsonDocument> GetOpenApiDocumentAsync()

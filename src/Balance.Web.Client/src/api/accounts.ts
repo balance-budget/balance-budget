@@ -23,8 +23,13 @@ export type BankAccountSummary = {
 export type Account = {
     id: AccountId;
     name: string;
+    code: string;
     type: AccountType;
     currencyCode: string;
+    /** A leaf that journal lines may reference directly; false for a non-postable roll-up account. */
+    isPostable: boolean;
+    /** Parent in the chart-of-accounts tree, or null for a root account (ADR-0022). */
+    parentId: AccountId | null;
     balance: Money;
     bankAccount: BankAccountSummary | null;
 };
@@ -56,8 +61,11 @@ function toAccount(wire: WireAccount): Account {
     return {
         id: asAccountId(wire.id),
         name: wire.name,
+        code: wire.code,
         type: wire.accountType,
         currencyCode: wire.currencyCode,
+        isPostable: wire.isPostable,
+        parentId: wire.parentAccountId === null ? null : asAccountId(wire.parentAccountId),
         balance: toMoney(wire.balance, wire.currencyCode),
         bankAccount: toBankAccountSummary(wire.bankAccount),
     };
