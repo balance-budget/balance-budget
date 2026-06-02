@@ -1,18 +1,16 @@
 import { useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useAccounts, type Account } from '../api/accounts';
-import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import { useJournalEntries, type JournalEntry } from '../api/journalEntries';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Pagination } from '../components/Pagination';
 import { Panel, SectionHead } from '../components/Panel';
+import { ProjectionAmount } from '../components/ProjectionAmount';
 import { SearchInput } from '../components/SearchInput';
 import { Skeleton } from '../components/Skeleton';
-import { cx } from '../lib/cx';
 import { type AccountId } from '../lib/domain';
 import { formatLegLabel, projectEntry, type JournalProjection } from '../lib/journalProjection';
-import { formatMoney } from '../lib/money';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
 
 const PAGE_SIZE = 50;
@@ -32,7 +30,6 @@ export function Activity({
     const debouncedQ = useDebouncedValue(q, 200);
     const entries = useJournalEntries(skip, PAGE_SIZE, debouncedQ);
     const accounts = useAccounts();
-    const catalog = useCurrencyCatalog();
 
     return (
         <Panel>
@@ -59,7 +56,6 @@ export function Activity({
             <JournalBody
                 entries={entries}
                 accounts={accounts.data ?? []}
-                catalog={catalog}
                 page={page}
                 query={debouncedQ}
                 onPageChange={onPageChange}
@@ -71,14 +67,12 @@ export function Activity({
 function JournalBody({
     entries,
     accounts,
-    catalog,
     page,
     query,
     onPageChange,
 }: {
     entries: ReturnType<typeof useJournalEntries>;
     accounts: Account[];
-    catalog: CurrencyCatalog;
     page: number;
     query: string;
     onPageChange: (p: number) => void;
@@ -136,12 +130,7 @@ function JournalBody({
                 <span className="text-right">Amount</span>
             </div>
             {entries.data.items.map(entry => (
-                <JournalRow
-                    key={entry.id}
-                    entry={entry}
-                    accountById={accountById}
-                    catalog={catalog}
-                />
+                <JournalRow key={entry.id} entry={entry} accountById={accountById} />
             ))}
             <Pagination
                 page={page}
@@ -156,11 +145,9 @@ function JournalBody({
 function JournalRow({
     entry,
     accountById,
-    catalog,
 }: {
     entry: JournalEntry;
     accountById: ReadonlyMap<AccountId, Account>;
-    catalog: CurrencyCatalog;
 }) {
     const projection = projectEntry(entry, accountById);
     const heading = entry.counterpartyName ?? entry.description ?? '—';
@@ -179,7 +166,7 @@ function JournalRow({
                 </span>
                 <span className="text-[13px] text-fg-1 truncate">{heading}</span>
                 <FromToCell projection={projection} lineCount={entry.lines.length} />
-                <AmountCell projection={projection} catalog={catalog} />
+                <ProjectionAmount projection={projection} variant="row" />
             </div>
             <div className="lg:hidden flex flex-col gap-1 px-2 py-3">
                 <div className="flex items-center justify-between gap-3">
@@ -194,7 +181,7 @@ function JournalRow({
                             />
                         ) : null}
                     </div>
-                    <AmountCell projection={projection} catalog={catalog} />
+                    <ProjectionAmount projection={projection} variant="row" />
                 </div>
                 <span className="text-[13px] text-fg-1 truncate">{heading}</span>
                 <FromToCell projection={projection} lineCount={entry.lines.length} />
@@ -226,28 +213,3 @@ function FromToCell({
     );
 }
 
-function AmountCell({
-    projection,
-    catalog,
-}: {
-    projection: JournalProjection;
-    catalog: CurrencyCatalog;
-}) {
-    // ADR-0012: transfers (NetWorthChange == 0) render unsigned magnitude in
-    // muted text; operating entries render the signed net-worth change with
-    // colour by sign. Font/size matches the per-account Register row for
-    // visual consistency across the two amount-on-row surfaces.
-    const money = projection.isTransfer ? projection.grossMagnitude : projection.netWorthChange;
-    const colour = projection.isTransfer
-        ? 'text-fg-3'
-        : money.amount < 0
-          ? 'text-danger'
-          : 'text-success';
-    return (
-        <span className={cx('font-mono text-[13px] tabular text-right', colour)}>
-            {formatMoney(money.amount, money.currencyCode, catalog, {
-                sign: !projection.isTransfer,
-            })}
-        </span>
-    );
-}

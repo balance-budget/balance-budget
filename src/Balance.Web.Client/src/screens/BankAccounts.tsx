@@ -21,7 +21,7 @@ import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { cx } from '../lib/cx';
 import type { BankAccountId } from '../lib/domain';
-import { ApiError } from '../lib/http';
+import { handleActionError } from '../lib/formErrors';
 import { BankAccountFormModal } from './BankAccountForm';
 
 const OWNER_FILTER_LABEL: Record<BankAccountOwnerFilter, string> = {
@@ -348,11 +348,7 @@ function DeleteBankAccountDialog({
             toast.success('Bank account deleted.');
             onClose();
         } catch (err) {
-            if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
-                setError(err.message);
-            } else if (err instanceof Error) {
-                toast.error(err.message);
-            }
+            handleActionError(err, { setError, toast: toast.error });
         }
     }
 

@@ -13,7 +13,7 @@ import { SearchInput } from '../components/SearchInput';
 import { Skeleton } from '../components/Skeleton';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useToast } from '../components/Toast';
-import { ApiError } from '../lib/http';
+import { handleActionError } from '../lib/formErrors';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
 import { CounterpartyFormModal } from './CounterpartyForm';
 
@@ -229,13 +229,7 @@ function DeleteCounterpartyDialog({
             toast.success(`Deleted “${counterparty.name}”.`);
             onClose();
         } catch (err) {
-            if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
-                setError(err.message);
-            } else if (err instanceof Error) {
-                toast.error(err.message);
-            } else {
-                toast.error('Delete failed.');
-            }
+            handleActionError(err, { setError, toast: toast.error });
         }
     }
 

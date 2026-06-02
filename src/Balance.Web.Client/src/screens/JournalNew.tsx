@@ -22,7 +22,7 @@ import {
     type AccountType,
     type CounterpartyId,
 } from '../lib/domain';
-import { ApiError } from '../lib/http';
+import { handleFormError } from '../lib/formErrors';
 import { formatMoney } from '../lib/money';
 import { CounterpartyFormModal } from './CounterpartyForm';
 import {
@@ -167,17 +167,7 @@ function JournalNewForm({
             toast.success('Journal entry created.');
             await navigate({ to: '/journal/$id', params: { id: created.id } });
         } catch (err) {
-            if (err instanceof ApiError) {
-                if (err.fieldErrors) {
-                    setFieldErrors(err.fieldErrors);
-                } else if (err.status >= 400 && err.status < 500) {
-                    setTopError(err.message);
-                } else {
-                    toast.error(err.message);
-                }
-            } else if (err instanceof Error) {
-                toast.error(err.message);
-            }
+            handleFormError(err, { setFieldErrors, setTopError, toast: toast.error });
         }
     }
 

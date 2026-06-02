@@ -12,7 +12,6 @@ import {
 import { useDetachBankTransaction, type BankTransactionDetail } from '../api/bankTransactions';
 import { useCounterparties } from '../api/counterparties';
 import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
-import { Amount } from '../components/Amount';
 import { BankTransactionDetails } from '../components/BankTransactionDetails';
 import { Combobox } from '../components/Combobox';
 import { type ComboboxItem } from '../components/combobox.state';
@@ -22,6 +21,7 @@ import { FieldError } from '../components/FieldError';
 import { FormErrorBanner } from '../components/FormErrorBanner';
 import { Icon } from '../components/Icon';
 import { Panel, SectionHead } from '../components/Panel';
+import { ProjectionAmount } from '../components/ProjectionAmount';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { cx } from '../lib/cx';
@@ -32,7 +32,7 @@ import {
     type CounterpartyId,
     type JournalEntryId,
 } from '../lib/domain';
-import { ApiError } from '../lib/http';
+import { handleActionError, handleFormError } from '../lib/formErrors';
 import { formatLegLabel, projectEntry, type JournalProjection } from '../lib/journalProjection';
 import { formatMoney } from '../lib/money';
 import {
@@ -213,7 +213,7 @@ function DetailHeader({
                 <FromToSummary projection={projection} lineCount={entry.lines.length} />
             </div>
             <div className="flex items-center justify-between gap-3 lg:shrink-0">
-                <HeaderAmount projection={projection} />
+                <ProjectionAmount projection={projection} variant="header" />
                 <div className="flex items-center gap-2">
                     <button
                         type="button"
@@ -264,25 +264,6 @@ function FromToSummary({
     );
 }
 
-function HeaderAmount({ projection }: { projection: JournalProjection }) {
-    // ADR-0012: transfers render unsigned magnitude, muted; operating entries
-    // render the signed net-worth change with colour by sign.
-    const money = projection.isTransfer ? projection.grossMagnitude : projection.netWorthChange;
-    const colour = projection.isTransfer
-        ? 'text-fg-3'
-        : money.amount < 0
-          ? 'text-danger'
-          : 'text-success';
-    return (
-        <Amount
-            minor={money.amount}
-            currencyCode={money.currencyCode}
-            size="big"
-            sign={!projection.isTransfer}
-            className={colour}
-        />
-    );
-}
 
 function LineTable({ entry, projection }: { entry: JournalEntry; projection: JournalProjection }) {
     const catalog = useCurrencyCatalog();
@@ -460,17 +441,7 @@ function EditJournalEntry({
             toast.success('Journal entry saved.');
             onSaved();
         } catch (err) {
-            if (err instanceof ApiError) {
-                if (err.fieldErrors) {
-                    setFieldErrors(err.fieldErrors);
-                } else if (err.status >= 400 && err.status < 500) {
-                    setTopError(err.message);
-                } else {
-                    toast.error(err.message);
-                }
-            } else if (err instanceof Error) {
-                toast.error(err.message);
-            }
+            handleFormError(err, { setFieldErrors, setTopError, toast: toast.error });
         }
     }
 
@@ -788,11 +759,7 @@ function DeleteJournalEntryDialog({
             toast.success(`Deleted journal entry “${label}”.`);
             await navigate({ to: '/activity', search: { page: 1, q: '' } });
         } catch (err) {
-            if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
-                setError(err.message);
-            } else if (err instanceof Error) {
-                toast.error(err.message);
-            }
+            handleActionError(err, { setError, toast: toast.error });
         }
     }
 
