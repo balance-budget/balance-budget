@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { components } from '../lib/api-types';
 import { getJson } from '../lib/http';
+import { toNumber } from '../lib/money';
 
 type WireCurrency = components['schemas']['CurrencyOutput'];
 
@@ -27,11 +28,10 @@ function fetchCurrencies(signal: AbortSignal): Promise<WireCurrency[]> {
 // minorUnitScale comes through as `number | string` for the same long-int
 // reason as Money — normalise. Code/name/symbol are required on the wire.
 function toCurrency(wire: WireCurrency): Currency {
-    const rawScale = wire.minorUnitScale;
     return {
         code: wire.code,
         name: wire.name,
-        minorUnitScale: typeof rawScale === 'string' ? Number(rawScale) : rawScale,
+        minorUnitScale: toNumber(wire.minorUnitScale),
         symbol: wire.symbol ?? null,
     };
 }
