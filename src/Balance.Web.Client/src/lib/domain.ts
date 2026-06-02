@@ -37,6 +37,24 @@ export const isLedgerAccount = (a: { type: AccountType }): boolean =>
 export const isCategoryAccount = (a: { type: AccountType }): boolean =>
     a.type === 'Income' || a.type === 'Expense';
 
+/** Canonical display order for grouping accounts by type (balance-sheet first, then P&L). */
+export const ACCOUNT_TYPE_ORDER: AccountType[] = [
+    'Asset',
+    'Liability',
+    'Income',
+    'Expense',
+    'Equity',
+];
+
+/** Plural display labels for each AccountType (optgroup / section headers). */
+export const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
+    Asset: 'Assets',
+    Liability: 'Liabilities',
+    Income: 'Income',
+    Expense: 'Expenses',
+    Equity: 'Equity',
+};
+
 export type TrendPoint = { date: string; balanceMinor: number };
 
 export type AccountTrend = {

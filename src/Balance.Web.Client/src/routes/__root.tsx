@@ -71,7 +71,7 @@ export const Route = createRootRoute({
 
         if (currentUserQuery.isLoading || currentUserQuery.data === null) {
             return (
-                <div className="min-h-screen flex items-center justify-center text-[13px] text-fg-3">
+                <div className="min-h-screen flex items-center justify-center text-13 text-fg-3">
                     Loading…
                 </div>
             );

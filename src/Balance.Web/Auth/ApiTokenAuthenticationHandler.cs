@@ -47,8 +47,7 @@ internal sealed class ApiTokenAuthenticationHandler
 
         var row = await db
             .ApiTokens.AsTracking()
-            .FirstOrDefaultAsync(t => t.TokenHash == hash, Context.RequestAborted)
-            .ConfigureAwait(false);
+            .FirstOrDefaultAsync(t => t.TokenHash == hash, Context.RequestAborted);
 
         if (row is null)
         {
@@ -67,8 +66,7 @@ internal sealed class ApiTokenAuthenticationHandler
 
         var user = await db
             .Users.AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Id == row.UserId, Context.RequestAborted)
-            .ConfigureAwait(false);
+            .FirstOrDefaultAsync(u => u.Id == row.UserId, Context.RequestAborted);
 
         if (user is null)
         {
@@ -85,7 +83,7 @@ internal sealed class ApiTokenAuthenticationHandler
         row.UpdatedAt = now.UtcDateTime;
         try
         {
-            await db.SaveChangesAsync(Context.RequestAborted).ConfigureAwait(false);
+            await db.SaveChangesAsync(Context.RequestAborted);
         }
         catch (DbUpdateException)
         {

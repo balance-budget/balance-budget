@@ -162,42 +162,26 @@ internal sealed class CounterpartyService : ICounterpartyService
         return ToOutput(counterparty);
     }
 
-    public async Task<Result> DeleteAsync(CounterpartyId id, CancellationToken cancellationToken)
-    {
-        var result = await _dbContext
+    public Task<Result> DeleteAsync(CounterpartyId id, CancellationToken cancellationToken) =>
+        _dbContext
             .Counterparties.Where(c => c.Id == id)
-            .ExecuteDeleteAndCatchAsync(cancellationToken);
-
-        if (result.IsFailure)
-            return result.Error;
-
-        if (result.Value == 0)
-            return new NotFoundError("Counterparty", id.Value.ToString());
-
-        return Result.Success;
-    }
+            .DeleteSingleAndCatchAsync("Counterparty", id.Value.ToString(), cancellationToken);
 
     private static CounterpartyOutput ToOutput(Counterparty counterparty) =>
         new(counterparty.Id, counterparty.Name, counterparty.CreatedAt, counterparty.UpdatedAt);
 
-    private async Task<Result> EnsureNameAvailableAsync(
+    private Task<Result> EnsureNameAvailableAsync(
         string name,
         CounterpartyId? excludingId,
         CancellationToken cancellationToken
-    )
-    {
-        var taken = await _dbContext.Counterparties.AnyAsync(
-            c => c.Name == name && (excludingId == null || c.Id != excludingId),
-            cancellationToken
-        );
-        if (taken)
-        {
-            return new ConflictError(
+    ) =>
+        _dbContext
+            .Counterparties.Where(c =>
+                c.Name == name && (excludingId == null || c.Id != excludingId)
+            )
+            .EnsureNoneAsync(
                 ErrorCodes.CounterpartyNameTaken,
-                $"A counterparty named '{name}' already exists."
+                $"A counterparty named '{name}' already exists.",
+                cancellationToken
             );
-        }
-
-        return Result.Success;
-    }
 }

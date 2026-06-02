@@ -2,7 +2,7 @@ using CsvHelper.Configuration.Attributes;
 
 namespace Balance.Integration.Ing.Models.BankAccount;
 
-public enum DebitCredit
+internal enum DebitCredit
 {
     [Name("Debit", "Af")]
     Debit,

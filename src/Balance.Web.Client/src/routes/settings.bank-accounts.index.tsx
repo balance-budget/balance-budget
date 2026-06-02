@@ -1,9 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import {
-    BANK_ACCOUNT_OWNER_FILTERS,
-    BankAccounts,
-    type BankAccountOwnerFilter,
-} from '../screens/BankAccounts';
+import { BANK_ACCOUNT_OWNER_FILTERS, type BankAccountOwnerFilter } from '../api/bankAccounts';
+import { BankAccounts } from '../screens/BankAccounts';
 
 type Search = { owner: BankAccountOwnerFilter };
 

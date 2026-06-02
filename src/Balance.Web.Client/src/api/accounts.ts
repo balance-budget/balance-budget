@@ -1,9 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { compare } from 'fast-json-patch';
+import { useQuery } from '@tanstack/react-query';
 import type { components } from '../lib/api-types';
 import { type AccountId, type AccountType, asAccountId } from '../lib/domain';
-import { deleteRequest, getJson, patchJson, postJson } from '../lib/http';
+import { getJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
+import { createResourceCrud } from '../lib/resourceApi';
 
 type WireAccount = components['schemas']['AccountOutput'];
 type WirePagedAccounts = components['schemas']['PagedOutputOfAccountOutput'];
@@ -73,73 +73,24 @@ export function useAccounts() {
     });
 }
 
-export function useAccount(id: AccountId) {
-    return useQuery({
-        queryKey: accountsKeys.detail(id),
-        queryFn: async ({ signal }) => {
-            const wire = await getJson<WireAccount>(`/api/accounts/${id}`, signal, 'load account');
-            return toAccount(wire);
-        },
-    });
-}
+const crud = createResourceCrud<
+    WireAccount,
+    Account,
+    WireCreateRequest,
+    WireUpdateInput,
+    AccountId
+>({
+    basePath: '/api/accounts',
+    label: 'account',
+    allKey: accountsKeys.all,
+    detailKey: accountsKeys.detail,
+    toView: toAccount,
+});
 
-export function useCreateAccount() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async (input: WireCreateRequest) => {
-            const wire = await postJson<WireAccount>(
-                '/api/accounts',
-                input,
-                new AbortController().signal,
-                'create account',
-            );
-            return toAccount(wire);
-        },
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: accountsKeys.all });
-        },
-    });
-}
-
-export function useUpdateAccount() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async (args: {
-            id: AccountId;
-            original: WireUpdateInput;
-            edited: WireUpdateInput;
-        }) => {
-            const patch = compare(args.original, args.edited);
-            const wire = await patchJson<WireAccount>(
-                `/api/accounts/${args.id}`,
-                patch,
-                new AbortController().signal,
-                'update account',
-            );
-            return toAccount(wire);
-        },
-        onSuccess: async (_data, vars) => {
-            await queryClient.invalidateQueries({ queryKey: accountsKeys.all });
-            await queryClient.invalidateQueries({ queryKey: accountsKeys.detail(vars.id) });
-        },
-    });
-}
-
-export function useDeleteAccount() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async (id: AccountId) => {
-            await deleteRequest(
-                `/api/accounts/${id}`,
-                new AbortController().signal,
-                'delete account',
-            );
-        },
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: accountsKeys.all });
-        },
-    });
-}
+export const useAccount = crud.useDetail;
+export const useCreateAccount = crud.useCreate;
+export const useUpdateAccount = crud.useUpdate;
+export const useDeleteAccount = crud.useDelete;
 
 /** Linked bank identifier for an Account row — IBAN if present, otherwise the
  *  account number, or null when nothing's linked. Returned verbatim; consumers

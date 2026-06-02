@@ -12,13 +12,17 @@ import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { cx } from '../lib/cx';
+import { todayIso } from '../lib/dates';
 import {
+    ACCOUNT_TYPE_LABEL,
+    ACCOUNT_TYPE_ORDER,
+    asAccountId,
     asCounterpartyId,
     type AccountId,
     type AccountType,
     type CounterpartyId,
 } from '../lib/domain';
-import { ApiError } from '../lib/http';
+import { handleFormError } from '../lib/formErrors';
 import { formatMoney } from '../lib/money';
 import { CounterpartyFormModal } from './CounterpartyForm';
 import {
@@ -36,24 +40,6 @@ import {
     type ScaleLookup,
     type SimpleLeg,
 } from './journalNew.state';
-
-const ACCOUNT_TYPE_ORDER: AccountType[] = ['Asset', 'Liability', 'Income', 'Expense', 'Equity'];
-
-const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
-    Asset: 'Assets',
-    Liability: 'Liabilities',
-    Income: 'Income',
-    Expense: 'Expenses',
-    Equity: 'Equity',
-};
-
-function todayIso(): string {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(now.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-}
 
 export function JournalNew() {
     const accounts = useAccounts();
@@ -181,17 +167,7 @@ function JournalNewForm({
             toast.success('Journal entry created.');
             await navigate({ to: '/journal/$id', params: { id: created.id } });
         } catch (err) {
-            if (err instanceof ApiError) {
-                if (err.fieldErrors) {
-                    setFieldErrors(err.fieldErrors);
-                } else if (err.status >= 400 && err.status < 500) {
-                    setTopError(err.message);
-                } else {
-                    toast.error(err.message);
-                }
-            } else if (err instanceof Error) {
-                toast.error(err.message);
-            }
+            handleFormError(err, { setFieldErrors, setTopError, toast: toast.error });
         }
     }
 
@@ -216,7 +192,7 @@ function JournalNewForm({
                             <Link
                                 to="/activity"
                                 search={{ page: 1, q: '' }}
-                                className="text-[12px] text-fg-3 hover:text-fg-1"
+                                className="text-12 text-fg-3 hover:text-fg-1"
                             >
                                 ← Cancel
                             </Link>
@@ -266,14 +242,14 @@ function JournalNewForm({
                         <Link
                             to="/activity"
                             search={{ page: 1, q: '' }}
-                            className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-fg-2 hover:text-fg-1"
+                            className="px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-fg-1"
                         >
                             Cancel
                         </Link>
                         <button
                             type="submit"
                             disabled={create.isPending}
-                            className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
+                            className="px-3 py-[7px] rounded-sm text-13 font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
                         >
                             {create.isPending ? 'Creating…' : 'Create entry'}
                         </button>
@@ -309,7 +285,7 @@ function HeaderInputs({
     return (
         <div className="grid grid-cols-[140px_1fr_minmax(220px,300px)] gap-3 mb-4">
             <label className="flex flex-col gap-1">
-                <span className="text-[12px] font-medium text-fg-2">Date</span>
+                <span className="text-12 font-medium text-fg-2">Date</span>
                 <input
                     type="date"
                     value={form.header.date}
@@ -317,12 +293,12 @@ function HeaderInputs({
                         onPatch({ date: e.target.value });
                     }}
                     required
-                    className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
+                    className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
                 />
                 <FieldError name="Date" errors={fieldErrors} />
             </label>
             <label className="flex flex-col gap-1">
-                <span className="text-[12px] font-medium text-fg-2">Description</span>
+                <span className="text-12 font-medium text-fg-2">Description</span>
                 <input
                     type="text"
                     value={form.header.description}
@@ -331,12 +307,12 @@ function HeaderInputs({
                     }}
                     maxLength={500}
                     placeholder="Optional"
-                    className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
+                    className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
                 />
                 <FieldError name="Description" errors={fieldErrors} />
             </label>
             <div className="flex flex-col gap-1">
-                <span className="text-[12px] font-medium text-fg-2">Counterparty</span>
+                <span className="text-12 font-medium text-fg-2">Counterparty</span>
                 <div className="flex items-stretch gap-2">
                     <select
                         value={form.header.counterpartyId ?? ''}
@@ -346,7 +322,7 @@ function HeaderInputs({
                                     e.target.value === '' ? null : asCounterpartyId(e.target.value),
                             });
                         }}
-                        className="flex-1 min-w-0 px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
+                        className="flex-1 min-w-0 px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
                     >
                         <option value="">None</option>
                         {counterparties.map(c => (
@@ -359,7 +335,7 @@ function HeaderInputs({
                         type="button"
                         onClick={onAddCounterparty}
                         title="Create a new counterparty"
-                        className="shrink-0 inline-flex items-center gap-1 px-2 rounded-sm bg-surface-2 border border-border-soft text-fg-2 hover:text-fg-1 hover:border-border-strong text-[13px]"
+                        className="shrink-0 inline-flex items-center gap-1 px-2 rounded-sm bg-surface-2 border border-border-soft text-fg-2 hover:text-fg-1 hover:border-border-strong text-13"
                     >
                         <Icon name="plus" size={14} strokeWidth={2} />
                         New
@@ -383,7 +359,7 @@ function ModeToggle({
     onSwitchAdvanced: () => void;
 }) {
     return (
-        <div className="inline-flex items-center gap-1 p-[2px] rounded-sm bg-surface-2 border border-border-soft text-[12px] font-medium">
+        <div className="inline-flex items-center gap-1 p-[2px] rounded-sm bg-surface-2 border border-border-soft text-12 font-medium">
             <button
                 type="button"
                 onClick={onSwitchSimple}
@@ -528,13 +504,13 @@ function SimpleLegColumn({
         <div className="flex flex-col gap-3">
             <div className="flex items-baseline justify-between">
                 <div className="flex flex-col gap-[2px]">
-                    <h3 className="text-[13px] font-semibold text-fg-1">{heading}</h3>
-                    <span className="text-[11px] text-fg-3">{subheading}</span>
+                    <h3 className="text-13 font-semibold text-fg-1">{heading}</h3>
+                    <span className="text-11 text-fg-3">{subheading}</span>
                 </div>
                 <button
                     type="button"
                     onClick={onAdd}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-[12px] text-fg-2 hover:text-fg-1 hover:bg-surface-2"
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-12 text-fg-2 hover:text-fg-1 hover:bg-surface-2"
                 >
                     <Icon name="plus" size={12} strokeWidth={2} />
                     Add
@@ -571,7 +547,7 @@ function SimpleLegColumn({
                                     onChange(side, i, { amount: e.target.value });
                                 }}
                                 placeholder="0.00"
-                                className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] text-right font-mono tabular focus:outline-none focus:border-border-strong"
+                                className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 text-right font-mono tabular focus:outline-none focus:border-border-strong"
                             />
                             <FieldError
                                 name={`simple.${side}[${i.toString()}].amount`}
@@ -634,7 +610,7 @@ function AdvancedLines({
 
     return (
         <div className="flex flex-col">
-            <div className="grid grid-cols-[1fr_120px_120px_minmax(140px,1fr)_32px] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
+            <div className="grid grid-cols-[1fr_120px_120px_minmax(140px,1fr)_32px] gap-3 px-2 pb-2 text-11 text-fg-3 uppercase tracking-wider border-b border-border-soft">
                 <span>Account</span>
                 <span className="text-right">Debit</span>
                 <span className="text-right">Credit</span>
@@ -675,7 +651,7 @@ function AdvancedLines({
                                     updateLine(i, { debit: e.target.value });
                                 }}
                                 placeholder="0.00"
-                                className="px-2 py-1 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[13px] text-right font-mono tabular focus:outline-none focus:border-border-strong"
+                                className="px-2 py-1 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-13 text-right font-mono tabular focus:outline-none focus:border-border-strong"
                             />
                             <FieldError
                                 name={`advanced[${i.toString()}].debit`}
@@ -691,7 +667,7 @@ function AdvancedLines({
                                     updateLine(i, { credit: e.target.value });
                                 }}
                                 placeholder="0.00"
-                                className="px-2 py-1 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[13px] text-right font-mono tabular focus:outline-none focus:border-border-strong"
+                                className="px-2 py-1 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-13 text-right font-mono tabular focus:outline-none focus:border-border-strong"
                             />
                             <FieldError
                                 name={`advanced[${i.toString()}].credit`}
@@ -707,7 +683,7 @@ function AdvancedLines({
                                 }}
                                 maxLength={500}
                                 placeholder="Optional"
-                                className="px-2 py-1 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[13px] focus:outline-none focus:border-border-strong"
+                                className="px-2 py-1 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-13 focus:outline-none focus:border-border-strong"
                             />
                         </div>
                         <button
@@ -728,7 +704,7 @@ function AdvancedLines({
                 <button
                     type="button"
                     onClick={addLine}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-[12px] text-fg-2 hover:text-fg-1 hover:bg-surface-2"
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-12 text-fg-2 hover:text-fg-1 hover:bg-surface-2"
                 >
                     <Icon name="plus" size={12} strokeWidth={2} />
                     Add line
@@ -749,13 +725,13 @@ function AdvancedTotalsFooter({
     catalog: CurrencyCatalog;
 }) {
     if (!currency) {
-        return <span className="text-[12px] text-fg-3">Σ Debit / Credit</span>;
+        return <span className="text-12 text-fg-3">Σ Debit / Credit</span>;
     }
     const debitStr = formatMoney(totals.debitMinor, currency, catalog);
     const creditStr = formatMoney(totals.creditMinor, currency, catalog);
     const diff = totals.debitMinor - totals.creditMinor;
     return (
-        <div className="flex items-center gap-4 text-[12px] tabular">
+        <div className="flex items-center gap-4 text-12 tabular">
             <span className="text-fg-3">
                 Σ Debit <span className="font-mono text-fg-1">{debitStr}</span>
             </span>
@@ -787,10 +763,10 @@ function AccountPicker({
     filterCurrency: string | null;
     onChange: (accountId: AccountId | null) => void;
 }) {
-    const visible = filterCurrency
-        ? accounts.filter(a => a.currencyCode === filterCurrency || a.id === value)
-        : accounts;
     const groups = useMemo(() => {
+        const visible = filterCurrency
+            ? accounts.filter(a => a.currencyCode === filterCurrency || a.id === value)
+            : accounts;
         const buckets = new Map<AccountType, Account[]>();
         for (const account of visible) {
             const list = buckets.get(account.type) ?? [];
@@ -804,16 +780,16 @@ function AccountPicker({
             type: t,
             accounts: buckets.get(t) ?? [],
         }));
-    }, [visible]);
+    }, [accounts, filterCurrency, value]);
 
     return (
         <select
             value={value ?? ''}
             onChange={e => {
                 const next = e.target.value;
-                onChange(next === '' ? null : (next as AccountId));
+                onChange(next === '' ? null : asAccountId(next));
             }}
-            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[13px] focus:outline-none focus:border-border-strong w-full"
+            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-13 focus:outline-none focus:border-border-strong w-full"
         >
             <option value="">Select…</option>
             {groups.map(g => (

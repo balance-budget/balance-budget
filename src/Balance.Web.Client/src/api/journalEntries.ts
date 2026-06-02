@@ -12,6 +12,7 @@ import {
     asJournalLineId,
 } from '../lib/domain';
 import { deleteRequest, getJson, postJson, putJson } from '../lib/http';
+import { toNumber } from '../lib/money';
 import type { Page } from '../lib/paging';
 
 type WireCreateRequest = components['schemas']['CreateJournalEntryRequest'];
@@ -53,7 +54,7 @@ export const journalEntriesKeys = {
 };
 
 function toLine(wire: WireLine): JournalLine {
-    const amount = typeof wire.amount === 'string' ? Number(wire.amount) : wire.amount;
+    const amount = toNumber(wire.amount);
     return {
         id: asJournalLineId(wire.id),
         accountId: asAccountId(wire.accountId),

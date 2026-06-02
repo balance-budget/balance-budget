@@ -62,7 +62,7 @@ export function Modal({ open, onClose, title, description, children, width = 'md
                             {title}
                         </h2>
                         {description ? (
-                            <p id={descriptionId} className="text-[13px] text-fg-3">
+                            <p id={descriptionId} className="text-13 text-fg-3">
                                 {description}
                             </p>
                         ) : null}

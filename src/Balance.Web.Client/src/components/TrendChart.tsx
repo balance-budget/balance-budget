@@ -144,7 +144,7 @@ function TrendTooltip({
     const sorted = [...payload].sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0));
 
     return (
-        <div className="rounded-md border border-border-soft bg-bg-1 px-3 py-2 shadow-sm text-[12px]">
+        <div className="rounded-md border border-border-soft bg-bg-1 px-3 py-2 shadow-sm text-12">
             <div className="text-fg-3 mb-1">
                 {typeof label === 'string' ? formatTrendTooltipDate(label) : ''}
             </div>

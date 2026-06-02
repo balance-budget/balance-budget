@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { compare } from 'fast-json-patch';
 import type { components } from '../lib/api-types';
 import {
     asAccountId,
@@ -9,7 +8,9 @@ import {
     type BankAccountId,
     type CounterpartyId,
 } from '../lib/domain';
-import { deleteRequest, getJson, patchJson, postFormData, postJson } from '../lib/http';
+import { getJson, postFormData } from '../lib/http';
+import { toNumber } from '../lib/money';
+import { createResourceCrud } from '../lib/resourceApi';
 
 type WireBankAccount = components['schemas']['BankAccountOutput'];
 type WirePagedBankAccounts = components['schemas']['PagedOutputOfBankAccountOutput'];
@@ -19,6 +20,11 @@ type WireUpdateInput = components['schemas']['UpdateBankAccountInput'];
 type WireImportResult = components['schemas']['ImportResult'];
 
 export type BankAccountType = 'Current' | 'Savings' | 'Card';
+
+/** Owner facet for the bank-accounts list: your own BankAccounts vs. counterparties'. */
+export type BankAccountOwnerFilter = 'mine' | 'others';
+
+export const BANK_ACCOUNT_OWNER_FILTERS: readonly BankAccountOwnerFilter[] = ['mine', 'others'];
 
 export type BankAccount = {
     id: BankAccountId;
@@ -113,14 +119,10 @@ function toBankAccountImporter(wire: WireBankAccountImporter): BankAccountImport
     return { key: wire.key, supportedType: wire.supportedType };
 }
 
-function toCount(raw: number | string): number {
-    return typeof raw === 'string' ? Number(raw) : raw;
-}
-
 function toImportResult(wire: WireImportResult): ImportResult {
     return {
-        imported: toCount(wire.imported),
-        skippedAsDuplicate: toCount(wire.skippedAsDuplicate),
+        imported: toNumber(wire.imported),
+        skippedAsDuplicate: toNumber(wire.skippedAsDuplicate),
     };
 }
 
@@ -149,79 +151,24 @@ export function useBankAccountImporters() {
     });
 }
 
-export function useBankAccount(id: BankAccountId) {
-    return useQuery({
-        queryKey: bankAccountsKeys.detail(id),
-        queryFn: async ({ signal }) => {
-            const wire = await getJson<WireBankAccount>(
-                `/api/bank-accounts/${id}`,
-                signal,
-                'load bank account',
-            );
-            return toBankAccount(wire);
-        },
-    });
-}
+const crud = createResourceCrud<
+    WireBankAccount,
+    BankAccount,
+    WireCreateRequest,
+    WireUpdateInput,
+    BankAccountId
+>({
+    basePath: '/api/bank-accounts',
+    label: 'bank account',
+    allKey: bankAccountsKeys.all,
+    detailKey: bankAccountsKeys.detail,
+    toView: toBankAccount,
+});
 
-export function useCreateBankAccount() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async (input: WireCreateRequest) => {
-            const wire = await postJson<WireBankAccount>(
-                '/api/bank-accounts',
-                input,
-                new AbortController().signal,
-                'create bank account',
-            );
-            return toBankAccount(wire);
-        },
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: bankAccountsKeys.all });
-        },
-    });
-}
-
-export function useUpdateBankAccount() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async (args: {
-            id: BankAccountId;
-            original: WireUpdateInput;
-            edited: WireUpdateInput;
-        }) => {
-            const patch = compare(args.original, args.edited);
-            const wire = await patchJson<WireBankAccount>(
-                `/api/bank-accounts/${args.id}`,
-                patch,
-                new AbortController().signal,
-                'update bank account',
-            );
-            return toBankAccount(wire);
-        },
-        onSuccess: async (_data, vars) => {
-            await queryClient.invalidateQueries({ queryKey: bankAccountsKeys.all });
-            await queryClient.invalidateQueries({
-                queryKey: bankAccountsKeys.detail(vars.id),
-            });
-        },
-    });
-}
-
-export function useDeleteBankAccount() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async (id: BankAccountId) => {
-            await deleteRequest(
-                `/api/bank-accounts/${id}`,
-                new AbortController().signal,
-                'delete bank account',
-            );
-        },
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: bankAccountsKeys.all });
-        },
-    });
-}
+export const useBankAccount = crud.useDetail;
+export const useCreateBankAccount = crud.useCreate;
+export const useUpdateBankAccount = crud.useUpdate;
+export const useDeleteBankAccount = crud.useDelete;
 
 /**
  * Multipart upload to the per-BankAccount statement importer. Returns the

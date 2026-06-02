@@ -2,6 +2,7 @@ using Balance.Data;
 using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
+using Balance.Services.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace Balance.Services.BankTransactions;
@@ -180,12 +181,11 @@ internal sealed class BankTransactionCategorisationService : IBankTransactionCat
     {
         if (input.CounterpartyId is { } existingId)
         {
-            var exists = await _dbContext.Counterparties.AnyAsync(
-                c => c.Id == existingId,
-                cancellationToken
-            );
-            if (!exists)
-                return new NotFoundError("Counterparty", existingId.Value.ToString());
+            var exists = await _dbContext
+                .Counterparties.Where(c => c.Id == existingId)
+                .EnsureExistsAsync("Counterparty", existingId.Value.ToString(), cancellationToken);
+            if (exists.IsFailure)
+                return exists.Error;
             return new Result<CounterpartyId?>(existingId);
         }
 

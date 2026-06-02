@@ -1,9 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { compare } from 'fast-json-patch';
+import { useQuery } from '@tanstack/react-query';
 import type { components } from '../lib/api-types';
 import { asAccountId, asCounterpartyId, type AccountId, type CounterpartyId } from '../lib/domain';
-import { deleteRequest, getJson, patchJson, postJson } from '../lib/http';
+import { getJson } from '../lib/http';
+import { toNumber } from '../lib/money';
 import type { Page } from '../lib/paging';
+import { createResourceCrud } from '../lib/resourceApi';
 
 type WireCounterparty = components['schemas']['CounterpartyOutput'];
 type WirePagedCounterparties = components['schemas']['PagedOutputOfCounterpartyOutput'];
@@ -74,66 +75,27 @@ export function useCounterpartiesPage(skip: number, take: number, q: string) {
     });
 }
 
-export function useCounterparty(id: CounterpartyId) {
-    return useQuery({
-        queryKey: counterpartiesKeys.detail(id),
-        queryFn: async ({ signal }) => {
-            const wire = await getJson<WireCounterparty>(
-                `/api/counterparties/${id}`,
-                signal,
-                'load counterparty',
-            );
-            return toCounterparty(wire);
-        },
-    });
-}
+const crud = createResourceCrud<
+    WireCounterparty,
+    Counterparty,
+    WireCreateRequest,
+    WireUpdateInput,
+    CounterpartyId
+>({
+    basePath: '/api/counterparties',
+    label: 'counterparty',
+    allKey: counterpartiesKeys.all,
+    detailKey: counterpartiesKeys.detail,
+    toView: toCounterparty,
+});
 
-export function useCreateCounterparty() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async (input: WireCreateRequest) => {
-            const wire = await postJson<WireCounterparty>(
-                '/api/counterparties',
-                input,
-                new AbortController().signal,
-                'create counterparty',
-            );
-            return toCounterparty(wire);
-        },
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: counterpartiesKeys.all });
-        },
-    });
-}
-
-export function useUpdateCounterparty() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async (args: {
-            id: CounterpartyId;
-            original: WireUpdateInput;
-            edited: WireUpdateInput;
-        }) => {
-            const patch = compare(args.original, args.edited);
-            const wire = await patchJson<WireCounterparty>(
-                `/api/counterparties/${args.id}`,
-                patch,
-                new AbortController().signal,
-                'update counterparty',
-            );
-            return toCounterparty(wire);
-        },
-        onSuccess: async (_data, vars) => {
-            await queryClient.invalidateQueries({ queryKey: counterpartiesKeys.all });
-            await queryClient.invalidateQueries({
-                queryKey: counterpartiesKeys.detail(vars.id),
-            });
-        },
-    });
-}
+export const useCounterparty = crud.useDetail;
+export const useCreateCounterparty = crud.useCreate;
+export const useUpdateCounterparty = crud.useUpdate;
+export const useDeleteCounterparty = crud.useDelete;
 
 function toSuggestedCounterAccount(wire: WireSuggestedCounterAccount): SuggestedCounterAccount {
-    const amount = typeof wire.amount === 'string' ? Number(wire.amount) : wire.amount;
+    const amount = toNumber(wire.amount);
     return { accountId: asAccountId(wire.accountId), amount };
 }
 
@@ -150,21 +112,5 @@ export function useSuggestedCounterAccounts(id: CounterpartyId | null) {
             return wire.map(toSuggestedCounterAccount);
         },
         enabled: id !== null,
-    });
-}
-
-export function useDeleteCounterparty() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async (id: CounterpartyId) => {
-            await deleteRequest(
-                `/api/counterparties/${id}`,
-                new AbortController().signal,
-                'delete counterparty',
-            );
-        },
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: counterpartiesKeys.all });
-        },
     });
 }

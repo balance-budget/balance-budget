@@ -218,9 +218,13 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
         AddString(entries, "SEPA Description", note.Creditor?.Description);
         AddString(entries, "SEPA Other Party", note.OtherParty);
 
-        // For card payments, use the card sequence for the exact date / time
+        // A row is either a card payment (carries a CardSequence) or a transfer (carries a
+        // DateTime), never both — so exactly one "Date" metadata entry is written. Writing both
+        // unconditionally would produce two values under the same key (there is no unique index on
+        // (BankTransactionId, KeyId)); the else keeps the key single-valued.
         if (note.CardSequence is { } cardSequence)
         {
+            // Card payment: use the card sequence for the exact date / time.
             AddString(entries, "Card Sequence Number", cardSequence.SequenceNumber);
             AddString(
                 entries,
@@ -228,9 +232,12 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
                 cardSequence.DateTime.ToString("o", CultureInfo.InvariantCulture)
             );
         }
+        else
+        {
+            // Transfer: use the date / time field.
+            AddString(entries, "Date", note.DateTime?.ToString("o", CultureInfo.InvariantCulture));
+        }
 
-        // For transfers, use the date / time field
-        AddString(entries, "Date", note.DateTime?.ToString("o", CultureInfo.InvariantCulture));
         AddString(entries, "Other Notes", note.Other);
 
         return entries;

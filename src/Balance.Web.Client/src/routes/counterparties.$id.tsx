@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { CounterpartyDetail } from '../screens/CounterpartyDetail';
 import { asCounterpartyId } from '../lib/domain';
+import { parsePage } from '../lib/routeSearch';
 
 type Search = { page: number };
 
@@ -20,9 +21,5 @@ export const Route = createFileRoute('/counterparties/$id')({
         );
     },
     staticData: { title: 'Counterparty' },
-    validateSearch: (raw: Record<string, unknown>): Search => {
-        const candidate = Number(raw.page);
-        const page = Number.isInteger(candidate) && candidate >= 1 ? candidate : 1;
-        return { page };
-    },
+    validateSearch: (raw: Record<string, unknown>): Search => ({ page: parsePage(raw.page) }),
 });

@@ -10,7 +10,7 @@ import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import type { AccountType } from '../lib/domain';
-import { ApiError } from '../lib/http';
+import { handleActionError } from '../lib/formErrors';
 import { AccountFormModal } from './AccountForm';
 
 const TYPE_ORDER: AccountType[] = ['Asset', 'Liability', 'Equity', 'Income', 'Expense'];
@@ -39,7 +39,7 @@ export function Accounts() {
                             onClick={() => {
                                 setCreating(true);
                             }}
-                            className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm bg-brand-primary text-white text-[13px] font-medium hover:bg-brand-primary-dark"
+                            className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm bg-brand-primary text-white text-13 font-medium hover:bg-brand-primary-dark"
                         >
                             <Icon name="plus" size={14} strokeWidth={2} />
                             New account
@@ -106,8 +106,8 @@ function AccountList({
     if (query.data.length === 0) {
         return (
             <div className="py-8 flex flex-col items-center gap-2 text-center">
-                <span className="text-[14px] text-fg-2">No accounts yet.</span>
-                <span className="text-[12px] text-fg-3">
+                <span className="text-14 text-fg-2">No accounts yet.</span>
+                <span className="text-12 text-fg-3">
                     Add your first ledger account to get started.
                 </span>
             </div>
@@ -177,7 +177,7 @@ function AccountRow({
                 <div className="flex flex-col gap-[2px] flex-1 min-w-0">
                     <span className="text-14 font-medium text-fg-1 truncate">{account.name}</span>
                     {identifier ? (
-                        <span className="text-[12px] text-fg-3 truncate tabular">{identifier}</span>
+                        <span className="text-12 text-fg-3 truncate tabular">{identifier}</span>
                     ) : null}
                 </div>
             </Link>
@@ -224,11 +224,7 @@ function DeleteAccountDialog({ account, onClose }: { account: Account; onClose: 
             toast.success(`Deleted “${account.name}”.`);
             onClose();
         } catch (err) {
-            if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
-                setError(err.message);
-            } else if (err instanceof Error) {
-                toast.error(err.message);
-            }
+            handleActionError(err, { setError, toast: toast.error });
         }
     }
 

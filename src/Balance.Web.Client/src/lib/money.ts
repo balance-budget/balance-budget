@@ -16,6 +16,15 @@ type WireMoney = components['schemas']['Money'];
 export type Money = { amount: number; currencyCode: string };
 
 /**
+ * Boundary converter for a single wire number: System.Text.Json serialises large
+ * 64-bit integers as strings, so wire numerics arrive as `number | string`. This
+ * normalises them back to `number`.
+ */
+export function toNumber(raw: number | string): number {
+    return typeof raw === 'string' ? Number(raw) : raw;
+}
+
+/**
  * Boundary converter for wire-format Money. openapi-typescript marks both fields
  * optional (System.Text.Json on a record struct), but the backend contract
  * guarantees both are present — large ints may serialise as strings, which is

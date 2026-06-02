@@ -6,7 +6,7 @@ type FormErrorBannerProps = {
 export function FormErrorBanner({ message }: FormErrorBannerProps) {
     if (!message) return null;
     return (
-        <div className="mb-3 px-3 py-2 rounded-sm bg-danger-soft text-danger text-[13px]">
+        <div className="mb-3 px-3 py-2 rounded-sm bg-danger-soft text-danger text-13">
             {message}
         </div>
     );

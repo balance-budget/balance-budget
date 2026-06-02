@@ -24,7 +24,7 @@ export function SearchInput({ value, onChange, placeholder, ariaLabel }: SearchI
                 }}
                 placeholder={placeholder ?? 'Search…'}
                 aria-label={ariaLabel ?? placeholder ?? 'Search'}
-                className="w-full pl-7 pr-2 py-1.5 rounded-sm bg-surface-2 text-[13px] text-fg-1 placeholder:text-fg-3 outline-none focus:ring-1 focus:ring-brand-primary"
+                className="w-full pl-7 pr-2 py-1.5 rounded-sm bg-surface-2 text-13 text-fg-1 placeholder:text-fg-3 outline-none focus:ring-1 focus:ring-brand-primary"
             />
         </div>
     );

@@ -7,8 +7,7 @@ type TopBarProps = {
     onSearchClick: () => void;
 };
 
-const isMac =
-    typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
 
 export function TopBar({ title, period, onMenuClick, onSearchClick }: TopBarProps) {
     return (
@@ -22,7 +21,7 @@ export function TopBar({ title, period, onMenuClick, onSearchClick }: TopBarProp
                 <Icon name="menu" size={20} strokeWidth={2} />
             </button>
             <div className="flex flex-col gap-[2px] min-w-0">
-                <h1 className="text-[18px] md:text-[22px] font-semibold truncate">{title}</h1>
+                <h1 className="text-18 md:text-22 font-semibold truncate">{title}</h1>
                 {period ? (
                     <span className="text-14 text-fg-3 whitespace-nowrap">{period}</span>
                 ) : null}
@@ -37,7 +36,7 @@ export function TopBar({ title, period, onMenuClick, onSearchClick }: TopBarProp
                 >
                     <Icon name="search" size={16} strokeWidth={1.75} />
                     <span className="flex-1 min-w-0 text-left truncate">Search…</span>
-                    <kbd className="px-1.5 py-0.5 rounded bg-bg-1 text-[11px] tabular border border-border-soft">
+                    <kbd className="px-1.5 py-0.5 rounded bg-bg-1 text-11 tabular border border-border-soft">
                         {isMac ? '⌘K' : 'Ctrl K'}
                     </kbd>
                 </button>

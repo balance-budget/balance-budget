@@ -2,7 +2,7 @@ using CsvHelper.Configuration.Attributes;
 
 namespace Balance.Integration.Ing.Models.BankAccount;
 
-public sealed class SavingsAccountStatementRow
+internal sealed class SavingsAccountStatementRow
 {
     [Name("Date")]
     [Format("yyyy-MM-dd")]

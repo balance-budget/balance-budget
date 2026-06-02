@@ -19,7 +19,7 @@ export function Pagination({ page, pageSize, totalCount, onPageChange }: Paginat
 
     return (
         <div className="flex items-center justify-between gap-3 pt-3">
-            <span className="text-[12px] text-fg-3 tabular">
+            <span className="text-12 text-fg-3 tabular">
                 {totalCount === 0 ? '—' : `${from}–${to} of ${totalCount}`}
             </span>
             <div className="flex items-center gap-1">
@@ -36,7 +36,7 @@ export function Pagination({ page, pageSize, totalCount, onPageChange }: Paginat
                     token === 'ellipsis' ? (
                         <span
                             key={`e${i}`}
-                            className="px-1 text-[12px] text-fg-3 select-none"
+                            className="px-1 text-12 text-fg-3 select-none"
                             aria-hidden="true"
                         >
                             …
@@ -115,7 +115,7 @@ function PageNumber({
             disabled={isCurrent}
             onClick={onClick}
             className={cx(
-                'min-w-[28px] px-2 py-1 rounded-sm text-[12px] tabular text-center',
+                'min-w-[28px] px-2 py-1 rounded-sm text-12 tabular text-center',
                 isCurrent
                     ? 'bg-surface-2 text-fg-1 font-medium cursor-default'
                     : 'text-fg-3 hover:text-fg-1 hover:bg-surface-2',

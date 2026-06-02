@@ -28,15 +28,17 @@ import { Modal, ModalFooter } from '../components/Modal';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
+import { todayIso } from '../lib/dates';
 import {
+    ACCOUNT_TYPE_LABEL,
+    ACCOUNT_TYPE_ORDER,
     type AccountId,
-    type AccountType,
     type BankAccountId,
     type BankTransactionId,
     type CounterpartyId,
     type JournalEntryId,
 } from '../lib/domain';
-import { ApiError } from '../lib/http';
+import { handleFormError } from '../lib/formErrors';
 import { formatMoney } from '../lib/money';
 import {
     applySuggestionsToLines,
@@ -50,24 +52,6 @@ import {
     type FieldErrors,
     type LineInput,
 } from './bankTransactionCategorize.state';
-
-const ACCOUNT_TYPE_ORDER: AccountType[] = ['Asset', 'Liability', 'Income', 'Expense', 'Equity'];
-
-const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
-    Asset: 'Assets',
-    Liability: 'Liabilities',
-    Income: 'Income',
-    Expense: 'Expenses',
-    Equity: 'Equity',
-};
-
-function todayIso(): string {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(now.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-}
 
 type Props = { id: BankTransactionId };
 
@@ -158,14 +142,14 @@ function NotCategorisableState({ bt }: { bt: BankTransaction }) {
                     <Link
                         to="/bank-transactions"
                         search={{ page: 1, filter: 'Inbox', q: '' }}
-                        className="text-[12px] text-fg-3 hover:text-fg-1"
+                        className="text-12 text-fg-3 hover:text-fg-1"
                     >
                         ← Back to inbox
                     </Link>
                 }
             />
             <div className="py-6 flex flex-col items-center gap-2 text-center">
-                <span className="text-[14px] text-fg-2">{reason}</span>
+                <span className="text-14 text-fg-2">{reason}</span>
             </div>
         </Panel>
     );
@@ -293,17 +277,7 @@ function CategorizeForm({
             toast.success('Categorised.');
             await navigate({ to: '/journal/$id', params: { id: created.id } });
         } catch (err) {
-            if (err instanceof ApiError) {
-                if (err.fieldErrors) {
-                    setFieldErrors(err.fieldErrors);
-                } else if (err.status >= 400 && err.status < 500) {
-                    setTopError(err.message);
-                } else {
-                    toast.error(err.message);
-                }
-            } else if (err instanceof Error) {
-                toast.error(err.message);
-            }
+            handleFormError(err, { setFieldErrors, setTopError, toast: toast.error });
         }
     }
 
@@ -323,7 +297,7 @@ function CategorizeForm({
                         <Link
                             to="/bank-transactions"
                             search={{ page: 1, filter: 'Inbox', q: '' }}
-                            className="text-[12px] text-fg-3 hover:text-fg-1"
+                            className="text-12 text-fg-3 hover:text-fg-1"
                         >
                             ← Cancel
                         </Link>
@@ -365,14 +339,14 @@ function CategorizeForm({
                     <Link
                         to="/bank-transactions"
                         search={{ page: 1, filter: 'Inbox', q: '' }}
-                        className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-fg-2 hover:text-fg-1"
+                        className="px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-fg-1"
                     >
                         Cancel
                     </Link>
                     <button
                         type="submit"
                         disabled={categorize.isPending}
-                        className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
+                        className="px-3 py-[7px] rounded-sm text-13 font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
                     >
                         {categorize.isPending ? 'Categorising…' : 'Categorise'}
                     </button>
@@ -396,7 +370,7 @@ function HeaderInputs({
     return (
         <div className="grid grid-cols-1 lg:grid-cols-[140px_1fr_minmax(220px,300px)] gap-3">
             <label className="flex flex-col gap-1">
-                <span className="text-[12px] font-medium text-fg-2">Date</span>
+                <span className="text-12 font-medium text-fg-2">Date</span>
                 <input
                     type="date"
                     value={form.date}
@@ -404,12 +378,12 @@ function HeaderInputs({
                         onPatch({ date: e.target.value });
                     }}
                     required
-                    className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
+                    className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
                 />
                 <FieldError name="Date" errors={fieldErrors} />
             </label>
             <label className="flex flex-col gap-1">
-                <span className="text-[12px] font-medium text-fg-2">Description</span>
+                <span className="text-12 font-medium text-fg-2">Description</span>
                 <input
                     type="text"
                     value={form.description}
@@ -418,7 +392,7 @@ function HeaderInputs({
                     }}
                     maxLength={500}
                     placeholder="Optional"
-                    className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
+                    className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
                 />
                 <FieldError name="Description" errors={fieldErrors} />
             </label>
@@ -468,7 +442,7 @@ function CounterpartyInput({
 
     return (
         <div className="flex flex-col gap-1">
-            <span className="text-[12px] font-medium text-fg-2">Counterparty</span>
+            <span className="text-12 font-medium text-fg-2">Counterparty</span>
             <Combobox
                 items={effectiveItems}
                 value={value}
@@ -546,7 +520,7 @@ function Lines({
 
     return (
         <div className="flex flex-col">
-            <div className="hidden lg:grid grid-cols-[1fr_140px_minmax(140px,1fr)_32px] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
+            <div className="hidden lg:grid grid-cols-[1fr_140px_minmax(140px,1fr)_32px] gap-3 px-2 pb-2 text-11 text-fg-3 uppercase tracking-wider border-b border-border-soft">
                 <span>Account</span>
                 <span className="text-right">Amount</span>
                 <span>Description</span>
@@ -569,7 +543,7 @@ function Lines({
                 <button
                     type="button"
                     onClick={onAdd}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-[12px] text-fg-2 hover:text-fg-1 hover:bg-surface-2"
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-12 text-fg-2 hover:text-fg-1 hover:bg-surface-2"
                 >
                     <Icon name="plus" size={12} strokeWidth={2} />
                     Add line
@@ -617,7 +591,7 @@ function LineRow({
                         onUpdate(index, { amount: e.target.value });
                     }}
                     placeholder="0.00"
-                    className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] text-right font-mono tabular focus:outline-none focus:border-border-strong"
+                    className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 text-right font-mono tabular focus:outline-none focus:border-border-strong"
                 />
                 <FieldError name={`lines[${index.toString()}].amount`} errors={fieldErrors} />
             </div>
@@ -630,7 +604,7 @@ function LineRow({
                     }}
                     maxLength={500}
                     placeholder="Optional"
-                    className="w-full px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[13px] focus:outline-none focus:border-border-strong"
+                    className="w-full px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-13 focus:outline-none focus:border-border-strong"
                 />
             </div>
             <button
@@ -694,7 +668,7 @@ function UnallocatedFooter({
     const unallocatedAbs = Math.abs(totals.unallocatedMinor);
     const unallocatedStr = formatMoney(unallocatedAbs, currencyCode, catalog);
     return (
-        <div className="flex items-center justify-end gap-4 mt-3 text-[12px] tabular">
+        <div className="flex items-center justify-end gap-4 mt-3 text-12 tabular">
             <span className="text-fg-3">
                 Target <span className="font-mono text-fg-1">{targetStr}</span>
             </span>
@@ -757,7 +731,7 @@ function AttachOptionsPanel({
     }
 
     return (
-        <div className="mb-4 px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-[12px]">
+        <div className="mb-4 px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-12">
             <div className="flex flex-wrap items-center gap-2">
                 <span className="text-fg-3">Sibling-of-self-transfer?</span>
                 {hint && (
@@ -838,7 +812,7 @@ function JePickerModal({
             width="md"
         >
             <div className="flex flex-wrap items-center gap-3 mb-3">
-                <label className="flex items-center gap-2 text-[12px] text-fg-2">
+                <label className="flex items-center gap-2 text-12 text-fg-2">
                     Date window (±days)
                     <input
                         type="number"
@@ -849,7 +823,7 @@ function JePickerModal({
                             const n = Number.parseInt(e.target.value, 10);
                             setDays(Number.isNaN(n) ? 0 : Math.max(0, Math.min(365, n)));
                         }}
-                        className="w-20 px-2 py-1 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[12px]"
+                        className="w-20 px-2 py-1 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-12"
                     />
                 </label>
                 <input
@@ -859,7 +833,7 @@ function JePickerModal({
                         setQuery(e.target.value);
                     }}
                     placeholder="Filter…"
-                    className="flex-1 min-w-[160px] px-2 py-1 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[12px]"
+                    className="flex-1 min-w-[160px] px-2 py-1 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-12"
                 />
             </div>
 
@@ -871,7 +845,7 @@ function JePickerModal({
                 />
             )}
             {candidates.data && filtered.length === 0 && (
-                <p className="text-[12px] text-fg-3">
+                <p className="text-12 text-fg-3">
                     No structural matches in this window. Widen the date range or fall back to
                     creating a new JE below.
                 </p>
@@ -889,14 +863,14 @@ function JePickerModal({
                                 className="w-full text-left px-3 py-2 rounded-sm border border-border-soft hover:bg-surface-2 flex items-baseline justify-between gap-2"
                             >
                                 <span className="flex flex-col leading-tight min-w-0">
-                                    <span className="text-[13px] text-fg-1 truncate">
+                                    <span className="text-13 text-fg-1 truncate">
                                         {candidate.description ?? '(no description)'}
                                     </span>
-                                    <span className="text-[11px] text-fg-3 truncate">
+                                    <span className="text-11 text-fg-3 truncate">
                                         {candidate.date} · {candidate.otherAccountName}
                                     </span>
                                 </span>
-                                <span className="text-[12px] font-mono text-fg-2 tabular shrink-0">
+                                <span className="text-12 font-mono text-fg-2 tabular shrink-0">
                                     {formatMoney(candidate.amount, bt.money.currencyCode, catalog, {
                                         sign: true,
                                     })}
@@ -911,7 +885,7 @@ function JePickerModal({
                 <button
                     type="button"
                     onClick={onClose}
-                    className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-fg-2 hover:text-fg-1"
+                    className="px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-fg-1"
                 >
                     Cancel
                 </button>

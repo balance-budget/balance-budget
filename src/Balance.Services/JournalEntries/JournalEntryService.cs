@@ -39,18 +39,9 @@ internal sealed class JournalEntryService : IJournalEntryService
         {
             // Match the entry Description or its linked Counterparty's Name. ADR-0020's
             // item (g) originally excluded counterparty-name matching from the list filter;
-            // that half is superseded now that the Counterparty detail view exists, and it
-            // brings this filter in line with the BankTransaction list filter.
-            var pattern = $"%{needle}%";
-            filtered = filtered.Where(e =>
-                (e.Description != null && DbFunction.CaseInsensitiveLike(e.Description, pattern))
-                || (
-                    e.CounterpartyId != null
-                    && _dbContext.Counterparties.Any(c =>
-                        c.Id == e.CounterpartyId && DbFunction.CaseInsensitiveLike(c.Name, pattern)
-                    )
-                )
-            );
+            // that half is superseded now that the Counterparty detail view exists. Shared with
+            // the Register filter via JournalEntryFilters so the two can't drift.
+            filtered = filtered.Where(JournalEntryFilters.MatchesNeedle(_dbContext, needle));
         }
 
         var totalCount = await filtered.CountAsync(cancellationToken);
@@ -412,20 +403,10 @@ internal sealed class JournalEntryService : IJournalEntryService
         return await LoadDetailOrThrowAsync(entry.Id, cancellationToken);
     }
 
-    public async Task<Result> DeleteAsync(JournalEntryId id, CancellationToken cancellationToken)
-    {
-        var result = await _dbContext
+    public Task<Result> DeleteAsync(JournalEntryId id, CancellationToken cancellationToken) =>
+        _dbContext
             .JournalEntries.Where(c => c.Id == id)
-            .ExecuteDeleteAndCatchAsync(cancellationToken);
-
-        if (result.IsFailure)
-            return result.Error;
-
-        if (result.Value == 0)
-            return new NotFoundError("JournalEntry", id.Value.ToString());
-
-        return Result.Success;
-    }
+            .DeleteSingleAndCatchAsync("JournalEntry", id.Value.ToString(), cancellationToken);
 
     private async Task<JournalEntryDetailOutput> LoadDetailOrThrowAsync(
         JournalEntryId id,
@@ -517,6 +498,9 @@ internal sealed class JournalEntryService : IJournalEntryService
                 .ToList(),
             e.CreatedAt,
             e.UpdatedAt,
+            // Mirrors BankTransactionProjections.ToDetailOutput; kept inline because EF cannot
+            // invoke a captured expression inside this nested Select. The positional record makes
+            // any field add/remove a compile error at both sites — keep the value-mappings in sync.
             db.BankTransactions.Where(b => b.JournalEntryId == e.Id)
                 .OrderBy(b => b.BookingDate)
                 .ThenBy(b => b.CreatedAt)
@@ -560,7 +544,7 @@ internal sealed class JournalEntryService : IJournalEntryService
     {
         if (lines.Count == 0)
         {
-            return new Result<IReadOnlyList<JournalLineDraft>>(Array.Empty<JournalLineDraft>());
+            return new Result<IReadOnlyList<JournalLineDraft>>([]);
         }
 
         var accountIds = lines.Select(l => l.AccountId).Distinct().ToList();
@@ -583,23 +567,18 @@ internal sealed class JournalEntryService : IJournalEntryService
         return new Result<IReadOnlyList<JournalLineDraft>>(drafts);
     }
 
-    private async Task<Result> EnsureCounterpartyExistsAsync(
+    private Task<Result> EnsureCounterpartyExistsAsync(
         CounterpartyId? counterpartyId,
         CancellationToken cancellationToken
     )
     {
         if (counterpartyId is { } cpId)
         {
-            var exists = await _dbContext.Counterparties.AnyAsync(
-                c => c.Id == cpId,
-                cancellationToken
-            );
-            if (!exists)
-            {
-                return new NotFoundError("Counterparty", cpId.Value.ToString());
-            }
+            return _dbContext
+                .Counterparties.Where(c => c.Id == cpId)
+                .EnsureExistsAsync("Counterparty", cpId.Value.ToString(), cancellationToken);
         }
 
-        return Result.Success;
+        return Task.FromResult(Result.Success);
     }
 }

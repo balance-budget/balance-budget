@@ -15,6 +15,7 @@ Balance.slnx
 │   ├── Balance.Data.PostgreSql
 │   ├── Balance.Data.Sqlite
 │   ├── Balance.Services
+│   ├── Balance.Integration.Ing
 │   ├── Balance.Web
 │   └── Balance.Web.Client
 └── /tests/
@@ -32,15 +33,18 @@ graph TD
     Services[Balance.Services]
     Data[Balance.Data]
     Configuration[Balance.Configuration]
+    IntegrationIng[Balance.Integration.Ing]
 
     Web -->|ReferenceOutputAssembly=false| Client
     Web --> Sqlite
     Web --> Services
     Web --> Postgres
+    Web --> IntegrationIng
 
     Sqlite --> Data
     Services --> Data
     Postgres --> Data
+    IntegrationIng --> Services
 
     Data --> Configuration
 ```
@@ -48,8 +52,9 @@ graph TD
 Notes:
 - `Balance.Data` does **not** reference the provider-specific projects. It targets EF Core's relational abstractions and lets the host process load the right migrations assembly at runtime.
 - `Balance.Web` references both provider-specific projects directly so their migration assemblies are loaded.
+- `Balance.Integration.Ing` references `Balance.Services` (its extractors implement the Services-owned `IBankTransactionExtractor` contract) and is therefore composed *beside* Services at the host, not nested under it — see [Startup composition](#startup-composition) and [ADR-0021](adr/0021-integration-layer-composed-at-host.md).
 - `Balance.Web` references `Balance.Web.Client` with `ReferenceOutputAssembly="false"` — the esproj produces no .NET assembly; the project reference exists purely so MSBuild builds the SPA (`npm run build` → `dist/`) and packs its static assets into the ASP.NET publish output.
-- `Balance.Tests` references `Balance.Web` and `Balance.Services` (transitively pulling in the rest). Both expose internals via `InternalsVisibleTo("Balance.Tests")`.
+- `Balance.Tests` references `Balance.Web` and `Balance.Services` (transitively pulling in the rest). `Balance.Web`, `Balance.Services`, and `Balance.Integration.Ing` expose internals via `InternalsVisibleTo("Balance.Tests")`.
 
 ## Layers
 
@@ -59,12 +64,12 @@ Notes:
 - `Options/DatabaseOptions` — `Provider` (`Sqlite` | `Postgres`) and `ConnectionString`.
 - `Helpers/HostEnvironmentExtensions` — `IsContainer()` and `IsContainerFastMode()` based on the `DOTNET_RUNNING_IN_CONTAINER` / `…_FAST_MODE` env vars.
 - `Helpers/ConfigurationExtensions` — `GetSection<T>()` and `GetSectionOrDefault<T>()` typed lookups.
-- `ServiceCollectionExtensions.AddBalanceConfiguration` registers all known options sections (currently just `DatabaseOptions`).
+- `ServiceCollectionExtensions.AddBalanceConfiguration` registers all known options sections via `AddSettings<T>` (currently `DatabaseOptions` and `AuthOptions`). Options only needed at composition time (`JobsOptions`, `ReverseProxyOptions`) are read eagerly with `GetSection<T>()` in the relevant DI extension instead of bound through `AddSettings<T>`.
 
 ### Balance.Data
 
 - `BalanceDbContext` (in `SpottarrDbContext.cs` — see [Known oddities](#known-oddities)) — implements `IDataProtectionKeyContext` so ASP.NET Data Protection keys persist to the same database. Exposes `Provider` so consumers can branch on dialect when necessary. Enables `EnableDetailedErrors` / `EnableSensitiveDataLogging` in development only.
-- `Entities/BaseEntity` — `Id` (`int`), `CreatedAt` (`init`), `UpdatedAt`. All domain entities should derive from this.
+- `Entities/BaseEntity<TId>` — generic over a strongly-typed ID struct (`where TId : struct`; see [ADR-0004](adr/0004-typed-ids-over-uuidv7.md)): `Id` (`TId`, `init`), `CreatedAt` (`init`), `UpdatedAt`. All domain entities should derive from this.
 - `Helpers/DbContextOptionsBuilderExtensions.UseProvider` — the provider switch. Returns a `UseSqlite(...).UseBulkInsertSqlite()` or `UseNpgsql(...).UseBulkInsertPostgreSql()` builder, wiring the appropriate migrations assembly.
 - `Helpers/DbPathHelper` — picks the SQLite file path (`/data/balance.db` in containers, `%LOCALAPPDATA%/balance-budget/balance.db` otherwise) and proactively probes for write access.
 - `Helpers/DateConverters` — `UtcConverter` ensures `DateTime` columns round-trip with `Kind = Utc`.
@@ -84,6 +89,14 @@ Empty class libraries that exist solely to host provider-specific EF Core migrat
 - `Jobs/ServiceCollectionQuartzConfiguratorExtensions.ScheduleJobAt<TJob>` — schedules a job with a cron expression, immediate start, and `DisallowConcurrentExecution`.
 - `Logging/LoggerExtensions` — partial class for source-generated `[LoggerMessage]` methods.
 - `ServiceCollectionExtensions.AddBalanceServices` composes `Configuration` + `Data` + `Jobs` and registers `IApplicationVersionService`. The `startJobs` parameter (default `true`) flips whether jobs trigger immediately — the Console host passes `false`.
+
+### Balance.Integration.Ing
+
+Bank-specific statement importers for ING. References `Balance.Services` and implements the Services-owned `IBankTransactionExtractor` contract; the import flow (`BankTransactionImportService`) consumes the registered extractors and dispatches by `ImporterKey` / `SupportedType`.
+
+- `Importers/` — `IBankTransactionExtractor` implementations (current account, savings, modern/legacy credit card). The credit-card extractors share an abstract base; each row maps to an immutable `BankTransaction` (ADR-0010), signing amounts at the parse boundary (ADR-0002).
+- `Parsers/` — CsvHelper-backed statement parsers and the ING note parser; `Models/` — `internal` CSV row models and value types; `Helpers/` — `RowHasher` (idempotent re-import hash) and parsing utilities.
+- `ServiceCollectionExtensions.AddBalanceIntegrationIng` — the layer's single `public` DI entry point; everything else is `internal`. Composed at the host *beside* `Balance.Services` (not nested under it) because nesting would invert the Services → Integration dependency into a cycle — see [ADR-0021](adr/0021-integration-layer-composed-at-host.md).
 
 ### Balance.Web
 
@@ -111,6 +124,7 @@ The web host follows this shape:
 builder.Logging.AddConsole(...)
 builder.Configuration.MapConfigurationSources(...)
 builder.Services.AddBalanceServices(builder.Configuration)
+builder.Services.AddBalanceIntegrationIng()   // bank importers — beside Services (ADR-0021)
 builder.Services.AddBalanceWeb()
 var app = builder.Build();
 await app.MigrateDatabaseAsync(lifetime.ApplicationStopping);
@@ -155,10 +169,11 @@ ExceptionHandler → StatusCodePages → ForwardedHeaders → DefaultFiles → R
   1. `dotnet tool restore`
   2. `dotnet restore`
   3. `dotnet csharpier check .`
-  4. `dotnet build --no-restore`
-  5. CodeQL analyze (public repos only)
-  6. `dotnet test` with cobertura coverage
-  7. Sticky PR comments for test results and coverage
+  4. `dotnet build --no-restore` (builds the SPA via the esproj — installs npm deps and generates the route tree)
+  5. `npm run lint` in `src/Balance.Web.Client` (ESLint, reusing the build's `node_modules` + generated route tree)
+  6. CodeQL analyze (public repos only)
+  7. `dotnet test` with cobertura coverage
+  8. Sticky PR comments for test results and coverage
 - A separate `codeql.yml` re-runs CodeQL on a weekly cron.
 
 ## Known oddities
