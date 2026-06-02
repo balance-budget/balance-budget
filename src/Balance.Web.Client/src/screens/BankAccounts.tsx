@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import {
+    BANK_ACCOUNT_OWNER_FILTERS,
     bankAccountTypeIcon,
     formatBankAccountLabel,
     formatBankAccountSubline,
@@ -8,6 +9,7 @@ import {
     useBankAccounts,
     useDeleteBankAccount,
     type BankAccount,
+    type BankAccountOwnerFilter,
 } from '../api/bankAccounts';
 import { useAccounts } from '../api/accounts';
 import { useCounterparties } from '../api/counterparties';
@@ -21,10 +23,6 @@ import { cx } from '../lib/cx';
 import type { BankAccountId } from '../lib/domain';
 import { ApiError } from '../lib/http';
 import { BankAccountFormModal } from './BankAccountForm';
-
-export type BankAccountOwnerFilter = 'mine' | 'others';
-
-export const BANK_ACCOUNT_OWNER_FILTERS: readonly BankAccountOwnerFilter[] = ['mine', 'others'];
 
 const OWNER_FILTER_LABEL: Record<BankAccountOwnerFilter, string> = {
     mine: 'Mine',
