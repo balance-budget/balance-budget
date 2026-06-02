@@ -39,14 +39,7 @@ jobs:
       uses: actions/setup-dotnet@v5
       with:
         dotnet-version: 10.0.x
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v6
-      with:
-        node-version: 22.x
-        cache: npm
-        cache-dependency-path: src/Balance.Web.Client/package-lock.json
-
+    
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v4
       if: ${{ !github.event.repository.private }}
@@ -64,27 +57,16 @@ jobs:
     
     - name: Restore packages
       run: dotnet restore
-
-    # Install the SPA's dependencies explicitly (incl. devDependencies like
-    # eslint/prettier/openapi-typescript) from the committed lockfile. The
-    # build below (esproj) would otherwise be the only thing that runs an
-    # `npm install`, but that side-effect install is gated by a timestamp-based
-    # incremental check and isn't a reliable source of the dev toolchain the
-    # lint/codegen steps need. Running `npm ci` first also means the esproj
-    # build reuses this node_modules rather than reinstalling.
-    - name: Install frontend dependencies
-      run: npm ci
-      working-directory: src/Balance.Web.Client
-
+      
     - name: Format
       run: dotnet csharpier check .
     
     - name: Build
       run: dotnet build --no-restore
 
-    # node_modules comes from the `npm ci` step above; the .NET build (esproj)
-    # has already generated the route tree by this point. ESLint runs
-    # typescript-eslint strictTypeChecked.
+    # The SPA is built inside the .NET build (esproj), so node_modules and the
+    # generated route tree already exist here — lint reuses them rather than
+    # reinstalling. ESLint runs typescript-eslint strictTypeChecked.
     - name: Lint frontend
       run: npm run lint
       working-directory: src/Balance.Web.Client
