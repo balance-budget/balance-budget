@@ -5,8 +5,20 @@ A personal-finance tool backed by a rigorous **double-entry ledger**. The domain
 ## Language
 
 **Account**:
-A ledger account in the double-entry accounting sense (e.g. "Groceries Expense", "ABN AMRO Checking", "Visa Credit Card"). Every Account has exactly one **AccountType**.
+A ledger account in the double-entry accounting sense (e.g. "Groceries Expense", "ABN AMRO Checking", "Visa Credit Card"). Every Account has exactly one **AccountType** and a required, globally-unique **Code**. Accounts form a tree via a nullable `ParentAccountId` self-reference (the **Chart of accounts**): an Account is either **Postable** — a leaf that **JournalLines** may reference — or a non-postable placeholder, a parent whose balance is the roll-up of its descendants. Every Account in a subtree shares the same **AccountType** and **Currency**.
 _Avoid_: bucket, category, envelope, payee (those are different concepts).
+
+**Postable** (and the verb **post**):
+A property of an **Account** (`IsPostable`, an explicit boolean). A Postable Account is a *leaf* that **JournalLines** may reference directly — to **post** is to record a **JournalLine** against an Account. A non-postable Account is a *placeholder*: it carries no **JournalLines** of its own and exists only to roll up its descendants (see **Chart of accounts**). Invariants: (a) a non-postable Account is never referenced by a **JournalLine**; (b) an Account with children is never Postable; (c) an empty placeholder (no children yet) and an empty leaf (no lines yet) are both legal. `IsPostable` is set explicitly and changes only via an explicit conversion — flipping a leaf to placeholder requires it to have zero **JournalLines**, and flipping a placeholder to leaf requires it to have no children. Nesting a child under a Postable leaf is therefore rejected; the parent must be converted to a placeholder first.
+_Avoid_: the noun **"posting"** as an alias for a **JournalEntry** or **JournalLine** (still avoided — see those terms). The verb **post** and the adjective **Postable** are canonical; only the noun is suppressed.
+
+**Code** (account code):
+The required, globally-**unique** human key on an **Account** — the chart-of-accounts "account number" (e.g. `5110` Groceries, `5100` Food, `3900` Opening Balances). Stored as a short string, not an integer: real codes are segmented and zero-padded. Hierarchical numbering — a child's code sharing its parent's prefix — is a *convention*, not enforced; only global uniqueness is. Distinct from **Name** (which carries no uniqueness constraint at all) and from **BankAccount**'s `AccountNumber`, the bank-side identifier (see Flagged ambiguities).
+_Avoid_: "account number" (collides with **BankAccount.AccountNumber**), "id" (that is the surrogate **AccountId**).
+
+**Chart of accounts**:
+The tree of **Accounts** formed by the nullable `ParentAccountId` self-reference, to arbitrary depth. Leaves are **Postable**; interior nodes are non-postable placeholders whose balance is the recursive signed sum of their descendant leaves. Every Account in a subtree shares one **AccountType** and one **Currency** (the homogeneity rule; the currency half relaxes when multi-currency lands). Re-parenting is allowed and re-rolls balances automatically (they are derived), guarded against cycles — an Account may not become its own ancestor. A parent with children cannot be deleted (FK `RESTRICT`); its children must be re-parented or removed first.
+_Avoid_: category tree, folder, group hierarchy (those imply the banned **category**/bucket framing — this is a ledger account tree).
 
 **AccountType**:
 The accounting classification of an **Account**, one of the five standard types: **Asset**, **Liability**, **Equity**, **Income**, **Expense**. Determines normal balance (debit-normal for Asset/Expense; credit-normal for Liability/Equity/Income) and how the account contributes to reports.
@@ -76,7 +88,7 @@ The masked card-number string identifying a `Card`-type **BankAccount** for matc
 _Avoid_: "card number" (ambiguous with PAN), "PAN" (which is the full 16-digit number, never stored).
 
 **Register**:
-The per-**Account** view of bookkeeping activity — what a banking or accounting UI shows when you "open an account": a chronological list of every **JournalLine** posted to that **Account**, enriched with the **JournalEntry** header (date, description, **Counterparty**) and the offsetting side. *Derived*, not stored — a projection of **JournalLines** filtered to one **Account**. Distinct from a **JournalEntry** (which is the full multi-line bookkeeping event) and from a **BankTransaction** (which is the import-side record). One **JournalEntry** appears in two or more **Registers** — once per **Account** it touches.
+The per-**Account** view of bookkeeping activity — what a banking or accounting UI shows when you "open an account": a chronological list of every **JournalLine** posted to that **Account**, enriched with the **JournalEntry** header (date, description, **Counterparty**) and the offsetting side. *Derived*, not stored — a projection of **JournalLines** filtered to one **Account**. Distinct from a **JournalEntry** (which is the full multi-line bookkeeping event) and from a **BankTransaction** (which is the import-side record). One **JournalEntry** appears in two or more **Registers** — once per **Account** it touches. For a non-postable placeholder (see **Postable**), the Register is the **union of its descendant leaves' JournalLines**, merged newest-first; intra-subtree self-transfers appear as both legs (no elimination) and net to zero in the rolled-up balance.
 _Avoid_: statement (sounds like a printed bank statement — that's a separate concept), ledger (the whole book, not one account), transaction (overloaded — see above), feed.
 
 **RegisterRow**:
@@ -121,6 +133,11 @@ _Avoid_: internal transaction, transfer (bare), between-accounts entry. "Transac
 - A **JournalEntry** *may* reference one **Counterparty**; **JournalLines** do not reference **Counterparties**.
 - A **Counterparty** is never an **Account** (this is an explicit departure from Firefly III, which models each payee as an expense/revenue account).
 - Each **Account** has exactly one **AccountType**.
+- **Accounts** form a tree via a nullable `Account.ParentAccountId` self-reference, to arbitrary depth; cycles are rejected (an **Account** may not become its own ancestor).
+- Every **Account** in a subtree shares one **AccountType** and one **CurrencyCode** (the homogeneity rule; the currency half relaxes when multi-currency lands).
+- An **Account** is either **Postable** (a leaf that **JournalLines** may reference) or a non-postable placeholder; an **Account** with children is never **Postable**, and a **JournalLine** never references a non-postable **Account**.
+- `Account.Code` is required and globally **unique**; `Account.Name` carries no uniqueness constraint.
+- A **BankAccount** may link only to a **Postable** **Account** (in addition to the existing `UNIQUE(AccountId)`).
 - Every **JournalLine** carries a **Money** amount; its **Currency** is inherited from its **Account**.
 - A **BankAccount** belongs to *exactly one* of: one **Account** (via `BankAccount.AccountId`) or one **Counterparty** (via `BankAccount.CounterpartyId`) — never both, never neither, enforced by CHECK constraint.
 - A **BankAccount** that belongs to an **Account** must have a `CurrencyCode`; one that belongs to a **Counterparty** may leave `CurrencyCode` null. Enforced by CHECK constraint and by service-layer validation.
@@ -138,7 +155,7 @@ _Avoid_: internal transaction, transfer (bare), between-accounts entry. "Transac
 
 ## Flagged ambiguities
 
-- "account" is used in everyday speech to mean both a ledger **Account** and a bank account. Inside the domain, **Account** always means the ledger account (debit-normal or credit-normal, with an **AccountType**); the banking product is a **BankAccount** (carries IBAN / account number / bank metadata). An **Account** may be linked to a **BankAccount** when it represents a real bank product.
+- "account" is used in everyday speech to mean both a ledger **Account** and a bank account. Inside the domain, **Account** always means the ledger account (debit-normal or credit-normal, with an **AccountType**); the banking product is a **BankAccount** (carries IBAN / account number / bank metadata). An **Account** may be linked to a **BankAccount** when it represents a real bank product. Relatedly, the **Account**'s human key is its **Code** (a chart-of-accounts number); the bank-side identifier on a **BankAccount** is its `AccountNumber`. These are different things — never call the ledger Account's **Code** an "account number".
 - "transaction" is overloaded in everyday speech (DB transactions, bank-statement rows, payment-API events). Inside the domain, the bookkeeping event is a **JournalEntry**; the immutable record of a bank-statement row is a **BankTransaction**. "Transaction" as a bare term is avoided.
 - "user" is an *access-control* concept, not a domain one. A user is a human login (`AspNetUsers` row) that gates entry to the app; multiple users share one ledger (ADR 0017), and the ledger has no per-user data. A user is *not* a **Counterparty** (the real-world party on the other side of a **JournalEntry**), is *not* an **Account** (a ledger account), and is *not* the **AccountHolderName** on a **BankAccount** (which is statement-row metadata about whoever owns a bank product). When the codebase says "user" it always means the logged-in human; when it means a counterparty or account-holder, it says so explicitly.
 
@@ -158,7 +175,7 @@ _Avoid_: internal transaction, transfer (bare), between-accounts entry. "Transac
 
 - **BankTransaction** is immutable in its bank-supplied fields and never deleted. **Dismissed** is the appropriate "make this row stop showing in the **Inbox**" action and is reversible — the row remains queryable in the full BankTransaction list view.
 - **JournalEntry** is deletable (its **JournalLines** cascade; any referencing **BankTransactions** have their `JournalEntryId` set to null via `ON DELETE SET NULL` and return to the **Inbox**). Editing is preferred for corrections.
-- **Account**, **Counterparty**, **BankAccount** are hard-deletable; FK constraints block the delete when they're still referenced. No archival / `IsArchived` flag in v1 — add later if UI clutter becomes a real problem.
+- **Account**, **Counterparty**, **BankAccount** are hard-deletable; FK constraints block the delete when they're still referenced. A non-postable parent **Account** with children cannot be deleted until its children are re-parented or removed (FK `RESTRICT` on `ParentAccountId`). No archival / `IsArchived` flag in v1 — add later if UI clutter becomes a real problem.
 
 ## Open questions
 
