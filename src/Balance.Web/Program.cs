@@ -25,7 +25,7 @@ var builder = WebApplication.CreateSlimBuilder(args);
 builder.Logging.AddConsole(builder.Environment);
 builder.Services.AddBalanceServices(builder.Configuration, builder.Environment);
 builder.Services.AddBalanceIntegrationIng();
-builder.Services.AddBalanceWeb(builder.Configuration);
+builder.Services.AddBalanceWeb(builder.Configuration, builder.Environment);
 
 var app = builder.Build();
 var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();

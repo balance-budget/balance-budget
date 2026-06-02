@@ -5,7 +5,7 @@ namespace Balance.Integration.Ing.Models.BankAccount;
 /// <remarks>
 /// Names are taken from Dutch and English descriptions used by ING
 /// </remarks>
-public enum TransactionCode
+internal enum TransactionCode
 {
     /// <summary>
     /// Acceptgiro

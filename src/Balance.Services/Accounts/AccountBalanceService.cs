@@ -35,9 +35,6 @@ internal sealed class AccountBalanceService : IAccountBalanceService
             .Where(l => l.AccountId == id)
             .SumAsync(l => l.Amount, cancellationToken);
 
-        var signed = AccountSignConvention.IsCreditNormal(account.AccountType)
-            ? checked(-sum)
-            : sum;
-        return new Money(signed, account.CurrencyCode);
+        return AccountSignConvention.ToBalance(account.AccountType, sum, account.CurrencyCode);
     }
 }

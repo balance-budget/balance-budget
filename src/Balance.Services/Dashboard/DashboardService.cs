@@ -86,13 +86,7 @@ internal sealed class DashboardService : IDashboardService
 
         if (assets.Count == 0)
         {
-            return new AccountBalanceTrendOutput(
-                Array.Empty<AccountTrendSeries>(),
-                periodStart,
-                today,
-                range,
-                currencyCode
-            );
+            return new AccountBalanceTrendOutput([], periodStart, today, range, currencyCode);
         }
 
         var assetIds = assets.Select(a => a.Id).ToHashSet();

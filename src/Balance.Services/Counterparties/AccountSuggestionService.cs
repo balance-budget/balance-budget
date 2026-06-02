@@ -42,9 +42,7 @@ internal sealed class AccountSuggestionService : IAccountSuggestionService
 
         if (mostRecentEntryId is null)
         {
-            return new Result<IReadOnlyList<SuggestedCounterAccountOutput>>(
-                Array.Empty<SuggestedCounterAccountOutput>()
-            );
+            return new Result<IReadOnlyList<SuggestedCounterAccountOutput>>([]);
         }
 
         // Project counter-side lines. We exclude lines whose Account is `Cleared` on the most

@@ -27,9 +27,9 @@ internal sealed class ApiTokenConfiguration : IEntityTypeConfiguration<ApiToken>
 
         builder.Property(t => t.CreatedAt).HasConversion(DateConverters.UtcConverter);
         builder.Property(t => t.UpdatedAt).HasConversion(DateConverters.UtcConverter);
-        builder.Property(t => t.LastUsedAt).HasConversion(DateConverters.UtcConverter);
-        builder.Property(t => t.ExpiresAt).HasConversion(DateConverters.UtcConverter);
-        builder.Property(t => t.RevokedAt).HasConversion(DateConverters.UtcConverter);
+        builder.Property(t => t.LastUsedAt).HasConversion(DateConverters.UtcNullableConverter);
+        builder.Property(t => t.ExpiresAt).HasConversion(DateConverters.UtcNullableConverter);
+        builder.Property(t => t.RevokedAt).HasConversion(DateConverters.UtcNullableConverter);
 
         builder
             .HasOne<BalanceUser>()

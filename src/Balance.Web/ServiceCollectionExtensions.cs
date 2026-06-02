@@ -16,10 +16,12 @@ internal static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddBalanceWeb(
         this IServiceCollection services,
-        IConfiguration configuration
+        IConfiguration configuration,
+        IHostEnvironment environment
     )
     {
         ArgumentNullException.ThrowIfNull(configuration);
+        ArgumentNullException.ThrowIfNull(environment);
 
         services.AddOpenApi(options =>
         {
@@ -77,7 +79,7 @@ internal static class ServiceCollectionExtensions
             }
         });
 
-        services.AddBalanceAuth(configuration);
+        services.AddBalanceAuth(configuration, environment);
         services.AddAuthorization();
 
         services.AddAntiforgery(options =>

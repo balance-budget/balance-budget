@@ -4,6 +4,7 @@ using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
 using Balance.Data.Helpers;
 using Balance.Services.Contracts;
+using Balance.Services.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace Balance.Services.Accounts;
@@ -51,22 +52,15 @@ internal sealed class RegisterService : IRegisterService
         var needle = search?.Trim();
         if (!string.IsNullOrEmpty(needle))
         {
-            // Match the entry Description or its linked Counterparty's Name, mirroring the
-            // journal-entries list filter (see the ADR-0020 item (g) amendment).
-            var pattern = $"%{needle}%";
-            lines = lines.Where(x =>
-                (
-                    x.Entry.Description != null
-                    && DbFunction.CaseInsensitiveLike(x.Entry.Description, pattern)
-                )
-                || (
-                    x.Entry.CounterpartyId != null
-                    && _dbContext.Counterparties.Any(c =>
-                        c.Id == x.Entry.CounterpartyId
-                        && DbFunction.CaseInsensitiveLike(c.Name, pattern)
-                    )
-                )
-            );
+            // Match the entry Description or its linked Counterparty's Name, sharing the exact
+            // predicate with the journal-entries list filter via JournalEntryFilters so the two
+            // can't drift (ADR-0020 item (g) amendment). Applied as an entry-id subquery because
+            // `lines` is the line↔entry join rather than a bare JournalEntry query.
+            var matchingEntryIds = _dbContext
+                .JournalEntries.AsNoTracking()
+                .Where(JournalEntryFilters.MatchesNeedle(_dbContext, needle))
+                .Select(e => e.Id);
+            lines = lines.Where(x => matchingEntryIds.Contains(x.Entry.Id));
         }
 
         var totalCount = await lines.CountAsync(cancellationToken);
@@ -74,11 +68,9 @@ internal sealed class RegisterService : IRegisterService
         if (take <= 0)
         {
             return new Result<PagedOutput<RegisterRowOutput>>(
-                new PagedOutput<RegisterRowOutput>(Array.Empty<RegisterRowOutput>(), totalCount)
+                new PagedOutput<RegisterRowOutput>([], totalCount)
             );
         }
-
-        var isCreditNormal = AccountSignConvention.IsCreditNormal(account.AccountType);
 
         // Page focal lines, ordered Date DESC then JournalEntryId DESC per ADR-0008.
         // The CounterpartyName is fetched via a correlated subquery so one round-trip
@@ -109,7 +101,7 @@ internal sealed class RegisterService : IRegisterService
         if (focalRows.Count == 0)
         {
             return new Result<PagedOutput<RegisterRowOutput>>(
-                new PagedOutput<RegisterRowOutput>(Array.Empty<RegisterRowOutput>(), totalCount)
+                new PagedOutput<RegisterRowOutput>([], totalCount)
             );
         }
 
@@ -137,8 +129,9 @@ internal sealed class RegisterService : IRegisterService
         var output = new List<RegisterRowOutput>(focalRows.Count);
         foreach (var row in focalRows)
         {
-            var focalAmount = new Money(
-                isCreditNormal ? checked(-row.Amount) : row.Amount,
+            var focalAmount = AccountSignConvention.ToBalance(
+                account.AccountType,
+                row.Amount,
                 account.CurrencyCode
             );
 
@@ -161,7 +154,7 @@ internal sealed class RegisterService : IRegisterService
             }
             else
             {
-                counter = Array.Empty<RegisterRowCounterLeg>();
+                counter = [];
             }
 
             output.Add(

@@ -327,6 +327,15 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
         // debit, - for asset credit; symmetric for liability), a bank-side line whose Amount
         // equals BT.Amount captures both senses uniformly because the BT.Amount sign already
         // encodes the in/out direction for the owning Account.
+        //
+        // Raw amount equality is deliberate (not a missing AccountSignConvention consult): the
+        // counter-side line was created in the Categorisation flow as a verbatim copy of the first
+        // BT's Amount, so a self-transfer matches iff the two bank statements report equal-and-
+        // opposite signed amounts. This holds when both extractors emit the "money-in-positive"
+        // convention; for Liability-backed own-Accounts (Card pay-downs) it relies on ING's
+        // credit-card CSV signing the DirectDebit row opposite to the funding current-account row.
+        // That cross-statement invariant is treated as known-good — if revisited, pin it with a
+        // Current->Card round-trip integration test rather than changing this predicate.
         var candidateLines = entry
             .Lines.Where(l =>
                 l.AccountId == bankSideAccountId
@@ -405,17 +414,77 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
         CancellationToken cancellationToken
     )
     {
-        var counterIban = bankTransaction.CounterpartyAccountNumber!;
+        var matches = await FindSelfTransferCandidatesAsync(
+            bankTransaction,
+            bankSideAccountId,
+            dateWindowDays,
+            requireCounterIbanMatch: true,
+            cancellationToken
+        );
+        return matches
+            .Select(m => new AttachHintOutput(m.Id, m.Date, m.Description, m.OtherAccountName))
+            .ToList();
+    }
+
+    /// <summary>
+    /// Manual-picker variant of <see cref="FindMatchingEntriesAsync"/>: keeps the structural
+    /// conditions (own-Account-only, currency match, available Uncleared bank-side slot) but
+    /// drops the strict-counter-IBAN match — the user wants to see entries even when their IBAN
+    /// parsing missed. The date window is the user's choice; results are ordered by date proximity.
+    /// </summary>
+    private async Task<IReadOnlyList<AttachCandidateOutput>> FindCandidateEntriesAsync(
+        BankTransaction bankTransaction,
+        AccountId bankSideAccountId,
+        int dateWindowDays,
+        CancellationToken cancellationToken
+    )
+    {
+        var matches = await FindSelfTransferCandidatesAsync(
+            bankTransaction,
+            bankSideAccountId,
+            dateWindowDays,
+            requireCounterIbanMatch: false,
+            cancellationToken
+        );
+        return matches
+            .OrderBy(m => Math.Abs(m.Date.DayNumber - bankTransaction.BookingDate.DayNumber))
+            .ThenByDescending(m => m.Date)
+            .Select(m => new AttachCandidateOutput(
+                m.Id,
+                m.Date,
+                m.Description,
+                m.OtherAccountName,
+                m.CounterAmount
+            ))
+            .ToList();
+    }
+
+    /// <summary>
+    /// Shared engine behind the Inbox hint (<see cref="FindMatchingEntriesAsync"/>) and the manual
+    /// JE-picker (<see cref="FindCandidateEntriesAsync"/>). Both must agree on the structural
+    /// self-transfer predicate (own-Account-only, currency match, an available Uncleared bank-side
+    /// line of matching amount); the only intended difference is whether the counter-side line is
+    /// pinned to the BT's CounterpartyAccountNumber (the strict hint) or left free (the picker).
+    /// Keeping them in one method is what keeps them from drifting apart.
+    /// </summary>
+    private async Task<List<CandidateMatch>> FindSelfTransferCandidatesAsync(
+        BankTransaction bankTransaction,
+        AccountId bankSideAccountId,
+        int dateWindowDays,
+        bool requireCounterIbanMatch,
+        CancellationToken cancellationToken
+    )
+    {
         var minDate = bankTransaction.BookingDate.AddDays(-dateWindowDays);
         var maxDate = bankTransaction.BookingDate.AddDays(dateWindowDays);
         var amount = bankTransaction.Money.Amount;
         var currency = bankTransaction.Money.CurrencyCode.Value;
+        var counterIban = bankTransaction.CounterpartyAccountNumber;
 
-        // Pull candidate entries: date in window, no counterparty, contain an Uncleared line on the
-        // bank-side Account with the right amount, and contain *any* line whose Account has a
-        // BankAccount with Iban == counterIban. Then refine in memory (the per-line own-Account
-        // structural guard would be ugly as raw EF).
-        var candidates = await _dbContext
+        // Candidate entries: date in window, no counterparty, with an Uncleared line on the
+        // bank-side Account of the right amount. The structural own-Account guard is refined in
+        // memory below (it would be ugly as raw EF).
+        var query = _dbContext
             .JournalEntries.AsNoTracking()
             .Where(e =>
                 e.CounterpartyId == null
@@ -426,12 +495,22 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
                     && l.ReconciliationStatus == ReconciliationStatus.Uncleared
                     && l.Amount == amount
                 )
-                && e.Lines.Any(l =>
+            );
+
+        // Strict hint only: the entry must also contain a line whose Account has a BankAccount
+        // with Iban == counterIban. The picker drops this so near-misses still surface.
+        if (requireCounterIbanMatch)
+        {
+            query = query.Where(e =>
+                e.Lines.Any(l =>
                     _dbContext.BankAccounts.Any(b =>
                         b.AccountId == l.AccountId && b.Iban == counterIban
                     )
                 )
-            )
+            );
+        }
+
+        var candidates = await query
             .Select(e => new
             {
                 e.Id,
@@ -450,7 +529,7 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
             .ToListAsync(cancellationToken);
 
         if (candidates.Count == 0)
-            return Array.Empty<AttachHintOutput>();
+            return [];
 
         // Resolve own-Account guard + currency + counter-side name in memory.
         var allAccountIds = candidates
@@ -466,7 +545,7 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
             .Where(b => b.AccountId != null && allAccountIds.Contains(b.AccountId!.Value))
             .ToDictionaryAsync(b => b.AccountId!.Value, cancellationToken);
 
-        var matches = new List<AttachHintOutput>();
+        var matches = new List<CandidateMatch>();
         foreach (var candidate in candidates)
         {
             var l1 = candidate.Lines.SingleOrDefault(l =>
@@ -485,114 +564,19 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
             if (candidate.Lines.Any(l => !bankAccountsByAccountId.ContainsKey(l.AccountId)))
                 continue;
 
-            var counterLine = candidate.Lines.FirstOrDefault(l =>
-                l.Id != l1.Id
-                && bankAccountsByAccountId.TryGetValue(l.AccountId, out var ba)
-                && ba.Iban == counterIban
-            );
+            var counterLine = requireCounterIbanMatch
+                ? candidate.Lines.FirstOrDefault(l =>
+                    l.Id != l1.Id
+                    && bankAccountsByAccountId.TryGetValue(l.AccountId, out var ba)
+                    && ba.Iban == counterIban
+                )
+                : candidate.Lines.FirstOrDefault(l => l.Id != l1.Id);
             if (counterLine is null)
                 continue;
 
             var otherAccount = accounts[counterLine.AccountId];
             matches.Add(
-                new AttachHintOutput(
-                    candidate.Id,
-                    candidate.Date,
-                    candidate.Description,
-                    otherAccount.Name
-                )
-            );
-        }
-        return matches;
-    }
-
-    /// <summary>
-    /// Manual-picker variant of <see cref="FindMatchingEntriesAsync"/>: keeps the structural
-    /// conditions (own-Account-only, currency match, available Uncleared bank-side slot) but
-    /// drops the strict-counter-IBAN match — the user wants to see entries even when their IBAN
-    /// parsing missed. The date window is the user's choice.
-    /// </summary>
-    private async Task<IReadOnlyList<AttachCandidateOutput>> FindCandidateEntriesAsync(
-        BankTransaction bankTransaction,
-        AccountId bankSideAccountId,
-        int dateWindowDays,
-        CancellationToken cancellationToken
-    )
-    {
-        var minDate = bankTransaction.BookingDate.AddDays(-dateWindowDays);
-        var maxDate = bankTransaction.BookingDate.AddDays(dateWindowDays);
-        var amount = bankTransaction.Money.Amount;
-        var currency = bankTransaction.Money.CurrencyCode.Value;
-
-        var candidates = await _dbContext
-            .JournalEntries.AsNoTracking()
-            .Where(e =>
-                e.CounterpartyId == null
-                && e.Date >= minDate
-                && e.Date <= maxDate
-                && e.Lines.Any(l =>
-                    l.AccountId == bankSideAccountId
-                    && l.ReconciliationStatus == ReconciliationStatus.Uncleared
-                    && l.Amount == amount
-                )
-            )
-            .Select(e => new
-            {
-                e.Id,
-                e.Date,
-                e.Description,
-                Lines = e
-                    .Lines.Select(l => new
-                    {
-                        l.Id,
-                        l.AccountId,
-                        l.Amount,
-                        l.ReconciliationStatus,
-                    })
-                    .ToList(),
-            })
-            .ToListAsync(cancellationToken);
-
-        if (candidates.Count == 0)
-            return Array.Empty<AttachCandidateOutput>();
-
-        var allAccountIds = candidates
-            .SelectMany(c => c.Lines.Select(l => l.AccountId))
-            .Distinct()
-            .ToList();
-        var accounts = await _dbContext
-            .Accounts.AsNoTracking()
-            .Where(a => allAccountIds.Contains(a.Id))
-            .ToDictionaryAsync(a => a.Id, cancellationToken);
-        var bankAccountsByAccountId = await _dbContext
-            .BankAccounts.AsNoTracking()
-            .Where(b => b.AccountId != null && allAccountIds.Contains(b.AccountId!.Value))
-            .ToDictionaryAsync(b => b.AccountId!.Value, cancellationToken);
-
-        var matches = new List<AttachCandidateOutput>();
-        foreach (var candidate in candidates)
-        {
-            var l1 = candidate.Lines.SingleOrDefault(l =>
-                l.AccountId == bankSideAccountId
-                && l.ReconciliationStatus == ReconciliationStatus.Uncleared
-                && l.Amount == amount
-            );
-            if (l1 is null)
-                continue;
-            if (!accounts.TryGetValue(l1.AccountId, out var l1Account))
-                continue;
-            if (l1Account.CurrencyCode.Value != currency)
-                continue;
-            if (candidate.Lines.Any(l => !bankAccountsByAccountId.ContainsKey(l.AccountId)))
-                continue;
-
-            var counterLine = candidate.Lines.FirstOrDefault(l => l.Id != l1.Id);
-            if (counterLine is null)
-                continue;
-
-            var otherAccount = accounts[counterLine.AccountId];
-            matches.Add(
-                new AttachCandidateOutput(
+                new CandidateMatch(
                     candidate.Id,
                     candidate.Date,
                     candidate.Description,
@@ -601,9 +585,18 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
                 )
             );
         }
-        return matches
-            .OrderBy(m => Math.Abs(m.Date.DayNumber - bankTransaction.BookingDate.DayNumber))
-            .ThenByDescending(m => m.Date)
-            .ToList();
+        return matches;
     }
+
+    /// <summary>
+    /// Common intermediate produced by <see cref="FindSelfTransferCandidatesAsync"/>; carries every
+    /// field both the hint and the picker outputs need (the picker also surfaces the counter amount).
+    /// </summary>
+    private sealed record CandidateMatch(
+        JournalEntryId Id,
+        DateOnly Date,
+        string? Description,
+        string OtherAccountName,
+        long CounterAmount
+    );
 }

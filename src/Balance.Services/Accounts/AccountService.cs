@@ -173,20 +173,10 @@ internal sealed class AccountService : IAccountService
         return await GetAsync(id, cancellationToken);
     }
 
-    public async Task<Result> DeleteAsync(AccountId id, CancellationToken cancellationToken)
-    {
-        var result = await _dbContext
+    public Task<Result> DeleteAsync(AccountId id, CancellationToken cancellationToken) =>
+        _dbContext
             .Accounts.Where(c => c.Id == id)
-            .ExecuteDeleteAndCatchAsync(cancellationToken);
-
-        if (result.IsFailure)
-            return result.Error;
-
-        if (result.Value == 0)
-            return new NotFoundError("Account", id.Value.ToString());
-
-        return Result.Success;
-    }
+            .DeleteSingleAndCatchAsync("Account", id.Value.ToString(), cancellationToken);
 
     // Projects into a flat row in SQL; callers materialise then pass each row through
     // ToOutput to flip the sign per AccountType and wrap the Money — neither step
@@ -217,12 +207,7 @@ internal sealed class AccountService : IAccountService
             row.Name,
             row.AccountType,
             row.CurrencyCode,
-            new Money(
-                AccountSignConvention.IsCreditNormal(row.AccountType)
-                    ? checked(-row.RawSum)
-                    : row.RawSum,
-                row.CurrencyCode
-            ),
+            AccountSignConvention.ToBalance(row.AccountType, row.RawSum, row.CurrencyCode),
             row.BankAccount,
             row.CreatedAt,
             row.UpdatedAt
@@ -237,26 +222,18 @@ internal sealed class AccountService : IAccountService
         return result.IsFailure ? result.Error : Result.Success;
     }
 
-    private async Task<Result> EnsureNameAvailableAsync(
+    private Task<Result> EnsureNameAvailableAsync(
         string name,
         AccountId? excludingId,
         CancellationToken cancellationToken
-    )
-    {
-        var taken = await _dbContext.Accounts.AnyAsync(
-            a => a.Name == name && (excludingId == null || a.Id != excludingId),
-            cancellationToken
-        );
-        if (taken)
-        {
-            return new ConflictError(
+    ) =>
+        _dbContext
+            .Accounts.Where(a => a.Name == name && (excludingId == null || a.Id != excludingId))
+            .EnsureNoneAsync(
                 ErrorCodes.AccountNameTaken,
-                $"An account named '{name}' already exists."
+                $"An account named '{name}' already exists.",
+                cancellationToken
             );
-        }
-
-        return Result.Success;
-    }
 
     private sealed record AccountProjectionRow(
         AccountId Id,
