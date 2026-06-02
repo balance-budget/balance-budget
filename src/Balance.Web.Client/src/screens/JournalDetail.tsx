@@ -26,8 +26,9 @@ import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { cx } from '../lib/cx';
 import {
+    ACCOUNT_TYPE_LABEL,
+    ACCOUNT_TYPE_ORDER,
     type AccountId,
-    type AccountType,
     type CounterpartyId,
     type JournalEntryId,
 } from '../lib/domain';
@@ -45,15 +46,6 @@ import {
     type TotalsState,
 } from './journalDetail.state';
 
-const ACCOUNT_TYPE_ORDER: AccountType[] = ['Asset', 'Liability', 'Income', 'Expense', 'Equity'];
-
-const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
-    Asset: 'Assets',
-    Liability: 'Liabilities',
-    Income: 'Income',
-    Expense: 'Expenses',
-    Equity: 'Equity',
-};
 
 export function JournalDetail({ id }: { id: JournalEntryId }) {
     const query = useJournalEntry(id);

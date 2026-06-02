@@ -28,9 +28,11 @@ import { Modal, ModalFooter } from '../components/Modal';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
+import { todayIso } from '../lib/dates';
 import {
+    ACCOUNT_TYPE_LABEL,
+    ACCOUNT_TYPE_ORDER,
     type AccountId,
-    type AccountType,
     type BankAccountId,
     type BankTransactionId,
     type CounterpartyId,
@@ -51,23 +53,6 @@ import {
     type LineInput,
 } from './bankTransactionCategorize.state';
 
-const ACCOUNT_TYPE_ORDER: AccountType[] = ['Asset', 'Liability', 'Income', 'Expense', 'Equity'];
-
-const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
-    Asset: 'Assets',
-    Liability: 'Liabilities',
-    Income: 'Income',
-    Expense: 'Expenses',
-    Equity: 'Equity',
-};
-
-function todayIso(): string {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(now.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-}
 
 type Props = { id: BankTransactionId };
 

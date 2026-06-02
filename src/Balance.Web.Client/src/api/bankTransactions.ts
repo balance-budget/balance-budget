@@ -11,6 +11,10 @@ import {
 import { getJson, postJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
 import type { Page } from '../lib/paging';
+import { accountsKeys } from './accounts';
+import { bankAccountsKeys } from './bankAccounts';
+import { counterpartiesKeys } from './counterparties';
+import { journalEntriesKeys } from './journalEntries';
 
 type WireBankTransaction = components['schemas']['BankTransactionOutput'];
 type WirePagedBankTransactions = components['schemas']['PagedOutputOfBankTransactionOutput'];
@@ -198,19 +202,22 @@ export function useCategorizeBankTransaction() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (args: { id: BankTransactionId; request: WireCategorizeRequest }) => {
-            return await postJson<WireJournalEntry>(
+            const wire = await postJson<WireJournalEntry>(
                 `/api/bank-transactions/${args.id}/categorize`,
                 args.request,
                 new AbortController().signal,
                 'categorise bank transaction',
             );
+            // Brand the escaping id at the boundary (ADR-0007). Mapped inline rather than
+            // through journalEntries' toEntry to avoid deepening the existing import cycle.
+            return { ...wire, id: asJournalEntryId(wire.id) };
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: bankTransactionsKeys.all });
-            await queryClient.invalidateQueries({ queryKey: ['journalEntries'] });
-            await queryClient.invalidateQueries({ queryKey: ['counterparties'] });
-            await queryClient.invalidateQueries({ queryKey: ['bank-accounts'] });
-            await queryClient.invalidateQueries({ queryKey: ['accounts'] });
+            await queryClient.invalidateQueries({ queryKey: journalEntriesKeys.all });
+            await queryClient.invalidateQueries({ queryKey: counterpartiesKeys.all });
+            await queryClient.invalidateQueries({ queryKey: bankAccountsKeys.all });
+            await queryClient.invalidateQueries({ queryKey: accountsKeys.all });
         },
     });
 }
@@ -237,16 +244,17 @@ export function useAttachBankTransaction() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (args: { id: BankTransactionId; journalEntryId: JournalEntryId }) => {
-            return await postJson<WireJournalEntryDetail>(
+            const wire = await postJson<WireJournalEntryDetail>(
                 `/api/bank-transactions/${args.id}/attach`,
                 { journalEntryId: args.journalEntryId },
                 new AbortController().signal,
                 'attach bank transaction',
             );
+            return { ...wire, id: asJournalEntryId(wire.id) };
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: bankTransactionsKeys.all });
-            await queryClient.invalidateQueries({ queryKey: ['journalEntries'] });
+            await queryClient.invalidateQueries({ queryKey: journalEntriesKeys.all });
         },
     });
 }
@@ -255,16 +263,17 @@ export function useDetachBankTransaction() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (id: BankTransactionId) => {
-            return await postJson<WireJournalEntryDetail>(
+            const wire = await postJson<WireJournalEntryDetail>(
                 `/api/bank-transactions/${id}/detach`,
                 {},
                 new AbortController().signal,
                 'detach bank transaction',
             );
+            return { ...wire, id: asJournalEntryId(wire.id) };
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: bankTransactionsKeys.all });
-            await queryClient.invalidateQueries({ queryKey: ['journalEntries'] });
+            await queryClient.invalidateQueries({ queryKey: journalEntriesKeys.all });
         },
     });
 }
