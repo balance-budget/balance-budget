@@ -34,6 +34,11 @@ namespace Balance.Data.PostgreSql.Migrations
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)");
 
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -42,21 +47,30 @@ namespace Balance.Data.PostgreSql.Migrations
                         .HasMaxLength(8)
                         .HasColumnType("character varying(8)");
 
+                    b.Property<bool>("IsPostable")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(128)
                         .HasColumnType("citext");
+
+                    b.Property<Guid?>("ParentAccountId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Accounts_Code");
+
                     b.HasIndex("CurrencyCode");
 
-                    b.HasIndex("Name")
-                        .IsUnique()
-                        .HasDatabaseName("IX_Accounts_Name");
+                    b.HasIndex("ParentAccountId")
+                        .HasDatabaseName("IX_Accounts_ParentAccountId");
 
                     b.ToTable("Accounts", (string)null);
 
@@ -65,8 +79,10 @@ namespace Balance.Data.PostgreSql.Migrations
                         {
                             Id = new Guid("00000000-0000-7000-8000-000000000001"),
                             AccountType = "Equity",
+                            Code = "3900",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CurrencyCode = "EUR",
+                            IsPostable = true,
                             Name = "Opening Balances",
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         });
@@ -712,6 +728,11 @@ namespace Balance.Data.PostgreSql.Migrations
                         .HasForeignKey("CurrencyCode")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Balance.Data.Entities.Account", null)
+                        .WithMany()
+                        .HasForeignKey("ParentAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Balance.Data.Entities.ApiToken", b =>

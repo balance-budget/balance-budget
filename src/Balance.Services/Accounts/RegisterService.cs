@@ -2,7 +2,6 @@ using Balance.Data;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
-using Balance.Data.Helpers;
 using Balance.Services.Contracts;
 using Balance.Services.Helpers;
 using Microsoft.EntityFrameworkCore;
@@ -36,12 +35,21 @@ internal sealed class RegisterService : IRegisterService
             return new NotFoundError("Account", accountId.Value.ToString());
         }
 
-        // Focal lines on this account, joined to their entry so the optional `?q=`
+        // The focal set is this account plus every descendant (ADR-0022): a leaf register shows its
+        // own lines; a non-postable account's register aggregates all descendant leaves' lines,
+        // merged newest-first with no intra-subtree elimination.
+        var nodes = await _dbContext
+            .Accounts.AsNoTracking()
+            .Select(a => new AccountNode(a.Id, a.ParentAccountId))
+            .ToListAsync(cancellationToken);
+        var focalIds = AccountTree.DescendantsAndSelf(nodes, accountId).ToList();
+
+        // Focal lines on the subtree, joined to their entry so the optional `?q=`
         // filter (and ordering) can read the entry header. The same query backs both
         // the count and the page so they never disagree.
         var lines = _dbContext
             .JournalLines.AsNoTracking()
-            .Where(l => l.AccountId == accountId)
+            .Where(l => focalIds.Contains(l.AccountId))
             .Join(
                 _dbContext.JournalEntries.AsNoTracking(),
                 l => l.JournalEntryId,
@@ -107,12 +115,14 @@ internal sealed class RegisterService : IRegisterService
 
         var entryIds = focalRows.Select(r => r.EntryId).Distinct().ToList();
 
-        // Sibling lines for the same entries — every line whose AccountId is not the
-        // focal account. Joined to Accounts for the offsetting account's name and
-        // currency (each leg renders in its own account's currency).
-        var siblings = await _dbContext
+        // All lines for the focal entries, joined to Accounts for each offsetting leg's name and
+        // currency (each leg renders in its own account's currency). The counter legs of a focal row
+        // are every OTHER line in its entry, excluded by line id rather than account id — so an
+        // intra-subtree transfer shows both legs, each as its own focal row with the sibling as its
+        // counter (no elimination, ADR-0022).
+        var entryLines = await _dbContext
             .JournalLines.AsNoTracking()
-            .Where(l => entryIds.Contains(l.JournalEntryId) && l.AccountId != accountId)
+            .Where(l => entryIds.Contains(l.JournalEntryId))
             .Join(
                 _dbContext.Accounts.AsNoTracking(),
                 l => l.AccountId,
@@ -122,7 +132,7 @@ internal sealed class RegisterService : IRegisterService
             )
             .ToListAsync(cancellationToken);
 
-        var siblingsByEntry = siblings
+        var linesByEntry = entryLines
             .GroupBy(s => s.EntryId)
             .ToDictionary(g => g.Key, g => (IReadOnlyList<SiblingRow>)g.ToList());
 
@@ -136,10 +146,10 @@ internal sealed class RegisterService : IRegisterService
             );
 
             IReadOnlyList<RegisterRowCounterLeg> counter;
-            if (siblingsByEntry.TryGetValue(row.EntryId, out var sibs))
+            if (linesByEntry.TryGetValue(row.EntryId, out var sibs))
             {
                 var legs = new List<RegisterRowCounterLeg>(sibs.Count);
-                foreach (var sib in sibs.OrderBy(s => s.LineId))
+                foreach (var sib in sibs.Where(s => s.LineId != row.LineId).OrderBy(s => s.LineId))
                 {
                     legs.Add(
                         new RegisterRowCounterLeg(

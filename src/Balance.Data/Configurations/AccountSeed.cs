@@ -18,8 +18,11 @@ internal static class AccountSeed
         {
             Id = OpeningBalancesId,
             Name = "Opening Balances",
+            Code = "3900",
             AccountType = AccountType.Equity,
             CurrencyCode = new CurrencyCode("EUR"),
+            IsPostable = true,
+            ParentAccountId = null,
             CreatedAt = SeedTimestamp,
             UpdatedAt = SeedTimestamp,
         },
