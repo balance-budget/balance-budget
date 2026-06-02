@@ -42,7 +42,7 @@ export function MtdDeltaChip({ current, prior, polarity }: Props) {
     return (
         <span
             className={cx(
-                'inline-flex items-center gap-[3px] px-2 py-[2px] rounded-full text-[11px] font-medium leading-none whitespace-nowrap',
+                'inline-flex items-center gap-[3px] px-2 py-[2px] rounded-full text-11 font-medium leading-none whitespace-nowrap',
                 colorClass,
             )}
         >

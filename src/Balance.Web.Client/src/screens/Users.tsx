@@ -83,7 +83,7 @@ export function Users() {
                 >
                     <FormErrorBanner message={createError} />
                     <label className="flex flex-col gap-1 mb-3">
-                        <span className="text-[12px] font-medium text-fg-2">Email</span>
+                        <span className="text-12 font-medium text-fg-2">Email</span>
                         <input
                             type="email"
                             required
@@ -91,11 +91,11 @@ export function Users() {
                             onChange={e => {
                                 setEmail(e.target.value);
                             }}
-                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
+                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
                         />
                     </label>
                     <label className="flex flex-col gap-1 mb-3">
-                        <span className="text-[12px] font-medium text-fg-2">Display name</span>
+                        <span className="text-12 font-medium text-fg-2">Display name</span>
                         <input
                             type="text"
                             required
@@ -103,11 +103,11 @@ export function Users() {
                             onChange={e => {
                                 setDisplayName(e.target.value);
                             }}
-                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
+                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
                         />
                     </label>
                     <label className="flex flex-col gap-1 mb-4">
-                        <span className="text-[12px] font-medium text-fg-2">Password</span>
+                        <span className="text-12 font-medium text-fg-2">Password</span>
                         <input
                             type="password"
                             required
@@ -116,15 +116,15 @@ export function Users() {
                             onChange={e => {
                                 setPassword(e.target.value);
                             }}
-                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
+                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
                         />
-                        <span className="text-[12px] text-fg-3">Minimum 12 characters.</span>
+                        <span className="text-12 text-fg-3">Minimum 12 characters.</span>
                     </label>
                     <div>
                         <button
                             type="submit"
                             disabled={createUser.isPending}
-                            className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
+                            className="px-3 py-[7px] rounded-sm text-13 font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
                         >
                             {createUser.isPending ? 'Creating…' : 'Create user'}
                         </button>
@@ -147,20 +147,20 @@ function UserRow({
     return (
         <li className="flex items-center justify-between gap-3 px-3 py-[10px] rounded-sm bg-surface-2 border border-border-soft">
             <div className="min-w-0">
-                <div className="text-[14px] font-medium text-fg-1 truncate">
+                <div className="text-14 font-medium text-fg-1 truncate">
                     {user.displayName}
                     {isSelf ? (
-                        <span className="ml-2 text-[12px] text-fg-3 font-normal">(you)</span>
+                        <span className="ml-2 text-12 text-fg-3 font-normal">(you)</span>
                     ) : null}
                 </div>
-                <div className="text-[12px] text-fg-3 truncate">{user.email}</div>
+                <div className="text-12 text-fg-3 truncate">{user.email}</div>
             </div>
             <div className="flex items-center gap-3 shrink-0">
                 <span
                     className={
                         user.isActive
-                            ? 'px-2 py-[3px] rounded-xs text-[12px] font-medium bg-success-soft text-success'
-                            : 'px-2 py-[3px] rounded-xs text-[12px] font-medium bg-danger-soft text-danger'
+                            ? 'px-2 py-[3px] rounded-xs text-12 font-medium bg-success-soft text-success'
+                            : 'px-2 py-[3px] rounded-xs text-12 font-medium bg-danger-soft text-danger'
                     }
                 >
                     {user.isActive ? 'Active' : 'Disabled'}
@@ -171,7 +171,7 @@ function UserRow({
                         onClick={() => {
                             onToggle(!user.isActive);
                         }}
-                        className="px-3 py-[5px] rounded-sm text-[12px] font-medium text-fg-2 bg-surface-2 border border-border-soft hover:bg-surface-3 hover:text-fg-1"
+                        className="px-3 py-[5px] rounded-sm text-12 font-medium text-fg-2 bg-surface-2 border border-border-soft hover:bg-surface-3 hover:text-fg-1"
                     >
                         {user.isActive ? 'Disable' : 'Enable'}
                     </button>

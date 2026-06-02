@@ -181,7 +181,7 @@ export function BankAccountFormModal(props: Props) {
                 <FormErrorBanner message={topError} />
 
                 <fieldset className="mb-4">
-                    <legend className="text-[12px] font-medium text-fg-2 mb-2">Type</legend>
+                    <legend className="text-12 font-medium text-fg-2 mb-2">Type</legend>
                     <div className="flex gap-4">
                         <RadioOption
                             label="Current"
@@ -209,7 +209,7 @@ export function BankAccountFormModal(props: Props) {
                 </fieldset>
 
                 <fieldset className="mb-4">
-                    <legend className="text-[12px] font-medium text-fg-2 mb-2">Owner</legend>
+                    <legend className="text-12 font-medium text-fg-2 mb-2">Owner</legend>
                     <div className="flex gap-4 mb-2">
                         <RadioOption
                             label="Account"
@@ -236,7 +236,7 @@ export function BankAccountFormModal(props: Props) {
                             }}
                             disabled={ownerLocked}
                             required
-                            className="w-full px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong disabled:opacity-60"
+                            className="w-full px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong disabled:opacity-60"
                         >
                             <option value="">Select an account…</option>
                             {ledgerAccounts.map(a => (
@@ -253,7 +253,7 @@ export function BankAccountFormModal(props: Props) {
                             }}
                             disabled={ownerLocked}
                             required
-                            className="w-full px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong disabled:opacity-60"
+                            className="w-full px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong disabled:opacity-60"
                         >
                             <option value="">Select a counterparty…</option>
                             {counterpartyList.map(c => (
@@ -331,7 +331,7 @@ export function BankAccountFormModal(props: Props) {
                         errors={fieldErrors}
                     />
                     <label className="flex flex-col gap-1">
-                        <span className="text-[12px] font-medium text-fg-2">
+                        <span className="text-12 font-medium text-fg-2">
                             Currency
                             {form.ownerKind === 'account' ? (
                                 <span className="text-danger"> *</span>
@@ -343,7 +343,7 @@ export function BankAccountFormModal(props: Props) {
                                 update_({ currencyCode: e.target.value });
                             }}
                             required={form.ownerKind === 'account'}
-                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
+                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
                         >
                             <option value="">
                                 {form.ownerKind === 'account' ? 'Select…' : '(none)'}
@@ -358,7 +358,7 @@ export function BankAccountFormModal(props: Props) {
                     </label>
                     {form.ownerKind === 'account' ? (
                         <label className="flex flex-col gap-1">
-                            <span className="text-[12px] font-medium text-fg-2">
+                            <span className="text-12 font-medium text-fg-2">
                                 Statement importer
                             </span>
                             <select
@@ -366,7 +366,7 @@ export function BankAccountFormModal(props: Props) {
                                 onChange={e => {
                                     update_({ importerKey: e.target.value });
                                 }}
-                                className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
+                                className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
                             >
                                 <option value="">(none)</option>
                                 {importerOptions.map(i => (
@@ -380,7 +380,7 @@ export function BankAccountFormModal(props: Props) {
                     ) : null}
                 </div>
 
-                <p className="mt-3 text-[12px] text-fg-3">
+                <p className="mt-3 text-12 text-fg-3">
                     {form.type === 'Current'
                         ? 'IBAN is required.'
                         : form.type === 'Savings'
@@ -393,14 +393,14 @@ export function BankAccountFormModal(props: Props) {
                         type="button"
                         onClick={props.onClose}
                         disabled={isPending}
-                        className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
+                        className="px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
                         disabled={isPending}
-                        className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
+                        className="px-3 py-[7px] rounded-sm text-13 font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
                     >
                         {isPending ? 'Saving…' : props.mode === 'create' ? 'Create' : 'Save'}
                     </button>
@@ -448,7 +448,7 @@ function TextField({
 }) {
     return (
         <label className="flex flex-col gap-1">
-            <span className="text-[12px] font-medium text-fg-2">{label}</span>
+            <span className="text-12 font-medium text-fg-2">{label}</span>
             <input
                 type="text"
                 value={value}
@@ -456,7 +456,7 @@ function TextField({
                     onChange(e.target.value);
                 }}
                 autoFocus={autoFocus}
-                className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
+                className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
             />
             <FieldError name={errorName} errors={errors} />
         </label>
@@ -475,7 +475,7 @@ function RadioOption({
     disabled?: boolean;
 }) {
     return (
-        <label className="inline-flex items-center gap-2 text-[13px] text-fg-1 cursor-pointer">
+        <label className="inline-flex items-center gap-2 text-13 text-fg-1 cursor-pointer">
             <input
                 type="radio"
                 checked={checked}

@@ -61,7 +61,7 @@ function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
                     <span className="text-14 font-medium text-fg-1 truncate">
                         {formatBankAccountLabel(bankAccount)}
                     </span>
-                    <span className="text-[12px] text-fg-3 truncate tabular">
+                    <span className="text-12 text-fg-3 truncate tabular">
                         {formatBankAccountSubline(bankAccount)}
                     </span>
                 </div>
@@ -69,7 +69,7 @@ function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
                     htmlFor={inputId}
                     className={
                         'inline-flex items-center gap-2 px-3 py-[7px] rounded-sm select-none ' +
-                        'bg-brand-primary text-white text-[13px] font-medium cursor-pointer ' +
+                        'bg-brand-primary text-white text-13 font-medium cursor-pointer ' +
                         'hover:bg-brand-primary-dark transition-colors ' +
                         (isUploading ? 'opacity-60 pointer-events-none' : '')
                     }
@@ -91,7 +91,7 @@ function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
                 />
             </div>
             {feedback?.kind === 'success' && (
-                <div className="pl-12 text-[12px] text-success">
+                <div className="pl-12 text-12 text-success">
                     Imported {feedback.imported}
                     {feedback.skipped > 0
                         ? ` · skipped ${feedback.skipped} duplicate${feedback.skipped === 1 ? '' : 's'}`
@@ -100,7 +100,7 @@ function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
                 </div>
             )}
             {feedback?.kind === 'error' && (
-                <div className="pl-12 text-[12px] text-danger">{feedback.message}</div>
+                <div className="pl-12 text-12 text-danger">{feedback.message}</div>
             )}
         </div>
     );
@@ -134,7 +134,7 @@ function ImportsPanel() {
 
     if (targets.length === 0) {
         return (
-            <span className="text-[13px] text-fg-3">
+            <span className="text-13 text-fg-3">
                 No bank accounts linked to one of your own accounts yet.
             </span>
         );

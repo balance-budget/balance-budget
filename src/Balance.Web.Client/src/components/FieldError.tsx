@@ -12,7 +12,7 @@ export function FieldError({ name, errors }: FieldErrorProps) {
     if (!errors) return null;
     const message = pickMessage(errors, name);
     if (!message) return null;
-    return <p className="text-[12px] text-danger mt-1">{message}</p>;
+    return <p className="text-12 text-danger mt-1">{message}</p>;
 }
 
 function pickMessage(errors: Record<string, string[]>, name: string): string | null {

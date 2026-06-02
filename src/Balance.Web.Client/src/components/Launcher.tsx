@@ -149,9 +149,9 @@ export function Launcher({ open, onClose }: LauncherProps) {
                         }}
                         placeholder="Search…"
                         aria-label="Search query"
-                        className="flex-1 bg-transparent outline-none text-[14px] text-fg-1 placeholder:text-fg-3"
+                        className="flex-1 bg-transparent outline-none text-14 text-fg-1 placeholder:text-fg-3"
                     />
-                    <kbd className="px-1.5 py-0.5 rounded bg-surface-2 text-[11px] text-fg-3 tabular border border-border-soft">
+                    <kbd className="px-1.5 py-0.5 rounded bg-surface-2 text-11 text-fg-3 tabular border border-border-soft">
                         Esc
                     </kbd>
                 </div>
@@ -190,20 +190,18 @@ function LauncherBody({
 }) {
     if (query.length < 2) {
         return (
-            <p className="px-4 py-6 text-center text-[12px] text-fg-3">
+            <p className="px-4 py-6 text-center text-12 text-fg-3">
                 Type to search accounts, counterparties, bank accounts, journal entries.
             </p>
         );
     }
 
     if (isPending || !data) {
-        return <p className="px-4 py-6 text-center text-[12px] text-fg-3">Searching…</p>;
+        return <p className="px-4 py-6 text-center text-12 text-fg-3">Searching…</p>;
     }
 
     if (rows.length === 0) {
-        return (
-            <p className="px-4 py-6 text-center text-[12px] text-fg-3">No matches for “{query}”.</p>
-        );
+        return <p className="px-4 py-6 text-center text-12 text-fg-3">No matches for “{query}”.</p>;
     }
 
     // Track the running flat-index as we render each section so that each row
@@ -351,10 +349,10 @@ function Section({
     const moreCount = total - shown;
     return (
         <div className="px-2 pb-2">
-            <div className="px-2 py-1 text-[11px] uppercase tracking-wider text-fg-3">{title}</div>
+            <div className="px-2 py-1 text-11 uppercase tracking-wider text-fg-3">{title}</div>
             {children}
             {moreCount > 0 ? (
-                <div className="px-2 pt-1 text-[11px] text-fg-3">
+                <div className="px-2 pt-1 text-11 text-fg-3">
                     + {moreCount} more matching {title.toLowerCase()}
                 </div>
             ) : null}
@@ -388,11 +386,9 @@ function Row({
             )}
         >
             <Icon name={icon} size={14} strokeWidth={2} className="text-fg-3 shrink-0" />
-            <span className="flex-1 min-w-0 truncate text-[13px] text-fg-1">{primary}</span>
+            <span className="flex-1 min-w-0 truncate text-13 text-fg-1">{primary}</span>
             {secondary ? (
-                <span className="text-[12px] text-fg-3 tabular truncate max-w-[40%]">
-                    {secondary}
-                </span>
+                <span className="text-12 text-fg-3 tabular truncate max-w-[40%]">{secondary}</span>
             ) : null}
         </button>
     );

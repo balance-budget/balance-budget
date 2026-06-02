@@ -124,7 +124,7 @@ function ToastViewport({
                     }}
                     className={cx(
                         'pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-sm border',
-                        'text-[13px] font-medium shadow-overlay min-w-[240px] max-w-[360px] text-left',
+                        'text-13 font-medium shadow-overlay min-w-[240px] max-w-[360px] text-left',
                         VARIANT_CLASS[t.variant],
                     )}
                 >

@@ -39,7 +39,7 @@ export function Activity({
                 action={
                     <Link
                         to="/journal/new"
-                        className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm bg-brand-primary text-white text-[13px] font-medium hover:bg-brand-primary-dark"
+                        className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm bg-brand-primary text-white text-13 font-medium hover:bg-brand-primary-dark"
                     >
                         <Icon name="plus" size={14} strokeWidth={2} />
                         New entry
@@ -104,16 +104,14 @@ function JournalBody({
     }
 
     if (entries.data.items.length === 0 && query !== '') {
-        return (
-            <div className="py-8 text-center text-[14px] text-fg-2">No matches for “{query}”.</div>
-        );
+        return <div className="py-8 text-center text-14 text-fg-2">No matches for “{query}”.</div>;
     }
 
     if (entries.data.items.length === 0 && page === 1) {
         return (
             <div className="py-8 flex flex-col items-center gap-2 text-center">
-                <span className="text-[14px] text-fg-2">No journal entries yet.</span>
-                <span className="text-[12px] text-fg-3">
+                <span className="text-14 text-fg-2">No journal entries yet.</span>
+                <span className="text-12 text-fg-3">
                     Create one manually or import a bank statement.
                 </span>
             </div>
@@ -122,7 +120,7 @@ function JournalBody({
 
     return (
         <div className="flex flex-col">
-            <div className="hidden lg:grid grid-cols-[100px_24px_1fr_minmax(180px,1.2fr)_140px] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
+            <div className="hidden lg:grid grid-cols-[100px_24px_1fr_minmax(180px,1.2fr)_140px] gap-3 px-2 pb-2 text-11 text-fg-3 uppercase tracking-wider border-b border-border-soft">
                 <span>Date</span>
                 <span />
                 <span>Counterparty</span>
@@ -158,20 +156,20 @@ function JournalRow({
             className="block border-b border-border-soft last:border-b-0 hover:bg-surface-2"
         >
             <div className="hidden lg:grid grid-cols-[100px_24px_1fr_minmax(180px,1.2fr)_140px] gap-3 items-center px-2 py-2">
-                <span className="text-[12px] text-fg-3 tabular">{entry.date}</span>
+                <span className="text-12 text-fg-3 tabular">{entry.date}</span>
                 <span className="flex items-center justify-center text-fg-3" aria-hidden="true">
                     {entry.hasBankTransactions ? (
                         <Icon name="download" size={12} strokeWidth={2} />
                     ) : null}
                 </span>
-                <span className="text-[13px] text-fg-1 truncate">{heading}</span>
+                <span className="text-13 text-fg-1 truncate">{heading}</span>
                 <FromToCell projection={projection} lineCount={entry.lines.length} />
                 <ProjectionAmount projection={projection} variant="row" />
             </div>
             <div className="lg:hidden flex flex-col gap-1 px-2 py-3">
                 <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-[12px] text-fg-3 tabular shrink-0">{entry.date}</span>
+                        <span className="text-12 text-fg-3 tabular shrink-0">{entry.date}</span>
                         {entry.hasBankTransactions ? (
                             <Icon
                                 name="download"
@@ -183,7 +181,7 @@ function JournalRow({
                     </div>
                     <ProjectionAmount projection={projection} variant="row" />
                 </div>
-                <span className="text-[13px] text-fg-1 truncate">{heading}</span>
+                <span className="text-13 text-fg-1 truncate">{heading}</span>
                 <FromToCell projection={projection} lineCount={entry.lines.length} />
             </div>
         </Link>
@@ -198,14 +196,14 @@ function FromToCell({
     lineCount: number;
 }) {
     if (!projection.isSimplifiable) {
-        return <span className="text-[12px] text-fg-3 truncate">Split ({lineCount} lines)</span>;
+        return <span className="text-12 text-fg-3 truncate">Split ({lineCount} lines)</span>;
     }
 
     const fromLabel = formatLegLabel(projection.fromLegs);
     const toLabel = formatLegLabel(projection.toLegs);
 
     return (
-        <span className="text-[12px] text-fg-2 truncate flex items-center gap-1">
+        <span className="text-12 text-fg-2 truncate flex items-center gap-1">
             <span className="truncate">{fromLabel}</span>
             <Icon name="chevron-right" size={10} strokeWidth={2} className="text-fg-3 shrink-0" />
             <span className="truncate">{toLabel}</span>

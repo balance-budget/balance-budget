@@ -76,7 +76,7 @@ export function AccountFormModal(props: Props) {
                 <FormErrorBanner message={topError} />
 
                 <label className="flex flex-col gap-1 mb-3">
-                    <span className="text-[12px] font-medium text-fg-2">Name</span>
+                    <span className="text-12 font-medium text-fg-2">Name</span>
                     <input
                         type="text"
                         value={name}
@@ -86,20 +86,20 @@ export function AccountFormModal(props: Props) {
                         required
                         maxLength={200}
                         autoFocus
-                        className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
+                        className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
                     />
                     <FieldError name="Name" errors={fieldErrors} />
                 </label>
 
                 <label className="flex flex-col gap-1 mb-3">
-                    <span className="text-[12px] font-medium text-fg-2">Type</span>
+                    <span className="text-12 font-medium text-fg-2">Type</span>
                     <select
                         value={accountType}
                         onChange={e => {
                             setAccountType(e.target.value as AccountType);
                         }}
                         required
-                        className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
+                        className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
                     >
                         {ACCOUNT_TYPES.map(t => (
                             <option key={t} value={t}>
@@ -111,14 +111,14 @@ export function AccountFormModal(props: Props) {
                 </label>
 
                 <label className="flex flex-col gap-1">
-                    <span className="text-[12px] font-medium text-fg-2">Currency</span>
+                    <span className="text-12 font-medium text-fg-2">Currency</span>
                     <select
                         value={currencyCode}
                         onChange={e => {
                             setCurrencyCode(e.target.value);
                         }}
                         required
-                        className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[14px] focus:outline-none focus:border-border-strong"
+                        className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
                     >
                         <option value="">Select…</option>
                         {currencyList.map(c => (
@@ -135,14 +135,14 @@ export function AccountFormModal(props: Props) {
                         type="button"
                         onClick={props.onClose}
                         disabled={isPending}
-                        className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
+                        className="px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
                         disabled={isPending}
-                        className="px-3 py-[7px] rounded-sm text-[13px] font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
+                        className="px-3 py-[7px] rounded-sm text-13 font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
                     >
                         {isPending ? 'Saving…' : props.mode === 'create' ? 'Create' : 'Save'}
                     </button>

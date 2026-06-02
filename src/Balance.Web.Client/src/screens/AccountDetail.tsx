@@ -66,13 +66,13 @@ export function AccountDetail({
                     <div className="flex items-center gap-3 min-w-0">
                         <AccountAvatar account={account} size="md" />
                         <div className="flex flex-col gap-[2px] min-w-0">
-                            <Link to="/accounts" className="text-[12px] text-fg-3 hover:text-fg-1">
+                            <Link to="/accounts" className="text-12 text-fg-3 hover:text-fg-1">
                                 ← Accounts
                             </Link>
-                            <h1 className="text-[22px] font-medium text-fg-1 truncate">
+                            <h1 className="text-22 font-medium text-fg-1 truncate">
                                 {account.name}
                             </h1>
-                            <span className="text-[12px] text-fg-3">
+                            <span className="text-12 text-fg-3">
                                 {account.type} · {account.currencyCode}
                             </span>
                         </div>
@@ -90,7 +90,7 @@ export function AccountDetail({
                                 onClick={() => {
                                     setEditing(true);
                                 }}
-                                className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm text-[13px] font-medium text-fg-2 hover:text-fg-1 hover:bg-surface-2"
+                                className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-fg-1 hover:bg-surface-2"
                             >
                                 <Icon name="pencil" size={14} strokeWidth={2} />
                                 Edit
@@ -100,7 +100,7 @@ export function AccountDetail({
                                 onClick={() => {
                                     setDeleting(true);
                                 }}
-                                className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm text-[13px] font-medium text-fg-2 hover:text-danger hover:bg-surface-2"
+                                className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-danger hover:bg-surface-2"
                             >
                                 <Icon name="trash" size={14} strokeWidth={2} />
                                 Delete
@@ -182,7 +182,7 @@ function RegisterTable({
 
     if (register.data.items.length === 0) {
         return (
-            <div className="py-6 text-center text-[13px] text-fg-3">
+            <div className="py-6 text-center text-13 text-fg-3">
                 {debouncedQ !== '' ? `No matches for “${debouncedQ}”.` : 'No journal entries yet.'}
             </div>
         );
@@ -190,7 +190,7 @@ function RegisterTable({
 
     return (
         <div className="flex flex-col">
-            <div className="hidden lg:grid grid-cols-[100px_1fr_180px_120px] gap-3 px-2 pb-2 text-[11px] text-fg-3 uppercase tracking-wider border-b border-border-soft">
+            <div className="hidden lg:grid grid-cols-[100px_1fr_180px_120px] gap-3 px-2 pb-2 text-11 text-fg-3 uppercase tracking-wider border-b border-border-soft">
                 <span>Date</span>
                 <span>Description</span>
                 <span>Counter</span>
@@ -224,7 +224,7 @@ function RegisterRowView({
     const amount = (
         <span
             className={cx(
-                'font-mono text-[13px] tabular text-right',
+                'font-mono text-13 tabular text-right',
                 negative ? 'text-danger' : 'text-success',
             )}
         >
@@ -232,7 +232,7 @@ function RegisterRowView({
         </span>
     );
     const counterLabel = (
-        <span className="text-[12px] text-fg-2 truncate">
+        <span className="text-12 text-fg-2 truncate">
             {counter ? counter.accountName : '—'}
             {extra > 0 ? <span className="text-fg-3"> +{extra}</span> : null}
         </span>
@@ -244,13 +244,11 @@ function RegisterRowView({
             className="block border-b border-border-soft last:border-b-0 hover:bg-surface-2"
         >
             <div className="hidden lg:grid grid-cols-[100px_1fr_180px_120px] gap-3 items-center px-2 py-2">
-                <span className="text-[12px] text-fg-3 tabular">{row.date}</span>
+                <span className="text-12 text-fg-3 tabular">{row.date}</span>
                 <div className="flex flex-col min-w-0">
-                    <span className="text-[13px] text-fg-1 truncate">{heading}</span>
+                    <span className="text-13 text-fg-1 truncate">{heading}</span>
                     {row.lineDescription ? (
-                        <span className="text-[12px] text-fg-3 truncate">
-                            {row.lineDescription}
-                        </span>
+                        <span className="text-12 text-fg-3 truncate">{row.lineDescription}</span>
                     ) : null}
                 </div>
                 {counterLabel}
@@ -258,12 +256,12 @@ function RegisterRowView({
             </div>
             <div className="lg:hidden flex flex-col gap-1 px-2 py-3">
                 <div className="flex items-center justify-between gap-3">
-                    <span className="text-[12px] text-fg-3 tabular">{row.date}</span>
+                    <span className="text-12 text-fg-3 tabular">{row.date}</span>
                     {amount}
                 </div>
-                <span className="text-[13px] text-fg-1 truncate">{heading}</span>
+                <span className="text-13 text-fg-1 truncate">{heading}</span>
                 {row.lineDescription ? (
-                    <span className="text-[12px] text-fg-3 truncate">{row.lineDescription}</span>
+                    <span className="text-12 text-fg-3 truncate">{row.lineDescription}</span>
                 ) : null}
                 {counterLabel}
             </div>

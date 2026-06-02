@@ -46,7 +46,7 @@ export function Counterparties({
                             onClick={() => {
                                 setCreating(true);
                             }}
-                            className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm bg-brand-primary text-white text-[13px] font-medium hover:bg-brand-primary-dark"
+                            className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm bg-brand-primary text-white text-13 font-medium hover:bg-brand-primary-dark"
                         >
                             <Icon name="plus" size={14} strokeWidth={2} />
                             New counterparty
@@ -136,17 +136,15 @@ function CounterpartyList({
 
     if (query.data.items.length === 0 && debouncedQ !== '') {
         return (
-            <div className="py-8 text-center text-[14px] text-fg-2">
-                No matches for “{debouncedQ}”.
-            </div>
+            <div className="py-8 text-center text-14 text-fg-2">No matches for “{debouncedQ}”.</div>
         );
     }
 
     if (query.data.items.length === 0 && page === 1) {
         return (
             <div className="py-8 flex flex-col items-center gap-2 text-center">
-                <span className="text-[14px] text-fg-2">No counterparties yet.</span>
-                <span className="text-[12px] text-fg-3">
+                <span className="text-14 text-fg-2">No counterparties yet.</span>
+                <span className="text-12 text-fg-3">
                     Add the parties you receive money from or pay to.
                 </span>
             </div>
