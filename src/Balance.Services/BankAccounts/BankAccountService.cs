@@ -278,20 +278,10 @@ internal sealed class BankAccountService : IBankAccountService
         return ToOutput(bankAccount);
     }
 
-    public async Task<Result> DeleteAsync(BankAccountId id, CancellationToken cancellationToken)
-    {
-        var result = await _dbContext
+    public Task<Result> DeleteAsync(BankAccountId id, CancellationToken cancellationToken) =>
+        _dbContext
             .BankAccounts.Where(c => c.Id == id)
-            .ExecuteDeleteAndCatchAsync(cancellationToken);
-
-        if (result.IsFailure)
-            return result.Error;
-
-        if (result.Value == 0)
-            return new NotFoundError("BankAccount", id.Value.ToString());
-
-        return Result.Success;
-    }
+            .DeleteSingleAndCatchAsync("BankAccount", id.Value.ToString(), cancellationToken);
 
     private static BankAccountOutput ToOutput(BankAccount bankAccount) =>
         new(
@@ -436,23 +426,20 @@ internal sealed class BankAccountService : IBankAccountService
 
         if (accountId is { } aid)
         {
-            var exists = await _dbContext.Accounts.AnyAsync(a => a.Id == aid, cancellationToken);
-            if (!exists)
-            {
-                return new NotFoundError("Account", aid.Value.ToString());
-            }
+            var accountExists = await _dbContext
+                .Accounts.Where(a => a.Id == aid)
+                .EnsureExistsAsync("Account", aid.Value.ToString(), cancellationToken);
+            if (accountExists.IsFailure)
+                return accountExists.Error;
         }
 
         if (counterpartyId is { } cid)
         {
-            var exists = await _dbContext.Counterparties.AnyAsync(
-                c => c.Id == cid,
-                cancellationToken
-            );
-            if (!exists)
-            {
-                return new NotFoundError("Counterparty", cid.Value.ToString());
-            }
+            var counterpartyExists = await _dbContext
+                .Counterparties.Where(c => c.Id == cid)
+                .EnsureExistsAsync("Counterparty", cid.Value.ToString(), cancellationToken);
+            if (counterpartyExists.IsFailure)
+                return counterpartyExists.Error;
         }
 
         return Result.Success;

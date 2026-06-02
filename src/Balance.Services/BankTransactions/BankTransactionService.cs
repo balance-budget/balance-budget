@@ -79,28 +79,7 @@ internal sealed class BankTransactionService : IBankTransactionService
             .AsNoTracking()
             .Skip(skip)
             .Take(take)
-            .Select(b => new BankTransactionOutput(
-                b.Id,
-                b.BankAccountId,
-                b.BookingDate,
-                b.Money,
-                b.Description,
-                b.CounterpartyName,
-                b.CounterpartyAccountNumber,
-                b.ValueDate,
-                b.Reference,
-                b.MandateId,
-                b.SepaCreditorId,
-                b.ForeignAmount,
-                b.ForeignCurrencyCode,
-                b.ExchangeRate,
-                b.ImporterKey,
-                b.JournalEntryId,
-                b.DismissedAt,
-                b.DismissedReason,
-                b.CreatedAt,
-                b.UpdatedAt
-            ))
+            .Select(BankTransactionProjections.ToOutput)
             .ToListAsync(cancellationToken);
 
         // The Inbox hint is the only filter where a MatchingJournalEntry is meaningful (other
@@ -126,35 +105,7 @@ internal sealed class BankTransactionService : IBankTransactionService
         var output = await _dbContext
             .BankTransactions.AsNoTracking()
             .Where(b => b.Id == id)
-            .Select(b => new BankTransactionDetailOutput(
-                b.Id,
-                b.BankAccountId,
-                b.BookingDate,
-                b.Money,
-                b.Description,
-                b.CounterpartyName,
-                b.CounterpartyAccountNumber,
-                b.ValueDate,
-                b.Reference,
-                b.MandateId,
-                b.SepaCreditorId,
-                b.ForeignAmount,
-                b.ForeignCurrencyCode,
-                b.ExchangeRate,
-                b.ImporterKey,
-                b.JournalEntryId,
-                b.DismissedAt,
-                b.DismissedReason,
-                b.CreatedAt,
-                b.UpdatedAt,
-                b.Metadata.OrderBy(m => m.Key!.Name)
-                    .Select(m => new BankTransactionMetadataEntryOutput(
-                        m.Key!.Name,
-                        m.StringValue,
-                        m.IntegerValue
-                    ))
-                    .ToList()
-            ))
+            .Select(BankTransactionProjections.ToDetailOutput)
             .FirstOrDefaultAsync(cancellationToken);
         return output is null ? new NotFoundError("BankTransaction", id.Value.ToString()) : output;
     }
@@ -237,20 +188,10 @@ internal sealed class BankTransactionService : IBankTransactionService
             input.CounterpartyAccountNumber ?? string.Empty
         );
 
-    public async Task<Result> DeleteAsync(BankTransactionId id, CancellationToken cancellationToken)
-    {
-        var result = await _dbContext
+    public Task<Result> DeleteAsync(BankTransactionId id, CancellationToken cancellationToken) =>
+        _dbContext
             .BankTransactions.Where(c => c.Id == id)
-            .ExecuteDeleteAndCatchAsync(cancellationToken);
-
-        if (result.IsFailure)
-            return result.Error;
-
-        if (result.Value == 0)
-            return new NotFoundError("BankTransaction", id.Value.ToString());
-
-        return Result.Success;
-    }
+            .DeleteSingleAndCatchAsync("BankTransaction", id.Value.ToString(), cancellationToken);
 
     public async Task<Result<BankTransactionOutput>> DismissAsync(
         BankTransactionId id,
@@ -341,26 +282,5 @@ internal sealed class BankTransactionService : IBankTransactionService
     }
 
     private static BankTransactionOutput ToOutput(BankTransaction bankTransaction) =>
-        new(
-            bankTransaction.Id,
-            bankTransaction.BankAccountId,
-            bankTransaction.BookingDate,
-            bankTransaction.Money,
-            bankTransaction.Description,
-            bankTransaction.CounterpartyName,
-            bankTransaction.CounterpartyAccountNumber,
-            bankTransaction.ValueDate,
-            bankTransaction.Reference,
-            bankTransaction.MandateId,
-            bankTransaction.SepaCreditorId,
-            bankTransaction.ForeignAmount,
-            bankTransaction.ForeignCurrencyCode,
-            bankTransaction.ExchangeRate,
-            bankTransaction.ImporterKey,
-            bankTransaction.JournalEntryId,
-            bankTransaction.DismissedAt,
-            bankTransaction.DismissedReason,
-            bankTransaction.CreatedAt,
-            bankTransaction.UpdatedAt
-        );
+        BankTransactionProjections.ToOutputInMemory(bankTransaction);
 }

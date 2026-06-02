@@ -155,13 +155,10 @@ internal sealed class CurrencyService : ICurrencyService
     {
         var result = await _dbContext
             .Currencies.Where(c => c.Code == code)
-            .ExecuteDeleteAndCatchAsync(cancellationToken);
+            .DeleteSingleAndCatchAsync("Currency", code.Value, cancellationToken);
 
         if (result.IsFailure)
             return result.Error;
-
-        if (result.Value == 0)
-            return new NotFoundError("Currency", code.Value);
 
         InvalidateCache(code);
 
