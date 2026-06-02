@@ -15,6 +15,15 @@ public static class ErrorCodes
     // Account
     public const string AccountNameTaken = "account.name_taken";
     public const string AccountNameEmpty = "account.name_empty";
+    public const string AccountCodeTaken = "account.code_taken";
+    public const string AccountCodeEmpty = "account.code_empty";
+    public const string AccountParentMustBeNonPostable = "account.parent_must_be_non_postable";
+    public const string AccountSubtreeTypeMismatch = "account.subtree_type_mismatch";
+    public const string AccountSubtreeCurrencyMismatch = "account.subtree_currency_mismatch";
+    public const string AccountParentCycle = "account.parent_cycle";
+    public const string AccountHasChildren = "account.has_children";
+    public const string AccountHasLines = "account.has_lines";
+    public const string AccountTypeLockedInTree = "account.type_locked_in_tree";
 
     // Counterparty
     public const string CounterpartyNameTaken = "counterparty.name_taken";
