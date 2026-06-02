@@ -6,7 +6,7 @@ import { FormErrorBanner } from '../components/FormErrorBanner';
 import { Modal, ModalFooter } from '../components/Modal';
 import { useToast } from '../components/Toast';
 import type { AccountType } from '../lib/domain';
-import { ApiError } from '../lib/http';
+import { handleFormError } from '../lib/formErrors';
 
 const ACCOUNT_TYPES: AccountType[] = ['Asset', 'Liability', 'Equity', 'Income', 'Expense'];
 
@@ -55,17 +55,7 @@ export function AccountFormModal(props: Props) {
             }
             props.onClose();
         } catch (err) {
-            if (err instanceof ApiError) {
-                if (err.fieldErrors) {
-                    setFieldErrors(err.fieldErrors);
-                } else if (err.status >= 400 && err.status < 500) {
-                    setTopError(err.message);
-                } else {
-                    toast.error(err.message);
-                }
-            } else if (err instanceof Error) {
-                toast.error(err.message);
-            }
+            handleFormError(err, { setFieldErrors, setTopError, toast: toast.error });
         }
     }
 

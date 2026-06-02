@@ -2,20 +2,18 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useAccounts, type Account } from '../api/accounts';
 import { useCounterparty, useDeleteCounterparty } from '../api/counterparties';
-import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import { useJournalEntries, type JournalEntry } from '../api/journalEntries';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Pagination } from '../components/Pagination';
 import { Panel, SectionHead } from '../components/Panel';
+import { ProjectionAmount } from '../components/ProjectionAmount';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
-import { cx } from '../lib/cx';
 import { type AccountId, type CounterpartyId } from '../lib/domain';
-import { ApiError } from '../lib/http';
+import { handleActionError } from '../lib/formErrors';
 import { formatLegLabel, projectEntry, type JournalProjection } from '../lib/journalProjection';
-import { formatMoney } from '../lib/money';
 import { LinkedBankAccountsSection } from './LinkedBankAccounts';
 import { CounterpartyFormModal } from './CounterpartyForm';
 
@@ -144,7 +142,6 @@ function JournalEntriesSection({
     const skip = (page - 1) * PAGE_SIZE;
     const entries = useJournalEntries(skip, PAGE_SIZE, '', counterpartyId);
     const accounts = useAccounts();
-    const catalog = useCurrencyCatalog();
 
     const accountById = useMemo(
         () => new Map<AccountId, Account>((accounts.data ?? []).map(a => [a.id, a])),
@@ -187,12 +184,7 @@ function JournalEntriesSection({
                 <span className="text-right">Amount</span>
             </div>
             {entries.data.items.map(entry => (
-                <CounterpartyEntryRow
-                    key={entry.id}
-                    entry={entry}
-                    accountById={accountById}
-                    catalog={catalog}
-                />
+                <CounterpartyEntryRow key={entry.id} entry={entry} accountById={accountById} />
             ))}
             <Pagination
                 page={page}
@@ -207,11 +199,9 @@ function JournalEntriesSection({
 function CounterpartyEntryRow({
     entry,
     accountById,
-    catalog,
 }: {
     entry: JournalEntry;
     accountById: ReadonlyMap<AccountId, Account>;
-    catalog: CurrencyCatalog;
 }) {
     const projection = projectEntry(entry, accountById);
     const description = entry.description ?? '—';
@@ -225,12 +215,12 @@ function CounterpartyEntryRow({
                 <span className="text-[12px] text-fg-3 tabular">{entry.date}</span>
                 <span className="text-[13px] text-fg-1 truncate">{description}</span>
                 <FromToCell projection={projection} lineCount={entry.lines.length} />
-                <AmountCell projection={projection} catalog={catalog} />
+                <ProjectionAmount projection={projection} variant="row" />
             </div>
             <div className="lg:hidden flex flex-col gap-1 px-2 py-3">
                 <div className="flex items-center justify-between gap-3">
                     <span className="text-[12px] text-fg-3 tabular shrink-0">{entry.date}</span>
-                    <AmountCell projection={projection} catalog={catalog} />
+                    <ProjectionAmount projection={projection} variant="row" />
                 </div>
                 <span className="text-[13px] text-fg-1 truncate">{description}</span>
                 <FromToCell projection={projection} lineCount={entry.lines.length} />
@@ -260,27 +250,6 @@ function FromToCell({
     );
 }
 
-function AmountCell({
-    projection,
-    catalog,
-}: {
-    projection: JournalProjection;
-    catalog: CurrencyCatalog;
-}) {
-    const money = projection.isTransfer ? projection.grossMagnitude : projection.netWorthChange;
-    const colour = projection.isTransfer
-        ? 'text-fg-3'
-        : money.amount < 0
-          ? 'text-danger'
-          : 'text-success';
-    return (
-        <span className={cx('font-mono text-[13px] tabular text-right', colour)}>
-            {formatMoney(money.amount, money.currencyCode, catalog, {
-                sign: !projection.isTransfer,
-            })}
-        </span>
-    );
-}
 
 function DeleteCounterpartyDialog({
     id,
@@ -303,11 +272,7 @@ function DeleteCounterpartyDialog({
             toast.success(`Deleted “${name}”.`);
             await navigate({ to: '/counterparties', search: { page: 1, q: '' } });
         } catch (err) {
-            if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
-                setError(err.message);
-            } else if (err instanceof Error) {
-                toast.error(err.message);
-            }
+            handleActionError(err, { setError, toast: toast.error });
         }
     }
 

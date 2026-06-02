@@ -15,7 +15,7 @@ import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { cx } from '../lib/cx';
 import type { AccountId } from '../lib/domain';
-import { ApiError } from '../lib/http';
+import { handleActionError } from '../lib/formErrors';
 import { formatMoney } from '../lib/money';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
 import { AccountFormModal } from './AccountForm';
@@ -284,11 +284,7 @@ function DeleteAccountDialog({ account, onClose }: { account: Account; onClose: 
             toast.success(`Deleted “${account.name}”.`);
             await navigate({ to: '/accounts' });
         } catch (err) {
-            if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
-                setError(err.message);
-            } else if (err instanceof Error) {
-                toast.error(err.message);
-            }
+            handleActionError(err, { setError, toast: toast.error });
         }
     }
 

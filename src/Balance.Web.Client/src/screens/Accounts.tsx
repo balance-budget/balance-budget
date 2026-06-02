@@ -10,7 +10,7 @@ import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import type { AccountType } from '../lib/domain';
-import { ApiError } from '../lib/http';
+import { handleActionError } from '../lib/formErrors';
 import { AccountFormModal } from './AccountForm';
 
 const TYPE_ORDER: AccountType[] = ['Asset', 'Liability', 'Equity', 'Income', 'Expense'];
@@ -224,11 +224,7 @@ function DeleteAccountDialog({ account, onClose }: { account: Account; onClose: 
             toast.success(`Deleted “${account.name}”.`);
             onClose();
         } catch (err) {
-            if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
-                setError(err.message);
-            } else if (err instanceof Error) {
-                toast.error(err.message);
-            }
+            handleActionError(err, { setError, toast: toast.error });
         }
     }
 
