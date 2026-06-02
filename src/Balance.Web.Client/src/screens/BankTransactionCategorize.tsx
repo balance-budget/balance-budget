@@ -53,7 +53,6 @@ import {
     type LineInput,
 } from './bankTransactionCategorize.state';
 
-
 type Props = { id: BankTransactionId };
 
 export function BankTransactionCategorize({ id }: Props) {

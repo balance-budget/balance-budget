@@ -250,7 +250,6 @@ function FromToCell({
     );
 }
 
-
 function DeleteCounterpartyDialog({
     id,
     name,

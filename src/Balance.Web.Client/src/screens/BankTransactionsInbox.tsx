@@ -109,7 +109,6 @@ const EMPTY_HINT: Record<BankTransactionFilter, string> = {
     All: 'Import a bank statement from Bank imports to get started.',
 };
 
-
 type Props = {
     page: number;
     filter: BankTransactionFilter;

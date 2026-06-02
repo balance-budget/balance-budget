@@ -76,9 +76,7 @@ function toCounterparty(
     return { id: asCounterpartyId(wire.id), name: wire.name };
 }
 
-function toBankAccount(
-    wire: WireSearchOutput['bankAccounts']['items'][number],
-): BankAccountHit {
+function toBankAccount(wire: WireSearchOutput['bankAccounts']['items'][number]): BankAccountHit {
     return {
         id: asBankAccountId(wire.id),
         type: wire.type,

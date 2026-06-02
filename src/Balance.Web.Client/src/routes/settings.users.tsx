@@ -51,10 +51,7 @@ function UsersPage() {
     return (
         <>
             <Panel>
-                <SectionHead
-                    title="Users"
-                    subtitle="Logins that have access to this ledger."
-                />
+                <SectionHead title="Users" subtitle="Logins that have access to this ledger." />
                 {usersQuery.isPending ? (
                     <div className="flex flex-col gap-2">
                         <Skeleton className="h-12" />

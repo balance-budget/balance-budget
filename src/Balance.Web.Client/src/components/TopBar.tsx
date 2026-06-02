@@ -7,8 +7,7 @@ type TopBarProps = {
     onSearchClick: () => void;
 };
 
-const isMac =
-    typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
 
 export function TopBar({ title, period, onMenuClick, onSearchClick }: TopBarProps) {
     return (
