@@ -137,7 +137,9 @@ function BankAccountList({ owner }: { owner: BankAccountOwnerFilter }) {
 
     if (filtered.length === 0) {
         const title =
-            owner === 'mine' ? 'No bank accounts of your own yet.' : 'No counterparty bank accounts.';
+            owner === 'mine'
+                ? 'No bank accounts of your own yet.'
+                : 'No counterparty bank accounts.';
         const hint =
             owner === 'mine'
                 ? 'Add one to attach to a ledger account.'

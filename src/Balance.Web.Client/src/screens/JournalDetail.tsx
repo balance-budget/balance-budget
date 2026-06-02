@@ -46,7 +46,6 @@ import {
     type TotalsState,
 } from './journalDetail.state';
 
-
 export function JournalDetail({ id }: { id: JournalEntryId }) {
     const query = useJournalEntry(id);
     const accounts = useAccounts();
@@ -263,7 +262,6 @@ function FromToSummary({
         </span>
     );
 }
-
 
 function LineTable({ entry, projection }: { entry: JournalEntry; projection: JournalProjection }) {
     const catalog = useCurrencyCatalog();
