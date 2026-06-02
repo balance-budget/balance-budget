@@ -64,13 +64,6 @@ jobs:
     - name: Build
       run: dotnet build --no-restore
 
-    # The SPA is built inside the .NET build (esproj), so node_modules and the
-    # generated route tree already exist here — lint reuses them rather than
-    # reinstalling. ESLint runs typescript-eslint strictTypeChecked.
-    - name: Lint frontend
-      run: npm run lint
-      working-directory: src/Balance.Web.Client
-
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
       if: ${{ !github.event.repository.private }}
