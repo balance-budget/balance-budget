@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { BANK_TRANSACTION_FILTERS, type BankTransactionFilter } from '../api/bankTransactions';
 import { BankTransactionsInbox } from '../screens/BankTransactionsInbox';
+import { parsePage, parseQ } from '../lib/routeSearch';
 
 type Search = { page: number; filter: BankTransactionFilter; q: string };
 
@@ -35,11 +36,9 @@ export const Route = createFileRoute('/bank-transactions/')({
         );
     },
     staticData: { title: 'Bank transactions' },
-    validateSearch: (raw: Record<string, unknown>): Search => {
-        const candidate = Number(raw.page);
-        const page = Number.isInteger(candidate) && candidate >= 1 ? candidate : 1;
-        const filter = isFilter(raw.filter) ? raw.filter : 'Inbox';
-        const q = typeof raw.q === 'string' ? raw.q : '';
-        return { page, filter, q };
-    },
+    validateSearch: (raw: Record<string, unknown>): Search => ({
+        page: parsePage(raw.page),
+        filter: isFilter(raw.filter) ? raw.filter : 'Inbox',
+        q: parseQ(raw.q),
+    }),
 });

@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Activity } from '../screens/Activity';
-
-type ActivitySearch = { page: number; q: string };
+import { parsePage, parseQ, type PageQSearch } from '../lib/routeSearch';
 
 export const Route = createFileRoute('/activity')({
     component: function ActivityRoute() {
@@ -21,10 +20,8 @@ export const Route = createFileRoute('/activity')({
         );
     },
     staticData: { title: 'Activity' },
-    validateSearch: (raw: Record<string, unknown>): ActivitySearch => {
-        const candidate = Number(raw.page);
-        const page = Number.isInteger(candidate) && candidate >= 1 ? candidate : 1;
-        const q = typeof raw.q === 'string' ? raw.q : '';
-        return { page, q };
-    },
+    validateSearch: (raw: Record<string, unknown>): PageQSearch => ({
+        page: parsePage(raw.page),
+        q: parseQ(raw.q),
+    }),
 });
