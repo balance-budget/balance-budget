@@ -607,8 +607,11 @@ export interface components {
         AccountOutput: {
             id: components["schemas"]["AccountId"];
             name: string;
+            code: string;
             accountType: components["schemas"]["AccountType"];
             currencyCode: components["schemas"]["CurrencyCode"];
+            isPostable: boolean;
+            parentAccountId: null | components["schemas"]["AccountId"];
             balance: components["schemas"]["Money"];
             bankAccount: null | components["schemas"]["BankAccountSummary"];
             /** Format: date-time */
@@ -790,8 +793,12 @@ export interface components {
         };
         CreateAccountRequest: {
             name: string;
+            code: string;
             accountType: components["schemas"]["AccountType"];
             currencyCode: components["schemas"]["CurrencyCode"];
+            /** @default true */
+            isPostable: boolean;
+            parentAccountId?: unknown;
         };
         CreateBankAccountRequest: {
             type: components["schemas"]["BankAccountType"];
@@ -968,19 +975,19 @@ export interface components {
             /** @enum {string} */
             op: "add" | "replace" | "test";
             /** @enum {string} */
-            path: "/name" | "/accountType" | "/currencyCode";
+            path: "/name" | "/code" | "/accountType" | "/currencyCode" | "/isPostable" | "/parentAccountId";
             value: unknown;
         } | {
             /** @enum {string} */
             op: "move" | "copy";
             /** @enum {string} */
-            path: "/name" | "/accountType" | "/currencyCode";
+            path: "/name" | "/code" | "/accountType" | "/currencyCode" | "/isPostable" | "/parentAccountId";
             from: string;
         } | {
             /** @enum {string} */
             op: "remove";
             /** @enum {string} */
-            path: "/name" | "/accountType" | "/currencyCode";
+            path: "/name" | "/code" | "/accountType" | "/currencyCode" | "/isPostable" | "/parentAccountId";
         })[];
         JsonPatchDocumentOfUpdateBankAccountInput: ({
             /** @enum {string} */
@@ -1194,9 +1201,12 @@ export interface components {
         TrendRange: "OneMonth" | "ThreeMonths" | "SixMonths" | "OneYear";
         UpdateAccountInput: {
             name: string;
+            code: string;
             /** @enum {unknown} */
             accountType: "Asset" | "Liability" | "Equity" | "Income" | "Expense";
             currencyCode: string;
+            isPostable: boolean;
+            parentAccountId?: unknown;
         };
         UpdateBankAccountInput: {
             /** @enum {unknown} */
