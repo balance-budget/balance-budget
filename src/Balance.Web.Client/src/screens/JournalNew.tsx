@@ -12,7 +12,11 @@ import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { cx } from '../lib/cx';
+import { todayIso } from '../lib/dates';
 import {
+    ACCOUNT_TYPE_LABEL,
+    ACCOUNT_TYPE_ORDER,
+    asAccountId,
     asCounterpartyId,
     type AccountId,
     type AccountType,
@@ -36,24 +40,6 @@ import {
     type ScaleLookup,
     type SimpleLeg,
 } from './journalNew.state';
-
-const ACCOUNT_TYPE_ORDER: AccountType[] = ['Asset', 'Liability', 'Income', 'Expense', 'Equity'];
-
-const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
-    Asset: 'Assets',
-    Liability: 'Liabilities',
-    Income: 'Income',
-    Expense: 'Expenses',
-    Equity: 'Equity',
-};
-
-function todayIso(): string {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(now.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-}
 
 export function JournalNew() {
     const accounts = useAccounts();
@@ -787,10 +773,10 @@ function AccountPicker({
     filterCurrency: string | null;
     onChange: (accountId: AccountId | null) => void;
 }) {
-    const visible = filterCurrency
-        ? accounts.filter(a => a.currencyCode === filterCurrency || a.id === value)
-        : accounts;
     const groups = useMemo(() => {
+        const visible = filterCurrency
+            ? accounts.filter(a => a.currencyCode === filterCurrency || a.id === value)
+            : accounts;
         const buckets = new Map<AccountType, Account[]>();
         for (const account of visible) {
             const list = buckets.get(account.type) ?? [];
@@ -804,14 +790,14 @@ function AccountPicker({
             type: t,
             accounts: buckets.get(t) ?? [],
         }));
-    }, [visible]);
+    }, [accounts, filterCurrency, value]);
 
     return (
         <select
             value={value ?? ''}
             onChange={e => {
                 const next = e.target.value;
-                onChange(next === '' ? null : (next as AccountId));
+                onChange(next === '' ? null : asAccountId(next));
             }}
             className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-[13px] focus:outline-none focus:border-border-strong w-full"
         >

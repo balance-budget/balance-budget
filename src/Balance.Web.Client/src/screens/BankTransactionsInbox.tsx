@@ -1,8 +1,9 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link, useBlocker } from '@tanstack/react-router';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
-import { useAccounts, type Account } from '../api/accounts';
-import { useBankAccounts, type BankAccount } from '../api/bankAccounts';
+import { accountsKeys, useAccounts, type Account } from '../api/accounts';
+import { bankAccountsKeys, useBankAccounts, type BankAccount } from '../api/bankAccounts';
+import { journalEntriesKeys } from '../api/journalEntries';
 import {
     BANK_TRANSACTION_FILTERS,
     bankTransactionsKeys,
@@ -35,10 +36,11 @@ import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { cx } from '../lib/cx';
 import {
+    ACCOUNT_TYPE_LABEL,
+    ACCOUNT_TYPE_ORDER,
     asAccountId,
     asCounterpartyId,
     type AccountId,
-    type AccountType,
     type BankTransactionId,
     type CounterpartyId,
 } from '../lib/domain';
@@ -106,15 +108,6 @@ const EMPTY_HINT: Record<BankTransactionFilter, string> = {
     All: 'Import a bank statement from Bank imports to get started.',
 };
 
-const ACCOUNT_TYPE_ORDER: AccountType[] = ['Asset', 'Liability', 'Income', 'Expense', 'Equity'];
-
-const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
-    Asset: 'Assets',
-    Liability: 'Liabilities',
-    Income: 'Income',
-    Expense: 'Expenses',
-    Equity: 'Equity',
-};
 
 type Props = {
     page: number;
@@ -970,10 +963,10 @@ function InboxEditorReady({
         });
 
         await queryClient.invalidateQueries({ queryKey: bankTransactionsKeys.all });
-        await queryClient.invalidateQueries({ queryKey: ['journalEntries'] });
+        await queryClient.invalidateQueries({ queryKey: journalEntriesKeys.all });
         await queryClient.invalidateQueries({ queryKey: counterpartiesKeys.all });
-        await queryClient.invalidateQueries({ queryKey: ['bank-accounts'] });
-        await queryClient.invalidateQueries({ queryKey: ['accounts'] });
+        await queryClient.invalidateQueries({ queryKey: bankAccountsKeys.all });
+        await queryClient.invalidateQueries({ queryKey: accountsKeys.all });
 
         // Refetch settled — saved rows have left the inbox list, so drop the
         // optimistic-hidden shadow.

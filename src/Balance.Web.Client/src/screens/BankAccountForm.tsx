@@ -13,7 +13,7 @@ import { FieldError } from '../components/FieldError';
 import { FormErrorBanner } from '../components/FormErrorBanner';
 import { Modal, ModalFooter } from '../components/Modal';
 import { useToast } from '../components/Toast';
-import { isLedgerAccount } from '../lib/domain';
+import { asAccountId, asCounterpartyId, isLedgerAccount } from '../lib/domain';
 import type { AccountId, CounterpartyId } from '../lib/domain';
 import { ApiError } from '../lib/http';
 
@@ -116,9 +116,9 @@ export function BankAccountFormModal(props: Props) {
         const payloadCurrency =
             trimmedCurrency.length === 0 ? (currencyRequired ? '' : null) : trimmedCurrency;
 
-        const accountIdValue = form.ownerKind === 'account' ? (form.accountId as AccountId) : null;
+        const accountIdValue = form.ownerKind === 'account' ? asAccountId(form.accountId) : null;
         const counterpartyIdValue =
-            form.ownerKind === 'counterparty' ? (form.counterpartyId as CounterpartyId) : null;
+            form.ownerKind === 'counterparty' ? asCounterpartyId(form.counterpartyId) : null;
 
         try {
             if (props.mode === 'create') {
