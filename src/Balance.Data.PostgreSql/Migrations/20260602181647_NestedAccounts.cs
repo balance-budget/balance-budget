@@ -37,6 +37,13 @@ namespace Balance.Data.PostgreSql.Migrations
                 nullable: true
             );
 
+            // Backfill Code from Name for every pre-existing row. Name was globally unique before
+            // this migration, so this yields unique, non-empty codes — safe to index below. New
+            // installs only have the seed row, which the UpdateData below sets explicitly.
+            migrationBuilder.Sql(
+                "UPDATE \"Accounts\" SET \"Code\" = \"Name\" WHERE \"Code\" = '';"
+            );
+
             migrationBuilder.UpdateData(
                 table: "Accounts",
                 keyColumn: "Id",
