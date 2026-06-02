@@ -35,14 +35,25 @@ internal sealed class ProblemDetailsContractTests : EndpointsTestsBase
     {
         using var client = Factory.CreateClient();
 
-        var first = new CreateAccountRequestDto($"DupName-{Guid.NewGuid():N}", "Expense", "EUR");
+        var code = $"PDC{Guid.NewGuid():N}"[..12];
+        var first = new CreateAccountRequestDto($"DupCode-{Guid.NewGuid():N}", "Expense", "EUR")
+        {
+            Code = code,
+        };
         using var firstResponse = await client.PostAsJsonAsync(
             new Uri("/api/accounts", UriKind.Relative),
             first
         );
         await Assert.That(firstResponse.StatusCode).IsEqualTo(HttpStatusCode.Created);
 
-        var duplicate = new CreateAccountRequestDto(first.Name, "Expense", "EUR");
+        var duplicate = new CreateAccountRequestDto(
+            $"DupCode2-{Guid.NewGuid():N}",
+            "Expense",
+            "EUR"
+        )
+        {
+            Code = code,
+        };
         using var response = await client.PostAsJsonAsync(
             new Uri("/api/accounts", UriKind.Relative),
             duplicate

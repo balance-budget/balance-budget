@@ -50,18 +50,49 @@ internal sealed class AccountEndpointsTests : EndpointsTestsBase
     }
 
     [Test]
-    public async Task CreateAccount_duplicate_name_case_insensitive_returns_409()
+    public async Task CreateAccount_duplicate_name_is_allowed()
     {
+        // Names carry no uniqueness constraint after ADR-0022 — Code is the unique key. Two accounts
+        // may share a name (e.g. "Fees" under different parents).
         using var client = Factory.CreateClient();
+        var name = $"Fees-{Guid.NewGuid():N}";
 
-        var first = new CreateAccountRequestDto("Groceries", "Expense", "EUR");
+        var first = new CreateAccountRequestDto(name, "Expense", "EUR");
         using var firstResponse = await client.PostAsJsonAsync(
             new Uri("/api/accounts", UriKind.Relative),
             first
         );
         await Assert.That(firstResponse.StatusCode).IsEqualTo(HttpStatusCode.Created);
 
-        var duplicate = new CreateAccountRequestDto("groceries", "Expense", "EUR");
+        var second = new CreateAccountRequestDto(name, "Expense", "EUR");
+        using var secondResponse = await client.PostAsJsonAsync(
+            new Uri("/api/accounts", UriKind.Relative),
+            second
+        );
+
+        await Assert.That(secondResponse.StatusCode).IsEqualTo(HttpStatusCode.Created);
+    }
+
+    [Test]
+    public async Task CreateAccount_duplicate_code_returns_409()
+    {
+        using var client = Factory.CreateClient();
+        var code = $"DUP{Guid.NewGuid():N}"[..12];
+
+        var first = new CreateAccountRequestDto($"First-{Guid.NewGuid():N}", "Expense", "EUR")
+        {
+            Code = code,
+        };
+        using var firstResponse = await client.PostAsJsonAsync(
+            new Uri("/api/accounts", UriKind.Relative),
+            first
+        );
+        await Assert.That(firstResponse.StatusCode).IsEqualTo(HttpStatusCode.Created);
+
+        var duplicate = new CreateAccountRequestDto($"Second-{Guid.NewGuid():N}", "Expense", "EUR")
+        {
+            Code = code,
+        };
         using var duplicateResponse = await client.PostAsJsonAsync(
             new Uri("/api/accounts", UriKind.Relative),
             duplicate
@@ -353,6 +384,9 @@ internal sealed record AccountDto(
     string Name,
     string AccountType,
     string CurrencyCode,
+    string? Code = null,
+    bool IsPostable = true,
+    Guid? ParentAccountId = null,
     MoneyDto? Balance = null,
     BankAccountSummaryDto? BankAccount = null
 );
@@ -364,8 +398,13 @@ internal sealed record BankAccountSummaryDto(
     string? BankName
 );
 
-internal sealed record CreateAccountRequestDto(
-    string Name,
-    string AccountType,
-    string CurrencyCode
-);
+// The positional shape stays (Name, AccountType, CurrencyCode) for the many tests that don't care
+// about the chart-of-accounts tree. Code is required and globally unique server-side (ADR-0022), so
+// it defaults to a freshly-generated value; tree tests set Code / IsPostable / ParentAccountId via
+// an object initializer or `with`.
+internal sealed record CreateAccountRequestDto(string Name, string AccountType, string CurrencyCode)
+{
+    public string Code { get; init; } = $"AC{Guid.NewGuid():N}"[..16];
+    public bool IsPostable { get; init; } = true;
+    public Guid? ParentAccountId { get; init; }
+}
