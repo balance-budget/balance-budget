@@ -685,6 +685,8 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        /** @enum {unknown} */
+        BankAccountOwnerFilter: "Mine" | "Others" | null;
         BankAccountSummary: {
             iban: null | string;
             accountNumber: null | string;
@@ -2409,7 +2411,12 @@ export interface operations {
     };
     ListBankAccounts: {
         parameters: {
-            query?: never;
+            query?: {
+                Skip?: number | string;
+                Take?: number | string;
+                Q?: string;
+                Owner?: components["schemas"]["BankAccountOwnerFilter"];
+            };
             header?: never;
             path?: never;
             cookie?: never;

@@ -6,7 +6,7 @@ import {
     formatBankAccountLabel,
     formatBankAccountSubline,
     useBankAccount,
-    useBankAccounts,
+    useBankAccountsPage,
     useDeleteBankAccount,
     type BankAccount,
     type BankAccountOwnerFilter,
@@ -16,25 +16,41 @@ import { useCounterparties } from '../api/counterparties';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
+import { Pagination } from '../components/Pagination';
 import { Panel, SectionHead } from '../components/Panel';
+import { SearchInput } from '../components/SearchInput';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { cx } from '../lib/cx';
 import type { BankAccountId } from '../lib/domain';
 import { handleActionError } from '../lib/formErrors';
+import { useDebouncedValue } from '../lib/useDebouncedValue';
 import { BankAccountFormModal } from './BankAccountForm';
 
+const PAGE_SIZE = 50;
+
 const OWNER_FILTER_LABEL: Record<BankAccountOwnerFilter, string> = {
-    mine: 'Mine',
-    others: 'Others',
+    Mine: 'Mine',
+    Others: 'Others',
 };
 
 type Props = {
     owner: BankAccountOwnerFilter;
+    page: number;
+    q: string;
     onOwnerChange: (owner: BankAccountOwnerFilter) => void;
+    onPageChange: (page: number) => void;
+    onSearchChange: (q: string) => void;
 };
 
-export function BankAccounts({ owner, onOwnerChange }: Props) {
+export function BankAccounts({
+    owner,
+    page,
+    q,
+    onOwnerChange,
+    onPageChange,
+    onSearchChange,
+}: Props) {
     const [creating, setCreating] = useState(false);
 
     return (
@@ -57,7 +73,14 @@ export function BankAccounts({ owner, onOwnerChange }: Props) {
                     }
                 />
                 <OwnerFilterChips value={owner} onChange={onOwnerChange} />
-                <BankAccountList owner={owner} />
+                <div className="mb-4">
+                    <SearchInput
+                        value={q}
+                        onChange={onSearchChange}
+                        placeholder="Search bank accounts…"
+                    />
+                </div>
+                <BankAccountList owner={owner} page={page} q={q} onPageChange={onPageChange} />
             </Panel>
 
             {creating && (
@@ -107,8 +130,20 @@ function OwnerFilterChips({
     );
 }
 
-function BankAccountList({ owner }: { owner: BankAccountOwnerFilter }) {
-    const query = useBankAccounts();
+function BankAccountList({
+    owner,
+    page,
+    q,
+    onPageChange,
+}: {
+    owner: BankAccountOwnerFilter;
+    page: number;
+    q: string;
+    onPageChange: (page: number) => void;
+}) {
+    const skip = (page - 1) * PAGE_SIZE;
+    const debouncedQ = useDebouncedValue(q, 200);
+    const query = useBankAccountsPage(skip, PAGE_SIZE, debouncedQ, owner);
     const accounts = useAccounts();
     const counterparties = useCounterparties();
 
@@ -131,17 +166,21 @@ function BankAccountList({ owner }: { owner: BankAccountOwnerFilter }) {
         );
     }
 
-    const filtered = query.data.filter(ba =>
-        owner === 'mine' ? ba.accountId !== null : ba.counterpartyId !== null,
-    );
+    const items = query.data.items;
 
-    if (filtered.length === 0) {
+    if (items.length === 0 && debouncedQ !== '') {
+        return (
+            <div className="py-8 text-center text-14 text-fg-2">No matches for “{debouncedQ}”.</div>
+        );
+    }
+
+    if (items.length === 0 && page === 1) {
         const title =
-            owner === 'mine'
+            owner === 'Mine'
                 ? 'No bank accounts of your own yet.'
                 : 'No counterparty bank accounts.';
         const hint =
-            owner === 'mine'
+            owner === 'Mine'
                 ? 'Add one to attach to a ledger account.'
                 : 'Counterparty bank accounts appear as you categorise imported transactions.';
         return (
@@ -157,13 +196,19 @@ function BankAccountList({ owner }: { owner: BankAccountOwnerFilter }) {
 
     return (
         <div>
-            {filtered.map(ba => (
+            {items.map(ba => (
                 <BankAccountRow
                     key={ba.id}
                     bankAccount={ba}
                     ownerLabel={resolveOwnerLabel(ba, accountsById, counterpartiesById)}
                 />
             ))}
+            <Pagination
+                page={page}
+                pageSize={PAGE_SIZE}
+                totalCount={query.data.totalCount}
+                onPageChange={onPageChange}
+            />
         </div>
     );
 }
@@ -251,7 +296,7 @@ export function BankAccountDetail({ id }: { id: BankAccountId }) {
                     <div className="flex flex-col gap-[2px] min-w-0">
                         <Link
                             to="/settings/bank-accounts"
-                            search={{ owner: 'mine' }}
+                            search={{ owner: 'Mine', page: 1, q: '' }}
                             className="text-12 text-fg-3 hover:text-fg-1"
                         >
                             ← Bank accounts

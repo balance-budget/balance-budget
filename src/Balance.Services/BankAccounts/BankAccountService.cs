@@ -29,11 +29,61 @@ internal sealed class BankAccountService : IBankAccountService
         _timeProvider = timeProvider;
     }
 
-    public async Task<PagedOutput<BankAccountOutput>> ListAsync(CancellationToken cancellationToken)
+    public async Task<PagedOutput<BankAccountOutput>> ListAsync(
+        int skip,
+        int? take,
+        string? search,
+        BankAccountOwnerFilter? owner,
+        CancellationToken cancellationToken
+    )
     {
-        var items = await _dbContext
-            .BankAccounts.OrderBy(b => b.CreatedAt)
-            .Select(b => new BankAccountOutput(
+        IQueryable<BankAccount> filtered = _dbContext.BankAccounts;
+
+        filtered = owner switch
+        {
+            BankAccountOwnerFilter.Mine => filtered.Where(b => b.AccountId != null),
+            BankAccountOwnerFilter.Others => filtered.Where(b => b.CounterpartyId != null),
+            _ => filtered,
+        };
+
+        var needle = search?.Trim();
+        if (!string.IsNullOrEmpty(needle))
+        {
+            var pattern = $"%{needle}%";
+            // Match the bank account's own identifying fields, plus the name of the
+            // linked owner — resolved via EXISTS subqueries since BankAccount carries
+            // only the foreign keys, not navigation properties.
+            filtered = filtered.Where(b =>
+                (b.Iban != null && DbFunction.CaseInsensitiveLike(b.Iban, pattern))
+                || (
+                    b.AccountNumber != null
+                    && DbFunction.CaseInsensitiveLike(b.AccountNumber, pattern)
+                )
+                || (
+                    b.CardIdentifier != null
+                    && DbFunction.CaseInsensitiveLike(b.CardIdentifier, pattern)
+                )
+                || (b.BankName != null && DbFunction.CaseInsensitiveLike(b.BankName, pattern))
+                || (
+                    b.AccountHolderName != null
+                    && DbFunction.CaseInsensitiveLike(b.AccountHolderName, pattern)
+                )
+                || _dbContext.Accounts.Any(a =>
+                    a.Id == b.AccountId && DbFunction.CaseInsensitiveLike(a.Name, pattern)
+                )
+                || _dbContext.Counterparties.Any(c =>
+                    c.Id == b.CounterpartyId && DbFunction.CaseInsensitiveLike(c.Name, pattern)
+                )
+            );
+        }
+
+        var totalCount = await filtered.CountAsync(cancellationToken);
+        var page = filtered.OrderBy(b => b.CreatedAt).Skip(skip);
+        // A null Take means "return everything" — the dropdown and linked-account callers
+        // rely on the full, unpaginated list; the list screen passes an explicit page size.
+        if (take is { } pageSize)
+            page = page.Take(pageSize);
+        var items = await page.Select(b => new BankAccountOutput(
                 b.Id,
                 b.Type,
                 b.Iban,
@@ -50,7 +100,7 @@ internal sealed class BankAccountService : IBankAccountService
                 b.UpdatedAt
             ))
             .ToListAsync(cancellationToken);
-        return new PagedOutput<BankAccountOutput>(items, items.Count);
+        return new PagedOutput<BankAccountOutput>(items, totalCount);
     }
 
     public async Task<Result<BankAccountOutput>> GetAsync(
