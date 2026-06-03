@@ -230,6 +230,18 @@ const RANGE_SUBTITLE: Record<TrendRange, string> = {
 function AccountBalanceTrendPanel() {
     const [range, setRange] = useState<TrendRange>('3M');
     const trend = useAccountBalanceTrend(range);
+    // Lives here (not in TrendChart) so toggles survive a range switch, during
+    // which TrendChart briefly unmounts behind the loading skeleton. Keyed by
+    // account id, so the same line stays hidden across ranges.
+    const [hiddenAccountIds, setHiddenAccountIds] = useState<Set<string>>(() => new Set());
+    const toggleSeries = (accountId: string) => {
+        setHiddenAccountIds(prev => {
+            const next = new Set(prev);
+            if (next.has(accountId)) next.delete(accountId);
+            else next.add(accountId);
+            return next;
+        });
+    };
 
     const pills = (
         <div className="flex items-center gap-[6px]">
@@ -273,6 +285,8 @@ function AccountBalanceTrendPanel() {
                     range={range}
                     currencyCode={trend.data.currencyCode}
                     height={240}
+                    hiddenAccountIds={hiddenAccountIds}
+                    onToggleSeries={toggleSeries}
                 />
             )}
         </Panel>
