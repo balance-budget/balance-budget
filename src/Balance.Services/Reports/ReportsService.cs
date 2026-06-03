@@ -96,6 +96,7 @@ internal sealed class ReportsService : IReportsService
         DateOnly fromDate,
         DateOnly toDate,
         CurrencyCode currencyCode,
+        int? maxDepth,
         CancellationToken cancellationToken
     )
     {
@@ -118,16 +119,24 @@ internal sealed class ReportsService : IReportsService
         // zero across all accounts (double-entry), so sources and exits balance for free:
         //   rawSum < 0 (net credit) → source, links node → hub
         //   rawSum > 0 (net debit)  → exit,   links hub → node
-        var builder = new FlowBuilder(byId, childrenByParent, ownRaw, subtreeRaw, currencyCode);
+        var builder = new FlowBuilder(
+            byId,
+            childrenByParent,
+            ownRaw,
+            subtreeRaw,
+            currencyCode,
+            maxDepth
+        );
 
-        // Income / Expense: full chart-of-accounts depth, subtrees become intermediate nodes.
+        // Income / Expense: chart-of-accounts hierarchy, subtrees become intermediate nodes. Roots
+        // sit at depth 1 (one hop from the hub); maxDepth caps how far the recursion descends.
         foreach (
             var root in accounts.Where(a =>
                 IsIncomeOrExpense(a.AccountType) && a.ParentAccountId is null
             )
         )
         {
-            var drawn = builder.BuildSubtree(root.Id);
+            var drawn = builder.BuildSubtree(root.Id, depth: 1);
             builder.Link(HubId, root.Id, drawn);
         }
 
@@ -252,6 +261,7 @@ internal sealed class ReportsService : IReportsService
         private readonly IReadOnlyDictionary<AccountId, long> _ownRaw;
         private readonly IReadOnlyDictionary<AccountId, long> _subtreeRaw;
         private readonly CurrencyCode _currencyCode;
+        private readonly int? _maxDepth;
         private readonly List<MoneyFlowLink> _links = [];
 
         public FlowBuilder(
@@ -259,7 +269,8 @@ internal sealed class ReportsService : IReportsService
             IReadOnlyDictionary<AccountId, List<AccountId>> childrenByParent,
             IReadOnlyDictionary<AccountId, long> ownRaw,
             IReadOnlyDictionary<AccountId, long> subtreeRaw,
-            CurrencyCode currencyCode
+            CurrencyCode currencyCode,
+            int? maxDepth
         )
         {
             _byId = byId;
@@ -267,15 +278,24 @@ internal sealed class ReportsService : IReportsService
             _ownRaw = ownRaw;
             _subtreeRaw = subtreeRaw;
             _currencyCode = currencyCode;
+            _maxDepth = maxDepth;
         }
 
         /// <summary>
         /// Emits the links for an account's children and returns the signed value drawn up to the
         /// account itself (own line sum plus same-side children). The caller emits the account's own
-        /// up-link with the returned value.
+        /// up-link with the returned value. <paramref name="depth"/> is the node's level below the
+        /// hub (roots are 1); at <c>maxDepth</c> the node becomes a leaf — its whole subtree folds
+        /// into the returned value and no child links are emitted.
         /// </summary>
-        public long BuildSubtree(AccountId nodeId)
+        public long BuildSubtree(AccountId nodeId, int depth)
         {
+            // At the cap: collapse the entire subtree into this node. The signed subtree sum already
+            // includes every descendant, so the value reaching the hub is unchanged — only the
+            // intermediate nodes disappear.
+            if (_maxDepth is { } max && depth >= max)
+                return _subtreeRaw.GetValueOrDefault(nodeId);
+
             var side = Math.Sign(_subtreeRaw.GetValueOrDefault(nodeId));
             var drawn = _ownRaw.GetValueOrDefault(nodeId);
 
@@ -284,7 +304,7 @@ internal sealed class ReportsService : IReportsService
                 if (_subtreeRaw.GetValueOrDefault(childId) == 0)
                     continue; // dormant subtree this period — render nothing
 
-                var childDrawn = BuildSubtree(childId);
+                var childDrawn = BuildSubtree(childId, depth + 1);
                 var childSide = Math.Sign(_subtreeRaw.GetValueOrDefault(childId));
 
                 if (side != 0 && childSide == side)
