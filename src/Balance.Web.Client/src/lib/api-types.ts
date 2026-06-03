@@ -568,6 +568,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reports/distribution": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetDistribution"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/flow": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetMoneyFlow"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/search": {
         parameters: {
             query?: never;
@@ -892,6 +924,26 @@ export interface components {
         DismissBankTransactionRequest: {
             reason: string;
         };
+        DistributionOutput: {
+            type: components["schemas"]["DistributionType"];
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            currencyCode: components["schemas"]["CurrencyCode"];
+            parentAccountId: null | components["schemas"]["AccountId"];
+            total: components["schemas"]["Money"];
+            slices: components["schemas"]["DistributionSlice"][];
+        };
+        DistributionSlice: {
+            accountId: components["schemas"]["AccountId"];
+            name: string;
+            code: string;
+            amount: components["schemas"]["Money"];
+            hasChildren: boolean;
+        };
+        /** @enum {unknown} */
+        DistributionType: "Income" | "Expense";
         HttpValidationProblemDetails: {
             type?: null | string;
             title?: null | string;
@@ -1054,6 +1106,27 @@ export interface components {
             amount?: number | string;
             currencyCode?: components["schemas"]["CurrencyCode"];
             isZero?: boolean;
+        };
+        MoneyFlowLink: {
+            source: string;
+            target: string;
+            value: components["schemas"]["Money"];
+        };
+        MoneyFlowNode: {
+            id: string;
+            name: string;
+            kind: components["schemas"]["MoneyFlowNodeKind"];
+        };
+        /** @enum {unknown} */
+        MoneyFlowNodeKind: "Hub" | "Income" | "Expense" | "Asset" | "Liability" | "Equity";
+        MoneyFlowOutput: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            currencyCode: components["schemas"]["CurrencyCode"];
+            nodes: components["schemas"]["MoneyFlowNode"][];
+            links: components["schemas"]["MoneyFlowLink"][];
         };
         NewCounterpartyRequest: {
             name: string;
@@ -3597,6 +3670,128 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AccountBalanceTrendOutput"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetDistribution: {
+        parameters: {
+            query: {
+                type: components["schemas"]["DistributionType"];
+                from: string;
+                to: string;
+                currency?: components["schemas"]["CurrencyCode"];
+                parentId?: components["schemas"]["AccountId"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DistributionOutput"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetMoneyFlow: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                currency?: components["schemas"]["CurrencyCode"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MoneyFlowOutput"];
                 };
             };
             /** @description Bad Request */

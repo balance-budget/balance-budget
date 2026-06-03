@@ -38,7 +38,7 @@ const NAV_PLAN: NavLink[] = [
 ];
 
 const NAV_OTHER: NavLink[] = [
-    { to: '/reports', label: 'Reports', iconName: 'line-chart' },
+    { to: '/reports', label: 'Insights', iconName: 'line-chart' },
     { to: '/settings', label: 'Settings', iconName: 'settings' },
 ];
 
