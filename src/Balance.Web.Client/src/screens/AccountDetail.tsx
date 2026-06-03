@@ -77,7 +77,7 @@ export function AccountDetail({
                             </span>
                         </div>
                     </div>
-                    <div className="flex items-center justify-between gap-3 lg:shrink-0">
+                    <div className="flex flex-col items-start gap-3 lg:flex-row lg:items-center lg:justify-between lg:shrink-0">
                         <Amount
                             minor={account.balance.amount}
                             currencyCode={account.balance.currencyCode}
