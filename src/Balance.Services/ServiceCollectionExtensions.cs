@@ -10,6 +10,7 @@ using Balance.Services.Currencies;
 using Balance.Services.Dashboard;
 using Balance.Services.Jobs;
 using Balance.Services.JournalEntries;
+using Balance.Services.Reports;
 using Balance.Services.Search;
 using FluentValidation;
 using Microsoft.Extensions.Configuration;
@@ -56,6 +57,7 @@ public static class ServiceCollectionExtensions
             .AddScoped<IJournalEntryService, JournalEntryService>()
             .AddScoped<ISearchService, SearchService>()
             .AddScoped<IDashboardService, DashboardService>()
+            .AddScoped<IReportsService, ReportsService>()
             .AddScoped<IDatabaseMaintenanceService, DatabaseMaintenanceService>()
             .AddSingleton(TimeProvider.System)
             .AddSingleton<IApplicationVersionService, ApplicationVersionService>();
