@@ -432,7 +432,19 @@ function ReadOnlyActions({
     onDismiss: (bt: BankTransaction) => void;
 }) {
     if (bankTransaction.journalEntryId) {
-        return <div />;
+        return (
+            <div className="flex items-center justify-end">
+                <Link
+                    to="/journal/$id"
+                    params={{ id: bankTransaction.journalEntryId }}
+                    aria-label="View journal entry"
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-12 text-brand-primary hover:bg-brand-primary-soft"
+                >
+                    <Icon name="book-open" size={14} strokeWidth={2} />
+                    View entry
+                </Link>
+            </div>
+        );
     }
     if (bankTransaction.dismissedAt) {
         return <UndismissButton bankTransaction={bankTransaction} />;
