@@ -1,6 +1,6 @@
 # Personal Finance Bookkeeping
 
-A personal-finance tool backed by a rigorous **double-entry ledger**. The domain is the bookkeeping core — accounts, journal entries, postings. Budgets, labels, imports, and reporting are deliberately deferred and will sit *on top* of this ledger later.
+A personal-finance tool backed by a rigorous **double-entry ledger**. The domain is the bookkeeping core — accounts, journal entries, postings. Budgets and labels are deliberately deferred; imports and reporting (**Insights**) sit *on top* of this ledger.
 
 ## Language
 
@@ -125,6 +125,30 @@ _Avoid_: import flow (already used for parsing CSVs into BankTransactions — se
 **Self-transfer**:
 A **JournalEntry** that moves money between two of your own **Accounts** — e.g. Current (**Asset**) → Savings (**Asset**), or Current (**Asset**) → Credit Card (**Liability**) when paying down the card. Every **JournalLine** references an **Account** that is yours (`Account` linked via `BankAccount.AccountId`); there is no external party, so `CounterpartyId` is `null`. When both sides of the movement appear as imported **BankTransactions** (one per statement), the first BT to be categorised creates the **JournalEntry** with both lines on the user's own **Accounts** — its bank-side line is `Cleared`, the counter-side line stays `Uncleared` waiting for the sibling. When the sibling BT later imports, the **Inbox** surfaces a one-click **Attach** action that links it to the existing **JournalEntry** and flips the matching line to `Cleared`. A self-transfer **JournalEntry** is therefore referenced by one or two **BankTransactions** over its lifetime, and is the only `JournalEntry` shape allowed to be referenced by more than one. See ADR 0013 for the **Attach predicate** and ADR 0014 for the flow.
 _Avoid_: internal transaction, transfer (bare), between-accounts entry. "Transaction" is overloaded; "transfer" alone is ambiguous (some systems use it for any movement, including to a counterparty).
+
+**Insights**:
+The date-ranged, exploratory reporting area of the app, sitting *on top of* the ledger — distinct from the fixed at-a-glance **Dashboard** home. The user picks a **Reporting period** and a single **Currency**, then reads one or more **Reports**: in v1 the **Distribution** and the **Money flow**. Surfaced in the nav as "Insights" at `/reports`.
+_Avoid_: analytics; "reporting" as the section noun (the section is **Insights**, an individual view is a **Report**); **Dashboard** (the existing summary home, not date-ranged).
+
+**Report**:
+One view within **Insights**, scoped to a **Reporting period** and a single **Currency**. v1 ships two — the **Distribution** and the **Money flow**.
+_Avoid_: chart (the chart is the rendering; the **Report** is the concept), widget, tile.
+
+**Reporting period**:
+The `[from, to]` **inclusive** window of calendar dates that scopes a **Report**. Membership is always decided by the **JournalEntry** `Date` — never a **BankTransaction**'s **BookingDate** or **ValueDate** (those are import-side). Offered as presets (this / last month, this / last year, last 30 / 90 days) plus a custom range; defaults to the current month.
+_Avoid_: timeframe, date filter, "as of" (that names a point-in-time **Balance**, not a window).
+
+**Net movement**:
+An **Account**'s signed net change over a **Reporting period** — the window-scoped analogue of **Balance** (which is the all-time running total). Computed with the same **Sign convention** as **Balance** (debit-normal **Asset** / **Expense** vs credit-normal **Liability** / **Equity** / **Income**), but summed only over **JournalLines** whose **JournalEntry** `Date` falls inside the period. For a temporary P&L **Account** (**Income** / **Expense**) the Net movement is its period total; for a balance-sheet **Account** (**Asset** / **Liability** / **Equity**) it is the change in its **Balance** across the period. The quantity the **Money flow** uses to place each **Account** on the in- or out-side.
+_Avoid_: contribution (collides with "contribution margin"), delta, period balance, turnover.
+
+**Distribution**:
+A **Report** breaking down **Net movement** across one **AccountType** family — either **Income** ("where money came from") or **Expense** ("where money went") — over a **Reporting period**, rolled up the **Chart of accounts** tree and drillable one level at a time. Amounts are net: a refund credited to an **Expense** lowers that slice; a clawback lowers the **Income** slice. A subtree whose **Net movement** is net-negative in the period is excluded from the part-of-whole rendering and surfaced as a note rather than drawn as a slice.
+_Avoid_: category breakdown, spending by category (category is banned — the slices are **Income** / **Expense** **Accounts**).
+
+**Money flow**:
+A **Report** depicting the whole ledger's in/out picture over a **Reporting period** as a single-hub flow diagram. Every **Account** contributes exactly one flow sized by its **Net movement**, and its side is chosen by sign: money *in* on the source side (**Income**, plus balance-sheet **Accounts** that shrank — a drained savings **Account**, new borrowing on a card), money *out* on the exit side (**Expense**, plus balance-sheet **Accounts** that grew — savings, investments, debt paid down, cash left as a buffer). Sources and exits balance exactly by the double-entry identity `Σ Income − Σ Expense = Σ (balance-sheet Net movement)`. The **Income** / **Expense** sides render at full **Chart of accounts** depth (subtrees become intermediate nodes); balance-sheet **Accounts** render at top level (v1). A net-negative **Account** flips to the opposite side for that period.
+_Avoid_: cash flow (a specific, loaded accounting statement), Sankey (the chart type, not the concept), in/out report.
 
 ## Relationships
 
