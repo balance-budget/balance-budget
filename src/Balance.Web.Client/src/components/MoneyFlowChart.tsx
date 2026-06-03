@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Rectangle, ResponsiveContainer, Sankey, Tooltip } from 'recharts';
 import { useCurrencyCatalog } from '../api/currencies';
-import { useMoneyFlow, type MoneyFlowNodeKind } from '../api/reports';
+import { useMoneyFlow, type FlowDepth, type MoneyFlowNodeKind } from '../api/reports';
+import { cx } from '../lib/cx';
 import { formatMoney } from '../lib/money';
 import type { ReportPeriod } from '../lib/reportPeriod';
 import { ErrorState } from './ErrorState';
@@ -12,6 +13,14 @@ type MoneyFlowChartProps = {
     period: ReportPeriod;
     currency: string;
 };
+
+// Preset category depths offered in the header. 'all' draws the full hierarchy.
+const DEPTHS: { token: FlowDepth; label: string }[] = [
+    { token: 1, label: '1' },
+    { token: 2, label: '2' },
+    { token: 3, label: '3' },
+    { token: 'all', label: 'All' },
+];
 
 // One colour per node kind. The hub is neutral; income/expense and the three
 // balance-sheet types reuse the category palette so the diagram reads the same
@@ -31,7 +40,8 @@ type SankeyData = {
 };
 
 export function MoneyFlowChart({ period, currency }: MoneyFlowChartProps) {
-    const flow = useMoneyFlow(period, currency);
+    const [depth, setDepth] = useState<FlowDepth>(1);
+    const flow = useMoneyFlow(period, currency, depth);
 
     const data = useMemo<SankeyData | null>(() => {
         if (!flow.data) return null;
@@ -49,7 +59,11 @@ export function MoneyFlowChart({ period, currency }: MoneyFlowChartProps) {
 
     return (
         <Panel>
-            <SectionHead title="Money flow" subtitle="Where money came in and where it went" />
+            <SectionHead
+                title="Money flow"
+                subtitle="Where money came in and where it went"
+                action={<DepthToggle depth={depth} onChange={setDepth} />}
+            />
             {flow.isPending ? (
                 <Skeleton className="h-[420px] w-full" />
             ) : flow.isError ? (
@@ -65,6 +79,37 @@ export function MoneyFlowChart({ period, currency }: MoneyFlowChartProps) {
                 <SankeyDiagram data={data} currency={currency} />
             )}
         </Panel>
+    );
+}
+
+function DepthToggle({
+    depth,
+    onChange,
+}: {
+    depth: FlowDepth;
+    onChange: (next: FlowDepth) => void;
+}) {
+    return (
+        <div className="flex items-center gap-[6px]">
+            <span className="text-11 text-fg-3">Depth</span>
+            {DEPTHS.map(d => (
+                <button
+                    key={String(d.token)}
+                    type="button"
+                    onClick={() => {
+                        onChange(d.token);
+                    }}
+                    className={cx(
+                        'px-[10px] py-[5px] rounded-full text-11 font-medium select-none',
+                        d.token === depth
+                            ? 'bg-brand-primary-soft text-brand-primary'
+                            : 'text-fg-3 hover:text-fg-1',
+                    )}
+                >
+                    {d.label}
+                </button>
+            ))}
+        </div>
     );
 }
 

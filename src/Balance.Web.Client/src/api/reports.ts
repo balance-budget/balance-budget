@@ -62,9 +62,12 @@ export const reportKeys = {
             currency,
             parentId,
         ] as const,
-    flow: (period: ReportPeriod, currency: string) =>
-        [...reportKeys.all, 'flow', period.from, period.to, currency] as const,
+    flow: (period: ReportPeriod, currency: string, depth: FlowDepth) =>
+        [...reportKeys.all, 'flow', period.from, period.to, currency, depth] as const,
 };
+
+// How many category levels below the hub to draw. 'all' renders the full hierarchy.
+export type FlowDepth = number | 'all';
 
 function toSlice(wire: WireDistributionSlice, currency: string): DistributionSlice {
     return {
@@ -124,15 +127,17 @@ export function useDistribution(
     });
 }
 
-export function useMoneyFlow(period: ReportPeriod, currency: string) {
+export function useMoneyFlow(period: ReportPeriod, currency: string, depth: FlowDepth) {
     return useQuery({
-        queryKey: reportKeys.flow(period, currency),
+        queryKey: reportKeys.flow(period, currency, depth),
         queryFn: async ({ signal }) => {
             const params = new URLSearchParams({
                 from: period.from,
                 to: period.to,
                 currency,
             });
+            // Omit `depth` for the full hierarchy; otherwise cap the category levels drawn.
+            if (depth !== 'all') params.set('depth', String(depth));
             const wire = await getJson<WireFlow>(
                 `/api/reports/flow?${params}`,
                 signal,

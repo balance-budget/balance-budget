@@ -61,6 +61,7 @@ internal static class ReportEndpoints
         [FromQuery] DateOnly from,
         [FromQuery] DateOnly to,
         [FromQuery] CurrencyCode? currency,
+        [FromQuery] int? depth,
         [FromServices] IReportsService reportsService,
         CancellationToken cancellationToken
     )
@@ -69,6 +70,10 @@ internal static class ReportEndpoints
             from,
             to,
             currency ?? DefaultCurrency,
+            // Omit (null) for the full hierarchy; otherwise at least the roots.
+            depth is { } d
+                ? Math.Max(1, d)
+                : null,
             cancellationToken
         );
         return result.ToOk();

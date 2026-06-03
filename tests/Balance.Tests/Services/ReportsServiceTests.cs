@@ -207,7 +207,13 @@ internal sealed class ReportsServiceTests : EndpointsTestsBase
             (checking, -1000)
         );
 
-        var result = await fx.Reports.GetMoneyFlowAsync(From, To, fx.Currency, cancellationToken);
+        var result = await fx.Reports.GetMoneyFlowAsync(
+            From,
+            To,
+            fx.Currency,
+            maxDepth: null,
+            cancellationToken
+        );
 
         await Assert.That(result.IsSuccess).IsTrue();
         var flow = result.Value!;
@@ -255,7 +261,13 @@ internal sealed class ReportsServiceTests : EndpointsTestsBase
         );
         await fx.EntryAsync(new(2026, 1, 9), cancellationToken, (dining, 1000), (checking, -1000));
 
-        var result = await fx.Reports.GetMoneyFlowAsync(From, To, fx.Currency, cancellationToken);
+        var result = await fx.Reports.GetMoneyFlowAsync(
+            From,
+            To,
+            fx.Currency,
+            maxDepth: null,
+            cancellationToken
+        );
 
         await Assert.That(result.IsSuccess).IsTrue();
         var flow = result.Value!;
@@ -278,6 +290,55 @@ internal sealed class ReportsServiceTests : EndpointsTestsBase
         var inbound = flow.Links.Where(l => l.Target == "hub").Sum(l => l.Value.Amount);
         var outbound = flow.Links.Where(l => l.Source == "hub").Sum(l => l.Value.Amount);
         await Assert.That(inbound).IsEqualTo(outbound);
+    }
+
+    [Test]
+    public async Task GetMoneyFlow_maxDepth_collapses_subtree_into_the_root(
+        CancellationToken cancellationToken
+    )
+    {
+        await using var fx = await CreateFixtureAsync(cancellationToken);
+
+        var checking = await fx.AccountAsync("Checking", AccountType.Asset, cancellationToken);
+        var salary = await fx.AccountAsync("Salary", AccountType.Income, cancellationToken);
+        var food = await fx.PlaceholderAsync("Food", AccountType.Expense, cancellationToken);
+        var groceries = await fx.ChildAsync("Groceries", food, cancellationToken);
+        var dining = await fx.ChildAsync("Dining", food, cancellationToken);
+
+        await fx.EntryAsync(new(2026, 1, 1), cancellationToken, (checking, 6000), (salary, -6000));
+        await fx.EntryAsync(
+            new(2026, 1, 6),
+            cancellationToken,
+            (groceries, 4000),
+            (checking, -4000)
+        );
+        await fx.EntryAsync(new(2026, 1, 9), cancellationToken, (dining, 1000), (checking, -1000));
+
+        var result = await fx.Reports.GetMoneyFlowAsync(
+            From,
+            To,
+            fx.Currency,
+            maxDepth: 1,
+            cancellationToken
+        );
+
+        await Assert.That(result.IsSuccess).IsTrue();
+        var flow = result.Value!;
+
+        // Depth 1: Food collapses to a single hub → Food (5000) link; its children are gone.
+        var hubToFood = flow.Links.Single(l =>
+            l.Source == "hub" && l.Target == food.Value.ToString()
+        );
+        await Assert.That(hubToFood.Value.Amount).IsEqualTo(5000L);
+        await Assert.That(flow.Links.Any(l => l.Source == food.Value.ToString())).IsFalse();
+        await Assert.That(flow.Nodes.Any(n => n.Id == groceries.Value.ToString())).IsFalse();
+        await Assert.That(flow.Nodes.Any(n => n.Id == dining.Value.ToString())).IsFalse();
+
+        // Capping only folds nodes together; the double-entry balance is untouched.
+        var inbound = flow.Links.Where(l => l.Target == "hub").Sum(l => l.Value.Amount);
+        var outbound = flow.Links.Where(l => l.Source == "hub").Sum(l => l.Value.Amount);
+        await Assert.That(inbound).IsEqualTo(6000L);
+        await Assert.That(outbound).IsEqualTo(6000L);
     }
 
     private async Task<Fixture> CreateFixtureAsync(CancellationToken cancellationToken)
