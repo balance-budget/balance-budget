@@ -143,28 +143,6 @@ function AccountTreeNode({
     return (
         <div className="flex flex-col gap-[2px]">
             <div className="flex items-center gap-1">
-                {hasChildren ? (
-                    <button
-                        type="button"
-                        onClick={() => {
-                            onToggle(account.id);
-                        }}
-                        aria-label={expanded ? 'Collapse' : 'Expand'}
-                        aria-expanded={expanded}
-                        className="shrink-0 p-1 rounded-sm text-fg-3 hover:text-fg-1 hover:bg-surface-2"
-                    >
-                        <Icon
-                            name="chevron-right"
-                            size={14}
-                            className={cx(
-                                'transition-transform duration-fast',
-                                expanded && 'rotate-90',
-                            )}
-                        />
-                    </button>
-                ) : (
-                    <span className="shrink-0 w-[22px]" aria-hidden="true" />
-                )}
                 <Link
                     to="/accounts/$id"
                     params={{ id: account.id }}
@@ -195,6 +173,26 @@ function AccountTreeNode({
                         </span>
                     )}
                 </Link>
+                {hasChildren && (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            onToggle(account.id);
+                        }}
+                        aria-label={expanded ? 'Collapse' : 'Expand'}
+                        aria-expanded={expanded}
+                        className="shrink-0 p-1 rounded-sm text-fg-3 hover:text-fg-1 hover:bg-surface-2"
+                    >
+                        <Icon
+                            name="chevron-right"
+                            size={14}
+                            className={cx(
+                                'transition-transform duration-fast',
+                                expanded && 'rotate-90',
+                            )}
+                        />
+                    </button>
+                )}
             </div>
             {hasChildren && expanded && (
                 // No indentation — the chart-of-accounts can nest several levels
