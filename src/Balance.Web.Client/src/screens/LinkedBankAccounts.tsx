@@ -110,7 +110,7 @@ function LinkedRow({
     onReassign: () => void;
 }) {
     return (
-        <div className="py-3 first:pt-0 flex items-center gap-3 border-b border-border-soft last:border-b-0">
+        <div className="py-3 first:pt-0 flex items-center gap-3 border-t border-border-soft first:border-t-0">
             <Link
                 to="/settings/bank-accounts/$id"
                 params={{ id: bankAccount.id }}
