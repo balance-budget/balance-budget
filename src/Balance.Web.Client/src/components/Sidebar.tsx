@@ -425,7 +425,10 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
                     </span>
                 </div>
 
-                <nav className="flex flex-col gap-1 overflow-y-auto">
+                {/* `-mr-4 pr-4` extends the scroll container to the aside's right
+                    edge so the scrollbar sits flush, while keeping the content
+                    inset where it was. */}
+                <nav className="flex flex-col gap-1 overflow-y-auto scrollbar-sleek -mr-4 pr-4">
                     <NavGroup title="Main" items={NAV_MAIN} currentPath={pathname} />
                     <AccountsGroup />
                     <NavGroup title="Plan" items={NAV_PLAN} currentPath={pathname} />
