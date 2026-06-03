@@ -1,4 +1,5 @@
 import { useId, useRef, useState } from 'react';
+import { Link } from '@tanstack/react-router';
 import {
     bankAccountTypeIcon,
     formatBankAccountLabel,
@@ -65,30 +66,43 @@ function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
                         {formatBankAccountSubline(bankAccount)}
                     </span>
                 </div>
-                <label
-                    htmlFor={inputId}
-                    className={
-                        'inline-flex items-center gap-2 px-3 py-[7px] rounded-sm select-none ' +
-                        'bg-brand-primary text-white text-13 font-medium cursor-pointer ' +
-                        'hover:bg-brand-primary-dark transition-colors ' +
-                        (isUploading ? 'opacity-60 pointer-events-none' : '')
-                    }
-                >
-                    <Icon name="download" size={14} strokeWidth={2} />
-                    {isUploading ? 'Importing…' : 'Import statement'}
-                </label>
-                <input
-                    ref={inputRef}
-                    id={inputId}
-                    type="file"
-                    accept=".csv,text/csv,.pdf,application/pdf"
-                    className="sr-only"
-                    onChange={e => {
-                        const file = e.target.files?.[0];
-                        if (file) void onFileChosen(file);
-                    }}
-                    disabled={isUploading}
-                />
+                {bankAccount.importerKey === null ? (
+                    <Link
+                        to="/settings/bank-accounts/$id"
+                        params={{ id: bankAccount.id }}
+                        className="shrink-0 text-12 text-fg-3 hover:text-fg-1 underline decoration-dotted underline-offset-2"
+                        title="Set an importer on this bank account to enable statement imports."
+                    >
+                        No importer configured
+                    </Link>
+                ) : (
+                    <>
+                        <label
+                            htmlFor={inputId}
+                            className={
+                                'inline-flex items-center gap-2 px-3 py-[7px] rounded-sm select-none ' +
+                                'bg-brand-primary text-white text-13 font-medium cursor-pointer ' +
+                                'hover:bg-brand-primary-dark transition-colors ' +
+                                (isUploading ? 'opacity-60 pointer-events-none' : '')
+                            }
+                        >
+                            <Icon name="download" size={14} strokeWidth={2} />
+                            {isUploading ? 'Importing…' : 'Import statement'}
+                        </label>
+                        <input
+                            ref={inputRef}
+                            id={inputId}
+                            type="file"
+                            accept=".csv,text/csv,.pdf,application/pdf"
+                            className="sr-only"
+                            onChange={e => {
+                                const file = e.target.files?.[0];
+                                if (file) void onFileChosen(file);
+                            }}
+                            disabled={isUploading}
+                        />
+                    </>
+                )}
             </div>
             {feedback?.kind === 'success' && (
                 <div className="pl-12 text-12 text-success">

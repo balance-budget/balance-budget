@@ -5,7 +5,13 @@ namespace Balance.Services.Contracts;
 
 public interface IBankAccountService
 {
-    Task<PagedOutput<BankAccountOutput>> ListAsync(CancellationToken cancellationToken);
+    Task<PagedOutput<BankAccountOutput>> ListAsync(
+        int skip,
+        int? take,
+        string? search,
+        BankAccountOwnerFilter? owner,
+        CancellationToken cancellationToken
+    );
 
     Task<Result<BankAccountOutput>> GetAsync(BankAccountId id, CancellationToken cancellationToken);
 

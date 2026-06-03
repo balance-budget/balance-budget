@@ -19,8 +19,8 @@ const SUB_NAV: {
 function SettingsLayout() {
     const pathname = useRouterState({ select: s => s.location.pathname });
     return (
-        <div className="flex gap-6 min-h-0">
-            <nav className="w-48 shrink-0 flex flex-col gap-1">
+        <div className="flex flex-col md:flex-row gap-6 min-h-0">
+            <nav className="w-full md:w-48 md:shrink-0 flex flex-col gap-1">
                 {SUB_NAV.map(item => {
                     const isActive = pathname.startsWith(item.to);
                     return (

@@ -14,7 +14,10 @@ internal static class BankAccountEndpoints
     public static void MapBankAccounts(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup(PathPrefix).WithTags("BankAccounts");
-        group.MapGet("", ListAsync).WithName("ListBankAccounts");
+        group
+            .MapGet("", ListAsync)
+            .WithValidation<ListBankAccountsRequest>()
+            .WithName("ListBankAccounts");
         group.MapGet("/importers", ListImportersAsync).WithName("ListBankAccountImporters");
         group.MapGet("/{id}", GetAsync).WithName("GetBankAccount");
         group
@@ -43,11 +46,18 @@ internal static class BankAccountEndpoints
     }
 
     private static async Task<Ok<PagedOutput<BankAccountOutput>>> ListAsync(
+        [AsParameters] ListBankAccountsRequest request,
         [FromServices] IBankAccountService bankAccountService,
         CancellationToken cancellationToken
     )
     {
-        var bankAccounts = await bankAccountService.ListAsync(cancellationToken);
+        var bankAccounts = await bankAccountService.ListAsync(
+            request.Skip ?? 0,
+            request.Take,
+            request.Q,
+            request.Owner,
+            cancellationToken
+        );
         return TypedResults.Ok(bankAccounts);
     }
 

@@ -140,7 +140,7 @@ function KpiStrip() {
 
     if (summary.isPending) {
         return (
-            <section className="grid gap-[14px]" style={{ gridTemplateColumns: '1.3fr 1fr 1fr' }}>
+            <section className="grid gap-[14px] grid-cols-1 sm:grid-cols-[1.3fr_1fr_1fr]">
                 <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
                     <span className="eyebrow truncate">Net worth</span>
                     <Skeleton className="h-[44px] w-[180px]" />
@@ -230,6 +230,18 @@ const RANGE_SUBTITLE: Record<TrendRange, string> = {
 function AccountBalanceTrendPanel() {
     const [range, setRange] = useState<TrendRange>('3M');
     const trend = useAccountBalanceTrend(range);
+    // Lives here (not in TrendChart) so toggles survive a range switch, during
+    // which TrendChart briefly unmounts behind the loading skeleton. Keyed by
+    // account id, so the same line stays hidden across ranges.
+    const [hiddenAccountIds, setHiddenAccountIds] = useState<Set<string>>(() => new Set());
+    const toggleSeries = (accountId: string) => {
+        setHiddenAccountIds(prev => {
+            const next = new Set(prev);
+            if (next.has(accountId)) next.delete(accountId);
+            else next.add(accountId);
+            return next;
+        });
+    };
 
     const pills = (
         <div className="flex items-center gap-[6px]">
@@ -273,6 +285,8 @@ function AccountBalanceTrendPanel() {
                     range={range}
                     currencyCode={trend.data.currencyCode}
                     height={240}
+                    hiddenAccountIds={hiddenAccountIds}
+                    onToggleSeries={toggleSeries}
                 />
             )}
         </Panel>
@@ -285,7 +299,7 @@ export function Dashboard() {
             <KpiStrip />
 
             {/* Trend + accounts */}
-            <section className="grid gap-[18px]" style={{ gridTemplateColumns: '1.4fr 1fr' }}>
+            <section className="grid gap-[18px] grid-cols-1 lg:grid-cols-[1.4fr_1fr]">
                 <AccountBalanceTrendPanel />
 
                 <Panel>

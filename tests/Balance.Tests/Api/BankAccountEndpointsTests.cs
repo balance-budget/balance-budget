@@ -19,6 +19,94 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
     }
 
     [Test]
+    public async Task ListBankAccounts_filters_by_owner()
+    {
+        using var client = Factory.CreateClient();
+        var account = await CreateAccountAsync(client, "Groceries Checking");
+        var counterparty = await CreateCounterpartyAsync(client, "Albert Heijn");
+        var mine = await CreateBankAccountAsync(
+            client,
+            NewRequest(iban: "NL91ABNA0417164300", accountId: account.Id, currencyCode: "EUR")
+        );
+        var theirs = await CreateBankAccountAsync(
+            client,
+            NewRequest(iban: "NL31RABO0123456789", counterpartyId: counterparty.Id)
+        );
+
+        var minePage = await ListAsync(client, "?owner=Mine");
+        await Assert.That(minePage.Items.Select(b => b.Id)).Contains(mine.Id);
+        await Assert.That(minePage.Items.Select(b => b.Id)).DoesNotContain(theirs.Id);
+
+        var othersPage = await ListAsync(client, "?owner=Others");
+        await Assert.That(othersPage.Items.Select(b => b.Id)).Contains(theirs.Id);
+        await Assert.That(othersPage.Items.Select(b => b.Id)).DoesNotContain(mine.Id);
+    }
+
+    [Test]
+    public async Task ListBankAccounts_searches_identifiers_and_owner_name()
+    {
+        using var client = Factory.CreateClient();
+        var account = await CreateAccountAsync(client, "Groceries Checking");
+        var counterparty = await CreateCounterpartyAsync(client, "Albert Heijn");
+        var mine = await CreateBankAccountAsync(
+            client,
+            NewRequest(
+                iban: "NL91ABNA0417164300",
+                bankName: "ABN AMRO",
+                accountId: account.Id,
+                currencyCode: "EUR"
+            )
+        );
+        var theirs = await CreateBankAccountAsync(
+            client,
+            NewRequest(
+                iban: "NL31RABO0123456789",
+                bankName: "Rabobank",
+                counterpartyId: counterparty.Id
+            )
+        );
+
+        // Matches the bank account's own field (bank name).
+        var byBankName = await ListAsync(client, "?q=ABN");
+        await Assert.That(byBankName.Items.Select(b => b.Id)).Contains(mine.Id);
+        await Assert.That(byBankName.Items.Select(b => b.Id)).DoesNotContain(theirs.Id);
+
+        // Matches the linked owner's name (Account).
+        var byAccountName = await ListAsync(client, "?q=Groceries");
+        await Assert.That(byAccountName.Items.Select(b => b.Id)).Contains(mine.Id);
+        await Assert.That(byAccountName.Items.Select(b => b.Id)).DoesNotContain(theirs.Id);
+
+        // Matches the linked owner's name (Counterparty).
+        var byCounterpartyName = await ListAsync(client, "?q=Albert");
+        await Assert.That(byCounterpartyName.Items.Select(b => b.Id)).Contains(theirs.Id);
+        await Assert.That(byCounterpartyName.Items.Select(b => b.Id)).DoesNotContain(mine.Id);
+    }
+
+    [Test]
+    public async Task ListBankAccounts_paginates()
+    {
+        using var client = Factory.CreateClient();
+        var counterparty = await CreateCounterpartyAsync(client, "Many Banks");
+        foreach (
+            var iban in new[] { "NL11RABO0000000001", "NL22RABO0000000002", "NL33RABO0000000003" }
+        )
+        {
+            await CreateBankAccountAsync(
+                client,
+                NewRequest(iban: iban, counterpartyId: counterparty.Id)
+            );
+        }
+
+        var firstPage = await ListAsync(client, "?owner=Others&skip=0&take=2");
+        await Assert.That(firstPage.TotalCount).IsEqualTo(3);
+        await Assert.That(firstPage.Items.Count).IsEqualTo(2);
+
+        var secondPage = await ListAsync(client, "?owner=Others&skip=2&take=2");
+        await Assert.That(secondPage.TotalCount).IsEqualTo(3);
+        await Assert.That(secondPage.Items.Count).IsEqualTo(1);
+    }
+
+    [Test]
     public async Task CreateBankAccount_for_an_account_round_trips()
     {
         using var client = Factory.CreateClient();
@@ -660,6 +748,48 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
         response.EnsureSuccessStatusCode();
         var dto = await response.Content.ReadFromJsonAsync<CounterpartyDto>();
         return dto!;
+    }
+
+    private static CreateBankAccountRequestDto NewRequest(
+        string iban,
+        Guid? accountId = null,
+        Guid? counterpartyId = null,
+        string? bankName = null,
+        string? currencyCode = null
+    ) =>
+        new(
+            Iban: iban,
+            AccountNumber: null,
+            Bic: null,
+            BankName: bankName,
+            AccountHolderName: null,
+            CurrencyCode: currencyCode,
+            AccountId: accountId,
+            CounterpartyId: counterpartyId
+        );
+
+    private static async Task<BankAccountDto> CreateBankAccountAsync(
+        HttpClient client,
+        CreateBankAccountRequestDto request
+    )
+    {
+        using var response = await client.PostAsJsonAsync(
+            new Uri("/api/bank-accounts", UriKind.Relative),
+            request
+        );
+        response.EnsureSuccessStatusCode();
+        var dto = await response.Content.ReadFromJsonAsync<BankAccountDto>();
+        return dto!;
+    }
+
+    private static async Task<PagedDto<BankAccountDto>> ListAsync(HttpClient client, string query)
+    {
+        using var response = await client.GetAsync(
+            new Uri($"/api/bank-accounts{query}", UriKind.Relative)
+        );
+        response.EnsureSuccessStatusCode();
+        var paged = await response.Content.ReadFromJsonAsync<PagedDto<BankAccountDto>>();
+        return paged ?? throw new InvalidOperationException("Paged response was null.");
     }
 }
 

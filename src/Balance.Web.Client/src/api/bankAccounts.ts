@@ -10,6 +10,7 @@ import {
 } from '../lib/domain';
 import { getJson, postFormData } from '../lib/http';
 import { toNumber } from '../lib/money';
+import type { Page } from '../lib/paging';
 import { createResourceCrud } from '../lib/resourceApi';
 
 type WireBankAccount = components['schemas']['BankAccountOutput'];
@@ -21,10 +22,11 @@ type WireImportResult = components['schemas']['ImportResult'];
 
 export type BankAccountType = 'Current' | 'Savings' | 'Card';
 
-/** Owner facet for the bank-accounts list: your own BankAccounts vs. counterparties'. */
-export type BankAccountOwnerFilter = 'mine' | 'others';
+/** Owner facet for the bank-accounts list: your own BankAccounts vs. counterparties'.
+ *  PascalCase to bind directly to the server's BankAccountOwnerFilter enum query param. */
+export type BankAccountOwnerFilter = 'Mine' | 'Others';
 
-export const BANK_ACCOUNT_OWNER_FILTERS: readonly BankAccountOwnerFilter[] = ['mine', 'others'];
+export const BANK_ACCOUNT_OWNER_FILTERS: readonly BankAccountOwnerFilter[] = ['Mine', 'Others'];
 
 export type BankAccount = {
     id: BankAccountId;
@@ -85,6 +87,8 @@ export function formatBankAccountSubline(ba: BankAccount): string {
 export const bankAccountsKeys = {
     all: ['bank-accounts'] as const,
     list: () => [...bankAccountsKeys.all, 'list'] as const,
+    page: (skip: number, take: number, q: string, owner: BankAccountOwnerFilter) =>
+        [...bankAccountsKeys.all, 'page', { skip, take, q, owner }] as const,
     detail: (id: BankAccountId) => [...bankAccountsKeys.all, 'detail', id] as const,
     importers: () => [...bankAccountsKeys.all, 'importers'] as const,
 };
@@ -132,6 +136,42 @@ export function useBankAccounts() {
         queryFn: async ({ signal }) => {
             const wire = await fetchBankAccounts(signal);
             return wire.map(toBankAccount);
+        },
+    });
+}
+
+/**
+ * Server-side paged + searchable bank accounts for the overview screen. Search
+ * matches the account's own identifiers plus the linked owner's name; `owner`
+ * facets to your own accounts vs. counterparties'. The unpaginated
+ * {@link useBankAccounts} remains for dropdowns and linked-account sections.
+ */
+export function useBankAccountsPage(
+    skip: number,
+    take: number,
+    q: string,
+    owner: BankAccountOwnerFilter,
+) {
+    return useQuery({
+        queryKey: bankAccountsKeys.page(skip, take, q, owner),
+        queryFn: async ({ signal }): Promise<Page<BankAccount>> => {
+            const params = new URLSearchParams({
+                skip: String(skip),
+                take: String(take),
+                owner,
+            });
+            if (q !== '') {
+                params.set('q', q);
+            }
+            const wire = await getJson<WirePagedBankAccounts>(
+                `/api/bank-accounts?${params.toString()}`,
+                signal,
+                'load bank accounts',
+            );
+            return {
+                items: wire.items.map(toBankAccount),
+                totalCount: Number(wire.totalCount),
+            };
         },
     });
 }

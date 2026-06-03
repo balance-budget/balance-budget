@@ -189,12 +189,7 @@ function AccountTreeRows({
     const children = childrenByParent.get(account.id) ?? [];
     return (
         <>
-            <AccountRow
-                account={account}
-                depth={depth}
-                onEdit={onEdit}
-                onDelete={onDelete}
-            />
+            <AccountRow account={account} depth={depth} onEdit={onEdit} onDelete={onDelete} />
             {children.map(child => (
                 <AccountTreeRows
                     key={child.id}
@@ -238,16 +233,20 @@ function AccountRow({
                 <AccountAvatar account={account} size="md" />
                 <div className="flex flex-col gap-[2px] flex-1 min-w-0">
                     <span className="flex items-center gap-2 min-w-0">
+                        {!account.isPostable ? (
+                            <Icon
+                                name="folder-tree"
+                                size={14}
+                                strokeWidth={1.75}
+                                className="shrink-0 text-fg-3"
+                                aria-label="Roll-up account"
+                            />
+                        ) : null}
                         <span
                             className={`text-14 truncate ${account.isPostable ? 'font-medium text-fg-1' : 'font-semibold text-fg-2'}`}
                         >
                             {account.name}
                         </span>
-                        {!account.isPostable ? (
-                            <span className="text-10 uppercase tracking-wide text-fg-3 border border-border-soft rounded-sm px-1 py-[1px] shrink-0">
-                                Roll-up
-                            </span>
-                        ) : null}
                     </span>
                     <span className="text-12 text-fg-3 truncate tabular">
                         {account.code}
