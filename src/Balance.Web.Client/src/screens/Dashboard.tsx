@@ -140,7 +140,7 @@ function KpiStrip() {
 
     if (summary.isPending) {
         return (
-            <section className="grid gap-[14px]" style={{ gridTemplateColumns: '1.3fr 1fr 1fr' }}>
+            <section className="grid gap-[14px] grid-cols-1 sm:grid-cols-[1.3fr_1fr_1fr]">
                 <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
                     <span className="eyebrow truncate">Net worth</span>
                     <Skeleton className="h-[44px] w-[180px]" />
@@ -285,7 +285,7 @@ export function Dashboard() {
             <KpiStrip />
 
             {/* Trend + accounts */}
-            <section className="grid gap-[18px]" style={{ gridTemplateColumns: '1.4fr 1fr' }}>
+            <section className="grid gap-[18px] grid-cols-1 lg:grid-cols-[1.4fr_1fr]">
                 <AccountBalanceTrendPanel />
 
                 <Panel>
