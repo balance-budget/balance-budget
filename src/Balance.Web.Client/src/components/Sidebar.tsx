@@ -120,13 +120,11 @@ function matchActiveAccountId(pathname: string): string | null {
 
 function AccountTreeNode({
     account,
-    depth,
     childrenByParent,
     expandedIds,
     onToggle,
 }: {
     account: Account;
-    depth: number;
     childrenByParent: Map<string | null, Account[]>;
     expandedIds: Set<string>;
     onToggle: (id: string) => void;
@@ -144,10 +142,7 @@ function AccountTreeNode({
 
     return (
         <div className="flex flex-col gap-[2px]">
-            <div
-                className="flex items-center gap-1"
-                style={{ paddingLeft: `${String(depth * 0.75)}rem` }}
-            >
+            <div className="flex items-center gap-1">
                 {hasChildren ? (
                     <button
                         type="button"
@@ -202,12 +197,15 @@ function AccountTreeNode({
                 </Link>
             </div>
             {hasChildren && expanded && (
-                <div className="flex flex-col gap-[2px]">
+                // No indentation — the chart-of-accounts can nest several levels
+                // deep and the sidebar is narrow. Instead, each expanded group sits
+                // on a translucent shade that compounds with depth, so nested
+                // subtrees read progressively brighter without eating width.
+                <div className="flex flex-col gap-[2px] rounded-md bg-white/[0.03] py-[2px]">
                     {children.map(child => (
                         <AccountTreeNode
                             key={child.id}
                             account={child}
-                            depth={depth + 1}
                             childrenByParent={childrenByParent}
                             expandedIds={expandedIds}
                             onToggle={onToggle}
@@ -240,7 +238,6 @@ function AccountTreeSection({
                 <AccountTreeNode
                     key={root.id}
                     account={root}
-                    depth={0}
                     childrenByParent={childrenByParent}
                     expandedIds={expandedIds}
                     onToggle={onToggle}
