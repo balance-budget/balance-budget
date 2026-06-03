@@ -173,7 +173,7 @@ function AccountTreeNode({
                         </span>
                     )}
                 </Link>
-                {hasChildren && (
+                {hasChildren ? (
                     <button
                         type="button"
                         onClick={() => {
@@ -192,6 +192,10 @@ function AccountTreeNode({
                             )}
                         />
                     </button>
+                ) : (
+                    // Reserve the toggle slot so balances right-align identically
+                    // whether or not the row has an expand chevron.
+                    <span className="shrink-0 w-[22px]" aria-hidden="true" />
                 )}
             </div>
             {hasChildren && expanded && (
