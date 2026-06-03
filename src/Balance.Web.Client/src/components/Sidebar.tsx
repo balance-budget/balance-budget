@@ -304,10 +304,13 @@ function AccountsGroup() {
     }
 
     const childrenByParent = buildChildrenMap(data);
-    const assetRoots = data.filter(a => a.parentId === null && a.type === 'Asset');
-    const liabilityRoots = data.filter(a => a.parentId === null && a.type === 'Liability');
-    const incomeRoots = data.filter(a => a.parentId === null && a.type === 'Income');
-    const expenseRoots = data.filter(a => a.parentId === null && a.type === 'Expense');
+    // Roots come from the map's `null` bucket, which buildChildrenMap already
+    // sorts by code then name — so each type section is code-ordered too.
+    const roots = childrenByParent.get(null) ?? [];
+    const assetRoots = roots.filter(a => a.type === 'Asset');
+    const liabilityRoots = roots.filter(a => a.type === 'Liability');
+    const incomeRoots = roots.filter(a => a.type === 'Income');
+    const expenseRoots = roots.filter(a => a.type === 'Expense');
 
     // Auto-expand the ancestors of the account being viewed so it's never hidden
     // behind a collapsed parent — unioned with the user's persisted expansions.
