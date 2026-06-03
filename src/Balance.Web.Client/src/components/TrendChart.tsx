@@ -21,9 +21,22 @@ type TrendChartProps = {
     range: TrendRange;
     currencyCode: string;
     height?: number;
+    /** Account ids whose line is currently toggled off via the legend. */
+    hiddenAccountIds: Set<string>;
+    /** Toggle a single series on/off; called with the clicked legend's account id. */
+    onToggleSeries: (accountId: string) => void;
 };
 
 type ChartRow = { date: string } & Record<string, number | string>;
+
+/** A recharts dataKey may be a string, number, or accessor function; our line
+ *  dataKeys are always the account id string, so narrow to that. */
+type LegendEntry = { dataKey?: string | number | ((obj: unknown) => unknown) };
+
+function legendAccountId(entry: LegendEntry): string | null {
+    const key = entry.dataKey;
+    return typeof key === 'string' || typeof key === 'number' ? String(key) : null;
+}
 
 function buildRows(series: AccountTrend[]): ChartRow[] {
     const first = series[0];
@@ -57,7 +70,14 @@ function computeTicks(rows: ChartRow[], range: TrendRange): string[] {
  * the snapped date, sorted value-descending. Axes auto-fit; y-axis labels are
  * compact above €10k, full below.
  */
-export function TrendChart({ series, range, currencyCode, height = 240 }: TrendChartProps) {
+export function TrendChart({
+    series,
+    range,
+    currencyCode,
+    height = 240,
+    hiddenAccountIds,
+    onToggleSeries,
+}: TrendChartProps) {
     const catalog = useCurrencyCatalog();
     const rows = useMemo(() => buildRows(series), [series]);
     const ticks = useMemo(() => computeTicks(rows, range), [rows, range]);
@@ -105,7 +125,25 @@ export function TrendChart({ series, range, currencyCode, height = 240 }: TrendC
                 <Legend
                     iconType="circle"
                     iconSize={8}
-                    wrapperStyle={{ fontSize: 13, paddingTop: 8 }}
+                    wrapperStyle={{ fontSize: 13, paddingTop: 8, cursor: 'pointer' }}
+                    onClick={(entry: LegendEntry) => {
+                        const id = legendAccountId(entry);
+                        if (id !== null) onToggleSeries(id);
+                    }}
+                    formatter={(value: string, entry: LegendEntry) => {
+                        const id = legendAccountId(entry);
+                        const off = id !== null && hiddenAccountIds.has(id);
+                        return (
+                            <span
+                                style={{
+                                    color: off ? 'var(--color-fg-3)' : undefined,
+                                    textDecoration: off ? 'line-through' : undefined,
+                                }}
+                            >
+                                {value}
+                            </span>
+                        );
+                    }}
                 />
                 {series.map(s => (
                     <Line
@@ -118,6 +156,7 @@ export function TrendChart({ series, range, currencyCode, height = 240 }: TrendC
                         dot={false}
                         activeDot={{ r: 3, strokeWidth: 0 }}
                         isAnimationActive={false}
+                        hide={hiddenAccountIds.has(s.accountId)}
                     />
                 ))}
             </LineChart>
