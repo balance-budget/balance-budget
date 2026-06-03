@@ -24,11 +24,8 @@ type NavLink = {
 
 const NAV_MAIN: NavLink[] = [
     { to: '/', label: 'Dashboard', iconName: 'layout-dashboard' },
-    { to: '/accounts', label: 'Accounts', iconName: 'wallet' },
-    { to: '/counterparties', label: 'Counterparties', iconName: 'user' },
     { to: '/activity', label: 'Activity', iconName: 'book-open' },
-    { to: '/bank-transactions', label: 'Bank transactions', iconName: 'inbox' },
-    { to: '/bank-imports', label: 'Bank imports', iconName: 'download' },
+    { to: '/reports', label: 'Insights', iconName: 'line-chart' },
 ];
 
 const NAV_PLAN: NavLink[] = [
@@ -38,7 +35,10 @@ const NAV_PLAN: NavLink[] = [
 ];
 
 const NAV_OTHER: NavLink[] = [
-    { to: '/reports', label: 'Insights', iconName: 'line-chart' },
+    { to: '/accounts', label: 'Accounts', iconName: 'wallet' },
+    { to: '/counterparties', label: 'Counterparties', iconName: 'user' },
+    { to: '/bank-transactions', label: 'Bank transactions', iconName: 'inbox' },
+    { to: '/bank-imports', label: 'Bank imports', iconName: 'download' },
     { to: '/settings', label: 'Settings', iconName: 'settings' },
 ];
 
@@ -47,13 +47,13 @@ function NavGroup({
     items,
     currentPath,
 }: {
-    title: string;
+    title?: string;
     items: NavLink[];
     currentPath: string;
 }) {
     return (
         <div className="flex flex-col gap-[2px]">
-            <SectionLabel>{title}</SectionLabel>
+            {title && <SectionLabel>{title}</SectionLabel>}
             {items.map(item => {
                 const isActive =
                     item.to === '/' ? currentPath === '/' : currentPath.startsWith(item.to);
@@ -142,12 +142,12 @@ function AccountTreeNode({
 
     return (
         <div className="flex flex-col gap-[2px]">
-            <div className="flex items-center gap-1">
+            <div className="relative flex items-center">
                 <Link
                     to="/accounts/$id"
                     params={{ id: account.id }}
                     search={{ page: 1, q: '' }}
-                    className="flex-1 min-w-0 flex items-center gap-3 px-2 py-2 rounded-sm text-fg-1 hover:bg-surface-2 transition-colors"
+                    className="flex-1 min-w-0 flex items-center gap-3 pl-2 pr-8 py-2 rounded-sm text-fg-1 hover:bg-surface-2 transition-colors"
                     activeProps={{ className: 'bg-brand-primary-soft text-brand-primary' }}
                 >
                     <AccountAvatar account={account} />
@@ -173,7 +173,10 @@ function AccountTreeNode({
                         </span>
                     )}
                 </Link>
-                {hasChildren ? (
+                {hasChildren && (
+                    // Floated over the link's reserved right padding (pr-8) so the
+                    // active/hover background spans the full row width while the
+                    // chevron stays its own clickable target.
                     <button
                         type="button"
                         onClick={() => {
@@ -181,7 +184,7 @@ function AccountTreeNode({
                         }}
                         aria-label={expanded ? 'Collapse' : 'Expand'}
                         aria-expanded={expanded}
-                        className="shrink-0 p-1 rounded-sm text-fg-3 hover:text-fg-1 hover:bg-surface-2"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded-sm text-fg-3 hover:text-fg-1"
                     >
                         <Icon
                             name="chevron-right"
@@ -192,10 +195,6 @@ function AccountTreeNode({
                             )}
                         />
                     </button>
-                ) : (
-                    // Reserve the toggle slot so balances right-align identically
-                    // whether or not the row has an expand chevron.
-                    <span className="shrink-0 w-[22px]" aria-hidden="true" />
                 )}
             </div>
             {hasChildren && expanded && (
@@ -305,7 +304,8 @@ function AccountsGroup() {
     }
 
     const childrenByParent = buildChildrenMap(data);
-    const ledgerRoots = data.filter(a => a.parentId === null && isLedgerAccount(a));
+    const assetRoots = data.filter(a => a.parentId === null && a.type === 'Asset');
+    const liabilityRoots = data.filter(a => a.parentId === null && a.type === 'Liability');
     const incomeRoots = data.filter(a => a.parentId === null && a.type === 'Income');
     const expenseRoots = data.filter(a => a.parentId === null && a.type === 'Expense');
 
@@ -322,8 +322,15 @@ function AccountsGroup() {
     return (
         <>
             <AccountTreeSection
-                title="Accounts"
-                roots={ledgerRoots}
+                title="Assets"
+                roots={assetRoots}
+                childrenByParent={childrenByParent}
+                expandedIds={effectiveExpanded}
+                onToggle={toggle}
+            />
+            <AccountTreeSection
+                title="Liabilities"
+                roots={liabilityRoots}
                 childrenByParent={childrenByParent}
                 expandedIds={effectiveExpanded}
                 onToggle={toggle}
@@ -429,10 +436,10 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
                     edge so the scrollbar sits flush, while keeping the content
                     inset where it was. */}
                 <nav className="flex flex-col gap-1 overflow-y-auto scrollbar-sleek -mr-4 pr-4">
-                    <NavGroup title="Main" items={NAV_MAIN} currentPath={pathname} />
+                    <NavGroup items={NAV_MAIN} currentPath={pathname} />
                     <AccountsGroup />
                     <NavGroup title="Plan" items={NAV_PLAN} currentPath={pathname} />
-                    <NavGroup title="Other" items={NAV_OTHER} currentPath={pathname} />
+                    <NavGroup title="Manage" items={NAV_OTHER} currentPath={pathname} />
                 </nav>
 
                 <CurrentUserCard />

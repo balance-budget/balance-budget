@@ -176,7 +176,7 @@ function KpiStrip() {
             : ' ';
 
     return (
-        <section className="grid gap-[14px]" style={{ gridTemplateColumns: '1.3fr 1fr 1fr' }}>
+        <section className="grid gap-[14px] grid-cols-1 sm:grid-cols-[1.3fr_1fr_1fr]">
             <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
                 <span className="eyebrow truncate">Net worth</span>
                 <Amount
