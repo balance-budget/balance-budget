@@ -408,7 +408,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
             />
             <aside
                 className={cx(
-                    'w-60 shrink-0 h-screen flex flex-col gap-5 px-4 py-6 border-r border-border-soft bg-surface-1 backdrop-blur-card',
+                    'w-64 shrink-0 h-screen flex flex-col gap-5 px-4 py-6 border-r border-border-soft bg-surface-1 backdrop-blur-card',
                     'fixed top-0 left-0 z-40 transition-transform duration-base',
                     open ? 'translate-x-0' : '-translate-x-full',
                     'md:sticky md:top-0 md:left-auto md:z-auto md:translate-x-0 md:transition-none',
