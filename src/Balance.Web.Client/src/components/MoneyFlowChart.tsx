@@ -81,8 +81,9 @@ function SankeyDiagram({ data, currency }: { data: SankeyData; currency: string 
                 nodeWidth={12}
                 linkCurvature={0.5}
                 iterations={64}
-                margin={{ top: 12, right: 140, bottom: 12, left: 140 }}
-                link={{ fill: 'var(--color-border-strong)', fillOpacity: 0.22 }}
+                align="left"
+                margin={{ top: 20, right: 120, bottom: 20, left: 120 }}
+                link={{ stroke: '#2b2b2b', strokeOpacity: 1 }}
                 node={<FlowNode />}
             >
                 <Tooltip
@@ -92,7 +93,9 @@ function SankeyDiagram({ data, currency }: { data: SankeyData; currency: string 
                         border: '1px solid var(--color-border-soft)',
                         borderRadius: 6,
                         fontSize: 12,
+                        color: 'var(--color-fg-1)',
                     }}
+                    itemStyle={{ color: 'var(--color-fg-1)' }}
                 />
             </Sankey>
         </ResponsiveContainer>
