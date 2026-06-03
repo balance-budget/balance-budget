@@ -63,7 +63,7 @@ export const Route = createRootRoute({
 
         if (isAuthRoute) {
             return (
-                <div className="min-h-screen flex items-center justify-center px-4">
+                <div className="min-h-[100dvh] flex items-center justify-center px-4">
                     <Outlet />
                 </div>
             );
