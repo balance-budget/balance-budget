@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import logo from '../assets/logo.svg';
 import { Icon } from './Icon';
@@ -83,7 +83,54 @@ function NavGroup({
     );
 }
 
-function AccountRow({ account }: { account: Account }) {
+const EXPANDED_STORAGE_KEY = 'balance.sidebar.expanded-accounts';
+
+function loadExpandedIds(): Set<string> {
+    try {
+        const raw = localStorage.getItem(EXPANDED_STORAGE_KEY);
+        if (!raw) return new Set();
+        const parsed: unknown = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return new Set();
+        return new Set(parsed.filter((x): x is string => typeof x === 'string'));
+    } catch {
+        return new Set();
+    }
+}
+
+/** Maps a parent id to its children, sorted by code then name; the `null` key
+ *  holds the roots. Mirrors the Accounts screen's ordering. */
+function buildChildrenMap(accounts: Account[]): Map<string | null, Account[]> {
+    const map = new Map<string | null, Account[]>();
+    for (const a of accounts) {
+        const bucket = map.get(a.parentId) ?? [];
+        bucket.push(a);
+        map.set(a.parentId, bucket);
+    }
+    const sort = (a: Account, b: Account) =>
+        a.code.localeCompare(b.code, undefined, { numeric: true }) || a.name.localeCompare(b.name);
+    for (const bucket of map.values()) bucket.sort(sort);
+    return map;
+}
+
+/** The active-account id encoded in the current path (`/accounts/<id>`), or null. */
+function matchActiveAccountId(pathname: string): string | null {
+    const match = /^\/accounts\/([^/]+)/.exec(pathname);
+    return match?.[1] ?? null;
+}
+
+function AccountTreeNode({
+    account,
+    depth,
+    childrenByParent,
+    expandedIds,
+    onToggle,
+}: {
+    account: Account;
+    depth: number;
+    childrenByParent: Map<string | null, Account[]>;
+    expandedIds: Set<string>;
+    onToggle: (id: string) => void;
+}) {
     const catalog = useCurrencyCatalog();
     const identifier = accountIdentifier(account);
     const isNegative = account.balance.amount < 0;
@@ -91,44 +138,113 @@ function AccountRow({ account }: { account: Account }) {
     // accumulated total, which isn't a meaningful figure in personal finance.
     // Only ledger (Asset/Liability) accounts have a balance worth showing here.
     const showBalance = isLedgerAccount(account);
+    const children = childrenByParent.get(account.id) ?? [];
+    const hasChildren = children.length > 0;
+    const expanded = expandedIds.has(account.id);
+
     return (
-        <Link
-            to="/accounts/$id"
-            params={{ id: account.id }}
-            search={{ page: 1, q: '' }}
-            className="flex items-center gap-3 px-3 py-2 rounded-sm text-fg-1 hover:bg-surface-2 transition-colors"
-            activeProps={{ className: 'bg-brand-primary-soft text-brand-primary' }}
-        >
-            <AccountAvatar account={account} />
-            <div className="flex-1 min-w-0 flex flex-col leading-tight">
-                <span className="truncate text-13">{account.name}</span>
-                {identifier && (
-                    <span className="text-11 text-fg-3 truncate tabular">{identifier}</span>
+        <div className="flex flex-col gap-[2px]">
+            <div
+                className="flex items-center gap-1"
+                style={{ paddingLeft: `${String(depth * 0.75)}rem` }}
+            >
+                {hasChildren ? (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            onToggle(account.id);
+                        }}
+                        aria-label={expanded ? 'Collapse' : 'Expand'}
+                        aria-expanded={expanded}
+                        className="shrink-0 p-1 rounded-sm text-fg-3 hover:text-fg-1 hover:bg-surface-2"
+                    >
+                        <Icon
+                            name="chevron-right"
+                            size={14}
+                            className={cx(
+                                'transition-transform duration-fast',
+                                expanded && 'rotate-90',
+                            )}
+                        />
+                    </button>
+                ) : (
+                    <span className="shrink-0 w-[22px]" aria-hidden="true" />
                 )}
-            </div>
-            {showBalance && (
-                <span
-                    className={cx(
-                        'shrink-0 text-12 tabular-nums',
-                        isNegative ? 'text-danger' : 'text-fg-2',
-                    )}
+                <Link
+                    to="/accounts/$id"
+                    params={{ id: account.id }}
+                    search={{ page: 1, q: '' }}
+                    className="flex-1 min-w-0 flex items-center gap-3 px-2 py-2 rounded-sm text-fg-1 hover:bg-surface-2 transition-colors"
+                    activeProps={{ className: 'bg-brand-primary-soft text-brand-primary' }}
                 >
-                    {formatMoney(account.balance.amount, account.balance.currencyCode, catalog, {
-                        decimals: false,
-                    })}
-                </span>
+                    <AccountAvatar account={account} />
+                    <div className="flex-1 min-w-0 flex flex-col leading-tight">
+                        <span className="truncate text-13">{account.name}</span>
+                        {identifier && (
+                            <span className="text-11 text-fg-3 truncate tabular">{identifier}</span>
+                        )}
+                    </div>
+                    {showBalance && (
+                        <span
+                            className={cx(
+                                'shrink-0 text-12 tabular-nums',
+                                isNegative ? 'text-danger' : 'text-fg-2',
+                            )}
+                        >
+                            {formatMoney(
+                                account.balance.amount,
+                                account.balance.currencyCode,
+                                catalog,
+                                { decimals: false },
+                            )}
+                        </span>
+                    )}
+                </Link>
+            </div>
+            {hasChildren && expanded && (
+                <div className="flex flex-col gap-[2px]">
+                    {children.map(child => (
+                        <AccountTreeNode
+                            key={child.id}
+                            account={child}
+                            depth={depth + 1}
+                            childrenByParent={childrenByParent}
+                            expandedIds={expandedIds}
+                            onToggle={onToggle}
+                        />
+                    ))}
+                </div>
             )}
-        </Link>
+        </div>
     );
 }
 
-function AccountSection({ title, accounts }: { title: string; accounts: Account[] }) {
-    if (accounts.length === 0) return null;
+function AccountTreeSection({
+    title,
+    roots,
+    childrenByParent,
+    expandedIds,
+    onToggle,
+}: {
+    title: string;
+    roots: Account[];
+    childrenByParent: Map<string | null, Account[]>;
+    expandedIds: Set<string>;
+    onToggle: (id: string) => void;
+}) {
+    if (roots.length === 0) return null;
     return (
         <div className="flex flex-col gap-[2px]">
             <SectionLabel>{title}</SectionLabel>
-            {accounts.map(account => (
-                <AccountRow key={account.id} account={account} />
+            {roots.map(root => (
+                <AccountTreeNode
+                    key={root.id}
+                    account={root}
+                    depth={0}
+                    childrenByParent={childrenByParent}
+                    expandedIds={expandedIds}
+                    onToggle={onToggle}
+                />
             ))}
         </div>
     );
@@ -136,6 +252,25 @@ function AccountSection({ title, accounts }: { title: string; accounts: Account[
 
 function AccountsGroup() {
     const { data, isPending, isError, refetch } = useAccounts();
+    const pathname = useRouterState({ select: s => s.location.pathname });
+    const [expandedIds, setExpandedIds] = useState<Set<string>>(loadExpandedIds);
+
+    useEffect(() => {
+        try {
+            localStorage.setItem(EXPANDED_STORAGE_KEY, JSON.stringify([...expandedIds]));
+        } catch {
+            // Persistence is best-effort; ignore quota/availability errors.
+        }
+    }, [expandedIds]);
+
+    const toggle = (id: string) => {
+        setExpandedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
 
     if (isPending) {
         return (
@@ -161,15 +296,7 @@ function AccountsGroup() {
         );
     }
 
-    const ledgerAccounts = data.filter(isLedgerAccount);
-    const incomeAccounts = data.filter(a => a.type === 'Income');
-    const expenseAccounts = data.filter(a => a.type === 'Expense');
-
-    if (
-        ledgerAccounts.length === 0 &&
-        incomeAccounts.length === 0 &&
-        expenseAccounts.length === 0
-    ) {
+    if (data.length === 0) {
         return (
             <div className="flex flex-col gap-[2px]">
                 <SectionLabel>Accounts</SectionLabel>
@@ -178,11 +305,44 @@ function AccountsGroup() {
         );
     }
 
+    const childrenByParent = buildChildrenMap(data);
+    const ledgerRoots = data.filter(a => a.parentId === null && isLedgerAccount(a));
+    const incomeRoots = data.filter(a => a.parentId === null && a.type === 'Income');
+    const expenseRoots = data.filter(a => a.parentId === null && a.type === 'Expense');
+
+    // Auto-expand the ancestors of the account being viewed so it's never hidden
+    // behind a collapsed parent — unioned with the user's persisted expansions.
+    const parentOf = new Map<string, string | null>(data.map(a => [a.id, a.parentId]));
+    const effectiveExpanded = new Set(expandedIds);
+    let cursor = parentOf.get(matchActiveAccountId(pathname) ?? '') ?? null;
+    while (cursor) {
+        effectiveExpanded.add(cursor);
+        cursor = parentOf.get(cursor) ?? null;
+    }
+
     return (
         <>
-            <AccountSection title="Accounts" accounts={ledgerAccounts} />
-            <AccountSection title="Income" accounts={incomeAccounts} />
-            <AccountSection title="Expenses" accounts={expenseAccounts} />
+            <AccountTreeSection
+                title="Accounts"
+                roots={ledgerRoots}
+                childrenByParent={childrenByParent}
+                expandedIds={effectiveExpanded}
+                onToggle={toggle}
+            />
+            <AccountTreeSection
+                title="Income"
+                roots={incomeRoots}
+                childrenByParent={childrenByParent}
+                expandedIds={effectiveExpanded}
+                onToggle={toggle}
+            />
+            <AccountTreeSection
+                title="Expenses"
+                roots={expenseRoots}
+                childrenByParent={childrenByParent}
+                expandedIds={effectiveExpanded}
+                onToggle={toggle}
+            />
         </>
     );
 }
