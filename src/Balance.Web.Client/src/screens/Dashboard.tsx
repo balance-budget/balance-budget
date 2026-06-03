@@ -119,7 +119,14 @@ function AccountsPanel() {
         );
     }
 
-    const ledgerAccounts = accounts.data.filter(isLedgerAccount);
+    // Sorted by code then name (numeric-aware), matching the sidebar's ordering.
+    const ledgerAccounts = accounts.data
+        .filter(isLedgerAccount)
+        .sort(
+            (a, b) =>
+                a.code.localeCompare(b.code, undefined, { numeric: true }) ||
+                a.name.localeCompare(b.name),
+        );
 
     if (ledgerAccounts.length === 0) {
         return <span className="text-13 text-fg-3">No accounts yet.</span>;
