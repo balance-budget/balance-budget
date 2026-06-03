@@ -163,10 +163,10 @@ function DistributionBody({
         fill: chartColorFor(s.accountId),
     }));
 
-    if (data.slices.length === 0) {
+    if (positive.length === 0 && negative.length === 0) {
         return (
             <div className="h-[280px] flex items-center justify-center text-13 text-fg-3">
-                Nothing in this period.
+                No money moved in this period.
             </div>
         );
     }
@@ -209,12 +209,14 @@ function DistributionBody({
                         Net negative this period — see the breakdown.
                     </div>
                 )}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-11 text-fg-3">Total</span>
-                    <span className="text-16 font-semibold text-fg-1">
-                        {formatMoney(data.total.amount, currency, catalog, { decimals: false })}
-                    </span>
-                </div>
+                {pieData.length > 0 && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span className="text-11 text-fg-3">Total</span>
+                        <span className="text-16 font-semibold text-fg-1">
+                            {formatMoney(data.total.amount, currency, catalog, { decimals: false })}
+                        </span>
+                    </div>
+                )}
             </div>
 
             <div className="flex flex-col">
