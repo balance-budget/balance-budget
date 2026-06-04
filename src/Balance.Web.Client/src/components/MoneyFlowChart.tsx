@@ -1,8 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Rectangle, ResponsiveContainer, Sankey, Tooltip } from 'recharts';
 import { useCurrencyCatalog } from '../api/currencies';
-import { useMoneyFlow, type FlowDepth, type MoneyFlowNodeKind } from '../api/reports';
-import { cx } from '../lib/cx';
+import { useMoneyFlow, type MoneyFlowNode, type MoneyFlowNodeKind } from '../api/reports';
 import { formatMoney } from '../lib/money';
 import type { ReportPeriod } from '../lib/reportPeriod';
 import { ErrorState } from './ErrorState';
@@ -13,14 +12,6 @@ type MoneyFlowChartProps = {
     period: ReportPeriod;
     currency: string;
 };
-
-// Preset category depths offered in the header. 'all' draws the full hierarchy.
-const DEPTHS: { token: FlowDepth; label: string }[] = [
-    { token: 1, label: '1' },
-    { token: 2, label: '2' },
-    { token: 3, label: '3' },
-    { token: 'all', label: 'All' },
-];
 
 // One colour per node kind. The hub is neutral; income/expense and the three
 // balance-sheet types reuse the category palette so the diagram reads the same
@@ -34,20 +25,61 @@ const KIND_COLOR: Record<MoneyFlowNodeKind, string> = {
     Equity: 'var(--color-cat-housing)',
 };
 
+type SankeyNode = { id: string; name: string; kind: MoneyFlowNodeKind; hasChildren: boolean };
 type SankeyData = {
-    nodes: { name: string; kind: MoneyFlowNodeKind }[];
+    nodes: SankeyNode[];
     links: { source: number; target: number; value: number }[];
 };
 
+// Collapsing a node hides its whole subtree, so any of its descendants that were
+// themselves expanded must drop out of the set — otherwise re-expanding the node
+// would resurface a deep tree (we chose prune-on-collapse). The descendants are
+// still visible at collapse time, so we walk parentId among the current nodes.
+function collapse(expanded: Set<string>, id: string, nodes: readonly MoneyFlowNode[]): Set<string> {
+    const childrenByParent = new Map<string, string[]>();
+    for (const n of nodes) {
+        if (n.parentId === null) continue;
+        const siblings = childrenByParent.get(n.parentId) ?? [];
+        siblings.push(n.id);
+        childrenByParent.set(n.parentId, siblings);
+    }
+
+    const next = new Set(expanded);
+    const stack = [id];
+    for (let current = stack.pop(); current !== undefined; current = stack.pop()) {
+        next.delete(current);
+        for (const child of childrenByParent.get(current) ?? []) stack.push(child);
+    }
+    return next;
+}
+
 export function MoneyFlowChart({ period, currency }: MoneyFlowChartProps) {
-    const [depth, setDepth] = useState<FlowDepth>(1);
-    const flow = useMoneyFlow(period, currency, depth);
+    const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+    const expandedIds = useMemo(() => [...expanded], [expanded]);
+    const flow = useMoneyFlow(period, currency, expandedIds);
+
+    const toggle = useCallback(
+        (id: string) => {
+            setExpanded(prev => {
+                if (prev.has(id)) return collapse(prev, id, flow.data?.nodes ?? []);
+                const next = new Set(prev);
+                next.add(id);
+                return next;
+            });
+        },
+        [flow.data],
+    );
 
     const data = useMemo<SankeyData | null>(() => {
         if (!flow.data) return null;
         const indexById = new Map(flow.data.nodes.map((n, i) => [n.id, i]));
         return {
-            nodes: flow.data.nodes.map(n => ({ name: n.name, kind: n.kind })),
+            nodes: flow.data.nodes.map(n => ({
+                id: n.id,
+                name: n.name,
+                kind: n.kind,
+                hasChildren: n.hasChildren,
+            })),
             links: flow.data.links.flatMap(l => {
                 const source = indexById.get(l.source);
                 const target = indexById.get(l.target);
@@ -62,7 +94,19 @@ export function MoneyFlowChart({ period, currency }: MoneyFlowChartProps) {
             <SectionHead
                 title="Money flow"
                 subtitle="Where money came in and where it went"
-                action={<DepthToggle depth={depth} onChange={setDepth} />}
+                action={
+                    expanded.size > 0 ? (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setExpanded(new Set());
+                            }}
+                            className="px-[10px] py-[5px] rounded-full text-11 font-medium text-fg-3 hover:text-fg-1 select-none"
+                        >
+                            Collapse all
+                        </button>
+                    ) : undefined
+                }
             />
             {flow.isPending ? (
                 <Skeleton className="h-[420px] w-full" />
@@ -76,44 +120,28 @@ export function MoneyFlowChart({ period, currency }: MoneyFlowChartProps) {
                     No money moved in this period.
                 </div>
             ) : (
-                <SankeyDiagram data={data} currency={currency} />
+                <SankeyDiagram
+                    data={data}
+                    currency={currency}
+                    expanded={expanded}
+                    onToggle={toggle}
+                />
             )}
         </Panel>
     );
 }
 
-function DepthToggle({
-    depth,
-    onChange,
+function SankeyDiagram({
+    data,
+    currency,
+    expanded,
+    onToggle,
 }: {
-    depth: FlowDepth;
-    onChange: (next: FlowDepth) => void;
+    data: SankeyData;
+    currency: string;
+    expanded: Set<string>;
+    onToggle: (id: string) => void;
 }) {
-    return (
-        <div className="flex items-center gap-[6px]">
-            <span className="text-11 text-fg-3">Depth</span>
-            {DEPTHS.map(d => (
-                <button
-                    key={String(d.token)}
-                    type="button"
-                    onClick={() => {
-                        onChange(d.token);
-                    }}
-                    className={cx(
-                        'px-[10px] py-[5px] rounded-full text-11 font-medium select-none',
-                        d.token === depth
-                            ? 'bg-brand-primary-soft text-brand-primary'
-                            : 'text-fg-3 hover:text-fg-1',
-                    )}
-                >
-                    {d.label}
-                </button>
-            ))}
-        </div>
-    );
-}
-
-function SankeyDiagram({ data, currency }: { data: SankeyData; currency: string }) {
     const catalog = useCurrencyCatalog();
     // Give every node room to breathe; tall charts stay legible.
     const height = Math.max(360, data.nodes.length * 30);
@@ -129,7 +157,7 @@ function SankeyDiagram({ data, currency }: { data: SankeyData; currency: string 
                 align="left"
                 margin={{ top: 20, right: 120, bottom: 20, left: 120 }}
                 link={{ stroke: '#2b2b2b', strokeOpacity: 1 }}
-                node={<FlowNode />}
+                node={<FlowNode expanded={expanded} onToggle={onToggle} />}
             >
                 <Tooltip
                     formatter={value => formatMoney(Number(value), currency, catalog)}
@@ -152,17 +180,26 @@ type FlowNodeProps = {
     y?: number;
     width?: number;
     height?: number;
-    index?: number;
     // recharts augments each node with its graph links; `sourceLinks` are the
     // edges flowing *into* this node, so an empty list means it's a pure source.
-    payload?: { name: string; kind: MoneyFlowNodeKind; sourceLinks?: unknown[] };
+    payload?: {
+        id: string;
+        name: string;
+        kind: MoneyFlowNodeKind;
+        hasChildren: boolean;
+        sourceLinks?: unknown[];
+    };
+    // Passed through by SankeyDiagram (recharts clones the element with our props).
+    expanded?: Set<string>;
+    onToggle?: (id: string) => void;
 };
 
 // Custom Sankey node: a coloured bar with its account name placed on the
 // outward side — pure sources (income, drawdowns) on the left, everything from
 // the hub rightward (expenses, savings) on the right — so labels never sit on
-// top of the flows.
-function FlowNode({ x, y, width, height, payload }: FlowNodeProps) {
+// top of the flows. Nodes with children carry a circled +/− on the outward edge
+// of the label (⊕ collapsed, ⊖ expanded) and toggle their subtree on click.
+function FlowNode({ x, y, width, height, payload, expanded, onToggle }: FlowNodeProps) {
     if (
         x === undefined ||
         y === undefined ||
@@ -178,8 +215,22 @@ function FlowNode({ x, y, width, height, payload }: FlowNodeProps) {
     const labelX = isSource ? x - 8 : x + width + 8;
     const anchor = isSource ? 'end' : 'start';
 
+    const expandable = payload.hasChildren;
+    const isExpanded = expandable && (expanded?.has(payload.id) ?? false);
+    // ⊕ to expand, ⊖ to collapse; mirrored to the outward edge of the label so it
+    // sits at the far end on both wings (left of income labels, right of expense).
+    const glyph = !expandable ? '' : isExpanded ? '⊖' : '⊕';
+    const label = !glyph
+        ? payload.name
+        : isSource
+          ? `${glyph}  ${payload.name}`
+          : `${payload.name}  ${glyph}`;
+
     return (
-        <g>
+        <g
+            onClick={expandable ? () => onToggle?.(payload.id) : undefined}
+            style={{ cursor: expandable ? 'pointer' : 'default' }}
+        >
             <Rectangle x={x} y={y} width={width} height={height} fill={color} fillOpacity={0.9} />
             <text
                 x={labelX}
@@ -189,7 +240,7 @@ function FlowNode({ x, y, width, height, payload }: FlowNodeProps) {
                 fontSize={12}
                 fill="var(--color-fg-2)"
             >
-                {payload.name}
+                {label}
             </text>
         </g>
     );

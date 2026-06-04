@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import type { components } from '../lib/api-types';
 import { asAccountId, type AccountId } from '../lib/domain';
 import { getJson } from '../lib/http';
@@ -35,7 +35,17 @@ export type Distribution = {
 };
 
 export type MoneyFlowNodeKind = WireFlowNode['kind'];
-export type MoneyFlowNode = { id: string; name: string; kind: MoneyFlowNodeKind };
+export type MoneyFlowNode = {
+    id: string;
+    name: string;
+    kind: MoneyFlowNodeKind;
+    // The account's parent id, or null for roots/the hub. Lets the chart walk ancestry to prune a
+    // node's descendants from the expanded set when it collapses.
+    parentId: string | null;
+    // True only when expanding this node would reveal a child that moved this period — the chart
+    // shows an expand affordance only where it's true.
+    hasChildren: boolean;
+};
 export type MoneyFlowLink = { source: string; target: string; value: Money };
 export type MoneyFlow = {
     nodes: MoneyFlowNode[];
@@ -62,12 +72,18 @@ export const reportKeys = {
             currency,
             parentId,
         ] as const,
-    flow: (period: ReportPeriod, currency: string, depth: FlowDepth) =>
-        [...reportKeys.all, 'flow', period.from, period.to, currency, depth] as const,
+    flow: (period: ReportPeriod, currency: string, expanded: readonly string[]) =>
+        // Sort so the key is stable regardless of expand order; collapsing back to a prior set is a
+        // cache hit.
+        [
+            ...reportKeys.all,
+            'flow',
+            period.from,
+            period.to,
+            currency,
+            [...expanded].sort().join(','),
+        ] as const,
 };
-
-// How many category levels below the hub to draw. 'all' renders the full hierarchy.
-export type FlowDepth = number | 'all';
 
 function toSlice(wire: WireDistributionSlice, currency: string): DistributionSlice {
     return {
@@ -91,7 +107,13 @@ function toDistribution(wire: WireDistribution): Distribution {
 
 function toMoneyFlow(wire: WireFlow): MoneyFlow {
     return {
-        nodes: wire.nodes.map((n: WireFlowNode) => ({ id: n.id, name: n.name, kind: n.kind })),
+        nodes: wire.nodes.map((n: WireFlowNode) => ({
+            id: n.id,
+            name: n.name,
+            kind: n.kind,
+            parentId: n.parentId,
+            hasChildren: n.hasChildren,
+        })),
         links: wire.links.map((l: WireFlowLink) => ({
             source: l.source,
             target: l.target,
@@ -127,17 +149,18 @@ export function useDistribution(
     });
 }
 
-export function useMoneyFlow(period: ReportPeriod, currency: string, depth: FlowDepth) {
+export function useMoneyFlow(period: ReportPeriod, currency: string, expanded: readonly string[]) {
     return useQuery({
-        queryKey: reportKeys.flow(period, currency, depth),
+        queryKey: reportKeys.flow(period, currency, expanded),
         queryFn: async ({ signal }) => {
             const params = new URLSearchParams({
                 from: period.from,
                 to: period.to,
                 currency,
             });
-            // Omit `depth` for the full hierarchy; otherwise cap the category levels drawn.
-            if (depth !== 'all') params.set('depth', String(depth));
+            // Each expanded account id opts that node into showing its children; an empty set draws
+            // roots only.
+            for (const id of expanded) params.append('expanded', id);
             const wire = await getJson<WireFlow>(
                 `/api/reports/flow?${params}`,
                 signal,
@@ -145,5 +168,8 @@ export function useMoneyFlow(period: ReportPeriod, currency: string, depth: Flow
             );
             return toMoneyFlow(wire);
         },
+        // Keep the previous diagram on screen while a fresh expansion loads, so expanding feels
+        // in-place rather than a reload; collapsing back to a cached set is instant.
+        placeholderData: keepPreviousData,
     });
 }
