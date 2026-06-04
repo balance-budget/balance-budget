@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using Balance.Data.Configurations;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
@@ -49,7 +50,7 @@ internal static class DevelopmentSeedData
         {
             // Chart of accounts: non-postable parents (ADR-0022) with postable leaves, all EUR.
             var checking = Leaf("1100", "Checking", AccountType.Asset);
-            var savings = Leaf("1200", "Savings A", AccountType.Asset);
+            var savings = Leaf("1200", "Savings", AccountType.Asset);
 
             var creditCard = Leaf("2100", "Credit Card", AccountType.Liability);
             var mortgage = Leaf("2200", "Mortgage", AccountType.Liability);
@@ -99,10 +100,91 @@ internal static class DevelopmentSeedData
             var cafe = Counterparty("Café Central");
             var lender = Counterparty("Big Bank");
             var transitCo = Counterparty("NS");
+            var telecom = Counterparty("KPN");
+            var healthInsurer = Counterparty("Zilveren Kruis");
+            var gym = Counterparty("Basic-Fit");
+            var streaming = Counterparty("Netflix");
+            var bank = Counterparty("ABN AMRO");
+            var taxOffice = Counterparty("Belastingdienst");
+            var housingInsurer = Counterparty("Centraal Beheer");
+            var handyman = Counterparty("Klusbedrijf Jansen");
+            var waterCo = Counterparty("Vitens");
+            var garage = Counterparty("Garage Bosch");
+            var bikeShop = Counterparty("Swapfiets");
+            var dentist = Counterparty("Tandartspraktijk");
+            var travelCo = Counterparty("TUI");
+            var clothingStore = Counterparty("Zalando");
+            var ticketing = Counterparty("Ticketmaster");
+            var school = Counterparty("Coursera");
+            var onlineStore = Counterparty("Coolblue");
+            var creditCardCo = Counterparty("ICS");
 
             // Bank accounts (your side) linked to the postable asset leaves.
             var checkingBank = BankAccount(checking, BankAccountType.Current, "NL01BALA0000000001");
             var savingsBank = BankAccount(savings, BankAccountType.Savings, "NL01BALA0000000002");
+
+            // Opening balances against the seeded Opening Balances equity account (AccountSeed), dated
+            // a year back so every running balance starts from a realistic position. Entered by hand,
+            // so both legs are Reconciled and there is no bank import.
+            var openingDate = FirstOfMonth(_today).AddMonths(-12);
+            Opening(checking, 1_000_000, openingDate); // €10,000.00
+            Opening(savings, 2_500_000, openingDate); // €25,000.00
+            Opening(mortgage, -30_000_000, openingDate); // €300,000.00 outstanding
+
+            // Recurring monthly spend on the checking account — one row per category so the whole
+            // chart of accounts carries a year of activity. (day, contra account, counterparty, cents).
+            (
+                int Day,
+                Account Contra,
+                Counterparty Counterparty,
+                long Amount,
+                string Description
+            )[] monthly =
+            [
+                (1, mortgage, lender, -120_000, "Monthly payment"),
+                (3, internetAndPhone, telecom, -4_500, "Internet & phone"),
+                (4, energy, utilityCo, -8_000, "Energy"),
+                (5, healthInsurance, healthInsurer, -13_500, "Health insurance"),
+                (6, groceries, supermarket, -5_200, "Groceries"),
+                (8, sports, gym, -2_500, "Gym membership"),
+                (10, eatingInAndOut, cafe, -2_750, "Dinner"),
+                (13, subscriptions, streaming, -2_580, "Subscriptions"),
+                (14, groceries, supermarket, -4_810, "Groceries"),
+                (18, financial, bank, -350, "Account fee"),
+                (22, groceries, supermarket, -6_390, "Groceries"),
+            ];
+
+            // Periodic spend (annual / quarterly / occasional), keyed off the calendar month so the
+            // year shows seasonality. The tax refund is the lone inflow. (when, day, contra, cp, cents).
+            (
+                Func<int, bool> When,
+                int Day,
+                Account Contra,
+                Counterparty Counterparty,
+                long Amount,
+                string Description
+            )[] periodic =
+            [
+                (month => month == 3, 9, taxes, taxOffice, -45_000, "Municipal taxes"),
+                (
+                    month => month == 1,
+                    15,
+                    housingInsurance,
+                    housingInsurer,
+                    -28_000,
+                    "Home insurance"
+                ),
+                (month => month is 6 or 11, 12, maintenance, handyman, -15_000, "Home maintenance"),
+                (month => month % 3 == 1, 20, water, waterCo, -3_000, "Water"),
+                (month => month % 3 == 2, 16, car, garage, -9_000, "Car service"),
+                (month => month == 4, 11, bike, bikeShop, -3_500, "Bike repair"),
+                (month => month is 2 or 9, 19, medical, dentist, -4_500, "Dentist"),
+                (month => month == 7, 5, holidays, travelCo, -180_000, "Summer holiday"),
+                (month => month is 4 or 11, 24, shopping, clothingStore, -12_000, "Clothing"),
+                (month => month is 5 or 10, 21, activities, ticketing, -6_000, "Concert tickets"),
+                (month => month == 9, 7, education, school, -25_000, "Online course"),
+                (month => month == 5, 13, taxReturn, taxOffice, 60_000, "Tax refund"),
+            ];
 
             // Trailing 12 months of recurring activity. The current month (m == 0) is naturally
             // truncated to <= today by OnDay, so month-to-date views are always partially filled.
@@ -111,87 +193,57 @@ internal static class DevelopmentSeedData
                 var monthStart = FirstOfMonth(_today).AddMonths(-m);
                 var reconciled = m >= 10; // oldest months demonstrate the frozen Reconciled state.
 
+                foreach (var s in monthly)
+                    OnDay(
+                        monthStart,
+                        s.Day,
+                        d =>
+                            Categorised(
+                                checkingBank,
+                                checking,
+                                s.Contra,
+                                s.Counterparty,
+                                s.Amount,
+                                s.Description,
+                                d
+                            )
+                    );
+
+                foreach (var p in periodic)
+                    if (p.When(monthStart.Month))
+                        OnDay(
+                            monthStart,
+                            p.Day,
+                            d =>
+                                Categorised(
+                                    checkingBank,
+                                    checking,
+                                    p.Contra,
+                                    p.Counterparty,
+                                    p.Amount,
+                                    p.Description,
+                                    d
+                                )
+                        );
+
+                // Revolving credit card: a purchase on the card (no bank import) and its repayment
+                // from checking, so the card balance oscillates around zero across the month.
                 OnDay(
                     monthStart,
-                    1,
-                    d =>
-                        Categorised(
-                            checkingBank,
-                            checking,
-                            mortgage,
-                            lender,
-                            -120_000,
-                            "Monthly payment",
-                            d
-                        )
+                    15,
+                    d => Cash(shopping, creditCard, onlineStore, 3_900, "Card purchase", d)
                 );
                 OnDay(
                     monthStart,
-                    4,
+                    27,
                     d =>
                         Categorised(
                             checkingBank,
                             checking,
-                            energy,
-                            utilityCo,
-                            -8_000,
-                            "Utilities",
-                            d
-                        )
-                );
-                OnDay(
-                    monthStart,
-                    6,
-                    d =>
-                        Categorised(
-                            checkingBank,
-                            checking,
-                            groceries,
-                            supermarket,
-                            -5_200,
-                            "Groceries",
-                            d
-                        )
-                );
-                OnDay(
-                    monthStart,
-                    14,
-                    d =>
-                        Categorised(
-                            checkingBank,
-                            checking,
-                            groceries,
-                            supermarket,
-                            -4_810,
-                            "Groceries",
-                            d
-                        )
-                );
-                OnDay(
-                    monthStart,
-                    22,
-                    d =>
-                        Categorised(
-                            checkingBank,
-                            checking,
-                            groceries,
-                            supermarket,
-                            -6_390,
-                            "Groceries",
-                            d
-                        )
-                );
-                OnDay(
-                    monthStart,
-                    10,
-                    d =>
-                        Categorised(
-                            checkingBank,
-                            checking,
-                            eatingInAndOut,
-                            cafe,
-                            -2_750,
-                            "Dinner",
+                            creditCard,
+                            creditCardCo,
+                            -3_900,
+                            "Credit card payment",
                             d
                         )
                 );
@@ -306,6 +358,21 @@ internal static class DevelopmentSeedData
                 counterparty?.Id,
                 new LineSpec(assetSide.Id, assetSideAmount, ReconciliationStatus.Uncleared),
                 new LineSpec(contra.Id, -assetSideAmount, ReconciliationStatus.Uncleared)
+            );
+
+        // An opening balance: a single hand-entered entry pairing the account against the seeded
+        // Opening Balances equity account (AccountSeed). Both legs Reconciled; no bank import.
+        private void Opening(Account account, long amount, DateOnly date) =>
+            AddEntry(
+                date,
+                "Opening balance",
+                counterpartyId: null,
+                new LineSpec(account.Id, amount, ReconciliationStatus.Reconciled),
+                new LineSpec(
+                    AccountSeed.OpeningBalancesId,
+                    -amount,
+                    ReconciliationStatus.Reconciled
+                )
             );
 
         // A self-transfer between two own accounts, with both statement rows imported and attached.
