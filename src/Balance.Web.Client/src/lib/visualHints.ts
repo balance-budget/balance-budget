@@ -30,6 +30,23 @@ export function visualHintFor(accountType: AccountType): VisualHint {
     };
 }
 
+// A distribution donut only ever shows one AccountType at a time, so its
+// slices read best as one hue — the type accent — rather than a grab-bag of
+// palette colours. Same-hue slices are then pulled apart by shade (below).
+export function chartBaseColorForType(accountType: AccountType): string {
+    return ACCENT_BY_TYPE[accountType];
+}
+
+// Fan successive same-hue slices toward white so a monochrome donut stays
+// legible. The first (largest) slice keeps the pure accent; later slices step
+// progressively lighter. oklab keeps the steps perceptually even, and color-mix
+// anchors each shade to the CSS custom property instead of baking hex into JS.
+export function shadeOf(baseColor: string, index: number, count: number): string {
+    if (count <= 1 || index <= 0) return baseColor;
+    const pct = Math.round((index / (count - 1)) * 52);
+    return `color-mix(in oklab, ${baseColor}, white ${pct}%)`;
+}
+
 // Charts need lines that read as distinct even when all accounts share an
 // AccountType. Pick deterministically from a wider category palette by hashing
 // the account id, independent of the type-level avatar accent.
