@@ -48,30 +48,56 @@ internal static class DevelopmentSeedData
         public DevelopmentSeedGraph Build()
         {
             // Chart of accounts: non-postable parents (ADR-0022) with postable leaves, all EUR.
-            var assets = Parent("1000", "Assets", AccountType.Asset);
-            var checking = Leaf("1010", "Checking", AccountType.Asset, assets);
-            var savings = Leaf("1020", "Savings", AccountType.Asset, assets);
+            var checking = Leaf("1100", "Checking", AccountType.Asset);
+            var savings = Leaf("1200", "Savings A", AccountType.Asset);
 
-            var liabilities = Parent("2000", "Liabilities", AccountType.Liability);
-            Leaf("2010", "Credit Card", AccountType.Liability, liabilities);
+            var creditCard = Leaf("2100", "Credit Card", AccountType.Liability);
+            var mortgage = Leaf("2200", "Mortgage", AccountType.Liability);
 
-            var income = Parent("4000", "Income", AccountType.Income);
-            var salary = Leaf("4010", "Salary", AccountType.Income, income);
-            var interest = Leaf("4020", "Interest Received", AccountType.Income, income);
+            var salary = Leaf("4100", "Salary", AccountType.Income);
+            var interest = Leaf("4200", "Interest Received", AccountType.Income);
+            var taxReturn = Leaf("4300", "Tax Return", AccountType.Income);
 
-            var expenses = Parent("5000", "Expenses", AccountType.Expense);
-            var rent = Leaf("5010", "Rent", AccountType.Expense, expenses);
-            var groceries = Leaf("5020", "Groceries", AccountType.Expense, expenses);
-            var utilities = Leaf("5030", "Utilities", AccountType.Expense, expenses);
-            var dining = Leaf("5040", "Dining Out", AccountType.Expense, expenses);
-            var transport = Leaf("5050", "Transport", AccountType.Expense, expenses);
+            var housing = Branch("5100", "Housing", AccountType.Expense);
+            var taxes = Leaf("5110", "Taxes", AccountType.Expense, housing);
+            var housingInsurance = Leaf("5120", "Insurance", AccountType.Expense, housing);
+            var maintenance = Leaf("5130", "Maintenance", AccountType.Expense, housing);
+
+            var utilities = Branch("5200", "Utilities", AccountType.Expense);
+            var energy = Leaf("5210", "Energy", AccountType.Expense, utilities);
+            var water = Leaf("5220", "Water", AccountType.Expense, utilities);
+            var internetAndPhone = Leaf("5230", "Internet & Phone", AccountType.Expense, utilities);
+
+            var household = Branch("5300", "Household", AccountType.Expense);
+            var groceries = Leaf("5310", "Groceries", AccountType.Expense, household);
+
+            var transport = Leaf("5400", "Transport", AccountType.Expense);
+            var car = Leaf("5410", "Car", AccountType.Expense, transport);
+            var publicTransport = Leaf("5420", "Public Transport", AccountType.Expense, transport);
+            var bike = Leaf("5430", "Bike", AccountType.Expense, transport);
+
+            var health = Leaf("5500", "Health", AccountType.Expense);
+            var healthInsurance = Leaf("5510", "Insurance", AccountType.Expense, health);
+            var medical = Leaf("5520", "Medical Expenses", AccountType.Expense, health);
+            var sports = Leaf("5530", "Sports", AccountType.Expense, health);
+
+            var lifestyle = Leaf("5700", "Lifestyle", AccountType.Expense);
+            var eatingInAndOut = Leaf("5710", "Eating In & Out", AccountType.Expense, lifestyle);
+            var holidays = Leaf("5720", "Holidays", AccountType.Expense, health);
+            var shopping = Leaf("5730", "Shopping", AccountType.Expense, health);
+            var activities = Leaf("5740", "Activities", AccountType.Expense, health);
+            var subscriptions = Leaf("5750", "Subscriptions", AccountType.Expense, health);
+
+            var misc = Leaf("5800", "Miscellaneous", AccountType.Expense);
+            var financial = Leaf("5810", "Financial", AccountType.Expense, misc);
+            var education = Leaf("5820", "Education & Training", AccountType.Expense, misc);
 
             // Counterparties.
             var employer = Counterparty("Acme Corp");
             var supermarket = Counterparty("Albert Heijn");
-            var landlord = Counterparty("Landlord BV");
             var utilityCo = Counterparty("Vattenfall");
             var cafe = Counterparty("Café Central");
+            var lender = Counterparty("Big Bank");
             var transitCo = Counterparty("NS");
 
             // Bank accounts (your side) linked to the postable asset leaves.
@@ -92,10 +118,10 @@ internal static class DevelopmentSeedData
                         Categorised(
                             checkingBank,
                             checking,
-                            rent,
-                            landlord,
+                            mortgage,
+                            lender,
                             -120_000,
-                            "Monthly rent",
+                            "Monthly payment",
                             d
                         )
                 );
@@ -106,7 +132,7 @@ internal static class DevelopmentSeedData
                         Categorised(
                             checkingBank,
                             checking,
-                            utilities,
+                            energy,
                             utilityCo,
                             -8_000,
                             "Utilities",
@@ -158,14 +184,23 @@ internal static class DevelopmentSeedData
                 OnDay(
                     monthStart,
                     10,
-                    d => Categorised(checkingBank, checking, dining, cafe, -2_750, "Dinner", d)
+                    d =>
+                        Categorised(
+                            checkingBank,
+                            checking,
+                            eatingInAndOut,
+                            cafe,
+                            -2_750,
+                            "Dinner",
+                            d
+                        )
                 );
 
                 // Cash entry: a real posting with no imported BankTransaction — stays Uncleared.
                 OnDay(
                     monthStart,
                     17,
-                    d => Cash(checking, transport, transitCo, -1_990, "Train ticket", d)
+                    d => Cash(checking, publicTransport, transitCo, -1_990, "Train ticket", d)
                 );
 
                 // Income, attached on import (debit-positive on the asset side).
@@ -416,11 +451,15 @@ internal static class DevelopmentSeedData
             );
         }
 
-        private Account Parent(string code, string name, AccountType type) =>
-            AddAccount(code, name, type, postable: false, parent: null);
+        private Account Branch(
+            string code,
+            string name,
+            AccountType type,
+            Account? parent = null
+        ) => AddAccount(code, name, type, postable: false, parent: parent?.Id);
 
-        private Account Leaf(string code, string name, AccountType type, Account parent) =>
-            AddAccount(code, name, type, postable: true, parent.Id);
+        private Account Leaf(string code, string name, AccountType type, Account? parent = null) =>
+            AddAccount(code, name, type, postable: true, parent?.Id);
 
         private Account AddAccount(
             string code,
