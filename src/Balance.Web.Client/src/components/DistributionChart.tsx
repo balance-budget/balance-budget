@@ -11,7 +11,7 @@ import { cx } from '../lib/cx';
 import type { AccountId } from '../lib/domain';
 import { formatMoney } from '../lib/money';
 import type { ReportPeriod } from '../lib/reportPeriod';
-import { chartColorFor } from '../lib/visualHints';
+import { chartBaseColorForType, shadeOf } from '../lib/visualHints';
 import { ErrorState } from './ErrorState';
 import { Panel, SectionHead } from './Panel';
 import { Skeleton } from './Skeleton';
@@ -155,12 +155,26 @@ function DistributionBody({
     const negative = useMemo(() => data.slices.filter(s => s.amount.amount < 0), [data.slices]);
     const positiveTotal = positive.reduce((sum, s) => sum + s.amount.amount, 0);
 
+    // Every slice in this view shares the account type, so paint them all in
+    // that type's accent and tell them apart by shade. The donut and the legend
+    // read from one map so a row's dot always matches its sector; positives
+    // lead (they form the donut), negatives continue the ramp in the legend.
+    const baseColor = chartBaseColorForType(data.type === 'income' ? 'Income' : 'Expense');
+    const colorByAccount = useMemo(() => {
+        const ordered = [...positive, ...negative];
+        const map = new Map<AccountId, string>();
+        ordered.forEach((s, i) => {
+            map.set(s.accountId, shadeOf(baseColor, i, ordered.length));
+        });
+        return map;
+    }, [positive, negative, baseColor]);
+
     const pieData = positive.map(s => ({
         name: s.name,
         value: s.amount.amount,
         // recharts spreads each datum onto its sector, so a per-entry `fill`
         // colours the slice — no deprecated <Cell> needed.
-        fill: chartColorFor(s.accountId),
+        fill: colorByAccount.get(s.accountId) ?? baseColor,
     }));
 
     if (positive.length === 0 && negative.length === 0) {
@@ -183,9 +197,8 @@ function DistributionBody({
                                 nameKey="name"
                                 innerRadius={64}
                                 outerRadius={104}
-                                paddingAngle={1}
-                                stroke="var(--color-bg-1)"
-                                strokeWidth={2}
+                                paddingAngle={2}
+                                stroke="none"
                                 isAnimationActive={false}
                             />
                             <Tooltip
@@ -200,7 +213,9 @@ function DistributionBody({
                                     border: '1px solid var(--color-border-soft)',
                                     borderRadius: 6,
                                     fontSize: 12,
+                                    color: 'var(--color-fg-1)',
                                 }}
+                                itemStyle={{ color: 'var(--color-fg-1)' }}
                             />
                         </PieChart>
                     </ResponsiveContainer>
@@ -224,6 +239,7 @@ function DistributionBody({
                     <SliceRow
                         key={s.accountId}
                         slice={s}
+                        color={colorByAccount.get(s.accountId) ?? baseColor}
                         share={positiveTotal > 0 ? s.amount.amount / positiveTotal : 0}
                         currency={currency}
                         onDrill={onDrill}
@@ -238,6 +254,7 @@ function DistributionBody({
                             <SliceRow
                                 key={s.accountId}
                                 slice={s}
+                                color={colorByAccount.get(s.accountId) ?? baseColor}
                                 share={null}
                                 currency={currency}
                                 onDrill={onDrill}
@@ -252,11 +269,13 @@ function DistributionBody({
 
 function SliceRow({
     slice,
+    color,
     share,
     currency,
     onDrill,
 }: {
     slice: DistributionSlice;
+    color: string;
     share: number | null;
     currency: string;
     onDrill: (slice: DistributionSlice) => void;
@@ -268,7 +287,7 @@ function SliceRow({
             <span className="flex items-center gap-2 min-w-0">
                 <span
                     className="w-2.5 h-2.5 rounded-full shrink-0"
-                    style={{ background: chartColorFor(slice.accountId) }}
+                    style={{ background: color }}
                 />
                 <span className="text-13 text-fg-1 truncate">{slice.name}</span>
                 {slice.hasChildren && <span className="text-11 text-fg-3">›</span>}
