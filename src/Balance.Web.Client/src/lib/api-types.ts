@@ -1116,6 +1116,8 @@ export interface components {
             id: string;
             name: string;
             kind: components["schemas"]["MoneyFlowNodeKind"];
+            parentId: null | string;
+            hasChildren: boolean;
         };
         /** @enum {unknown} */
         MoneyFlowNodeKind: "Hub" | "Income" | "Expense" | "Asset" | "Liability" | "Equity";
@@ -3778,6 +3780,7 @@ export interface operations {
                 from: string;
                 to: string;
                 currency?: components["schemas"]["CurrencyCode"];
+                expanded?: unknown[];
             };
             header?: never;
             path?: never;
