@@ -2,6 +2,7 @@ using Balance.Configuration.Options;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Ids;
 using Balance.Data.Helpers;
+using Balance.Data.Seeding;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +19,7 @@ public sealed class BalanceDbContext
     private readonly IHostEnvironment _environment;
     private readonly ILoggerFactory _loggerFactory;
     private readonly DatabaseOptions _options;
+    private readonly TimeProvider _timeProvider;
 
     public DbSet<DataProtectionKey> DataProtectionKeys { get; set; } = null!;
 
@@ -46,7 +48,8 @@ public sealed class BalanceDbContext
     public BalanceDbContext(
         IHostEnvironment environment,
         ILoggerFactory loggerFactory,
-        IOptions<DatabaseOptions> options
+        IOptions<DatabaseOptions> options,
+        TimeProvider timeProvider
     )
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -54,6 +57,7 @@ public sealed class BalanceDbContext
         _environment = environment;
         _loggerFactory = loggerFactory;
         _options = options.Value;
+        _timeProvider = timeProvider;
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -68,6 +72,24 @@ public sealed class BalanceDbContext
             .UseLoggerFactory(_loggerFactory)
             .EnableDetailedErrors(_environment.IsDevelopment())
             .EnableSensitiveDataLogging(_environment.IsDevelopment());
+
+        // Development-only sample data, rebuilt every startup with dates anchored to now (ADR-0024).
+        // Reference data stays on HasData; this runtime hook is the only EF-suggested way to express
+        // "Development-only" and "current-dated", neither of which HasData can do. Invoked by the
+        // startup MigrateAsync; the guard also keeps it out of IntegrationTest and design-time hosts.
+        if (_environment.IsDevelopment())
+        {
+            var logger = _loggerFactory.CreateLogger("Balance.Data.Seeding");
+            optionsBuilder.UseAsyncSeeding(
+                (context, _, cancellationToken) =>
+                    DevelopmentDataSeeder.SeedAsync(
+                        (BalanceDbContext)context,
+                        _timeProvider,
+                        logger,
+                        cancellationToken
+                    )
+            );
+        }
     }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
