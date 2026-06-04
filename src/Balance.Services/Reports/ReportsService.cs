@@ -96,7 +96,7 @@ internal sealed class ReportsService : IReportsService
         DateOnly fromDate,
         DateOnly toDate,
         CurrencyCode currencyCode,
-        int? maxDepth,
+        IReadOnlySet<AccountId> expandedAccountIds,
         CancellationToken cancellationToken
     )
     {
@@ -125,18 +125,19 @@ internal sealed class ReportsService : IReportsService
             ownRaw,
             subtreeRaw,
             currencyCode,
-            maxDepth
+            expandedAccountIds
         );
 
-        // Income / Expense: chart-of-accounts hierarchy, subtrees become intermediate nodes. Roots
-        // sit at depth 1 (one hop from the hub); maxDepth caps how far the recursion descends.
+        // Income / Expense: chart-of-accounts hierarchy, subtrees become intermediate nodes. Every
+        // root renders one hop from the hub; the recursion descends into a node only when it is in
+        // the expanded set, otherwise the node collapses (its whole subtree folds into it).
         foreach (
             var root in accounts.Where(a =>
                 IsIncomeOrExpense(a.AccountType) && a.ParentAccountId is null
             )
         )
         {
-            var drawn = builder.BuildSubtree(root.Id, depth: 1);
+            var drawn = builder.BuildSubtree(root.Id);
             builder.Link(HubId, root.Id, drawn);
         }
 
@@ -261,7 +262,7 @@ internal sealed class ReportsService : IReportsService
         private readonly IReadOnlyDictionary<AccountId, long> _ownRaw;
         private readonly IReadOnlyDictionary<AccountId, long> _subtreeRaw;
         private readonly CurrencyCode _currencyCode;
-        private readonly int? _maxDepth;
+        private readonly IReadOnlySet<AccountId> _expanded;
         private readonly List<MoneyFlowLink> _links = [];
 
         public FlowBuilder(
@@ -270,7 +271,7 @@ internal sealed class ReportsService : IReportsService
             IReadOnlyDictionary<AccountId, long> ownRaw,
             IReadOnlyDictionary<AccountId, long> subtreeRaw,
             CurrencyCode currencyCode,
-            int? maxDepth
+            IReadOnlySet<AccountId> expanded
         )
         {
             _byId = byId;
@@ -278,22 +279,21 @@ internal sealed class ReportsService : IReportsService
             _ownRaw = ownRaw;
             _subtreeRaw = subtreeRaw;
             _currencyCode = currencyCode;
-            _maxDepth = maxDepth;
+            _expanded = expanded;
         }
 
         /// <summary>
         /// Emits the links for an account's children and returns the signed value drawn up to the
         /// account itself (own line sum plus same-side children). The caller emits the account's own
-        /// up-link with the returned value. <paramref name="depth"/> is the node's level below the
-        /// hub (roots are 1); at <c>maxDepth</c> the node becomes a leaf — its whole subtree folds
-        /// into the returned value and no child links are emitted.
+        /// up-link with the returned value. A node that is not in the expanded set becomes a leaf —
+        /// its whole subtree folds into the returned value and no child links are emitted.
         /// </summary>
-        public long BuildSubtree(AccountId nodeId, int depth)
+        public long BuildSubtree(AccountId nodeId)
         {
-            // At the cap: collapse the entire subtree into this node. The signed subtree sum already
-            // includes every descendant, so the value reaching the hub is unchanged — only the
-            // intermediate nodes disappear.
-            if (_maxDepth is { } max && depth >= max)
+            // Not expanded: collapse the entire subtree into this node. The signed subtree sum
+            // already includes every descendant, so the value reaching the hub is unchanged — only
+            // the intermediate nodes disappear.
+            if (!_expanded.Contains(nodeId))
                 return _subtreeRaw.GetValueOrDefault(nodeId);
 
             var side = Math.Sign(_subtreeRaw.GetValueOrDefault(nodeId));
@@ -304,7 +304,7 @@ internal sealed class ReportsService : IReportsService
                 if (_subtreeRaw.GetValueOrDefault(childId) == 0)
                     continue; // dormant subtree this period — render nothing
 
-                var childDrawn = BuildSubtree(childId, depth + 1);
+                var childDrawn = BuildSubtree(childId);
                 var childSide = Math.Sign(_subtreeRaw.GetValueOrDefault(childId));
 
                 if (side != 0 && childSide == side)
@@ -344,16 +344,25 @@ internal sealed class ReportsService : IReportsService
             var nodes = nodeIds
                 .Select(id =>
                     id == HubId
-                        ? new MoneyFlowNode(HubId, "Total", MoneyFlowNodeKind.Hub)
+                        ? new MoneyFlowNode(HubId, "Total", MoneyFlowNodeKind.Hub, null, false)
                         : new MoneyFlowNode(
                             id,
                             metaById[id].Name,
-                            KindFor(metaById[id].AccountType)
+                            KindFor(metaById[id].AccountType),
+                            metaById[id].ParentAccountId?.Value.ToString(),
+                            HasRenderableChildren(metaById[id].Id)
                         )
                 )
                 .ToList();
             return (nodes, _links);
         }
+
+        // A node is worth an expand affordance only when descending would reveal something: at least
+        // one child whose subtree moved this period (mirrors the dormant-subtree skip above).
+        private bool HasRenderableChildren(AccountId id) =>
+            _childrenByParent
+                .GetValueOrDefault(id, [])
+                .Any(childId => _subtreeRaw.GetValueOrDefault(childId) != 0);
 
         private static MoneyFlowNodeKind KindFor(AccountType type) =>
             type switch

@@ -18,17 +18,19 @@ public interface IReportsService
         CancellationToken cancellationToken
     );
 
-    /// <param name="maxDepth">
-    /// Caps how many category levels below the hub are drawn: 1 shows only the chart-of-accounts
-    /// roots (each collapsing its whole subtree), 2 shows roots plus one sub-level, and so on.
-    /// <c>null</c> draws the full hierarchy. Capping only folds deeper nodes into their ancestor at
-    /// the cutoff, so the double-entry balance is preserved at any depth.
+    /// <param name="expandedAccountIds">
+    /// The set of accounts whose children should be drawn. Every root renders as a node; the
+    /// recursion descends into a node only when its id is in this set, otherwise the node collapses
+    /// (its whole subtree folds into it). An empty set therefore draws roots only. Folding only
+    /// moves value into the collapsed ancestor, so the double-entry balance is preserved at any
+    /// expansion. Ids not on a visible path (dormant, wrong currency, orphaned) are harmlessly
+    /// ignored — they are simply never reached.
     /// </param>
     Task<Result<MoneyFlowOutput>> GetMoneyFlowAsync(
         DateOnly fromDate,
         DateOnly toDate,
         CurrencyCode currencyCode,
-        int? maxDepth,
+        IReadOnlySet<AccountId> expandedAccountIds,
         CancellationToken cancellationToken
     );
 }

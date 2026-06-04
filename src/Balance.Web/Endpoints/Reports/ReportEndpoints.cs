@@ -61,7 +61,7 @@ internal static class ReportEndpoints
         [FromQuery] DateOnly from,
         [FromQuery] DateOnly to,
         [FromQuery] CurrencyCode? currency,
-        [FromQuery] int? depth,
+        [FromQuery] AccountId[]? expanded,
         [FromServices] IReportsService reportsService,
         CancellationToken cancellationToken
     )
@@ -70,10 +70,8 @@ internal static class ReportEndpoints
             from,
             to,
             currency ?? DefaultCurrency,
-            // Omit (null) for the full hierarchy; otherwise at least the roots.
-            depth is { } d
-                ? Math.Max(1, d)
-                : null,
+            // Empty set draws roots only; each id opts that node into showing its children.
+            (expanded ?? []).ToHashSet(),
             cancellationToken
         );
         return result.ToOk();

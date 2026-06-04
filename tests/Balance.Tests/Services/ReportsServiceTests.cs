@@ -211,7 +211,7 @@ internal sealed class ReportsServiceTests : EndpointsTestsBase
             From,
             To,
             fx.Currency,
-            maxDepth: null,
+            new HashSet<AccountId>(),
             cancellationToken
         );
 
@@ -240,7 +240,7 @@ internal sealed class ReportsServiceTests : EndpointsTestsBase
     }
 
     [Test]
-    public async Task GetMoneyFlow_nests_expense_subtree_as_intermediate_nodes(
+    public async Task GetMoneyFlow_nests_expanded_expense_subtree_as_intermediate_nodes(
         CancellationToken cancellationToken
     )
     {
@@ -261,11 +261,12 @@ internal sealed class ReportsServiceTests : EndpointsTestsBase
         );
         await fx.EntryAsync(new(2026, 1, 9), cancellationToken, (dining, 1000), (checking, -1000));
 
+        // Expanding Food draws its children as intermediate nodes; without it Food would collapse.
         var result = await fx.Reports.GetMoneyFlowAsync(
             From,
             To,
             fx.Currency,
-            maxDepth: null,
+            new HashSet<AccountId> { food },
             cancellationToken
         );
 
@@ -286,6 +287,10 @@ internal sealed class ReportsServiceTests : EndpointsTestsBase
         );
         await Assert.That(foodToDining.Value.Amount).IsEqualTo(1000L);
 
+        // Child nodes carry their parent id so the client can prune them when Food collapses.
+        var groceriesNode = flow.Nodes.Single(n => n.Id == groceries.Value.ToString());
+        await Assert.That(groceriesNode.ParentId).IsEqualTo(food.Value.ToString());
+
         // And it still balances.
         var inbound = flow.Links.Where(l => l.Target == "hub").Sum(l => l.Value.Amount);
         var outbound = flow.Links.Where(l => l.Source == "hub").Sum(l => l.Value.Amount);
@@ -293,7 +298,7 @@ internal sealed class ReportsServiceTests : EndpointsTestsBase
     }
 
     [Test]
-    public async Task GetMoneyFlow_maxDepth_collapses_subtree_into_the_root(
+    public async Task GetMoneyFlow_collapses_unexpanded_subtree_into_the_root(
         CancellationToken cancellationToken
     )
     {
@@ -314,18 +319,20 @@ internal sealed class ReportsServiceTests : EndpointsTestsBase
         );
         await fx.EntryAsync(new(2026, 1, 9), cancellationToken, (dining, 1000), (checking, -1000));
 
+        // Empty expanded set: Food is not opted in, so it stays collapsed.
         var result = await fx.Reports.GetMoneyFlowAsync(
             From,
             To,
             fx.Currency,
-            maxDepth: 1,
+            new HashSet<AccountId>(),
             cancellationToken
         );
 
         await Assert.That(result.IsSuccess).IsTrue();
         var flow = result.Value!;
 
-        // Depth 1: Food collapses to a single hub → Food (5000) link; its children are gone.
+        // Food collapses to a single hub → Food (5000) link; its children are gone, but the node
+        // advertises that expanding it would reveal them.
         var hubToFood = flow.Links.Single(l =>
             l.Source == "hub" && l.Target == food.Value.ToString()
         );
@@ -333,8 +340,11 @@ internal sealed class ReportsServiceTests : EndpointsTestsBase
         await Assert.That(flow.Links.Any(l => l.Source == food.Value.ToString())).IsFalse();
         await Assert.That(flow.Nodes.Any(n => n.Id == groceries.Value.ToString())).IsFalse();
         await Assert.That(flow.Nodes.Any(n => n.Id == dining.Value.ToString())).IsFalse();
+        await Assert
+            .That(flow.Nodes.Single(n => n.Id == food.Value.ToString()).HasChildren)
+            .IsTrue();
 
-        // Capping only folds nodes together; the double-entry balance is untouched.
+        // Collapsing only folds nodes together; the double-entry balance is untouched.
         var inbound = flow.Links.Where(l => l.Target == "hub").Sum(l => l.Value.Amount);
         var outbound = flow.Links.Where(l => l.Source == "hub").Sum(l => l.Value.Amount);
         await Assert.That(inbound).IsEqualTo(6000L);
