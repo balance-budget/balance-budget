@@ -4,7 +4,7 @@ namespace Balance.Integration.Ing.Helpers;
 
 internal static partial class IngPatterns
 {
-    [GeneratedRegex(@"(D\d{8})")]
+    [GeneratedRegex(@"([A-Z]\d{8})")]
     public static partial Regex SavingsAccount();
 
     [GeneratedRegex(@"^NL\d{2} INGB \d{4} \d{4} \d{2}$", RegexOptions.IgnoreCase)]
