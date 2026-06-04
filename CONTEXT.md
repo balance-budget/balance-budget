@@ -66,6 +66,14 @@ The exponent for converting a **Money** amount to/from its display value. EUR �
 **Currency** (entity):
 A reference-data row in the `Currency` table: `(Code: string PK, Name: string, MinorUnitScale: int, Symbol?: string)`. Seeded on migration with common ISO 4217 currencies. **Accounts** and **BankAccounts** reference currencies by code (FK). New currencies (incl. crypto) are added by inserting a row, not by changing code.
 
+**Reference data**:
+Seed data that is part of the domain in *every* environment and that the app depends on to function — the **Currency** rows and the canonical `Opening Balances` **Equity** **Account**. Identical in development and production; real domain data, not illustrative and not disposable.
+_Avoid_: sample data, fixtures, test data (those name the disposable development-only set — see **Development sample data**).
+
+**Development sample data**:
+Illustrative, disposable ledger content — **Accounts**, **Counterparties**, **BankAccounts**, **BankTransactions**, **JournalEntries** — that exists only to exercise the app during local development. Carries no domain meaning, never appears in production, and is kept current-dated so time-relative views (month-to-date, the current **Reporting period**) always have data. A **user** (the Development login) is provided alongside it so the shared ledger is reachable. Distinct from **Reference data**, which is real domain data present in every environment. (How it is produced is an implementation concern — see ADR 0024.)
+_Avoid_: fixtures, demo data; bare "seed data" (ambiguous — **Reference data** is seeded too).
+
 **Sign convention** (for **JournalLine.Amount**):
 Positive = **debit**, negative = **credit**. The zero-sum invariant on a **JournalEntry** is therefore `SUM(Amount) = 0` per **Currency**. Per-**Account** running balance:
 - **Asset** / **Expense** (debit-normal): balance = `SUM(Amount)`.
