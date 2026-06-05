@@ -8,7 +8,7 @@ public interface IRegisterService
         AccountId accountId,
         int skip,
         int take,
-        string? search,
+        RegisterListFilter filter,
         CancellationToken cancellationToken
     );
 }

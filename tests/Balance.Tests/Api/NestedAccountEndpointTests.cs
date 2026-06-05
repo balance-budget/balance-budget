@@ -133,6 +133,135 @@ internal sealed class NestedAccountEndpointTests : EndpointsTestsBase
     }
 
     [Test]
+    public async Task ParentRegister_rows_carry_the_descendant_posted_account()
+    {
+        using var client = Factory.CreateClient();
+        var food = await CreateAsync(client, "Food", "Expense", isPostable: false);
+        var groceries = await CreateChildAsync(client, "Groceries", "Expense", food.Id);
+        var checking = await CreateAsync(client, $"Checking-{Guid.NewGuid():N}", "Asset");
+
+        await PostJournalEntryAsync(
+            client,
+            [
+                new CreateJournalLineRequestDto(groceries.Id, 20_000, null),
+                new CreateJournalLineRequestDto(checking.Id, -20_000, null),
+            ]
+        );
+
+        using var response = await client.GetAsync(
+            new Uri($"/api/accounts/{food.Id}/register", UriKind.Relative)
+        );
+        var rows = await response.Content.ReadPagedItemsAsync<RegisterRowDto>();
+
+        // The row landed on the Groceries leaf, not on the viewed Food parent.
+        await Assert.That(rows.Count).IsEqualTo(1);
+        await Assert.That(rows[0].AccountId).IsEqualTo(groceries.Id);
+        await Assert.That(rows[0].AccountName).IsEqualTo(groceries.Name);
+    }
+
+    [Test]
+    public async Task ParentRegister_posted_account_filter_narrows_to_one_descendant()
+    {
+        using var client = Factory.CreateClient();
+        var food = await CreateAsync(client, "Food", "Expense", isPostable: false);
+        var groceries = await CreateChildAsync(client, "Groceries", "Expense", food.Id);
+        var dining = await CreateChildAsync(client, "Dining", "Expense", food.Id);
+        var checking = await CreateAsync(client, $"Checking-{Guid.NewGuid():N}", "Asset");
+
+        await PostJournalEntryAsync(
+            client,
+            [
+                new CreateJournalLineRequestDto(groceries.Id, 20_000, null),
+                new CreateJournalLineRequestDto(checking.Id, -20_000, null),
+            ]
+        );
+        await PostJournalEntryAsync(
+            client,
+            [
+                new CreateJournalLineRequestDto(dining.Id, 15_000, null),
+                new CreateJournalLineRequestDto(checking.Id, -15_000, null),
+            ]
+        );
+
+        using var response = await client.GetAsync(
+            new Uri(
+                $"/api/accounts/{food.Id}/register?postedAccountId={dining.Id}",
+                UriKind.Relative
+            )
+        );
+        var rows = await response.Content.ReadPagedItemsAsync<RegisterRowDto>();
+
+        await Assert.That(rows.Count).IsEqualTo(1);
+        await Assert.That(rows[0].AccountId).IsEqualTo(dining.Id);
+    }
+
+    [Test]
+    public async Task ParentRegister_posted_account_filter_outside_subtree_matches_nothing()
+    {
+        using var client = Factory.CreateClient();
+        var food = await CreateAsync(client, "Food", "Expense", isPostable: false);
+        var groceries = await CreateChildAsync(client, "Groceries", "Expense", food.Id);
+        var checking = await CreateAsync(client, $"Checking-{Guid.NewGuid():N}", "Asset");
+
+        await PostJournalEntryAsync(
+            client,
+            [
+                new CreateJournalLineRequestDto(groceries.Id, 20_000, null),
+                new CreateJournalLineRequestDto(checking.Id, -20_000, null),
+            ]
+        );
+
+        // Checking exists but lies outside Food's subtree — the intersection is empty.
+        using var response = await client.GetAsync(
+            new Uri(
+                $"/api/accounts/{food.Id}/register?postedAccountId={checking.Id}",
+                UriKind.Relative
+            )
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var rows = await response.Content.ReadPagedItemsAsync<RegisterRowDto>();
+        await Assert.That(rows.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task Register_counter_account_filter_matches_whole_subtree()
+    {
+        using var client = Factory.CreateClient();
+        var food = await CreateAsync(client, "Food", "Expense", isPostable: false);
+        var groceries = await CreateChildAsync(client, "Groceries", "Expense", food.Id);
+        var rent = await CreateAsync(client, $"Rent-{Guid.NewGuid():N}", "Expense");
+        var checking = await CreateAsync(client, $"Checking-{Guid.NewGuid():N}", "Asset");
+
+        await PostJournalEntryAsync(
+            client,
+            [
+                new CreateJournalLineRequestDto(groceries.Id, 20_000, null),
+                new CreateJournalLineRequestDto(checking.Id, -20_000, null),
+            ]
+        );
+        await PostJournalEntryAsync(
+            client,
+            [
+                new CreateJournalLineRequestDto(rent.Id, 120_000, null),
+                new CreateJournalLineRequestDto(checking.Id, -120_000, null),
+            ]
+        );
+
+        // Filtering Checking's register on the non-postable Food matches the Groceries leg.
+        using var response = await client.GetAsync(
+            new Uri(
+                $"/api/accounts/{checking.Id}/register?counterAccountId={food.Id}",
+                UriKind.Relative
+            )
+        );
+        var rows = await response.Content.ReadPagedItemsAsync<RegisterRowDto>();
+
+        await Assert.That(rows.Count).IsEqualTo(1);
+        await Assert.That(rows[0].AccountId).IsEqualTo(checking.Id);
+    }
+
+    [Test]
     public async Task ConvertAccount_with_lines_to_non_postable_returns_422()
     {
         using var client = Factory.CreateClient();
@@ -243,5 +372,10 @@ internal sealed class NestedAccountEndpointTests : EndpointsTestsBase
         response.EnsureSuccessStatusCode();
     }
 
-    private sealed record RegisterRowDto(Guid JournalEntryId, Guid JournalLineId);
+    private sealed record RegisterRowDto(
+        Guid JournalEntryId,
+        Guid JournalLineId,
+        Guid AccountId,
+        string AccountName
+    );
 }
