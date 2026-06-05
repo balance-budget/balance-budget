@@ -46,10 +46,32 @@ export type JournalEntryDetail = JournalEntry & {
     bankTransactions: BankTransactionDetail[];
 };
 
+/** Optional list narrowing, AND-combined with the `q` search. `accountId` matches
+ *  entries with at least one line on the account or its descendants (ADR-0019);
+ *  `from`/`to` bound the entry date inclusively ('' means unbounded). */
+export type JournalEntriesFilters = {
+    counterpartyId?: CounterpartyId | null;
+    accountId?: AccountId | null;
+    from?: string;
+    to?: string;
+};
+
 export const journalEntriesKeys = {
     all: ['journalEntries'] as const,
-    list: (skip: number, take: number, q: string, counterpartyId: CounterpartyId | null) =>
-        [...journalEntriesKeys.all, 'list', { skip, take, q, counterpartyId }] as const,
+    list: (skip: number, take: number, q: string, filters: JournalEntriesFilters) =>
+        [
+            ...journalEntriesKeys.all,
+            'list',
+            {
+                skip,
+                take,
+                q,
+                counterpartyId: filters.counterpartyId ?? null,
+                accountId: filters.accountId ?? null,
+                from: filters.from ?? '',
+                to: filters.to ?? '',
+            },
+        ] as const,
     detail: (id: JournalEntryId) => [...journalEntriesKeys.all, 'detail', id] as const,
 };
 
@@ -95,17 +117,26 @@ export function useJournalEntries(
     skip: number,
     take: number,
     q: string,
-    counterpartyId: CounterpartyId | null = null,
+    filters: JournalEntriesFilters = {},
 ) {
     return useQuery({
-        queryKey: journalEntriesKeys.list(skip, take, q, counterpartyId),
+        queryKey: journalEntriesKeys.list(skip, take, q, filters),
         queryFn: async ({ signal }): Promise<Page<JournalEntry>> => {
             const params = new URLSearchParams({ skip: String(skip), take: String(take) });
             if (q !== '') {
                 params.set('q', q);
             }
-            if (counterpartyId !== null) {
-                params.set('counterpartyId', counterpartyId);
+            if (filters.counterpartyId != null) {
+                params.set('counterpartyId', filters.counterpartyId);
+            }
+            if (filters.accountId != null) {
+                params.set('accountId', filters.accountId);
+            }
+            if (filters.from != null && filters.from !== '') {
+                params.set('from', filters.from);
+            }
+            if (filters.to != null && filters.to !== '') {
+                params.set('to', filters.to);
             }
             const wire = await getJson<WirePagedEntries>(
                 `/api/journal-entries?${params.toString()}`,
