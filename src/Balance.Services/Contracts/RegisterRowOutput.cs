@@ -7,6 +7,8 @@ namespace Balance.Services.Contracts;
 public sealed record RegisterRowOutput(
     JournalEntryId JournalEntryId,
     JournalLineId JournalLineId,
+    AccountId AccountId,
+    string AccountName,
     DateOnly Date,
     string? EntryDescription,
     CounterpartyId? CounterpartyId,

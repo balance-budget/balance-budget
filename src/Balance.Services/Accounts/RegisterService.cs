@@ -21,10 +21,12 @@ internal sealed class RegisterService : IRegisterService
         AccountId accountId,
         int skip,
         int take,
-        string? search,
+        RegisterListFilter filter,
         CancellationToken cancellationToken
     )
     {
+        ArgumentNullException.ThrowIfNull(filter);
+
         var account = await _dbContext
             .Accounts.AsNoTracking()
             .Where(a => a.Id == accountId)
@@ -44,6 +46,19 @@ internal sealed class RegisterService : IRegisterService
             .ToListAsync(cancellationToken);
         var focalIds = AccountTree.DescendantsAndSelf(nodes, accountId).ToList();
 
+        // The posted-account filter narrows the focal set to one descendant's subtree —
+        // an account outside the viewed subtree simply intersects to nothing.
+        if (filter.PostedAccountId is { } postedId)
+        {
+            if (!nodes.Any(n => n.Id == postedId))
+            {
+                return new NotFoundError("Account", postedId.Value.ToString());
+            }
+
+            var postedIds = AccountTree.DescendantsAndSelf(nodes, postedId);
+            focalIds = focalIds.Where(postedIds.Contains).ToList();
+        }
+
         // Focal lines on the subtree, joined to their entry so the optional `?q=`
         // filter (and ordering) can read the entry header. The same query backs both
         // the count and the page so they never disagree.
@@ -57,7 +72,42 @@ internal sealed class RegisterService : IRegisterService
                 (l, e) => new { Line = l, Entry = e }
             );
 
-        var needle = search?.Trim();
+        // The counter-account filter keeps rows whose entry has at least one OTHER line on the
+        // chosen account's subtree — "other" by line id, mirroring how the counter legs are
+        // derived below, so an intra-subtree transfer still matches its sibling leg.
+        if (filter.CounterAccountId is { } counterId)
+        {
+            if (!nodes.Any(n => n.Id == counterId))
+            {
+                return new NotFoundError("Account", counterId.Value.ToString());
+            }
+
+            var counterIds = AccountTree.DescendantsAndSelf(nodes, counterId).ToList();
+            lines = lines.Where(x =>
+                _dbContext.JournalLines.Any(l2 =>
+                    l2.JournalEntryId == x.Entry.Id
+                    && l2.Id != x.Line.Id
+                    && counterIds.Contains(l2.AccountId)
+                )
+            );
+        }
+
+        if (filter.From is { } from)
+        {
+            lines = lines.Where(x => x.Entry.Date >= from);
+        }
+
+        if (filter.To is { } to)
+        {
+            lines = lines.Where(x => x.Entry.Date <= to);
+        }
+
+        if (filter.Status is { } status)
+        {
+            lines = lines.Where(x => x.Line.ReconciliationStatus == status);
+        }
+
+        var needle = filter.Search?.Trim();
         if (!string.IsNullOrEmpty(needle))
         {
             // Match the entry Description or its linked Counterparty's Name, sharing the exact
@@ -136,9 +186,15 @@ internal sealed class RegisterService : IRegisterService
             .GroupBy(s => s.EntryId)
             .ToDictionary(g => g.Key, g => (IReadOnlyList<SiblingRow>)g.ToList());
 
+        // The focal line itself is part of `entryLines`, so the posted account (the descendant
+        // leaf the line actually sits on — equal to the viewed account for a leaf register)
+        // comes from the same fetch.
+        var lineById = entryLines.ToDictionary(s => s.LineId);
+
         var output = new List<RegisterRowOutput>(focalRows.Count);
         foreach (var row in focalRows)
         {
+            var posted = lineById[row.LineId];
             var focalAmount = AccountSignConvention.ToBalance(
                 account.AccountType,
                 row.Amount,
@@ -171,6 +227,8 @@ internal sealed class RegisterService : IRegisterService
                 new RegisterRowOutput(
                     row.EntryId,
                     row.LineId,
+                    posted.AccountId,
+                    posted.AccountName,
                     row.Date,
                     row.EntryDescription,
                     row.CounterpartyId,

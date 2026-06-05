@@ -476,6 +476,236 @@ internal sealed class AccountRegisterEndpointTests : EndpointsTestsBase
     }
 
     [Test]
+    public async Task GetRegister_rows_carry_the_posted_account()
+    {
+        using var client = Factory.CreateClient();
+        var currency = await CreateIsolatedCurrencyAsync(client);
+        var checking = await CreateAccountAsync(
+            client,
+            $"Reg-PA-Checking-{Guid.NewGuid():N}",
+            "Asset",
+            currency
+        );
+        var salary = await CreateAccountAsync(
+            client,
+            $"Reg-PA-Salary-{Guid.NewGuid():N}",
+            "Income",
+            currency
+        );
+
+        await PostJournalEntryAsync(
+            client,
+            new DateOnly(2026, 5, 24),
+            [
+                new CreateJournalLineRequestDto(checking.Id, 100L, null),
+                new CreateJournalLineRequestDto(salary.Id, -100L, null),
+            ]
+        );
+
+        var rows = await GetRegisterAsync(client, checking.Id);
+
+        // On a leaf register the posted account is the viewed account itself.
+        await Assert.That(rows.Count).IsEqualTo(1);
+        await Assert.That(rows[0].AccountId).IsEqualTo(checking.Id);
+        await Assert.That(rows[0].AccountName).IsEqualTo(checking.Name);
+    }
+
+    [Test]
+    public async Task GetRegister_counter_account_filter_keeps_rows_with_matching_counter_leg()
+    {
+        using var client = Factory.CreateClient();
+        var currency = await CreateIsolatedCurrencyAsync(client);
+        var checking = await CreateAccountAsync(
+            client,
+            $"Reg-CF-Checking-{Guid.NewGuid():N}",
+            "Asset",
+            currency
+        );
+        var groceries = await CreateAccountAsync(
+            client,
+            $"Reg-CF-Groc-{Guid.NewGuid():N}",
+            "Expense",
+            currency
+        );
+        var rent = await CreateAccountAsync(
+            client,
+            $"Reg-CF-Rent-{Guid.NewGuid():N}",
+            "Expense",
+            currency
+        );
+
+        await PostJournalEntryAsync(
+            client,
+            new DateOnly(2026, 5, 25),
+            [
+                new CreateJournalLineRequestDto(checking.Id, -3_000L, null),
+                new CreateJournalLineRequestDto(groceries.Id, 3_000L, null),
+            ]
+        );
+        await PostJournalEntryAsync(
+            client,
+            new DateOnly(2026, 5, 26),
+            [
+                new CreateJournalLineRequestDto(checking.Id, -120_000L, null),
+                new CreateJournalLineRequestDto(rent.Id, 120_000L, null),
+            ]
+        );
+
+        var rows = await GetRegisterAsync(client, checking.Id, counterAccountId: groceries.Id);
+
+        await Assert.That(rows.Count).IsEqualTo(1);
+        await Assert.That(rows[0].Counter[0].AccountId).IsEqualTo(groceries.Id);
+    }
+
+    [Test]
+    public async Task GetRegister_from_and_to_bound_the_entry_date_inclusively()
+    {
+        using var client = Factory.CreateClient();
+        var currency = await CreateIsolatedCurrencyAsync(client);
+        var checking = await CreateAccountAsync(
+            client,
+            $"Reg-Dt-Checking-{Guid.NewGuid():N}",
+            "Asset",
+            currency
+        );
+        var salary = await CreateAccountAsync(
+            client,
+            $"Reg-Dt-Salary-{Guid.NewGuid():N}",
+            "Income",
+            currency
+        );
+
+        var dates = new[]
+        {
+            new DateOnly(2026, 6, 1),
+            new DateOnly(2026, 6, 2),
+            new DateOnly(2026, 6, 3),
+            new DateOnly(2026, 6, 4),
+        };
+        foreach (var date in dates)
+        {
+            await PostJournalEntryAsync(
+                client,
+                date,
+                [
+                    new CreateJournalLineRequestDto(checking.Id, 100L, null),
+                    new CreateJournalLineRequestDto(salary.Id, -100L, null),
+                ]
+            );
+        }
+
+        var rows = await GetRegisterAsync(
+            client,
+            checking.Id,
+            from: new DateOnly(2026, 6, 2),
+            to: new DateOnly(2026, 6, 3)
+        );
+
+        // Inclusive bounds: 2nd and 3rd match, newest first.
+        await Assert.That(rows.Count).IsEqualTo(2);
+        await Assert.That(rows[0].Date).IsEqualTo(new DateOnly(2026, 6, 3));
+        await Assert.That(rows[1].Date).IsEqualTo(new DateOnly(2026, 6, 2));
+    }
+
+    [Test]
+    public async Task GetRegister_status_filter_matches_the_focal_line_status()
+    {
+        using var client = Factory.CreateClient();
+        var currency = await CreateIsolatedCurrencyAsync(client);
+        var checking = await CreateAccountAsync(
+            client,
+            $"Reg-St-Checking-{Guid.NewGuid():N}",
+            "Asset",
+            currency
+        );
+        var salary = await CreateAccountAsync(
+            client,
+            $"Reg-St-Salary-{Guid.NewGuid():N}",
+            "Income",
+            currency
+        );
+
+        await PostJournalEntryAsync(
+            client,
+            new DateOnly(2026, 6, 5),
+            [
+                new CreateJournalLineRequestDto(checking.Id, 100L, null),
+                new CreateJournalLineRequestDto(salary.Id, -100L, null),
+            ]
+        );
+
+        // Manually-created lines are Uncleared; only the matching status returns the row.
+        var uncleared = await GetRegisterAsync(client, checking.Id, status: "Uncleared");
+        var cleared = await GetRegisterAsync(client, checking.Id, status: "Cleared");
+
+        await Assert.That(uncleared.Count).IsEqualTo(1);
+        await Assert.That(cleared.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task GetRegister_unknown_counter_account_returns_404()
+    {
+        using var client = Factory.CreateClient();
+        var account = await CreateAccountAsync(
+            client,
+            $"Reg-CU-{Guid.NewGuid():N}",
+            "Asset",
+            "EUR"
+        );
+
+        using var response = await client.GetAsync(
+            new Uri(
+                $"/api/accounts/{account.Id}/register?counterAccountId={Guid.NewGuid()}",
+                UriKind.Relative
+            )
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
+    }
+
+    [Test]
+    public async Task GetRegister_unknown_posted_account_returns_404()
+    {
+        using var client = Factory.CreateClient();
+        var account = await CreateAccountAsync(
+            client,
+            $"Reg-PU-{Guid.NewGuid():N}",
+            "Asset",
+            "EUR"
+        );
+
+        using var response = await client.GetAsync(
+            new Uri(
+                $"/api/accounts/{account.Id}/register?postedAccountId={Guid.NewGuid()}",
+                UriKind.Relative
+            )
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
+    }
+
+    [Test]
+    public async Task GetRegister_from_after_to_returns_400()
+    {
+        using var client = Factory.CreateClient();
+        var account = await CreateAccountAsync(
+            client,
+            $"Reg-FT-{Guid.NewGuid():N}",
+            "Asset",
+            "EUR"
+        );
+
+        using var response = await client.GetAsync(
+            new Uri(
+                $"/api/accounts/{account.Id}/register?from=2026-06-04&to=2026-06-01",
+                UriKind.Relative
+            )
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+    }
+
+    [Test]
     public async Task GetRegister_invalid_take_returns_400()
     {
         using var client = Factory.CreateClient();
@@ -498,7 +728,12 @@ internal sealed class AccountRegisterEndpointTests : EndpointsTestsBase
         Guid accountId,
         int? skip = null,
         int? take = null,
-        string? q = null
+        string? q = null,
+        Guid? postedAccountId = null,
+        Guid? counterAccountId = null,
+        DateOnly? from = null,
+        DateOnly? to = null,
+        string? status = null
     )
     {
         var queryParts = new List<string>();
@@ -508,6 +743,16 @@ internal sealed class AccountRegisterEndpointTests : EndpointsTestsBase
             queryParts.Add($"take={take}");
         if (q is not null)
             queryParts.Add($"q={Uri.EscapeDataString(q)}");
+        if (postedAccountId is not null)
+            queryParts.Add($"postedAccountId={postedAccountId}");
+        if (counterAccountId is not null)
+            queryParts.Add($"counterAccountId={counterAccountId}");
+        if (from is not null)
+            queryParts.Add($"from={from:yyyy-MM-dd}");
+        if (to is not null)
+            queryParts.Add($"to={to:yyyy-MM-dd}");
+        if (status is not null)
+            queryParts.Add($"status={status}");
         var query = queryParts.Count == 0 ? string.Empty : "?" + string.Join("&", queryParts);
 
         using var response = await client.GetAsync(
@@ -590,6 +835,8 @@ internal sealed class AccountRegisterEndpointTests : EndpointsTestsBase
 internal sealed record RegisterRowDto(
     Guid JournalEntryId,
     Guid JournalLineId,
+    Guid AccountId,
+    string AccountName,
     DateOnly Date,
     string? EntryDescription,
     Guid? CounterpartyId,
