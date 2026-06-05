@@ -8,7 +8,10 @@ internal sealed record ListJournalEntriesRequest(
     [FromQuery] int? Skip,
     [FromQuery] int? Take,
     [FromQuery] string? Q,
-    [FromQuery] CounterpartyId? CounterpartyId
+    [FromQuery] CounterpartyId? CounterpartyId,
+    [FromQuery] AccountId? AccountId,
+    [FromQuery] DateOnly? From,
+    [FromQuery] DateOnly? To
 )
 {
     public const int DefaultPageSize = 50;
@@ -29,5 +32,8 @@ internal sealed class ListJournalEntriesRequestValidator
         RuleFor(x => x.Q!)
             .MaximumLength(ListJournalEntriesRequest.MaxSearchLength)
             .When(x => x.Q is not null);
+        RuleFor(x => x.To!.Value)
+            .GreaterThanOrEqualTo(x => x.From!.Value)
+            .When(x => x.From is not null && x.To is not null);
     }
 }

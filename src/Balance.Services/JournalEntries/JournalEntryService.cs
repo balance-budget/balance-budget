@@ -4,6 +4,7 @@ using Balance.Data.Entities;
 using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
 using Balance.Data.Helpers;
+using Balance.Services.Accounts;
 using Balance.Services.Contracts;
 using Balance.Services.Helpers;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +27,9 @@ internal sealed class JournalEntryService : IJournalEntryService
         int take,
         string? search,
         CounterpartyId? counterpartyId,
+        AccountId? accountId,
+        DateOnly? fromDate,
+        DateOnly? toDate,
         CancellationToken cancellationToken
     )
     {
@@ -33,6 +37,29 @@ internal sealed class JournalEntryService : IJournalEntryService
         if (counterpartyId is not null)
         {
             filtered = filtered.Where(e => e.CounterpartyId == counterpartyId);
+        }
+
+        if (accountId is { } account)
+        {
+            // An entry matches when at least one of its lines is posted to the account or any
+            // of its descendants — a non-postable account means "its subtree" (ADR-0019). The
+            // Activity row is symmetric (no focal account), so one filter covers both sides.
+            var nodes = await _dbContext
+                .Accounts.AsNoTracking()
+                .Select(a => new AccountNode(a.Id, a.ParentAccountId))
+                .ToListAsync(cancellationToken);
+            var subtreeIds = AccountTree.DescendantsAndSelf(nodes, account).ToList();
+            filtered = filtered.Where(e => e.Lines.Any(l => subtreeIds.Contains(l.AccountId)));
+        }
+
+        if (fromDate is { } from)
+        {
+            filtered = filtered.Where(e => e.Date >= from);
+        }
+
+        if (toDate is { } to)
+        {
+            filtered = filtered.Where(e => e.Date <= to);
         }
         var needle = search?.Trim();
         if (!string.IsNullOrEmpty(needle))
