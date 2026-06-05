@@ -14,6 +14,7 @@ import { Amount } from '../components/Amount';
 import { Combobox } from '../components/Combobox';
 import { type ComboboxItem } from '../components/combobox.state';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { DateInput } from '../components/DateInput';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Pagination } from '../components/Pagination';
@@ -304,34 +305,6 @@ function RegisterFilterBar({
                 })}
             </div>
         </div>
-    );
-}
-
-function DateInput({
-    value,
-    onChange,
-    ariaLabel,
-    min,
-    max,
-}: {
-    value: string;
-    onChange: (value: string) => void;
-    ariaLabel: string;
-    min?: string;
-    max?: string;
-}) {
-    return (
-        <input
-            type="date"
-            value={value}
-            min={min}
-            max={max}
-            onChange={e => {
-                onChange(e.target.value);
-            }}
-            aria-label={ariaLabel}
-            className="px-3 py-[7px] rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-13 focus:outline-none focus:border-border-strong"
-        />
     );
 }
 

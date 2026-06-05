@@ -2,6 +2,9 @@ import { useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useAccounts, type Account } from '../api/accounts';
 import { useJournalEntries, type JournalEntry } from '../api/journalEntries';
+import { Combobox } from '../components/Combobox';
+import { type ComboboxItem } from '../components/combobox.state';
+import { DateInput } from '../components/DateInput';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Pagination } from '../components/Pagination';
@@ -9,26 +12,41 @@ import { Panel, SectionHead } from '../components/Panel';
 import { ProjectionAmount } from '../components/ProjectionAmount';
 import { SearchInput } from '../components/SearchInput';
 import { Skeleton } from '../components/Skeleton';
-import { type AccountId } from '../lib/domain';
+import { ACCOUNT_TYPE_ORDER, type AccountId } from '../lib/domain';
 import { formatLegLabel, projectEntry, type JournalProjection } from '../lib/journalProjection';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
 
 const PAGE_SIZE = 50;
 
+/** The Activity list's URL-backed filters, minus the separately-debounced `q`. */
+export type ActivityFilterState = {
+    account: AccountId | null;
+    from: string;
+    to: string;
+};
+
 export function Activity({
     page,
     q,
+    filters,
     onPageChange,
     onSearchChange,
+    onFiltersChange,
 }: {
     page: number;
     q: string;
+    filters: ActivityFilterState;
     onPageChange: (p: number) => void;
     onSearchChange: (q: string) => void;
+    onFiltersChange: (patch: Partial<ActivityFilterState>) => void;
 }) {
     const skip = (page - 1) * PAGE_SIZE;
     const debouncedQ = useDebouncedValue(q, 200);
-    const entries = useJournalEntries(skip, PAGE_SIZE, debouncedQ);
+    const entries = useJournalEntries(skip, PAGE_SIZE, debouncedQ, {
+        accountId: filters.account,
+        from: filters.from,
+        to: filters.to,
+    });
     const accounts = useAccounts();
 
     return (
@@ -46,11 +64,16 @@ export function Activity({
                     </Link>
                 }
             />
-            <div className="mb-4">
+            <div className="mb-4 flex flex-col gap-3">
                 <SearchInput
                     value={q}
                     onChange={onSearchChange}
                     placeholder="Search description or counterparty…"
+                />
+                <ActivityFilterBar
+                    accounts={accounts.data ?? []}
+                    filters={filters}
+                    onFiltersChange={onFiltersChange}
                 />
             </div>
             <JournalBody
@@ -58,9 +81,70 @@ export function Activity({
                 accounts={accounts.data ?? []}
                 page={page}
                 query={debouncedQ}
+                filtered={filters.account !== null || filters.from !== '' || filters.to !== ''}
                 onPageChange={onPageChange}
             />
         </Panel>
+    );
+}
+
+function ActivityFilterBar({
+    accounts,
+    filters,
+    onFiltersChange,
+}: {
+    accounts: Account[];
+    filters: ActivityFilterState;
+    onFiltersChange: (patch: Partial<ActivityFilterState>) => void;
+}) {
+    // One symmetric account filter — an Activity row has no focal account, so this
+    // matches entries touching the account or any of its descendants (ADR-0019).
+    const accountItems = useMemo<ComboboxItem<AccountId>[]>(
+        () =>
+            [...accounts]
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map(a => ({ key: a.id, label: a.name, group: a.type, value: a.id })),
+        [accounts],
+    );
+
+    return (
+        <div className="flex flex-wrap items-center gap-2">
+            <div className="w-56">
+                <Combobox
+                    items={accountItems}
+                    value={filters.account}
+                    onChange={v => {
+                        onFiltersChange({ account: v });
+                    }}
+                    onClear={() => {
+                        onFiltersChange({ account: null });
+                    }}
+                    noneLabel="Any account"
+                    placeholder="Account…"
+                    groupOrder={ACCOUNT_TYPE_ORDER}
+                    ariaLabel="Filter by account"
+                />
+            </div>
+            <div className="flex items-center gap-1">
+                <DateInput
+                    value={filters.from}
+                    max={filters.to === '' ? undefined : filters.to}
+                    onChange={v => {
+                        onFiltersChange({ from: v });
+                    }}
+                    ariaLabel="From date"
+                />
+                <span className="text-12 text-fg-3">–</span>
+                <DateInput
+                    value={filters.to}
+                    min={filters.from === '' ? undefined : filters.from}
+                    onChange={v => {
+                        onFiltersChange({ to: v });
+                    }}
+                    ariaLabel="To date"
+                />
+            </div>
+        </div>
     );
 }
 
@@ -69,12 +153,14 @@ function JournalBody({
     accounts,
     page,
     query,
+    filtered,
     onPageChange,
 }: {
     entries: ReturnType<typeof useJournalEntries>;
     accounts: Account[];
     page: number;
     query: string;
+    filtered: boolean;
     onPageChange: (p: number) => void;
 }) {
     const accountById = useMemo(
@@ -105,6 +191,14 @@ function JournalBody({
 
     if (entries.data.items.length === 0 && query !== '') {
         return <div className="py-8 text-center text-14 text-fg-2">No matches for “{query}”.</div>;
+    }
+
+    if (entries.data.items.length === 0 && filtered) {
+        return (
+            <div className="py-8 text-center text-14 text-fg-2">
+                No entries match the current filters.
+            </div>
+        );
     }
 
     if (entries.data.items.length === 0 && page === 1) {

@@ -140,7 +140,7 @@ function JournalEntriesSection({
     onPageChange: (page: number) => void;
 }) {
     const skip = (page - 1) * PAGE_SIZE;
-    const entries = useJournalEntries(skip, PAGE_SIZE, '', counterpartyId);
+    const entries = useJournalEntries(skip, PAGE_SIZE, '', { counterpartyId });
     const accounts = useAccounts();
 
     const accountById = useMemo(
