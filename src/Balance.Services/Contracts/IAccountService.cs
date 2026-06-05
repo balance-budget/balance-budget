@@ -36,6 +36,7 @@ public sealed record CreateAccountInput
     public required CurrencyCode CurrencyCode { get; init; }
     public bool IsPostable { get; init; } = true;
     public AccountId? ParentAccountId { get; init; }
+    public string? IconName { get; init; }
 }
 
 public sealed record UpdateAccountInput
@@ -46,4 +47,5 @@ public sealed record UpdateAccountInput
     public required CurrencyCode CurrencyCode { get; set; }
     public required bool IsPostable { get; set; }
     public AccountId? ParentAccountId { get; set; }
+    public string? IconName { get; set; }
 }

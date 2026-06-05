@@ -21,18 +21,20 @@ const STROKE_WIDTH: Record<Size, number> = {
 };
 
 type AccountAvatarProps = {
-    account: Account;
+    /** Only the visual fields are needed, so form previews can pass a draft. */
+    account: Pick<Account, 'type' | 'icon'>;
     size?: Size;
     className?: string;
 };
 
 /**
- * Tinted square containing the per-AccountType icon. The background and
- * foreground are derived from visualHintFor — kept in one component so the
- * Sidebar and Dashboard rows can't drift apart visually.
+ * Tinted square containing the account's icon — the user's custom choice, or
+ * the per-AccountType default. The tint always follows the AccountType. Both
+ * are derived from visualHintFor — kept in one component so the Sidebar and
+ * Dashboard rows can't drift apart visually.
  */
 export function AccountAvatar({ account, size = 'sm', className }: AccountAvatarProps) {
-    const visual = visualHintFor(account.type);
+    const visual = visualHintFor(account);
     return (
         <span
             className={cx(

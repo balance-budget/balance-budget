@@ -644,6 +644,7 @@ export interface components {
             currencyCode: components["schemas"]["CurrencyCode"];
             isPostable: boolean;
             parentAccountId: null | components["schemas"]["AccountId"];
+            iconName: null | string;
             balance: components["schemas"]["Money"];
             bankAccount: null | components["schemas"]["BankAccountSummary"];
             /** Format: date-time */
@@ -833,6 +834,7 @@ export interface components {
             /** @default true */
             isPostable: boolean;
             parentAccountId?: unknown;
+            iconName?: null | string;
         };
         CreateBankAccountRequest: {
             type: components["schemas"]["BankAccountType"];
@@ -1029,19 +1031,19 @@ export interface components {
             /** @enum {string} */
             op: "add" | "replace" | "test";
             /** @enum {string} */
-            path: "/name" | "/code" | "/accountType" | "/currencyCode" | "/isPostable" | "/parentAccountId";
+            path: "/name" | "/code" | "/accountType" | "/currencyCode" | "/isPostable" | "/parentAccountId" | "/iconName";
             value: unknown;
         } | {
             /** @enum {string} */
             op: "move" | "copy";
             /** @enum {string} */
-            path: "/name" | "/code" | "/accountType" | "/currencyCode" | "/isPostable" | "/parentAccountId";
+            path: "/name" | "/code" | "/accountType" | "/currencyCode" | "/isPostable" | "/parentAccountId" | "/iconName";
             from: string;
         } | {
             /** @enum {string} */
             op: "remove";
             /** @enum {string} */
-            path: "/name" | "/code" | "/accountType" | "/currencyCode" | "/isPostable" | "/parentAccountId";
+            path: "/name" | "/code" | "/accountType" | "/currencyCode" | "/isPostable" | "/parentAccountId" | "/iconName";
         })[];
         JsonPatchDocumentOfUpdateBankAccountInput: ({
             /** @enum {string} */
@@ -1284,6 +1286,7 @@ export interface components {
             currencyCode: string;
             isPostable: boolean;
             parentAccountId?: unknown;
+            iconName?: null | string;
         };
         UpdateBankAccountInput: {
             /** @enum {unknown} */

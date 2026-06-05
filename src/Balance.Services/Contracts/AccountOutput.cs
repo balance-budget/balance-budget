@@ -12,6 +12,7 @@ public sealed record AccountOutput(
     CurrencyCode CurrencyCode,
     bool IsPostable,
     AccountId? ParentAccountId,
+    string? IconName,
     Money Balance,
     BankAccountSummary? BankAccount,
     DateTime CreatedAt,

@@ -13,6 +13,55 @@ const ICON_BY_TYPE: Record<AccountType, string> = {
     Expense: 'shopping-cart',
 };
 
+// The curated set a user may pick a custom account icon from. This list — not the
+// backend — is the source of truth for which icons exist (the API validates shape
+// only), so a stored name that ever drops out of this set falls back to the type
+// default below instead of breaking. Every entry must be registered in Icon.tsx.
+export const ACCOUNT_ICON_CHOICES: readonly string[] = [
+    // money & banking
+    'wallet',
+    'banknote',
+    'piggy-bank',
+    'landmark',
+    'bank',
+    'credit-card',
+    'bitcoin',
+    'trending-up',
+    'trending-down',
+    // spending & daily life
+    'shopping-cart',
+    'shopping-bag',
+    'utensils',
+    'coffee',
+    'shirt',
+    'gift',
+    'home',
+    'zap',
+    'smartphone',
+    // transport & travel
+    'car',
+    'fuel',
+    'bike',
+    'train',
+    'plane',
+    'umbrella',
+    // people, health & leisure
+    'briefcase',
+    'graduation-cap',
+    'heart',
+    'stethoscope',
+    'baby',
+    'paw-print',
+    'dumbbell',
+    'gamepad',
+    'music',
+    'tv',
+    'book-open',
+    'leaf',
+];
+
+const ACCOUNT_ICON_SET: ReadonlySet<string> = new Set(ACCOUNT_ICON_CHOICES);
+
 // One accent per AccountType — accounts no longer get per-instance tints, so
 // the list / sidebar / dashboard read as type-grouped at a glance.
 const ACCENT_BY_TYPE: Record<AccountType, string> = {
@@ -23,10 +72,22 @@ const ACCENT_BY_TYPE: Record<AccountType, string> = {
     Expense: 'var(--color-cat-food)',
 };
 
-export function visualHintFor(accountType: AccountType): VisualHint {
+type AccountVisual = {
+    type: AccountType;
+    /** The user-chosen icon name, or null to inherit the type default. */
+    icon: string | null;
+};
+
+// The icon honours the user's custom choice (falling back to the type default for
+// null or no-longer-offered names); the accent colour is never user-chosen — it
+// always derives from the AccountType so lists stay type-grouped at a glance.
+export function visualHintFor(account: AccountVisual): VisualHint {
     return {
-        accentColor: ACCENT_BY_TYPE[accountType],
-        iconName: ICON_BY_TYPE[accountType],
+        accentColor: ACCENT_BY_TYPE[account.type],
+        iconName:
+            account.icon !== null && ACCOUNT_ICON_SET.has(account.icon)
+                ? account.icon
+                : ICON_BY_TYPE[account.type],
     };
 }
 

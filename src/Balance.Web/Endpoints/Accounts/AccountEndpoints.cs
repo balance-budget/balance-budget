@@ -107,6 +107,7 @@ internal static class AccountEndpoints
                 CurrencyCode = request.CurrencyCode,
                 IsPostable = request.IsPostable,
                 ParentAccountId = request.ParentAccountId,
+                IconName = request.IconName,
             },
             cancellationToken
         );

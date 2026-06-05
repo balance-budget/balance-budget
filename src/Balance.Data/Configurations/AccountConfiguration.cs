@@ -34,6 +34,8 @@ internal sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
 
         builder.Property(a => a.ParentAccountId).HasConversion<AccountId.EfCoreValueConverter>();
 
+        builder.Property(a => a.IconName).HasMaxLength(64);
+
         builder.Property(a => a.CreatedAt).HasConversion(DateConverters.UtcConverter);
         builder.Property(a => a.UpdatedAt).HasConversion(DateConverters.UtcConverter);
 

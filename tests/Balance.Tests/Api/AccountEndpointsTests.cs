@@ -102,6 +102,118 @@ internal sealed class AccountEndpointsTests : EndpointsTestsBase
     }
 
     [Test]
+    public async Task CreateAccount_with_icon_name_round_trips()
+    {
+        using var client = Factory.CreateClient();
+
+        var request = new CreateAccountRequestDto($"Savings-{Guid.NewGuid():N}", "Asset", "EUR")
+        {
+            IconName = "piggy-bank",
+        };
+        using var createResponse = await client.PostAsJsonAsync(
+            new Uri("/api/accounts", UriKind.Relative),
+            request
+        );
+
+        await Assert.That(createResponse.StatusCode).IsEqualTo(HttpStatusCode.Created);
+        var created = await createResponse.Content.ReadFromJsonAsync<AccountDto>();
+        await Assert.That(created!.IconName).IsEqualTo("piggy-bank");
+
+        using var getResponse = await client.GetAsync(
+            new Uri($"/api/accounts/{created.Id}", UriKind.Relative)
+        );
+        var fetched = await getResponse.Content.ReadFromJsonAsync<AccountDto>();
+        await Assert.That(fetched!.IconName).IsEqualTo("piggy-bank");
+    }
+
+    [Test]
+    public async Task CreateAccount_without_icon_name_stores_null()
+    {
+        using var client = Factory.CreateClient();
+
+        var request = new CreateAccountRequestDto($"Plain-{Guid.NewGuid():N}", "Asset", "EUR");
+        using var createResponse = await client.PostAsJsonAsync(
+            new Uri("/api/accounts", UriKind.Relative),
+            request
+        );
+
+        await Assert.That(createResponse.StatusCode).IsEqualTo(HttpStatusCode.Created);
+        var created = await createResponse.Content.ReadFromJsonAsync<AccountDto>();
+        await Assert.That(created!.IconName).IsNull();
+    }
+
+    [Test]
+    [Arguments("Not Kebab")]
+    [Arguments("UPPERCASE")]
+    [Arguments("-leading-dash")]
+    [Arguments("trailing-dash-")]
+    public async Task CreateAccount_with_malformed_icon_name_returns_400(string iconName)
+    {
+        using var client = Factory.CreateClient();
+
+        var request = new CreateAccountRequestDto($"Bad-{Guid.NewGuid():N}", "Asset", "EUR")
+        {
+            IconName = iconName,
+        };
+        using var response = await client.PostAsJsonAsync(
+            new Uri("/api/accounts", UriKind.Relative),
+            request
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+    }
+
+    [Test]
+    public async Task UpdateAccount_sets_and_clears_icon_name()
+    {
+        using var client = Factory.CreateClient();
+
+        var request = new CreateAccountRequestDto($"Icon-{Guid.NewGuid():N}", "Expense", "EUR");
+        using var createResponse = await client.PostAsJsonAsync(
+            new Uri("/api/accounts", UriKind.Relative),
+            request
+        );
+        var created = await createResponse.Content.ReadFromJsonAsync<AccountDto>();
+
+        using var setResponse = await client.PatchAsJsonPatchAsync(
+            new Uri($"/api/accounts/{created!.Id}", UriKind.Relative),
+            [JsonPatchHelpers.Replace("/iconName", "coffee")]
+        );
+        await Assert.That(setResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var withIcon = await setResponse.Content.ReadFromJsonAsync<AccountDto>();
+        await Assert.That(withIcon!.IconName).IsEqualTo("coffee");
+
+        // Clearing reverts to "inherit the AccountType default" — stored as null.
+        using var clearResponse = await client.PatchAsJsonPatchAsync(
+            new Uri($"/api/accounts/{created.Id}", UriKind.Relative),
+            [JsonPatchHelpers.Replace("/iconName", null)]
+        );
+        await Assert.That(clearResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var cleared = await clearResponse.Content.ReadFromJsonAsync<AccountDto>();
+        await Assert.That(cleared!.IconName).IsNull();
+    }
+
+    [Test]
+    public async Task UpdateAccount_with_malformed_icon_name_returns_400()
+    {
+        using var client = Factory.CreateClient();
+
+        var request = new CreateAccountRequestDto($"IconBad-{Guid.NewGuid():N}", "Expense", "EUR");
+        using var createResponse = await client.PostAsJsonAsync(
+            new Uri("/api/accounts", UriKind.Relative),
+            request
+        );
+        var created = await createResponse.Content.ReadFromJsonAsync<AccountDto>();
+
+        using var patchResponse = await client.PatchAsJsonPatchAsync(
+            new Uri($"/api/accounts/{created!.Id}", UriKind.Relative),
+            [JsonPatchHelpers.Replace("/iconName", "Not Valid!")]
+        );
+
+        await Assert.That(patchResponse.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+    }
+
+    [Test]
     public async Task GetAccount_returns_404_when_unknown()
     {
         using var client = Factory.CreateClient();
@@ -388,7 +500,8 @@ internal sealed record AccountDto(
     bool IsPostable = true,
     Guid? ParentAccountId = null,
     MoneyDto? Balance = null,
-    BankAccountSummaryDto? BankAccount = null
+    BankAccountSummaryDto? BankAccount = null,
+    string? IconName = null
 );
 
 internal sealed record BankAccountSummaryDto(
@@ -407,4 +520,5 @@ internal sealed record CreateAccountRequestDto(string Name, string AccountType, 
     public string Code { get; init; } = $"AC{Guid.NewGuid():N}"[..16];
     public bool IsPostable { get; init; } = true;
     public Guid? ParentAccountId { get; init; }
+    public string? IconName { get; init; }
 }

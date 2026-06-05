@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAccounts, useCreateAccount, useUpdateAccount, type Account } from '../api/accounts';
 import { useCurrencies } from '../api/currencies';
+import { AccountIconPicker } from '../components/AccountIconPicker';
 import { FieldError } from '../components/FieldError';
 import { FormErrorBanner } from '../components/FormErrorBanner';
 import { Modal, ModalFooter } from '../components/Modal';
@@ -28,6 +29,7 @@ export function AccountFormModal(props: Props) {
                   currencyCode: props.account.currencyCode,
                   isPostable: props.account.isPostable,
                   parentId: props.account.parentId,
+                  icon: props.account.icon,
               }
             : {
                   name: '',
@@ -36,6 +38,7 @@ export function AccountFormModal(props: Props) {
                   currencyCode: '',
                   isPostable: true,
                   parentId: null as Account['parentId'],
+                  icon: null as Account['icon'],
               };
 
     const [name, setName] = useState(initial.name);
@@ -44,6 +47,7 @@ export function AccountFormModal(props: Props) {
     const [currencyCode, setCurrencyCode] = useState(initial.currencyCode);
     const [isPostable, setIsPostable] = useState(initial.isPostable);
     const [parentId, setParentId] = useState<Account['parentId']>(initial.parentId);
+    const [icon, setIcon] = useState<Account['icon']>(initial.icon);
     const [topError, setTopError] = useState<string | null>(null);
     const [fieldErrors, setFieldErrors] = useState<Record<string, string[]> | null>(null);
 
@@ -72,6 +76,7 @@ export function AccountFormModal(props: Props) {
                     currencyCode,
                     isPostable,
                     parentAccountId: parentId,
+                    iconName: icon,
                 });
             } else {
                 await update.mutateAsync({
@@ -83,6 +88,7 @@ export function AccountFormModal(props: Props) {
                         currencyCode: props.account.currencyCode,
                         isPostable: props.account.isPostable,
                         parentAccountId: props.account.parentId,
+                        iconName: props.account.icon,
                     },
                     edited: {
                         name,
@@ -91,6 +97,7 @@ export function AccountFormModal(props: Props) {
                         currencyCode,
                         isPostable,
                         parentAccountId: parentId,
+                        iconName: icon,
                     },
                 });
             }
@@ -115,6 +122,12 @@ export function AccountFormModal(props: Props) {
                 noValidate
             >
                 <FormErrorBanner message={topError} />
+
+                <div className="flex flex-col gap-1 mb-3">
+                    <span className="text-12 font-medium text-fg-2">Icon</span>
+                    <AccountIconPicker accountType={accountType} value={icon} onChange={setIcon} />
+                    <FieldError name="IconName" errors={fieldErrors} />
+                </div>
 
                 <label className="flex flex-col gap-1 mb-3">
                     <span className="text-12 font-medium text-fg-2">Name</span>

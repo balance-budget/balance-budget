@@ -41,6 +41,10 @@ namespace Balance.Data.Sqlite.Migrations
                         .HasMaxLength(8)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("IconName")
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("IsPostable")
                         .HasColumnType("INTEGER");
 
