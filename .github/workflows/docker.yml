@@ -7,10 +7,8 @@ on:
   #  branches: [ "main" ]
 env:
   IMAGES: |
-    ghcr.io/christiaanderidder/balance
-  #IMAGES: |
+    ghcr.io/balance-budget/balance
   #  balance/balance
-  #  ghcr.io/balance-budget/balance
 permissions:
   contents: read
   packages: write
