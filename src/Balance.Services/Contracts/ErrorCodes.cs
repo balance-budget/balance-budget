@@ -78,4 +78,6 @@ public static class ErrorCodes
     public const string JournalLineFrozen = "journal.line_frozen";
     public const string JournalLineUnknown = "journal.line_unknown";
     public const string JournalLineStatusMutation = "journal.line_status_mutation";
+    public const string JournalLineReassignTargetNotPostable =
+        "journal.reassign_target_not_postable";
 }

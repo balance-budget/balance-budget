@@ -430,6 +430,106 @@ internal sealed class JournalEntryService : IJournalEntryService
         return await LoadDetailOrThrowAsync(entry.Id, cancellationToken);
     }
 
+    public async Task<Result> ReassignLinesAsync(
+        IReadOnlyList<JournalLineId> lineIds,
+        AccountId targetAccountId,
+        CancellationToken cancellationToken
+    )
+    {
+        ArgumentNullException.ThrowIfNull(lineIds);
+
+        var ids = lineIds.Distinct().ToList();
+
+        var target = await _dbContext
+            .Accounts.AsNoTracking()
+            .Where(a => a.Id == targetAccountId)
+            .Select(a => new { a.IsPostable, a.CurrencyCode })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (target is null)
+        {
+            return new NotFoundError("Account", targetAccountId.Value.ToString());
+        }
+
+        if (!target.IsPostable)
+        {
+            return new InvariantError(
+                ErrorCodes.JournalLineReassignTargetNotPostable,
+                $"Account {targetAccountId.Value} is not postable; "
+                    + "JournalLines can only be reassigned to a postable account."
+            );
+        }
+
+        var lines = await _dbContext
+            .JournalLines.Where(l => ids.Contains(l.Id))
+            .ToListAsync(cancellationToken);
+        if (lines.Count != ids.Count)
+        {
+            var missing = ids.First(id => lines.TrueForAll(l => l.Id != id));
+            return new NotFoundError("JournalLine", missing.Value.ToString());
+        }
+
+        // Editability gate (ADR-0014): a non-Uncleared line's AccountId is frozen. This also
+        // protects the bank-side leg of any bank-linked entry by construction — categorise and
+        // attach always leave that leg Cleared.
+        foreach (var line in lines)
+        {
+            if (line.ReconciliationStatus != ReconciliationStatus.Uncleared)
+            {
+                return new InvariantError(
+                    ErrorCodes.JournalLineFrozen,
+                    $"JournalLine {line.Id.Value} is {line.ReconciliationStatus}; "
+                        + "AccountId is frozen and the line cannot be reassigned."
+                );
+            }
+        }
+
+        // Every line must already be in the target's currency — amounts are minor units of the
+        // posted account's currency, so a cross-currency move would silently re-denominate.
+        var sourceAccountIds = lines.Select(l => l.AccountId).Distinct().ToList();
+        var sourceCurrencies = await _dbContext
+            .Accounts.AsNoTracking()
+            .Where(a => sourceAccountIds.Contains(a.Id))
+            .ToDictionaryAsync(a => a.Id, a => a.CurrencyCode, cancellationToken);
+        foreach (var line in lines)
+        {
+            var sourceCurrency = sourceCurrencies[line.AccountId];
+            if (sourceCurrency != target.CurrencyCode)
+            {
+                return new InvariantError(
+                    ErrorCodes.JournalCurrencyMismatch,
+                    $"JournalLine {line.Id.Value} is denominated in {sourceCurrency}; "
+                        + $"the target account uses {target.CurrencyCode}."
+                );
+            }
+        }
+
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
+        var entryIds = lines.Select(l => l.JournalEntryId).Distinct().ToList();
+        var entries = await _dbContext
+            .JournalEntries.Where(e => entryIds.Contains(e.Id))
+            .ToListAsync(cancellationToken);
+
+        foreach (var line in lines)
+        {
+            line.AccountId = targetAccountId;
+            line.UpdatedAt = now;
+        }
+
+        foreach (var entry in entries)
+        {
+            entry.UpdatedAt = now;
+        }
+
+        // One SaveChanges = one transaction: the whole batch moves atomically or not at all.
+        var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
+        if (saveResult.IsFailure)
+        {
+            return saveResult.Error;
+        }
+
+        return Result.Success;
+    }
+
     public Task<Result> DeleteAsync(JournalEntryId id, CancellationToken cancellationToken) =>
         _dbContext
             .JournalEntries.Where(c => c.Id == id)

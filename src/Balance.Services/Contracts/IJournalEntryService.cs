@@ -45,6 +45,19 @@ public interface IJournalEntryService
     );
 
     Task<Result> DeleteAsync(JournalEntryId id, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Re-points every line in <paramref name="lineIds"/> to <paramref name="targetAccountId"/>
+    /// in one transaction — the whole batch moves or nothing does. The target must be postable
+    /// and share each line's currency; a line whose <c>ReconciliationStatus</c> is not
+    /// <c>Uncleared</c> is frozen (ADR-0014) and rejects the batch. Amounts, descriptions and
+    /// the owning entries' other legs are untouched, so every entry still nets to zero.
+    /// </summary>
+    Task<Result> ReassignLinesAsync(
+        IReadOnlyList<JournalLineId> lineIds,
+        AccountId targetAccountId,
+        CancellationToken cancellationToken
+    );
 }
 
 public sealed record CreateJournalEntryInput(
