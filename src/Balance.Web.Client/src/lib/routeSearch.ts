@@ -18,3 +18,8 @@ export function parsePage(raw: unknown): number {
 export function parseQ(raw: unknown): string {
     return typeof raw === 'string' ? raw : '';
 }
+
+/** Coerce a raw URL search value into a `yyyy-MM-dd` date string (defaults to ''). */
+export function parseDate(raw: unknown): string {
+    return typeof raw === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : '';
+}
