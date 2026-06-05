@@ -1,10 +1,18 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { useAccount, useDeleteAccount, type Account } from '../api/accounts';
+import { useAccount, useAccounts, useDeleteAccount, type Account } from '../api/accounts';
 import { useCurrencyCatalog } from '../api/currencies';
-import { useAccountRegister, type RegisterRow } from '../api/register';
+import { useReassignJournalLines } from '../api/journalLines';
+import {
+    useAccountRegister,
+    type RegisterFilters,
+    type RegisterRow,
+    type RegisterStatusFilter,
+} from '../api/register';
 import { AccountAvatar } from '../components/AccountAvatar';
 import { Amount } from '../components/Amount';
+import { Combobox } from '../components/Combobox';
+import { type ComboboxItem } from '../components/combobox.state';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
@@ -13,8 +21,9 @@ import { Panel, SectionHead } from '../components/Panel';
 import { SearchInput } from '../components/SearchInput';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
+import { descendantAndSelfIds } from '../lib/accountTree';
 import { cx } from '../lib/cx';
-import type { AccountId } from '../lib/domain';
+import { ACCOUNT_TYPE_ORDER, type AccountId, type JournalLineId } from '../lib/domain';
 import { handleActionError } from '../lib/formErrors';
 import { formatMoney } from '../lib/money';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
@@ -23,18 +32,31 @@ import { LinkedBankAccountsSection } from './LinkedBankAccounts';
 
 const REGISTER_PAGE_SIZE = 50;
 
+/** The register's URL-backed filters, minus the separately-debounced `q`. */
+export type RegisterFilterState = {
+    posted: AccountId | null;
+    counter: AccountId | null;
+    from: string;
+    to: string;
+    status: RegisterStatusFilter;
+};
+
 export function AccountDetail({
     id,
     page,
     q,
+    filters,
     onPageChange,
     onSearchChange,
+    onFiltersChange,
 }: {
     id: AccountId;
     page: number;
     q: string;
+    filters: RegisterFilterState;
     onPageChange: (p: number) => void;
     onSearchChange: (q: string) => void;
+    onFiltersChange: (patch: Partial<RegisterFilterState>) => void;
 }) {
     const query = useAccount(id);
     const [editing, setEditing] = useState(false);
@@ -117,14 +139,25 @@ export function AccountDetail({
 
             <Panel>
                 <SectionHead title="Register" subtitle="Chronological activity on this account." />
-                <div className="mb-4">
+                <div className="mb-4 flex flex-col gap-3">
                     <SearchInput
                         value={q}
                         onChange={onSearchChange}
                         placeholder="Search description or counterparty…"
                     />
+                    <RegisterFilterBar
+                        account={account}
+                        filters={filters}
+                        onFiltersChange={onFiltersChange}
+                    />
                 </div>
-                <RegisterTable account={account} page={page} q={q} onPageChange={onPageChange} />
+                <RegisterTable
+                    account={account}
+                    page={page}
+                    q={q}
+                    filters={filters}
+                    onPageChange={onPageChange}
+                />
             </Panel>
 
             {editing && (
@@ -148,21 +181,206 @@ export function AccountDetail({
     );
 }
 
+const STATUS_FILTERS: readonly RegisterStatusFilter[] = [
+    '',
+    'Uncleared',
+    'Cleared',
+    'Reconciled',
+];
+
+const STATUS_LABEL: Record<RegisterStatusFilter, string> = {
+    '': 'All',
+    Uncleared: 'Uncleared',
+    Cleared: 'Cleared',
+    Reconciled: 'Reconciled',
+};
+
+function RegisterFilterBar({
+    account,
+    filters,
+    onFiltersChange,
+}: {
+    account: Account;
+    filters: RegisterFilterState;
+    onFiltersChange: (patch: Partial<RegisterFilterState>) => void;
+}) {
+    const accounts = useAccounts();
+    const all = useMemo(() => accounts.data ?? [], [accounts.data]);
+
+    // The posted picker offers only the viewed subtree (anything else matches nothing);
+    // picking a non-postable child means "that child's whole subtree" (ADR-0019).
+    const postedItems = useMemo<ComboboxItem<AccountId>[]>(() => {
+        const subtree = descendantAndSelfIds(all, account.id);
+        return all
+            .filter(a => subtree.has(a.id) && a.id !== account.id)
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map(a => ({ key: a.id, label: a.name, value: a.id }));
+    }, [all, account.id]);
+
+    const counterItems = useMemo<ComboboxItem<AccountId>[]>(
+        () =>
+            [...all]
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map(a => ({ key: a.id, label: a.name, group: a.type, value: a.id })),
+        [all],
+    );
+
+    return (
+        <div className="flex flex-wrap items-center gap-2">
+            {!account.isPostable && (
+                <div className="w-56">
+                    <Combobox
+                        items={postedItems}
+                        value={filters.posted}
+                        onChange={v => {
+                            onFiltersChange({ posted: v });
+                        }}
+                        onClear={() => {
+                            onFiltersChange({ posted: null });
+                        }}
+                        noneLabel="Any sub-account"
+                        placeholder="Sub-account…"
+                        ariaLabel="Filter by sub-account"
+                    />
+                </div>
+            )}
+            <div className="w-56">
+                <Combobox
+                    items={counterItems}
+                    value={filters.counter}
+                    onChange={v => {
+                        onFiltersChange({ counter: v });
+                    }}
+                    onClear={() => {
+                        onFiltersChange({ counter: null });
+                    }}
+                    noneLabel="Any counter-account"
+                    placeholder="Counter-account…"
+                    groupOrder={ACCOUNT_TYPE_ORDER}
+                    ariaLabel="Filter by counter-account"
+                />
+            </div>
+            <div className="flex items-center gap-1">
+                <DateInput
+                    value={filters.from}
+                    max={filters.to === '' ? undefined : filters.to}
+                    onChange={v => {
+                        onFiltersChange({ from: v });
+                    }}
+                    ariaLabel="From date"
+                />
+                <span className="text-12 text-fg-3">–</span>
+                <DateInput
+                    value={filters.to}
+                    min={filters.from === '' ? undefined : filters.from}
+                    onChange={v => {
+                        onFiltersChange({ to: v });
+                    }}
+                    ariaLabel="To date"
+                />
+            </div>
+            <div className="flex items-center gap-2" role="tablist" aria-label="Status filter">
+                {STATUS_FILTERS.map(status => {
+                    const active = status === filters.status;
+                    return (
+                        <button
+                            key={status === '' ? 'all' : status}
+                            type="button"
+                            role="tab"
+                            aria-selected={active}
+                            onClick={() => {
+                                onFiltersChange({ status });
+                            }}
+                            className={cx(
+                                'px-3 py-1 rounded-sm text-12 font-medium select-none transition-colors',
+                                active
+                                    ? 'bg-brand-primary-soft text-brand-primary'
+                                    : 'text-fg-2 hover:bg-surface-2 hover:text-fg-1',
+                            )}
+                        >
+                            {STATUS_LABEL[status]}
+                        </button>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
+function DateInput({
+    value,
+    onChange,
+    ariaLabel,
+    min,
+    max,
+}: {
+    value: string;
+    onChange: (value: string) => void;
+    ariaLabel: string;
+    min?: string;
+    max?: string;
+}) {
+    return (
+        <input
+            type="date"
+            value={value}
+            min={min}
+            max={max}
+            onChange={e => {
+                onChange(e.target.value);
+            }}
+            aria-label={ariaLabel}
+            className="px-3 py-[7px] rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-13 focus:outline-none focus:border-border-strong"
+        />
+    );
+}
+
 function RegisterTable({
     account,
     page,
     q,
+    filters,
     onPageChange,
 }: {
     account: Account;
     page: number;
     q: string;
+    filters: RegisterFilterState;
     onPageChange: (p: number) => void;
 }) {
     const skip = (page - 1) * REGISTER_PAGE_SIZE;
     const debouncedQ = useDebouncedValue(q, 200);
-    const register = useAccountRegister(account.id, skip, REGISTER_PAGE_SIZE, debouncedQ);
+    const registerFilters: RegisterFilters = { q: debouncedQ, ...filters };
+    const register = useAccountRegister(account.id, skip, REGISTER_PAGE_SIZE, registerFilters);
     const catalog = useCurrencyCatalog();
+    const [selected, setSelected] = useState<ReadonlySet<JournalLineId>>(new Set());
+
+    // Show the posted-account column only when rows can come from descendants — on a
+    // leaf register every row would repeat the viewed account.
+    const showAccountColumn = !account.isPostable;
+    const gridClass = showAccountColumn
+        ? 'grid-cols-[24px_100px_1fr_150px_160px_120px]'
+        : 'grid-cols-[24px_100px_1fr_180px_120px]';
+
+    const rows = useMemo(() => register.data?.items ?? [], [register.data]);
+    // Selection is page-bound and prunes itself: ids that fell off the current page (or
+    // stopped being movable) simply no longer count.
+    const visibleSelected = useMemo(
+        () =>
+            new Set(
+                rows
+                    .filter(
+                        r => selected.has(r.journalLineId) && r.reconciliationStatus === 'Uncleared',
+                    )
+                    .map(r => r.journalLineId),
+            ),
+        [rows, selected],
+    );
+    const selectableIds = useMemo(
+        () =>
+            rows.filter(r => r.reconciliationStatus === 'Uncleared').map(r => r.journalLineId),
+        [rows],
+    );
 
     if (register.isPending) {
         return (
@@ -180,24 +398,91 @@ function RegisterTable({
         );
     }
 
-    if (register.data.items.length === 0) {
+    if (rows.length === 0) {
+        const hasFilters =
+            filters.posted !== null ||
+            filters.counter !== null ||
+            filters.from !== '' ||
+            filters.to !== '' ||
+            filters.status !== '';
         return (
             <div className="py-6 text-center text-13 text-fg-3">
-                {debouncedQ !== '' ? `No matches for “${debouncedQ}”.` : 'No journal entries yet.'}
+                {debouncedQ !== ''
+                    ? `No matches for “${debouncedQ}”.`
+                    : hasFilters
+                      ? 'No rows match the current filters.'
+                      : 'No journal entries yet.'}
             </div>
         );
     }
 
+    function toggleRow(id: JournalLineId) {
+        setSelected(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+    }
+
+    function toggleAll() {
+        setSelected(
+            visibleSelected.size === selectableIds.length ? new Set() : new Set(selectableIds),
+        );
+    }
+
+    const allState: 'none' | 'some' | 'all' =
+        visibleSelected.size === 0
+            ? 'none'
+            : visibleSelected.size === selectableIds.length
+              ? 'all'
+              : 'some';
+
     return (
         <div className="flex flex-col">
-            <div className="hidden lg:grid grid-cols-[100px_1fr_180px_120px] gap-3 px-2 pb-2 text-11 text-fg-3 uppercase tracking-wider border-b border-border-soft">
+            {visibleSelected.size > 0 && (
+                <ReassignBar
+                    account={account}
+                    selectedIds={[...visibleSelected]}
+                    onDone={() => {
+                        setSelected(new Set());
+                    }}
+                />
+            )}
+            <div
+                className={cx(
+                    'hidden lg:grid gap-3 px-2 pb-2 text-11 text-fg-3 uppercase tracking-wider border-b border-border-soft',
+                    gridClass,
+                )}
+            >
+                <span className="flex items-center">
+                    <HeaderSelectAllCheckbox
+                        state={allState}
+                        disabled={selectableIds.length === 0}
+                        onClick={toggleAll}
+                    />
+                </span>
                 <span>Date</span>
                 <span>Description</span>
+                {showAccountColumn && <span>Account</span>}
                 <span>Counter</span>
                 <span className="text-right">Amount</span>
             </div>
-            {register.data.items.map(row => (
-                <RegisterRowView key={row.journalLineId} row={row} catalog={catalog} />
+            {rows.map(row => (
+                <RegisterRowView
+                    key={row.journalLineId}
+                    row={row}
+                    catalog={catalog}
+                    gridClass={gridClass}
+                    showAccountColumn={showAccountColumn}
+                    selected={visibleSelected.has(row.journalLineId)}
+                    onToggle={() => {
+                        toggleRow(row.journalLineId);
+                    }}
+                />
             ))}
             <Pagination
                 page={page}
@@ -209,16 +494,169 @@ function RegisterTable({
     );
 }
 
+function ReassignBar({
+    account,
+    selectedIds,
+    onDone,
+}: {
+    account: Account;
+    selectedIds: readonly JournalLineId[];
+    onDone: () => void;
+}) {
+    const accounts = useAccounts();
+    const reassign = useReassignJournalLines();
+    const toast = useToast();
+    const [target, setTarget] = useState<AccountId | null>(null);
+    const [confirming, setConfirming] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    // Reassign targets: postable accounts in the lines' currency (every line on this
+    // register shares the viewed subtree's currency, ADR-0019). Cross-type moves are
+    // legitimate (e.g. reclassifying an expense leg onto an asset).
+    const items = useMemo<ComboboxItem<AccountId>[]>(
+        () =>
+            (accounts.data ?? [])
+                .filter(a => a.isPostable && a.currencyCode === account.currencyCode)
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map(a => ({ key: a.id, label: a.name, group: a.type, value: a.id })),
+        [accounts.data, account.currencyCode],
+    );
+    const targetName = items.find(i => i.value === target)?.label ?? '';
+    const count = selectedIds.length;
+
+    async function onConfirm() {
+        if (target === null) return;
+        setError(null);
+        try {
+            await reassign.mutateAsync({ lineIds: selectedIds, targetAccountId: target });
+            toast.success(`Moved ${String(count)} line${count === 1 ? '' : 's'} to “${targetName}”.`);
+            setConfirming(false);
+            setTarget(null);
+            onDone();
+        } catch (err) {
+            handleActionError(err, { setError, toast: toast.error });
+        }
+    }
+
+    return (
+        <div className="flex flex-wrap items-center gap-3 mb-3 px-3 py-2 rounded-sm bg-surface-2 border border-border-soft">
+            <span className="text-13 text-fg-2 font-medium">
+                {count} line{count === 1 ? '' : 's'} selected
+            </span>
+            <div className="w-64">
+                <Combobox
+                    items={items}
+                    value={target}
+                    onChange={setTarget}
+                    placeholder="Move to account…"
+                    groupOrder={ACCOUNT_TYPE_ORDER}
+                    ariaLabel="Move selected lines to account"
+                />
+            </div>
+            <button
+                type="button"
+                disabled={target === null || reassign.isPending}
+                onClick={() => {
+                    setConfirming(true);
+                }}
+                className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm bg-brand-primary text-white text-13 font-medium hover:bg-brand-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                <Icon name="arrow-right" size={14} strokeWidth={2} />
+                Move
+            </button>
+            <button
+                type="button"
+                onClick={onDone}
+                className="px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-fg-1 hover:bg-surface-2"
+            >
+                Clear selection
+            </button>
+            {confirming && (
+                <ConfirmDialog
+                    open
+                    onClose={() => {
+                        setConfirming(false);
+                    }}
+                    onConfirm={() => void onConfirm()}
+                    title={`Move ${String(count)} line${count === 1 ? '' : 's'} to “${targetName}”?`}
+                    message="Only the selected side of each entry moves — dates, amounts and the other side stay untouched. The whole batch moves together, or not at all."
+                    confirmLabel="Move"
+                    busy={reassign.isPending}
+                    error={error}
+                />
+            )}
+        </div>
+    );
+}
+
+function RowSelectCheckbox({
+    selected,
+    disabled,
+    onChange,
+    ariaLabel,
+}: {
+    selected: boolean;
+    disabled: boolean;
+    onChange: () => void;
+    ariaLabel: string;
+}) {
+    return (
+        <input
+            type="checkbox"
+            aria-label={ariaLabel}
+            title={disabled ? 'Cleared and reconciled lines can’t be moved.' : undefined}
+            checked={selected}
+            disabled={disabled}
+            onChange={onChange}
+            className="h-4 w-4 cursor-pointer accent-brand-primary disabled:opacity-40 disabled:cursor-not-allowed"
+        />
+    );
+}
+
+function HeaderSelectAllCheckbox({
+    state,
+    onClick,
+    disabled,
+}: {
+    state: 'none' | 'some' | 'all';
+    onClick: () => void;
+    disabled: boolean;
+}) {
+    function setRef(el: HTMLInputElement | null) {
+        if (el) el.indeterminate = state === 'some';
+    }
+    return (
+        <input
+            ref={setRef}
+            type="checkbox"
+            aria-label="Select all movable rows on this page"
+            checked={state === 'all'}
+            disabled={disabled}
+            onChange={onClick}
+            className="h-4 w-4 cursor-pointer accent-brand-primary disabled:opacity-40 disabled:cursor-not-allowed"
+        />
+    );
+}
+
 function RegisterRowView({
     row,
     catalog,
+    gridClass,
+    showAccountColumn,
+    selected,
+    onToggle,
 }: {
     row: RegisterRow;
     catalog: ReturnType<typeof useCurrencyCatalog>;
+    gridClass: string;
+    showAccountColumn: boolean;
+    selected: boolean;
+    onToggle: () => void;
 }) {
     const counter = row.counter[0];
     const extra = row.counter.length - 1;
     const negative = row.amount.amount < 0;
+    const movable = row.reconciliationStatus === 'Uncleared';
     const heading = row.counterpartyName ?? row.entryDescription ?? '—';
     // Match the journal-list amount-coloring convention: in = success, out = danger.
     const amount = (
@@ -237,35 +675,57 @@ function RegisterRowView({
             {extra > 0 ? <span className="text-fg-3"> +{extra}</span> : null}
         </span>
     );
+    const checkbox = (
+        <RowSelectCheckbox
+            selected={selected}
+            disabled={!movable}
+            onChange={onToggle}
+            ariaLabel={`Select line of ${row.date}`}
+        />
+    );
     return (
-        <Link
-            to="/journal/$id"
-            params={{ id: row.journalEntryId }}
-            className="block border-b border-border-soft last:border-b-0 hover:bg-surface-2"
-        >
-            <div className="hidden lg:grid grid-cols-[100px_1fr_180px_120px] gap-3 items-center px-2 py-2">
-                <span className="text-12 text-fg-3 tabular">{row.date}</span>
-                <div className="flex flex-col min-w-0">
+        <div className="border-b border-border-soft last:border-b-0 hover:bg-surface-2">
+            <div className={cx('hidden lg:grid gap-3 items-center px-2 py-2', gridClass)}>
+                <span className="flex items-center">{checkbox}</span>
+                <Link to="/journal/$id" params={{ id: row.journalEntryId }} className="contents">
+                    <span className="text-12 text-fg-3 tabular">{row.date}</span>
+                    <div className="flex flex-col min-w-0">
+                        <span className="text-13 text-fg-1 truncate">{heading}</span>
+                        {row.lineDescription ? (
+                            <span className="text-12 text-fg-3 truncate">
+                                {row.lineDescription}
+                            </span>
+                        ) : null}
+                    </div>
+                    {showAccountColumn && (
+                        <span className="text-12 text-fg-2 truncate">{row.accountName}</span>
+                    )}
+                    {counterLabel}
+                    {amount}
+                </Link>
+            </div>
+            <div className="lg:hidden flex gap-3 px-2 py-3">
+                <span className="flex items-start pt-[2px]">{checkbox}</span>
+                <Link
+                    to="/journal/$id"
+                    params={{ id: row.journalEntryId }}
+                    className="flex-1 flex flex-col gap-1 min-w-0"
+                >
+                    <div className="flex items-center justify-between gap-3">
+                        <span className="text-12 text-fg-3 tabular">{row.date}</span>
+                        {amount}
+                    </div>
                     <span className="text-13 text-fg-1 truncate">{heading}</span>
                     {row.lineDescription ? (
                         <span className="text-12 text-fg-3 truncate">{row.lineDescription}</span>
                     ) : null}
-                </div>
-                {counterLabel}
-                {amount}
+                    {showAccountColumn && (
+                        <span className="text-12 text-fg-2 truncate">{row.accountName}</span>
+                    )}
+                    {counterLabel}
+                </Link>
             </div>
-            <div className="lg:hidden flex flex-col gap-1 px-2 py-3">
-                <div className="flex items-center justify-between gap-3">
-                    <span className="text-12 text-fg-3 tabular">{row.date}</span>
-                    {amount}
-                </div>
-                <span className="text-13 text-fg-1 truncate">{heading}</span>
-                {row.lineDescription ? (
-                    <span className="text-12 text-fg-3 truncate">{row.lineDescription}</span>
-                ) : null}
-                {counterLabel}
-            </div>
-        </Link>
+        </div>
     );
 }
 

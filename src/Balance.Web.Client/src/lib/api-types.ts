@@ -536,6 +536,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/journal-lines/reassign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ReassignJournalLines"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/dashboard/summary": {
         parameters: {
             query?: never;
@@ -1177,6 +1193,10 @@ export interface components {
             detail?: null | string;
             instance?: null | string;
         };
+        ReassignJournalLinesRequest: {
+            lineIds: unknown[];
+            targetAccountId: components["schemas"]["AccountId"];
+        };
         /** @enum {unknown} */
         ReconciliationStatus: "Uncleared" | "Cleared" | "Reconciled";
         RegisterRowCounterLeg: {
@@ -1187,6 +1207,8 @@ export interface components {
         RegisterRowOutput: {
             journalEntryId: components["schemas"]["JournalEntryId"];
             journalLineId: components["schemas"]["JournalLineId"];
+            accountId: components["schemas"]["AccountId"];
+            accountName: string;
             /** Format: date */
             date: string;
             entryDescription: null | string;
@@ -2169,6 +2191,11 @@ export interface operations {
                 Skip?: number | string;
                 Take?: number | string;
                 Q?: string;
+                PostedAccountId?: components["schemas"]["AccountId"];
+                CounterAccountId?: components["schemas"]["AccountId"];
+                From?: string;
+                To?: string;
+                Status?: components["schemas"]["ReconciliationStatus"];
             };
             header?: never;
             path: {
@@ -3362,6 +3389,9 @@ export interface operations {
                 Take?: number | string;
                 Q?: string;
                 CounterpartyId?: components["schemas"]["CounterpartyId"];
+                AccountId?: components["schemas"]["AccountId"];
+                From?: string;
+                To?: string;
             };
             header?: never;
             path?: never;
@@ -3552,6 +3582,64 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ReassignJournalLines: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReassignJournalLinesRequest"];
+            };
+        };
         responses: {
             /** @description No Content */
             204: {
