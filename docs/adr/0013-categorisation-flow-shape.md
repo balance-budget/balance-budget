@@ -1,0 +1,10 @@
+# Categorisation flow is one composite endpoint; rules engine deferred
+
+Turning one unmatched `BankTransaction` into one `JournalEntry` is a single composite endpoint `POST /api/bank-transactions/{id}/categorize`, accepting (a) an existing `CounterpartyId` *or* a `NewCounterparty: { Name }` block (mutually exclusive, FluentValidation), (b) an optional `LinkBankAccount` payload that creates a counterparty-owned `BankAccount` (`CounterpartyId` set, `AccountId`/`CurrencyCode` null per ADR-0010), and (c) the `JournalEntry` fields. All writes run in one transaction; a `Counterparty` or `BankAccount` never persists unless the `JournalEntry` does.
+
+Counter-side pre-fill resolves in order:
+
+1. **Self-transfer recognition** — if `BT.CounterpartyAccountNumber` matches a `BankAccount.Iban` whose `AccountId IS NOT NULL` (your own `Account`), pre-fill that own-`Account` and leave `CounterpartyId` null on submit. The resulting JE has every line on an own-`Account`, the bank-side line `Cleared`, the counter-side `Uncleared` awaiting the sibling BT to attach (ADR-0012).
+2. **Counterparty resolution** — otherwise exact-match `CounterpartyAccountNumber` against `BankAccount.Iban` to find the `Counterparty`, and use its most-recent `JournalEntry` as the last-used `Account`/amount suggestion. No name-based or fuzzy matching. The bank-side line is `Cleared`; splits are N counter-lines summing to `−BT.Amount`; cross-currency lines are refused.
+
+The self-transfer rule above is the path code cites as **ADR-0013(e)**. Inbox pre-fill is opt-in: rows render pristine and suggestions apply only when the user clicks `Apply suggestions`, because payment-processor IBANs (Adyen, Worldline, Stripe) route many merchants through one IBAN and auto-applying would persist entries against the wrong `Counterparty`. The sibling BT's flow also offers a **manual JE-picker** that relaxes the predicate's date window. We rejected three separate SPA calls (partial-state on mid-sequence failure), extending the generic `POST /api/journal-entries` (it conflates two activities), and a rules engine (premature without manual-categorisation pain points to shape it).

@@ -8,7 +8,7 @@ namespace Balance.Services.Contracts;
 /// for a given <see cref="BankAccount"/>. Per-bank validation (Account column matches the chosen
 /// BankAccount, currency matches, ownership) lives here. The bank-agnostic
 /// <c>BankTransactionImportService</c> orchestrates dedup and persistence around it, dispatching
-/// by <see cref="BankAccount.ImporterKey"/> across the registered extractors (ADR 0019).
+/// by <see cref="BankAccount.ImporterKey"/> across the registered extractors (ADR 0009).
 /// </summary>
 public interface IBankTransactionExtractor
 {

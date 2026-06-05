@@ -160,7 +160,7 @@ internal sealed class IngSavingsAccountTransactionExtractor : IBankTransactionEx
     }
 
     // Anything the extractor parses that is *not* promoted to a BankTransaction column lives
-    // here (ADR 0015). The savings layout has no structured note, so only the two free-text
+    // here (ADR 0009). The savings layout has no structured note, so only the two free-text
     // columns carry over.
     private static List<BankTransactionMetadataValue> BuildMetadata(SavingsAccountStatementRow row)
     {
@@ -208,7 +208,7 @@ internal sealed class IngSavingsAccountTransactionExtractor : IBankTransactionEx
 
     // ING savings statements quote the account number with separators (e.g. "D 595-90523");
     // the current-account side emits the same number contiguous (e.g. "D59590523"). Strip
-    // spaces and dashes and uppercase so both forms compare equal — keeping the ADR 0013
+    // spaces and dashes and uppercase so both forms compare equal — keeping the ADR 0012
     // self-transfer Attach symmetric across the current- and savings-account imports.
     private static string NormaliseAccount(string? value) =>
         value is null

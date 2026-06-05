@@ -37,7 +37,7 @@ internal sealed class JournalEntryService : IJournalEntryService
         var needle = search?.Trim();
         if (!string.IsNullOrEmpty(needle))
         {
-            // Match the entry Description or its linked Counterparty's Name. ADR-0020's
+            // Match the entry Description or its linked Counterparty's Name. ADR-0017's
             // item (g) originally excluded counterparty-name matching from the list filter;
             // that half is superseded now that the Counterparty detail view exists. Shared with
             // the Register filter via JournalEntryFilters so the two can't drift.
@@ -254,7 +254,7 @@ internal sealed class JournalEntryService : IJournalEntryService
 
         var existingLines = entry.Lines.ToDictionary(l => l.Id);
 
-        // Editability gate (ADR 0016): every line whose current ReconciliationStatus != Uncleared
+        // Editability gate (ADR 0014): every line whose current ReconciliationStatus != Uncleared
         // must appear in the body with unchanged AccountId and Amount; existing non-Uncleared lines
         // missing from the body are not deletable; new lines (no Id) default to Uncleared; body-
         // supplied ReconciliationStatus is validated to match current (the PUT does not mutate it).
@@ -467,7 +467,7 @@ internal sealed class JournalEntryService : IJournalEntryService
     /// EF projection for the detail wire shape. Adds the list of bank-transactions
     /// pointing at this entry via <c>BankTransaction.JournalEntryId</c> (each with its
     /// metadata bag). The list is 0 or 1 elements today (per-BT FK cardinality); the
-    /// list shape is forward-compatible with ADR 0013's self-transfer Attach. The
+    /// list shape is forward-compatible with ADR 0012's self-transfer Attach. The
     /// metadata join is wasted work for the list endpoint, so this variant is
     /// reserved for Get / Create / Update.
     /// </summary>

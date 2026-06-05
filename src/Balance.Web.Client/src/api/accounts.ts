@@ -28,7 +28,7 @@ export type Account = {
     currencyCode: string;
     /** A leaf that journal lines may reference directly; false for a non-postable roll-up account. */
     isPostable: boolean;
-    /** Parent in the chart-of-accounts tree, or null for a root account (ADR-0022). */
+    /** Parent in the chart-of-accounts tree, or null for a root account (ADR-0019). */
     parentId: AccountId | null;
     balance: Money;
     bankAccount: BankAccountSummary | null;

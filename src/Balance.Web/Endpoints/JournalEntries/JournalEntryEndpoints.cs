@@ -23,8 +23,8 @@ internal static class JournalEntryEndpoints
             .MapPost("", CreateAsync)
             .WithValidation<CreateJournalEntryRequest>()
             .WithName("CreateJournalEntry");
-        // PATCH stays mounted as the legacy ADR 0005 surface (kept to avoid breaking existing
-        // bookmarks / clients) but is hidden from the OpenAPI document — ADR 0016 makes the
+        // PATCH stays mounted as the legacy ADR 0014 surface (kept to avoid breaking existing
+        // bookmarks / clients) but is hidden from the OpenAPI document — ADR 0014 makes the
         // PUT below the canonical edit surface, and the SPA no longer calls PATCH.
         group
             .MapPatchSnapshotted<

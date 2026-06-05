@@ -1,5 +1,5 @@
 /*
- * Pure form-state helpers for the JournalDetail edit form (ADR 0016). Keeps
+ * Pure form-state helpers for the JournalDetail edit form (ADR 0014). Keeps
  * the user-input ↔ wire-shape projection out of the React component.
  *
  * Editability gate (matches the server-side check in JournalEntryService.ReplaceAsync):

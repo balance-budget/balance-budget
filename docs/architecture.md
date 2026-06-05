@@ -52,7 +52,7 @@ graph TD
 Notes:
 - `Balance.Data` does **not** reference the provider-specific projects. It targets EF Core's relational abstractions and lets the host process load the right migrations assembly at runtime.
 - `Balance.Web` references both provider-specific projects directly so their migration assemblies are loaded.
-- `Balance.Integration.Ing` references `Balance.Services` (its extractors implement the Services-owned `IBankTransactionExtractor` contract) and is therefore composed *beside* Services at the host, not nested under it — see [Startup composition](#startup-composition) and [ADR-0021](adr/0021-integration-layer-composed-at-host.md).
+- `Balance.Integration.Ing` references `Balance.Services` (its extractors implement the Services-owned `IBankTransactionExtractor` contract) and is therefore composed *beside* Services at the host, not nested under it — see [Startup composition](#startup-composition) and [ADR-0018](adr/0018-integration-layer-composed-at-host.md).
 - `Balance.Web` references `Balance.Web.Client` with `ReferenceOutputAssembly="false"` — the esproj produces no .NET assembly; the project reference exists purely so MSBuild builds the SPA (`npm run build` → `dist/`) and packs its static assets into the ASP.NET publish output.
 - `Balance.Tests` references `Balance.Web` and `Balance.Services` (transitively pulling in the rest). `Balance.Web`, `Balance.Services`, and `Balance.Integration.Ing` expose internals via `InternalsVisibleTo("Balance.Tests")`.
 
@@ -94,9 +94,9 @@ Empty class libraries that exist solely to host provider-specific EF Core migrat
 
 Bank-specific statement importers for ING. References `Balance.Services` and implements the Services-owned `IBankTransactionExtractor` contract; the import flow (`BankTransactionImportService`) consumes the registered extractors and dispatches by `ImporterKey` / `SupportedType`.
 
-- `Importers/` — `IBankTransactionExtractor` implementations (current account, savings, modern/legacy credit card). The credit-card extractors share an abstract base; each row maps to an immutable `BankTransaction` (ADR-0010), signing amounts at the parse boundary (ADR-0002).
+- `Importers/` — `IBankTransactionExtractor` implementations (current account, savings, modern/legacy credit card). The credit-card extractors share an abstract base; each row maps to an immutable `BankTransaction` (ADR-0009), signing amounts at the parse boundary (ADR-0002).
 - `Parsers/` — CsvHelper-backed statement parsers and the ING note parser; `Models/` — `internal` CSV row models and value types; `Helpers/` — `RowHasher` (idempotent re-import hash) and parsing utilities.
-- `ServiceCollectionExtensions.AddBalanceIntegrationIng` — the layer's single `public` DI entry point; everything else is `internal`. Composed at the host *beside* `Balance.Services` (not nested under it) because nesting would invert the Services → Integration dependency into a cycle — see [ADR-0021](adr/0021-integration-layer-composed-at-host.md).
+- `ServiceCollectionExtensions.AddBalanceIntegrationIng` — the layer's single `public` DI entry point; everything else is `internal`. Composed at the host *beside* `Balance.Services` (not nested under it) because nesting would invert the Services → Integration dependency into a cycle — see [ADR-0018](adr/0018-integration-layer-composed-at-host.md).
 
 ### Balance.Web
 
@@ -124,7 +124,7 @@ The web host follows this shape:
 builder.Logging.AddConsole(...)
 builder.Configuration.MapConfigurationSources(...)
 builder.Services.AddBalanceServices(builder.Configuration)
-builder.Services.AddBalanceIntegrationIng()   // bank importers — beside Services (ADR-0021)
+builder.Services.AddBalanceIntegrationIng()   // bank importers — beside Services (ADR-0018)
 builder.Services.AddBalanceWeb()
 var app = builder.Build();
 await app.MigrateDatabaseAsync(lifetime.ApplicationStopping);

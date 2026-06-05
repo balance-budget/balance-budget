@@ -43,7 +43,7 @@ internal sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
             .HasForeignKey(a => a.CurrencyCode)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Self-referential chart-of-accounts tree (ADR-0022). RESTRICT so a parent with children
+        // Self-referential chart-of-accounts tree (ADR-0019). RESTRICT so a parent with children
         // cannot be deleted until they are re-parented or removed.
         builder
             .HasOne<Account>()
@@ -51,7 +51,7 @@ internal sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
             .HasForeignKey(a => a.ParentAccountId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Code is the globally-unique human key. Name is no longer unique (ADR-0022).
+        // Code is the globally-unique human key. Name is no longer unique (ADR-0019).
         builder.HasIndex(a => a.Code).IsUnique().HasDatabaseName("IX_Accounts_Code");
 
         builder.HasIndex(a => a.ParentAccountId).HasDatabaseName("IX_Accounts_ParentAccountId");

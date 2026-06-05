@@ -5,7 +5,7 @@ namespace Balance.Services.Contracts;
 
 /// <summary>
 /// Detail-endpoint shape: every <see cref="BankTransactionOutput"/> field plus the
-/// typed key-value <c>Metadata</c> bag (ADR 0015). The list endpoint stays on the
+/// typed key-value <c>Metadata</c> bag (ADR 0009). The list endpoint stays on the
 /// narrower <see cref="BankTransactionOutput"/> shape — pulling per-row metadata
 /// for every Inbox row would be wasted work for fields the user only consults on
 /// detail.

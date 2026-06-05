@@ -137,7 +137,7 @@ internal sealed class BankTransactionCategorisationService : IBankTransactionCat
         if (entryResult.IsFailure)
             return entryResult.Error;
 
-        // Per ADR 0013, the BT↔JE link lives on the BankTransaction side now. Set the
+        // Per ADR 0012, the BT↔JE link lives on the BankTransaction side now. Set the
         // newly-created JE's id on the tracked BT inside the same transaction so a JE
         // creation failure rolls back cleanly, and a successful categorise hides the row
         // from the Inbox via the `b.JournalEntryId IS NULL` filter.
@@ -160,7 +160,7 @@ internal sealed class BankTransactionCategorisationService : IBankTransactionCat
 
     private static Result ResolveCounterpartySelection(CategorizeBankTransactionInput input)
     {
-        // A self-transfer (CONTEXT.md / ADR 0014(e)) is a JE with no external party,
+        // A self-transfer (CONTEXT.md / ADR 0013(e)) is a JE with no external party,
         // so both CounterpartyId and NewCounterparty being null is a valid input —
         // only the contradictory "both provided" case is rejected here.
         if (input.CounterpartyId.HasValue && input.NewCounterparty is not null)

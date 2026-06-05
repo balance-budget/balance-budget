@@ -9,10 +9,10 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Balance.Tests.Services;
 
 /// <summary>
-/// Verifies the flipped FK shape from ADR 0013: the link lives on
+/// Verifies the flipped FK shape from ADR 0012: the link lives on
 /// <c>BankTransaction.JournalEntryId</c> as a nullable scalar FK with
 /// <c>ON DELETE SET NULL</c>. The cardinality is N BTs per JE (reserved
-/// for self-transfer Attach — see ADR 0013); today every JE has 0 or 1
+/// for self-transfer Attach — see ADR 0012); today every JE has 0 or 1
 /// referencing BT, but the schema permits multiple.
 /// </summary>
 internal sealed class BankTransactionJournalEntryIdFkTests : EndpointsTestsBase

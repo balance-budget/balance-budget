@@ -15,7 +15,7 @@ import { deleteRequest, getJson, patchJson, postJson } from './http';
  * stay hand-written per resource because their shapes genuinely vary; this only
  * removes the fetch+map+invalidate boilerplate that was identical across
  * resources. Generic over the branded `TId` so query keys and mutate args keep
- * their nominal types (ADR-0004 / ADR-0007).
+ * their nominal types (ADR-0004 / ADR-0006).
  */
 export function createResourceCrud<
     // TWire is inferred from `toView` and reused to type the getJson/postJson/patchJson fetch

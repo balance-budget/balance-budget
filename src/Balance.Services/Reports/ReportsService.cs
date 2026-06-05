@@ -11,7 +11,7 @@ namespace Balance.Services.Reports;
 /// <summary>
 /// Server-shaped projections for the Insights reports (CONTEXT.md). Both reports build on one cheap
 /// aggregate — each account's raw <c>SUM(JournalLine.Amount)</c> over the period — then apply the
-/// sign convention (ADR-0012) and the chart-of-accounts rollup in memory. See ADR-0023 for the
+/// sign convention (ADR-0011) and the chart-of-accounts rollup in memory. See ADR-0020 for the
 /// Money flow model.
 /// </summary>
 internal sealed class ReportsService : IReportsService

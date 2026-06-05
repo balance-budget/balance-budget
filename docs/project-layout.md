@@ -42,7 +42,7 @@ balance-budget/
 | Domain service / use case                     | `src/Balance.Services/<Feature>/`                                   |
 | Service contract / DTO consumed by Web        | `src/Balance.Services/Contracts/`                                   |
 | Background job (Quartz `IJob`)                | `src/Balance.Services/Jobs/<JobName>.cs`, scheduled in `AddBalanceJobs` |
-| Bank-statement importer for a **new bank**    | New `src/Balance.Integration.<Bank>/` project implementing `IBankTransactionExtractor`; wire one `AddBalanceIntegration<Bank>()` call at the host (ADR-0021) |
+| Bank-statement importer for a **new bank**    | New `src/Balance.Integration.<Bank>/` project implementing `IBankTransactionExtractor`; wire one `AddBalanceIntegration<Bank>()` call at the host (ADR-0018) |
 | Bank-statement importer / parser for **ING**  | `src/Balance.Integration.Ing/` — `Importers/` (extractors), `Parsers/`, `Models/` |
 | Options class                                 | `src/Balance.Configuration/Options/`, implement `IOptionsSection`   |
 | Minimal API endpoint (JSON)                   | `src/Balance.Web/Endpoints/` — new `Map<Feature>Endpoints` group, called on the `/api` route group in `Program.cs` |

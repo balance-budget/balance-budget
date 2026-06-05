@@ -5,7 +5,7 @@ using Balance.Tests.Api.Helpers;
 namespace Balance.Tests.Api;
 
 /// <summary>
-/// Covers the chart-of-accounts tree behaviour from ADR-0022: parent validation, postability
+/// Covers the chart-of-accounts tree behaviour from ADR-0019: parent validation, postability
 /// conversion gating, cycle prevention, rolled-up balances, the aggregated parent register, and
 /// the parent-delete RESTRICT.
 /// </summary>

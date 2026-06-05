@@ -9,7 +9,7 @@ namespace Balance.Services.BankTransactions;
 
 internal sealed class BankTransactionImportService : IBankTransactionImportService
 {
-    // One retry covers the only realistic race per ADR 0010 (double-clicked submit, two tabs).
+    // One retry covers the only realistic race per ADR 0009 (double-clicked submit, two tabs).
     private const int MaxRetries = 1;
 
     private readonly BalanceDbContext _dbContext;

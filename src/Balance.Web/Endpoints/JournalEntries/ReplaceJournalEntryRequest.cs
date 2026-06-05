@@ -5,11 +5,11 @@ using FluentValidation;
 namespace Balance.Web.Endpoints.JournalEntries;
 
 /// <summary>
-/// Full-body PUT shape per ADR 0016. Lines are ordered; each carries an optional
+/// Full-body PUT shape per ADR 0014. Lines are ordered; each carries an optional
 /// <see cref="ReplaceJournalLineRequest.Id"/> (omit to insert a new line, server assigns the id).
 /// Per-line <see cref="ReplaceJournalLineRequest.ReconciliationStatus"/> is validated to match
 /// current when supplied — the PUT does not mutate it. The BT↔JE link lives on the
-/// BankTransaction side (ADR 0013) and is mutated via Attach/Detach, not this endpoint.
+/// BankTransaction side (ADR 0012) and is mutated via Attach/Detach, not this endpoint.
 /// </summary>
 internal sealed record ReplaceJournalEntryRequest(
     DateOnly Date,

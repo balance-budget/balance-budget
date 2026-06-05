@@ -6,7 +6,7 @@ namespace Balance.Web.Auth;
 /// <summary>
 /// SHA-256 hashing for personal access tokens. The wire format <c>bal_pat_&lt;random&gt;</c>
 /// carries 256 bits of cryptographically-random server-generated entropy, so a fast hash
-/// (SHA-256) is sufficient (ADR 0018 rejected password-style KDFs because there is no
+/// (SHA-256) is sufficient (ADR 0016 rejected password-style KDFs because there is no
 /// low-entropy input to brute force).
 /// </summary>
 internal static class ApiTokenHasher

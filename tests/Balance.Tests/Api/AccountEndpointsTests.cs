@@ -52,7 +52,7 @@ internal sealed class AccountEndpointsTests : EndpointsTestsBase
     [Test]
     public async Task CreateAccount_duplicate_name_is_allowed()
     {
-        // Names carry no uniqueness constraint after ADR-0022 — Code is the unique key. Two accounts
+        // Names carry no uniqueness constraint after ADR-0019 — Code is the unique key. Two accounts
         // may share a name (e.g. "Fees" under different parents).
         using var client = Factory.CreateClient();
         var name = $"Fees-{Guid.NewGuid():N}";
@@ -399,7 +399,7 @@ internal sealed record BankAccountSummaryDto(
 );
 
 // The positional shape stays (Name, AccountType, CurrencyCode) for the many tests that don't care
-// about the chart-of-accounts tree. Code is required and globally unique server-side (ADR-0022), so
+// about the chart-of-accounts tree. Code is required and globally unique server-side (ADR-0019), so
 // it defaults to a freshly-generated value; tree tests set Code / IsPostable / ParentAccountId via
 // an object initializer or `with`.
 internal sealed record CreateAccountRequestDto(string Name, string AccountType, string CurrencyCode)

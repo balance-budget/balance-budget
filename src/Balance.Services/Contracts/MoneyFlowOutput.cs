@@ -4,7 +4,7 @@ using Balance.Data.Entities.Ids;
 namespace Balance.Services.Contracts;
 
 /// <summary>
-/// The <b>Money flow</b> report (ADR-0023): the whole ledger's in/out picture over a <b>Reporting
+/// The <b>Money flow</b> report (ADR-0020): the whole ledger's in/out picture over a <b>Reporting
 /// period</b> as a single-hub flow diagram, ready to render as a Sankey. Every account contributes
 /// one flow sized by its <b>Net movement</b>; its side is chosen by sign. Sources (money in) link
 /// <c>node → hub</c>; exits (money out) link <c>hub → node</c>. Sources and exits balance exactly by

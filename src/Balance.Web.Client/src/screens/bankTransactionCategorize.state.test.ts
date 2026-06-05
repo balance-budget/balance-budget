@@ -117,7 +117,7 @@ describe('resolveOpenContext', () => {
         };
     }
 
-    it('returns self-transfer when matched BankAccount.AccountId is non-null (ADR 0014 step 1)', () => {
+    it('returns self-transfer when matched BankAccount.AccountId is non-null (ADR 0013 step 1)', () => {
         const own = bankAccount({
             id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1',
             iban: 'NL00BANK0000000001',
@@ -166,7 +166,7 @@ describe('resolveOpenContext', () => {
     });
 
     it('prefers self-transfer when an own-account match exists even if a counterparty BA shares the IBAN', () => {
-        // Defensive: ADR 0011 keeps AccountId / CounterpartyId mutually exclusive on a
+        // Defensive: ADR 0010 keeps AccountId / CounterpartyId mutually exclusive on a
         // single BankAccount, but the resolver must still pick the own-account row when
         // both shapes appear under the same IBAN across rows (e.g. legacy data).
         const cpBa = bankAccount({

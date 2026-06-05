@@ -4,7 +4,7 @@ using System.Text;
 namespace Balance.Services.BankTransactions;
 
 /// <summary>
-/// Hashes a statement row's raw bytes per ADR 0010: normalise <c>\r\n</c> to <c>\n</c>,
+/// Hashes a statement row's raw bytes per ADR 0009: normalise <c>\r\n</c> to <c>\n</c>,
 /// trim trailing whitespace on each line, then SHA-256 the UTF-8 bytes and lowercase-hex the digest.
 /// </summary>
 public static class RowHasher

@@ -17,7 +17,7 @@ internal static class AccountSignConvention
 
     /// <summary>
     /// Converts a raw <c>SUM(JournalLine.Amount)</c> (debit-positive, ADR-0002) into the account's
-    /// running balance per the ADR-0012 sign convention: debit-normal accounts (Asset/Expense) keep
+    /// running balance per the ADR-0011 sign convention: debit-normal accounts (Asset/Expense) keep
     /// the sum; credit-normal accounts (Liability/Equity/Income) negate it.
     /// </summary>
     public static Money ToBalance(

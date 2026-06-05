@@ -5,7 +5,7 @@ using Balance.Tests.Api.Helpers;
 namespace Balance.Tests.Api;
 
 /// <summary>
-/// HTTP-level coverage of the Attach feature (issue #93 / ADR 0013):
+/// HTTP-level coverage of the Attach feature (issue #93 / ADR 0012):
 ///  * POST /api/bank-transactions/{id}/attach
 ///  * POST /api/bank-transactions/{id}/detach
 ///  * GET  /api/bank-transactions/{id}/attach-candidates

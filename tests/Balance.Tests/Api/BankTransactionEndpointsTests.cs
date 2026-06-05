@@ -381,7 +381,7 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
         var btx = await btxResponse.Content.ReadFromJsonAsync<BankTransactionDto>();
         var counter = await CreateAccountAsync(client, "Income-BTX-Cat1");
 
-        // Per ADR 0013 the BT↔JE link lives on the BankTransaction side; categorise the BT
+        // Per ADR 0012 the BT↔JE link lives on the BankTransaction side; categorise the BT
         // through its own endpoint to establish that link (the JE PUT/POST surface no longer
         // carries a BankTransactionId field).
         var categorizeRequest = new

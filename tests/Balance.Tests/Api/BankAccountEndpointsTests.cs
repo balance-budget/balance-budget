@@ -552,7 +552,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
         var created = await createResponse.Content.ReadFromJsonAsync<BankAccountDto>();
 
         // Iban stays set so the IBAN-or-AccountNumber invariant holds; CurrencyCode
-        // stays set because owned BankAccounts must keep one (see ADR 0011); everything
+        // stays set because owned BankAccounts must keep one (see ADR 0010); everything
         // else becomes genuinely null via JSON Patch replace-to-null.
         using var patchResponse = await client.PatchAsJsonPatchAsync(
             new Uri($"/api/bank-accounts/{created!.Id}", UriKind.Relative),

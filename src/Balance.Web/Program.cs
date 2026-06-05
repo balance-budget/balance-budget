@@ -63,7 +63,7 @@ app.MapFallbackToFile("index.html");
 // Prefix all Balance.Web endpoints with /api. The group requires authentication and
 // stamps every endpoint with AutoValidateAntiforgeryTokenAttribute so the built-in
 // UseAntiforgery() middleware enforces XSRF on unsafe HTTP methods. Individual endpoints
-// opt back via AllowAnonymous and DisableAntiforgery (ADR 0018).
+// opt back via AllowAnonymous and DisableAntiforgery (ADR 0016).
 var api = app.MapGroup("/api")
     .RequireAuthorization()
     .WithMetadata(new AutoValidateAntiforgeryTokenAttribute());

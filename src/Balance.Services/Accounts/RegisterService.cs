@@ -35,7 +35,7 @@ internal sealed class RegisterService : IRegisterService
             return new NotFoundError("Account", accountId.Value.ToString());
         }
 
-        // The focal set is this account plus every descendant (ADR-0022): a leaf register shows its
+        // The focal set is this account plus every descendant (ADR-0019): a leaf register shows its
         // own lines; a non-postable account's register aggregates all descendant leaves' lines,
         // merged newest-first with no intra-subtree elimination.
         var nodes = await _dbContext
@@ -62,7 +62,7 @@ internal sealed class RegisterService : IRegisterService
         {
             // Match the entry Description or its linked Counterparty's Name, sharing the exact
             // predicate with the journal-entries list filter via JournalEntryFilters so the two
-            // can't drift (ADR-0020 item (g) amendment). Applied as an entry-id subquery because
+            // can't drift (ADR-0017 item (g) amendment). Applied as an entry-id subquery because
             // `lines` is the line↔entry join rather than a bare JournalEntry query.
             var matchingEntryIds = _dbContext
                 .JournalEntries.AsNoTracking()
@@ -80,7 +80,7 @@ internal sealed class RegisterService : IRegisterService
             );
         }
 
-        // Page focal lines, ordered Date DESC then JournalEntryId DESC per ADR-0008.
+        // Page focal lines, ordered Date DESC then JournalEntryId DESC per ADR-0007.
         // The CounterpartyName is fetched via a correlated subquery so one round-trip
         // captures everything needed for the page header columns.
         var focalRows = await lines
@@ -119,7 +119,7 @@ internal sealed class RegisterService : IRegisterService
         // currency (each leg renders in its own account's currency). The counter legs of a focal row
         // are every OTHER line in its entry, excluded by line id rather than account id — so an
         // intra-subtree transfer shows both legs, each as its own focal row with the sibling as its
-        // counter (no elimination, ADR-0022).
+        // counter (no elimination, ADR-0019).
         var entryLines = await _dbContext
             .JournalLines.AsNoTracking()
             .Where(l => entryIds.Contains(l.JournalEntryId))

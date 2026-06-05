@@ -9,7 +9,7 @@ public sealed class AuthOptions : IOptionsSection
     /// <summary>
     /// Deploy-time secret guarding the first-run setup wizard. The wizard refuses requests
     /// unless this token is supplied (header or query), <em>and</em> the user table is empty
-    /// (ADR 0018). May be null in non-production environments; the wizard then accepts any
+    /// (ADR 0016). May be null in non-production environments; the wizard then accepts any
     /// (or absent) token, since the empty-table guard is still in effect.
     /// </summary>
     public string? SetupToken { get; init; }

@@ -11,7 +11,7 @@ namespace Balance.Data.Seeding;
 /// The single source of all <see cref="DevelopmentSeedGraph"/> sample data. Builds a realistic,
 /// fully-balanced EUR ledger anchored to "today" so time-relative views (month-to-date, the current
 /// reporting period) always have data. Pure construction only — persistence and the
-/// wipe/refresh lifecycle live in <see cref="DevelopmentDataSeeder"/>. See ADR-0024.
+/// wipe/refresh lifecycle live in <see cref="DevelopmentDataSeeder"/>. See ADR-0021.
 /// </summary>
 internal static class DevelopmentSeedData
 {
@@ -48,7 +48,7 @@ internal static class DevelopmentSeedData
 
         public DevelopmentSeedGraph Build()
         {
-            // Chart of accounts: non-postable parents (ADR-0022) with postable leaves, all EUR.
+            // Chart of accounts: non-postable parents (ADR-0019) with postable leaves, all EUR.
             var checking = Leaf("1100", "Checking", AccountType.Asset);
             var savings = Leaf("1200", "Savings", AccountType.Asset);
 
@@ -311,7 +311,7 @@ internal static class DevelopmentSeedData
 
         // A categorised bank row: a balanced entry whose bank-side line is Cleared (or Reconciled),
         // plus the imported BankTransaction attached to it. The bank-tx amount equals the bank-side
-        // line amount under the deliberate raw-equality match (ADR-0013).
+        // line amount under the deliberate raw-equality match (ADR-0012).
         private void Categorised(
             BankAccount bank,
             Account bankSide,

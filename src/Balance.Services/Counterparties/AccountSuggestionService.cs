@@ -31,7 +31,7 @@ internal sealed class AccountSuggestionService : IAccountSuggestionService
             return new NotFoundError("Counterparty", counterpartyId.Value.ToString());
         }
 
-        // Most recent JournalEntry for this counterparty (Date desc, CreatedAt desc per ADR-0008).
+        // Most recent JournalEntry for this counterparty (Date desc, CreatedAt desc per ADR-0007).
         var mostRecentEntryId = await _dbContext
             .JournalEntries.AsNoTracking()
             .Where(e => e.CounterpartyId == counterpartyId)

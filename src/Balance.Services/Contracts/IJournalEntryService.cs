@@ -63,7 +63,7 @@ public sealed record CreateJournalLineInput(
 /// <see cref="JournalLineId"/> rendered as a "D"-format Guid string; the service parses keys
 /// back to typed IDs and enforces key-set equality so lines cannot be added or removed via
 /// PATCH. The BT↔JE link is mutated through Attach/Detach on the BankTransaction side
-/// (ADR 0013) and is not part of this surface.
+/// (ADR 0012) and is not part of this surface.
 /// </summary>
 public sealed record UpdateJournalEntryInput
 {
@@ -79,7 +79,7 @@ public sealed record UpdateJournalLineInput
 }
 
 /// <summary>
-/// Full-body replace surface of a <see cref="JournalEntry"/> (ADR 0016). The client sends the
+/// Full-body replace surface of a <see cref="JournalEntry"/> (ADR 0014). The client sends the
 /// desired final state; the server validates that lines whose current
 /// <see cref="ReconciliationStatus"/> is not <see cref="ReconciliationStatus.Uncleared"/> appear
 /// in <see cref="Lines"/> with unchanged <see cref="ReplaceJournalLineInput.AccountId"/> and
@@ -87,7 +87,7 @@ public sealed record UpdateJournalLineInput
 /// <see cref="Lines"/> are deleted; lines without an <see cref="ReplaceJournalLineInput.Id"/> are
 /// inserted with a server-assigned id and default to <c>Uncleared</c>. Per-line
 /// <c>ReconciliationStatus</c> is validated to match current when supplied (the PUT does not
-/// mutate it). The BT↔JE link lives on the BankTransaction side now (ADR 0013) and is
+/// mutate it). The BT↔JE link lives on the BankTransaction side now (ADR 0012) and is
 /// mutated via Attach/Detach, not this endpoint.
 /// </summary>
 public sealed record ReplaceJournalEntryInput(

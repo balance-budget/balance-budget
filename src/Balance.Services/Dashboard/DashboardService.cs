@@ -227,7 +227,7 @@ internal sealed class DashboardService : IDashboardService
         var incomeRaw = rows.FirstOrDefault(r => r.AccountType == AccountType.Income)?.Sum ?? 0L;
         var expensesRaw = rows.FirstOrDefault(r => r.AccountType == AccountType.Expense)?.Sum ?? 0L;
 
-        // Sign flip to the focal-user perspective (per ADR-0008): positive = money in,
+        // Sign flip to the focal-user perspective (per ADR-0007): positive = money in,
         // negative = money out. Income lines record credits (negative Amount) when money
         // comes in, so flip the sign to render income positive. Expense lines record
         // debits (positive Amount) when money goes out, so flip the sign to render

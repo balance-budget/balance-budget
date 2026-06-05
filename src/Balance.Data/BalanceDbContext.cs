@@ -73,7 +73,7 @@ public sealed class BalanceDbContext
             .EnableDetailedErrors(_environment.IsDevelopment())
             .EnableSensitiveDataLogging(_environment.IsDevelopment());
 
-        // Development-only sample data, rebuilt every startup with dates anchored to now (ADR-0024).
+        // Development-only sample data, rebuilt every startup with dates anchored to now (ADR-0021).
         // Reference data stays on HasData; this runtime hook is the only EF-suggested way to express
         // "Development-only" and "current-dated", neither of which HasData can do. Invoked by the
         // startup MigrateAsync; the guard also keeps it out of IntegrationTest and design-time hosts.

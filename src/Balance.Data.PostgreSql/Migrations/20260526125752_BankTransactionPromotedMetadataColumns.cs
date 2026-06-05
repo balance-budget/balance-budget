@@ -74,7 +74,7 @@ namespace Balance.Data.PostgreSql.Migrations
 
             // The ING current-account extractor is the only one wired up today, so
             // every existing row is its output. Stamp them so the upcoming RawSource
-            // re-extraction (ADR 0015) knows which extractor to dispatch to.
+            // re-extraction (ADR 0009) knows which extractor to dispatch to.
             migrationBuilder.Sql(
                 "UPDATE \"BankTransactions\" SET \"ImporterKey\" = 'Ing.CurrentAccount.V1' "
                     + "WHERE \"ImporterKey\" IS NULL;"

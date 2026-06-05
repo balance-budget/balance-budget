@@ -6,7 +6,7 @@ namespace Balance.Services.Contracts;
 /// Composite write that turns one unmatched <c>BankTransaction</c> into exactly one
 /// <c>JournalEntry</c>, optionally creating a new <c>Counterparty</c> and a counterparty-owned
 /// <c>BankAccount</c> on the way. All side effects commit in a single DB transaction; any
-/// failure rolls the whole thing back. See ADR-0014.
+/// failure rolls the whole thing back. See ADR-0013.
 /// </summary>
 public interface IBankTransactionCategorisationService
 {

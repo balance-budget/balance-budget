@@ -1,7 +1,7 @@
 namespace Balance.Services.Contracts;
 
 /// <summary>
-/// Lifecycle filter for the BankTransaction list view, per ADR 0013.
+/// Lifecycle filter for the BankTransaction list view, per ADR 0012.
 /// </summary>
 public enum BankTransactionListFilter
 {

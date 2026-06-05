@@ -29,7 +29,7 @@ internal sealed class AccountService : IAccountService
     {
         var rows = await ProjectAccounts(_dbContext.Accounts).ToListAsync(cancellationToken);
 
-        // Roll each non-postable account's balance up from its descendants (ADR-0022). Leaves
+        // Roll each non-postable account's balance up from its descendants (ADR-0019). Leaves
         // resolve to their own sum because their subtree is just themselves.
         var nodes = rows.Select(r => new AccountNode(r.Id, r.ParentAccountId)).ToList();
         var ownSums = rows.ToDictionary(r => r.Id, r => r.OwnRawSum);
@@ -210,7 +210,7 @@ internal sealed class AccountService : IAccountService
             cancellationToken
         );
 
-        // Postability conversion gate (ADR-0022): a non-postable account may never carry lines, and
+        // Postability conversion gate (ADR-0019): a non-postable account may never carry lines, and
         // a postable account with children is impossible.
         if (input.IsPostable && hasChildren)
         {
@@ -229,7 +229,7 @@ internal sealed class AccountService : IAccountService
         }
 
         // Type and currency are fixed once an account participates in a tree, because the whole
-        // subtree must stay homogeneous (ADR-0022) and we do not cascade type changes.
+        // subtree must stay homogeneous (ADR-0019) and we do not cascade type changes.
         var typeOrCurrencyChanged =
             input.AccountType != account.AccountType || input.CurrencyCode != account.CurrencyCode;
         if (

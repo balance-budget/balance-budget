@@ -13,7 +13,7 @@ namespace Balance.Data.Seeding;
 /// (wired in <see cref="BalanceDbContext.OnConfiguring"/>, Development-guarded). On every startup it
 /// wipes the previous sample ledger and rebuilds it from <see cref="DevelopmentSeedData"/> with dates
 /// re-anchored to "today". Reference data (Currencies, the Opening Balances account) and Identity
-/// users survive the wipe. See ADR-0024.
+/// users survive the wipe. See ADR-0021.
 /// </summary>
 internal static class DevelopmentDataSeeder
 {
@@ -71,7 +71,7 @@ internal static class DevelopmentDataSeeder
         await context.BankAccounts.ExecuteDeleteAsync(cancellationToken);
         await context.Counterparties.ExecuteDeleteAsync(cancellationToken);
 
-        // ParentAccountId is RESTRICT (ADR-0022), so break the self-references before bulk-deleting.
+        // ParentAccountId is RESTRICT (ADR-0019), so break the self-references before bulk-deleting.
         await context
             .Accounts.Where(a => a.Id != AccountSeed.OpeningBalancesId && a.ParentAccountId != null)
             .ExecuteUpdateAsync(

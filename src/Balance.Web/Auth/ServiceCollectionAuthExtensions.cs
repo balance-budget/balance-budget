@@ -26,7 +26,7 @@ internal static class ServiceCollectionAuthExtensions
 
         // Disable a user (LockoutEnd > now) takes effect on existing SPA sessions within
         // ~5 minutes — short enough to be operationally usable, long enough to avoid a DB
-        // roundtrip on every request (ADR 0018).
+        // roundtrip on every request (ADR 0016).
         services.Configure<SecurityStampValidatorOptions>(options =>
         {
             options.ValidationInterval = TimeSpan.FromMinutes(5);
@@ -69,7 +69,7 @@ internal static class ServiceCollectionAuthExtensions
                     cookie.Cookie.Name = AuthSchemes.CookieName;
                     cookie.Cookie.HttpOnly = true;
                     cookie.Cookie.SameSite = SameSiteMode.Strict;
-                    // Secure in production (ADR 0018); SameAsRequest in dev so the plain-HTTP
+                    // Secure in production (ADR 0016); SameAsRequest in dev so the plain-HTTP
                     // localhost host still sets the cookie.
                     cookie.Cookie.SecurePolicy = environment.IsProduction()
                         ? CookieSecurePolicy.Always

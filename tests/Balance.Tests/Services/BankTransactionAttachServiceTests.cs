@@ -9,9 +9,9 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Balance.Tests.Services;
 
 /// <summary>
-/// Covers the BankTransaction Attach feature (ADR 0013): the 7-condition predicate,
+/// Covers the BankTransaction Attach feature (ADR 0012): the 7-condition predicate,
 /// Attach/Detach state transitions, Inbox hint computation, and the manual JE-picker
-/// candidate list (ADR 0014).
+/// candidate list (ADR 0013).
 ///
 /// All tests seed a sibling self-transfer scenario: BT-A on the current-account is
 /// categorised as a self-transfer to a savings own-account, leaving the savings line

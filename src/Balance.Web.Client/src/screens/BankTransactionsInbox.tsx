@@ -604,7 +604,7 @@ function InboxEditorReady({
         [bankTransactions, savedIds],
     );
 
-    // Inbox-suggestion-gating amendment to ADR 0014: rows render pristine —
+    // Inbox-suggestion-gating amendment to ADR 0013: rows render pristine —
     // no IBAN→counterparty pre-fill, no last-used-account pre-fill. The
     // IBAN-resolved cp is still computed here so the suggestion queries can
     // pre-warm the cache for the user's eventual "Apply suggestions" click.

@@ -9,7 +9,7 @@ namespace Balance.Services.Contracts;
 /// chart-of-accounts tree. When <see cref="ParentAccountId"/> is null the slices are the top-level
 /// (root) accounts of the requested <see cref="Type"/>; otherwise they are the direct children of
 /// that parent (one drill-down level). Amounts are net (refunds reduce an expense slice) and
-/// sign-converted to the focal-user perspective per ADR-0012, so income and expense both read as
+/// sign-converted to the focal-user perspective per ADR-0011, so income and expense both read as
 /// positive in the common case. <see cref="Total"/> is the signed sum of <see cref="Slices"/>.
 /// </summary>
 public sealed record DistributionOutput(

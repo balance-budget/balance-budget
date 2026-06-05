@@ -51,7 +51,7 @@ export function AccountFormModal(props: Props) {
     const currencyList = Array.from(currencies.data?.values() ?? []);
 
     // Eligible parents: non-postable accounts that share the chosen type and currency, excluding
-    // self (deeper cycles are rejected server-side and surfaced as a form error). See ADR-0022.
+    // self (deeper cycles are rejected server-side and surfaced as a form error). See ADR-0019.
     const parentOptions = (accounts.data ?? []).filter(
         a =>
             !a.isPostable &&

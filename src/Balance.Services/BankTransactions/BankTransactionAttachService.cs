@@ -10,7 +10,7 @@ namespace Balance.Services.BankTransactions;
 internal sealed class BankTransactionAttachService : IBankTransactionAttachService
 {
     /// <summary>
-    /// The strict 7-day window for the auto-hint (ADR 0013 condition 4).
+    /// The strict 7-day window for the auto-hint (ADR 0012 condition 4).
     /// </summary>
     private const int HintDateWindowDays = 7;
 
@@ -236,7 +236,7 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
     }
 
     /// <summary>
-    /// Walks the seven predicate conditions from ADR 0013. Returns the matching <c>JournalLine</c>
+    /// Walks the seven predicate conditions from ADR 0012. Returns the matching <c>JournalLine</c>
     /// on success — the bank-side <c>Uncleared</c> line that Attach will flip to <c>Cleared</c>.
     /// Failures surface as <c>InvariantError</c> with stable codes so the SPA can distinguish
     /// "wrong shape" (silent — no hint shown) from "user-explicit attempt failed" (toast).

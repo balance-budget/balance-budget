@@ -41,7 +41,7 @@ namespace Balance.Data.Sqlite.Migrations
             );
 
             // Backfill: existing BankAccounts whose only identifier is AccountNumber are the
-            // credit-card BankAccounts created before ADR 0019 (PAN was stuffed into
+            // credit-card BankAccounts created before ADR 0009 (PAN was stuffed into
             // AccountNumber to satisfy the legacy CHECK). Reclassify them as Card and copy the
             // value into CardIdentifier so the new CK_BankAccounts_IdentifierByType holds. We
             // intentionally leave AccountNumber populated — the legacy CHECK is still in scope

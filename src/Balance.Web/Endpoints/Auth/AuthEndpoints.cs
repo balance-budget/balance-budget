@@ -28,14 +28,14 @@ internal static class AuthEndpoints
         group
             .MapPost("/setup", SetupAsync)
             .AllowAnonymous()
-            .DisableAntiforgery() // anonymous POST — no session to forge (ADR 0018)
+            .DisableAntiforgery() // anonymous POST — no session to forge (ADR 0016)
             .WithValidation<SetupRequest>()
             .WithName("Setup");
 
         group
             .MapPost("/login", LoginAsync)
             .AllowAnonymous()
-            .DisableAntiforgery() // anonymous POST — no session to forge (ADR 0018)
+            .DisableAntiforgery() // anonymous POST — no session to forge (ADR 0016)
             .WithValidation<LoginRequest>()
             .WithName("Login");
 
@@ -66,7 +66,7 @@ internal static class AuthEndpoints
     {
         // Empty-table guard first: once a user exists, the wizard is gone for good — and
         // it 404s rather than 409s so probing the URL does not reveal the machinery
-        // ever existed (ADR 0018).
+        // ever existed (ADR 0016).
         var anyUser = await db.Users.AnyAsync(cancellationToken);
         if (anyUser)
         {

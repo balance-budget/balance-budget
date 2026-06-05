@@ -30,7 +30,7 @@ internal sealed class AccountBalanceService : IAccountBalanceService
             return new NotFoundError("Account", id.Value.ToString());
         }
 
-        // Roll the balance up over the whole subtree (ADR-0022): a leaf sums only its own lines; a
+        // Roll the balance up over the whole subtree (ADR-0019): a leaf sums only its own lines; a
         // non-postable account sums every descendant's. All descendants share this account's type and
         // currency (homogeneity), so the parent's sign convention applies to the combined raw sum.
         var nodes = await _dbContext

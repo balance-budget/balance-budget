@@ -208,7 +208,7 @@ export function useCategorizeBankTransaction() {
                 new AbortController().signal,
                 'categorise bank transaction',
             );
-            // Brand the escaping id at the boundary (ADR-0007). Mapped inline rather than
+            // Brand the escaping id at the boundary (ADR-0006). Mapped inline rather than
             // through journalEntries' toEntry to avoid deepening the existing import cycle.
             return { ...wire, id: asJournalEntryId(wire.id) };
         },

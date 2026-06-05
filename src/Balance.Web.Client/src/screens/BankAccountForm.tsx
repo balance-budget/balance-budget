@@ -99,7 +99,7 @@ export function BankAccountFormModal(props: Props) {
     }
 
     function changeType(next: BankAccountType) {
-        // Card BankAccounts are owned-only (ADR 0019). Snap ownerKind back to 'account'
+        // Card BankAccounts are owned-only (ADR 0009). Snap ownerKind back to 'account'
         // and clear any incompatible ImporterKey when the user picks Card.
         const nextOwner: OwnerKind = next === 'Card' ? 'account' : form.ownerKind;
         const currentImporter = importers.data?.find(i => i.key === form.importerKey);

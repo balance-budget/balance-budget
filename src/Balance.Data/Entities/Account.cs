@@ -9,7 +9,7 @@ public sealed class Account : BaseEntity<AccountId>
 
     /// <summary>
     /// The required, globally-unique chart-of-accounts code (e.g. <c>5110</c>). The human key for an
-    /// account; <see cref="Name"/> carries no uniqueness. See ADR-0022.
+    /// account; <see cref="Name"/> carries no uniqueness. See ADR-0019.
     /// </summary>
     public required string Code { get; set; }
 
@@ -19,7 +19,7 @@ public sealed class Account : BaseEntity<AccountId>
     /// <summary>
     /// <c>true</c> for a leaf that <c>JournalLine</c>s may reference directly; <c>false</c> for a
     /// non-postable account whose balance is the roll-up of its descendants. An account with
-    /// children is never postable (ADR-0022).
+    /// children is never postable (ADR-0019).
     /// </summary>
     public required bool IsPostable { get; set; }
 

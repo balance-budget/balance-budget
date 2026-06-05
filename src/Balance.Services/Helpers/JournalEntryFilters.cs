@@ -11,7 +11,7 @@ internal static class JournalEntryFilters
     /// The shared in-list <c>?q=</c> predicate: a JournalEntry matches when its Description or its
     /// linked Counterparty's Name contains <paramref name="needle"/> (case-insensitive LIKE). Single
     /// source for the Activity/journal-entries list and the per-Account Register so the two filters
-    /// can't drift — see ADR-0020 item (g) and its amendment.
+    /// can't drift — see ADR-0017 item (g) and its amendment.
     /// </summary>
     public static Expression<Func<JournalEntry, bool>> MatchesNeedle(
         BalanceDbContext dbContext,

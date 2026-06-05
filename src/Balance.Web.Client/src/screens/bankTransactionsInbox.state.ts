@@ -91,7 +91,7 @@ export function pickSuggestedAccountId(
  *  prefill. Returns null when neither the IBAN match nor the account
  *  suggestion produced anything useful, so the caller can skip the row.
  *
- *  Per the inbox-suggestion-gating amendment to ADR 0014, this is only called
+ *  Per the inbox-suggestion-gating amendment to ADR 0013, this is only called
  *  on user demand — not at render time. */
 export function buildSuggestionOverride(
     bt: BankTransaction,
@@ -127,7 +127,7 @@ export function rowStatus(draft: RowDraft): RowStatus {
         draft.counterpartyMode === 'new' && draft.newCounterpartyName.trim().length > 0;
     const hasExistingCp = draft.counterpartyMode === 'existing' && draft.counterpartyId !== null;
     // Self-transfer: existing mode with null counterpartyId is legal (CONTEXT.md,
-    // ADR 0014(e)) — counts as "counterparty side resolved" as long as the
+    // ADR 0013(e)) — counts as "counterparty side resolved" as long as the
     // user has explicitly set an account.
     const isSelfTransfer = draft.counterpartyMode === 'existing' && draft.counterpartyId === null;
 

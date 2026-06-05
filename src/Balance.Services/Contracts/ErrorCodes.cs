@@ -50,7 +50,7 @@ public static class ErrorCodes
     public const string BankTransactionNotAttached = "bank_transaction.not_attached";
     public const string CategoriseCounterpartySelection = "categorise.counterparty_selection";
 
-    // BankTransaction Attach (ADR 0013)
+    // BankTransaction Attach (ADR 0012)
     public const string AttachPredicateFailed = "attach.predicate_failed";
     public const string AttachSelfTransferGuard = "attach.self_transfer_guard";
 

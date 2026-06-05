@@ -1,5 +1,5 @@
 /*
- * Pure UI-shaped projection of a JournalEntry's lines, per ADR-0012.
+ * Pure UI-shaped projection of a JournalEntry's lines, per ADR-0011.
  *
  * Mirrors the same rules the C# implementation used before issue #82:
  *

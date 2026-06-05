@@ -25,12 +25,12 @@ public static class ServiceCollectionExtensions
         if (!environment.IsDesignTime())
             builder.PersistKeysToDbContext<BalanceDbContext>();
 
-        // Identity Core only — no RoleManager (ADR 0017 has no roles), no UI. The cookie /
+        // Identity Core only — no RoleManager (ADR 0015 has no roles), no UI. The cookie /
         // policy scheme and API token handler live in Balance.Web.
         services
             .AddIdentityCore<BalanceUser>(options =>
             {
-                // Length-first password policy (ADR 0018), per NIST SP 800-63B.
+                // Length-first password policy (ADR 0016), per NIST SP 800-63B.
                 options.Password.RequiredLength = 12;
                 options.Password.RequireDigit = false;
                 options.Password.RequireLowercase = false;

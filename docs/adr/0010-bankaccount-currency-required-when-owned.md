@@ -1,0 +1,5 @@
+# BankAccount currency required when owned
+
+A **BankAccount** must have a non-null `CurrencyCode` whenever `AccountId IS NOT NULL` (one of your own accounts); when `CounterpartyId IS NOT NULL` it may stay null. Enforced as a CHECK constraint `("AccountId" IS NULL OR "CurrencyCode" IS NOT NULL)` and mirrored in `BankAccountService.CreateAsync`/`UpdateAsync` via `EnsureCurrencyWhenOwned`, which returns `InvariantError("bank_account.currency_required_when_owned", …)` so the API surfaces a 422 rather than a 500 from a constraint violation.
+
+The motivation is import safety: a statement importer compares the file's currency against the target's `CurrencyCode` to refuse a misclick, and that collapses to one equality if owned accounts always carry a currency. We rejected making currency unconditionally required (counterparty accounts are often just a harvested IBAN whose currency is never read) and inferring it from the first import (BankAccount edits should be explicit, not a side effect of an upload).

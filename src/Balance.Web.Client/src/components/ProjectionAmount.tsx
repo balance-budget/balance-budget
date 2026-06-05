@@ -5,7 +5,7 @@ import { formatMoney, type Money } from '../lib/money';
 import { Amount } from './Amount';
 
 /**
- * The ADR-0012 amount shown on a one-row entry summary: transfers
+ * The ADR-0011 amount shown on a one-row entry summary: transfers
  * (`netWorthChange === 0`) render the unsigned gross magnitude in muted text;
  * operating entries render the signed net-worth change coloured by sign. Single
  * source for that rule across the Activity feed, the Counterparty register, and

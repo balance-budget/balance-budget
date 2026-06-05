@@ -90,7 +90,7 @@ export function initialForm(args: {
 }
 
 /**
- * Resolve the "open BT" projection per ADR 0014 step 1 / step 2.
+ * Resolve the "open BT" projection per ADR 0013 step 1 / step 2.
  *
  *   1. If the BT's CounterpartyAccountNumber exact-matches a BankAccount whose
  *      AccountId IS NOT NULL, this is a *self-transfer in progress*: the
@@ -119,7 +119,7 @@ export function resolveOpenContext(
     if (normalised.length === 0) return { kind: 'none' };
 
     // Two passes: self-transfer wins over a same-IBAN counterparty row if both
-    // exist (ADR 0011 keeps them mutually exclusive on one BankAccount, but
+    // exist (ADR 0010 keeps them mutually exclusive on one BankAccount, but
     // we don't want the order of `bankAccounts` deciding which side wins).
     let counterpartyCandidate: CounterpartyId | null = null;
     for (const ba of bankAccounts) {
@@ -233,7 +233,7 @@ export function buildRequest(
     }
 
     // 'existing' mode with a null counterpartyId is a valid self-transfer
-    // (CONTEXT.md, ADR 0014(e)) — the server treats both inputs null as
+    // (CONTEXT.md, ADR 0013(e)) — the server treats both inputs null as
     // "no external party", so we don't require a pick here either.
     if (form.counterpartyMode === 'new') {
         const trimmed = form.newCounterpartyName.trim();

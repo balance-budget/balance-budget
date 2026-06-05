@@ -119,7 +119,7 @@ internal abstract class IngCreditCardTransactionExtractor : IBankTransactionExtr
         // Only the DirectDebit (pay-down) row genuinely moves money from the funding current
         // account into the card; merchant rows (Payment, CashWithdrawal etc.) have the merchant
         // as the counterparty and no per-row counterparty IBAN. Populating the funding IBAN
-        // here lets ADR 0013's Attach predicate fire on the card-side pay-down without
+        // here lets ADR 0012's Attach predicate fire on the card-side pay-down without
         // amending clause (3).
         var counterpartyAccountNumber = row.TransactionType
             is CreditCardTransactionType.DirectDebit
@@ -152,7 +152,7 @@ internal abstract class IngCreditCardTransactionExtractor : IBankTransactionExtr
     }
 
     // Anything the extractor parses that is *not* promoted to a BankTransaction column lives
-    // here (ADR 0015). Keys are global namespace; bank-prefixed only for genuinely
+    // here (ADR 0009). Keys are global namespace; bank-prefixed only for genuinely
     // bank-specific extras. Nested values flatten with dotted keys.
     private static List<BankTransactionMetadataValue> BuildMetadata(CreditCardStatementRow row)
     {

@@ -180,7 +180,7 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
     }
 
     // Anything the extractor parses that is *not* promoted to a BankTransaction column lives
-    // here (ADR 0015). Keys are global namespace; bank-prefixed only for genuinely
+    // here (ADR 0009). Keys are global namespace; bank-prefixed only for genuinely
     // bank-specific extras. Nested values flatten with dotted keys.
     private static List<BankTransactionMetadataValue> BuildMetadata(
         CurrentAccountStatementRow row,

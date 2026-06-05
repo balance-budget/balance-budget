@@ -3,7 +3,7 @@ using Balance.Data.Entities.Ids;
 namespace Balance.Services.Accounts;
 
 /// <summary>
-/// One node of the chart-of-accounts tree (ADR-0022) — the minimal shape needed to walk
+/// One node of the chart-of-accounts tree (ADR-0019) — the minimal shape needed to walk
 /// parent/child relationships in memory. The accounts table is small, so descendant resolution
 /// and roll-up are computed in process rather than via a provider-specific recursive CTE.
 /// </summary>

@@ -506,7 +506,7 @@ function Lines({
     // Only exclude the BT's own bank-side account (otherwise the JE would
     // credit and debit the same account, since the server adds that line).
     // Other user-owned accounts must remain pickable so self-transfers
-    // (Current → Savings, Current → Credit Card) work — see ADR 0014(e).
+    // (Current → Savings, Current → Credit Card) work — see ADR 0013(e).
     const ownBankSideAccountId = useMemo(() => {
         const ba = bankAccounts.find(b => b.id === bankTransactionBankAccountId);
         return ba?.accountId ?? null;
@@ -698,7 +698,7 @@ function filterSuggestionsByCurrency(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Attach options: three choices for a sibling-shaped BT (ADR 0014).
+// Attach options: three choices for a sibling-shaped BT (ADR 0013).
 //  1. Quick attach — only when the strict predicate hit a unique JE (the hint).
 //  2. Pick a JE — manual JE-picker over structural candidates with a widened
 //     date window the user controls.
