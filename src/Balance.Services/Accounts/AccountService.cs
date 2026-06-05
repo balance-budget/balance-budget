@@ -73,6 +73,7 @@ internal sealed class AccountService : IAccountService
                 CurrencyCode = a.CurrencyCode,
                 IsPostable = a.IsPostable,
                 ParentAccountId = a.ParentAccountId,
+                IconName = a.IconName,
             })
             .FirstOrDefaultAsync(cancellationToken);
         return snapshot is null ? new NotFoundError("Account", id.Value.ToString()) : snapshot;
@@ -127,6 +128,7 @@ internal sealed class AccountService : IAccountService
             CurrencyCode = input.CurrencyCode,
             IsPostable = input.IsPostable,
             ParentAccountId = input.ParentAccountId,
+            IconName = NormalizeIconName(input.IconName),
             CreatedAt = now,
             UpdatedAt = now,
         };
@@ -144,6 +146,7 @@ internal sealed class AccountService : IAccountService
             account.CurrencyCode,
             account.IsPostable,
             account.ParentAccountId,
+            account.IconName,
             Money.Zero(account.CurrencyCode),
             BankAccount: null,
             account.CreatedAt,
@@ -286,6 +289,7 @@ internal sealed class AccountService : IAccountService
         account.CurrencyCode = input.CurrencyCode;
         account.IsPostable = input.IsPostable;
         account.ParentAccountId = input.ParentAccountId;
+        account.IconName = NormalizeIconName(input.IconName);
         account.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
         var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
         if (saveResult.IsFailure)
@@ -314,6 +318,7 @@ internal sealed class AccountService : IAccountService
             a.CurrencyCode,
             a.IsPostable,
             a.ParentAccountId,
+            a.IconName,
             _dbContext.JournalLines.Where(l => l.AccountId == a.Id).Sum(l => (long?)l.Amount) ?? 0L,
             _dbContext
                 .BankAccounts.Where(ba => ba.AccountId == a.Id)
@@ -337,6 +342,7 @@ internal sealed class AccountService : IAccountService
             row.CurrencyCode,
             row.IsPostable,
             row.ParentAccountId,
+            row.IconName,
             AccountSignConvention.ToBalance(row.AccountType, rawSum, row.CurrencyCode),
             row.BankAccount,
             row.CreatedAt,
@@ -355,6 +361,12 @@ internal sealed class AccountService : IAccountService
                 .SumAsync(cancellationToken)
             ?? 0L;
     }
+
+    // A blank icon name means "no custom icon" — store null so the avatar falls back to the
+    // AccountType default. Icon names are presentation-layer identifiers; see the request
+    // validator for why no allowlist is enforced here.
+    private static string? NormalizeIconName(string? iconName) =>
+        string.IsNullOrWhiteSpace(iconName) ? null : iconName.Trim();
 
     private Task<List<AccountNode>> LoadNodesAsync(CancellationToken cancellationToken) =>
         _dbContext
@@ -441,6 +453,7 @@ internal sealed class AccountService : IAccountService
         CurrencyCode CurrencyCode,
         bool IsPostable,
         AccountId? ParentAccountId,
+        string? IconName,
         long OwnRawSum,
         BankAccountSummary? BankAccount,
         DateTime CreatedAt,

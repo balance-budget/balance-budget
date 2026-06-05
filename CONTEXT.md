@@ -23,6 +23,10 @@ _Avoid_: category tree, folder, group hierarchy (those imply the banned **catego
 **AccountType**:
 The accounting classification of an **Account**, one of the five standard types: **Asset**, **Liability**, **Equity**, **Income**, **Expense**. Determines normal balance (debit-normal for Asset/Expense; credit-normal for Liability/Equity/Income) and how the account contributes to reports.
 
+**Account icon**:
+The optional, user-chosen glyph displayed for an **Account** wherever its avatar renders. When unset, the **Account** displays its **AccountType**'s default icon; once set, it is the user's deliberate choice and survives type and parent changes (never reset implicitly — only cleared explicitly back to the default). Purely presentational: it never affects accounting semantics. The avatar's *color* is not user-chosen — it always derives from the **AccountType**.
+_Avoid_: avatar (the rendered tile, which combines icon + type color), logo, image (it is a named glyph from a curated set, not an uploaded picture).
+
 **Asset**:
 An **Account** representing something owned or money owed to you. Examples: ABN AMRO Checking, Cash, Savings, Investments, "Owed by Alice" (informal receivable).
 

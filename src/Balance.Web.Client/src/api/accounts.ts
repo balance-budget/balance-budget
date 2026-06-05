@@ -30,6 +30,8 @@ export type Account = {
     isPostable: boolean;
     /** Parent in the chart-of-accounts tree, or null for a root account (ADR-0019). */
     parentId: AccountId | null;
+    /** User-chosen avatar icon name, or null to inherit the AccountType default. */
+    icon: string | null;
     balance: Money;
     bankAccount: BankAccountSummary | null;
 };
@@ -66,6 +68,7 @@ function toAccount(wire: WireAccount): Account {
         currencyCode: wire.currencyCode,
         isPostable: wire.isPostable,
         parentId: wire.parentAccountId === null ? null : asAccountId(wire.parentAccountId),
+        icon: wire.iconName,
         balance: toMoney(wire.balance, wire.currencyCode),
         bankAccount: toBankAccountSummary(wire.bankAccount),
     };
