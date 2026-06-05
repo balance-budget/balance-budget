@@ -119,9 +119,11 @@ function AccountsPanel() {
         );
     }
 
+    // Postable leaves only — branch accounts have no register of their own, their
+    // balance is just the roll-up of their descendants (ADR-0019).
     // Sorted by code then name (numeric-aware), matching the sidebar's ordering.
     const ledgerAccounts = accounts.data
-        .filter(isLedgerAccount)
+        .filter(a => isLedgerAccount(a) && a.isPostable)
         .sort(
             (a, b) =>
                 a.code.localeCompare(b.code, undefined, { numeric: true }) ||
@@ -176,7 +178,9 @@ function KpiStrip() {
     }
 
     const data = summary.data;
-    const accountCount = accounts.data?.filter(isLedgerAccount).length;
+    // Postable leaves only, matching the Accounts panel — counting branch roll-ups
+    // alongside their leaves would double-count.
+    const accountCount = accounts.data?.filter(a => isLedgerAccount(a) && a.isPostable).length;
     const subtext =
         accountCount !== undefined
             ? `Across ${accountCount} ${accountCount === 1 ? 'account' : 'accounts'}`
