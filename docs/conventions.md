@@ -146,6 +146,23 @@ configurator.ScheduleJob<MyJob>(
 
 `ScheduleJob<TJob>` applies `DisallowConcurrentExecution` for you. Wire job scheduling inside `AddBalanceJobs`, not in `Program.cs`.
 
+## Commit messages
+
+The repository uses [Conventional Commits](https://www.conventionalcommits.org/). Every commit subject is `type(scope): summary`, imperative mood, no trailing period:
+
+```
+feat(reports): drive money-flow depth by per-node expansion
+fix(ing): allow savings accounts starting with a non-D letter
+refactor(spa): extract shared route-search parsers
+
+Refs: #42
+```
+
+- **Types:** `feat`, `fix`, `docs`, `chore`, `refactor`, `style`, `test`, `ci`, `build`, `perf`, `revert`.
+- **Scope** (optional, lowercase) names the affected area, e.g. `reports`, `ing`, `client`/`spa`, `data`, `web`, `accounts`, `bank-accounts`, `bank-transactions`, `dashboard`, `sidebar`, `auth`, `settings`.
+- **Footers** carry issue/PR references (`Refs: #NN`, `Closes #NN`) and `BREAKING CHANGE:` notes — never the subject line.
+- **Breaking changes** are marked `type(scope)!:` or with a `BREAKING CHANGE:` footer.
+
 ## Formatting & build hygiene
 
 - CSharpier is the formatter. CI fails on any deviation — run `dotnet csharpier format .` before committing.
