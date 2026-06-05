@@ -518,48 +518,6 @@ namespace Balance.Data.PostgreSql.Migrations
                             MinorUnitScale = 2,
                             Name = "Euro",
                             Symbol = "€"
-                        },
-                        new
-                        {
-                            Code = "USD",
-                            MinorUnitScale = 2,
-                            Name = "United States Dollar",
-                            Symbol = "$"
-                        },
-                        new
-                        {
-                            Code = "GBP",
-                            MinorUnitScale = 2,
-                            Name = "Pound Sterling",
-                            Symbol = "£"
-                        },
-                        new
-                        {
-                            Code = "JPY",
-                            MinorUnitScale = 0,
-                            Name = "Japanese Yen",
-                            Symbol = "¥"
-                        },
-                        new
-                        {
-                            Code = "CHF",
-                            MinorUnitScale = 2,
-                            Name = "Swiss Franc",
-                            Symbol = "CHF"
-                        },
-                        new
-                        {
-                            Code = "BTC",
-                            MinorUnitScale = 8,
-                            Name = "Bitcoin",
-                            Symbol = "₿"
-                        },
-                        new
-                        {
-                            Code = "ETH",
-                            MinorUnitScale = 18,
-                            Name = "Ether",
-                            Symbol = "Ξ"
                         });
                 });
 

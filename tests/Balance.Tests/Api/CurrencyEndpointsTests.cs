@@ -18,15 +18,10 @@ internal sealed class CurrencyEndpointsTests : EndpointsTestsBase
         var currencies = await response.Content.ReadFromJsonAsync<IReadOnlyList<CurrencyDto>>();
         await Assert.That(currencies).IsNotNull();
         await Assert.That(currencies!.Select(c => c.Code)).Contains("EUR");
-        await Assert.That(currencies.Select(c => c.Code)).Contains("USD");
-        await Assert.That(currencies.Select(c => c.Code)).Contains("JPY");
-        await Assert.That(currencies.Select(c => c.Code)).Contains("BTC");
 
-        var jpy = currencies.Single(c => c.Code == "JPY");
-        await Assert.That(jpy.MinorUnitScale).IsEqualTo(0);
-
-        var btc = currencies.Single(c => c.Code == "BTC");
-        await Assert.That(btc.MinorUnitScale).IsEqualTo(8);
+        var eur = currencies!.Single(c => c.Code == "EUR");
+        await Assert.That(eur.MinorUnitScale).IsEqualTo(2);
+        await Assert.That(eur.Symbol).IsEqualTo("€");
     }
 
     [Test]
