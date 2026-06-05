@@ -141,7 +141,7 @@ The web host startup follows this order:
 
 ### Issue tracker
 
-Issues live on GitHub at `christiaanderidder/balance-budget`, managed via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+Issues live on GitHub at `balance-budget/balance-budget`, managed via the `gh` CLI. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

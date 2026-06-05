@@ -175,7 +175,3 @@ ExceptionHandler → StatusCodePages → ForwardedHeaders → DefaultFiles → R
   7. `dotnet test` with cobertura coverage
   8. Sticky PR comments for test results and coverage
 - A separate `codeql.yml` re-runs CodeQL on a weekly cron.
-
-## Known oddities
-
-- `src/Balance.Data/SpottarrDbContext.cs` contains the class `BalanceDbContext`. The filename is a leftover from a fork from the [Spottarr](https://github.com/christiaanderidder/spottarr) project; the class name is canonical. Treat the class name as authoritative.
