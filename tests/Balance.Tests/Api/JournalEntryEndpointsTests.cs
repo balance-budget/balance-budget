@@ -167,6 +167,151 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
     }
 
     [Test]
+    public async Task ListJournalEntries_accountId_filters_to_entries_touching_the_account()
+    {
+        using var client = Factory.CreateClient();
+        var groceries = await CreateAccountAsync(client, $"G-{Guid.NewGuid():N}", "Expense");
+        var rent = await CreateAccountAsync(client, $"R-{Guid.NewGuid():N}", "Expense");
+        var checking = await CreateAccountAsync(client, $"C-{Guid.NewGuid():N}", "Asset");
+
+        await PostJeAsync(
+            client,
+            new CreateJournalEntryRequestDto(
+                Date: new DateOnly(2026, 2, 1),
+                Description: "Groceries entry",
+                CounterpartyId: null,
+                Lines:
+                [
+                    new CreateJournalLineRequestDto(groceries.Id, 1000, null),
+                    new CreateJournalLineRequestDto(checking.Id, -1000, null),
+                ]
+            )
+        );
+        await PostJeAsync(
+            client,
+            new CreateJournalEntryRequestDto(
+                Date: new DateOnly(2026, 2, 2),
+                Description: "Rent entry",
+                CounterpartyId: null,
+                Lines:
+                [
+                    new CreateJournalLineRequestDto(rent.Id, 2000, null),
+                    new CreateJournalLineRequestDto(checking.Id, -2000, null),
+                ]
+            )
+        );
+
+        using var response = await client.GetAsync(
+            new Uri($"/api/journal-entries?accountId={groceries.Id}", UriKind.Relative)
+        );
+        var rows = await response.Content.ReadPagedItemsAsync<JournalEntryDto>();
+
+        await Assert.That(rows.Count).IsEqualTo(1);
+        await Assert.That(rows[0].Description).IsEqualTo("Groceries entry");
+    }
+
+    [Test]
+    public async Task ListJournalEntries_accountId_matches_whole_subtree()
+    {
+        using var client = Factory.CreateClient();
+        var food = await PostAccountAsync(
+            client,
+            new CreateAccountRequestDto($"Food-{Guid.NewGuid():N}", "Expense", "EUR")
+            {
+                IsPostable = false,
+            }
+        );
+        var groceries = await PostAccountAsync(
+            client,
+            new CreateAccountRequestDto($"Groceries-{Guid.NewGuid():N}", "Expense", "EUR")
+            {
+                ParentAccountId = food.Id,
+            }
+        );
+        var checking = await CreateAccountAsync(client, $"C-{Guid.NewGuid():N}", "Asset");
+
+        await PostJeAsync(
+            client,
+            new CreateJournalEntryRequestDto(
+                Date: new DateOnly(2026, 2, 3),
+                Description: "Leaf entry",
+                CounterpartyId: null,
+                Lines:
+                [
+                    new CreateJournalLineRequestDto(groceries.Id, 1000, null),
+                    new CreateJournalLineRequestDto(checking.Id, -1000, null),
+                ]
+            )
+        );
+
+        // Filtering on the non-postable parent matches the entry posted to its leaf.
+        using var response = await client.GetAsync(
+            new Uri($"/api/journal-entries?accountId={food.Id}", UriKind.Relative)
+        );
+        var rows = await response.Content.ReadPagedItemsAsync<JournalEntryDto>();
+
+        await Assert.That(rows.Count).IsEqualTo(1);
+        await Assert.That(rows[0].Description).IsEqualTo("Leaf entry");
+    }
+
+    [Test]
+    public async Task ListJournalEntries_from_and_to_bound_the_date_inclusively()
+    {
+        using var client = Factory.CreateClient();
+        var expense = await CreateAccountAsync(client, $"E-{Guid.NewGuid():N}", "Expense");
+        var checking = await CreateAccountAsync(client, $"C-{Guid.NewGuid():N}", "Asset");
+
+        var dates = new[]
+        {
+            new DateOnly(2026, 3, 1),
+            new DateOnly(2026, 3, 2),
+            new DateOnly(2026, 3, 3),
+            new DateOnly(2026, 3, 4),
+        };
+        foreach (var date in dates)
+        {
+            await PostJeAsync(
+                client,
+                new CreateJournalEntryRequestDto(
+                    Date: date,
+                    Description: null,
+                    CounterpartyId: null,
+                    Lines:
+                    [
+                        new CreateJournalLineRequestDto(expense.Id, 1000, null),
+                        new CreateJournalLineRequestDto(checking.Id, -1000, null),
+                    ]
+                )
+            );
+        }
+
+        // Scope by the freshly-minted account to stay isolated from other tests' entries.
+        using var response = await client.GetAsync(
+            new Uri(
+                $"/api/journal-entries?accountId={expense.Id}&from=2026-03-02&to=2026-03-03",
+                UriKind.Relative
+            )
+        );
+        var rows = await response.Content.ReadPagedItemsAsync<JournalEntryDto>();
+
+        await Assert.That(rows.Count).IsEqualTo(2);
+        await Assert.That(rows[0].Date).IsEqualTo(new DateOnly(2026, 3, 3));
+        await Assert.That(rows[1].Date).IsEqualTo(new DateOnly(2026, 3, 2));
+    }
+
+    [Test]
+    public async Task ListJournalEntries_from_after_to_returns_400()
+    {
+        using var client = Factory.CreateClient();
+
+        using var response = await client.GetAsync(
+            new Uri("/api/journal-entries?from=2026-03-04&to=2026-03-01", UriKind.Relative)
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+    }
+
+    [Test]
     public async Task ListJournalEntries_q_above_max_length_returns_400()
     {
         using var client = Factory.CreateClient();
@@ -1107,6 +1252,14 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
     )
     {
         var req = new CreateAccountRequestDto(name, accountType, currencyCode);
+        return await PostAccountAsync(client, req);
+    }
+
+    private static async Task<AccountDto> PostAccountAsync(
+        HttpClient client,
+        CreateAccountRequestDto req
+    )
+    {
         using var response = await client.PostAsJsonAsync(
             new Uri("/api/accounts", UriKind.Relative),
             req

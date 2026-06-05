@@ -11,6 +11,9 @@ public interface IJournalEntryService
         int take,
         string? search,
         CounterpartyId? counterpartyId,
+        AccountId? accountId,
+        DateOnly? fromDate,
+        DateOnly? toDate,
         CancellationToken cancellationToken
     );
 

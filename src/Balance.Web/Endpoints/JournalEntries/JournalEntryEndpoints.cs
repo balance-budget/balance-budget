@@ -59,6 +59,9 @@ internal static class JournalEntryEndpoints
             take,
             request.Q,
             request.CounterpartyId,
+            request.AccountId,
+            request.From,
+            request.To,
             cancellationToken
         );
         return TypedResults.Ok(entries);
