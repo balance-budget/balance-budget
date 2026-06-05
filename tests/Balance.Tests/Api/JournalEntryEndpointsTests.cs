@@ -285,6 +285,14 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
     public async Task CreateJournalEntry_currency_mismatch_returns_422()
     {
         using var client = Factory.CreateClient();
+
+        // Only EUR is seeded; add a second currency to provoke the mismatch.
+        using var createCurrencyResponse = await client.PostAsJsonAsync(
+            new Uri("/api/currencies", UriKind.Relative),
+            new CreateCurrencyRequestDto("USD", "United States Dollar", 2, "$")
+        );
+        await Assert.That(createCurrencyResponse.StatusCode).IsEqualTo(HttpStatusCode.Created);
+
         var eurAccount = await CreateAccountAsync(client, "Currency-EUR", "Asset", "EUR");
         var usdAccount = await CreateAccountAsync(client, "Currency-USD", "Asset", "USD");
 

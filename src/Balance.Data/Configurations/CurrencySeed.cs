@@ -5,6 +5,7 @@ namespace Balance.Data.Configurations;
 
 internal static class CurrencySeed
 {
+    // EUR only for now — anything else is user-added via the currencies API.
     public static readonly IReadOnlyList<Currency> All =
     [
         new()
@@ -13,48 +14,6 @@ internal static class CurrencySeed
             Name = "Euro",
             MinorUnitScale = 2,
             Symbol = "€",
-        },
-        new()
-        {
-            Code = new CurrencyCode("USD"),
-            Name = "United States Dollar",
-            MinorUnitScale = 2,
-            Symbol = "$",
-        },
-        new()
-        {
-            Code = new CurrencyCode("GBP"),
-            Name = "Pound Sterling",
-            MinorUnitScale = 2,
-            Symbol = "£",
-        },
-        new()
-        {
-            Code = new CurrencyCode("JPY"),
-            Name = "Japanese Yen",
-            MinorUnitScale = 0,
-            Symbol = "¥",
-        },
-        new()
-        {
-            Code = new CurrencyCode("CHF"),
-            Name = "Swiss Franc",
-            MinorUnitScale = 2,
-            Symbol = "CHF",
-        },
-        new()
-        {
-            Code = new CurrencyCode("BTC"),
-            Name = "Bitcoin",
-            MinorUnitScale = 8,
-            Symbol = "₿",
-        },
-        new()
-        {
-            Code = new CurrencyCode("ETH"),
-            Name = "Ether",
-            MinorUnitScale = 18,
-            Symbol = "Ξ",
         },
     ];
 }
