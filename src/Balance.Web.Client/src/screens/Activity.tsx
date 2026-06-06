@@ -2,8 +2,7 @@ import { useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useAccounts, type Account } from '../api/accounts';
 import { useJournalEntries, type JournalEntry } from '../api/journalEntries';
-import { Combobox } from '../components/Combobox';
-import { type ComboboxItem } from '../components/combobox.state';
+import { AccountSelect } from '../components/AccountSelect';
 import { DateInput } from '../components/DateInput';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
@@ -12,7 +11,7 @@ import { Panel, SectionHead } from '../components/Panel';
 import { ProjectionAmount } from '../components/ProjectionAmount';
 import { SearchInput } from '../components/SearchInput';
 import { Skeleton } from '../components/Skeleton';
-import { ACCOUNT_TYPE_ORDER, type AccountId } from '../lib/domain';
+import { type AccountId } from '../lib/domain';
 import { formatLegLabel, projectEntry, type JournalProjection } from '../lib/journalProjection';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
 
@@ -70,11 +69,7 @@ export function Activity({
                     onChange={onSearchChange}
                     placeholder="Search description or counterparty…"
                 />
-                <ActivityFilterBar
-                    accounts={accounts.data ?? []}
-                    filters={filters}
-                    onFiltersChange={onFiltersChange}
-                />
+                <ActivityFilterBar filters={filters} onFiltersChange={onFiltersChange} />
             </div>
             <JournalBody
                 entries={entries}
@@ -89,29 +84,19 @@ export function Activity({
 }
 
 function ActivityFilterBar({
-    accounts,
     filters,
     onFiltersChange,
 }: {
-    accounts: Account[];
     filters: ActivityFilterState;
     onFiltersChange: (patch: Partial<ActivityFilterState>) => void;
 }) {
-    // One symmetric account filter — an Activity row has no focal account, so this
-    // matches entries touching the account or any of its descendants (ADR-0019).
-    const accountItems = useMemo<ComboboxItem<AccountId>[]>(
-        () =>
-            [...accounts]
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map(a => ({ key: a.id, label: a.name, group: a.type, value: a.id })),
-        [accounts],
-    );
-
     return (
         <div className="flex flex-wrap items-center gap-2">
             <div className="w-56">
-                <Combobox
-                    items={accountItems}
+                {/* One symmetric account filter — an Activity row has no focal account, so this
+                 *  matches entries touching the account or any of its descendants (ADR-0019);
+                 *  placeholders stay selectable to mean "this whole subtree". */}
+                <AccountSelect
                     value={filters.account}
                     onChange={v => {
                         onFiltersChange({ account: v });
@@ -121,7 +106,6 @@ function ActivityFilterBar({
                     }}
                     noneLabel="Any account"
                     placeholder="Account…"
-                    groupOrder={ACCOUNT_TYPE_ORDER}
                     ariaLabel="Filter by account"
                 />
             </div>
