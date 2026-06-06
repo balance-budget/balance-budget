@@ -1,3 +1,5 @@
+import { DateField } from './DateField';
+
 /** A `yyyy-MM-dd` date filter input styled like the other toolbar inputs; '' = unset. */
 export function DateInput({
     value,
@@ -13,15 +15,13 @@ export function DateInput({
     max?: string;
 }) {
     return (
-        <input
-            type="date"
+        <DateField
             value={value}
+            onChange={onChange}
             min={min}
             max={max}
-            onChange={e => {
-                onChange(e.target.value);
-            }}
-            aria-label={ariaLabel}
+            ariaLabel={ariaLabel}
+            wrapperClassName="w-[150px]"
             className="px-3 py-[7px] rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-13 focus:outline-none focus:border-border-strong"
         />
     );

@@ -1,5 +1,6 @@
 import { cx } from '../lib/cx';
 import { detectPreset, PERIOD_PRESETS, presetRange, type ReportPeriod } from '../lib/reportPeriod';
+import { DateField } from './DateField';
 
 type PeriodPickerProps = {
     period: ReportPeriod;
@@ -38,28 +39,30 @@ export function PeriodPicker({ period, onChange }: PeriodPickerProps) {
             </div>
 
             <div className="flex items-center gap-[6px] text-12 text-fg-3">
-                <input
-                    type="date"
+                <DateField
                     value={period.from}
                     max={period.to}
-                    onChange={e => {
-                        onChange({ ...period, from: e.target.value });
+                    onChange={from => {
+                        onChange({ ...period, from });
                     }}
+                    ariaLabel="Period start"
+                    wrapperClassName="w-[140px]"
                     className={cx(
-                        'rounded-sm border border-border-soft bg-bg-1 px-2 py-[4px] text-fg-1',
+                        'rounded-sm border border-border-soft bg-bg-1 px-2 py-[4px] text-12 text-fg-1',
                         active === 'custom' && 'border-brand-primary',
                     )}
                 />
                 <span>→</span>
-                <input
-                    type="date"
+                <DateField
                     value={period.to}
                     min={period.from}
-                    onChange={e => {
-                        onChange({ ...period, to: e.target.value });
+                    onChange={to => {
+                        onChange({ ...period, to });
                     }}
+                    ariaLabel="Period end"
+                    wrapperClassName="w-[140px]"
                     className={cx(
-                        'rounded-sm border border-border-soft bg-bg-1 px-2 py-[4px] text-fg-1',
+                        'rounded-sm border border-border-soft bg-bg-1 px-2 py-[4px] text-12 text-fg-1',
                         active === 'custom' && 'border-brand-primary',
                     )}
                 />
