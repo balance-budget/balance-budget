@@ -19,8 +19,8 @@ If you are adding documentation, prefer extending the files under `docs/` and up
 dotnet tool restore
 # NuGet packages      
 dotnet restore
-# Frontend npm packages
-npm install --prefix src/Balance.Web.Client
+# Frontend npm packages (npm workspaces — single root node_modules covers Balance.Web.Client)
+npm install
 
 # Build (without restore) — also builds the SPA via the esproj reference
 dotnet build --no-restore -v:minimal
@@ -47,7 +47,7 @@ dotnet test --no-build -v:minimal --treenode-filter "/Balance.Tests/Balance.Test
 # .NET host (serves /api/*, and the last built SPA at /)
 dotnet run --project src/Balance.Web/Balance.Web.csproj
 # Vite dev server (HMR; proxies /api → http://localhost:5248) — browse this URL
-npm run dev --prefix src/Balance.Web.Client
+npm run dev
 
 # Publish — bundles the SPA's dist into the ASP.NET publish output
 dotnet publish src/Balance.Web/Balance.Web.csproj -c Release
@@ -127,7 +127,7 @@ The web host startup follows this order:
 
 ## CI
 
-`.github/workflows/build-and-test.yml`: `dotnet tool restore` → `dotnet restore` → CSharpier check → build → frontend ESLint (`npm run lint` in `src/Balance.Web.Client`, reusing the SPA build the esproj already ran) → CodeQL (public repos) → `dotnet test` with cobertura coverage. Test results and coverage are posted as sticky PR comments. A separate scheduled `codeql.yml` re-runs CodeQL weekly.
+`.github/workflows/build-and-test.yml`: `dotnet tool restore` → `dotnet restore` → CSharpier check → build → frontend ESLint (`npm run lint` from the repo root, which forwards to the `Balance.Web.Client` workspace and reuses the SPA build the esproj already ran) → CodeQL (public repos) → `dotnet test` with cobertura coverage. Test results and coverage are posted as sticky PR comments. A separate scheduled `codeql.yml` re-runs CodeQL weekly.
 
 ## Notes for AI agents
 
