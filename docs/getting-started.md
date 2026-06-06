@@ -10,11 +10,13 @@
 ## First-time setup
 
 ```bash
-dotnet tool restore                              # installs CSharpier as a local tool
-dotnet restore                                   # restores NuGet packages
-npm install --prefix src/Balance.Web.Client      # restores SPA dependencies
-dotnet build                                     # also runs `npm run build` via the esproj reference
+dotnet tool restore      # installs CSharpier as a local tool
+dotnet restore           # restores NuGet packages
+npm install              # restores SPA dependencies (npm workspace → root node_modules)
+dotnet build             # also runs `npm run build` via the esproj reference
 ```
+
+The repo is an [npm workspace](https://docs.npmjs.com/cli/v10/using-npm/workspaces): the SPA at `src/Balance.Web.Client` is declared as a workspace in the root `package.json`, so a single `npm install` at the repo root covers everything and produces one root `node_modules/`.
 
 ## Common commands
 
@@ -34,7 +36,7 @@ dotnet test
 dotnet run --project src/Balance.Web/Balance.Web.csproj
 
 # Terminal 2: Vite dev server with HMR — browse http://localhost:5173
-npm run dev --prefix src/Balance.Web.Client
+npm run dev
 
 # Publish (bundles the SPA's dist into the publish output)
 dotnet publish src/Balance.Web/Balance.Web.csproj -c Release

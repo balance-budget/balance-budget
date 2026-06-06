@@ -20,7 +20,7 @@ The CLA lets the project relicense contributions if needed; you retain copyright
 ## How to contribute
 
 1. **Fork** the repository and create a branch off `main`.
-2. **Build and test locally** — see [docs/getting-started.md](docs/getting-started.md). In short: `dotnet tool restore && dotnet restore && npm install --prefix src/Balance.Web.Client`, then `dotnet build` and `dotnet test`.
+2. **Build and test locally** — see [docs/getting-started.md](docs/getting-started.md). In short: `dotnet tool restore && dotnet restore && npm install`, then `dotnet build` and `dotnet test`.
 3. **Match the conventions** in [CLAUDE.md](CLAUDE.md) and [docs/conventions.md](docs/conventions.md). Run `dotnet csharpier format .` (C#) and `npm run lint` (SPA) before pushing — CI fails on formatting and lint deviations, and the build treats warnings as errors.
 4. **Open a pull request** against `main`. CI must be green and the CLA signed.
 

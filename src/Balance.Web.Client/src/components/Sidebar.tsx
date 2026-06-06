@@ -146,7 +146,15 @@ function AccountTreeNode({
                 <Link
                     to="/accounts/$id"
                     params={{ id: account.id }}
-                    search={{ page: 1, q: '' }}
+                    search={{
+                        page: 1,
+                        q: '',
+                        posted: '',
+                        counter: '',
+                        from: '',
+                        to: '',
+                        status: '',
+                    }}
                     className="flex-1 min-w-0 flex items-center gap-3 pl-2 pr-8 py-2 rounded-sm text-fg-1 hover:bg-surface-2 transition-colors"
                     activeProps={{ className: 'bg-brand-primary-soft text-brand-primary' }}
                 >

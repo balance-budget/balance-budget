@@ -285,10 +285,7 @@ function SliceRow({
     const content = (
         <>
             <span className="flex items-center gap-2 min-w-0">
-                <span
-                    className="w-2.5 h-2.5 rounded-full shrink-0"
-                    style={{ background: color }}
-                />
+                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }} />
                 <span className="text-13 text-fg-1 truncate">{slice.name}</span>
                 {slice.hasChildren && <span className="text-11 text-fg-3">›</span>}
             </span>

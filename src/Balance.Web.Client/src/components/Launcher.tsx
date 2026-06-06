@@ -80,7 +80,15 @@ export function Launcher({ open, onClose }: LauncherProps) {
                 void navigate({
                     to: '/accounts/$id',
                     params: { id: row.hit.id },
-                    search: { page: 1, q: '' },
+                    search: {
+                        page: 1,
+                        q: '',
+                        posted: '',
+                        counter: '',
+                        from: '',
+                        to: '',
+                        status: '',
+                    },
                 });
                 break;
             case 'counterparty':

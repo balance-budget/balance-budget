@@ -8,7 +8,7 @@ import {
     TREND_RANGES,
     type TrendRange,
 } from '../api/dashboard';
-import { useAccountRegister, type RegisterRow } from '../api/register';
+import { useAccountRegister, type RegisterFilters, type RegisterRow } from '../api/register';
 import { AccountAvatar } from '../components/AccountAvatar';
 import { Amount } from '../components/Amount';
 import { ErrorState } from '../components/ErrorState';
@@ -36,8 +36,17 @@ function RecentRow({ row }: { row: RegisterRow }) {
     );
 }
 
+const EMPTY_REGISTER_FILTERS: RegisterFilters = {
+    q: '',
+    posted: null,
+    counter: null,
+    from: '',
+    to: '',
+    status: '',
+};
+
 function RecentActivity({ account }: { account: Account }) {
-    const register = useAccountRegister(account.id, 0, 5, '');
+    const register = useAccountRegister(account.id, 0, 5, EMPTY_REGISTER_FILTERS);
 
     if (register.isPending) {
         return (

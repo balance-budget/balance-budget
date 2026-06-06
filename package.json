@@ -1,8 +1,26 @@
 {
+  "name": "balance-budget",
+  "private": true,
+  "workspaces": [
+    "src/Balance.Web.Client"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=balance",
+    "build": "npm run build --workspace=balance",
+    "lint": "npm run lint --workspace=balance",
+    "test": "npm run test --workspace=balance",
+    "typecheck": "npm run typecheck --workspace=balance",
+    "format": "npm run format --workspace=balance",
+    "format:check": "npm run format:check --workspace=balance",
+    "codegen": "npm run codegen --workspace=balance",
+    "sandcastle": "npx tsx .sandcastle/main.mts"
+  },
   "devDependencies": {
     "@ai-hero/sandcastle": "^0.5.11"
   },
-  "scripts": {
-    "sandcastle": "npx tsx .sandcastle/main.mts"
+  "overrides": {
+    "openapi-typescript": {
+      "typescript": "$typescript"
+    }
   }
 }
