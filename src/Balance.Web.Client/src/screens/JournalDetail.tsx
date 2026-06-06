@@ -17,6 +17,7 @@ import { BankTransactionDetails } from '../components/BankTransactionDetails';
 import { Combobox } from '../components/Combobox';
 import { type ComboboxItem } from '../components/combobox.state';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { DateField } from '../components/DateField';
 import { ErrorState } from '../components/ErrorState';
 import { FieldError } from '../components/FieldError';
 import { FormErrorBanner } from '../components/FormErrorBanner';
@@ -461,13 +462,11 @@ function EditJournalEntry({
                 <div className="grid grid-cols-1 lg:grid-cols-[140px_1fr_minmax(180px,260px)] gap-3 mb-4">
                     <label className="flex flex-col gap-1">
                         <span className="text-12 font-medium text-fg-2">Date</span>
-                        <input
-                            type="date"
+                        <DateField
                             value={date}
-                            onChange={e => {
-                                setDate(e.target.value);
-                            }}
+                            onChange={setDate}
                             required
+                            ariaLabel="Date"
                             className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
                         />
                         <FieldError name="Date" errors={fieldErrors} />

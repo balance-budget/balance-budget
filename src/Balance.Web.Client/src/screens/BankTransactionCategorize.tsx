@@ -21,6 +21,7 @@ import { AccountSelect } from '../components/AccountSelect';
 import { BankTransactionDetails } from '../components/BankTransactionDetails';
 import { Combobox } from '../components/Combobox';
 import { type ComboboxItem } from '../components/combobox.state';
+import { DateField } from '../components/DateField';
 import { ErrorState } from '../components/ErrorState';
 import { FieldError } from '../components/FieldError';
 import { FormErrorBanner } from '../components/FormErrorBanner';
@@ -369,13 +370,13 @@ function HeaderInputs({
         <div className="grid grid-cols-1 lg:grid-cols-[140px_1fr_minmax(220px,300px)] gap-3">
             <label className="flex flex-col gap-1">
                 <span className="text-12 font-medium text-fg-2">Date</span>
-                <input
-                    type="date"
+                <DateField
                     value={form.date}
-                    onChange={e => {
-                        onPatch({ date: e.target.value });
+                    onChange={date => {
+                        onPatch({ date });
                     }}
                     required
+                    ariaLabel="Date"
                     className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
                 />
                 <FieldError name="Date" errors={fieldErrors} />

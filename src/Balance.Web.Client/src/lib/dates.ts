@@ -16,6 +16,14 @@ export function todayIso(): string {
     return `${y}-${m}-${d}`;
 }
 
+/** True when `value` is a real calendar day in strict `yyyy-MM-dd` form. */
+export function isValidIsoDate(value: string): boolean {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const [y = 0, m = 0, d = 0] = value.split('-').map(Number);
+    const parsed = new Date(y, m - 1, d);
+    return parsed.getFullYear() === y && parsed.getMonth() === m - 1 && parsed.getDate() === d;
+}
+
 const MONTH_SHORT = new Intl.DateTimeFormat(undefined, { month: 'short' });
 const MONTH_DAY_SHORT = new Intl.DateTimeFormat(undefined, {
     month: 'short',
