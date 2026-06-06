@@ -21,6 +21,7 @@ import {
     type SuggestedCounterAccount,
 } from '../api/counterparties';
 import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
+import { AccountSelect } from '../components/AccountSelect';
 import { Combobox } from '../components/Combobox';
 import { type ComboboxItem } from '../components/combobox.state';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -36,8 +37,6 @@ import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { cx } from '../lib/cx';
 import {
-    ACCOUNT_TYPE_LABEL,
-    ACCOUNT_TYPE_ORDER,
     asAccountId,
     asCounterpartyId,
     type AccountId,
@@ -999,11 +998,8 @@ function InboxEditorReady({
         bulkCounterparty,
         bulkAccountId,
         counterpartyItems,
-        accountItems: buildBulkAccountItems(
-            accounts,
-            selectedCurrencies,
-            ownBankSideAccountIdsInSelection,
-        ),
+        bulkCurrency: selectedCurrencies.length === 1 ? (selectedCurrencies[0] ?? null) : null,
+        excludeAccountIds: ownBankSideAccountIdsInSelection,
         saving,
         progress,
         dirtyCount,
@@ -1058,11 +1054,10 @@ function InboxEditorReady({
                             dismissDraft={dismissDrafts.get(bt.id) ?? null}
                             error={rowErrors.get(bt.id) ?? null}
                             counterpartyItems={counterpartyItems}
-                            accountItems={buildAccountItems(
-                                accounts,
-                                bt.money.currencyCode,
-                                bankAccountsById.get(bt.bankAccountId)?.accountId ?? null,
-                            )}
+                            currencyCode={bt.money.currencyCode}
+                            excludeAccountId={
+                                bankAccountsById.get(bt.bankAccountId)?.accountId ?? null
+                            }
                             catalog={catalog}
                             saving={saving}
                             selected={selection.has(bt.id)}
@@ -1165,34 +1160,6 @@ function buildCounterpartyItems(
         .map(c => ({ key: c.id, label: c.name, value: c.id }));
 }
 
-function buildAccountItems(
-    accounts: Account[],
-    currencyCode: string,
-    ownBankSideAccountId: AccountId | null,
-): ComboboxItem<AccountId>[] {
-    return accounts
-        .filter(a => a.currencyCode === currencyCode && a.id !== ownBankSideAccountId)
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .map(a => ({ key: a.id, label: a.name, group: a.type, value: a.id }));
-}
-
-/** Bulk-apply Account picker items. Empty when the selection spans more than
- *  one currency (the picker is also disabled in that case). Excludes any
- *  bank-side account that maps to a selected row's bank, so the user can't
- *  bulk-pick the very account on the BT side of those rows. */
-function buildBulkAccountItems(
-    accounts: Account[],
-    selectedCurrencies: readonly string[],
-    excludedAccountIds: ReadonlySet<AccountId>,
-): ComboboxItem<AccountId>[] {
-    if (selectedCurrencies.length !== 1) return [];
-    const currency = selectedCurrencies[0];
-    return accounts
-        .filter(a => a.currencyCode === currency && !excludedAccountIds.has(a.id))
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .map(a => ({ key: a.id, label: a.name, group: a.type, value: a.id }));
-}
-
 function RowSelectCheckbox({
     selected,
     disabled,
@@ -1261,7 +1228,11 @@ type ActionBarProps = {
     bulkCounterparty: BulkApplyCounterparty | null;
     bulkAccountId: AccountId | null;
     counterpartyItems: ComboboxItem<CounterpartyId | null>[];
-    accountItems: ComboboxItem<AccountId>[];
+    /** The one currency shared by the selection, or null when it spans several
+     *  (the account picker is disabled in that case). */
+    bulkCurrency: string | null;
+    /** Bank-side accounts of the selected rows — never bulk-pickable. */
+    excludeAccountIds: ReadonlySet<AccountId>;
     saving: boolean;
     progress: { done: number; total: number } | null;
     dirtyCount: number;
@@ -1293,7 +1264,8 @@ function ActionBar({
     bulkCounterparty,
     bulkAccountId,
     counterpartyItems,
-    accountItems,
+    bulkCurrency,
+    excludeAccountIds,
     saving,
     progress,
     dirtyCount,
@@ -1365,14 +1337,14 @@ function ActionBar({
                             />
                         </div>
                         <div className="min-w-[180px] flex-1 max-w-[260px]">
-                            <Combobox
-                                items={accountItems}
+                            <AccountSelect
                                 value={bulkAccountId}
                                 onChange={id => {
                                     onBulkAccountIdChange(id);
                                 }}
-                                groupOrder={ACCOUNT_TYPE_ORDER}
-                                groupLabels={ACCOUNT_TYPE_LABEL}
+                                postableOnly
+                                currencyCode={bulkCurrency ?? undefined}
+                                exclude={[...excludeAccountIds]}
                                 placeholder={
                                     mixedCurrency ? 'Account (mixed currencies)' : 'Account…'
                                 }
@@ -1469,7 +1441,8 @@ function InboxRow({
     dismissDraft,
     error,
     counterpartyItems,
-    accountItems,
+    currencyCode,
+    excludeAccountId,
     catalog,
     saving,
     selected,
@@ -1484,7 +1457,8 @@ function InboxRow({
     dismissDraft: string | null;
     error: string | null;
     counterpartyItems: ComboboxItem<CounterpartyId | null>[];
-    accountItems: ComboboxItem<AccountId>[];
+    currencyCode: string;
+    excludeAccountId: AccountId | null;
     catalog: CurrencyCatalog;
     saving: boolean;
     selected: boolean;
@@ -1549,7 +1523,8 @@ function InboxRow({
             />
             <AccountPicker
                 draft={draft}
-                items={accountItems}
+                currencyCode={currencyCode}
+                excludeAccountId={excludeAccountId}
                 onPatch={onPatch}
                 disabled={saving || willDismiss}
             />
@@ -1673,24 +1648,26 @@ function CounterpartyPicker({
 
 function AccountPicker({
     draft,
-    items,
+    currencyCode,
+    excludeAccountId,
     onPatch,
     disabled,
 }: {
     draft: RowDraft;
-    items: ComboboxItem<AccountId>[];
+    currencyCode: string;
+    excludeAccountId: AccountId | null;
     onPatch: (patch: Partial<RowDraft>) => void;
     disabled: boolean;
 }) {
     return (
-        <Combobox
-            items={items}
+        <AccountSelect
             value={draft.accountId}
             onChange={id => {
                 onPatch({ accountId: id });
             }}
-            groupOrder={ACCOUNT_TYPE_ORDER}
-            groupLabels={ACCOUNT_TYPE_LABEL}
+            postableOnly
+            currencyCode={currencyCode}
+            exclude={excludeAccountId ? [excludeAccountId] : undefined}
             placeholder="Pick account…"
             disabled={disabled}
             ariaLabel="Account"

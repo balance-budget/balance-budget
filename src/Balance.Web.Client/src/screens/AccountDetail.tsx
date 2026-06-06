@@ -457,10 +457,7 @@ function ReassignBar({
     const [confirming, setConfirming] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const byId = useMemo(
-        () => new Map((accounts.data ?? []).map(a => [a.id, a])),
-        [accounts.data],
-    );
+    const byId = useMemo(() => new Map((accounts.data ?? []).map(a => [a.id, a])), [accounts.data]);
     const targetName = target !== null ? (accountPathLabel(byId, target) ?? '') : '';
     const count = selectedIds.length;
 
