@@ -76,6 +76,19 @@ describe('buildOptionList', () => {
         expect(out.some(o => o.kind === 'create')).toBe(false);
     });
 
+    it('matches against searchText when present, not the displayed label', () => {
+        const withSearch: ComboboxItem<string>[] = [
+            { key: 'a', label: 'Car › Tax', searchText: '5110 Car Tax', value: 'a' },
+            { key: 'b', label: 'Home › Tax', searchText: '5210 Home Tax', value: 'b' },
+        ];
+        // The code lives only in searchText, yet the query finds it.
+        expect(buildOptionList({ items: withSearch, query: '5110' })).toHaveLength(1);
+        // A path segment that the space-joined searchText exposes but the label hides.
+        expect(buildOptionList({ items: withSearch, query: 'car t' })).toHaveLength(1);
+        // The leaf still matches both rows.
+        expect(buildOptionList({ items: withSearch, query: 'tax' })).toHaveLength(2);
+    });
+
     it('orders groups by the supplied groupOrder', () => {
         const out = buildOptionList({
             items: items(),
