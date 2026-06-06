@@ -296,7 +296,9 @@ function renderOptions<T>(
             >
                 {option.kind === 'create' && <Icon name="plus" size={12} strokeWidth={2} />}
                 <span className="truncate">
-                    {option.kind === 'item' ? option.item.label : option.label}
+                    {option.kind === 'item'
+                        ? (option.item.render ?? option.item.label)
+                        : option.label}
                 </span>
             </li>,
         );

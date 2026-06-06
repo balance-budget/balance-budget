@@ -5,11 +5,22 @@
  * binds these to React state + JSX.
  */
 
+import type { ReactNode } from 'react';
+
 export type ComboboxItem<T> = {
     /** Stable string identifier — used as React key and for selection. */
     key: string;
-    /** Display label, also the substring matched against the search query. */
+    /** Plain-text label shown in the collapsed input once selected, and the
+     *  default substring target for the search query (see `searchText`). */
     label: string;
+    /** Extra text the query is matched against instead of `label`. Lets a
+     *  picker search over facets that aren't all shown in `label` — e.g. an
+     *  account's code and full path segments. Falls back to `label` when unset. */
+    searchText?: string;
+    /** Rich node rendered for this option in the open list, when the row needs
+     *  more than the plain `label` (e.g. a dimmed account path + muted code).
+     *  Falls back to `label` when unset. */
+    render?: ReactNode;
     /** Optional bucket name for grouped pickers (e.g. AccountType for the
      *  per-row account combobox). Bucket order is controlled by `groupOrder`
      *  on the component prop. */
@@ -55,7 +66,7 @@ export function buildOptionList<T>({
     createLabel,
     groupOrder,
 }: OptionListArgs<T>): ComboboxOption<T>[] {
-    const filtered = items.filter(item => matchesQuery(item.label, query));
+    const filtered = items.filter(item => matchesQuery(item.searchText ?? item.label, query));
 
     // Group ordering. Ungrouped items keep their relative order.
     const grouped = sortByGroup(filtered, groupOrder);
