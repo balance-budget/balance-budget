@@ -17,5 +17,10 @@
   },
   "devDependencies": {
     "@ai-hero/sandcastle": "^0.5.11"
+  },
+  "overrides": {
+    "openapi-typescript": {
+      "typescript": "$typescript"
+    }
   }
 }

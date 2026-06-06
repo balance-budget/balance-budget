@@ -182,12 +182,7 @@ export function AccountDetail({
     );
 }
 
-const STATUS_FILTERS: readonly RegisterStatusFilter[] = [
-    '',
-    'Uncleared',
-    'Cleared',
-    'Reconciled',
-];
+const STATUS_FILTERS: readonly RegisterStatusFilter[] = ['', 'Uncleared', 'Cleared', 'Reconciled'];
 
 const STATUS_LABEL: Record<RegisterStatusFilter, string> = {
     '': 'All',
@@ -343,15 +338,15 @@ function RegisterTable({
             new Set(
                 rows
                     .filter(
-                        r => selected.has(r.journalLineId) && r.reconciliationStatus === 'Uncleared',
+                        r =>
+                            selected.has(r.journalLineId) && r.reconciliationStatus === 'Uncleared',
                     )
                     .map(r => r.journalLineId),
             ),
         [rows, selected],
     );
     const selectableIds = useMemo(
-        () =>
-            rows.filter(r => r.reconciliationStatus === 'Uncleared').map(r => r.journalLineId),
+        () => rows.filter(r => r.reconciliationStatus === 'Uncleared').map(r => r.journalLineId),
         [rows],
     );
 
@@ -502,7 +497,9 @@ function ReassignBar({
         setError(null);
         try {
             await reassign.mutateAsync({ lineIds: selectedIds, targetAccountId: target });
-            toast.success(`Moved ${String(count)} line${count === 1 ? '' : 's'} to “${targetName}”.`);
+            toast.success(
+                `Moved ${String(count)} line${count === 1 ? '' : 's'} to “${targetName}”.`,
+            );
             setConfirming(false);
             setTarget(null);
             onDone();
