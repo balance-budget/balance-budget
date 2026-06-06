@@ -19,8 +19,22 @@ updates:
         patterns:
           - "*"
         update-types:
-          - "minor"
-          - "patch"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "saturday"
+      time: "10:00"
+      timezone: "Europe/Amsterdam"
+    groups:
+      npm:
+        patterns:
+          - "*"
+        update-types:
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -33,5 +47,5 @@ updates:
         patterns:
           - "*"
         update-types:
-          - "minor"
-          - "patch"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
