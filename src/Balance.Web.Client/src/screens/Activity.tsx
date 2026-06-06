@@ -92,7 +92,7 @@ function ActivityFilterBar({
 }) {
     return (
         <div className="flex flex-wrap items-center gap-2">
-            <div className="w-56">
+            <div className="w-64">
                 {/* One symmetric account filter — an Activity row has no focal account, so this
                  *  matches entries touching the account or any of its descendants (ADR-0019);
                  *  placeholders stay selectable to mean "this whole subtree". */}

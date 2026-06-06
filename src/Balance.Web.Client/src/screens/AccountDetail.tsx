@@ -202,7 +202,7 @@ function RegisterFilterBar({
     return (
         <div className="flex flex-wrap items-center gap-2">
             {!account.isPostable && (
-                <div className="w-56">
+                <div className="w-64">
                     {/* The posted picker offers only the viewed subtree (anything else matches
                      *  nothing); picking a non-postable child means "that child's whole subtree"
                      *  (ADR-0019), so placeholders stay selectable here. */}
@@ -221,7 +221,7 @@ function RegisterFilterBar({
                     />
                 </div>
             )}
-            <div className="w-56">
+            <div className="w-64">
                 <AccountSelect
                     value={filters.counter}
                     onChange={v => {
@@ -482,7 +482,7 @@ function ReassignBar({
             <span className="text-13 text-fg-2 font-medium">
                 {count} line{count === 1 ? '' : 's'} selected
             </span>
-            <div className="w-64">
+            <div className="w-72">
                 {/* Reassign targets: postable accounts in the lines' currency (every line on
                  *  this register shares the viewed subtree's currency, ADR-0019). Cross-type
                  *  moves are legitimate (e.g. reclassifying an expense leg onto an asset). */}

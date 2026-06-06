@@ -14,6 +14,11 @@ import {
 import { Combobox } from './Combobox';
 import type { ComboboxItem } from './combobox.state';
 
+// Deep paths ("5131  Car › Insurance › Liability › Excess") need more room than
+// the narrow filter/inline triggers give, so the open list widens to at least
+// this regardless of the trigger width (capped to the viewport in Combobox).
+const LISTBOX_MIN_WIDTH = 360;
+
 /**
  * The single account picker used everywhere in the app. Wraps `<Combobox>` and
  * owns the rules the selectors must share (ADR-0019): each option shows the
@@ -160,6 +165,7 @@ export function AccountSelect({
             placeholder={placeholder}
             disabled={disabled}
             ariaLabel={ariaLabel}
+            listboxMinWidth={LISTBOX_MIN_WIDTH}
         />
     );
 }
