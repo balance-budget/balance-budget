@@ -22,18 +22,18 @@ updates:
           - "minor"
           - "patch"
   - package-ecosystem: "npm"
-      directory: "/"
-      schedule:
-        interval: "weekly"
-        day: "saturday"
-        time: "10:00"
-        timezone: "Europe/Amsterdam"
-      groups:
-        npm:
-          patterns:
-            - "*"
-          update-types:
-            - "minor"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "saturday"
+      time: "10:00"
+      timezone: "Europe/Amsterdam"
+    groups:
+      npm:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
