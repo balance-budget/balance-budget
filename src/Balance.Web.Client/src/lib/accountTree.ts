@@ -35,3 +35,40 @@ export function descendantAndSelfIds(
     }
     return result;
 }
+
+/** Separator between path segments in account labels, e.g. "Car › Tax". */
+export const ACCOUNT_PATH_SEPARATOR = ' › ';
+
+/**
+ * The chain of account names from the root down to `id`, e.g. `['Car', 'Tax']`.
+ * A root account returns just its own name. Showing the full path makes nested
+ * leaves unambiguous (Car › Tax vs Home › Tax) — see ADR-0019.
+ */
+export function accountPathSegments(
+    byId: ReadonlyMap<AccountId, Account>,
+    id: AccountId,
+): string[] {
+    const segments: string[] = [];
+    const guard = new Set<AccountId>();
+    let current = byId.get(id);
+    while (current && !guard.has(current.id)) {
+        guard.add(current.id);
+        segments.unshift(current.name);
+        current = current.parentId === null ? undefined : byId.get(current.parentId);
+    }
+    return segments;
+}
+
+/**
+ * Plain "5110  Car › Tax" label (code + full path) for read-only account
+ * displays — e.g. a frozen journal line that shows where it posted without an
+ * editable picker. Returns null when the account is unknown.
+ */
+export function accountPathLabel(
+    byId: ReadonlyMap<AccountId, Account>,
+    id: AccountId,
+): string | null {
+    const account = byId.get(id);
+    if (!account) return null;
+    return `${account.code}  ${accountPathSegments(byId, id).join(ACCOUNT_PATH_SEPARATOR)}`;
+}
