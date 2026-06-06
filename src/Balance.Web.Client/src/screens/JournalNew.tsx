@@ -4,6 +4,7 @@ import { useAccounts, type Account } from '../api/accounts';
 import { useCounterparties } from '../api/counterparties';
 import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import { useCreateJournalEntry } from '../api/journalEntries';
+import { AccountSelect } from '../components/AccountSelect';
 import { ErrorState } from '../components/ErrorState';
 import { FieldError } from '../components/FieldError';
 import { FormErrorBanner } from '../components/FormErrorBanner';
@@ -13,15 +14,7 @@ import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { cx } from '../lib/cx';
 import { todayIso } from '../lib/dates';
-import {
-    ACCOUNT_TYPE_LABEL,
-    ACCOUNT_TYPE_ORDER,
-    asAccountId,
-    asCounterpartyId,
-    type AccountId,
-    type AccountType,
-    type CounterpartyId,
-} from '../lib/domain';
+import { asCounterpartyId, type AccountId, type CounterpartyId } from '../lib/domain';
 import { handleFormError } from '../lib/formErrors';
 import { formatMoney } from '../lib/money';
 import { CounterpartyFormModal } from './CounterpartyForm';
@@ -220,7 +213,6 @@ function JournalNewForm({
                     {form.mode === 'simple' ? (
                         <SimpleLines
                             simple={form.simple}
-                            accounts={accounts}
                             accountsById={accountsById}
                             anchorCurrency={anchorCurrency}
                             fieldErrors={fieldErrors}
@@ -229,7 +221,6 @@ function JournalNewForm({
                     ) : (
                         <AdvancedLines
                             advanced={form.advanced}
-                            accounts={accounts}
                             accountsById={accountsById}
                             anchorCurrency={anchorCurrency}
                             catalog={catalog}
@@ -404,14 +395,12 @@ function pickAnchorCurrency(form: FormState, accountsById: Map<AccountId, Accoun
 
 function SimpleLines({
     simple,
-    accounts,
     accountsById,
     anchorCurrency,
     fieldErrors,
     onChange,
 }: {
     simple: FormState['simple'];
-    accounts: Account[];
     accountsById: Map<AccountId, Account>;
     anchorCurrency: string | null;
     fieldErrors: FieldErrors | null;
@@ -442,7 +431,6 @@ function SimpleLines({
                 subheading="Money leaves these accounts (credit)."
                 side="from"
                 legs={simple.from}
-                accounts={accounts}
                 anchorCurrency={anchorCurrency}
                 accountsById={accountsById}
                 fieldErrors={fieldErrors}
@@ -459,7 +447,6 @@ function SimpleLines({
                 subheading="Money arrives in these accounts (debit)."
                 side="to"
                 legs={simple.to}
-                accounts={accounts}
                 anchorCurrency={anchorCurrency}
                 accountsById={accountsById}
                 fieldErrors={fieldErrors}
@@ -480,7 +467,6 @@ function SimpleLegColumn({
     subheading,
     side,
     legs,
-    accounts,
     anchorCurrency,
     accountsById,
     fieldErrors,
@@ -492,7 +478,6 @@ function SimpleLegColumn({
     subheading: string;
     side: 'from' | 'to';
     legs: SimpleLeg[];
-    accounts: Account[];
     anchorCurrency: string | null;
     accountsById: Map<AccountId, Account>;
     fieldErrors: FieldErrors | null;
@@ -527,7 +512,6 @@ function SimpleLegColumn({
                         <div className="flex-1 min-w-0 flex flex-col gap-1">
                             <AccountPicker
                                 value={leg.accountId}
-                                accounts={accounts}
                                 filterCurrency={filterCurrency}
                                 onChange={accountId => {
                                     onChange(side, i, { accountId });
@@ -574,7 +558,6 @@ function SimpleLegColumn({
 
 function AdvancedLines({
     advanced,
-    accounts,
     accountsById,
     anchorCurrency,
     catalog,
@@ -583,7 +566,6 @@ function AdvancedLines({
     onChange,
 }: {
     advanced: AdvancedLine[];
-    accounts: Account[];
     accountsById: Map<AccountId, Account>;
     anchorCurrency: string | null;
     catalog: CurrencyCatalog;
@@ -631,7 +613,6 @@ function AdvancedLines({
                         <div className="flex flex-col gap-1">
                             <AccountPicker
                                 value={line.accountId}
-                                accounts={accounts}
                                 filterCurrency={filterCurrency}
                                 onChange={accountId => {
                                     updateLine(i, { accountId });
@@ -754,53 +735,23 @@ function AdvancedTotalsFooter({
 
 function AccountPicker({
     value,
-    accounts,
     filterCurrency,
     onChange,
 }: {
     value: AccountId | null;
-    accounts: Account[];
     filterCurrency: string | null;
     onChange: (accountId: AccountId | null) => void;
 }) {
-    const groups = useMemo(() => {
-        const visible = filterCurrency
-            ? accounts.filter(a => a.currencyCode === filterCurrency || a.id === value)
-            : accounts;
-        const buckets = new Map<AccountType, Account[]>();
-        for (const account of visible) {
-            const list = buckets.get(account.type) ?? [];
-            list.push(account);
-            buckets.set(account.type, list);
-        }
-        for (const list of buckets.values()) {
-            list.sort((a, b) => a.name.localeCompare(b.name));
-        }
-        return ACCOUNT_TYPE_ORDER.filter(t => buckets.has(t)).map(t => ({
-            type: t,
-            accounts: buckets.get(t) ?? [],
-        }));
-    }, [accounts, filterCurrency, value]);
-
+    // Journal lines post to leaves only; the currency is anchored to the first
+    // chosen leg so every line in the entry shares one currency.
     return (
-        <select
-            value={value ?? ''}
-            onChange={e => {
-                const next = e.target.value;
-                onChange(next === '' ? null : asAccountId(next));
-            }}
-            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-13 focus:outline-none focus:border-border-strong w-full"
-        >
-            <option value="">Select…</option>
-            {groups.map(g => (
-                <optgroup key={g.type} label={ACCOUNT_TYPE_LABEL[g.type]}>
-                    {g.accounts.map(a => (
-                        <option key={a.id} value={a.id}>
-                            {a.name} — {a.currencyCode}
-                        </option>
-                    ))}
-                </optgroup>
-            ))}
-        </select>
+        <AccountSelect
+            value={value}
+            onChange={onChange}
+            postableOnly
+            currencyCode={filterCurrency ?? undefined}
+            placeholder="Select…"
+            ariaLabel="Account"
+        />
     );
 }
