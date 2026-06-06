@@ -8,7 +8,8 @@ ENV ASPNETCORE_HTTP_PORTS=5248
 EXPOSE 5248
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0.300-alpine3.23 AS build
-RUN apk add --no-cache nodejs npm
+# Keep the pnpm version in sync with the packageManager field in package.json.
+RUN apk add --no-cache nodejs npm && npm install --global pnpm@10.34.1
 ARG BUILD_CONFIGURATION=Release
 ARG BUILD_VERSION=v1.0.0
 WORKDIR /src

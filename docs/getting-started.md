@@ -3,7 +3,8 @@
 ## Prerequisites
 
 - .NET SDK **10.0.300** (or any `10.0.x` that satisfies `rollForward=latestMinor`). The version is pinned in `global.json`.
-- **Node.js 20+** for the React + Vite frontend (`Balance.Web.Client`). The esproj build invokes `npm` and Vite 8 requires Node 20.19+ / 22.12+.
+- **Node.js 20+** for the React + Vite frontend (`Balance.Web.Client`). Vite 8 requires Node 20.19+ / 22.12+.
+- **pnpm 10** — the version is pinned via the `packageManager` field in the root `package.json`. Easiest install: `corepack enable pnpm` (Corepack ships with Node and picks up the pinned version automatically). The esproj build invokes `pnpm` directly.
 - An IDE that understands the new `.slnx` solution format — Rider, Visual Studio 2022 17.11+, or VS Code with the C# Dev Kit.
 - (Optional) PostgreSQL 14+ if you want to run against the Postgres provider instead of SQLite.
 
@@ -12,11 +13,11 @@
 ```bash
 dotnet tool restore      # installs CSharpier as a local tool
 dotnet restore           # restores NuGet packages
-npm install              # restores SPA dependencies (npm workspace → root node_modules)
-dotnet build             # also runs `npm run build` via the esproj reference
+pnpm install             # restores SPA dependencies (pnpm workspace)
+dotnet build             # also runs `pnpm run build` via the esproj reference
 ```
 
-The repo is an [npm workspace](https://docs.npmjs.com/cli/v10/using-npm/workspaces): the SPA at `src/Balance.Web.Client` is declared as a workspace in the root `package.json`, so a single `npm install` at the repo root covers everything and produces one root `node_modules/`.
+The repo is a [pnpm workspace](https://pnpm.io/workspaces): the SPA at `src/Balance.Web.Client` is declared in `pnpm-workspace.yaml`, so a single `pnpm install` at the repo root covers everything. The esproj replaces the JavaScript SDK's hardcoded `npm install` with a `RunPnpmInstall` target, so `dotnet build` restores frontend packages on its own when needed.
 
 ## Common commands
 
@@ -36,7 +37,7 @@ dotnet test
 dotnet run --project src/Balance.Web/Balance.Web.csproj
 
 # Terminal 2: Vite dev server with HMR — browse http://localhost:5173
-npm run dev
+pnpm run dev
 
 # Publish (bundles the SPA's dist into the publish output)
 dotnet publish src/Balance.Web/Balance.Web.csproj -c Release

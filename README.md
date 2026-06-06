@@ -31,12 +31,12 @@ See [`docs/architecture.md`](docs/architecture.md) for the project graph and [`d
 ```bash
 dotnet tool restore
 dotnet restore
-npm install            # installs the SPA workspace (src/Balance.Web.Client) into the root node_modules
+pnpm install           # installs the SPA workspace (src/Balance.Web.Client)
 dotnet build
 
 # Run (two terminals)
 dotnet run --project src/Balance.Web/Balance.Web.csproj # .NET host on :5248
-npm run dev                                             # Vite dev server on :5173 — browse this
+pnpm run dev                                            # Vite dev server on :5173 — browse this
 ```
 
 Run in the **Development** environment to get a wipe-and-rebuilt sample ledger to click around in. Full setup, configuration, and database notes are in [`docs/getting-started.md`](docs/getting-started.md).

@@ -39,7 +39,12 @@ jobs:
       uses: actions/setup-dotnet@v5
       with:
         dotnet-version: 10.0.x
-    
+
+    # Version comes from the packageManager field in package.json.
+    # The SPA esproj runs `pnpm install` + `pnpm run build` during dotnet build.
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v4
       if: ${{ !github.event.repository.private }}

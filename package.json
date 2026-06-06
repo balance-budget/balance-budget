@@ -1,26 +1,19 @@
 {
   "name": "balance-budget",
   "private": true,
-  "workspaces": [
-    "src/Balance.Web.Client"
-  ],
+  "packageManager": "pnpm@10.34.1",
   "scripts": {
-    "dev": "npm run dev --workspace=balance",
-    "build": "npm run build --workspace=balance",
-    "lint": "npm run lint --workspace=balance",
-    "test": "npm run test --workspace=balance",
-    "typecheck": "npm run typecheck --workspace=balance",
-    "format": "npm run format --workspace=balance",
-    "format:check": "npm run format:check --workspace=balance",
-    "codegen": "npm run codegen --workspace=balance",
-    "sandcastle": "npx tsx .sandcastle/main.mts"
+    "dev": "pnpm --filter balance dev",
+    "build": "pnpm --filter balance build",
+    "lint": "pnpm --filter balance lint",
+    "test": "pnpm --filter balance test",
+    "typecheck": "pnpm --filter balance typecheck",
+    "format": "pnpm --filter balance format",
+    "format:check": "pnpm --filter balance format:check",
+    "codegen": "pnpm --filter balance codegen",
+    "sandcastle": "pnpm dlx tsx .sandcastle/main.mts"
   },
   "devDependencies": {
     "@ai-hero/sandcastle": "^0.7.0"
-  },
-  "overrides": {
-    "openapi-typescript": {
-      "typescript": "$typescript"
-    }
   }
 }

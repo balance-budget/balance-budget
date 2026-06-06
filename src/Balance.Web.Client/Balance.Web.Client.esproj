@@ -1,7 +1,25 @@
 <Project Sdk="Microsoft.VisualStudio.JavaScript.Sdk/1.0.5550578">
   <PropertyGroup>
-    <BuildCommand>npm run build</BuildCommand>
-    <ProductionBuildCommand>npm run build</ProductionBuildCommand>
+    <!-- The SDK's RunNpmInstall target hardcodes `npm install`; disable it (this also
+         disables its npm-audit rider) — RunPnpmInstall below takes its place. -->
+    <ShouldRunNpmInstall>false</ShouldRunNpmInstall>
+    <BuildCommand>pnpm run build</BuildCommand>
+    <ProductionBuildCommand>pnpm run build</ProductionBuildCommand>
     <BuildOutputFolder>dist</BuildOutputFolder>
+    <PnpmInstallStamp>$(BaseIntermediateOutputPath)pnpm-install.stamp</PnpmInstallStamp>
   </PropertyGroup>
+
+  <!-- pnpm replacement for the SDK's RunNpmInstall. BeforeTargets fires even though
+       RunNpmInstall itself is condition-skipped, so every path that depends on it
+       (build, clean, publish, dotnet run) still restores first. pnpm resolves the
+       workspace root upward via pnpm-workspace.yaml. -->
+  <Target Name="RunPnpmInstall"
+          BeforeTargets="RunNpmInstall"
+          Inputs="$(MSBuildProjectDirectory)/package.json;$(MSBuildProjectDirectory)/../../package.json;$(MSBuildProjectDirectory)/../../pnpm-workspace.yaml;$(MSBuildProjectDirectory)/../../pnpm-lock.yaml"
+          Outputs="$(PnpmInstallStamp)">
+    <Message Importance="high" Text="Restoring dependencies using 'pnpm'. This may take several minutes..." />
+    <Exec Command="pnpm install" WorkingDirectory="$(MSBuildProjectDirectory)" />
+    <MakeDir Directories="$(BaseIntermediateOutputPath)" />
+    <Touch Files="$(PnpmInstallStamp)" AlwaysCreate="true" />
+  </Target>
 </Project>

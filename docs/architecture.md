@@ -53,7 +53,7 @@ Notes:
 - `Balance.Data` does **not** reference the provider-specific projects. It targets EF Core's relational abstractions and lets the host process load the right migrations assembly at runtime.
 - `Balance.Web` references both provider-specific projects directly so their migration assemblies are loaded.
 - `Balance.Integration.Ing` references `Balance.Services` (its extractors implement the Services-owned `IBankTransactionExtractor` contract) and is therefore composed *beside* Services at the host, not nested under it — see [Startup composition](#startup-composition) and [ADR-0018](adr/0018-integration-layer-composed-at-host.md).
-- `Balance.Web` references `Balance.Web.Client` with `ReferenceOutputAssembly="false"` — the esproj produces no .NET assembly; the project reference exists purely so MSBuild builds the SPA (`npm run build` → `dist/`) and packs its static assets into the ASP.NET publish output.
+- `Balance.Web` references `Balance.Web.Client` with `ReferenceOutputAssembly="false"` — the esproj produces no .NET assembly; the project reference exists purely so MSBuild builds the SPA (`pnpm run build` → `dist/`) and packs its static assets into the ASP.NET publish output.
 - `Balance.Tests` references `Balance.Web` and `Balance.Services` (transitively pulling in the rest). `Balance.Web`, `Balance.Services`, and `Balance.Integration.Ing` expose internals via `InternalsVisibleTo("Balance.Tests")`.
 
 ## Layers
@@ -110,7 +110,7 @@ Built with `WebApplication.CreateSlimBuilder` for fast startup and minimal defau
 
 ### Balance.Web.Client
 
-React 19 + TypeScript + Vite 8 SPA. The `.esproj` (`Microsoft.VisualStudio.JavaScript.Sdk/1.0.5550578`) wraps `npm run build` and emits to `dist/`. The project is referenced from `Balance.Web` with `ReferenceOutputAssembly="false"` so MSBuild builds the SPA whenever `Balance.Web` builds, and the resulting static assets are packed into the publish output. During development, `npm run dev` runs the Vite dev server (default `http://localhost:5173`) with HMR; `vite.config.ts` proxies `/api` to the .NET host at `http://localhost:5248`, so the browser only ever talks to one origin and CORS stays out of the picture.
+React 19 + TypeScript + Vite 8 SPA. The `.esproj` (`Microsoft.VisualStudio.JavaScript.Sdk/1.0.5550578`) wraps `pnpm run build` and emits to `dist/`. The project is referenced from `Balance.Web` with `ReferenceOutputAssembly="false"` so MSBuild builds the SPA whenever `Balance.Web` builds, and the resulting static assets are packed into the publish output. During development, `pnpm run dev` runs the Vite dev server (default `http://localhost:5173`) with HMR; `vite.config.ts` proxies `/api` to the .NET host at `http://localhost:5248`, so the browser only ever talks to one origin and CORS stays out of the picture.
 
 ### Balance.Tests
 
@@ -166,12 +166,14 @@ ExceptionHandler → StatusCodePages → ForwardedHeaders → DefaultFiles → R
 - `dotnet-tools.json` — CSharpier `1.2.6` as the project-local formatter.
 - `.editorconfig` — minimal; disables `CA2007` (no `ConfigureAwait` on tasks in app code).
 - CI (`.github/workflows/build-and-test.yml`):
-  1. `dotnet tool restore`
-  2. `dotnet restore`
-  3. `dotnet csharpier check .`
-  4. `dotnet build --no-restore` (builds the SPA via the esproj — installs npm deps and generates the route tree)
-  5. `npm run lint` in `src/Balance.Web.Client` (ESLint, reusing the build's `node_modules` + generated route tree)
+  1. pnpm setup (`pnpm/action-setup`, version from the `packageManager` field)
+  2. `dotnet tool restore`
+  3. `dotnet restore`
+  4. `dotnet csharpier check .`
+  5. `dotnet build --no-restore` (builds the SPA via the esproj — runs `pnpm install` and generates the route tree)
   6. CodeQL analyze (public repos only)
   7. `dotnet test` with cobertura coverage
   8. Sticky PR comments for test results and coverage
+
+  There is currently no frontend lint/typecheck step in CI — run `pnpm run lint` locally.
 - A separate `codeql.yml` re-runs CodeQL on a weekly cron.

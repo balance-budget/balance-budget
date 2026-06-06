@@ -1,0 +1,7 @@
+packages:
+  - src/Balance.Web.Client
+
+# openapi-typescript declares typescript ^5.x; force the workspace's TS 6.
+# Keep in sync with the typescript devDependency in src/Balance.Web.Client.
+overrides:
+  'openapi-typescript>typescript': '~6.0.2'

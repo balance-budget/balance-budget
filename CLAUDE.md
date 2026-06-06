@@ -19,8 +19,8 @@ If you are adding documentation, prefer extending the files under `docs/` and up
 dotnet tool restore
 # NuGet packages      
 dotnet restore
-# Frontend npm packages (npm workspaces — single root node_modules covers Balance.Web.Client)
-npm install
+# Frontend packages (pnpm workspace — see pnpm-workspace.yaml; version pinned via the packageManager field)
+pnpm install
 
 # Build (without restore) — also builds the SPA via the esproj reference
 dotnet build --no-restore -v:minimal
@@ -47,7 +47,7 @@ dotnet test --no-build -v:minimal --treenode-filter "/Balance.Tests/Balance.Test
 # .NET host (serves /api/*, and the last built SPA at /)
 dotnet run --project src/Balance.Web/Balance.Web.csproj
 # Vite dev server (HMR; proxies /api → http://localhost:5248) — browse this URL
-npm run dev
+pnpm run dev
 
 # Publish — bundles the SPA's dist into the ASP.NET publish output
 dotnet publish src/Balance.Web/Balance.Web.csproj -c Release
@@ -86,7 +86,7 @@ graph LR
 
 **Layers**
 - `Balance.Web` — Minimal APIs (all under `/api`), middleware pipeline, Scalar/OpenAPI, and the SPA host (`MapStaticAssets()` + `MapFallbackToFile("index.html")`). Uses `WebApplication.CreateSlimBuilder`.
-- `Balance.Web.Client` — React 19 + TypeScript + Vite SPA. Built via an `.esproj` (`Microsoft.VisualStudio.JavaScript.Sdk`) that wraps `npm run build`; the resulting `dist/` is packed into the ASP.NET publish output via the project reference on `Balance.Web` (`ReferenceOutputAssembly="false"`).
+- `Balance.Web.Client` — React 19 + TypeScript + Vite SPA. Built via an `.esproj` (`Microsoft.VisualStudio.JavaScript.Sdk`) that wraps `pnpm run build` (a custom `RunPnpmInstall` target replaces the SDK's hardcoded `npm install`); the resulting `dist/` is packed into the ASP.NET publish output via the project reference on `Balance.Web` (`ReferenceOutputAssembly="false"`).
 - `Balance.Services` — Business logic, Quartz jobs, `IApplicationVersionService`, and the bank-import contract `IBankTransactionExtractor`. Composes `Configuration` + `Data` + `Jobs`.
 - `Balance.Integration.Ing` — ING bank-statement importers. References `Balance.Services` and implements `IBankTransactionExtractor`; composed at the host *beside* Services (a third `AddBalanceIntegrationIng()` call), not nested under it, to avoid a Services↔Integration reference cycle. See `docs/adr/0018-integration-layer-composed-at-host.md`. New banks are new `Balance.Integration.<Bank>` projects.
 - `Balance.Data` — EF Core `BalanceDbContext` (also implements `IDataProtectionKeyContext`), abstract `BaseEntity` (`Id`/`CreatedAt`/`UpdatedAt`), migration host extension, UTC value converters.
@@ -106,7 +106,7 @@ These are conventions to follow when adding new code. See [docs/conventions.md](
 - **Constructors.** Do not use C# 12 primary constructors. Stick to the explicit pattern: `private readonly` fields plus a named constructor that assigns them.
 - **Logging.** Use the source-generated `LoggerMessage` pattern. Each project has a `Logging/LoggerExtensions.cs` partial class; add `[LoggerMessage]` methods there rather than calling `ILogger.LogXxx` directly.
 - **API surface.** All backend routes are mounted inside `var api = app.MapGroup("/api");` in `Program.cs`. Register feature endpoints through a `MapXxxEndpoints` extension and call it on `api`, not on `app` — the SPA fallback (`MapFallbackToFile("index.html")`) owns every non-`/api` URL.
-- **Frontend.** The React SPA lives at `src/Balance.Web.Client`. Pages and components go under `src/`, public assets (favicon, etc.) under `public/`. The Vite dev server (`npm run dev`) proxies `/api` to the .NET host (`http://localhost:5248`) per `vite.config.ts`.
+- **Frontend.** The React SPA lives at `src/Balance.Web.Client`. Pages and components go under `src/`, public assets (favicon, etc.) under `public/`. The Vite dev server (`pnpm run dev`) proxies `/api` to the .NET host (`http://localhost:5248`) per `vite.config.ts`.
 - **Background jobs.** Use the Quartz helpers in `Balance.Services/Jobs` (`ScheduleJobAt<TJob>(cron)`). The scheduler name is `"Balance Scheduler"`. Wire jobs inside `AddBalanceJobs`.
 - **Visibility.** Default to `internal`; expose `public` only where another project legitimately needs the type. `Balance.Web` and `Balance.Services` use `InternalsVisibleTo` to share internals with `Balance.Tests`.
 - **Formatting.** CSharpier is the source of truth — CI fails on any deviation. Always run `dotnet csharpier format .` before committing.
@@ -127,7 +127,7 @@ The web host startup follows this order:
 
 ## CI
 
-`.github/workflows/build-and-test.yml`: `dotnet tool restore` → `dotnet restore` → CSharpier check → build → frontend ESLint (`npm run lint` from the repo root, which forwards to the `Balance.Web.Client` workspace and reuses the SPA build the esproj already ran) → CodeQL (public repos) → `dotnet test` with cobertura coverage. Test results and coverage are posted as sticky PR comments. A separate scheduled `codeql.yml` re-runs CodeQL weekly.
+`.github/workflows/build-and-test.yml`: pnpm setup (version from the `packageManager` field) → `dotnet tool restore` → `dotnet restore` → CSharpier check → build (the esproj runs `pnpm install` + `pnpm run build` for the SPA) → CodeQL (public repos) → `dotnet test` with cobertura coverage. Test results and coverage are posted as sticky PR comments. A separate scheduled `codeql.yml` re-runs CodeQL weekly. There is currently no frontend lint/typecheck step in CI — run `pnpm run lint` locally.
 
 ## Notes for AI agents
 
