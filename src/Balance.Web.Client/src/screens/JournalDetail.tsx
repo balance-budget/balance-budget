@@ -12,6 +12,7 @@ import {
 import { useDetachBankTransaction, type BankTransactionDetail } from '../api/bankTransactions';
 import { useCounterparties } from '../api/counterparties';
 import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
+import { AccountSelect } from '../components/AccountSelect';
 import { BankTransactionDetails } from '../components/BankTransactionDetails';
 import { Combobox } from '../components/Combobox';
 import { type ComboboxItem } from '../components/combobox.state';
@@ -24,14 +25,9 @@ import { Panel, SectionHead } from '../components/Panel';
 import { ProjectionAmount } from '../components/ProjectionAmount';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
+import { accountPathLabel } from '../lib/accountTree';
 import { cx } from '../lib/cx';
-import {
-    ACCOUNT_TYPE_LABEL,
-    ACCOUNT_TYPE_ORDER,
-    type AccountId,
-    type CounterpartyId,
-    type JournalEntryId,
-} from '../lib/domain';
+import { type AccountId, type CounterpartyId, type JournalEntryId } from '../lib/domain';
 import { handleActionError, handleFormError } from '../lib/formErrors';
 import { formatLegLabel, projectEntry, type JournalProjection } from '../lib/journalProjection';
 import { formatMoney } from '../lib/money';
@@ -400,11 +396,6 @@ function EditJournalEntry({
         [counterparties.data],
     );
 
-    const visibleAccounts = useMemo(
-        () => accounts.filter(a => a.currencyCode === currencyCode),
-        [accounts, currencyCode],
-    );
-
     function updateLine(key: string, patch: Partial<EditLine>) {
         setLines(prev => prev.map(l => (l.key === key ? { ...l, ...patch } : l)));
     }
@@ -518,7 +509,8 @@ function EditJournalEntry({
             <Panel>
                 <EditLines
                     lines={lines}
-                    accounts={visibleAccounts}
+                    currencyCode={currencyCode}
+                    accountsById={accountsById}
                     fieldErrors={fieldErrors}
                     onUpdate={updateLine}
                     onAdd={addLine}
@@ -549,14 +541,16 @@ function EditJournalEntry({
 
 function EditLines({
     lines,
-    accounts,
+    currencyCode,
+    accountsById,
     fieldErrors,
     onUpdate,
     onAdd,
     onRemove,
 }: {
     lines: EditLine[];
-    accounts: Account[];
+    currencyCode: string;
+    accountsById: ReadonlyMap<AccountId, Account>;
     fieldErrors: FieldErrors | null;
     onUpdate: (key: string, patch: Partial<EditLine>) => void;
     onAdd: () => void;
@@ -577,7 +571,8 @@ function EditLines({
                     key={line.key}
                     line={line}
                     index={i}
-                    accounts={accounts}
+                    currencyCode={currencyCode}
+                    accountsById={accountsById}
                     fieldErrors={fieldErrors}
                     onUpdate={onUpdate}
                     onRemove={onRemove}
@@ -601,30 +596,25 @@ function EditLines({
 function EditLineRow({
     line,
     index,
-    accounts,
+    currencyCode,
+    accountsById,
     fieldErrors,
     onUpdate,
     onRemove,
 }: {
     line: EditLine;
     index: number;
-    accounts: Account[];
+    currencyCode: string;
+    accountsById: ReadonlyMap<AccountId, Account>;
     fieldErrors: FieldErrors | null;
     onUpdate: (key: string, patch: Partial<EditLine>) => void;
     onRemove: (key: string) => void;
 }) {
     const locked = isLineLocked(line);
-    const accountItems = useMemo<ComboboxItem<AccountId>[]>(
-        () =>
-            [...accounts]
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map(a => ({ key: a.id, label: a.name, group: a.type, value: a.id })),
-        [accounts],
-    );
-    const selectedAccount = useMemo(
-        () => accounts.find(a => a.id === line.accountId),
-        [accounts, line.accountId],
-    );
+    // A frozen line shows the same code + path the picker would, so editable and
+    // frozen rows read identically.
+    const frozenLabel =
+        line.accountId !== null ? (accountPathLabel(accountsById, line.accountId) ?? '—') : '—';
     return (
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_90px_140px_140px_minmax(140px,1fr)_32px] gap-3 items-start px-2 py-2 border-b border-border-soft last:border-b-0">
             <div className="flex flex-col gap-1">
@@ -633,17 +623,16 @@ function EditLineRow({
                         className="px-3 py-2 rounded-sm bg-surface-1 border border-border-soft text-fg-2 text-13 truncate"
                         title="Frozen — line is Cleared or Reconciled"
                     >
-                        {selectedAccount?.name ?? '—'}
+                        {frozenLabel}
                     </span>
                 ) : (
-                    <Combobox
-                        items={accountItems}
+                    <AccountSelect
                         value={line.accountId}
                         onChange={id => {
                             onUpdate(line.key, { accountId: id });
                         }}
-                        groupOrder={ACCOUNT_TYPE_ORDER}
-                        groupLabels={ACCOUNT_TYPE_LABEL}
+                        postableOnly
+                        currencyCode={currencyCode}
                         placeholder="Pick account…"
                         ariaLabel="Account"
                     />
