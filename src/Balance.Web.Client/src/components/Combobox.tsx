@@ -112,6 +112,7 @@ export function Combobox<T>({
     const inputRef = useRef<HTMLInputElement>(null);
     const listboxRef = useRef<HTMLUListElement>(null);
     const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
+    const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
     const listboxId = useId();
     const inputId = useId();
 
@@ -128,11 +129,19 @@ export function Combobox<T>({
 
     // Capture the anchor rect synchronously before paint so the portalled
     // listbox renders at the correct position on first open, even if the
-    // window has been scrolled since the previous open.
+    // window has been scrolled since the previous open. The portal target is
+    // captured alongside it: when the combobox sits inside a <dialog> opened
+    // via showModal(), the dialog lives in the browser's top layer, which
+    // paints above everything portalled to document.body regardless of
+    // z-index — so the listbox must portal into the dialog itself. The
+    // fixed-position coordinates from listboxStyle stay viewport-relative
+    // either way (the dialog has no transform/filter to re-anchor them).
     useLayoutEffect(() => {
         if (!open) return;
         const el = inputRef.current;
-        if (el) setAnchorRect(el.getBoundingClientRect());
+        if (!el) return;
+        setAnchorRect(el.getBoundingClientRect());
+        setPortalTarget(el.closest('dialog') ?? document.body);
     }, [open]);
 
     useEffect(() => {
@@ -237,6 +246,7 @@ export function Combobox<T>({
             {open &&
                 options.length > 0 &&
                 anchorRect &&
+                portalTarget &&
                 createPortal(
                     <ul
                         ref={listboxRef}
@@ -250,7 +260,7 @@ export function Combobox<T>({
                     >
                         {renderOptions(options, effectiveActive, groupLabels, commit, setActive)}
                     </ul>,
-                    document.body,
+                    portalTarget,
                 )}
         </div>
     );
