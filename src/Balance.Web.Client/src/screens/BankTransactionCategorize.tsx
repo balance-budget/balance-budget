@@ -17,6 +17,7 @@ import {
     type SuggestedCounterAccount,
 } from '../api/counterparties';
 import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
+import { AccountSelect } from '../components/AccountSelect';
 import { BankTransactionDetails } from '../components/BankTransactionDetails';
 import { Combobox } from '../components/Combobox';
 import { type ComboboxItem } from '../components/combobox.state';
@@ -30,8 +31,6 @@ import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { todayIso } from '../lib/dates';
 import {
-    ACCOUNT_TYPE_LABEL,
-    ACCOUNT_TYPE_ORDER,
     type AccountId,
     type BankAccountId,
     type BankTransactionId,
@@ -321,7 +320,6 @@ function CategorizeForm({
             <Panel>
                 <Lines
                     lines={form.lines}
-                    accounts={accounts}
                     bankAccounts={bankAccounts}
                     bankTransactionBankAccountId={bt.bankAccountId}
                     currencyCode={bt.money.currencyCode}
@@ -484,7 +482,6 @@ function CounterpartyInput({
 
 function Lines({
     lines,
-    accounts,
     bankAccounts,
     bankTransactionBankAccountId,
     currencyCode,
@@ -494,7 +491,6 @@ function Lines({
     onRemove,
 }: {
     lines: LineInput[];
-    accounts: Account[];
     bankAccounts: BankAccount[];
     bankTransactionBankAccountId: BankAccountId;
     currencyCode: string;
@@ -512,12 +508,6 @@ function Lines({
         return ba?.accountId ?? null;
     }, [bankAccounts, bankTransactionBankAccountId]);
 
-    const visibleAccounts = useMemo(
-        () =>
-            accounts.filter(a => a.currencyCode === currencyCode && a.id !== ownBankSideAccountId),
-        [accounts, currencyCode, ownBankSideAccountId],
-    );
-
     return (
         <div className="flex flex-col">
             <div className="hidden lg:grid grid-cols-[1fr_140px_minmax(140px,1fr)_32px] gap-3 px-2 pb-2 text-11 text-fg-3 uppercase tracking-wider border-b border-border-soft">
@@ -532,7 +522,8 @@ function Lines({
                     line={line}
                     index={i}
                     canRemove={lines.length > 1}
-                    accounts={visibleAccounts}
+                    currencyCode={currencyCode}
+                    excludeAccountId={ownBankSideAccountId}
                     fieldErrors={fieldErrors}
                     onUpdate={onUpdate}
                     onRemove={onRemove}
@@ -557,7 +548,8 @@ function LineRow({
     line,
     index,
     canRemove,
-    accounts,
+    currencyCode,
+    excludeAccountId,
     fieldErrors,
     onUpdate,
     onRemove,
@@ -565,7 +557,8 @@ function LineRow({
     line: LineInput;
     index: number;
     canRemove: boolean;
-    accounts: Account[];
+    currencyCode: string;
+    excludeAccountId: AccountId | null;
     fieldErrors: FieldErrors | null;
     onUpdate: (index: number, patch: Partial<LineInput>) => void;
     onRemove: (index: number) => void;
@@ -573,12 +566,16 @@ function LineRow({
     return (
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_140px_minmax(140px,1fr)_32px] gap-3 items-start px-2 py-2 border-b border-border-soft last:border-b-0">
             <div className="flex flex-col gap-1">
-                <AccountPicker
+                <AccountSelect
                     value={line.accountId}
-                    accounts={accounts}
                     onChange={accountId => {
                         onUpdate(index, { accountId });
                     }}
+                    postableOnly
+                    currencyCode={currencyCode}
+                    exclude={excludeAccountId ? [excludeAccountId] : undefined}
+                    placeholder="Pick account…"
+                    ariaLabel="Account"
                 />
                 <FieldError name={`lines[${index.toString()}].accountId`} errors={fieldErrors} />
             </div>
@@ -619,38 +616,6 @@ function LineRow({
                 <Icon name="trash" size={14} strokeWidth={2} />
             </button>
         </div>
-    );
-}
-
-function AccountPicker({
-    value,
-    accounts,
-    onChange,
-}: {
-    value: AccountId | null;
-    accounts: Account[];
-    onChange: (accountId: AccountId | null) => void;
-}) {
-    const items = useMemo<ComboboxItem<AccountId>[]>(
-        () =>
-            [...accounts]
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map(a => ({ key: a.id, label: a.name, group: a.type, value: a.id })),
-        [accounts],
-    );
-
-    return (
-        <Combobox
-            items={items}
-            value={value}
-            onChange={id => {
-                onChange(id);
-            }}
-            groupOrder={ACCOUNT_TYPE_ORDER}
-            groupLabels={ACCOUNT_TYPE_LABEL}
-            placeholder="Pick account…"
-            ariaLabel="Account"
-        />
     );
 }
 
