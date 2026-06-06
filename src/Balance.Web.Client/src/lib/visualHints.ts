@@ -26,11 +26,17 @@ export const ACCOUNT_ICON_CHOICES: readonly string[] = [
     'bank',
     'credit-card',
     'bitcoin',
+    'shield',
     'trending-up',
     'trending-down',
+    'repeat',
+    'calendar-sync',
     // spending & daily life
     'shopping-cart',
     'shopping-bag',
+    'shopping-basket',
+    'sofa',
+    'store',
     'utensils',
     'coffee',
     'shirt',
@@ -39,12 +45,16 @@ export const ACCOUNT_ICON_CHOICES: readonly string[] = [
     'zap',
     'smartphone',
     // transport & travel
+    'road',
     'car',
+    'motorbike',
     'fuel',
+    'ev-charger',
     'bike',
     'train',
     'plane',
     'umbrella',
+    'wrench',
     // people, health & leisure
     'briefcase',
     'graduation-cap',
@@ -58,6 +68,12 @@ export const ACCOUNT_ICON_CHOICES: readonly string[] = [
     'tv',
     'book-open',
     'leaf',
+    'circle-question-mark',
+    'amphora',
+    'roller-coaster',
+    'ferris-wheel',
+    'palmtree',
+    'sparkles',
 ];
 
 const ACCOUNT_ICON_SET: ReadonlySet<string> = new Set(ACCOUNT_ICON_CHOICES);
