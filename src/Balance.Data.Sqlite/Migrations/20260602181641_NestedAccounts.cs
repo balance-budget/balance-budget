@@ -41,7 +41,7 @@ namespace Balance.Data.Sqlite.Migrations
             // this migration, so this yields unique, non-empty codes — safe to index below. New
             // installs only have the seed row, which the UpdateData below sets explicitly.
             migrationBuilder.Sql(
-                "UPDATE \"Accounts\" SET \"Code\" = \"Name\" WHERE \"Code\" = '';"
+                "UPDATE \"Accounts\" SET \"Code\" = \"Name\", \"IsPostable\" = 1 WHERE \"Code\" = '';"
             );
 
             migrationBuilder.UpdateData(
