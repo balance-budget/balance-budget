@@ -15,30 +15,37 @@ const LISTBOX_MAX_HEIGHT = 256; // matches the design's max-h-64
 const LISTBOX_GAP = 4;
 const LISTBOX_DOWN_MIN_SPACE = 160; // prefer popping up when below has less than this
 
+const LISTBOX_VIEWPORT_MARGIN = 8; // keep the popup off the window's right edge
+
 /** Decide whether the listbox should drop down below the input or pop up above.
  *  Pops up when the space below the anchor is too small to comfortably show a
  *  useful slice of options *and* the space above is more generous — which is
  *  exactly the situation the BulkApplyFooter at the bottom of the viewport
- *  creates for its inline comboboxes. */
-function listboxStyle(anchorRect: DOMRect): CSSProperties {
+ *  creates for its inline comboboxes.
+ *
+ *  By default the listbox matches the anchor width. `minWidth` lets a picker
+ *  whose options are wider than the trigger (e.g. deep account paths) widen the
+ *  popup beyond the input, capped so it never runs past the viewport edge. */
+function listboxStyle(anchorRect: DOMRect, minWidth?: number): CSSProperties {
     const spaceBelow = window.innerHeight - anchorRect.bottom - LISTBOX_GAP;
     const spaceAbove = anchorRect.top - LISTBOX_GAP;
     const popUp = spaceBelow < LISTBOX_DOWN_MIN_SPACE && spaceAbove > spaceBelow;
     const maxHeight = Math.min(LISTBOX_MAX_HEIGHT, popUp ? spaceAbove : spaceBelow);
+    const maxWidth = window.innerWidth - anchorRect.left - LISTBOX_VIEWPORT_MARGIN;
+    const width = Math.min(Math.max(anchorRect.width, minWidth ?? 0), maxWidth);
+    const horizontal = { left: anchorRect.left, width };
     if (popUp) {
         return {
             position: 'fixed',
             bottom: window.innerHeight - anchorRect.top + LISTBOX_GAP,
-            left: anchorRect.left,
-            width: anchorRect.width,
+            ...horizontal,
             maxHeight,
         };
     }
     return {
         position: 'fixed',
         top: anchorRect.bottom + LISTBOX_GAP,
-        left: anchorRect.left,
-        width: anchorRect.width,
+        ...horizontal,
         maxHeight,
     };
 }
@@ -75,6 +82,10 @@ export type ComboboxProps<T> = {
     disabled?: boolean;
     /** Visible-only label used by screen readers. */
     ariaLabel?: string;
+    /** Minimum width (px) for the open listbox, letting it grow wider than the
+     *  trigger when options are long (e.g. deep account paths). Capped to the
+     *  viewport. */
+    listboxMinWidth?: number;
 };
 
 export function Combobox<T>({
@@ -90,6 +101,7 @@ export function Combobox<T>({
     placeholder,
     disabled,
     ariaLabel,
+    listboxMinWidth,
 }: ComboboxProps<T>) {
     const selectedItem = useMemo(() => items.find(i => i.value === value) ?? null, [items, value]);
 
@@ -230,7 +242,7 @@ export function Combobox<T>({
                         ref={listboxRef}
                         id={listboxId}
                         role="listbox"
-                        style={listboxStyle(anchorRect)}
+                        style={listboxStyle(anchorRect, listboxMinWidth)}
                         className={cx(
                             'z-50 overflow-y-auto',
                             'rounded-sm bg-bg-1 border border-border-soft shadow-overlay text-13',
