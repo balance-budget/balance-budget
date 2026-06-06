@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useAccounts, useCreateAccount, useUpdateAccount, type Account } from '../api/accounts';
+import { useCreateAccount, useUpdateAccount, type Account } from '../api/accounts';
 import { useCurrencies } from '../api/currencies';
 import { AccountIconPicker } from '../components/AccountIconPicker';
+import { AccountSelect } from '../components/AccountSelect';
 import { FieldError } from '../components/FieldError';
 import { FormErrorBanner } from '../components/FormErrorBanner';
 import { Modal, ModalFooter } from '../components/Modal';
@@ -18,7 +19,6 @@ export function AccountFormModal(props: Props) {
     const update = useUpdateAccount();
     const toast = useToast();
     const currencies = useCurrencies();
-    const accounts = useAccounts();
 
     const initial =
         props.mode === 'edit'
@@ -53,16 +53,6 @@ export function AccountFormModal(props: Props) {
 
     const isPending = create.isPending || update.isPending;
     const currencyList = Array.from(currencies.data?.values() ?? []);
-
-    // Eligible parents: non-postable accounts that share the chosen type and currency, excluding
-    // self (deeper cycles are rejected server-side and surfaced as a form error). See ADR-0019.
-    const parentOptions = (accounts.data ?? []).filter(
-        a =>
-            !a.isPostable &&
-            a.type === accountType &&
-            a.currencyCode === currencyCode &&
-            (props.mode === 'create' || a.id !== props.account.id),
-    );
 
     async function submit() {
         setTopError(null);
@@ -202,28 +192,33 @@ export function AccountFormModal(props: Props) {
                     <FieldError name="CurrencyCode" errors={fieldErrors} />
                 </label>
 
-                <label className="flex flex-col gap-1 mb-3">
+                <div className="flex flex-col gap-1 mb-3">
                     <span className="text-12 font-medium text-fg-2">Parent account</span>
-                    <select
-                        value={parentId ?? ''}
-                        onChange={e => {
-                            setParentId((e.target.value || null) as Account['parentId']);
+                    {/* Eligible parents: non-postable placeholders sharing the chosen type and
+                     *  currency. In edit mode the account's own subtree is excluded so it can't
+                     *  become its own ancestor; deeper cycles are rejected server-side too. */}
+                    <AccountSelect
+                        value={parentId}
+                        onChange={id => {
+                            setParentId(id);
                         }}
-                        className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong disabled:opacity-60"
-                        disabled={parentOptions.length === 0}
-                    >
-                        <option value="">None — top level</option>
-                        {parentOptions.map(a => (
-                            <option key={a.id} value={a.id}>
-                                {a.code} — {a.name}
-                            </option>
-                        ))}
-                    </select>
+                        onClear={() => {
+                            setParentId(null);
+                        }}
+                        placeholdersOnly
+                        type={accountType}
+                        currencyCode={currencyCode || undefined}
+                        excludeSubtreeOf={props.mode === 'edit' ? props.account.id : undefined}
+                        disabled={currencyCode === ''}
+                        noneLabel="None — top level"
+                        placeholder="None — top level"
+                        ariaLabel="Parent account"
+                    />
                     <span className="text-11 text-fg-3">
                         Only non-postable accounts of the same type and currency can be parents.
                     </span>
                     <FieldError name="ParentAccountId" errors={fieldErrors} />
-                </label>
+                </div>
 
                 <label className="flex items-start gap-2">
                     <input

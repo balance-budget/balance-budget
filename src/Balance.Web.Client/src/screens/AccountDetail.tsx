@@ -10,9 +10,8 @@ import {
     type RegisterStatusFilter,
 } from '../api/register';
 import { AccountAvatar } from '../components/AccountAvatar';
+import { AccountSelect } from '../components/AccountSelect';
 import { Amount } from '../components/Amount';
-import { Combobox } from '../components/Combobox';
-import { type ComboboxItem } from '../components/combobox.state';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { DateInput } from '../components/DateInput';
 import { ErrorState } from '../components/ErrorState';
@@ -22,9 +21,9 @@ import { Panel, SectionHead } from '../components/Panel';
 import { SearchInput } from '../components/SearchInput';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
-import { descendantAndSelfIds } from '../lib/accountTree';
+import { accountPathLabel } from '../lib/accountTree';
 import { cx } from '../lib/cx';
-import { ACCOUNT_TYPE_ORDER, type AccountId, type JournalLineId } from '../lib/domain';
+import { type AccountId, type JournalLineId } from '../lib/domain';
 import { handleActionError } from '../lib/formErrors';
 import { formatMoney } from '../lib/money';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
@@ -200,34 +199,16 @@ function RegisterFilterBar({
     filters: RegisterFilterState;
     onFiltersChange: (patch: Partial<RegisterFilterState>) => void;
 }) {
-    const accounts = useAccounts();
-    const all = useMemo(() => accounts.data ?? [], [accounts.data]);
-
-    // The posted picker offers only the viewed subtree (anything else matches nothing);
-    // picking a non-postable child means "that child's whole subtree" (ADR-0019).
-    const postedItems = useMemo<ComboboxItem<AccountId>[]>(() => {
-        const subtree = descendantAndSelfIds(all, account.id);
-        return all
-            .filter(a => subtree.has(a.id) && a.id !== account.id)
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map(a => ({ key: a.id, label: a.name, value: a.id }));
-    }, [all, account.id]);
-
-    const counterItems = useMemo<ComboboxItem<AccountId>[]>(
-        () =>
-            [...all]
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map(a => ({ key: a.id, label: a.name, group: a.type, value: a.id })),
-        [all],
-    );
-
     return (
         <div className="flex flex-wrap items-center gap-2">
             {!account.isPostable && (
                 <div className="w-56">
-                    <Combobox
-                        items={postedItems}
+                    {/* The posted picker offers only the viewed subtree (anything else matches
+                     *  nothing); picking a non-postable child means "that child's whole subtree"
+                     *  (ADR-0019), so placeholders stay selectable here. */}
+                    <AccountSelect
                         value={filters.posted}
+                        subtreeOf={account.id}
                         onChange={v => {
                             onFiltersChange({ posted: v });
                         }}
@@ -241,8 +222,7 @@ function RegisterFilterBar({
                 </div>
             )}
             <div className="w-56">
-                <Combobox
-                    items={counterItems}
+                <AccountSelect
                     value={filters.counter}
                     onChange={v => {
                         onFiltersChange({ counter: v });
@@ -252,7 +232,6 @@ function RegisterFilterBar({
                     }}
                     noneLabel="Any counter-account"
                     placeholder="Counter-account…"
-                    groupOrder={ACCOUNT_TYPE_ORDER}
                     ariaLabel="Filter by counter-account"
                 />
             </div>
@@ -478,18 +457,11 @@ function ReassignBar({
     const [confirming, setConfirming] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Reassign targets: postable accounts in the lines' currency (every line on this
-    // register shares the viewed subtree's currency, ADR-0019). Cross-type moves are
-    // legitimate (e.g. reclassifying an expense leg onto an asset).
-    const items = useMemo<ComboboxItem<AccountId>[]>(
-        () =>
-            (accounts.data ?? [])
-                .filter(a => a.isPostable && a.currencyCode === account.currencyCode)
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map(a => ({ key: a.id, label: a.name, group: a.type, value: a.id })),
-        [accounts.data, account.currencyCode],
+    const byId = useMemo(
+        () => new Map((accounts.data ?? []).map(a => [a.id, a])),
+        [accounts.data],
     );
-    const targetName = items.find(i => i.value === target)?.label ?? '';
+    const targetName = target !== null ? (accountPathLabel(byId, target) ?? '') : '';
     const count = selectedIds.length;
 
     async function onConfirm() {
@@ -514,12 +486,15 @@ function ReassignBar({
                 {count} line{count === 1 ? '' : 's'} selected
             </span>
             <div className="w-64">
-                <Combobox
-                    items={items}
+                {/* Reassign targets: postable accounts in the lines' currency (every line on
+                 *  this register shares the viewed subtree's currency, ADR-0019). Cross-type
+                 *  moves are legitimate (e.g. reclassifying an expense leg onto an asset). */}
+                <AccountSelect
                     value={target}
                     onChange={setTarget}
+                    postableOnly
+                    currencyCode={account.currencyCode}
                     placeholder="Move to account…"
-                    groupOrder={ACCOUNT_TYPE_ORDER}
                     ariaLabel="Move selected lines to account"
                 />
             </div>
