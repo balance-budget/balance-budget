@@ -20,8 +20,12 @@ internal static class DevelopmentSeedData
     private readonly record struct LineSpec(
         AccountId Account,
         long Amount,
-        ReconciliationStatus Status
+        ReconciliationStatus Status,
+        LoanPartId? LoanPart = null
     );
+
+    /// <summary>One counter-side leg of a seeded loan payment, attributed to its Loan Part.</summary>
+    private readonly record struct LoanLineSpec(LoanPart Part, AccountId Account, long Amount);
 
     private sealed class Builder
     {
@@ -35,6 +39,9 @@ internal static class DevelopmentSeedData
         private readonly List<BankAccount> _bankAccounts = [];
         private readonly List<JournalEntry> _journalEntries = [];
         private readonly List<BankTransaction> _bankTransactions = [];
+        private readonly List<Loan> _loans = [];
+        private readonly List<LoanPart> _loanParts = [];
+        private readonly List<LoanPartRatePeriod> _loanPartRatePeriods = [];
 
         // Disambiguates RawSource so the (BankAccountId, RowHash) unique index never collides,
         // even for two grocery runs of the same amount in the same month.
@@ -58,7 +65,32 @@ internal static class DevelopmentSeedData
             var home = Leaf("1400", "Home", AccountType.Asset, liquid: false);
 
             var creditCard = Leaf("2100", "Credit Card", AccountType.Liability);
-            var mortgage = Leaf("2200", "Mortgage", AccountType.Liability, liquid: false);
+
+            // The mortgage as a Loan subtree (ADR-0025): one non-postable parent, one postable
+            // Illiquid leaf per leningdeel — an annuity part and an interest-only part with
+            // different rates, the typical Dutch shape.
+            var mortgage = AddAccount(
+                "2200",
+                "Mortgage",
+                AccountType.Liability,
+                postable: false,
+                liquid: false,
+                parent: null
+            );
+            var mortgagePart1 = Leaf(
+                "2210",
+                "Mortgage · Part 1",
+                AccountType.Liability,
+                mortgage,
+                liquid: false
+            );
+            var mortgagePart2 = Leaf(
+                "2220",
+                "Mortgage · Part 2",
+                AccountType.Liability,
+                mortgage,
+                liquid: false
+            );
 
             // Counter-account for revaluations of the illiquid assets (the seeded Opening
             // Balances equity account stays reserved for onboarding entries).
@@ -72,6 +104,7 @@ internal static class DevelopmentSeedData
             var taxes = Leaf("5110", "Taxes", AccountType.Expense, housing);
             var housingInsurance = Leaf("5120", "Insurance", AccountType.Expense, housing);
             var maintenance = Leaf("5130", "Maintenance", AccountType.Expense, housing);
+            var mortgageInterest = Leaf("5140", "Mortgage Interest", AccountType.Expense, housing);
 
             var utilities = Branch("5200", "Utilities", AccountType.Expense);
             var energy = Leaf("5210", "Energy", AccountType.Expense, utilities);
@@ -133,6 +166,34 @@ internal static class DevelopmentSeedData
             var checkingBank = BankAccount(checking, BankAccountType.Current, "NL01BALA0000000001");
             var savingsBank = BankAccount(savings, BankAccountType.Savings, "NL01BALA0000000002");
 
+            // The lender's account: monthly debits reference this IBAN as their counterparty
+            // account number, which is what resolves the Inbox's loan-payment hint (ADR-0025).
+            const string lenderIban = "NL45BIGB0001234567";
+            CounterpartyBankAccount(lender, lenderIban);
+
+            // The Loan over the mortgage subtree: an annuity part (€240k at 3.6%, fixed 10y)
+            // and an interest-only part (€60k at 2.9%, fixed 5y), both running 28 more years.
+            var openingDateForLoan = FirstOfMonth(_today).AddMonths(-12);
+            var loan = Loan("Home mortgage", lender, mortgageInterest, mortgage);
+            var part1 = LoanPart(
+                loan,
+                "Part 1 · Annuity",
+                LoanRepaymentType.Annuity,
+                openingDateForLoan,
+                openingDateForLoan.AddYears(28),
+                mortgagePart1
+            );
+            RatePeriod(part1, openingDateForLoan, 3.6m, openingDateForLoan.AddYears(10));
+            var part2 = LoanPart(
+                loan,
+                "Part 2 · Interest-only",
+                LoanRepaymentType.InterestOnly,
+                openingDateForLoan,
+                openingDateForLoan.AddYears(28),
+                mortgagePart2
+            );
+            RatePeriod(part2, openingDateForLoan, 2.9m, openingDateForLoan.AddYears(5));
+
             // Opening balances against the seeded Opening Balances equity account (AccountSeed), dated
             // a year back so every running balance starts from a realistic position. Entered by hand,
             // so both legs are Reconciled and there is no bank import.
@@ -141,7 +202,8 @@ internal static class DevelopmentSeedData
             Opening(savings, 2_500_000, openingDate); // €25,000.00
             Opening(investments, 1_500_000, openingDate); // €15,000.00
             Opening(home, 38_000_000, openingDate); // €380,000.00
-            Opening(mortgage, -30_000_000, openingDate); // €300,000.00 outstanding
+            Opening(mortgagePart1, -24_000_000, openingDate); // €240,000.00 outstanding
+            Opening(mortgagePart2, -6_000_000, openingDate); // €60,000.00 outstanding
 
             // Recurring monthly spend on the checking account — one row per category so the whole
             // chart of accounts carries a year of activity. (day, contra account, counterparty, cents).
@@ -153,7 +215,6 @@ internal static class DevelopmentSeedData
                 string Description
             )[] monthly =
             [
-                (1, mortgage, lender, -120_000, "Monthly payment"),
                 (3, internetAndPhone, telecom, -4_500, "Internet & phone"),
                 (4, energy, utilityCo, -8_000, "Energy"),
                 (5, healthInsurance, healthInsurer, -13_500, "Health insurance"),
@@ -205,6 +266,45 @@ internal static class DevelopmentSeedData
             {
                 var monthStart = FirstOfMonth(_today).AddMonths(-m);
                 var reconciled = m >= 10; // oldest months demonstrate the frozen Reconciled state.
+
+                // The monthly loan payment in its loan-aware shape (ADR-0025): bank line
+                // Cleared, principal on the annuity part, one interest line per part, each
+                // counter-line attributed to its Loan Part. The current month's debit stays
+                // in the Inbox so the loan-payment hint has something to point at.
+                if (m > 0)
+                {
+                    OnDay(
+                        monthStart,
+                        1,
+                        d =>
+                            LoanPayment(
+                                checkingBank,
+                                checking,
+                                lender,
+                                lenderIban,
+                                d,
+                                new LoanLineSpec(part1, mortgagePart1.Id, 42_000),
+                                new LoanLineSpec(part1, mortgageInterest.Id, 71_500),
+                                new LoanLineSpec(part2, mortgageInterest.Id, 14_500)
+                            )
+                    );
+                }
+                else
+                {
+                    OnDay(
+                        monthStart,
+                        1,
+                        d =>
+                            Inbox(
+                                checkingBank,
+                                d,
+                                -128_000,
+                                "Mortgage payment",
+                                lender.Name,
+                                lenderIban
+                            )
+                    );
+                }
 
                 foreach (var s in monthly)
                     OnDay(
@@ -344,6 +444,9 @@ internal static class DevelopmentSeedData
                 BankAccounts = _bankAccounts,
                 JournalEntries = _journalEntries,
                 BankTransactions = _bankTransactions,
+                Loans = _loans,
+                LoanParts = _loanParts,
+                LoanPartRatePeriods = _loanPartRatePeriods,
             };
         }
 
@@ -448,12 +551,50 @@ internal static class DevelopmentSeedData
             );
         }
 
+        // A loan payment in its loan-aware posted shape (ADR-0025): the single bank debit
+        // covering every part, with each counter-line attributed to its Loan Part. The bank-tx
+        // carries the lender's IBAN so re-categorising it later resolves the hint again.
+        private void LoanPayment(
+            BankAccount bank,
+            Account bankSide,
+            Counterparty lender,
+            string lenderIban,
+            DateOnly date,
+            params LoanLineSpec[] parts
+        )
+        {
+            var total = parts.Sum(p => p.Amount);
+            var specs = new LineSpec[parts.Length + 1];
+            specs[0] = new LineSpec(bankSide.Id, -total, ReconciliationStatus.Cleared);
+            for (var i = 0; i < parts.Length; i++)
+            {
+                specs[i + 1] = new LineSpec(
+                    parts[i].Account,
+                    parts[i].Amount,
+                    ReconciliationStatus.Uncleared,
+                    parts[i].Part.Id
+                );
+            }
+
+            var entry = AddEntry(date, "Mortgage payment", lender.Id, specs);
+            AddBankTransaction(
+                bank.Id,
+                date,
+                -total,
+                "Mortgage payment",
+                lender.Name,
+                entry.Id,
+                counterpartyAccountNumber: lenderIban
+            );
+        }
+
         private void Inbox(
             BankAccount bank,
             DateOnly date,
             long amount,
             string description,
-            string counterpartyName
+            string counterpartyName,
+            string? counterpartyAccountNumber = null
         )
         {
             if (date <= _today)
@@ -463,7 +604,8 @@ internal static class DevelopmentSeedData
                     amount,
                     description,
                     counterpartyName,
-                    journalEntryId: null
+                    journalEntryId: null,
+                    counterpartyAccountNumber: counterpartyAccountNumber
                 );
         }
 
@@ -491,8 +633,7 @@ internal static class DevelopmentSeedData
             DateOnly date,
             string description,
             CounterpartyId? counterpartyId,
-            LineSpec primary,
-            LineSpec contra
+            params LineSpec[] lines
         )
         {
             var id = new JournalEntryId(Guid.CreateVersion7());
@@ -506,8 +647,8 @@ internal static class DevelopmentSeedData
                 CreatedAt = at,
                 UpdatedAt = at,
             };
-            entry.Lines.Add(AddLine(id, primary, at));
-            entry.Lines.Add(AddLine(id, contra, at));
+            foreach (var spec in lines)
+                entry.Lines.Add(AddLine(id, spec, at));
             _journalEntries.Add(entry);
             return entry;
         }
@@ -520,6 +661,7 @@ internal static class DevelopmentSeedData
                 AccountId = spec.Account,
                 Amount = spec.Amount,
                 ReconciliationStatus = spec.Status,
+                LoanPartId = spec.LoanPart,
                 CreatedAt = at,
                 UpdatedAt = at,
             };
@@ -531,7 +673,8 @@ internal static class DevelopmentSeedData
             string description,
             string? counterpartyName,
             JournalEntryId? journalEntryId,
-            (DateTime At, string Reason)? dismissed = null
+            (DateTime At, string Reason)? dismissed = null,
+            string? counterpartyAccountNumber = null
         )
         {
             var raw = $"SEED;{date:yyyy-MM-dd};{amount};{description};{_sequence++}";
@@ -545,6 +688,7 @@ internal static class DevelopmentSeedData
                     Money = new Money(amount, Eur),
                     Description = description,
                     CounterpartyName = counterpartyName,
+                    CounterpartyAccountNumber = counterpartyAccountNumber,
                     RawSource = raw,
                     RowHash = Hash(raw),
                     JournalEntryId = journalEntryId,
@@ -621,6 +765,80 @@ internal static class DevelopmentSeedData
             _counterparties.Add(counterparty);
             return counterparty;
         }
+
+        private Loan Loan(string name, Counterparty lender, Account interestExpense, Account parent)
+        {
+            var loan = new Loan
+            {
+                Id = new LoanId(Guid.CreateVersion7()),
+                Name = name,
+                LenderCounterpartyId = lender.Id,
+                InterestExpenseAccountId = interestExpense.Id,
+                ParentAccountId = parent.Id,
+                CreatedAt = _structuralCreatedAt,
+                UpdatedAt = _structuralCreatedAt,
+            };
+            _loans.Add(loan);
+            return loan;
+        }
+
+        private LoanPart LoanPart(
+            Loan loan,
+            string label,
+            LoanRepaymentType repaymentType,
+            DateOnly startDate,
+            DateOnly endDate,
+            Account account
+        )
+        {
+            var part = new LoanPart
+            {
+                Id = new LoanPartId(Guid.CreateVersion7()),
+                LoanId = loan.Id,
+                Label = label,
+                RepaymentType = repaymentType,
+                StartDate = startDate,
+                EndDate = endDate,
+                AccountId = account.Id,
+                CreatedAt = _structuralCreatedAt,
+                UpdatedAt = _structuralCreatedAt,
+            };
+            _loanParts.Add(part);
+            return part;
+        }
+
+        private void RatePeriod(
+            LoanPart part,
+            DateOnly effectiveDate,
+            decimal annualRatePercent,
+            DateOnly? fixedUntil
+        ) =>
+            _loanPartRatePeriods.Add(
+                new LoanPartRatePeriod
+                {
+                    Id = new LoanPartRatePeriodId(Guid.CreateVersion7()),
+                    LoanPartId = part.Id,
+                    EffectiveDate = effectiveDate,
+                    AnnualRatePercent = annualRatePercent,
+                    FixedUntil = fixedUntil,
+                    CreatedAt = _structuralCreatedAt,
+                    UpdatedAt = _structuralCreatedAt,
+                }
+            );
+
+        // A counterparty-owned bank account (ADR-0010): the other side's IBAN, no own Account.
+        private void CounterpartyBankAccount(Counterparty counterparty, string iban) =>
+            _bankAccounts.Add(
+                new BankAccount
+                {
+                    Id = new BankAccountId(Guid.CreateVersion7()),
+                    Type = BankAccountType.Current,
+                    Iban = iban,
+                    CounterpartyId = counterparty.Id,
+                    CreatedAt = _structuralCreatedAt,
+                    UpdatedAt = _structuralCreatedAt,
+                }
+            );
 
         private BankAccount BankAccount(Account owner, BankAccountType type, string iban)
         {
