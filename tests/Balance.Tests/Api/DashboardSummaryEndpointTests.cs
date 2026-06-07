@@ -80,6 +80,76 @@ internal sealed class DashboardSummaryEndpointTests : EndpointsTestsBase
 
         await Assert.That(summary.NetWorth!.Amount).IsEqualTo(350_000L);
         await Assert.That(summary.NetWorth.CurrencyCode).IsEqualTo(currency);
+
+        // No illiquid accounts in play, so the liquid figure matches the total.
+        await Assert.That(summary.LiquidNetWorth!.Amount).IsEqualTo(350_000L);
+        await Assert.That(summary.LiquidNetWorth.CurrencyCode).IsEqualTo(currency);
+    }
+
+    [Test]
+    public async Task GetSummary_LiquidNetWorth_excludes_illiquid_accounts()
+    {
+        using var client = Factory.CreateClient();
+        var currency = await CreateIsolatedCurrencyAsync(client);
+
+        var checking = await CreateAccountAsync(
+            client,
+            $"LNW-Checking-{Guid.NewGuid():N}",
+            "Asset",
+            currency
+        );
+        var home = await CreateAccountAsync(
+            client,
+            $"LNW-Home-{Guid.NewGuid():N}",
+            "Asset",
+            currency,
+            isLiquid: false
+        );
+        var mortgage = await CreateAccountAsync(
+            client,
+            $"LNW-Mortgage-{Guid.NewGuid():N}",
+            "Liability",
+            currency,
+            isLiquid: false
+        );
+        var equity = await CreateAccountAsync(
+            client,
+            $"LNW-Equity-{Guid.NewGuid():N}",
+            "Equity",
+            currency
+        );
+
+        await PostJournalEntryAsync(
+            client,
+            new DateOnly(2024, 1, 1),
+            [
+                new CreateJournalLineRequestDto(checking.Id, 500_000L, null),
+                new CreateJournalLineRequestDto(equity.Id, -500_000L, null),
+            ]
+        );
+        await PostJournalEntryAsync(
+            client,
+            new DateOnly(2024, 1, 1),
+            [
+                new CreateJournalLineRequestDto(home.Id, 2_000_000L, null),
+                new CreateJournalLineRequestDto(equity.Id, -2_000_000L, null),
+            ]
+        );
+        await PostJournalEntryAsync(
+            client,
+            new DateOnly(2024, 1, 1),
+            [
+                new CreateJournalLineRequestDto(equity.Id, 1_500_000L, null),
+                new CreateJournalLineRequestDto(mortgage.Id, -1_500_000L, null),
+            ]
+        );
+
+        var summary = await GetSummaryAsync(client, currency);
+
+        // Net worth counts everything: 500k + 2M - 1.5M. Liquid net worth counts only the
+        // liquid checking account — the home and mortgage are the user's illiquid world.
+        await Assert.That(summary.NetWorth!.Amount).IsEqualTo(1_000_000L);
+        await Assert.That(summary.LiquidNetWorth!.Amount).IsEqualTo(500_000L);
     }
 
     [Test]
@@ -435,10 +505,14 @@ internal sealed class DashboardSummaryEndpointTests : EndpointsTestsBase
         HttpClient client,
         string name,
         string accountType,
-        string currencyCode = "EUR"
+        string currencyCode = "EUR",
+        bool isLiquid = true
     )
     {
-        var req = new CreateAccountRequestDto(name, accountType, currencyCode);
+        var req = new CreateAccountRequestDto(name, accountType, currencyCode)
+        {
+            IsLiquid = isLiquid,
+        };
         using var response = await client.PostAsJsonAsync(
             new Uri("/api/accounts", UriKind.Relative),
             req
@@ -470,6 +544,7 @@ internal sealed class DashboardSummaryEndpointTests : EndpointsTestsBase
 
 internal sealed record DashboardSummaryDto(
     MoneyDto? NetWorth,
+    MoneyDto? LiquidNetWorth,
     MoneyDto? IncomeMtd,
     MoneyDto? ExpensesMtd,
     MoneyDto? IncomeMtdPrior,

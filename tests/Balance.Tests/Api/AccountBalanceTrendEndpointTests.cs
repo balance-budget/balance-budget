@@ -301,6 +301,57 @@ internal sealed class AccountBalanceTrendEndpointTests : EndpointsTestsBase
     }
 
     [Test]
+    public async Task GetTrend_excludes_illiquid_assets()
+    {
+        // The trend chart is the day-to-day companion to the liquid net worth KPI — an
+        // illiquid asset (a house) would flatten every other series into the baseline.
+        using var client = Factory.CreateClient();
+        var currency = await CreateIsolatedCurrencyAsync(client);
+
+        var home = await CreateAccountAsync(
+            client,
+            $"Trend-Home-{Guid.NewGuid():N}",
+            "Asset",
+            currency,
+            isLiquid: false
+        );
+        var checking = await CreateAccountAsync(
+            client,
+            $"Trend-Checking-{Guid.NewGuid():N}",
+            "Asset",
+            currency
+        );
+        var equity = await CreateAccountAsync(
+            client,
+            $"Trend-Home-Equity-{Guid.NewGuid():N}",
+            "Equity",
+            currency
+        );
+
+        await PostJournalEntryAsync(
+            client,
+            new DateOnly(2020, 1, 1),
+            [
+                new CreateJournalLineRequestDto(home.Id, 38_000_000L, null),
+                new CreateJournalLineRequestDto(equity.Id, -38_000_000L, null),
+            ]
+        );
+        await PostJournalEntryAsync(
+            client,
+            new DateOnly(2020, 1, 1),
+            [
+                new CreateJournalLineRequestDto(checking.Id, 100_000L, null),
+                new CreateJournalLineRequestDto(equity.Id, -100_000L, null),
+            ]
+        );
+
+        var trend = await GetTrendAsync(client, range: "OneMonth", currency: currency);
+
+        await Assert.That(SeriesFor(trend, home.Id)).IsNull();
+        await Assert.That(SeriesFor(trend, checking.Id)).IsNotNull();
+    }
+
+    [Test]
     public async Task GetTrend_omits_assets_with_zero_opening_and_no_activity()
     {
         using var client = Factory.CreateClient();
@@ -365,10 +416,14 @@ internal sealed class AccountBalanceTrendEndpointTests : EndpointsTestsBase
         HttpClient client,
         string name,
         string accountType,
-        string currencyCode = "EUR"
+        string currencyCode = "EUR",
+        bool isLiquid = true
     )
     {
-        var req = new CreateAccountRequestDto(name, accountType, currencyCode);
+        var req = new CreateAccountRequestDto(name, accountType, currencyCode)
+        {
+            IsLiquid = isLiquid,
+        };
         using var response = await client.PostAsJsonAsync(
             new Uri("/api/accounts", UriKind.Relative),
             req

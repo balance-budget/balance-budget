@@ -5,6 +5,7 @@ namespace Balance.Services.Contracts;
 
 public sealed record DashboardSummaryOutput(
     Money NetWorth,
+    Money LiquidNetWorth,
     Money IncomeMtd,
     Money ExpensesMtd,
     Money IncomeMtdPrior,
