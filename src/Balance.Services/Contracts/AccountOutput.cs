@@ -11,6 +11,7 @@ public sealed record AccountOutput(
     AccountType AccountType,
     CurrencyCode CurrencyCode,
     bool IsPostable,
+    bool IsLiquid,
     AccountId? ParentAccountId,
     string? IconName,
     Money Balance,

@@ -114,6 +114,7 @@ internal static class AccountEndpoints
                 AccountType = request.AccountType,
                 CurrencyCode = request.CurrencyCode,
                 IsPostable = request.IsPostable,
+                IsLiquid = request.IsLiquid,
                 ParentAccountId = request.ParentAccountId,
                 IconName = request.IconName,
             },
