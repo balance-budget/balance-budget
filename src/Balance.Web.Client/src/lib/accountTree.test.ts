@@ -11,6 +11,7 @@ function account(id: string, name: string, code: string, parentId: string | null
         type: 'Expense',
         currencyCode: 'EUR',
         isPostable: parentId !== null,
+        isLiquid: true,
         parentId: parentId === null ? null : asAccountId(parentId),
         icon: null,
         balance: { amount: 0, currencyCode: 'EUR' },

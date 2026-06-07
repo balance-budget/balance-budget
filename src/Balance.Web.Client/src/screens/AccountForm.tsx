@@ -33,6 +33,7 @@ export function AccountFormModal(props: Props) {
                   accountType: props.account.type,
                   currencyCode: props.account.currencyCode,
                   isPostable: props.account.isPostable,
+                  isLiquid: props.account.isLiquid,
                   parentId: props.account.parentId,
                   icon: props.account.icon,
               }
@@ -42,6 +43,7 @@ export function AccountFormModal(props: Props) {
                   accountType: 'Asset' as AccountType,
                   currencyCode: '',
                   isPostable: true,
+                  isLiquid: true,
                   parentId: null as Account['parentId'],
                   icon: null as Account['icon'],
               };
@@ -51,6 +53,7 @@ export function AccountFormModal(props: Props) {
     const [accountType, setAccountType] = useState<AccountType>(initial.accountType);
     const [currencyCode, setCurrencyCode] = useState(initial.currencyCode);
     const [isPostable, setIsPostable] = useState(initial.isPostable);
+    const [isLiquid, setIsLiquid] = useState(initial.isLiquid);
     const [parentId, setParentId] = useState<Account['parentId']>(initial.parentId);
     const [icon, setIcon] = useState<Account['icon']>(initial.icon);
     const [topError, setTopError] = useState<string | null>(null);
@@ -70,6 +73,7 @@ export function AccountFormModal(props: Props) {
                     accountType,
                     currencyCode,
                     isPostable,
+                    isLiquid,
                     parentAccountId: parentId,
                     iconName: icon,
                 });
@@ -82,6 +86,7 @@ export function AccountFormModal(props: Props) {
                         accountType: props.account.type,
                         currencyCode: props.account.currencyCode,
                         isPostable: props.account.isPostable,
+                        isLiquid: props.account.isLiquid,
                         parentAccountId: props.account.parentId,
                         iconName: props.account.icon,
                     },
@@ -91,6 +96,7 @@ export function AccountFormModal(props: Props) {
                         accountType,
                         currencyCode,
                         isPostable,
+                        isLiquid,
                         parentAccountId: parentId,
                         iconName: icon,
                     },
@@ -221,6 +227,24 @@ export function AccountFormModal(props: Props) {
                         </span>
                     </span>
                 </Checkbox>
+
+                {/* Liquidity only means something on the balance sheet — Income/Expense/Equity
+                 *  accounts carry the default and the server ignores it. */}
+                {(accountType === 'Asset' || accountType === 'Liability') && (
+                    <div className="mt-3">
+                        <Checkbox isSelected={isLiquid} onChange={setIsLiquid}>
+                            <span className="flex flex-col">
+                                <span className="text-xs font-medium text-fg-2">
+                                    Liquid — counts toward liquid net worth
+                                </span>
+                                <span className="text-xs text-fg-3">
+                                    Uncheck for long-term holdings such as a house, mortgage, or
+                                    investment portfolio.
+                                </span>
+                            </span>
+                        </Checkbox>
+                    </div>
+                )}
 
                 <ModalFooter>
                     <Button variant="ghost" onPress={props.onClose} isDisabled={isPending}>

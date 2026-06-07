@@ -12,6 +12,7 @@ type WireTrendDelta = components['schemas']['TrendDelta'];
 
 export type DashboardSummary = {
     netWorth: Money;
+    liquidNetWorth: Money;
     incomeMtd: Money;
     expensesMtd: Money;
     incomeMtdPrior: Money;
@@ -68,6 +69,7 @@ function fetchTrend(range: TrendRange, signal: AbortSignal): Promise<WireTrend> 
 function toSummary(wire: WireSummary): DashboardSummary {
     return {
         netWorth: toMoney(wire.netWorth, wire.currencyCode),
+        liquidNetWorth: toMoney(wire.liquidNetWorth, wire.currencyCode),
         incomeMtd: toMoney(wire.incomeMtd, wire.currencyCode),
         expensesMtd: toMoney(wire.expensesMtd, wire.currencyCode),
         incomeMtdPrior: toMoney(wire.incomeMtdPrior, wire.currencyCode),

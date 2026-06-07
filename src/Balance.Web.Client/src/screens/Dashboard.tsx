@@ -206,19 +206,36 @@ function KpiStrip() {
             ? `Across ${accountCount} ${accountCount === 1 ? 'account' : 'accounts'}`
             : ' ';
 
+    // The liquid-headline form only kicks in once an illiquid account exists — comparing
+    // the two amounts instead would misfire when a house exactly offsets its mortgage.
+    const hasIlliquid = accounts.data?.some(a => isLedgerAccount(a) && !a.isLiquid) ?? false;
+    const headline = hasIlliquid ? data.liquidNetWorth : data.netWorth;
+
     return (
         <section className="grid gap-[14px] grid-cols-1 sm:grid-cols-[1.3fr_1fr_1fr]">
             <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
                 <span className="text-xs font-medium text-fg-3 tracking-widest uppercase truncate">
-                    Net worth
+                    {hasIlliquid ? 'Liquid net worth' : 'Net worth'}
                 </span>
                 <Amount
-                    minor={data.netWorth.amount}
-                    currencyCode={data.netWorth.currencyCode}
+                    minor={headline.amount}
+                    currencyCode={headline.currencyCode}
                     size="big"
-                    className={data.netWorth.amount < 0 ? 'text-danger' : ''}
+                    className={headline.amount < 0 ? 'text-danger' : ''}
                 />
-                <span className="text-sm text-fg-3">{subtext}</span>
+                {hasIlliquid ? (
+                    <span className="text-sm text-fg-3 inline-flex items-baseline gap-[0.35em]">
+                        Net worth
+                        <Amount
+                            minor={data.netWorth.amount}
+                            currencyCode={data.netWorth.currencyCode}
+                            size="inline"
+                            className={data.netWorth.amount < 0 ? 'text-danger' : ''}
+                        />
+                    </span>
+                ) : (
+                    <span className="text-sm text-fg-3">{subtext}</span>
+                )}
             </Panel>
 
             <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
