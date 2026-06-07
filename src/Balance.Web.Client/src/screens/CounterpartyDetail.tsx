@@ -60,11 +60,11 @@ export function CounterpartyDetail({ id, page, onPageChange }: Props) {
                         <Link
                             to="/counterparties"
                             search={{ page: 1, q: '' }}
-                            className="text-12 text-fg-3 hover:text-fg-1 inline-flex items-center gap-1"
+                            className="text-xs text-fg-3 hover:text-fg-1 inline-flex items-center gap-1"
                         >
                             ← Counterparties
                         </Link>
-                        <h1 className="text-22 font-medium text-fg-1 truncate">{cp.name}</h1>
+                        <h1 className="text-xl font-medium text-fg-1 truncate">{cp.name}</h1>
                     </div>
                     <div className="flex items-center gap-2 lg:shrink-0">
                         <button
@@ -72,7 +72,7 @@ export function CounterpartyDetail({ id, page, onPageChange }: Props) {
                             onClick={() => {
                                 setEditing(true);
                             }}
-                            className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-fg-1 hover:bg-surface-2"
+                            className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1 hover:bg-surface-2"
                         >
                             <Icon name="pencil" size={14} strokeWidth={2} />
                             Edit
@@ -82,7 +82,7 @@ export function CounterpartyDetail({ id, page, onPageChange }: Props) {
                             onClick={() => {
                                 setDeleting(true);
                             }}
-                            className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-danger hover:bg-surface-2"
+                            className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-danger hover:bg-surface-2"
                         >
                             <Icon name="trash" size={14} strokeWidth={2} />
                             Delete
@@ -169,7 +169,7 @@ function JournalEntriesSection({
 
     if (entries.data.items.length === 0 && page === 1) {
         return (
-            <div className="py-6 text-center text-13 text-fg-3">
+            <div className="py-6 text-center text-sm text-fg-3">
                 No journal entries yet for this counterparty.
             </div>
         );
@@ -177,7 +177,7 @@ function JournalEntriesSection({
 
     return (
         <div className="flex flex-col">
-            <div className="hidden lg:grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px] gap-3 px-2 pb-2 text-11 text-fg-3 uppercase tracking-wider border-b border-border-soft">
+            <div className="hidden lg:grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px] gap-3 px-2 pb-2 text-xs text-fg-3 uppercase tracking-wider border-b border-border-soft">
                 <span>Date</span>
                 <span>Description</span>
                 <span>From → To</span>
@@ -212,17 +212,17 @@ function CounterpartyEntryRow({
             className="block border-b border-border-soft last:border-b-0 hover:bg-surface-2"
         >
             <div className="hidden lg:grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px] gap-3 items-center px-2 py-2">
-                <span className="text-12 text-fg-3 tabular">{entry.date}</span>
-                <span className="text-13 text-fg-1 truncate">{description}</span>
+                <span className="text-xs text-fg-3 tabular">{entry.date}</span>
+                <span className="text-sm text-fg-1 truncate">{description}</span>
                 <FromToCell projection={projection} lineCount={entry.lines.length} />
                 <ProjectionAmount projection={projection} variant="row" />
             </div>
             <div className="lg:hidden flex flex-col gap-1 px-2 py-3">
                 <div className="flex items-center justify-between gap-3">
-                    <span className="text-12 text-fg-3 tabular shrink-0">{entry.date}</span>
+                    <span className="text-xs text-fg-3 tabular shrink-0">{entry.date}</span>
                     <ProjectionAmount projection={projection} variant="row" />
                 </div>
-                <span className="text-13 text-fg-1 truncate">{description}</span>
+                <span className="text-sm text-fg-1 truncate">{description}</span>
                 <FromToCell projection={projection} lineCount={entry.lines.length} />
             </div>
         </Link>
@@ -237,12 +237,12 @@ function FromToCell({
     lineCount: number;
 }) {
     if (!projection.isSimplifiable) {
-        return <span className="text-12 text-fg-3 truncate">Split ({lineCount} lines)</span>;
+        return <span className="text-xs text-fg-3 truncate">Split ({lineCount} lines)</span>;
     }
     const fromLabel = formatLegLabel(projection.fromLegs);
     const toLabel = formatLegLabel(projection.toLegs);
     return (
-        <span className="text-12 text-fg-2 truncate flex items-center gap-1">
+        <span className="text-xs text-fg-2 truncate flex items-center gap-1">
             <span className="truncate">{fromLabel}</span>
             <Icon name="chevron-right" size={10} strokeWidth={2} className="text-fg-3 shrink-0" />
             <span className="truncate">{toLabel}</span>

@@ -20,8 +20,8 @@ import {
 import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import { AccountSelect } from '../components/AccountSelect';
 import { BankTransactionDetails } from '../components/BankTransactionDetails';
-import { Combobox } from '../components/Combobox';
-import { type ComboboxItem } from '../components/combobox.state';
+import { ComboBox } from '../components/ui/ComboBox';
+import { type ComboBoxItem } from '../components/ui/combobox.state';
 import { ErrorState } from '../components/ErrorState';
 import { FieldError } from '../components/FieldError';
 import { FormErrorBanner } from '../components/FormErrorBanner';
@@ -146,14 +146,14 @@ function NotCategorisableState({ bt }: { bt: BankTransaction }) {
                     <Link
                         to="/bank-transactions"
                         search={{ page: 1, filter: 'Inbox', q: '' }}
-                        className="text-12 text-fg-3 hover:text-fg-1"
+                        className="text-xs text-fg-3 hover:text-fg-1"
                     >
                         ← Back to inbox
                     </Link>
                 }
             />
             <div className="py-6 flex flex-col items-center gap-2 text-center">
-                <span className="text-14 text-fg-2">{reason}</span>
+                <span className="text-sm text-fg-2">{reason}</span>
             </div>
         </Panel>
     );
@@ -301,7 +301,7 @@ function CategorizeForm({
                         <Link
                             to="/bank-transactions"
                             search={{ page: 1, filter: 'Inbox', q: '' }}
-                            className="text-12 text-fg-3 hover:text-fg-1"
+                            className="text-xs text-fg-3 hover:text-fg-1"
                         >
                             ← Cancel
                         </Link>
@@ -342,14 +342,14 @@ function CategorizeForm({
                     <Link
                         to="/bank-transactions"
                         search={{ page: 1, filter: 'Inbox', q: '' }}
-                        className="px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-fg-1"
+                        className="px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1"
                     >
                         Cancel
                     </Link>
                     <button
                         type="submit"
                         disabled={categorize.isPending}
-                        className="px-3 py-[7px] rounded-sm text-13 font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
+                        className="px-3 py-[7px] rounded-lg text-sm font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
                     >
                         {categorize.isPending ? 'Categorising…' : 'Categorise'}
                     </button>
@@ -382,7 +382,7 @@ function HeaderInputs({
                 isRequired
             />
             <label className="flex flex-col gap-1">
-                <span className="text-12 font-medium text-fg-2">Description</span>
+                <span className="text-xs font-medium text-fg-2">Description</span>
                 <input
                     type="text"
                     value={form.description}
@@ -391,7 +391,7 @@ function HeaderInputs({
                     }}
                     maxLength={500}
                     placeholder="Optional"
-                    className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
+                    className="px-3 py-2 rounded-lg bg-surface-2 border border-border-soft text-fg-1 text-sm focus:outline-none focus:border-border-strong"
                 />
                 <FieldError name="Description" errors={fieldErrors} />
             </label>
@@ -416,7 +416,7 @@ function CounterpartyInput({
     onPatch: (patch: Partial<CategorizeFormState>) => void;
     fieldErrors: FieldErrors | null;
 }) {
-    const items = useMemo<ComboboxItem<CounterpartyId | null>[]>(
+    const items = useMemo<ComboBoxItem<CounterpartyId | null>[]>(
         () =>
             [...counterparties]
                 .sort((a, b) => a.name.localeCompare(b.name))
@@ -428,7 +428,7 @@ function CounterpartyInput({
         if (form.counterpartyMode !== 'new' || form.newCounterpartyName.trim().length === 0) {
             return items;
         }
-        const pending: ComboboxItem<CounterpartyId | null> = {
+        const pending: ComboBoxItem<CounterpartyId | null> = {
             key: '__pending__',
             label: `${form.newCounterpartyName.trim()} (new)`,
             value: null,
@@ -441,8 +441,8 @@ function CounterpartyInput({
 
     return (
         <div className="flex flex-col gap-1">
-            <span className="text-12 font-medium text-fg-2">Counterparty</span>
-            <Combobox
+            <span className="text-xs font-medium text-fg-2">Counterparty</span>
+            <ComboBox
                 items={effectiveItems}
                 value={value}
                 onChange={id => {
@@ -467,7 +467,6 @@ function CounterpartyInput({
                     });
                 }}
                 noneLabel="── None (self-transfer)"
-                createLabel={typed => `+ Create '${typed}'`}
                 placeholder="Pick counterparty…"
                 ariaLabel="Counterparty"
             />
@@ -511,7 +510,7 @@ function Lines({
 
     return (
         <div className="flex flex-col">
-            <div className="hidden lg:grid grid-cols-[1fr_140px_minmax(140px,1fr)_32px] gap-3 px-2 pb-2 text-11 text-fg-3 uppercase tracking-wider border-b border-border-soft">
+            <div className="hidden lg:grid grid-cols-[1fr_140px_minmax(140px,1fr)_32px] gap-3 px-2 pb-2 text-xs text-fg-3 uppercase tracking-wider border-b border-border-soft">
                 <span>Account</span>
                 <span className="text-right">Amount</span>
                 <span>Description</span>
@@ -534,7 +533,7 @@ function Lines({
                 <button
                     type="button"
                     onClick={onAdd}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-12 text-fg-2 hover:text-fg-1 hover:bg-surface-2"
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-fg-2 hover:text-fg-1 hover:bg-surface-2"
                 >
                     <Icon name="plus" size={12} strokeWidth={2} />
                     Add line
@@ -594,7 +593,7 @@ function LineRow({
                 }}
                 maxLength={500}
                 placeholder="Optional"
-                inputClassName="text-13"
+                inputClassName="text-sm"
             />
             <IconButton
                 onPress={() => {
@@ -624,7 +623,7 @@ function UnallocatedFooter({
     const unallocatedAbs = Math.abs(totals.unallocatedMinor);
     const unallocatedStr = formatMoney(unallocatedAbs, currencyCode, catalog);
     return (
-        <div className="flex items-center justify-end gap-4 mt-3 text-12 tabular">
+        <div className="flex items-center justify-end gap-4 mt-3 text-xs tabular">
             <span className="text-fg-3">
                 Target <span className="font-mono text-fg-1">{targetStr}</span>
             </span>
@@ -687,7 +686,7 @@ function AttachOptionsPanel({
     }
 
     return (
-        <div className="mb-4 px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-12">
+        <div className="mb-4 px-3 py-2 rounded-lg bg-surface-2 border border-border-soft text-xs">
             <div className="flex flex-wrap items-center gap-2">
                 <span className="text-fg-3">Sibling-of-self-transfer?</span>
                 {hint && (
@@ -695,7 +694,7 @@ function AttachOptionsPanel({
                         type="button"
                         onClick={() => void attachTo(hint.id)}
                         disabled={attach.isPending}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-brand-primary hover:bg-brand-primary-soft disabled:opacity-60"
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-brand-primary hover:bg-brand-primary-soft disabled:opacity-60"
                     >
                         <Icon name="link" size={13} strokeWidth={2} />
                         Attach to JE on {hint.date} · {hint.otherAccountName}
@@ -707,7 +706,7 @@ function AttachOptionsPanel({
                         setPickerOpen(true);
                     }}
                     disabled={attach.isPending}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-fg-1 border border-border-strong hover:bg-surface-1 disabled:opacity-60"
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-fg-1 border border-border-strong hover:bg-surface-1 disabled:opacity-60"
                 >
                     <Icon name="search" size={13} strokeWidth={2} />
                     Pick a JE to attach to…
@@ -768,7 +767,7 @@ function JePickerModal({
             width="md"
         >
             <div className="flex flex-wrap items-center gap-3 mb-3">
-                <label className="flex items-center gap-2 text-12 text-fg-2">
+                <label className="flex items-center gap-2 text-xs text-fg-2">
                     Date window (±days)
                     <input
                         type="number"
@@ -779,7 +778,7 @@ function JePickerModal({
                             const n = Number.parseInt(e.target.value, 10);
                             setDays(Number.isNaN(n) ? 0 : Math.max(0, Math.min(365, n)));
                         }}
-                        className="w-20 px-2 py-1 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-12"
+                        className="w-20 px-2 py-1 rounded-lg bg-surface-2 border border-border-soft text-fg-1 text-xs"
                     />
                 </label>
                 <input
@@ -789,7 +788,7 @@ function JePickerModal({
                         setQuery(e.target.value);
                     }}
                     placeholder="Filter…"
-                    className="flex-1 min-w-[160px] px-2 py-1 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-12"
+                    className="flex-1 min-w-[160px] px-2 py-1 rounded-lg bg-surface-2 border border-border-soft text-fg-1 text-xs"
                 />
             </div>
 
@@ -801,7 +800,7 @@ function JePickerModal({
                 />
             )}
             {candidates.data && filtered.length === 0 && (
-                <p className="text-12 text-fg-3">
+                <p className="text-xs text-fg-3">
                     No structural matches in this window. Widen the date range or fall back to
                     creating a new JE below.
                 </p>
@@ -816,17 +815,17 @@ function JePickerModal({
                                 onClick={() => {
                                     onPick(candidate.id);
                                 }}
-                                className="w-full text-left px-3 py-2 rounded-sm border border-border-soft hover:bg-surface-2 flex items-baseline justify-between gap-2"
+                                className="w-full text-left px-3 py-2 rounded-lg border border-border-soft hover:bg-surface-2 flex items-baseline justify-between gap-2"
                             >
                                 <span className="flex flex-col leading-tight min-w-0">
-                                    <span className="text-13 text-fg-1 truncate">
+                                    <span className="text-sm text-fg-1 truncate">
                                         {candidate.description ?? '(no description)'}
                                     </span>
-                                    <span className="text-11 text-fg-3 truncate">
+                                    <span className="text-xs text-fg-3 truncate">
                                         {candidate.date} · {candidate.otherAccountName}
                                     </span>
                                 </span>
-                                <span className="text-12 font-mono text-fg-2 tabular shrink-0">
+                                <span className="text-xs font-mono text-fg-2 tabular shrink-0">
                                     {formatMoney(candidate.amount, bt.money.currencyCode, catalog, {
                                         sign: true,
                                     })}
@@ -841,7 +840,7 @@ function JePickerModal({
                 <button
                     type="button"
                     onClick={onClose}
-                    className="px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-fg-1"
+                    className="px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1"
                 >
                     Cancel
                 </button>

@@ -100,3 +100,44 @@ with Balance's existing Tailwind v4 `@theme` tokens. Concretely:
   `DateInput.tsx`, `Modal.tsx`, `Toast.tsx`, `SearchInput.tsx`, the
   `Launcher` listbox internals, and the ISO date helpers are deleted rather
   than maintained.
+
+## Amendment — field chrome and type scale (2026-06-07)
+
+The first pass at the `ui/` kit still let sizing drift: controls derived
+their height from `padding + font-size` and disagreed (`py-2 text-14`
+text fields vs `py-[5px] text-13` date pickers vs a `py-1.5` search box with
+its own focus ring), and the Tailwind theme carried a bespoke pixel type
+scale (`--text-11` … `--text-56`). Three decisions tighten this:
+
+- **One control size, fixed height.** Every form control (and `Button`) is
+  exactly `h-9 px-3 text-sm`, composed from `inputStyles`/`groupStyles` in
+  `ui/styles.ts`. Height is explicit, never padding-derived, so text fields,
+  date pickers, comboboxes and search boxes align on a row by construction —
+  even when inner fonts differ (`font-mono` amounts). The `fieldSize`
+  (`md`/`sm`) variant system is deleted; dense grids (advanced journal lines)
+  use the same `h-9`. Rationale: two sizes existed to buy density that wasn't
+  worth the drift; one size makes misalignment unrepresentable.
+- **One focus treatment.** Fields focus by border swap
+  (`focus-within:border-border-strong`); the brand-primary focus ring is
+  reserved for buttons/toggles. `SearchField`'s one-off ring + borderless
+  chrome was folded into the shared group chrome.
+- **Native Tailwind theme.** The custom `--text-*` pixel variables are
+  deleted; the SPA uses Tailwind's default scale (`text-xs` … `text-6xl`).
+  Mapping applied: 11/12 px → `text-xs`, 13/14 px → `text-sm`, 16 → `base`,
+  18 → `lg`, 22 → `xl`, 28 → `3xl`, 44 → `5xl`. The 13 px compact size — the
+  main casualty, with no default equivalent — was deliberately given up: form
+  controls read fine at 14 px, and staying on stock tokens beats maintaining
+  a parallel scale. The same sweep removed the remaining redundant tokens:
+  `--spacing: 4px` (identical to the default `0.25rem`), the tracking
+  overrides, the custom radius scale (4/8/32 px snap exactly onto default
+  `rounded-sm`/`lg`/`4xl`; the 14 px panel radius snaps to `rounded-xl`,
+  12 px), the named blur/duration tokens (v4 accepts numeric `duration-120`
+  natively), and the `--ease-out`/`--ease-in-out` overrides that silently
+  changed what the stock utilities meant. Custom `@theme` tokens remain only
+  where Balance is genuinely opinionated: colors, font families,
+  `--shadow-overlay`, and the two supported global motion knobs
+  (`--default-transition-duration`/`-timing-function`) as literals.
+
+The shared picker also moved and renamed: `components/Combobox.tsx` →
+`components/ui/ComboBox.tsx` (React Aria casing), with the create sentinel
+gated on `onCreate` and its label defaulting inside the component.

@@ -4,7 +4,9 @@
 /*
  * Design tokens — Balance Design System.
  * Exposed both as CSS variables (use in arbitrary CSS) and as Tailwind v4
- * theme tokens (use as utilities, e.g. bg-surface-1, text-fg-2, rounded-xl).
+ * theme tokens (use as utilities, e.g. bg-surface-1, text-fg-2). Everything
+ * not listed here (type scale, spacing, radii, tracking, blur, …) is stock
+ * Tailwind — prefer default utilities over adding new tokens.
  */
 @theme {
     /* Brand */
@@ -61,48 +63,14 @@
     --font-sans: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-    /* Type scale */
-    --text-11: 0.6875rem;
-    --text-12: 0.75rem;
-    --text-13: 0.8125rem;
-    --text-14: 0.875rem;
-    --text-16: 1rem;
-    --text-18: 1.125rem;
-    --text-22: 1.375rem;
-    --text-28: 1.75rem;
-    --text-34: 2.125rem;
-    --text-44: 2.75rem;
-    --text-56: 3.5rem;
-
-    /* Tracking */
-    --tracking-tight: -0.02em;
-    --tracking-caps: 0.12em;
-
-    /* Spacing (4pt base — Tailwind v4 derives p-1=4px, p-2=8px, ... from --spacing) */
-    --spacing: 4px;
-
-    /* Radii */
-    --radius-xs: 4px;
-    --radius-sm: 8px;
-    --radius-md: 14px;
-    --radius-lg: 20px;
-    --radius-xl: 32px;
-
-    /* Blur */
-    --blur-card: 20px;
-    --blur-soft: 10px;
+    /* Type scale, tracking, spacing, radii, blur: Tailwind defaults — no overrides. */
 
     /* Shadows — Balance avoids drop shadows except for floating overlays. */
     --shadow-overlay: 0 12px 40px rgba(0, 0, 0, 0.45);
 
-    /* Motion */
-    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-    --default-transition-timing-function: var(--ease-out);
-    --duration-fast: 120ms;
-    --duration-base: 220ms;
-    --duration-slow: 420ms;
-    --default-transition-duration: var(--duration-base);
+    /* Motion — Tailwind's supported global-default knobs, tuned for Balance. */
+    --default-transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    --default-transition-duration: 220ms;
 }
 
 /*
@@ -146,10 +114,10 @@ summary,
 
 /* Eyebrow / uppercase micro label. */
 .eyebrow {
-    font-size: var(--text-12);
+    font-size: var(--text-xs);
     font-weight: 500;
     color: var(--color-fg-3);
-    letter-spacing: var(--tracking-caps);
+    letter-spacing: 0.1em; /* tracking-widest */
     text-transform: uppercase;
 }
 

@@ -2,10 +2,12 @@ import { useMemo, useState } from 'react';
 import { Form, ToggleButton, ToggleButtonGroup } from 'react-aria-components';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useAccounts, type Account } from '../api/accounts';
-import { useCounterparties } from '../api/counterparties';
+import { useCounterparties, useCreateCounterparty } from '../api/counterparties';
 import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import { useCreateJournalEntry } from '../api/journalEntries';
 import { AccountSelect } from '../components/AccountSelect';
+import { ComboBox } from '../components/ui/ComboBox';
+import { type ComboBoxItem } from '../components/ui/combobox.state';
 import { ErrorState } from '../components/ErrorState';
 import { FormErrorBanner } from '../components/FormErrorBanner';
 import { Icon } from '../components/Icon';
@@ -14,16 +16,14 @@ import { Skeleton } from '../components/Skeleton';
 import { Button, IconButton } from '../components/ui/Button';
 import { DatePicker } from '../components/ui/DatePicker';
 import { NumberField } from '../components/ui/NumberField';
-import { Select, SelectItem } from '../components/ui/Select';
 import { TextField } from '../components/ui/TextField';
 import { selectedKey } from '../components/ui/selection';
 import { useToast } from '../components/ui/Toast';
 import { cx } from '../lib/cx';
 import { todayIso } from '../lib/dates';
-import { asCounterpartyId, type AccountId, type CounterpartyId } from '../lib/domain';
+import { type AccountId, type CounterpartyId } from '../lib/domain';
 import { handleFormError } from '../lib/formErrors';
 import { formatMoney } from '../lib/money';
-import { CounterpartyFormModal } from './CounterpartyForm';
 import {
     advancedStateToCreateRequest,
     computeAdvancedTotals,
@@ -39,9 +39,6 @@ import {
     type ScaleLookup,
     type SimpleLeg,
 } from './journalNew.state';
-
-/** Sentinel id for the "None" option — RAC Select keys can't be null. */
-const NONE_COUNTERPARTY = '__none__';
 
 /** Currency-styled Intl options for amount fields; plain decimal until an
  *  account (and thus a currency) is known. */
@@ -104,13 +101,13 @@ function JournalNewForm({
     catalog: CurrencyCatalog;
 }) {
     const create = useCreateJournalEntry();
+    const createCounterparty = useCreateCounterparty();
     const toast = useToast();
     const navigate = useNavigate();
 
     const [form, setForm] = useState<FormState>(() => emptyForm(todayIso()));
     const [topError, setTopError] = useState<string | null>(null);
     const [fieldErrors, setFieldErrors] = useState<FieldErrors | null>(null);
-    const [createCounterparty, setCreateCounterparty] = useState(false);
 
     const accountsById = useMemo(() => {
         const m = new Map<AccountId, Account>();
@@ -129,6 +126,16 @@ function JournalNewForm({
 
     function setHeader(patch: Partial<FormState['header']>) {
         setForm(prev => ({ ...prev, header: { ...prev.header, ...patch } }));
+    }
+
+    async function createAndSelectCounterparty(name: string) {
+        try {
+            const created = await createCounterparty.mutateAsync({ name });
+            setHeader({ counterpartyId: created.id });
+            toast.success(`Counterparty '${created.name}' created.`);
+        } catch (err) {
+            handleFormError(err, { setFieldErrors, setTopError, toast: toast.error });
+        }
     }
 
     function setSimple(updater: (s: FormState['simple']) => FormState['simple']) {
@@ -180,91 +187,80 @@ function JournalNewForm({
     }
 
     return (
-        <>
-            <Form
-                validationErrors={fieldErrors ?? undefined}
-                onSubmit={e => {
-                    e.preventDefault();
-                    void submit();
-                }}
-            >
-                <Panel>
-                    <SectionHead
-                        title="New journal entry"
-                        subtitle={
-                            form.mode === 'simple'
-                                ? 'Money moved from one or more sources to one or more destinations.'
-                                : 'General-journal table — explicit debit / credit per line.'
-                        }
-                        action={
-                            <Link
-                                to="/activity"
-                                search={{ page: 1, q: '', account: '', from: '', to: '' }}
-                                className="text-12 text-fg-3 hover:text-fg-1"
-                            >
-                                ← Cancel
-                            </Link>
-                        }
-                    />
-                    <FormErrorBanner message={topError} />
-                    <HeaderInputs
-                        form={form}
-                        counterparties={counterparties}
-                        onPatch={setHeader}
-                        onAddCounterparty={() => {
-                            setCreateCounterparty(true);
-                        }}
-                    />
-                    <ModeToggle
-                        mode={form.mode}
-                        canSwitchToSimple={canSwitchToSimple}
-                        onSwitchSimple={switchToSimple}
-                        onSwitchAdvanced={switchToAdvanced}
-                    />
-                </Panel>
-
-                <Panel>
-                    {form.mode === 'simple' ? (
-                        <SimpleLines
-                            simple={form.simple}
-                            accountsById={accountsById}
-                            anchorCurrency={anchorCurrency}
-                            onChange={setSimple}
-                        />
-                    ) : (
-                        <AdvancedLines
-                            advanced={form.advanced}
-                            accountsById={accountsById}
-                            anchorCurrency={anchorCurrency}
-                            catalog={catalog}
-                            scaleLookup={scaleLookup}
-                            onChange={setAdvanced}
-                        />
-                    )}
-                    <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-border-soft">
+        <Form
+            validationErrors={fieldErrors ?? undefined}
+            onSubmit={e => {
+                e.preventDefault();
+                void submit();
+            }}
+        >
+            <Panel>
+                <SectionHead
+                    title="New journal entry"
+                    subtitle={
+                        form.mode === 'simple'
+                            ? 'Money moved from one or more sources to one or more destinations.'
+                            : 'General-journal table — explicit debit / credit per line.'
+                    }
+                    action={
                         <Link
                             to="/activity"
                             search={{ page: 1, q: '', account: '', from: '', to: '' }}
-                            className="px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-fg-1"
+                            className="text-xs text-fg-3 hover:text-fg-1"
                         >
-                            Cancel
+                            ← Cancel
                         </Link>
-                        <Button type="submit" variant="primary" isDisabled={create.isPending}>
-                            {create.isPending ? 'Creating…' : 'Create entry'}
-                        </Button>
-                    </div>
-                </Panel>
-            </Form>
-
-            {createCounterparty && (
-                <CounterpartyFormModal
-                    mode="create"
-                    onClose={() => {
-                        setCreateCounterparty(false);
+                    }
+                />
+                <FormErrorBanner message={topError} />
+                <HeaderInputs
+                    form={form}
+                    counterparties={counterparties}
+                    onPatch={setHeader}
+                    onCreateCounterparty={name => {
+                        void createAndSelectCounterparty(name);
                     }}
                 />
-            )}
-        </>
+                <ModeToggle
+                    mode={form.mode}
+                    canSwitchToSimple={canSwitchToSimple}
+                    onSwitchSimple={switchToSimple}
+                    onSwitchAdvanced={switchToAdvanced}
+                />
+            </Panel>
+
+            <Panel>
+                {form.mode === 'simple' ? (
+                    <SimpleLines
+                        simple={form.simple}
+                        accountsById={accountsById}
+                        anchorCurrency={anchorCurrency}
+                        onChange={setSimple}
+                    />
+                ) : (
+                    <AdvancedLines
+                        advanced={form.advanced}
+                        accountsById={accountsById}
+                        anchorCurrency={anchorCurrency}
+                        catalog={catalog}
+                        scaleLookup={scaleLookup}
+                        onChange={setAdvanced}
+                    />
+                )}
+                <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-border-soft">
+                    <Link
+                        to="/activity"
+                        search={{ page: 1, q: '', account: '', from: '', to: '' }}
+                        className="px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1"
+                    >
+                        Cancel
+                    </Link>
+                    <Button type="submit" variant="primary" isDisabled={create.isPending}>
+                        {create.isPending ? 'Creating…' : 'Create entry'}
+                    </Button>
+                </div>
+            </Panel>
+        </Form>
     );
 }
 
@@ -272,13 +268,18 @@ function HeaderInputs({
     form,
     counterparties,
     onPatch,
-    onAddCounterparty,
+    onCreateCounterparty,
 }: {
     form: FormState;
     counterparties: { id: CounterpartyId; name: string }[];
     onPatch: (patch: Partial<FormState['header']>) => void;
-    onAddCounterparty: () => void;
+    onCreateCounterparty: (name: string) => void;
 }) {
+    const counterpartyItems = useMemo<ComboBoxItem<CounterpartyId>[]>(
+        () => counterparties.map(c => ({ key: c.id, label: c.name, value: c.id })),
+        [counterparties],
+    );
+
     return (
         <div className="grid grid-cols-[140px_1fr_minmax(220px,300px)] gap-3 mb-4">
             <DatePicker
@@ -301,38 +302,22 @@ function HeaderInputs({
                 placeholder="Optional"
             />
             <div className="flex flex-col gap-1">
-                <span className="text-12 font-medium text-fg-2">Counterparty</span>
-                <div className="flex items-stretch gap-2">
-                    <Select
-                        aria-label="Counterparty"
-                        name="CounterpartyId"
-                        value={form.header.counterpartyId ?? NONE_COUNTERPARTY}
-                        onChange={key => {
-                            onPatch({
-                                counterpartyId:
-                                    key === null || key === NONE_COUNTERPARTY
-                                        ? null
-                                        : asCounterpartyId(String(key)),
-                            });
-                        }}
-                        className="flex-1 min-w-0"
-                    >
-                        <SelectItem id={NONE_COUNTERPARTY}>None</SelectItem>
-                        {counterparties.map(c => (
-                            <SelectItem key={c.id} id={c.id}>
-                                {c.name}
-                            </SelectItem>
-                        ))}
-                    </Select>
-                    <Button
-                        onPress={onAddCounterparty}
-                        aria-label="Create a new counterparty"
-                        className="shrink-0"
-                    >
-                        <Icon name="plus" size={14} strokeWidth={2} />
-                        New
-                    </Button>
-                </div>
+                <span className="text-xs font-medium text-fg-2">Counterparty</span>
+                <ComboBox
+                    name="CounterpartyId"
+                    items={counterpartyItems}
+                    value={form.header.counterpartyId}
+                    onChange={counterpartyId => {
+                        onPatch({ counterpartyId });
+                    }}
+                    onClear={() => {
+                        onPatch({ counterpartyId: null });
+                    }}
+                    onCreate={onCreateCounterparty}
+                    noneLabel="── None"
+                    placeholder="Pick counterparty…"
+                    ariaLabel="Counterparty"
+                />
             </div>
         </div>
     );
@@ -351,7 +336,7 @@ function ModeToggle({
 }) {
     const segmentClass = (selected: boolean) =>
         cx(
-            'px-2 py-1 rounded-sm outline-none cursor-pointer data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary',
+            'px-2 py-1 rounded-lg outline-none cursor-pointer data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary',
             selected
                 ? 'bg-surface-1 text-fg-1'
                 : 'text-fg-3 data-[hovered]:text-fg-1 data-[disabled]:opacity-40 data-[disabled]:cursor-not-allowed',
@@ -367,7 +352,7 @@ function ModeToggle({
                 if (next === 'simple') onSwitchSimple();
                 if (next === 'advanced') onSwitchAdvanced();
             }}
-            className="inline-flex items-center gap-1 p-[2px] rounded-sm bg-surface-2 border border-border-soft text-12 font-medium"
+            className="inline-flex items-center gap-1 p-[2px] rounded-lg bg-surface-2 border border-border-soft text-xs font-medium"
         >
             <ToggleButton
                 id="simple"
@@ -488,10 +473,10 @@ function SimpleLegColumn({
         <div className="flex flex-col gap-3">
             <div className="flex items-baseline justify-between">
                 <div className="flex flex-col gap-[2px]">
-                    <h3 className="text-13 font-semibold text-fg-1">{heading}</h3>
-                    <span className="text-11 text-fg-3">{subheading}</span>
+                    <h3 className="text-sm font-semibold text-fg-1">{heading}</h3>
+                    <span className="text-xs text-fg-3">{subheading}</span>
                 </div>
-                <Button variant="ghost" onPress={onAdd} className="px-2 py-1 text-12 font-normal">
+                <Button variant="ghost" onPress={onAdd} className="px-2 py-1 text-xs font-normal">
                     <Icon name="plus" size={12} strokeWidth={2} />
                     Add
                 </Button>
@@ -579,7 +564,7 @@ function AdvancedLines({
 
     return (
         <div className="flex flex-col">
-            <div className="grid grid-cols-[1fr_120px_120px_minmax(140px,1fr)_32px] gap-3 px-2 pb-2 text-11 text-fg-3 uppercase tracking-wider border-b border-border-soft">
+            <div className="grid grid-cols-[1fr_120px_120px_minmax(140px,1fr)_32px] gap-3 px-2 pb-2 text-xs text-fg-3 uppercase tracking-wider border-b border-border-soft">
                 <span>Account</span>
                 <span className="text-right">Debit</span>
                 <span className="text-right">Credit</span>
@@ -616,7 +601,6 @@ function AdvancedLines({
                                 lineAccount?.currencyCode ?? anchorCurrency,
                             )}
                             placeholder="0.00"
-                            fieldSize="sm"
                             inputClassName="text-right font-mono"
                         />
                         <NumberField
@@ -630,7 +614,6 @@ function AdvancedLines({
                                 lineAccount?.currencyCode ?? anchorCurrency,
                             )}
                             placeholder="0.00"
-                            fieldSize="sm"
                             inputClassName="text-right font-mono"
                         />
                         <TextField
@@ -641,7 +624,6 @@ function AdvancedLines({
                             }}
                             maxLength={500}
                             placeholder="Optional"
-                            fieldSize="sm"
                         />
                         <IconButton
                             onPress={() => {
@@ -657,7 +639,7 @@ function AdvancedLines({
                 );
             })}
             <div className="flex items-center justify-between mt-2">
-                <Button variant="ghost" onPress={addLine} className="px-2 py-1 text-12 font-normal">
+                <Button variant="ghost" onPress={addLine} className="px-2 py-1 text-xs font-normal">
                     <Icon name="plus" size={12} strokeWidth={2} />
                     Add line
                 </Button>
@@ -677,13 +659,13 @@ function AdvancedTotalsFooter({
     catalog: CurrencyCatalog;
 }) {
     if (!currency) {
-        return <span className="text-12 text-fg-3">Σ Debit / Credit</span>;
+        return <span className="text-xs text-fg-3">Σ Debit / Credit</span>;
     }
     const debitStr = formatMoney(totals.debitMinor, currency, catalog);
     const creditStr = formatMoney(totals.creditMinor, currency, catalog);
     const diff = totals.debitMinor - totals.creditMinor;
     return (
-        <div className="flex items-center gap-4 text-12 tabular">
+        <div className="flex items-center gap-4 text-xs tabular">
             <span className="text-fg-3">
                 Σ Debit <span className="font-mono text-fg-1">{debitStr}</span>
             </span>

@@ -34,21 +34,21 @@ export function Modal({ open, onClose, title, description, children, width = 'md
             className={
                 'fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto ' +
                 'bg-surface-overlay backdrop-blur-sm ' +
-                'data-[entering]:opacity-0 data-[exiting]:opacity-0 transition-opacity duration-fast'
+                'data-[entering]:opacity-0 data-[exiting]:opacity-0 transition-opacity duration-120'
             }
         >
             <AriaModal className={cx('w-[calc(100vw-32px)]', WIDTH_CLASS[width])}>
                 <Dialog
-                    className="flex flex-col bg-bg-1 border border-border-soft rounded-md shadow-overlay outline-none text-fg-1"
+                    className="flex flex-col bg-bg-1 border border-border-soft rounded-xl shadow-overlay outline-none text-fg-1"
                     aria-label={title}
                 >
                     <header className="flex items-start gap-3 px-5 pt-4 pb-3 border-b border-border-soft">
                         <div className="flex-1 min-w-0 flex flex-col gap-[2px]">
-                            <Heading slot="title" className="text-16 font-semibold leading-snug">
+                            <Heading slot="title" className="text-base font-semibold leading-snug">
                                 {title}
                             </Heading>
                             {description !== undefined && (
-                                <p className="text-13 text-fg-3">{description}</p>
+                                <p className="text-sm text-fg-3">{description}</p>
                             )}
                         </div>
                         <IconButton

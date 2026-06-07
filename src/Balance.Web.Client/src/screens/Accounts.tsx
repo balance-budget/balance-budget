@@ -39,7 +39,7 @@ export function Accounts() {
                             onClick={() => {
                                 setCreating(true);
                             }}
-                            className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm bg-brand-primary text-white text-13 font-medium hover:bg-brand-primary-dark"
+                            className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg bg-brand-primary text-white text-sm font-medium hover:bg-brand-primary-dark"
                         >
                             <Icon name="plus" size={14} strokeWidth={2} />
                             New account
@@ -106,8 +106,8 @@ function AccountList({
     if (query.data.length === 0) {
         return (
             <div className="py-8 flex flex-col items-center gap-2 text-center">
-                <span className="text-14 text-fg-2">No accounts yet.</span>
-                <span className="text-12 text-fg-3">
+                <span className="text-sm text-fg-2">No accounts yet.</span>
+                <span className="text-xs text-fg-3">
                     Add your first ledger account to get started.
                 </span>
             </div>
@@ -251,12 +251,12 @@ function AccountRow({
                             />
                         ) : null}
                         <span
-                            className={`text-14 truncate ${account.isPostable ? 'font-medium text-fg-1' : 'font-semibold text-fg-2'}`}
+                            className={`text-sm truncate ${account.isPostable ? 'font-medium text-fg-1' : 'font-semibold text-fg-2'}`}
                         >
                             {account.name}
                         </span>
                     </span>
-                    <span className="text-12 text-fg-3 truncate tabular">
+                    <span className="text-xs text-fg-3 truncate tabular">
                         {account.code}
                         {identifier ? ` · ${identifier}` : ''}
                     </span>
@@ -275,7 +275,7 @@ function AccountRow({
                     onEdit(account);
                 }}
                 aria-label="Edit"
-                className="p-2 rounded-sm text-fg-3 hover:text-fg-1 hover:bg-surface-2"
+                className="p-2 rounded-lg text-fg-3 hover:text-fg-1 hover:bg-surface-2"
             >
                 <Icon name="pencil" size={14} strokeWidth={2} />
             </button>
@@ -285,7 +285,7 @@ function AccountRow({
                     onDelete(account);
                 }}
                 aria-label="Delete"
-                className="p-2 rounded-sm text-fg-3 hover:text-danger hover:bg-surface-2"
+                className="p-2 rounded-lg text-fg-3 hover:text-danger hover:bg-surface-2"
             >
                 <Icon name="trash" size={14} strokeWidth={2} />
             </button>

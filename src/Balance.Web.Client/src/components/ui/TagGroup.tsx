@@ -30,9 +30,9 @@ export function TagGroup<T extends object>({ label, items, children, ...props }:
 
 const TAG_SHAPE = {
     /** Rounded pill — preset/range selectors. */
-    pill: 'px-[10px] py-[5px] rounded-full text-11',
+    pill: 'px-[10px] py-[5px] rounded-full text-xs',
     /** Squared chip — list filter rows. */
-    chip: 'px-3 py-1 rounded-sm text-12 data-[hovered]:bg-surface-2 transition-colors',
+    chip: 'px-3 py-1 rounded-lg text-xs data-[hovered]:bg-surface-2 transition-colors',
 };
 
 export function Tag({ shape = 'pill', ...props }: TagProps & { shape?: keyof typeof TAG_SHAPE }) {

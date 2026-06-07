@@ -344,7 +344,7 @@ export function BankAccountFormModal(props: Props) {
                     ) : null}
                 </div>
 
-                <p className="mt-3 text-12 text-fg-3">
+                <p className="mt-3 text-xs text-fg-3">
                     {form.type === 'Current'
                         ? 'IBAN is required.'
                         : form.type === 'Savings'

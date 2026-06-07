@@ -76,7 +76,7 @@ export function DateRangePicker({
             <Group
                 className={cx(
                     groupStyles,
-                    'group-data-[invalid]:border-danger w-fit px-2 py-[5px] text-13',
+                    'group-data-[invalid]:border-danger w-fit px-3',
                     fieldClassName,
                 )}
             >

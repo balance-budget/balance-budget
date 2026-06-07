@@ -40,16 +40,16 @@ export function Setup() {
               : null;
 
     return (
-        <div className="w-full max-w-[480px] bg-bg-1 border border-border-soft rounded-md shadow-overlay">
+        <div className="w-full max-w-[480px] bg-bg-1 border border-border-soft rounded-xl shadow-overlay">
             <header className="flex items-center gap-[10px] px-5 pt-5 pb-3">
                 <img src={logo} alt="" className="w-8 h-8 rounded-[6px]" />
-                <span className="text-18 font-normal tracking-[-0.01em]">
+                <span className="text-lg font-normal tracking-[-0.01em]">
                     Balance<span className="text-brand-primary">.</span>
                 </span>
             </header>
             <div className="px-5 pt-1 pb-5">
-                <h1 className="text-16 font-semibold leading-snug mb-1">First-run setup</h1>
-                <p className="text-13 text-fg-3 mb-4">
+                <h1 className="text-base font-semibold leading-snug mb-1">First-run setup</h1>
+                <p className="text-sm text-fg-3 mb-4">
                     Create the first account. This wizard becomes unavailable once a user exists.
                 </p>
                 <Form
@@ -93,7 +93,7 @@ export function Setup() {
                             onChange={setSetupToken}
                             inputClassName="font-mono"
                         />
-                        <span className="text-12 text-fg-3">
+                        <span className="text-xs text-fg-3">
                             Required when configured at deploy time via{' '}
                             <code className="font-mono">Auth:SetupToken</code>.
                         </span>

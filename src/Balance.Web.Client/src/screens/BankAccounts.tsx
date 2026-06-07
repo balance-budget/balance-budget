@@ -65,7 +65,7 @@ export function BankAccounts({
                             onClick={() => {
                                 setCreating(true);
                             }}
-                            className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm bg-brand-primary text-white text-13 font-medium hover:bg-brand-primary-dark"
+                            className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg bg-brand-primary text-white text-sm font-medium hover:bg-brand-primary-dark"
                         >
                             <Icon name="plus" size={14} strokeWidth={2} />
                             New bank account
@@ -117,7 +117,7 @@ function OwnerFilterChips({
                             onChange(o);
                         }}
                         className={cx(
-                            'px-3 py-1 rounded-sm text-12 font-medium select-none transition-colors',
+                            'px-3 py-1 rounded-lg text-xs font-medium select-none transition-colors',
                             active
                                 ? 'bg-brand-primary-soft text-brand-primary'
                                 : 'text-fg-2 hover:bg-surface-2 hover:text-fg-1',
@@ -171,7 +171,7 @@ function BankAccountList({
 
     if (items.length === 0 && debouncedQ !== '') {
         return (
-            <div className="py-8 text-center text-14 text-fg-2">No matches for “{debouncedQ}”.</div>
+            <div className="py-8 text-center text-sm text-fg-2">No matches for “{debouncedQ}”.</div>
         );
     }
 
@@ -186,8 +186,8 @@ function BankAccountList({
                 : 'Counterparty bank accounts appear as you categorise imported transactions.';
         return (
             <div className="py-8 flex flex-col items-center gap-2 text-center">
-                <span className="text-14 text-fg-2">{title}</span>
-                <span className="text-12 text-fg-3">{hint}</span>
+                <span className="text-sm text-fg-2">{title}</span>
+                <span className="text-xs text-fg-3">{hint}</span>
             </div>
         );
     }
@@ -241,22 +241,22 @@ function BankAccountRow({
         <Link
             to="/settings/bank-accounts/$id"
             params={{ id: bankAccount.id }}
-            className="py-3 first:pt-0 last:pb-0 flex items-center gap-3 border-b border-border-soft last:border-b-0 hover:bg-surface-2 px-1 -mx-1 rounded-sm"
+            className="py-3 first:pt-0 last:pb-0 flex items-center gap-3 border-b border-border-soft last:border-b-0 hover:bg-surface-2 px-1 -mx-1 rounded-lg"
         >
-            <span className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-md bg-brand-primary-soft text-brand-primary">
+            <span className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-xl bg-brand-primary-soft text-brand-primary">
                 <Icon name={bankAccountTypeIcon(bankAccount.type)} size={16} strokeWidth={2} />
             </span>
             <div className="flex-1 min-w-0 flex flex-col leading-tight">
-                <span className="text-14 font-medium text-fg-1 truncate">
+                <span className="text-sm font-medium text-fg-1 truncate">
                     {formatBankAccountLabel(bankAccount)}
                 </span>
-                <span className="text-12 text-fg-3 tabular truncate">
+                <span className="text-xs text-fg-3 tabular truncate">
                     {formatBankAccountSubline(bankAccount)}
                 </span>
             </div>
             <div className="shrink-0 flex flex-col items-end leading-tight">
-                <span className="text-11 text-fg-3 uppercase tracking-wider">{ownerKind}</span>
-                <span className="text-12 text-fg-2 truncate max-w-[160px]">{ownerLabel}</span>
+                <span className="text-xs text-fg-3 uppercase tracking-wider">{ownerKind}</span>
+                <span className="text-xs text-fg-2 truncate max-w-[160px]">{ownerLabel}</span>
             </div>
             <Icon name="chevron-right" size={14} className="text-fg-3" />
         </Link>
@@ -298,11 +298,11 @@ export function BankAccountDetail({ id }: { id: BankAccountId }) {
                         <Link
                             to="/settings/bank-accounts"
                             search={{ owner: 'Mine', page: 1, q: '' }}
-                            className="text-12 text-fg-3 hover:text-fg-1"
+                            className="text-xs text-fg-3 hover:text-fg-1"
                         >
                             ← Bank accounts
                         </Link>
-                        <h1 className="text-22 font-medium text-fg-1 truncate">
+                        <h1 className="text-xl font-medium text-fg-1 truncate">
                             {formatBankAccountLabel(ba)}
                         </h1>
                     </div>
@@ -312,7 +312,7 @@ export function BankAccountDetail({ id }: { id: BankAccountId }) {
                             onClick={() => {
                                 setEditing(true);
                             }}
-                            className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-fg-1 hover:bg-surface-2"
+                            className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1 hover:bg-surface-2"
                         >
                             <Icon name="pencil" size={14} strokeWidth={2} />
                             Edit
@@ -322,7 +322,7 @@ export function BankAccountDetail({ id }: { id: BankAccountId }) {
                             onClick={() => {
                                 setDeleting(true);
                             }}
-                            className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-danger hover:bg-surface-2"
+                            className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-danger hover:bg-surface-2"
                         >
                             <Icon name="trash" size={14} strokeWidth={2} />
                             Delete
@@ -355,7 +355,7 @@ export function BankAccountDetail({ id }: { id: BankAccountId }) {
 
 function BankAccountDetails({ bankAccount }: { bankAccount: BankAccount }) {
     return (
-        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-13">
+        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
             <Field label="Type" value={bankAccount.type} />
             <Field label="IBAN" value={bankAccount.iban} />
             <Field label="Account number" value={bankAccount.accountNumber} />
@@ -372,7 +372,7 @@ function BankAccountDetails({ bankAccount }: { bankAccount: BankAccount }) {
 function Field({ label, value }: { label: string; value: string | null }) {
     return (
         <div className="flex flex-col gap-[2px]">
-            <dt className="text-11 text-fg-3 uppercase tracking-wider">{label}</dt>
+            <dt className="text-xs text-fg-3 uppercase tracking-wider">{label}</dt>
             <dd className="text-fg-1 tabular">{value ?? '—'}</dd>
         </div>
     );

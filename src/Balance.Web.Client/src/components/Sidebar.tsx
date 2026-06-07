@@ -63,8 +63,8 @@ function NavGroup({
                         key={item.to}
                         to={item.to}
                         className={cx(
-                            'flex items-center gap-3 px-3 py-[9px] rounded-sm select-none',
-                            'text-[13.5px] font-medium transition-[background,color] duration-fast',
+                            'flex items-center gap-3 px-3 py-[9px] rounded-lg select-none',
+                            'text-sm font-medium transition-[background,color] duration-120',
                             isActive
                                 ? 'bg-brand-primary-soft text-brand-primary'
                                 : 'text-fg-2 hover:bg-surface-2 hover:text-fg-1',
@@ -156,20 +156,20 @@ function AccountTreeNode({
                         to: '',
                         status: '',
                     }}
-                    className="flex-1 min-w-0 flex items-center gap-3 pl-2 pr-8 py-2 rounded-sm text-fg-1 hover:bg-surface-2 transition-colors"
+                    className="flex-1 min-w-0 flex items-center gap-3 pl-2 pr-8 py-2 rounded-lg text-fg-1 hover:bg-surface-2 transition-colors"
                     activeProps={{ className: 'bg-brand-primary-soft text-brand-primary' }}
                 >
                     <AccountAvatar account={account} />
                     <div className="flex-1 min-w-0 flex flex-col leading-tight">
-                        <span className="truncate text-13">{account.name}</span>
+                        <span className="truncate text-sm">{account.name}</span>
                         {identifier && (
-                            <span className="text-11 text-fg-3 truncate tabular">{identifier}</span>
+                            <span className="text-xs text-fg-3 truncate tabular">{identifier}</span>
                         )}
                     </div>
                     {showBalance && (
                         <span
                             className={cx(
-                                'shrink-0 text-12 tabular-nums',
+                                'shrink-0 text-xs tabular-nums',
                                 isNegative ? 'text-danger' : 'text-fg-2',
                             )}
                         >
@@ -192,13 +192,13 @@ function AccountTreeNode({
                         }}
                         aria-label={expanded ? 'Collapse' : 'Expand'}
                         aria-expanded={expanded}
-                        className="absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded-sm text-fg-3 cursor-pointer outline-none data-[hovered]:text-fg-1 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded-lg text-fg-3 cursor-pointer outline-none data-[hovered]:text-fg-1 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary"
                     >
                         <Icon
                             name="chevron-right"
                             size={14}
                             className={cx(
-                                'transition-transform duration-fast',
+                                'transition-transform duration-120',
                                 expanded && 'rotate-90',
                             )}
                         />
@@ -210,7 +210,7 @@ function AccountTreeNode({
                 // deep and the sidebar is narrow. Instead, each expanded group sits
                 // on a translucent shade that compounds with depth, so nested
                 // subtrees read progressively brighter without eating width.
-                <div className="flex flex-col gap-[2px] rounded-md bg-white/[0.03] py-[2px]">
+                <div className="flex flex-col gap-[2px] rounded-xl bg-white/[0.03] py-[2px]">
                     {children.map(child => (
                         <AccountTreeNode
                             key={child.id}
@@ -306,7 +306,7 @@ function AccountsGroup() {
         return (
             <div className="flex flex-col gap-[2px]">
                 <SectionLabel>Accounts</SectionLabel>
-                <div className="px-3 py-2 text-12 text-fg-3">No accounts yet.</div>
+                <div className="px-3 py-2 text-xs text-fg-3">No accounts yet.</div>
             </div>
         );
     }
@@ -391,20 +391,20 @@ function CurrentUserCard() {
     }
 
     return (
-        <div className="mt-auto flex items-center gap-[10px] p-[10px] rounded-sm bg-surface-2">
-            <div className="w-8 h-8 rounded-full bg-brand-primary-soft text-brand-primary flex items-center justify-center text-12 font-semibold">
+        <div className="mt-auto flex items-center gap-[10px] p-[10px] rounded-lg bg-surface-2">
+            <div className="w-8 h-8 rounded-full bg-brand-primary-soft text-brand-primary flex items-center justify-center text-xs font-semibold">
                 {initials(displayName)}
             </div>
             <div className="flex-1 flex flex-col leading-tight min-w-0">
-                <span className="text-13 font-medium text-fg-1 truncate">{displayName}</span>
-                <span className="text-14 text-fg-3 truncate">{email}</span>
+                <span className="text-sm font-medium text-fg-1 truncate">{displayName}</span>
+                <span className="text-sm text-fg-3 truncate">{email}</span>
             </div>
             <Button
                 onPress={() => {
                     void signOut();
                 }}
                 isDisabled={logout.isPending}
-                className="text-fg-3 cursor-pointer outline-none data-[hovered]:text-fg-1 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary rounded-xs"
+                className="text-fg-3 cursor-pointer outline-none data-[hovered]:text-fg-1 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary rounded-sm"
                 aria-label="Sign out"
             >
                 <Icon name="log-out" size={16} />
@@ -422,21 +422,21 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
                 aria-hidden="true"
                 onClick={onClose}
                 className={cx(
-                    'md:hidden fixed inset-0 z-30 bg-surface-overlay backdrop-blur-sm transition-opacity duration-base',
+                    'md:hidden fixed inset-0 z-30 bg-surface-overlay backdrop-blur-sm transition-opacity duration-220',
                     open ? 'opacity-100' : 'opacity-0 pointer-events-none',
                 )}
             />
             <aside
                 className={cx(
-                    'w-64 shrink-0 h-screen flex flex-col gap-5 px-4 py-6 border-r border-border-soft bg-surface-1 backdrop-blur-card',
-                    'fixed top-0 left-0 z-40 transition-transform duration-base',
+                    'w-64 shrink-0 h-screen flex flex-col gap-5 px-4 py-6 border-r border-border-soft bg-surface-1 backdrop-blur-xl',
+                    'fixed top-0 left-0 z-40 transition-transform duration-220',
                     open ? 'translate-x-0' : '-translate-x-full',
                     'md:sticky md:top-0 md:left-auto md:z-auto md:translate-x-0 md:transition-none',
                 )}
             >
                 <div className="flex items-center gap-[10px] px-[10px] py-1">
                     <img src={logo} alt="" className="w-8 h-8 rounded-[6px]" />
-                    <span className="text-18 font-normal tracking-[-0.01em]">
+                    <span className="text-lg font-normal tracking-[-0.01em]">
                         Balance<span className="text-brand-primary">.</span>
                     </span>
                 </div>

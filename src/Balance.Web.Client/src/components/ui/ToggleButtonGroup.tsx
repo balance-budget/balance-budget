@@ -26,7 +26,7 @@ export function ToggleButton(props: ToggleButtonProps) {
             {...props}
             className={composeTailwindRenderProps(
                 props.className,
-                'px-[10px] py-[5px] rounded-full text-11 font-medium select-none cursor-pointer outline-none ' +
+                'px-[10px] py-[5px] rounded-full text-xs font-medium select-none cursor-pointer outline-none ' +
                     'text-fg-3 data-[hovered]:text-fg-1 ' +
                     'data-[selected]:bg-brand-primary-soft data-[selected]:text-brand-primary ' +
                     'data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary ' +

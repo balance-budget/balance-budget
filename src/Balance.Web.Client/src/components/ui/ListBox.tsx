@@ -24,14 +24,14 @@ export function DropdownListBox<T extends object>(props: ListBoxProps<T>) {
 }
 
 /** A single option row — focused rows take the brand highlight (matches the
- *  previous hand-rolled Combobox's active style). */
+ *  previous hand-rolled ComboBox's active style). */
 export function DropdownItem(props: ListBoxItemProps) {
     return (
         <ListBoxItem
             {...props}
             className={composeTailwindRenderProps(
                 props.className,
-                'px-3 py-2 cursor-pointer flex items-center gap-2 text-13 text-fg-1 outline-none ' +
+                'px-3 py-2 cursor-pointer flex items-center gap-2 text-sm text-fg-1 outline-none ' +
                     'data-[focused]:bg-brand-primary-soft data-[focused]:text-brand-primary ' +
                     'data-[disabled]:opacity-60',
             )}
@@ -44,7 +44,7 @@ export type DropdownSectionProps<T> = SectionProps<T> & {
     items?: Iterable<T>;
 };
 
-/** Grouped options with the uppercase micro-header from the previous Combobox. */
+/** Grouped options with the uppercase micro-header from the previous ComboBox. */
 export function DropdownSection<T extends object>({
     title,
     items,
@@ -53,7 +53,7 @@ export function DropdownSection<T extends object>({
 }: DropdownSectionProps<T>) {
     return (
         <ListBoxSection {...props}>
-            <Header className="px-3 py-1 text-11 text-fg-3 uppercase tracking-wider bg-surface-2 border-b border-border-soft">
+            <Header className="px-3 py-1 text-xs text-fg-3 uppercase tracking-wider bg-surface-2 border-b border-border-soft">
                 {title}
             </Header>
             <Collection items={items}>{children}</Collection>

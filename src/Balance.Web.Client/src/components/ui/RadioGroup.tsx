@@ -51,7 +51,7 @@ export function RadioGroup({
 export function Radio(props: RadioFieldProps) {
     return (
         <RadioField {...props}>
-            <RadioButton className="group flex items-center gap-2 text-13 text-fg-1 cursor-pointer data-[disabled]:opacity-60 outline-none">
+            <RadioButton className="group flex items-center gap-2 text-sm text-fg-1 cursor-pointer data-[disabled]:opacity-60 outline-none">
                 {composeRenderProps(props.children, children => (
                     <>
                         <span

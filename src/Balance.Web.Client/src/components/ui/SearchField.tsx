@@ -5,36 +5,39 @@ import {
     SearchField as AriaSearchField,
     type SearchFieldProps as AriaSearchFieldProps,
 } from 'react-aria-components';
+import { cx } from '../../lib/cx';
 import { composeTailwindRenderProps } from './compose';
+import { groupStyles } from './styles';
 
 export type SearchFieldProps = AriaSearchFieldProps & {
     placeholder?: string;
 };
 
-/** Compact toolbar search box — icon prefix, clear button, brand focus ring. */
+/** Toolbar search box — standard field chrome with an icon prefix and clear button. */
 export function SearchField({ placeholder, ...props }: SearchFieldProps) {
     return (
         <AriaSearchField
             {...props}
-            className={composeTailwindRenderProps(props.className, 'group relative')}
+            className={composeTailwindRenderProps(props.className, 'group')}
         >
-            <span
-                className="absolute inset-y-0 left-2 flex items-center text-fg-3 pointer-events-none"
-                aria-hidden="true"
-            >
-                <Search size={14} strokeWidth={1.75} />
-            </span>
-            <Input
-                placeholder={placeholder ?? 'Search…'}
-                className={
-                    'w-full pl-7 pr-7 py-1.5 rounded-sm bg-surface-2 text-13 text-fg-1 ' +
-                    'placeholder:text-fg-3 outline-none focus:ring-1 focus:ring-brand-primary ' +
-                    '[&::-webkit-search-cancel-button]:appearance-none'
-                }
-            />
-            <Button className="absolute inset-y-0 right-1 flex items-center px-1 text-fg-3 data-[hovered]:text-fg-1 outline-none group-data-[empty]:invisible">
-                <X size={13} strokeWidth={2} aria-hidden="true" />
-            </Button>
+            <div className={cx(groupStyles, 'px-3')}>
+                <span
+                    className="flex items-center text-fg-3 pointer-events-none"
+                    aria-hidden="true"
+                >
+                    <Search size={14} strokeWidth={1.75} />
+                </span>
+                <Input
+                    placeholder={placeholder ?? 'Search…'}
+                    className={
+                        'h-full flex-1 min-w-0 px-2 bg-transparent outline-none ' +
+                        '[&::-webkit-search-cancel-button]:appearance-none'
+                    }
+                />
+                <Button className="flex items-center text-fg-3 data-[hovered]:text-fg-1 outline-none group-data-[empty]:invisible">
+                    <X size={13} strokeWidth={2} aria-hidden="true" />
+                </Button>
+            </div>
         </AriaSearchField>
     );
 }

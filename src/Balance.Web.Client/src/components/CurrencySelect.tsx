@@ -19,7 +19,7 @@ export function CurrencySelect({ value, onChange }: CurrencySelectProps) {
     const options = codes.includes(value) ? codes : [value, ...codes];
 
     return (
-        <div className="flex items-center gap-2 text-12 text-fg-3">
+        <div className="flex items-center gap-2 text-xs text-fg-3">
             <span id="currency-select-label">Currency</span>
             <Select
                 aria-labelledby="currency-select-label"

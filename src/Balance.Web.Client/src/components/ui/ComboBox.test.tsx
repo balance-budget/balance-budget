@@ -3,18 +3,18 @@ import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { User } from '@react-aria/test-utils';
 import { describe, expect, it, vi } from 'vitest';
-import { Combobox } from './Combobox';
-import type { ComboboxItem } from './combobox.state';
+import { ComboBox } from './ComboBox';
+import type { ComboBoxItem } from './combobox.state';
 
 /*
- * App-specific Combobox behaviour on top of React Aria's ComboBox: searchText
+ * App-specific ComboBox behaviour on top of React Aria's ComboBox: searchText
  * matching, group ordering, and the None/Create sentinel rows. React Aria's
  * own keyboard/ARIA machinery is not re-tested here (Adobe covers that).
  */
 
 const testUtilUser = new User({ interactionType: 'mouse' });
 
-function accountishItems(): ComboboxItem<string>[] {
+function accountishItems(): ComboBoxItem<string>[] {
     return [
         {
             key: 'car-tax',
@@ -40,17 +40,15 @@ function accountishItems(): ComboboxItem<string>[] {
     ];
 }
 
-function renderCombobox(overrides: Partial<Parameters<typeof Combobox<string>>[0]> = {}) {
+function renderComboBox(overrides: Partial<Parameters<typeof ComboBox<string>>[0]> = {}) {
     const onChange = vi.fn();
     const onClear = vi.fn();
-    const onCreate = vi.fn();
     const view = render(
-        <Combobox
+        <ComboBox
             items={accountishItems()}
             value={null}
             onChange={onChange}
             onClear={onClear}
-            onCreate={onCreate}
             groupOrder={['Income', 'Expense']}
             ariaLabel="Account"
             {...overrides}
@@ -59,19 +57,19 @@ function renderCombobox(overrides: Partial<Parameters<typeof Combobox<string>>[0
     const tester = testUtilUser.createTester('ComboBox', {
         root: view.container,
     });
-    return { view, tester, onChange, onClear, onCreate };
+    return { view, tester, onChange, onClear };
 }
 
-describe('Combobox on React Aria', () => {
+describe('ComboBox on React Aria', () => {
     it('shows all options grouped in groupOrder when opened', async () => {
-        const { tester } = renderCombobox();
+        const { tester } = renderComboBox();
         await tester.open();
         const labels = tester.getOptions().map(o => o.textContent);
         expect(labels).toEqual(['4100 Salary', '5110 Car › Tax', '5210 Home › Tax']);
     });
 
     it('filters by searchText facets the label hides', async () => {
-        const { tester } = renderCombobox();
+        const { tester } = renderComboBox();
         await tester.open();
         await userEvent.keyboard('car t');
         const labels = tester.getOptions().map(o => o.textContent);
@@ -79,14 +77,14 @@ describe('Combobox on React Aria', () => {
     });
 
     it('selecting an option commits the item value', async () => {
-        const { tester, onChange } = renderCombobox();
+        const { tester, onChange } = renderComboBox();
         await tester.open();
         await tester.toggleOptionSelection({ option: '4100 Salary' });
         expect(onChange).toHaveBeenCalledWith('salary');
     });
 
     it('renders the None sentinel first and routes it to onClear', async () => {
-        const { tester, onClear, onChange } = renderCombobox({ noneLabel: '── None' });
+        const { tester, onClear, onChange } = renderComboBox({ noneLabel: '── None' });
         await tester.open();
         expect(tester.getOptions()[0]?.textContent).toBe('── None');
         await tester.toggleOptionSelection({ option: '── None' });
@@ -95,19 +93,16 @@ describe('Combobox on React Aria', () => {
     });
 
     it('offers Create for unmatched text and passes the trimmed input', async () => {
-        const { tester, onCreate } = renderCombobox({
-            createLabel: typed => `+ Create '${typed}'`,
-        });
+        const onCreate = vi.fn();
+        const { tester } = renderComboBox({ onCreate });
         await tester.open();
         await userEvent.keyboard('  Xeon ');
-        await tester.toggleOptionSelection({ option: "+ Create 'Xeon'" });
+        await tester.toggleOptionSelection({ option: "Create 'Xeon'" });
         expect(onCreate).toHaveBeenCalledWith('Xeon');
     });
 
     it('omits Create when the text exactly matches an existing label', async () => {
-        const { tester } = renderCombobox({
-            createLabel: typed => `+ Create '${typed}'`,
-        });
+        const { tester } = renderComboBox({ onCreate: vi.fn() });
         await tester.open();
         await userEvent.keyboard('4100 Salary');
         const labels = tester.getOptions().map(o => o.textContent);

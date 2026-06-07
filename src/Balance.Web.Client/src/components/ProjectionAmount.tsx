@@ -44,7 +44,7 @@ export function ProjectionAmount({
 function RowAmount({ money, colour, sign }: { money: Money; colour: string; sign: boolean }) {
     const catalog = useCurrencyCatalog();
     return (
-        <span className={cx('font-mono text-13 tabular text-right', colour)}>
+        <span className={cx('font-mono text-sm tabular text-right', colour)}>
             {formatMoney(money.amount, money.currencyCode, catalog, { sign })}
         </span>
     );

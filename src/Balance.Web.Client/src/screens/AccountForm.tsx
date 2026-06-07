@@ -119,7 +119,7 @@ export function AccountFormModal(props: Props) {
                 <FormErrorBanner message={topError} />
 
                 <div className="flex flex-col gap-1 mb-3">
-                    <span className="text-12 font-medium text-fg-2">Icon</span>
+                    <span className="text-xs font-medium text-fg-2">Icon</span>
                     <AccountIconPicker accountType={accountType} value={icon} onChange={setIcon} />
                     <FieldError name="IconName" errors={fieldErrors} />
                 </div>
@@ -184,7 +184,7 @@ export function AccountFormModal(props: Props) {
                 </Select>
 
                 <div className="flex flex-col gap-1 mb-3">
-                    <span className="text-12 font-medium text-fg-2">Parent account</span>
+                    <span className="text-xs font-medium text-fg-2">Parent account</span>
                     {/* Eligible parents: non-postable placeholders sharing the chosen type and
                      *  currency. In edit mode the account's own subtree is excluded so it can't
                      *  become its own ancestor; deeper cycles are rejected server-side too. */}
@@ -205,7 +205,7 @@ export function AccountFormModal(props: Props) {
                         placeholder="None — top level"
                         ariaLabel="Parent account"
                     />
-                    <span className="text-11 text-fg-3">
+                    <span className="text-xs text-fg-3">
                         Only non-postable accounts of the same type and currency can be parents.
                     </span>
                     <FieldError name="ParentAccountId" errors={fieldErrors} />
@@ -213,10 +213,10 @@ export function AccountFormModal(props: Props) {
 
                 <Checkbox isSelected={isPostable} onChange={setIsPostable}>
                     <span className="flex flex-col">
-                        <span className="text-12 font-medium text-fg-2">
+                        <span className="text-xs font-medium text-fg-2">
                             Can contain transactions
                         </span>
-                        <span className="text-11 text-fg-3">
+                        <span className="text-xs text-fg-3">
                             Uncheck to make this a roll-up account that only totals its children.
                         </span>
                     </span>

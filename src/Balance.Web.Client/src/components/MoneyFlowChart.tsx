@@ -101,7 +101,7 @@ export function MoneyFlowChart({ period, currency }: MoneyFlowChartProps) {
                             onClick={() => {
                                 setExpanded(new Set());
                             }}
-                            className="px-[10px] py-[5px] rounded-full text-11 font-medium text-fg-3 hover:text-fg-1 select-none"
+                            className="px-[10px] py-[5px] rounded-full text-xs font-medium text-fg-3 hover:text-fg-1 select-none"
                         >
                             Collapse all
                         </button>
@@ -116,7 +116,7 @@ export function MoneyFlowChart({ period, currency }: MoneyFlowChartProps) {
                     onRetry={() => void flow.refetch()}
                 />
             ) : !data || data.links.length === 0 ? (
-                <div className="h-[420px] flex items-center justify-center text-13 text-fg-3">
+                <div className="h-[420px] flex items-center justify-center text-sm text-fg-3">
                     No money moved in this period.
                 </div>
             ) : (

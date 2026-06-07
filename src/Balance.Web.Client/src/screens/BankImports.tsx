@@ -52,14 +52,14 @@ function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
     return (
         <div className="py-4 first:pt-0 last:pb-0 flex flex-col gap-2 border-b border-border-soft last:border-b-0">
             <div className="flex items-center gap-3">
-                <span className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-md bg-brand-primary-soft text-brand-primary">
+                <span className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-xl bg-brand-primary-soft text-brand-primary">
                     <Icon name={bankAccountTypeIcon(bankAccount.type)} size={16} strokeWidth={2} />
                 </span>
                 <div className="flex-1 min-w-0 flex flex-col leading-tight">
-                    <span className="text-14 font-medium text-fg-1 truncate">
+                    <span className="text-sm font-medium text-fg-1 truncate">
                         {formatBankAccountLabel(bankAccount)}
                     </span>
-                    <span className="text-12 text-fg-3 truncate tabular">
+                    <span className="text-xs text-fg-3 truncate tabular">
                         {formatBankAccountSubline(bankAccount)}
                     </span>
                 </div>
@@ -67,7 +67,7 @@ function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
                     <Link
                         to="/settings/bank-accounts/$id"
                         params={{ id: bankAccount.id }}
-                        className="shrink-0 text-12 text-fg-3 hover:text-fg-1 underline decoration-dotted underline-offset-2"
+                        className="shrink-0 text-xs text-fg-3 hover:text-fg-1 underline decoration-dotted underline-offset-2"
                         title="Set an importer on this bank account to enable statement imports."
                     >
                         No importer configured
@@ -88,7 +88,7 @@ function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
                 )}
             </div>
             {feedback?.kind === 'success' && (
-                <div className="pl-12 text-12 text-success">
+                <div className="pl-12 text-xs text-success">
                     Imported {feedback.imported}
                     {feedback.skipped > 0
                         ? ` · skipped ${feedback.skipped} duplicate${feedback.skipped === 1 ? '' : 's'}`
@@ -97,7 +97,7 @@ function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
                 </div>
             )}
             {feedback?.kind === 'error' && (
-                <div className="pl-12 text-12 text-danger">{feedback.message}</div>
+                <div className="pl-12 text-xs text-danger">{feedback.message}</div>
             )}
         </div>
     );
@@ -131,7 +131,7 @@ function ImportsPanel() {
 
     if (targets.length === 0) {
         return (
-            <span className="text-13 text-fg-3">
+            <span className="text-sm text-fg-3">
                 No bank accounts linked to one of your own accounts yet.
             </span>
         );

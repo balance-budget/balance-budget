@@ -7,7 +7,7 @@ type SkeletonProps = {
 export function Skeleton({ className }: SkeletonProps) {
     return (
         <div
-            className={cx('rounded-sm bg-surface-2 animate-pulse', className)}
+            className={cx('rounded-lg bg-surface-2 animate-pulse', className)}
             aria-hidden="true"
         />
     );

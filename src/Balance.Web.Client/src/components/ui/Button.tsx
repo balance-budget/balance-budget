@@ -4,7 +4,7 @@ import { composeTailwindRenderProps } from './compose';
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
 const BASE =
-    'inline-flex items-center justify-center gap-1.5 px-3 py-[7px] rounded-sm text-13 font-medium ' +
+    'inline-flex h-9 items-center justify-center gap-1.5 px-3 rounded-lg text-sm font-medium ' +
     'outline-none data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary disabled:opacity-60';
 
 const VARIANT: Record<ButtonVariant, string> = {
@@ -36,7 +36,7 @@ export function IconButton(props: AriaButtonProps) {
             {...props}
             className={composeTailwindRenderProps(
                 props.className,
-                'inline-flex items-center justify-center p-1 rounded-sm text-fg-3 outline-none ' +
+                'inline-flex items-center justify-center p-1 rounded-lg text-fg-3 outline-none ' +
                     'data-[hovered]:text-fg-1 data-[hovered]:bg-surface-2 ' +
                     'data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary disabled:opacity-60',
             )}

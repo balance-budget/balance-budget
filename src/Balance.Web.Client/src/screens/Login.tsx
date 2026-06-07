@@ -33,16 +33,16 @@ export function Login({ returnTo }: { returnTo?: string }) {
               : null;
 
     return (
-        <div className="w-full max-w-[380px] bg-bg-1 border border-border-soft rounded-md shadow-overlay">
+        <div className="w-full max-w-[380px] bg-bg-1 border border-border-soft rounded-xl shadow-overlay">
             <header className="flex items-center gap-[10px] px-5 pt-5 pb-3">
                 <img src={logo} alt="" className="w-8 h-8 rounded-[6px]" />
-                <span className="text-18 font-normal tracking-[-0.01em]">
+                <span className="text-lg font-normal tracking-[-0.01em]">
                     Balance<span className="text-brand-primary">.</span>
                 </span>
             </header>
             <div className="px-5 pt-1 pb-5">
-                <h1 className="text-16 font-semibold leading-snug mb-1">Sign in</h1>
-                <p className="text-13 text-fg-3 mb-4">Enter your email and password to continue.</p>
+                <h1 className="text-base font-semibold leading-snug mb-1">Sign in</h1>
+                <p className="text-sm text-fg-3 mb-4">Enter your email and password to continue.</p>
                 <Form
                     onSubmit={e => {
                         e.preventDefault();

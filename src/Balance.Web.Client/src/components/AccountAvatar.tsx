@@ -6,8 +6,8 @@ import { Icon } from './Icon';
 type Size = 'sm' | 'md';
 
 const BOX_CLASS: Record<Size, string> = {
-    sm: 'w-6 h-6 rounded-sm',
-    md: 'w-9 h-9 rounded-md',
+    sm: 'w-6 h-6 rounded-lg',
+    md: 'w-9 h-9 rounded-xl',
 };
 
 const ICON_SIZE: Record<Size, number> = {

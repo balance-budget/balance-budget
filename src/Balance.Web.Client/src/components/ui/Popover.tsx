@@ -9,9 +9,9 @@ export function Popover(props: PopoverProps) {
             {...props}
             className={composeTailwindRenderProps(
                 props.className,
-                'rounded-sm bg-bg-1 border border-border-soft shadow-overlay text-13 ' +
+                'rounded-lg bg-bg-1 border border-border-soft shadow-overlay text-sm ' +
                     'max-h-(--available-height) ' +
-                    'data-[entering]:opacity-0 data-[exiting]:opacity-0 transition-opacity duration-fast',
+                    'data-[entering]:opacity-0 data-[exiting]:opacity-0 transition-opacity duration-120',
             )}
         />
     );

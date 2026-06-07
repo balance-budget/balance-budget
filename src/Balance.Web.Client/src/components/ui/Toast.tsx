@@ -73,8 +73,8 @@ export function AppToastRegion() {
                 <AriaToast
                     toast={toast}
                     className={cx(
-                        'flex items-center gap-2 px-3 py-2 rounded-sm border backdrop-blur-md',
-                        'text-13 font-medium shadow-overlay min-w-[240px] max-w-[360px] outline-none',
+                        'flex items-center gap-2 px-3 py-2 rounded-lg border backdrop-blur-md',
+                        'text-sm font-medium shadow-overlay min-w-[240px] max-w-[360px] outline-none',
                         VARIANT_CLASS[toast.content.variant],
                     )}
                 >
@@ -90,7 +90,7 @@ export function AppToastRegion() {
                     <Button
                         slot="close"
                         aria-label="Close"
-                        className="shrink-0 p-[2px] rounded-xs outline-none opacity-70 data-[hovered]:opacity-100 data-[focus-visible]:ring-1 data-[focus-visible]:ring-current"
+                        className="shrink-0 p-[2px] rounded-sm outline-none opacity-70 data-[hovered]:opacity-100 data-[focus-visible]:ring-1 data-[focus-visible]:ring-current"
                     >
                         <X size={13} strokeWidth={2} aria-hidden="true" />
                     </Button>

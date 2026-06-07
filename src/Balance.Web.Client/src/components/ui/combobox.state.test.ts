@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { groupBuckets, matchesQuery, type ComboboxItem } from './combobox.state';
+import { groupBuckets, matchesQuery, type ComboBoxItem } from './combobox.state';
 
-function items(): ComboboxItem<string>[] {
+function items(): ComboBoxItem<string>[] {
     return [
         { key: 'a', label: 'Albert Heijn', group: 'Expense', value: 'a' },
         { key: 'b', label: 'Beta Bank', group: 'Asset', value: 'b' },

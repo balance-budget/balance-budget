@@ -20,7 +20,7 @@ export function Pagination({ page, pageSize, totalCount, onPageChange }: Paginat
 
     return (
         <div className="flex items-center justify-between gap-3 pt-3">
-            <span className="text-12 text-fg-3 tabular">
+            <span className="text-xs text-fg-3 tabular">
                 {totalCount === 0 ? '—' : `${from}–${to} of ${totalCount}`}
             </span>
             <div className="flex items-center gap-1">
@@ -37,7 +37,7 @@ export function Pagination({ page, pageSize, totalCount, onPageChange }: Paginat
                     token === 'ellipsis' ? (
                         <span
                             key={`e${i}`}
-                            className="px-1 text-12 text-fg-3 select-none"
+                            className="px-1 text-xs text-fg-3 select-none"
                             aria-hidden="true"
                         >
                             …
@@ -115,7 +115,7 @@ function PageNumber({
             isDisabled={isCurrent}
             onPress={onClick}
             className={cx(
-                'min-w-[28px] px-2 py-1 rounded-sm text-12 tabular text-center outline-none',
+                'min-w-[28px] px-2 py-1 rounded-lg text-xs tabular text-center outline-none',
                 'data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary',
                 isCurrent
                     ? 'bg-surface-2 text-fg-1 font-medium cursor-default'
@@ -146,7 +146,7 @@ function PageButton({
             isDisabled={disabled}
             onPress={onClick}
             className={cx(
-                'p-2 rounded-sm text-fg-3 outline-none cursor-pointer',
+                'p-2 rounded-lg text-fg-3 outline-none cursor-pointer',
                 'data-[hovered]:text-fg-1 data-[hovered]:bg-surface-2',
                 'data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary',
                 disabled && 'opacity-30 cursor-not-allowed',

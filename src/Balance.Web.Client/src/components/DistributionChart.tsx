@@ -61,7 +61,7 @@ export function DistributionChart({ period, currency }: DistributionChartProps) 
                         switchType(t.token);
                     }}
                     className={cx(
-                        'px-[10px] py-[5px] rounded-full text-11 font-medium select-none',
+                        'px-[10px] py-[5px] rounded-full text-xs font-medium select-none',
                         t.token === type
                             ? 'bg-brand-primary-soft text-brand-primary'
                             : 'text-fg-3 hover:text-fg-1',
@@ -109,7 +109,7 @@ function DrillBreadcrumbs({
 }) {
     const rootLabel = type === 'income' ? 'All income' : 'All expenses';
     return (
-        <Breadcrumbs className="text-14 text-fg-3">
+        <Breadcrumbs className="text-sm text-fg-3">
             <Breadcrumb
                 isDisabled={trail.length === 0}
                 onPress={() => {
@@ -172,7 +172,7 @@ function DistributionBody({
 
     if (positive.length === 0 && negative.length === 0) {
         return (
-            <div className="h-[280px] flex items-center justify-center text-13 text-fg-3">
+            <div className="h-[280px] flex items-center justify-center text-sm text-fg-3">
                 No money moved in this period.
             </div>
         );
@@ -213,14 +213,14 @@ function DistributionBody({
                         </PieChart>
                     </ResponsiveContainer>
                 ) : (
-                    <div className="h-full flex items-center justify-center text-12 text-fg-3 text-center px-4">
+                    <div className="h-full flex items-center justify-center text-xs text-fg-3 text-center px-4">
                         Net negative this period — see the breakdown.
                     </div>
                 )}
                 {pieData.length > 0 && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span className="text-11 text-fg-3">Total</span>
-                        <span className="text-16 font-semibold text-fg-1">
+                        <span className="text-xs text-fg-3">Total</span>
+                        <span className="text-base font-semibold text-fg-1">
                             {formatMoney(data.total.amount, currency, catalog, { decimals: false })}
                         </span>
                     </div>
@@ -240,7 +240,7 @@ function DistributionBody({
                 ))}
                 {negative.length > 0 && (
                     <div className="mt-2 pt-2 border-t border-border-soft flex flex-col gap-1">
-                        <span className="text-11 text-fg-3">
+                        <span className="text-xs text-fg-3">
                             Net negative this period (excluded from the chart)
                         </span>
                         {negative.map(s => (
@@ -279,18 +279,18 @@ function SliceRow({
         <>
             <span className="flex items-center gap-2 min-w-0">
                 <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }} />
-                <span className="text-13 text-fg-1 truncate">{slice.name}</span>
-                {slice.hasChildren && <span className="text-11 text-fg-3">›</span>}
+                <span className="text-sm text-fg-1 truncate">{slice.name}</span>
+                {slice.hasChildren && <span className="text-xs text-fg-3">›</span>}
             </span>
             <span className="flex items-center gap-3 shrink-0">
                 {share !== null && (
-                    <span className="text-11 text-fg-3 tabular w-10 text-right">
+                    <span className="text-xs text-fg-3 tabular w-10 text-right">
                         {Math.round(share * 100)}%
                     </span>
                 )}
                 <span
                     className={cx(
-                        'font-mono text-12 tabular',
+                        'font-mono text-xs tabular',
                         negative ? 'text-danger' : 'text-fg-1',
                     )}
                 >
@@ -312,7 +312,7 @@ function SliceRow({
                 }}
                 className={cx(
                     rowClass,
-                    'w-full text-left hover:bg-surface-2 rounded-sm px-1 -mx-1',
+                    'w-full text-left hover:bg-surface-2 rounded-lg px-1 -mx-1',
                 )}
             >
                 {content}

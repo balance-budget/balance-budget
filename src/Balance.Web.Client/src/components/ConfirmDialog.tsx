@@ -30,7 +30,7 @@ export function ConfirmDialog({
     return (
         <Modal open={open} onClose={onClose} title={title} width="sm">
             <FormErrorBanner message={error} />
-            {message ? <p className="text-13 text-fg-2">{message}</p> : null}
+            {message ? <p className="text-sm text-fg-2">{message}</p> : null}
             <ModalFooter>
                 <Button variant="ghost" onPress={onClose} isDisabled={busy}>
                     {cancelLabel}
