@@ -50,7 +50,8 @@ dotnet run --project src/Balance.Web/Balance.Web.csproj
 npm run dev
 
 # Regenerate the typed API client after changing the backend API surface
-# (dotnet build emits artifacts/openapi/Balance.Web.json; output is committed, CI checks drift)
+# (dotnet build emits artifacts/openapi/Balance.Web.json; output is committed, CI checks drift).
+# Automatic while `npm run dev` runs — a dev-only Vite plugin watches the document.
 npm run codegen
 
 # Publish — `npm run build` first: Vite outputs to src/Balance.Web/wwwroot and the

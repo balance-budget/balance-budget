@@ -25,7 +25,9 @@ The repo is an [npm workspace](https://docs.npmjs.com/cli/v10/using-npm/workspac
 dotnet build --no-restore
 
 # Regenerate the typed API client after changing the backend API surface
-# (output src/lib/api-types.gen.ts is committed; CI fails if it drifts)
+# (output src/lib/api-types.gen.ts is committed; CI fails if it drifts).
+# While `npm run dev` is running this happens automatically: a dev-only Vite
+# plugin watches the OpenAPI document and re-runs codegen on content changes.
 npm run codegen
 
 # Format (CI fails if these report differences)

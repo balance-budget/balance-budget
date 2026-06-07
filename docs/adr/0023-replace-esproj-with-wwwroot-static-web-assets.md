@@ -92,6 +92,9 @@ Adopt option 3. Concretely:
 - The repo depends only on the paved-road `wwwroot` discovery path of the
   static-web-assets SDK; no Visual Studio JavaScript SDK, no custom
   static-web-assets MSBuild.
-- Regenerating after a backend API change during local development is a
-  manual `npm run codegen` for now; automating that trigger is a known
-  follow-up.
+- During local development a dev-server-only Vite plugin
+  (`vite-plugin-openapi-codegen.ts`) watches the build-emitted OpenAPI
+  document and re-runs `npm run codegen` when its content changes, so the
+  types track the backend API surface without a manual step. It spawns the
+  same npm script CI uses, keeping dev regenerations byte-identical to what
+  the drift gate checks.
