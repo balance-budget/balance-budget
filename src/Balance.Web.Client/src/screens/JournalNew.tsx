@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Form, ToggleButton, ToggleButtonGroup } from 'react-aria-components';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useAccounts, type Account } from '../api/accounts';
 import { useCounterparties } from '../api/counterparties';
@@ -12,7 +13,10 @@ import { FormErrorBanner } from '../components/FormErrorBanner';
 import { Icon } from '../components/Icon';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
-import { useToast } from '../components/Toast';
+import { Button, IconButton } from '../components/ui/Button';
+import { Select, SelectItem } from '../components/ui/Select';
+import { TextField } from '../components/ui/TextField';
+import { useToast } from '../components/ui/Toast';
 import { cx } from '../lib/cx';
 import { todayIso } from '../lib/dates';
 import { asCounterpartyId, type AccountId, type CounterpartyId } from '../lib/domain';
@@ -34,6 +38,9 @@ import {
     type ScaleLookup,
     type SimpleLeg,
 } from './journalNew.state';
+
+/** Sentinel id for the "None" option — RAC Select keys can't be null. */
+const NONE_COUNTERPARTY = '__none__';
 
 export function JournalNew() {
     const accounts = useAccounts();
@@ -167,12 +174,12 @@ function JournalNewForm({
 
     return (
         <>
-            <form
+            <Form
+                validationErrors={fieldErrors ?? undefined}
                 onSubmit={e => {
                     e.preventDefault();
                     void submit();
                 }}
-                noValidate
             >
                 <Panel>
                     <SectionHead
@@ -238,16 +245,12 @@ function JournalNewForm({
                         >
                             Cancel
                         </Link>
-                        <button
-                            type="submit"
-                            disabled={create.isPending}
-                            className="px-3 py-[7px] rounded-sm text-13 font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
-                        >
+                        <Button type="submit" variant="primary" isDisabled={create.isPending}>
                             {create.isPending ? 'Creating…' : 'Create entry'}
-                        </button>
+                        </Button>
                     </div>
                 </Panel>
-            </form>
+            </Form>
 
             {createCounterparty && (
                 <CounterpartyFormModal
@@ -289,51 +292,49 @@ function HeaderInputs({
                 />
                 <FieldError name="Date" errors={fieldErrors} />
             </label>
-            <label className="flex flex-col gap-1">
-                <span className="text-12 font-medium text-fg-2">Description</span>
-                <input
-                    type="text"
-                    value={form.header.description}
-                    onChange={e => {
-                        onPatch({ description: e.target.value });
-                    }}
-                    maxLength={500}
-                    placeholder="Optional"
-                    className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
-                />
-                <FieldError name="Description" errors={fieldErrors} />
-            </label>
+            <TextField
+                label="Description"
+                name="Description"
+                value={form.header.description}
+                onChange={description => {
+                    onPatch({ description });
+                }}
+                maxLength={500}
+                placeholder="Optional"
+            />
             <div className="flex flex-col gap-1">
                 <span className="text-12 font-medium text-fg-2">Counterparty</span>
                 <div className="flex items-stretch gap-2">
-                    <select
-                        value={form.header.counterpartyId ?? ''}
-                        onChange={e => {
+                    <Select
+                        aria-label="Counterparty"
+                        name="CounterpartyId"
+                        value={form.header.counterpartyId ?? NONE_COUNTERPARTY}
+                        onChange={key => {
                             onPatch({
                                 counterpartyId:
-                                    e.target.value === '' ? null : asCounterpartyId(e.target.value),
+                                    key === null || key === NONE_COUNTERPARTY
+                                        ? null
+                                        : asCounterpartyId(String(key)),
                             });
                         }}
-                        className="flex-1 min-w-0 px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
+                        className="flex-1 min-w-0"
                     >
-                        <option value="">None</option>
+                        <SelectItem id={NONE_COUNTERPARTY}>None</SelectItem>
                         {counterparties.map(c => (
-                            <option key={c.id} value={c.id}>
+                            <SelectItem key={c.id} id={c.id}>
                                 {c.name}
-                            </option>
+                            </SelectItem>
                         ))}
-                    </select>
-                    <button
-                        type="button"
-                        onClick={onAddCounterparty}
-                        title="Create a new counterparty"
-                        className="shrink-0 inline-flex items-center gap-1 px-2 rounded-sm bg-surface-2 border border-border-soft text-fg-2 hover:text-fg-1 hover:border-border-strong text-13"
+                    </Select>
+                    <Button
+                        onPress={onAddCounterparty}
+                        aria-label="Create a new counterparty"
+                        className="shrink-0"
                     >
                         <Icon name="plus" size={14} strokeWidth={2} />
                         New
-                    </button>
+                    </Button>
                 </div>
-                <FieldError name="CounterpartyId" errors={fieldErrors} />
             </div>
         </div>
     );
@@ -350,37 +351,42 @@ function ModeToggle({
     onSwitchSimple: () => void;
     onSwitchAdvanced: () => void;
 }) {
+    const segmentClass = (selected: boolean) =>
+        cx(
+            'px-2 py-1 rounded-sm outline-none cursor-pointer data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary',
+            selected
+                ? 'bg-surface-1 text-fg-1'
+                : 'text-fg-3 data-[hovered]:text-fg-1 data-[disabled]:opacity-40 data-[disabled]:cursor-not-allowed',
+        );
+
     return (
-        <div className="inline-flex items-center gap-1 p-[2px] rounded-sm bg-surface-2 border border-border-soft text-12 font-medium">
-            <button
-                type="button"
-                onClick={onSwitchSimple}
-                disabled={!canSwitchToSimple}
-                title={
+        <ToggleButtonGroup
+            selectionMode="single"
+            disallowEmptySelection
+            selectedKeys={[mode]}
+            onSelectionChange={keys => {
+                const next = [...keys][0];
+                if (next === 'simple') onSwitchSimple();
+                if (next === 'advanced') onSwitchAdvanced();
+            }}
+            className="inline-flex items-center gap-1 p-[2px] rounded-sm bg-surface-2 border border-border-soft text-12 font-medium"
+        >
+            <ToggleButton
+                id="simple"
+                isDisabled={!canSwitchToSimple}
+                aria-label={
                     canSwitchToSimple
                         ? 'Switch to the personal-finance shape'
                         : 'Multi-source-multi-destination entries can only be edited in Advanced.'
                 }
-                className={cx(
-                    'px-2 py-1 rounded-sm',
-                    mode === 'simple'
-                        ? 'bg-surface-1 text-fg-1'
-                        : 'text-fg-3 hover:text-fg-1 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-fg-3',
-                )}
+                className={segmentClass(mode === 'simple')}
             >
                 Simple
-            </button>
-            <button
-                type="button"
-                onClick={onSwitchAdvanced}
-                className={cx(
-                    'px-2 py-1 rounded-sm',
-                    mode === 'advanced' ? 'bg-surface-1 text-fg-1' : 'text-fg-3 hover:text-fg-1',
-                )}
-            >
+            </ToggleButton>
+            <ToggleButton id="advanced" className={segmentClass(mode === 'advanced')}>
                 Advanced
-            </button>
-        </div>
+            </ToggleButton>
+        </ToggleButtonGroup>
     );
 }
 
@@ -493,14 +499,10 @@ function SimpleLegColumn({
                     <h3 className="text-13 font-semibold text-fg-1">{heading}</h3>
                     <span className="text-11 text-fg-3">{subheading}</span>
                 </div>
-                <button
-                    type="button"
-                    onClick={onAdd}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-12 text-fg-2 hover:text-fg-1 hover:bg-surface-2"
-                >
+                <Button variant="ghost" onPress={onAdd} className="px-2 py-1 text-12 font-normal">
                     <Icon name="plus" size={12} strokeWidth={2} />
                     Add
-                </button>
+                </Button>
             </div>
             {legs.map((leg, i) => {
                 const legAccount = leg.accountId ? accountsById.get(leg.accountId) : null;
@@ -539,17 +541,16 @@ function SimpleLegColumn({
                                 errors={fieldErrors}
                             />
                         </div>
-                        <button
-                            type="button"
-                            onClick={() => {
+                        <IconButton
+                            onPress={() => {
                                 onRemove(i);
                             }}
-                            disabled={legs.length === 1}
-                            title="Remove this leg"
-                            className="shrink-0 mt-[2px] p-2 text-fg-3 hover:text-danger disabled:opacity-40 disabled:cursor-not-allowed"
+                            isDisabled={legs.length === 1}
+                            aria-label="Remove this leg"
+                            className="shrink-0 mt-[2px] p-2 data-[hovered]:text-danger data-[hovered]:bg-transparent"
                         >
                             <Icon name="trash" size={14} strokeWidth={2} />
-                        </button>
+                        </IconButton>
                     </div>
                 );
             })}
@@ -656,41 +657,34 @@ function AdvancedLines({
                                 errors={fieldErrors}
                             />
                         </div>
-                        <div className="flex flex-col gap-1">
-                            <input
-                                type="text"
-                                value={line.description}
-                                onChange={e => {
-                                    updateLine(i, { description: e.target.value });
-                                }}
-                                maxLength={500}
-                                placeholder="Optional"
-                                className="px-2 py-1 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-13 focus:outline-none focus:border-border-strong"
-                            />
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => {
+                        <TextField
+                            aria-label="Line description"
+                            value={line.description}
+                            onChange={description => {
+                                updateLine(i, { description });
+                            }}
+                            maxLength={500}
+                            placeholder="Optional"
+                            fieldSize="sm"
+                        />
+                        <IconButton
+                            onPress={() => {
                                 removeLine(i);
                             }}
-                            disabled={advanced.length <= 2}
-                            title="Remove this line"
-                            className="self-start mt-[2px] p-1 text-fg-3 hover:text-danger disabled:opacity-40 disabled:cursor-not-allowed"
+                            isDisabled={advanced.length <= 2}
+                            aria-label="Remove this line"
+                            className="self-start mt-[2px] data-[hovered]:text-danger data-[hovered]:bg-transparent"
                         >
                             <Icon name="trash" size={14} strokeWidth={2} />
-                        </button>
+                        </IconButton>
                     </div>
                 );
             })}
             <div className="flex items-center justify-between mt-2">
-                <button
-                    type="button"
-                    onClick={addLine}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-12 text-fg-2 hover:text-fg-1 hover:bg-surface-2"
-                >
+                <Button variant="ghost" onPress={addLine} className="px-2 py-1 text-12 font-normal">
                     <Icon name="plus" size={12} strokeWidth={2} />
                     Add line
-                </button>
+                </Button>
                 <AdvancedTotalsFooter totals={totals} currency={anchorCurrency} catalog={catalog} />
             </div>
         </div>

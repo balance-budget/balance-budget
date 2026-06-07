@@ -12,7 +12,7 @@ import { Panel, SectionHead } from '../components/Panel';
 import { SearchInput } from '../components/SearchInput';
 import { Skeleton } from '../components/Skeleton';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { useToast } from '../components/Toast';
+import { useToast } from '../components/ui/Toast';
 import { handleActionError } from '../lib/formErrors';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
 import { CounterpartyFormModal } from './CounterpartyForm';

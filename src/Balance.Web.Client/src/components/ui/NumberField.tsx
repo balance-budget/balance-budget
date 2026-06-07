@@ -6,13 +6,15 @@ import {
 } from 'react-aria-components';
 import { cx } from '../../lib/cx';
 import { composeTailwindRenderProps } from './compose';
-import { Description, FieldError, inputStyles, Label } from './field';
+import { Description, FieldError, Label } from './field';
+import { type FieldSize, inputStyles } from './styles';
 
 export type NumberFieldProps = AriaNumberFieldProps & {
     label?: string;
     description?: string;
     placeholder?: string;
     errorMessage?: string | ((validation: ValidationResult) => string);
+    fieldSize?: FieldSize;
     /** Extra classes for the inner `<input>` (width, alignment). */
     inputClassName?: string;
 };
@@ -27,6 +29,7 @@ export function NumberField({
     description,
     placeholder,
     errorMessage,
+    fieldSize,
     inputClassName,
     ...props
 }: NumberFieldProps) {
@@ -38,7 +41,7 @@ export function NumberField({
             {label !== undefined && <Label>{label}</Label>}
             <Input
                 placeholder={placeholder}
-                className={cx(inputStyles, 'tabular', inputClassName)}
+                className={cx(inputStyles(fieldSize), 'tabular', inputClassName)}
             />
             {description !== undefined && <Description>{description}</Description>}
             <FieldError>{errorMessage}</FieldError>

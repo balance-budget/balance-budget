@@ -25,7 +25,7 @@ import { Icon } from '../components/Icon';
 import { Panel, SectionHead } from '../components/Panel';
 import { ProjectionAmount } from '../components/ProjectionAmount';
 import { Skeleton } from '../components/Skeleton';
-import { useToast } from '../components/Toast';
+import { useToast } from '../components/ui/Toast';
 import { accountPathLabel } from '../lib/accountTree';
 import { cx } from '../lib/cx';
 import { type AccountId, type CounterpartyId, type JournalEntryId } from '../lib/domain';

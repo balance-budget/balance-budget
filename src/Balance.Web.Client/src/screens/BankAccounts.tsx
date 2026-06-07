@@ -20,7 +20,7 @@ import { Pagination } from '../components/Pagination';
 import { Panel, SectionHead } from '../components/Panel';
 import { SearchInput } from '../components/SearchInput';
 import { Skeleton } from '../components/Skeleton';
-import { useToast } from '../components/Toast';
+import { useToast } from '../components/ui/Toast';
 import { cx } from '../lib/cx';
 import type { BankAccountId } from '../lib/domain';
 import { handleActionError } from '../lib/formErrors';

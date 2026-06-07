@@ -28,15 +28,17 @@ const DISMISS_MS = 5000;
 
 const queue = new ToastQueue<AppToast>();
 
+function push(message: string, variant: ToastVariant = 'info') {
+    queue.add({ message, variant }, { timeout: DISMISS_MS });
+}
+
 const api = {
-    push(message: string, variant: ToastVariant = 'info') {
-        queue.add({ message, variant }, { timeout: DISMISS_MS });
+    push,
+    success: (message: string) => {
+        push(message, 'success');
     },
-    success(message: string) {
-        this.push(message, 'success');
-    },
-    error(message: string) {
-        this.push(message, 'error');
+    error: (message: string) => {
+        push(message, 'error');
     },
 };
 

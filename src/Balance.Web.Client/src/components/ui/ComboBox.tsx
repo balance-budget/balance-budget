@@ -8,7 +8,8 @@ import {
     type ValidationResult,
 } from 'react-aria-components';
 import { composeTailwindRenderProps } from './compose';
-import { Description, FieldError, groupStyles, Label } from './field';
+import { Description, FieldError, Label } from './field';
+import { groupStyles } from './styles';
 import { DropdownItem, DropdownListBox, DropdownSection } from './ListBox';
 import { Popover } from './Popover';
 

@@ -1,7 +1,10 @@
 import { useState } from 'react';
+import { Form } from 'react-aria-components';
 import { useNavigate } from '@tanstack/react-router';
 import { useSetup } from '../api/auth';
 import { FormErrorBanner } from '../components/FormErrorBanner';
+import { Button } from '../components/ui/Button';
+import { TextField } from '../components/ui/TextField';
 import { ApiError } from '../lib/http';
 import logo from '../assets/logo.svg';
 
@@ -49,77 +52,61 @@ export function Setup() {
                 <p className="text-13 text-fg-3 mb-4">
                     Create the first account. This wizard becomes unavailable once a user exists.
                 </p>
-                <form
+                <Form
                     onSubmit={e => {
                         e.preventDefault();
                         void submit();
                     }}
-                    noValidate
                 >
                     <FormErrorBanner message={errorMessage} />
-                    <label className="flex flex-col gap-1 mb-3">
-                        <span className="text-12 font-medium text-fg-2">Email</span>
-                        <input
-                            type="email"
-                            required
-                            autoFocus
-                            value={email}
-                            onChange={e => {
-                                setEmail(e.target.value);
-                            }}
-                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
-                        />
-                    </label>
-                    <label className="flex flex-col gap-1 mb-3">
-                        <span className="text-12 font-medium text-fg-2">Display name</span>
-                        <input
-                            type="text"
-                            required
-                            value={displayName}
-                            onChange={e => {
-                                setDisplayName(e.target.value);
-                            }}
-                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
-                        />
-                    </label>
-                    <label className="flex flex-col gap-1 mb-3">
-                        <span className="text-12 font-medium text-fg-2">Password</span>
-                        <input
-                            type="password"
-                            required
-                            minLength={12}
-                            autoComplete="new-password"
-                            value={password}
-                            onChange={e => {
-                                setPassword(e.target.value);
-                            }}
-                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
-                        />
-                        <span className="text-12 text-fg-3">Minimum 12 characters.</span>
-                    </label>
-                    <label className="flex flex-col gap-1 mb-4">
-                        <span className="text-12 font-medium text-fg-2">Setup token</span>
-                        <input
-                            type="text"
+                    <TextField
+                        label="Email"
+                        type="email"
+                        isRequired
+                        autoFocus
+                        value={email}
+                        onChange={setEmail}
+                        className="mb-3"
+                    />
+                    <TextField
+                        label="Display name"
+                        isRequired
+                        value={displayName}
+                        onChange={setDisplayName}
+                        className="mb-3"
+                    />
+                    <TextField
+                        label="Password"
+                        type="password"
+                        isRequired
+                        minLength={12}
+                        autoComplete="new-password"
+                        value={password}
+                        onChange={setPassword}
+                        description="Minimum 12 characters."
+                        className="mb-3"
+                    />
+                    <div className="flex flex-col gap-1 mb-4">
+                        <TextField
+                            label="Setup token"
                             value={setupToken}
-                            onChange={e => {
-                                setSetupToken(e.target.value);
-                            }}
-                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 font-mono focus:outline-none focus:border-border-strong"
+                            onChange={setSetupToken}
+                            inputClassName="font-mono"
                         />
                         <span className="text-12 text-fg-3">
                             Required when configured at deploy time via{' '}
                             <code className="font-mono">Auth:SetupToken</code>.
                         </span>
-                    </label>
-                    <button
+                    </div>
+                    <Button
                         type="submit"
-                        disabled={setup.isPending}
-                        className="w-full px-3 py-[7px] rounded-sm text-13 font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
+                        variant="primary"
+                        isDisabled={setup.isPending}
+                        className="w-full"
                     >
                         {setup.isPending ? 'Creating…' : 'Create account'}
-                    </button>
-                </form>
+                    </Button>
+                </Form>
             </div>
         </div>
     );

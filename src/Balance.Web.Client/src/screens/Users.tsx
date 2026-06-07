@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { useCurrentUser } from '../api/auth';
 import { useCreateUser, useToggleUserActive, useUsers, type User } from '../api/admin';
+import { Form } from 'react-aria-components';
 import { FormErrorBanner } from '../components/FormErrorBanner';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
+import { Button } from '../components/ui/Button';
+import { TextField } from '../components/ui/TextField';
 import { ApiError } from '../lib/http';
 
 export function Users() {
@@ -73,63 +76,45 @@ export function Users() {
 
             <Panel>
                 <SectionHead title="Add user" />
-                <form
+                <Form
                     onSubmit={e => {
                         e.preventDefault();
                         void submit();
                     }}
-                    noValidate
                     className="flex flex-col max-w-md"
                 >
                     <FormErrorBanner message={createError} />
-                    <label className="flex flex-col gap-1 mb-3">
-                        <span className="text-12 font-medium text-fg-2">Email</span>
-                        <input
-                            type="email"
-                            required
-                            value={email}
-                            onChange={e => {
-                                setEmail(e.target.value);
-                            }}
-                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
-                        />
-                    </label>
-                    <label className="flex flex-col gap-1 mb-3">
-                        <span className="text-12 font-medium text-fg-2">Display name</span>
-                        <input
-                            type="text"
-                            required
-                            value={displayName}
-                            onChange={e => {
-                                setDisplayName(e.target.value);
-                            }}
-                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
-                        />
-                    </label>
-                    <label className="flex flex-col gap-1 mb-4">
-                        <span className="text-12 font-medium text-fg-2">Password</span>
-                        <input
-                            type="password"
-                            required
-                            minLength={12}
-                            value={password}
-                            onChange={e => {
-                                setPassword(e.target.value);
-                            }}
-                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
-                        />
-                        <span className="text-12 text-fg-3">Minimum 12 characters.</span>
-                    </label>
+                    <TextField
+                        label="Email"
+                        type="email"
+                        isRequired
+                        value={email}
+                        onChange={setEmail}
+                        className="mb-3"
+                    />
+                    <TextField
+                        label="Display name"
+                        isRequired
+                        value={displayName}
+                        onChange={setDisplayName}
+                        className="mb-3"
+                    />
+                    <TextField
+                        label="Password"
+                        type="password"
+                        isRequired
+                        minLength={12}
+                        value={password}
+                        onChange={setPassword}
+                        description="Minimum 12 characters."
+                        className="mb-4"
+                    />
                     <div>
-                        <button
-                            type="submit"
-                            disabled={createUser.isPending}
-                            className="px-3 py-[7px] rounded-sm text-13 font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
-                        >
+                        <Button type="submit" variant="primary" isDisabled={createUser.isPending}>
                             {createUser.isPending ? 'Creating…' : 'Create user'}
-                        </button>
+                        </Button>
                     </div>
-                </form>
+                </Form>
             </Panel>
         </>
     );
@@ -166,15 +151,14 @@ function UserRow({
                     {user.isActive ? 'Active' : 'Disabled'}
                 </span>
                 {isSelf ? null : (
-                    <button
-                        type="button"
-                        onClick={() => {
+                    <Button
+                        onPress={() => {
                             onToggle(!user.isActive);
                         }}
-                        className="px-3 py-[5px] rounded-sm text-12 font-medium text-fg-2 bg-surface-2 border border-border-soft hover:bg-surface-3 hover:text-fg-1"
+                        className="py-[5px] text-12"
                     >
                         {user.isActive ? 'Disable' : 'Enable'}
-                    </button>
+                    </Button>
                 )}
             </div>
         </li>

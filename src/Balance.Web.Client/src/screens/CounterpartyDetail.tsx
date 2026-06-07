@@ -10,7 +10,7 @@ import { Pagination } from '../components/Pagination';
 import { Panel, SectionHead } from '../components/Panel';
 import { ProjectionAmount } from '../components/ProjectionAmount';
 import { Skeleton } from '../components/Skeleton';
-import { useToast } from '../components/Toast';
+import { useToast } from '../components/ui/Toast';
 import { type AccountId, type CounterpartyId } from '../lib/domain';
 import { handleActionError } from '../lib/formErrors';
 import { formatLegLabel, projectEntry, type JournalProjection } from '../lib/journalProjection';
