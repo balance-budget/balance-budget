@@ -483,6 +483,7 @@ function EditJournalEntry({
                     <div className="flex flex-col gap-1">
                         <span className="text-12 font-medium text-fg-2">Counterparty</span>
                         <Combobox
+                            name="CounterpartyId"
                             items={counterpartyItems}
                             value={counterpartyId}
                             onChange={id => {
@@ -495,7 +496,6 @@ function EditJournalEntry({
                             placeholder="Pick counterparty…"
                             ariaLabel="Counterparty"
                         />
-                        <FieldError name="CounterpartyId" errors={fieldErrors} />
                     </div>
                 </div>
             </Panel>
@@ -562,7 +562,6 @@ function EditLines({
                     index={i}
                     currencyCode={currencyCode}
                     accountsById={accountsById}
-                    fieldErrors={fieldErrors}
                     onUpdate={onUpdate}
                     onRemove={onRemove}
                 />
@@ -587,7 +586,6 @@ function EditLineRow({
     index,
     currencyCode,
     accountsById,
-    fieldErrors,
     onUpdate,
     onRemove,
 }: {
@@ -595,7 +593,6 @@ function EditLineRow({
     index: number;
     currencyCode: string;
     accountsById: ReadonlyMap<AccountId, Account>;
-    fieldErrors: FieldErrors | null;
     onUpdate: (key: string, patch: Partial<EditLine>) => void;
     onRemove: (key: string) => void;
 }) {
@@ -616,6 +613,7 @@ function EditLineRow({
                     </span>
                 ) : (
                     <AccountSelect
+                        name={`lines[${index.toString()}].accountId`}
                         value={line.accountId}
                         onChange={id => {
                             onUpdate(line.key, { accountId: id });
@@ -626,7 +624,6 @@ function EditLineRow({
                         ariaLabel="Account"
                     />
                 )}
-                <FieldError name={`lines[${index.toString()}].accountId`} errors={fieldErrors} />
             </div>
             <Select
                 aria-label="Side"

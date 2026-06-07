@@ -7,7 +7,6 @@ import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import { useCreateJournalEntry } from '../api/journalEntries';
 import { AccountSelect } from '../components/AccountSelect';
 import { ErrorState } from '../components/ErrorState';
-import { FieldError } from '../components/FieldError';
 import { FormErrorBanner } from '../components/FormErrorBanner';
 import { Icon } from '../components/Icon';
 import { Panel, SectionHead } from '../components/Panel';
@@ -229,7 +228,6 @@ function JournalNewForm({
                             simple={form.simple}
                             accountsById={accountsById}
                             anchorCurrency={anchorCurrency}
-                            fieldErrors={fieldErrors}
                             onChange={setSimple}
                         />
                     ) : (
@@ -239,7 +237,6 @@ function JournalNewForm({
                             anchorCurrency={anchorCurrency}
                             catalog={catalog}
                             scaleLookup={scaleLookup}
-                            fieldErrors={fieldErrors}
                             onChange={setAdvanced}
                         />
                     )}
@@ -404,13 +401,11 @@ function SimpleLines({
     simple,
     accountsById,
     anchorCurrency,
-    fieldErrors,
     onChange,
 }: {
     simple: FormState['simple'];
     accountsById: Map<AccountId, Account>;
     anchorCurrency: string | null;
-    fieldErrors: FieldErrors | null;
     onChange: (updater: (s: FormState['simple']) => FormState['simple']) => void;
 }) {
     function updateLeg(side: 'from' | 'to', index: number, patch: Partial<SimpleLeg>) {
@@ -440,7 +435,6 @@ function SimpleLines({
                 legs={simple.from}
                 anchorCurrency={anchorCurrency}
                 accountsById={accountsById}
-                fieldErrors={fieldErrors}
                 onChange={updateLeg}
                 onAdd={() => {
                     addLeg('from');
@@ -456,7 +450,6 @@ function SimpleLines({
                 legs={simple.to}
                 anchorCurrency={anchorCurrency}
                 accountsById={accountsById}
-                fieldErrors={fieldErrors}
                 onChange={updateLeg}
                 onAdd={() => {
                     addLeg('to');
@@ -476,7 +469,6 @@ function SimpleLegColumn({
     legs,
     anchorCurrency,
     accountsById,
-    fieldErrors,
     onChange,
     onAdd,
     onRemove,
@@ -487,7 +479,6 @@ function SimpleLegColumn({
     legs: SimpleLeg[];
     anchorCurrency: string | null;
     accountsById: Map<AccountId, Account>;
-    fieldErrors: FieldErrors | null;
     onChange: (side: 'from' | 'to', index: number, patch: Partial<SimpleLeg>) => void;
     onAdd: () => void;
     onRemove: (index: number) => void;
@@ -512,17 +503,14 @@ function SimpleLegColumn({
                         : anchorCurrency;
                 return (
                     <div key={leg.id} className="flex items-start gap-2">
-                        <div className="flex-1 min-w-0 flex flex-col gap-1">
+                        <div className="flex-1 min-w-0">
                             <AccountPicker
+                                name={`simple.${side}[${i.toString()}].accountId`}
                                 value={leg.accountId}
                                 filterCurrency={filterCurrency}
                                 onChange={accountId => {
                                     onChange(side, i, { accountId });
                                 }}
-                            />
-                            <FieldError
-                                name={`simple.${side}[${i.toString()}].accountId`}
-                                errors={fieldErrors}
                             />
                         </div>
                         <NumberField
@@ -562,7 +550,6 @@ function AdvancedLines({
     anchorCurrency,
     catalog,
     scaleLookup,
-    fieldErrors,
     onChange,
 }: {
     advanced: AdvancedLine[];
@@ -570,7 +557,6 @@ function AdvancedLines({
     anchorCurrency: string | null;
     catalog: CurrencyCatalog;
     scaleLookup: ScaleLookup;
-    fieldErrors: FieldErrors | null;
     onChange: (updater: (a: AdvancedLine[]) => AdvancedLine[]) => void;
 }) {
     function updateLine(index: number, patch: Partial<AdvancedLine>) {
@@ -610,19 +596,14 @@ function AdvancedLines({
                         key={line.id}
                         className="grid grid-cols-[1fr_120px_120px_minmax(140px,1fr)_32px] gap-3 items-start px-2 py-2 border-b border-border-soft last:border-b-0"
                     >
-                        <div className="flex flex-col gap-1">
-                            <AccountPicker
-                                value={line.accountId}
-                                filterCurrency={filterCurrency}
-                                onChange={accountId => {
-                                    updateLine(i, { accountId });
-                                }}
-                            />
-                            <FieldError
-                                name={`advanced[${i.toString()}].accountId`}
-                                errors={fieldErrors}
-                            />
-                        </div>
+                        <AccountPicker
+                            name={`advanced[${i.toString()}].accountId`}
+                            value={line.accountId}
+                            filterCurrency={filterCurrency}
+                            onChange={accountId => {
+                                updateLine(i, { accountId });
+                            }}
+                        />
                         <NumberField
                             aria-label="Debit"
                             name={`advanced[${i.toString()}].debit`}
@@ -723,10 +704,12 @@ function AdvancedTotalsFooter({
 }
 
 function AccountPicker({
+    name,
     value,
     filterCurrency,
     onChange,
 }: {
+    name: string;
     value: AccountId | null;
     filterCurrency: string | null;
     onChange: (accountId: AccountId | null) => void;
@@ -735,6 +718,7 @@ function AccountPicker({
     // chosen leg so every line in the entry shares one currency.
     return (
         <AccountSelect
+            name={name}
             value={value}
             onChange={onChange}
             postableOnly

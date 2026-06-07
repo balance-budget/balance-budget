@@ -1,62 +1,16 @@
-import {
-    useEffect,
-    useId,
-    useLayoutEffect,
-    useMemo,
-    useRef,
-    useState,
-    type CSSProperties,
-    type KeyboardEvent,
-} from 'react';
-import { createPortal } from 'react-dom';
-import type { ReactNode } from 'react';
-
-const LISTBOX_MAX_HEIGHT = 256; // matches the design's max-h-64
-const LISTBOX_GAP = 4;
-const LISTBOX_DOWN_MIN_SPACE = 160; // prefer popping up when below has less than this
-
-const LISTBOX_VIEWPORT_MARGIN = 8; // keep the popup off the window's right edge
-
-/** Decide whether the listbox should drop down below the input or pop up above.
- *  Pops up when the space below the anchor is too small to comfortably show a
- *  useful slice of options *and* the space above is more generous — which is
- *  exactly the situation the BulkApplyFooter at the bottom of the viewport
- *  creates for its inline comboboxes.
- *
- *  By default the listbox matches the anchor width. `minWidth` lets a picker
- *  whose options are wider than the trigger (e.g. deep account paths) widen the
- *  popup beyond the input, capped so it never runs past the viewport edge. */
-function listboxStyle(anchorRect: DOMRect, minWidth?: number): CSSProperties {
-    const spaceBelow = window.innerHeight - anchorRect.bottom - LISTBOX_GAP;
-    const spaceAbove = anchorRect.top - LISTBOX_GAP;
-    const popUp = spaceBelow < LISTBOX_DOWN_MIN_SPACE && spaceAbove > spaceBelow;
-    const maxHeight = Math.min(LISTBOX_MAX_HEIGHT, popUp ? spaceAbove : spaceBelow);
-    const maxWidth = window.innerWidth - anchorRect.left - LISTBOX_VIEWPORT_MARGIN;
-    const width = Math.min(Math.max(anchorRect.width, minWidth ?? 0), maxWidth);
-    const horizontal = { left: anchorRect.left, width };
-    if (popUp) {
-        return {
-            position: 'fixed',
-            bottom: window.innerHeight - anchorRect.top + LISTBOX_GAP,
-            ...horizontal,
-            maxHeight,
-        };
-    }
-    return {
-        position: 'fixed',
-        top: anchorRect.bottom + LISTBOX_GAP,
-        ...horizontal,
-        maxHeight,
-    };
-}
-import { Icon } from './Icon';
+import { ChevronDown, Plus } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Button, ComboBox as AriaComboBox, Input, type Key } from 'react-aria-components';
 import { cx } from '../lib/cx';
-import {
-    buildOptionList,
-    nextActiveIndex,
-    type ComboboxItem,
-    type ComboboxOption,
-} from './combobox.state';
+import { FieldError } from './ui/field';
+import { DropdownItem, DropdownListBox, DropdownSection } from './ui/ListBox';
+import { Popover } from './ui/Popover';
+import { groupStyles } from './ui/styles';
+import { groupBuckets, matchesQuery, type ComboboxItem } from './combobox.state';
+
+/** Sentinel option ids — never collide with item keys (which are entity ids). */
+const NONE_KEY = '__none__';
+const CREATE_KEY = '__create__';
 
 export type ComboboxProps<T> = {
     items: readonly ComboboxItem<T>[];
@@ -82,12 +36,21 @@ export type ComboboxProps<T> = {
     disabled?: boolean;
     /** Visible-only label used by screen readers. */
     ariaLabel?: string;
+    /** Field name for React Aria Form `validationErrors`. */
+    name?: string;
     /** Minimum width (px) for the open listbox, letting it grow wider than the
      *  trigger when options are long (e.g. deep account paths). Capped to the
-     *  viewport. */
+     *  viewport by React Aria. */
     listboxMinWidth?: number;
 };
 
+/**
+ * The shared typeahead picker, built on React Aria's ComboBox (ADR-0024).
+ * Filtering happens here (against `searchText`) rather than in React Aria so
+ * the option rows can render rich nodes while matching on more than what's
+ * displayed; sentinel rows ("None", "+ Create") are plain options with
+ * reserved ids.
+ */
 export function Combobox<T>({
     items,
     value,
@@ -101,229 +64,124 @@ export function Combobox<T>({
     placeholder,
     disabled,
     ariaLabel,
+    name,
     listboxMinWidth,
 }: ComboboxProps<T>) {
     const selectedItem = useMemo(() => items.find(i => i.value === value) ?? null, [items, value]);
 
-    const [query, setQuery] = useState('');
+    // While open the input is a query box (starts blank, shows all options);
+    // closed it displays the selection. This mirrors the previous Combobox.
     const [open, setOpen] = useState(false);
-    const [active, setActive] = useState(-1);
-    const wrapperRef = useRef<HTMLDivElement>(null);
-    const inputRef = useRef<HTMLInputElement>(null);
-    const listboxRef = useRef<HTMLUListElement>(null);
-    const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
-    const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
-    const listboxId = useId();
-    const inputId = useId();
+    const [typed, setTyped] = useState('');
 
-    const options = useMemo(
-        () => buildOptionList({ items, query, noneLabel, createLabel, groupOrder }),
-        [items, query, noneLabel, createLabel, groupOrder],
+    const filtered = useMemo(
+        () => items.filter(item => matchesQuery(item.searchText ?? item.label, typed)),
+        [items, typed],
     );
+    const buckets = useMemo(() => groupBuckets(filtered, groupOrder), [filtered, groupOrder]);
 
-    // Clamp at read-time rather than synchronising via an effect: when the
-    // filter shrinks the option list, the previous `active` may dangle off
-    // the end (or below zero), so resolve it here.
-    const effectiveActive =
-        options.length === 0 ? -1 : active >= 0 && active < options.length ? active : 0;
+    const trimmed = typed.trim();
+    const createText =
+        createLabel !== undefined &&
+        trimmed.length > 0 &&
+        !items.some(i => i.label.toLowerCase() === trimmed.toLowerCase())
+            ? createLabel(trimmed)
+            : null;
 
-    // Capture the anchor rect synchronously before paint so the portalled
-    // listbox renders at the correct position on first open, even if the
-    // window has been scrolled since the previous open. The portal target is
-    // captured alongside it: when the combobox sits inside a <dialog> opened
-    // via showModal(), the dialog lives in the browser's top layer, which
-    // paints above everything portalled to document.body regardless of
-    // z-index — so the listbox must portal into the dialog itself. The
-    // fixed-position coordinates from listboxStyle stay viewport-relative
-    // either way (the dialog has no transform/filter to re-anchor them).
-    useLayoutEffect(() => {
-        if (!open) return;
-        const el = inputRef.current;
-        if (!el) return;
-        setAnchorRect(el.getBoundingClientRect());
-        setPortalTarget(el.closest('dialog') ?? document.body);
-    }, [open]);
-
-    useEffect(() => {
-        if (!open) return;
-        function onDocClick(e: MouseEvent) {
-            const target = e.target as Node;
-            // The listbox is rendered outside `wrapperRef` (via a portal) to
-            // escape the parent Panel's stacking context, so a click on it
-            // would otherwise be treated as "outside" and close the popup
-            // before the option's onMouseDown fires.
-            if (wrapperRef.current?.contains(target)) return;
-            if (listboxRef.current?.contains(target)) return;
-            setOpen(false);
-            setQuery('');
-        }
-        function updateRect() {
-            const el = inputRef.current;
-            if (el) setAnchorRect(el.getBoundingClientRect());
-        }
-        document.addEventListener('mousedown', onDocClick);
-        window.addEventListener('resize', updateRect);
-        window.addEventListener('scroll', updateRect, true);
-        return () => {
-            document.removeEventListener('mousedown', onDocClick);
-            window.removeEventListener('resize', updateRect);
-            window.removeEventListener('scroll', updateRect, true);
-        };
-    }, [open]);
-
-    const displayLabel = selectedItem?.label ?? '';
-
-    function commit(option: ComboboxOption<T>) {
-        if (option.kind === 'item') {
-            onChange(option.item.value);
-        } else if (option.kind === 'none') {
+    function commit(key: Key | null) {
+        if (key === null) return;
+        if (key === NONE_KEY) {
             onClear?.();
+        } else if (key === CREATE_KEY) {
+            onCreate?.(trimmed);
         } else {
-            onCreate?.(option.typed);
-        }
-        setOpen(false);
-        setQuery('');
-    }
-
-    function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            if (!open) setOpen(true);
-            setActive(nextActiveIndex(effectiveActive, options.length, 1));
-            return;
-        }
-        if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            if (!open) setOpen(true);
-            setActive(nextActiveIndex(effectiveActive, options.length, -1));
-            return;
-        }
-        if (e.key === 'Enter') {
-            const option = effectiveActive >= 0 ? options[effectiveActive] : null;
-            if (option) {
-                e.preventDefault();
-                commit(option);
-            }
-            return;
-        }
-        if (e.key === 'Escape') {
-            if (open) {
-                e.preventDefault();
-                setOpen(false);
-                setQuery('');
-            }
+            const item = items.find(i => i.key === key);
+            if (item) onChange(item.value);
         }
     }
 
     return (
-        <div ref={wrapperRef} className="relative">
-            <input
-                ref={inputRef}
-                id={inputId}
-                type="text"
-                role="combobox"
-                aria-expanded={open}
-                aria-controls={listboxId}
-                aria-autocomplete="list"
-                aria-label={ariaLabel}
-                value={open ? query : displayLabel}
-                onChange={e => {
-                    setQuery(e.target.value);
-                    if (!open) setOpen(true);
-                }}
-                onFocus={() => {
-                    setOpen(true);
-                }}
-                onKeyDown={handleKeyDown}
-                disabled={disabled}
-                placeholder={placeholder}
-                autoComplete="off"
-                className={cx(
-                    'w-full px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-13',
-                    'focus:outline-none focus:border-border-strong disabled:opacity-60',
-                )}
-            />
-            {open &&
-                options.length > 0 &&
-                anchorRect &&
-                portalTarget &&
-                createPortal(
-                    <ul
-                        ref={listboxRef}
-                        id={listboxId}
-                        role="listbox"
-                        style={listboxStyle(anchorRect, listboxMinWidth)}
-                        className={cx(
-                            'z-50 overflow-y-auto',
-                            'rounded-sm bg-bg-1 border border-border-soft shadow-overlay text-13',
-                        )}
-                    >
-                        {renderOptions(options, effectiveActive, groupLabels, commit, setActive)}
-                    </ul>,
-                    portalTarget,
-                )}
-        </div>
+        <AriaComboBox
+            aria-label={ariaLabel}
+            name={name}
+            isDisabled={disabled}
+            menuTrigger="focus"
+            defaultFilter={() => true}
+            value={selectedItem?.key ?? null}
+            onChange={commit}
+            inputValue={open ? typed : (selectedItem?.label ?? '')}
+            onInputChange={v => {
+                if (open) setTyped(v);
+            }}
+            onOpenChange={isOpen => {
+                setOpen(isOpen);
+                setTyped('');
+            }}
+            className="group flex flex-col gap-1"
+        >
+            <div className={cx(groupStyles, 'group-data-[invalid]:border-danger')}>
+                <Input
+                    placeholder={placeholder}
+                    className="flex-1 min-w-0 px-3 py-2 bg-transparent outline-none text-13 placeholder:text-fg-3 disabled:opacity-60"
+                />
+                <Button className="px-2 self-stretch text-fg-3 outline-none cursor-pointer data-[hovered]:text-fg-1 data-[focus-visible]:text-fg-1 disabled:opacity-60">
+                    <ChevronDown size={14} aria-hidden="true" />
+                </Button>
+            </div>
+            <FieldError />
+            <Popover
+                className="max-w-(--available-width)"
+                style={
+                    listboxMinWidth === undefined
+                        ? { minWidth: 'var(--trigger-width)' }
+                        : { minWidth: `max(var(--trigger-width), ${listboxMinWidth.toString()}px)` }
+                }
+            >
+                <DropdownListBox>
+                    {noneLabel !== undefined && (
+                        <DropdownItem
+                            id={NONE_KEY}
+                            textValue={noneLabel}
+                            className="italic text-fg-3"
+                        >
+                            {noneLabel}
+                        </DropdownItem>
+                    )}
+                    {buckets.map(bucket =>
+                        bucket.group === undefined ? (
+                            bucket.items.map(item => <OptionRow key={item.key} item={item} />)
+                        ) : (
+                            <DropdownSection
+                                key={bucket.group}
+                                id={bucket.group}
+                                title={groupLabels?.[bucket.group] ?? bucket.group}
+                            >
+                                {bucket.items.map(item => (
+                                    <OptionRow key={item.key} item={item} />
+                                ))}
+                            </DropdownSection>
+                        ),
+                    )}
+                    {createText !== null && (
+                        <DropdownItem
+                            id={CREATE_KEY}
+                            textValue={createText}
+                            className="text-brand-primary"
+                        >
+                            <Plus size={12} strokeWidth={2} aria-hidden="true" />
+                            <span className="truncate">{createText}</span>
+                        </DropdownItem>
+                    )}
+                </DropdownListBox>
+            </Popover>
+        </AriaComboBox>
     );
 }
 
-function renderOptions<T>(
-    options: ComboboxOption<T>[],
-    active: number,
-    groupLabels: Record<string, string> | undefined,
-    commit: (option: ComboboxOption<T>) => void,
-    setActive: (i: number) => void,
-) {
-    const nodes: ReactNode[] = [];
-    let lastGroup: string | undefined;
-    options.forEach((option, i) => {
-        if (option.kind === 'item' && option.group !== lastGroup) {
-            lastGroup = option.group;
-            if (option.group !== undefined) {
-                nodes.push(
-                    <li
-                        key={`group-${option.group}`}
-                        role="presentation"
-                        className="px-3 py-1 text-11 text-fg-3 uppercase tracking-wider bg-surface-2 border-b border-border-soft"
-                    >
-                        {groupLabels?.[option.group] ?? option.group}
-                    </li>,
-                );
-            }
-        }
-        const isActive = i === active;
-        const key =
-            option.kind === 'item'
-                ? `item-${option.item.key}`
-                : option.kind === 'none'
-                  ? 'none'
-                  : `create-${option.typed}`;
-        nodes.push(
-            <li
-                key={key}
-                role="option"
-                aria-selected={isActive}
-                onMouseDown={e => {
-                    e.preventDefault();
-                    commit(option);
-                }}
-                onMouseEnter={() => {
-                    setActive(i);
-                }}
-                className={cx(
-                    'px-3 py-2 cursor-pointer flex items-center gap-2',
-                    isActive ? 'bg-brand-primary-soft text-brand-primary' : 'text-fg-1',
-                    option.kind === 'create' && 'text-brand-primary',
-                    option.kind === 'none' && 'text-fg-3 italic',
-                )}
-            >
-                {option.kind === 'create' && <Icon name="plus" size={12} strokeWidth={2} />}
-                <span className="truncate">
-                    {option.kind === 'item'
-                        ? (option.item.render ?? option.item.label)
-                        : option.label}
-                </span>
-            </li>,
-        );
-    });
-    return nodes;
+function OptionRow<T>({ item }: { item: ComboboxItem<T> }) {
+    return (
+        <DropdownItem id={item.key} textValue={item.label}>
+            <span className="truncate">{item.render ?? item.label}</span>
+        </DropdownItem>
+    );
 }

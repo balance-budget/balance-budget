@@ -525,7 +525,6 @@ function Lines({
                     canRemove={lines.length > 1}
                     currencyCode={currencyCode}
                     excludeAccountId={ownBankSideAccountId}
-                    fieldErrors={fieldErrors}
                     onUpdate={onUpdate}
                     onRemove={onRemove}
                 />
@@ -551,7 +550,6 @@ function LineRow({
     canRemove,
     currencyCode,
     excludeAccountId,
-    fieldErrors,
     onUpdate,
     onRemove,
 }: {
@@ -560,26 +558,23 @@ function LineRow({
     canRemove: boolean;
     currencyCode: string;
     excludeAccountId: AccountId | null;
-    fieldErrors: FieldErrors | null;
     onUpdate: (index: number, patch: Partial<LineInput>) => void;
     onRemove: (index: number) => void;
 }) {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_140px_minmax(140px,1fr)_32px] gap-3 items-start px-2 py-2 border-b border-border-soft last:border-b-0">
-            <div className="flex flex-col gap-1">
-                <AccountSelect
-                    value={line.accountId}
-                    onChange={accountId => {
-                        onUpdate(index, { accountId });
-                    }}
-                    postableOnly
-                    currencyCode={currencyCode}
-                    exclude={excludeAccountId ? [excludeAccountId] : undefined}
-                    placeholder="Pick account…"
-                    ariaLabel="Account"
-                />
-                <FieldError name={`lines[${index.toString()}].accountId`} errors={fieldErrors} />
-            </div>
+            <AccountSelect
+                name={`lines[${index.toString()}].accountId`}
+                value={line.accountId}
+                onChange={accountId => {
+                    onUpdate(index, { accountId });
+                }}
+                postableOnly
+                currencyCode={currencyCode}
+                exclude={excludeAccountId ? [excludeAccountId] : undefined}
+                placeholder="Pick account…"
+                ariaLabel="Account"
+            />
             <NumberField
                 aria-label="Amount"
                 name={`lines[${index.toString()}].amount`}
