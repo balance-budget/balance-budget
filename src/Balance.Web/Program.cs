@@ -69,6 +69,11 @@ var api = app.MapGroup("/api")
     .RequireAuthorization()
     .WithMetadata(new AutoValidateAntiforgeryTokenAttribute());
 
+// Unmatched /api/* URLs must be API 404s (Problem Details via the status-code pages
+// middleware), never the SPA shell: this group fallback is more specific than the
+// MapFallbackToFile catch-all above, so it wins route precedence.
+api.MapFallback(static () => Results.NotFound()).AllowAnonymous().DisableAntiforgery();
+
 // Liveness / readiness probes and OpenAPI surfaces stay anonymous so probes from a
 // reverse proxy / Scalar UI keep working when no user is logged in.
 api.MapHealthChecks("/healthz/live", new HealthCheckOptions { Predicate = _ => false })
