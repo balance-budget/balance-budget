@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Form } from 'react-aria-components';
 import {
     useBankAccountImporters,
     useCreateBankAccount,
@@ -9,10 +10,13 @@ import {
 import { useAccounts } from '../api/accounts';
 import { useCounterparties } from '../api/counterparties';
 import { useCurrencies } from '../api/currencies';
-import { FieldError } from '../components/FieldError';
 import { FormErrorBanner } from '../components/FormErrorBanner';
-import { Modal, ModalFooter } from '../components/Modal';
-import { useToast } from '../components/Toast';
+import { Button } from '../components/ui/Button';
+import { Modal, ModalFooter } from '../components/ui/Modal';
+import { Radio, RadioGroup } from '../components/ui/RadioGroup';
+import { Select, SelectItem } from '../components/ui/Select';
+import { TextField } from '../components/ui/TextField';
+import { useToast } from '../components/ui/Toast';
 import { asAccountId, asCounterpartyId, isLedgerAccount } from '../lib/domain';
 import type { AccountId, CounterpartyId } from '../lib/domain';
 import { handleFormError } from '../lib/formErrors';
@@ -171,212 +175,172 @@ export function BankAccountFormModal(props: Props) {
             title={props.mode === 'create' ? 'New bank account' : 'Edit bank account'}
             width="md"
         >
-            <form
+            <Form
+                validationErrors={fieldErrors ?? undefined}
                 onSubmit={e => {
                     e.preventDefault();
                     void submit();
                 }}
-                noValidate
             >
                 <FormErrorBanner message={topError} />
 
-                <fieldset className="mb-4">
-                    <legend className="text-12 font-medium text-fg-2 mb-2">Type</legend>
-                    <div className="flex gap-4">
-                        <RadioOption
-                            label="Current"
-                            checked={form.type === 'Current'}
-                            onChange={() => {
-                                changeType('Current');
-                            }}
-                        />
-                        <RadioOption
-                            label="Savings"
-                            checked={form.type === 'Savings'}
-                            onChange={() => {
-                                changeType('Savings');
-                            }}
-                        />
-                        <RadioOption
-                            label="Card"
-                            checked={form.type === 'Card'}
-                            onChange={() => {
-                                changeType('Card');
-                            }}
-                        />
-                    </div>
-                    <FieldError name="Type" errors={fieldErrors} />
-                </fieldset>
+                <RadioGroup
+                    label="Type"
+                    name="Type"
+                    value={form.type}
+                    onChange={value => {
+                        changeType(value as BankAccountType);
+                    }}
+                    className="mb-4"
+                >
+                    <Radio value="Current">Current</Radio>
+                    <Radio value="Savings">Savings</Radio>
+                    <Radio value="Card">Card</Radio>
+                </RadioGroup>
 
-                <fieldset className="mb-4">
-                    <legend className="text-12 font-medium text-fg-2 mb-2">Owner</legend>
-                    <div className="flex gap-4 mb-2">
-                        <RadioOption
-                            label="Account"
-                            checked={form.ownerKind === 'account'}
-                            disabled={ownerKindLocked}
-                            onChange={() => {
-                                update_({ ownerKind: 'account' });
-                            }}
-                        />
-                        <RadioOption
-                            label="Counterparty"
-                            checked={form.ownerKind === 'counterparty'}
-                            disabled={ownerKindLocked}
-                            onChange={() => {
-                                update_({ ownerKind: 'counterparty' });
-                            }}
-                        />
-                    </div>
+                <RadioGroup
+                    label="Owner"
+                    name="OwnerKind"
+                    value={form.ownerKind}
+                    onChange={value => {
+                        update_({ ownerKind: value as OwnerKind });
+                    }}
+                    isDisabled={ownerKindLocked}
+                    className="mb-2"
+                >
+                    <Radio value="account">Account</Radio>
+                    <Radio value="counterparty">Counterparty</Radio>
+                </RadioGroup>
+
+                <div className="mb-4">
                     {form.ownerKind === 'account' ? (
-                        <select
-                            value={form.accountId}
-                            onChange={e => {
-                                update_({ accountId: e.target.value });
+                        <Select
+                            aria-label="Owner account"
+                            name="AccountId"
+                            value={form.accountId === '' ? null : form.accountId}
+                            onChange={key => {
+                                update_({ accountId: key === null ? '' : String(key) });
                             }}
-                            disabled={ownerLocked}
-                            required
-                            className="w-full px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong disabled:opacity-60"
+                            isDisabled={ownerLocked}
+                            isRequired
+                            placeholder="Select an account…"
                         >
-                            <option value="">Select an account…</option>
                             {ledgerAccounts.map(a => (
-                                <option key={a.id} value={a.id}>
+                                <SelectItem key={a.id} id={a.id}>
                                     {a.name} ({a.type})
-                                </option>
+                                </SelectItem>
                             ))}
-                        </select>
+                        </Select>
                     ) : (
-                        <select
-                            value={form.counterpartyId}
-                            onChange={e => {
-                                update_({ counterpartyId: e.target.value });
+                        <Select
+                            aria-label="Owner counterparty"
+                            name="CounterpartyId"
+                            value={form.counterpartyId === '' ? null : form.counterpartyId}
+                            onChange={key => {
+                                update_({ counterpartyId: key === null ? '' : String(key) });
                             }}
-                            disabled={ownerLocked}
-                            required
-                            className="w-full px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong disabled:opacity-60"
+                            isDisabled={ownerLocked}
+                            isRequired
+                            placeholder="Select a counterparty…"
                         >
-                            <option value="">Select a counterparty…</option>
                             {counterpartyList.map(c => (
-                                <option key={c.id} value={c.id}>
+                                <SelectItem key={c.id} id={c.id}>
                                     {c.name}
-                                </option>
+                                </SelectItem>
                             ))}
-                        </select>
+                        </Select>
                     )}
-                    <FieldError name="AccountId" errors={fieldErrors} />
-                    <FieldError name="CounterpartyId" errors={fieldErrors} />
-                </fieldset>
+                </div>
 
                 <div className="grid grid-cols-2 gap-3">
                     {form.type !== 'Card' ? (
                         <TextField
                             label={`IBAN${form.type === 'Current' ? ' *' : ''}`}
+                            name="Iban"
                             value={form.iban}
                             onChange={v => {
                                 update_({ iban: v });
                             }}
-                            errorName="Iban"
-                            errors={fieldErrors}
                             autoFocus
                         />
                     ) : null}
                     {form.type === 'Savings' ? (
                         <TextField
                             label="Account number"
+                            name="AccountNumber"
                             value={form.accountNumber}
                             onChange={v => {
                                 update_({ accountNumber: v });
                             }}
-                            errorName="AccountNumber"
-                            errors={fieldErrors}
                         />
                     ) : null}
                     {form.type === 'Card' ? (
                         <TextField
                             label="Card identifier *"
+                            name="CardIdentifier"
                             value={form.cardIdentifier}
                             onChange={v => {
                                 update_({ cardIdentifier: v });
                             }}
-                            errorName="CardIdentifier"
-                            errors={fieldErrors}
                             autoFocus
                         />
                     ) : null}
                     <TextField
                         label="BIC"
+                        name="Bic"
                         value={form.bic}
                         onChange={v => {
                             update_({ bic: v });
                         }}
-                        errorName="Bic"
-                        errors={fieldErrors}
                     />
                     <TextField
                         label="Bank name"
+                        name="BankName"
                         value={form.bankName}
                         onChange={v => {
                             update_({ bankName: v });
                         }}
-                        errorName="BankName"
-                        errors={fieldErrors}
                     />
                     <TextField
                         label="Account holder name"
+                        name="AccountHolderName"
                         value={form.accountHolderName}
                         onChange={v => {
                             update_({ accountHolderName: v });
                         }}
-                        errorName="AccountHolderName"
-                        errors={fieldErrors}
                     />
-                    <label className="flex flex-col gap-1">
-                        <span className="text-12 font-medium text-fg-2">
-                            Currency
-                            {form.ownerKind === 'account' ? (
-                                <span className="text-danger"> *</span>
-                            ) : null}
-                        </span>
-                        <select
-                            value={form.currencyCode}
-                            onChange={e => {
-                                update_({ currencyCode: e.target.value });
-                            }}
-                            required={form.ownerKind === 'account'}
-                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
-                        >
-                            <option value="">
-                                {form.ownerKind === 'account' ? 'Select…' : '(none)'}
-                            </option>
-                            {currencyList.map(c => (
-                                <option key={c.code} value={c.code}>
-                                    {c.code} — {c.name}
-                                </option>
-                            ))}
-                        </select>
-                        <FieldError name="CurrencyCode" errors={fieldErrors} />
-                    </label>
+                    <Select
+                        label={form.ownerKind === 'account' ? 'Currency *' : 'Currency'}
+                        name="CurrencyCode"
+                        value={form.currencyCode === '' ? null : form.currencyCode}
+                        onChange={key => {
+                            update_({ currencyCode: key === null ? '' : String(key) });
+                        }}
+                        isRequired={form.ownerKind === 'account'}
+                        placeholder={form.ownerKind === 'account' ? 'Select…' : '(none)'}
+                    >
+                        {currencyList.map(c => (
+                            <SelectItem key={c.code} id={c.code}>
+                                {c.code} — {c.name}
+                            </SelectItem>
+                        ))}
+                    </Select>
                     {form.ownerKind === 'account' ? (
-                        <label className="flex flex-col gap-1">
-                            <span className="text-12 font-medium text-fg-2">
-                                Statement importer
-                            </span>
-                            <select
-                                value={form.importerKey}
-                                onChange={e => {
-                                    update_({ importerKey: e.target.value });
-                                }}
-                                className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
-                            >
-                                <option value="">(none)</option>
-                                {importerOptions.map(i => (
-                                    <option key={i.key} value={i.key}>
-                                        {i.key}
-                                    </option>
-                                ))}
-                            </select>
-                            <FieldError name="ImporterKey" errors={fieldErrors} />
-                        </label>
+                        <Select
+                            label="Statement importer"
+                            name="ImporterKey"
+                            value={form.importerKey === '' ? null : form.importerKey}
+                            onChange={key => {
+                                update_({ importerKey: key === null ? '' : String(key) });
+                            }}
+                            placeholder="(none)"
+                        >
+                            {importerOptions.map(i => (
+                                <SelectItem key={i.key} id={i.key}>
+                                    {i.key}
+                                </SelectItem>
+                            ))}
+                        </Select>
                     ) : null}
                 </div>
 
@@ -389,23 +353,14 @@ export function BankAccountFormModal(props: Props) {
                 </p>
 
                 <ModalFooter>
-                    <button
-                        type="button"
-                        onClick={props.onClose}
-                        disabled={isPending}
-                        className="px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
-                    >
+                    <Button variant="ghost" onPress={props.onClose} isDisabled={isPending}>
                         Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={isPending}
-                        className="px-3 py-[7px] rounded-sm text-13 font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
-                    >
+                    </Button>
+                    <Button type="submit" variant="primary" isDisabled={isPending}>
                         {isPending ? 'Saving…' : props.mode === 'create' ? 'Create' : 'Save'}
-                    </button>
+                    </Button>
                 </ModalFooter>
-            </form>
+            </Form>
         </Modal>
     );
 }
@@ -429,61 +384,4 @@ function bankAccountToUpdateInput(ba: BankAccount) {
         accountId: ba.accountId,
         counterpartyId: ba.counterpartyId,
     };
-}
-
-function TextField({
-    label,
-    value,
-    onChange,
-    errorName,
-    errors,
-    autoFocus = false,
-}: {
-    label: string;
-    value: string;
-    onChange: (v: string) => void;
-    errorName: string;
-    errors: Record<string, string[]> | null;
-    autoFocus?: boolean;
-}) {
-    return (
-        <label className="flex flex-col gap-1">
-            <span className="text-12 font-medium text-fg-2">{label}</span>
-            <input
-                type="text"
-                value={value}
-                onChange={e => {
-                    onChange(e.target.value);
-                }}
-                autoFocus={autoFocus}
-                className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
-            />
-            <FieldError name={errorName} errors={errors} />
-        </label>
-    );
-}
-
-function RadioOption({
-    label,
-    checked,
-    onChange,
-    disabled,
-}: {
-    label: string;
-    checked: boolean;
-    onChange: () => void;
-    disabled?: boolean;
-}) {
-    return (
-        <label className="inline-flex items-center gap-2 text-13 text-fg-1 cursor-pointer">
-            <input
-                type="radio"
-                checked={checked}
-                onChange={onChange}
-                disabled={disabled}
-                className="accent-brand-primary"
-            />
-            {label}
-        </label>
-    );
 }

@@ -8,7 +8,7 @@ import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
-import { useToast } from '../components/Toast';
+import { useToast } from '../components/ui/Toast';
 import type { AccountType } from '../lib/domain';
 import { handleActionError } from '../lib/formErrors';
 import { AccountFormModal } from './AccountForm';

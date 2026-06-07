@@ -29,7 +29,7 @@ import { Icon } from '../components/Icon';
 import { Modal, ModalFooter } from '../components/Modal';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
-import { useToast } from '../components/Toast';
+import { useToast } from '../components/ui/Toast';
 import { todayIso } from '../lib/dates';
 import {
     type AccountId,

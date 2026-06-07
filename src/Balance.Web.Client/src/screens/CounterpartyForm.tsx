@@ -1,13 +1,15 @@
 import { useState } from 'react';
+import { Form } from 'react-aria-components';
 import {
     useCreateCounterparty,
     useUpdateCounterparty,
     type Counterparty,
 } from '../api/counterparties';
-import { FieldError } from '../components/FieldError';
 import { FormErrorBanner } from '../components/FormErrorBanner';
-import { Modal, ModalFooter } from '../components/Modal';
-import { useToast } from '../components/Toast';
+import { Button } from '../components/ui/Button';
+import { Modal, ModalFooter } from '../components/ui/Modal';
+import { TextField } from '../components/ui/TextField';
+import { useToast } from '../components/ui/Toast';
 import { handleFormError } from '../lib/formErrors';
 
 type Props = { onClose: () => void } & (
@@ -53,47 +55,32 @@ export function CounterpartyFormModal(props: Props) {
             title={props.mode === 'create' ? 'New counterparty' : 'Edit counterparty'}
             width="sm"
         >
-            <form
+            <Form
+                validationErrors={fieldErrors ?? undefined}
                 onSubmit={e => {
                     e.preventDefault();
                     void submit();
                 }}
-                noValidate
             >
                 <FormErrorBanner message={topError} />
-                <label className="flex flex-col gap-1">
-                    <span className="text-12 font-medium text-fg-2">Name</span>
-                    <input
-                        type="text"
-                        value={name}
-                        onChange={e => {
-                            setName(e.target.value);
-                        }}
-                        required
-                        maxLength={200}
-                        autoFocus
-                        className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
-                    />
-                    <FieldError name="Name" errors={fieldErrors} />
-                </label>
+                <TextField
+                    label="Name"
+                    name="Name"
+                    value={name}
+                    onChange={setName}
+                    isRequired
+                    maxLength={200}
+                    autoFocus
+                />
                 <ModalFooter>
-                    <button
-                        type="button"
-                        onClick={props.onClose}
-                        disabled={isPending}
-                        className="px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
-                    >
+                    <Button variant="ghost" onPress={props.onClose} isDisabled={isPending}>
                         Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={isPending}
-                        className="px-3 py-[7px] rounded-sm text-13 font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
-                    >
+                    </Button>
+                    <Button type="submit" variant="primary" isDisabled={isPending}>
                         {isPending ? 'Saving…' : props.mode === 'create' ? 'Create' : 'Save'}
-                    </button>
+                    </Button>
                 </ModalFooter>
-            </form>
+            </Form>
         </Modal>
     );
 }

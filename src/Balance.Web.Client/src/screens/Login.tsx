@@ -1,7 +1,10 @@
 import { useState } from 'react';
+import { Form } from 'react-aria-components';
 import { useNavigate } from '@tanstack/react-router';
 import { useLogin } from '../api/auth';
 import { FormErrorBanner } from '../components/FormErrorBanner';
+import { Button } from '../components/ui/Button';
+import { TextField } from '../components/ui/TextField';
 import { ApiError } from '../lib/http';
 import logo from '../assets/logo.svg';
 
@@ -40,49 +43,41 @@ export function Login({ returnTo }: { returnTo?: string }) {
             <div className="px-5 pt-1 pb-5">
                 <h1 className="text-16 font-semibold leading-snug mb-1">Sign in</h1>
                 <p className="text-13 text-fg-3 mb-4">Enter your email and password to continue.</p>
-                <form
+                <Form
                     onSubmit={e => {
                         e.preventDefault();
                         void submit();
                     }}
-                    noValidate
                 >
                     <FormErrorBanner message={errorMessage} />
-                    <label className="flex flex-col gap-1 mb-3">
-                        <span className="text-12 font-medium text-fg-2">Email</span>
-                        <input
-                            type="email"
-                            required
-                            autoComplete="username"
-                            autoFocus
-                            value={email}
-                            onChange={e => {
-                                setEmail(e.target.value);
-                            }}
-                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
-                        />
-                    </label>
-                    <label className="flex flex-col gap-1 mb-4">
-                        <span className="text-12 font-medium text-fg-2">Password</span>
-                        <input
-                            type="password"
-                            required
-                            autoComplete="current-password"
-                            value={password}
-                            onChange={e => {
-                                setPassword(e.target.value);
-                            }}
-                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
-                        />
-                    </label>
-                    <button
+                    <TextField
+                        label="Email"
+                        type="email"
+                        isRequired
+                        autoComplete="username"
+                        autoFocus
+                        value={email}
+                        onChange={setEmail}
+                        className="mb-3"
+                    />
+                    <TextField
+                        label="Password"
+                        type="password"
+                        isRequired
+                        autoComplete="current-password"
+                        value={password}
+                        onChange={setPassword}
+                        className="mb-4"
+                    />
+                    <Button
                         type="submit"
-                        disabled={login.isPending}
-                        className="w-full px-3 py-[7px] rounded-sm text-13 font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
+                        variant="primary"
+                        isDisabled={login.isPending}
+                        className="w-full"
                     >
                         {login.isPending ? 'Signing in…' : 'Sign in'}
-                    </button>
-                </form>
+                    </Button>
+                </Form>
             </div>
         </div>
     );

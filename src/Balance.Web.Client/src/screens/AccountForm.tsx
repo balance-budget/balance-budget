@@ -1,12 +1,17 @@
 import { useState } from 'react';
+import { Form } from 'react-aria-components';
 import { useCreateAccount, useUpdateAccount, type Account } from '../api/accounts';
 import { useCurrencies } from '../api/currencies';
 import { AccountIconPicker } from '../components/AccountIconPicker';
 import { AccountSelect } from '../components/AccountSelect';
 import { FieldError } from '../components/FieldError';
 import { FormErrorBanner } from '../components/FormErrorBanner';
-import { Modal, ModalFooter } from '../components/Modal';
-import { useToast } from '../components/Toast';
+import { Button } from '../components/ui/Button';
+import { Checkbox } from '../components/ui/Checkbox';
+import { Modal, ModalFooter } from '../components/ui/Modal';
+import { Select, SelectItem } from '../components/ui/Select';
+import { TextField } from '../components/ui/TextField';
+import { useToast } from '../components/ui/Toast';
 import type { AccountType } from '../lib/domain';
 import { handleFormError } from '../lib/formErrors';
 
@@ -104,12 +109,12 @@ export function AccountFormModal(props: Props) {
             title={props.mode === 'create' ? 'New account' : 'Edit account'}
             width="sm"
         >
-            <form
+            <Form
+                validationErrors={fieldErrors ?? undefined}
                 onSubmit={e => {
                     e.preventDefault();
                     void submit();
                 }}
-                noValidate
             >
                 <FormErrorBanner message={topError} />
 
@@ -119,78 +124,64 @@ export function AccountFormModal(props: Props) {
                     <FieldError name="IconName" errors={fieldErrors} />
                 </div>
 
-                <label className="flex flex-col gap-1 mb-3">
-                    <span className="text-12 font-medium text-fg-2">Name</span>
-                    <input
-                        type="text"
-                        value={name}
-                        onChange={e => {
-                            setName(e.target.value);
-                        }}
-                        required
-                        maxLength={200}
-                        autoFocus
-                        className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
-                    />
-                    <FieldError name="Name" errors={fieldErrors} />
-                </label>
+                <TextField
+                    label="Name"
+                    name="Name"
+                    value={name}
+                    onChange={setName}
+                    isRequired
+                    maxLength={200}
+                    autoFocus
+                    className="mb-3"
+                />
 
-                <label className="flex flex-col gap-1 mb-3">
-                    <span className="text-12 font-medium text-fg-2">Code</span>
-                    <input
-                        type="text"
-                        value={code}
-                        onChange={e => {
-                            setCode(e.target.value);
-                        }}
-                        required
-                        maxLength={32}
-                        placeholder="e.g. 5110"
-                        className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 tabular focus:outline-none focus:border-border-strong"
-                    />
-                    <FieldError name="Code" errors={fieldErrors} />
-                </label>
+                <TextField
+                    label="Code"
+                    name="Code"
+                    value={code}
+                    onChange={setCode}
+                    isRequired
+                    maxLength={32}
+                    placeholder="e.g. 5110"
+                    inputClassName="tabular"
+                    className="mb-3"
+                />
 
-                <label className="flex flex-col gap-1 mb-3">
-                    <span className="text-12 font-medium text-fg-2">Type</span>
-                    <select
-                        value={accountType}
-                        onChange={e => {
-                            setAccountType(e.target.value as AccountType);
-                            setParentId(null);
-                        }}
-                        required
-                        className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
-                    >
-                        {ACCOUNT_TYPES.map(t => (
-                            <option key={t} value={t}>
-                                {t}
-                            </option>
-                        ))}
-                    </select>
-                    <FieldError name="AccountType" errors={fieldErrors} />
-                </label>
+                <Select
+                    label="Type"
+                    name="AccountType"
+                    value={accountType}
+                    onChange={key => {
+                        setAccountType(key as AccountType);
+                        setParentId(null);
+                    }}
+                    className="mb-3"
+                >
+                    {ACCOUNT_TYPES.map(t => (
+                        <SelectItem key={t} id={t}>
+                            {t}
+                        </SelectItem>
+                    ))}
+                </Select>
 
-                <label className="flex flex-col gap-1 mb-3">
-                    <span className="text-12 font-medium text-fg-2">Currency</span>
-                    <select
-                        value={currencyCode}
-                        onChange={e => {
-                            setCurrencyCode(e.target.value);
-                            setParentId(null);
-                        }}
-                        required
-                        className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
-                    >
-                        <option value="">Select…</option>
-                        {currencyList.map(c => (
-                            <option key={c.code} value={c.code}>
-                                {c.code} — {c.name}
-                            </option>
-                        ))}
-                    </select>
-                    <FieldError name="CurrencyCode" errors={fieldErrors} />
-                </label>
+                <Select
+                    label="Currency"
+                    name="CurrencyCode"
+                    value={currencyCode === '' ? null : currencyCode}
+                    onChange={key => {
+                        setCurrencyCode(key === null ? '' : String(key));
+                        setParentId(null);
+                    }}
+                    isRequired
+                    placeholder="Select…"
+                    className="mb-3"
+                >
+                    {currencyList.map(c => (
+                        <SelectItem key={c.code} id={c.code}>
+                            {c.code} — {c.name}
+                        </SelectItem>
+                    ))}
+                </Select>
 
                 <div className="flex flex-col gap-1 mb-3">
                     <span className="text-12 font-medium text-fg-2">Parent account</span>
@@ -220,15 +211,7 @@ export function AccountFormModal(props: Props) {
                     <FieldError name="ParentAccountId" errors={fieldErrors} />
                 </div>
 
-                <label className="flex items-start gap-2">
-                    <input
-                        type="checkbox"
-                        checked={isPostable}
-                        onChange={e => {
-                            setIsPostable(e.target.checked);
-                        }}
-                        className="mt-[3px]"
-                    />
+                <Checkbox isSelected={isPostable} onChange={setIsPostable}>
                     <span className="flex flex-col">
                         <span className="text-12 font-medium text-fg-2">
                             Can contain transactions
@@ -237,26 +220,17 @@ export function AccountFormModal(props: Props) {
                             Uncheck to make this a roll-up account that only totals its children.
                         </span>
                     </span>
-                </label>
+                </Checkbox>
 
                 <ModalFooter>
-                    <button
-                        type="button"
-                        onClick={props.onClose}
-                        disabled={isPending}
-                        className="px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
-                    >
+                    <Button variant="ghost" onPress={props.onClose} isDisabled={isPending}>
                         Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={isPending}
-                        className="px-3 py-[7px] rounded-sm text-13 font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
-                    >
+                    </Button>
+                    <Button type="submit" variant="primary" isDisabled={isPending}>
                         {isPending ? 'Saving…' : props.mode === 'create' ? 'Create' : 'Save'}
-                    </button>
+                    </Button>
                 </ModalFooter>
-            </form>
+            </Form>
         </Modal>
     );
 }

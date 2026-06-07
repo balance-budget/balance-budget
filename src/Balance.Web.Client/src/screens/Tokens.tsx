@@ -6,9 +6,12 @@ import {
     type CreatedToken,
     type Token,
 } from '../api/admin';
+import { Form } from 'react-aria-components';
 import { FormErrorBanner } from '../components/FormErrorBanner';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
+import { Button } from '../components/ui/Button';
+import { TextField } from '../components/ui/TextField';
 import { ApiError } from '../lib/http';
 
 export function Tokens() {
@@ -53,15 +56,14 @@ export function Tokens() {
                         {justCreated.token}
                     </code>
                     <div className="mt-3">
-                        <button
-                            type="button"
-                            onClick={() => {
+                        <Button
+                            onPress={() => {
                                 setJustCreated(null);
                             }}
-                            className="px-3 py-[5px] rounded-sm text-12 font-medium text-fg-2 bg-surface-2 border border-border-soft hover:bg-surface-3 hover:text-fg-1"
+                            className="py-[5px] text-12"
                         >
                             I've copied it
-                        </button>
+                        </Button>
                     </div>
                 </Panel>
             ) : null}
@@ -95,49 +97,35 @@ export function Tokens() {
 
             <Panel>
                 <SectionHead title="Create token" />
-                <form
+                <Form
                     onSubmit={e => {
                         e.preventDefault();
                         void submit();
                     }}
-                    noValidate
                     className="flex flex-col max-w-md"
                 >
                     <FormErrorBanner message={createError} />
-                    <label className="flex flex-col gap-1 mb-3">
-                        <span className="text-12 font-medium text-fg-2">Name</span>
-                        <input
-                            type="text"
-                            required
-                            placeholder="e.g. ING importer cron"
-                            value={name}
-                            onChange={e => {
-                                setName(e.target.value);
-                            }}
-                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 placeholder:text-fg-4 focus:outline-none focus:border-border-strong"
-                        />
-                    </label>
-                    <label className="flex flex-col gap-1 mb-4">
-                        <span className="text-12 font-medium text-fg-2">Expires (optional)</span>
-                        <input
-                            type="datetime-local"
-                            value={expiresAt}
-                            onChange={e => {
-                                setExpiresAt(e.target.value);
-                            }}
-                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
-                        />
-                    </label>
+                    <TextField
+                        label="Name"
+                        isRequired
+                        placeholder="e.g. ING importer cron"
+                        value={name}
+                        onChange={setName}
+                        className="mb-3"
+                    />
+                    <TextField
+                        label="Expires (optional)"
+                        type="datetime-local"
+                        value={expiresAt}
+                        onChange={setExpiresAt}
+                        className="mb-4"
+                    />
                     <div>
-                        <button
-                            type="submit"
-                            disabled={create.isPending}
-                            className="px-3 py-[7px] rounded-sm text-13 font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
-                        >
+                        <Button type="submit" variant="primary" isDisabled={create.isPending}>
                             {create.isPending ? 'Creating…' : 'Create token'}
-                        </button>
+                        </Button>
                     </div>
-                </form>
+                </Form>
             </Panel>
         </>
     );
@@ -173,13 +161,9 @@ function TokenRow({ token, onRevoke }: { token: Token; onRevoke: () => void }) {
                         Expired
                     </span>
                 ) : (
-                    <button
-                        type="button"
-                        onClick={onRevoke}
-                        className="px-3 py-[5px] rounded-sm text-12 font-medium text-fg-2 bg-surface-2 border border-border-soft hover:bg-surface-3 hover:text-fg-1"
-                    >
+                    <Button onPress={onRevoke} className="py-[5px] text-12">
                         Revoke
-                    </button>
+                    </Button>
                 )}
             </div>
         </li>

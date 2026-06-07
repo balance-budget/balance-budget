@@ -13,7 +13,8 @@ import { cx } from '../../lib/cx';
 import { CalendarMonthGrid, CalendarPickerHeader, StyledDateInput } from './calendar-parts';
 import { parseIsoDate } from './iso-date';
 import { composeTailwindRenderProps } from './compose';
-import { Description, FieldError, groupStyles, Label } from './field';
+import { Description, FieldError, Label } from './field';
+import { groupStyles } from './styles';
 import { Popover } from './Popover';
 
 export type DateRange = {

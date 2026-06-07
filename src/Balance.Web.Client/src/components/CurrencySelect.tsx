@@ -1,4 +1,5 @@
 import { useCurrencies } from '../api/currencies';
+import { Select, SelectItem } from './ui/Select';
 
 type CurrencySelectProps = {
     value: string;
@@ -18,21 +19,21 @@ export function CurrencySelect({ value, onChange }: CurrencySelectProps) {
     const options = codes.includes(value) ? codes : [value, ...codes];
 
     return (
-        <label className="flex items-center gap-2 text-12 text-fg-3">
-            <span>Currency</span>
-            <select
+        <div className="flex items-center gap-2 text-12 text-fg-3">
+            <span id="currency-select-label">Currency</span>
+            <Select
+                aria-labelledby="currency-select-label"
                 value={value}
-                onChange={e => {
-                    onChange(e.target.value);
+                onChange={key => {
+                    if (key !== null) onChange(String(key));
                 }}
-                className="rounded-sm border border-border-soft bg-bg-1 px-2 py-[4px] text-fg-1"
             >
                 {options.map(code => (
-                    <option key={code} value={code}>
+                    <SelectItem key={code} id={code}>
                         {currencies.data?.get(code)?.name ?? code}
-                    </option>
+                    </SelectItem>
                 ))}
-            </select>
-        </label>
+            </Select>
+        </div>
     );
 }
