@@ -4,9 +4,11 @@ import {
     asBankAccountId,
     asBankTransactionId,
     asJournalEntryId,
+    asLoanId,
     type BankAccountId,
     type BankTransactionId,
     type JournalEntryId,
+    type LoanId,
 } from '../lib/domain';
 import { getJson, postJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
@@ -58,6 +60,7 @@ export type BankTransaction = {
     dismissedAt: string | null;
     dismissedReason: string | null;
     matchingJournalEntry: AttachHint | null;
+    loanPaymentHint: LoanPaymentHint | null;
 };
 
 export type AttachHint = {
@@ -65,6 +68,12 @@ export type AttachHint = {
     date: string;
     description: string | null;
     otherAccountName: string;
+};
+
+/** Inbox hint that a row looks like a Loan payment from a known lender (ADR-0025). */
+export type LoanPaymentHint = {
+    loanId: LoanId;
+    loanName: string;
 };
 
 export type AttachCandidate = {
@@ -114,6 +123,12 @@ function toBankTransaction(wire: WireBankTransaction): BankTransaction {
         dismissedReason: wire.dismissedReason,
         matchingJournalEntry: wire.matchingJournalEntry
             ? toAttachHint(wire.matchingJournalEntry)
+            : null,
+        loanPaymentHint: wire.loanPaymentHint
+            ? {
+                  loanId: asLoanId(wire.loanPaymentHint.loanId),
+                  loanName: wire.loanPaymentHint.loanName,
+              }
             : null,
     };
 }

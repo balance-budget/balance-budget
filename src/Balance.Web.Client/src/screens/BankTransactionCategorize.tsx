@@ -18,6 +18,7 @@ import {
     type SuggestedCounterAccount,
 } from '../api/counterparties';
 import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
+import { useLoanPaymentProposal, type LoanProposal } from '../api/loans';
 import { AccountSelect } from '../components/AccountSelect';
 import { BankTransactionDetails } from '../components/BankTransactionDetails';
 import { ComboBox } from '../components/ui/ComboBox';
@@ -41,6 +42,7 @@ import {
     type BankTransactionId,
     type CounterpartyId,
     type JournalEntryId,
+    type LoanId,
 } from '../lib/domain';
 import { handleFormError } from '../lib/formErrors';
 import { formatMoney } from '../lib/money';
@@ -51,15 +53,16 @@ import {
     emptyLine,
     formatMagnitudeFor,
     initialForm,
+    linesFromLoanProposal,
     resolveOpenContext,
     type CategorizeFormState,
     type FieldErrors,
     type LineInput,
 } from './bankTransactionCategorize.state';
 
-type Props = { id: BankTransactionId };
+type Props = { id: BankTransactionId; loanId: LoanId | null };
 
-export function BankTransactionCategorize({ id }: Props) {
+export function BankTransactionCategorize({ id, loanId }: Props) {
     const bt = useBankTransaction(id);
     const accounts = useAccounts();
     const counterparties = useCounterparties();
@@ -126,6 +129,7 @@ export function BankTransactionCategorize({ id }: Props) {
     return (
         <CategorizeForm
             bt={bt.data}
+            loanId={loanId}
             accounts={accounts.data}
             counterparties={counterparties.data}
             bankAccounts={bankAccounts.data}
@@ -161,12 +165,14 @@ function NotCategorisableState({ bt }: { bt: BankTransaction }) {
 
 function CategorizeForm({
     bt,
+    loanId,
     accounts,
     counterparties,
     bankAccounts,
     catalog,
 }: {
     bt: BankTransactionDetail;
+    loanId: LoanId | null;
     accounts: Account[];
     counterparties: Counterparty[];
     bankAccounts: BankAccount[];
@@ -212,6 +218,12 @@ function CategorizeForm({
         return m;
     }, [accounts]);
 
+    // Loan mode (ADR-0025): pre-fill the engine's per-part interest/principal
+    // proposal for the BT's month. The user confirms rather than calculates;
+    // every amount stays editable because the bank's actual charge wins.
+    const proposal = useLoanPaymentProposal(loanId, bt.bookingDate);
+    const [includedParts, setIncludedParts] = useState<ReadonlySet<string> | null>(null);
+
     const activeCounterpartyId = form.counterpartyMode === 'existing' ? form.counterpartyId : null;
     const suggestions = useSuggestedCounterAccounts(activeCounterpartyId);
 
@@ -221,7 +233,30 @@ function CategorizeForm({
     const pristine = useRef(true);
     const lastAppliedCounterpartyId = useRef<CounterpartyId | null>(null);
 
+    // Loan-mode pre-fill: (re-)apply whenever the proposal lands or the part
+    // subset changes; manual edits stop the re-fill until the subset changes
+    // again (changing the subset is an explicit "start over from the engine").
+    const lastAppliedLoanKey = useRef<string | null>(null);
     useEffect(() => {
+        const data = proposal.data;
+        if (loanId === null || !data) return;
+        const key = `${loanId}|${includedParts === null ? '*' : [...includedParts].sort().join(',')}`;
+        if (lastAppliedLoanKey.current === key) return;
+        if (lastAppliedLoanKey.current !== null && !pristine.current) {
+            // subset change overrides edits deliberately
+        } else if (!pristine.current) {
+            return;
+        }
+        setForm(prev => ({
+            ...prev,
+            lines: linesFromLoanProposal(data, includedParts, formatMagnitude),
+        }));
+        pristine.current = true;
+        lastAppliedLoanKey.current = key;
+    }, [loanId, proposal.data, includedParts, formatMagnitude]);
+
+    useEffect(() => {
+        if (loanId !== null) return; // loan mode owns the pre-fill
         if (activeCounterpartyId === null) {
             lastAppliedCounterpartyId.current = null;
             return;
@@ -237,6 +272,7 @@ function CategorizeForm({
         setForm(prev => ({ ...prev, lines: next }));
         lastAppliedCounterpartyId.current = activeCounterpartyId;
     }, [
+        loanId,
         activeCounterpartyId,
         suggestions.data,
         bt.money.amount,
@@ -310,7 +346,26 @@ function CategorizeForm({
                 <div className="mb-4">
                     <BankTransactionDetails bt={bt} catalog={catalog} />
                 </div>
-                <AttachOptionsPanel bt={bt} catalog={catalog} />
+                {loanId === null ? (
+                    <AttachOptionsPanel bt={bt} catalog={catalog} />
+                ) : (
+                    <LoanModePanel
+                        bt={bt}
+                        proposal={proposal.data ?? null}
+                        includedParts={includedParts}
+                        onToggle={partId => {
+                            setIncludedParts(prev => {
+                                const all = new Set(
+                                    (proposal.data?.lines ?? []).map(l => l.loanPartId as string),
+                                );
+                                const next = new Set(prev ?? all);
+                                if (next.has(partId)) next.delete(partId);
+                                else next.add(partId);
+                                return next;
+                            });
+                        }}
+                    />
+                )}
                 <FormErrorBanner message={topError} />
                 <HeaderInputs
                     form={form}
@@ -639,6 +694,75 @@ function UnallocatedFooter({
                     <Icon name="alert-circle" size={12} strokeWidth={2} />
                     {totals.unallocatedMinor > 0 ? 'Unallocated' : 'Over by'} {unallocatedStr}
                 </span>
+            )}
+        </div>
+    );
+}
+
+/**
+ * Loan-aware mode header (ADR-0025): names the loan, lets the user scope the
+ * payment to a subset of parts (banks that debit parts separately), and offers
+ * the way back to plain categorisation. The engine's proposal is applied to
+ * the editable lines below.
+ */
+function LoanModePanel({
+    bt,
+    proposal,
+    includedParts,
+    onToggle,
+}: {
+    bt: BankTransactionDetail;
+    proposal: LoanProposal | null;
+    includedParts: ReadonlySet<string> | null;
+    onToggle: (partId: string) => void;
+}) {
+    return (
+        <div className="mb-4 px-3 py-2 rounded-lg bg-surface-2 border border-border-soft text-xs">
+            <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1 text-brand-primary font-medium">
+                    <Icon name="landmark" size={13} strokeWidth={2} />
+                    Loan payment
+                </span>
+                {proposal === null ? (
+                    <span className="text-fg-3">Computing the proposal…</span>
+                ) : (
+                    <span className="text-fg-3">
+                        Pre-filled from the schedule for {proposal.month.slice(0, 7)} — adjust the
+                        amounts to match the bank&apos;s charge.
+                    </span>
+                )}
+                <Link
+                    to="/bank-transactions/$id/categorize"
+                    params={{ id: bt.id }}
+                    search={{}}
+                    className="ml-auto text-fg-3 hover:text-fg-1"
+                >
+                    Categorise normally
+                </Link>
+            </div>
+            {proposal !== null && proposal.lines.length > 1 && (
+                <div className="flex flex-wrap items-center gap-3 mt-2 pt-2 border-t border-border-soft">
+                    <span className="text-fg-3">Parts in this payment:</span>
+                    {proposal.lines.map(line => {
+                        const included =
+                            includedParts === null || includedParts.has(line.loanPartId);
+                        return (
+                            <label
+                                key={line.loanPartId}
+                                className="inline-flex items-center gap-1.5"
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={included}
+                                    onChange={() => {
+                                        onToggle(line.loanPartId);
+                                    }}
+                                />
+                                {line.label}
+                            </label>
+                        );
+                    })}
+                </div>
             )}
         </div>
     );

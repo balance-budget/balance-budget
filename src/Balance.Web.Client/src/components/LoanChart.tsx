@@ -1,0 +1,184 @@
+import { useMemo } from 'react';
+import {
+    Area,
+    CartesianGrid,
+    ComposedChart,
+    Line,
+    ReferenceLine,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
+} from 'recharts';
+import type { LoanProjection } from '../api/loans';
+import { useCurrencyCatalog } from '../api/currencies';
+import { formatMoney, formatMoneyAxis } from '../lib/money';
+import { chartColorFor } from '../lib/visualHints';
+import { buildChartRows } from '../screens/loanDetail.state';
+
+type LoanChartProps = {
+    projection: LoanProjection;
+    height?: number;
+};
+
+type FlatRow = { period: string } & Record<string, number | string | null>;
+
+/**
+ * Outstanding balance stacked by part: posted actuals left of today (solid),
+ * the engine projection right of today (faded), rate-fixation boundaries
+ * marked per part, and — when the simulator is active — the scenario's total
+ * balance overlaid as a dashed line (ADR-0025).
+ */
+export function LoanChart({ projection, height = 280 }: LoanChartProps) {
+    const catalog = useCurrencyCatalog();
+
+    const { rows, hasScenario } = useMemo(() => {
+        const chartRows = buildChartRows(projection);
+        const flat: FlatRow[] = chartRows.map(r => {
+            const row: FlatRow = { period: r.period, scenarioTotal: r.scenarioTotal };
+            for (const [partId, balance] of Object.entries(r.actual)) row[`a:${partId}`] = balance;
+            for (const [partId, balance] of Object.entries(r.proj)) row[`p:${partId}`] = balance;
+            return row;
+        });
+        return { rows: flat, hasScenario: chartRows.some(r => r.scenarioTotal !== null) };
+    }, [projection]);
+
+    const ticks = useMemo(() => {
+        // January of every nth year, thinned so long mortgages stay readable.
+        const januaries = rows.map(r => r.period).filter(p => p.slice(5, 7) === '01');
+        const step = Math.max(1, Math.ceil(januaries.length / 8));
+        return januaries.filter((_, i) => i % step === 0);
+    }, [rows]);
+
+    const labelByPart = new Map(projection.parts.map(p => [p.id as string, p.label]));
+
+    return (
+        <ResponsiveContainer width="100%" height={height}>
+            <ComposedChart data={rows} margin={{ top: 10, right: 12, bottom: 0, left: 0 }}>
+                <CartesianGrid
+                    stroke="var(--color-border-soft)"
+                    vertical={false}
+                    strokeDasharray="2 4"
+                />
+                <XAxis
+                    dataKey="period"
+                    ticks={ticks}
+                    interval={0}
+                    tickFormatter={(p: string) => p.slice(0, 4)}
+                    tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                />
+                <YAxis
+                    domain={[0, 'auto']}
+                    tickFormatter={(v: number) =>
+                        formatMoneyAxis(v, projection.currencyCode, catalog)
+                    }
+                    tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={64}
+                />
+                <Tooltip
+                    cursor={{
+                        stroke: 'var(--color-border-strong)',
+                        strokeWidth: 1,
+                        strokeDasharray: '2 2',
+                    }}
+                    contentStyle={{
+                        background: 'var(--color-bg-1)',
+                        border: '1px solid var(--color-border-soft)',
+                        borderRadius: 8,
+                        fontSize: 12,
+                        color: 'var(--color-fg-1)',
+                    }}
+                    labelFormatter={label => String(label).slice(0, 7)}
+                    formatter={(value, name) => [
+                        typeof value === 'number'
+                            ? formatMoney(value, projection.currencyCode, catalog)
+                            : String(value ?? ''),
+                        chartSeriesLabel(String(name), labelByPart),
+                    ]}
+                />
+                {/* Today: actuals to the left, projection to the right. */}
+                <ReferenceLine
+                    x={projection.anchorMonth}
+                    stroke="var(--color-border-strong)"
+                    strokeDasharray="4 3"
+                    label={{
+                        value: 'today',
+                        position: 'insideTopLeft',
+                        fill: 'var(--color-fg-3)',
+                        fontSize: 10,
+                    }}
+                />
+                {/* Rate-fixation boundaries: where the projection stops being contractual. */}
+                {projection.parts.map(p =>
+                    p.fixedUntil === null ? null : (
+                        <ReferenceLine
+                            key={`fix-${p.id}`}
+                            x={firstOfMonth(p.fixedUntil)}
+                            stroke={chartColorFor(p.accountId)}
+                            strokeDasharray="2 4"
+                            label={{
+                                value: `${p.label} fixed until`,
+                                position: 'insideTopRight',
+                                fill: 'var(--color-fg-3)',
+                                fontSize: 10,
+                            }}
+                        />
+                    ),
+                )}
+                {projection.parts.map(p => (
+                    <Area
+                        key={`a:${p.id}`}
+                        dataKey={`a:${p.id}`}
+                        stackId="actual"
+                        name={`a:${p.id}`}
+                        stroke={chartColorFor(p.accountId)}
+                        fill={chartColorFor(p.accountId)}
+                        fillOpacity={0.45}
+                        strokeWidth={1.5}
+                        isAnimationActive={false}
+                    />
+                ))}
+                {projection.parts.map(p => (
+                    <Area
+                        key={`p:${p.id}`}
+                        dataKey={`p:${p.id}`}
+                        stackId="proj"
+                        name={`p:${p.id}`}
+                        stroke={chartColorFor(p.accountId)}
+                        strokeDasharray="4 3"
+                        fill={chartColorFor(p.accountId)}
+                        fillOpacity={0.16}
+                        strokeWidth={1.25}
+                        isAnimationActive={false}
+                    />
+                ))}
+                {hasScenario && (
+                    <Line
+                        dataKey="scenarioTotal"
+                        name="scenarioTotal"
+                        stroke="var(--color-fg-1)"
+                        strokeWidth={1.75}
+                        strokeDasharray="6 3"
+                        dot={false}
+                        isAnimationActive={false}
+                    />
+                )}
+            </ComposedChart>
+        </ResponsiveContainer>
+    );
+}
+
+function chartSeriesLabel(seriesName: string, labelByPart: Map<string, string>): string {
+    if (seriesName === 'scenarioTotal') return 'What-if total';
+    const partId = seriesName.slice(2);
+    const label = labelByPart.get(partId) ?? 'Part';
+    return seriesName.startsWith('a:') ? label : `${label} (projected)`;
+}
+
+function firstOfMonth(date: string): string {
+    return `${date.slice(0, 7)}-01`;
+}

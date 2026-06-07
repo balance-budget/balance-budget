@@ -1508,6 +1508,12 @@ function InboxRow({
                 {bankTransaction.matchingJournalEntry && (
                     <AttachHintBadge hint={bankTransaction.matchingJournalEntry} />
                 )}
+                {bankTransaction.loanPaymentHint && (
+                    <LoanPaymentHintBadge
+                        bankTransactionId={bankTransaction.id}
+                        hint={bankTransaction.loanPaymentHint}
+                    />
+                )}
                 {dismissDraft !== null && (
                     <span className="text-xs text-warning mt-1 truncate">
                         Reason: {dismissDraft}
@@ -1573,6 +1579,28 @@ function AttachHintBadge({ hint }: { hint: NonNullable<BankTransaction['matching
             <Icon name="link" size={11} strokeWidth={2} />
             Matches JE · {hint.otherAccountName}
         </span>
+    );
+}
+
+/** Loan-payment hint (ADR-0025): one click into the loan-aware categorise mode. */
+function LoanPaymentHintBadge({
+    bankTransactionId,
+    hint,
+}: {
+    bankTransactionId: BankTransaction['id'];
+    hint: NonNullable<BankTransaction['loanPaymentHint']>;
+}) {
+    return (
+        <Link
+            to="/bank-transactions/$id/categorize"
+            params={{ id: bankTransactionId }}
+            search={{ loan: hint.loanId }}
+            className="text-xs text-brand-primary mt-1 truncate inline-flex items-center gap-1 hover:underline"
+            title={`Looks like a payment on ${hint.loanName}`}
+        >
+            <Icon name="landmark" size={11} strokeWidth={2} />
+            Loan payment · {hint.loanName}
+        </Link>
     );
 }
 

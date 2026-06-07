@@ -69,6 +69,7 @@ function bt(overrides: Partial<BankTransaction> = {}): BankTransaction {
         dismissedAt: null,
         dismissedReason: null,
         matchingJournalEntry: null,
+        loanPaymentHint: null,
         ...overrides,
     };
 }

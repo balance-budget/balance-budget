@@ -10,10 +10,11 @@
  */
 
 import type { components } from '../lib/api-types.gen';
-import type { AccountId, CounterpartyId } from '../lib/domain';
+import type { AccountId, CounterpartyId, LoanPartId } from '../lib/domain';
 import { parseMoney } from '../lib/money';
 import type { BankAccount } from '../api/bankAccounts';
 import type { SuggestedCounterAccount } from '../api/counterparties';
+import type { LoanProposal } from '../api/loans';
 
 type WireCategorizeRequest = components['schemas']['CategorizeBankTransactionRequest'];
 
@@ -24,6 +25,8 @@ export type LineInput = {
     accountId: AccountId | null;
     amount: string;
     description: string;
+    /** Loan Part attribution — set only by the loan-aware mode (ADR-0025). */
+    loanPartId?: LoanPartId | null;
 };
 
 export type CategorizeFormState = {
@@ -178,6 +181,44 @@ export function applySuggestionsToLines(
     }));
 }
 
+/**
+ * Pre-fill lines from the loan-aware payment proposal (ADR-0025): one
+ * principal line per included amortizing part (on the part's account) and one
+ * interest line per included part (on the loan's interest Expense account),
+ * each attributed to its Loan Part. Engine amounts are editable defaults —
+ * the bank's actual charge wins. Zero proposal amounts are still rendered so
+ * a rounding-different bank charge has a line ready to edit, except principal
+ * lines for interest-only parts (always zero by construction).
+ */
+export function linesFromLoanProposal(
+    proposal: LoanProposal,
+    includedPartIds: ReadonlySet<string> | null,
+    formatMagnitude: (minor: number) => string,
+): LineInput[] {
+    const lines: LineInput[] = [];
+    for (const part of proposal.lines) {
+        if (includedPartIds !== null && !includedPartIds.has(part.loanPartId)) continue;
+
+        if (part.principal !== 0) {
+            lines.push({
+                id: nextLineId(),
+                accountId: part.partAccountId,
+                amount: formatMagnitude(part.principal),
+                description: `${part.label} — principal`,
+                loanPartId: part.loanPartId,
+            });
+        }
+        lines.push({
+            id: nextLineId(),
+            accountId: proposal.interestExpenseAccountId,
+            amount: formatMagnitude(part.interest),
+            description: `${part.label} — interest`,
+            loanPartId: part.loanPartId,
+        });
+    }
+    return lines.length === 0 ? [emptyLine()] : lines;
+}
+
 export type LineProjection = { minor: number | null; error: string | null };
 
 export function projectLine(line: LineInput, scale: number): LineProjection {
@@ -271,6 +312,7 @@ export function buildRequest(
                 accountId: line.accountId,
                 amount: counterSign * projection.minor,
                 description: line.description.trim() === '' ? null : line.description.trim(),
+                loanPartId: line.loanPartId ?? null,
             });
         }
     });
