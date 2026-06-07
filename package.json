@@ -21,6 +21,8 @@
   "overrides": {
     "openapi-typescript": {
       "typescript": "$typescript"
-    }
+    },
+    "react": "19.1.8",
+    "react-dom": "19.1.8"
   }
 }
