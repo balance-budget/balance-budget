@@ -58,7 +58,7 @@ export function BankTransactionDetails({
                     <dt className="text-fg-3">{field.label}</dt>
                     <dd
                         className={cx(
-                            'tabular truncate',
+                            'tabular-nums truncate',
                             field.tone === 'negative'
                                 ? 'text-danger font-mono'
                                 : field.tone === 'positive'

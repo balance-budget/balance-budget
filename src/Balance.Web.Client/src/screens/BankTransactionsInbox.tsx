@@ -326,7 +326,9 @@ function ReadOnlyRow({
     return (
         <div className="border-b border-border-soft last:border-b-0">
             <div className="hidden lg:grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px_minmax(180px,200px)] gap-3 items-center px-2 py-2">
-                <span className="text-xs text-fg-3 tabular">{bankTransaction.bookingDate}</span>
+                <span className="text-xs text-fg-3 tabular-nums">
+                    {bankTransaction.bookingDate}
+                </span>
                 <div className="min-w-0 flex flex-col leading-tight">
                     <span className="text-sm text-fg-1 truncate">
                         {bankTransaction.description}
@@ -340,7 +342,9 @@ function ReadOnlyRow({
             </div>
             <div className="lg:hidden flex flex-col gap-1 px-2 py-3">
                 <div className="flex items-center justify-between gap-3">
-                    <span className="text-xs text-fg-3 tabular">{bankTransaction.bookingDate}</span>
+                    <span className="text-xs text-fg-3 tabular-nums">
+                        {bankTransaction.bookingDate}
+                    </span>
                     <AmountCell bankTransaction={bankTransaction} catalog={catalog} />
                 </div>
                 <span className="text-sm text-fg-1 truncate">{bankTransaction.description}</span>
@@ -357,12 +361,12 @@ function ReadOnlyRow({
 
 function StateChip({ bankTransaction }: { bankTransaction: BankTransaction }) {
     if (bankTransaction.journalEntryId) {
-        return <span className="text-xs text-success tabular">Categorised</span>;
+        return <span className="text-xs text-success tabular-nums">Categorised</span>;
     }
     if (bankTransaction.dismissedAt) {
         const reason = bankTransaction.dismissedReason ?? '';
         return (
-            <span className="text-xs text-fg-3 tabular truncate">
+            <span className="text-xs text-fg-3 tabular-nums truncate">
                 Dismissed{reason ? ` · ${reason}` : ''}
             </span>
         );
@@ -382,7 +386,7 @@ function CounterpartyCell({ bankTransaction }: { bankTransaction: BankTransactio
                 {name ?? '—'}
             </span>
             {iban && (
-                <span className="text-xs text-fg-3 truncate tabular" title={iban}>
+                <span className="text-xs text-fg-3 truncate tabular-nums" title={iban}>
                     {iban}
                 </span>
             )}
@@ -412,7 +416,7 @@ function AmountCell({
     const money = bankTransaction.money;
     const colour = money.amount < 0 ? 'text-danger' : 'text-success';
     return (
-        <span className={cx('font-mono text-sm tabular text-right', colour)}>
+        <span className={cx('font-mono text-sm tabular-nums text-right', colour)}>
             {formatMoney(money.amount, money.currencyCode, catalog, { sign: true })}
         </span>
     );
@@ -1393,7 +1397,7 @@ function ActionBar({
                 <div className="flex items-center justify-between gap-3 px-3 py-2">
                     <div className="flex items-center gap-3 text-xs text-fg-2">
                         {saving && progress ? (
-                            <span className="tabular">
+                            <span className="tabular-nums">
                                 Saving {progress.done.toString()}/{progress.total.toString()}…
                             </span>
                         ) : (
@@ -1475,7 +1479,9 @@ function InboxRow({
                 />
             </div>
             <div className="flex flex-col leading-tight pt-2">
-                <span className="text-xs text-fg-3 tabular">{bankTransaction.bookingDate}</span>
+                <span className="text-xs text-fg-3 tabular-nums">
+                    {bankTransaction.bookingDate}
+                </span>
                 {willDismiss ? <WillDismissIndicator /> : <StatusIndicator status={status} />}
             </div>
             <div className="min-w-0 flex flex-col leading-tight pt-2">
@@ -1492,7 +1498,7 @@ function InboxRow({
                 )}
                 {bankTransaction.counterpartyAccountNumber && (
                     <span
-                        className="text-xs text-fg-3 truncate tabular"
+                        className="text-xs text-fg-3 truncate tabular-nums"
                         title={bankTransaction.counterpartyAccountNumber}
                     >
                         {bankTransaction.counterpartyAccountNumber}
@@ -1539,20 +1545,20 @@ function InboxRow({
 function StatusIndicator({ status }: { status: RowStatus }) {
     if (status === 'ready') {
         return (
-            <span className="text-xs text-success tabular inline-flex items-center gap-1">
+            <span className="text-xs text-success tabular-nums inline-flex items-center gap-1">
                 <span aria-hidden>●</span> ready
             </span>
         );
     }
     if (status === 'invalid') {
         return (
-            <span className="text-xs text-warning tabular inline-flex items-center gap-1">
+            <span className="text-xs text-warning tabular-nums inline-flex items-center gap-1">
                 <span aria-hidden>⚠</span> invalid
             </span>
         );
     }
     return (
-        <span className="text-xs text-fg-3 tabular inline-flex items-center gap-1">
+        <span className="text-xs text-fg-3 tabular-nums inline-flex items-center gap-1">
             <span aria-hidden>—</span>
         </span>
     );
@@ -1572,7 +1578,7 @@ function AttachHintBadge({ hint }: { hint: NonNullable<BankTransaction['matching
 
 function WillDismissIndicator() {
     return (
-        <span className="text-xs text-warning tabular inline-flex items-center gap-1">
+        <span className="text-xs text-warning tabular-nums inline-flex items-center gap-1">
             <span aria-hidden>●</span> will dismiss
         </span>
     );

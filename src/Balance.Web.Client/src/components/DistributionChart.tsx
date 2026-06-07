@@ -284,13 +284,13 @@ function SliceRow({
             </span>
             <span className="flex items-center gap-3 shrink-0">
                 {share !== null && (
-                    <span className="text-xs text-fg-3 tabular w-10 text-right">
+                    <span className="text-xs text-fg-3 tabular-nums w-10 text-right">
                         {Math.round(share * 100)}%
                     </span>
                 )}
                 <span
                     className={cx(
-                        'font-mono text-xs tabular',
+                        'font-mono text-xs tabular-nums',
                         negative ? 'text-danger' : 'text-fg-1',
                     )}
                 >

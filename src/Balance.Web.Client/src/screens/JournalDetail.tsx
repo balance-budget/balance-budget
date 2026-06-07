@@ -207,7 +207,7 @@ function DetailHeader({
                         </span>
                     ) : null}
                 </div>
-                <span className="text-xs text-fg-3 tabular">
+                <span className="text-xs text-fg-3 tabular-nums">
                     {entry.date}
                     {entry.counterpartyName && entry.description ? ` · ${entry.description}` : ''}
                 </span>
@@ -304,10 +304,10 @@ function LineRow({
         <div className="border-b border-border-soft last:border-b-0">
             <div className="hidden lg:grid grid-cols-[1fr_120px_120px_140px_minmax(120px,1.4fr)] gap-3 items-center px-2 py-2">
                 <span className="text-sm text-fg-1 truncate">{line.accountName}</span>
-                <span className="font-mono text-sm tabular text-right text-fg-1">
+                <span className="font-mono text-sm tabular-nums text-right text-fg-1">
                     {isDebit ? moneyStr : ''}
                 </span>
-                <span className="font-mono text-sm tabular text-right text-fg-1">
+                <span className="font-mono text-sm tabular-nums text-right text-fg-1">
                     {!isDebit ? moneyStr : ''}
                 </span>
                 <ReconciliationChip status={line.reconciliationStatus} />
@@ -316,7 +316,7 @@ function LineRow({
             <div className="lg:hidden flex flex-col gap-1 px-2 py-3">
                 <div className="flex items-baseline justify-between gap-3">
                     <span className="text-sm text-fg-1 truncate">{line.accountName}</span>
-                    <span className="font-mono text-sm tabular shrink-0 text-fg-1">
+                    <span className="font-mono text-sm tabular-nums shrink-0 text-fg-1">
                         {isDebit ? 'Dr ' : 'Cr '}
                         {moneyStr}
                     </span>
@@ -701,7 +701,7 @@ function BalanceFooter({
     const diff = Math.abs(totals.debitMinor - totals.creditMinor);
     const diffStr = formatMoney(diff, currencyCode, catalog);
     return (
-        <div className="flex items-center justify-end gap-4 mt-3 text-xs tabular">
+        <div className="flex items-center justify-end gap-4 mt-3 text-xs tabular-nums">
             <span className="text-fg-3">
                 Σ Debit <span className="font-mono text-fg-1">{debitStr}</span>
             </span>

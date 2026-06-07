@@ -74,70 +74,50 @@
 }
 
 /*
- * Base styles. Body carries the page gradient + Poppins. Tabular numerics
- * are mandatory on amount-bearing displays — handled by .tabular utility
- * applied in components.
+ * Base styles — only what preflight doesn't already cover. Preflight zeroes
+ * body margin and applies --font-sans via --default-font-family; font
+ * size/weight ride the browser defaults.
  */
-html {
-    font-size: 16px;
-    color-scheme: dark;
-}
+@layer base {
+    html {
+        color-scheme: dark;
+    }
 
-body {
-    margin: 0;
-    min-height: 100dvh;
-    background: linear-gradient(135deg, var(--color-bg-0), var(--color-bg-1));
-    background-attachment: fixed;
-    color: var(--color-fg-1);
-    font-family: var(--font-sans);
-    font-weight: 400;
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
-}
+    body {
+        min-height: 100dvh;
+        background: linear-gradient(135deg, var(--color-bg-0), var(--color-bg-1));
+        background-attachment: fixed;
+        color: var(--color-fg-1);
+        -webkit-font-smoothing: antialiased;
+    }
 
-#root {
-    min-height: 100dvh;
-}
-
-/* Browsers default <button> to cursor: default. Restore the pointer for
- * interactive controls; disabled elements keep the default cursor. */
-button:not(:disabled),
-summary,
-[role='button']:not([aria-disabled='true']) {
-    cursor: pointer;
-}
-
-/* Tabular numerics — for amounts, dates, percentages. */
-.tabular {
-    font-variant-numeric: tabular-nums;
-}
-
-/* Eyebrow / uppercase micro label. */
-.eyebrow {
-    font-size: var(--text-xs);
-    font-weight: 500;
-    color: var(--color-fg-3);
-    letter-spacing: 0.1em; /* tracking-widest */
-    text-transform: uppercase;
+    /* Preflight defaults <button> to cursor: default (Tailwind v4). Restore the
+     * pointer for interactive controls; disabled elements keep the default. */
+    button:not(:disabled),
+    summary,
+    [role='button']:not([aria-disabled='true']) {
+        cursor: pointer;
+    }
 }
 
 /* Sleek, thin scrollbar — a quieter alternative to the chunky browser default.
  * Track is transparent; the thumb is a subtle pill that brightens on hover. */
-.scrollbar-sleek {
+@utility scrollbar-sleek {
     scrollbar-width: thin;
     scrollbar-color: var(--color-surface-3) transparent;
-}
-.scrollbar-sleek::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-.scrollbar-sleek::-webkit-scrollbar-track {
-    background: transparent;
-}
-.scrollbar-sleek::-webkit-scrollbar-thumb {
-    background-color: var(--color-surface-3);
-    border-radius: 9999px;
-}
-.scrollbar-sleek::-webkit-scrollbar-thumb:hover {
-    background-color: var(--color-border-strong);
+
+    &::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+        background-color: var(--color-surface-3);
+        border-radius: 9999px;
+    }
+    &::-webkit-scrollbar-thumb:hover {
+        background-color: var(--color-border-strong);
+    }
 }

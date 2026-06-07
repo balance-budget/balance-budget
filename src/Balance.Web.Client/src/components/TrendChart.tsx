@@ -205,7 +205,7 @@ function TrendTooltip({
                                     {series?.name ?? String(item.name ?? '')}
                                 </span>
                             </span>
-                            <span className="font-mono tabular text-fg-1">
+                            <span className="font-mono tabular-nums text-fg-1">
                                 {formatMoney(value, currencyCode, catalog)}
                             </span>
                         </div>

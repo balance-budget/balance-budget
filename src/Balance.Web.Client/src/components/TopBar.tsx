@@ -35,7 +35,7 @@ export function TopBar({ title, period, onMenuClick, onSearchClick }: TopBarProp
                 >
                     <Icon name="search" size={16} strokeWidth={1.75} />
                     <span className="flex-1 min-w-0 text-left truncate">Search…</span>
-                    <kbd className="px-1.5 py-0.5 rounded bg-bg-1 text-xs tabular border border-border-soft">
+                    <kbd className="px-1.5 py-0.5 rounded bg-bg-1 text-xs tabular-nums border border-border-soft">
                         {isMac ? '⌘K' : 'Ctrl K'}
                     </kbd>
                 </TopBarButton>

@@ -623,7 +623,7 @@ function UnallocatedFooter({
     const unallocatedAbs = Math.abs(totals.unallocatedMinor);
     const unallocatedStr = formatMoney(unallocatedAbs, currencyCode, catalog);
     return (
-        <div className="flex items-center justify-end gap-4 mt-3 text-xs tabular">
+        <div className="flex items-center justify-end gap-4 mt-3 text-xs tabular-nums">
             <span className="text-fg-3">
                 Target <span className="font-mono text-fg-1">{targetStr}</span>
             </span>
@@ -825,7 +825,7 @@ function JePickerModal({
                                         {candidate.date} · {candidate.otherAccountName}
                                     </span>
                                 </span>
-                                <span className="text-xs font-mono text-fg-2 tabular shrink-0">
+                                <span className="text-xs font-mono text-fg-2 tabular-nums shrink-0">
                                     {formatMoney(candidate.amount, bt.money.currencyCode, catalog, {
                                         sign: true,
                                     })}

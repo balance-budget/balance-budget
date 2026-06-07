@@ -77,7 +77,7 @@ function toItem(account: Account, byId: ReadonlyMap<AccountId, Account>): ComboB
         searchText: `${account.code} ${segments.join(' ')}`,
         render: (
             <>
-                <span className="text-fg-3 tabular mr-2">{account.code}</span>
+                <span className="text-fg-3 tabular-nums mr-2">{account.code}</span>
                 {ancestors.length > 0 && (
                     <span className="text-fg-3">
                         {ancestors.join(ACCOUNT_PATH_SEPARATOR)}
