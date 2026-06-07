@@ -43,6 +43,9 @@ internal static class DevelopmentDataSeeder
         context.BankAccounts.AddRange(graph.BankAccounts);
         context.JournalEntries.AddRange(graph.JournalEntries);
         context.BankTransactions.AddRange(graph.BankTransactions);
+        context.Loans.AddRange(graph.Loans);
+        context.LoanParts.AddRange(graph.LoanParts);
+        context.LoanPartRatePeriods.AddRange(graph.LoanPartRatePeriods);
 
         await EnsureDeveloperUserAsync(context, cancellationToken);
 
@@ -127,4 +130,7 @@ internal sealed class DevelopmentSeedGraph
     public required IReadOnlyList<BankAccount> BankAccounts { get; init; }
     public required IReadOnlyList<JournalEntry> JournalEntries { get; init; }
     public required IReadOnlyList<BankTransaction> BankTransactions { get; init; }
+    public required IReadOnlyList<Loan> Loans { get; init; }
+    public required IReadOnlyList<LoanPart> LoanParts { get; init; }
+    public required IReadOnlyList<LoanPartRatePeriod> LoanPartRatePeriods { get; init; }
 }
