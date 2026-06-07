@@ -41,9 +41,14 @@
     <ProjectReference Include="..\Balance.Data\Balance.Data.csproj" />
     <ProjectReference Include="..\Balance.Integration.Ing\Balance.Integration.Ing.csproj" />
     <ProjectReference Include="..\Balance.Services\Balance.Services.csproj" />
-    <ProjectReference
-      Include="..\Balance.Web.Client\Balance.Web.Client.esproj"
-      ReferenceOutputAssembly="false"
-    />
   </ItemGroup>
+
+  <!--
+  The SPA (Balance.Web.Client) builds straight into wwwroot/ on publish (see ADR-0023);
+  wwwroot is gitignored build output. Make sure the web root exists so source runs
+  (`dotnet run`) start without a missing-WebRootPath warning before any SPA build.
+  -->
+  <Target Name="EnsureWebRoot" BeforeTargets="Build">
+    <MakeDir Directories="$(MSBuildProjectDirectory)\wwwroot" />
+  </Target>
 </Project>

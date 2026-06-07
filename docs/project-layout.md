@@ -25,7 +25,7 @@ balance-budget/
 │   ├── Balance.Services/
 │   ├── Balance.Integration.Ing/     ING bank-statement importers (references Services)
 │   ├── Balance.Web/                 ASP.NET host (API + SPA shell)
-│   └── Balance.Web.Client/          React + Vite SPA (.esproj)
+│   └── Balance.Web.Client/          React + Vite SPA (npm workspace)
 ├── tests/
 │   └── Balance.Tests/
 ├── .github/                     Issue templates, workflows, dependabot, funding

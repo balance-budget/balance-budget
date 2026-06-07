@@ -129,7 +129,7 @@ Register a feature's endpoints through a `MapXxxEndpoints` extension method on `
 
 ## Frontend
 
-The SPA lives at `src/Balance.Web.Client` (React 19 + TypeScript + Vite 8). Pages and components go under `src/`, public assets (favicons, etc.) under `public/`. The `.esproj` reference from `Balance.Web` packs the SPA's `dist/` into the ASP.NET publish output — there is no separate frontend deployment.
+The SPA lives at `src/Balance.Web.Client` (React 19 + TypeScript + Vite 8). Pages and components go under `src/`, public assets (favicons, etc.) under `public/`. `npm run build` outputs into `src/Balance.Web/wwwroot/`, which the static-web-assets pipeline packs into the ASP.NET publish output (ADR-0023) — there is no separate frontend deployment.
 
 During development, run the .NET host (`dotnet run --project src/Balance.Web`) and the Vite dev server (`npm run dev` from the repo root) in two terminals and browse the Vite URL (default `http://localhost:5173`) for HMR; Vite proxies `/api` to `http://localhost:5248` per `vite.config.ts`, so the browser only sees one origin.
 

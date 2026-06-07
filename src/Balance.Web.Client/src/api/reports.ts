@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import type { components } from '../lib/api-types';
+import type { components } from '../lib/api-types.gen';
 import { asAccountId, type AccountId } from '../lib/domain';
 import { getJson } from '../lib/http';
 import type { ReportPeriod } from '../lib/reportPeriod';

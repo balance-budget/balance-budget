@@ -16,6 +16,9 @@ COPY --parents src/**/*.csproj ./
 COPY ./Directory.Build.props ./
 COPY ./Directory.Packages.props ./
 RUN dotnet restore "src/Balance.Web/Balance.Web.csproj"
+COPY package.json package-lock.json ./
+COPY src/Balance.Web.Client/package.json src/Balance.Web.Client/
+RUN npm ci
 COPY . .
 WORKDIR "/src/src/Balance.Web"
 RUN dotnet build "Balance.Web.csproj" \
@@ -26,8 +29,15 @@ RUN dotnet build "Balance.Web.csproj" \
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
+# Build the SPA into Balance.Web/wwwroot (Vite outDir). No codegen here: the committed
+# api-types.gen.ts is the contract; CI's drift gate keeps it fresh. See ADR-0023.
+WORKDIR /src
+RUN npm run build
+WORKDIR "/src/src/Balance.Web"
+# No --no-build: publish must re-run the (incremental) build so static-web-assets
+# discovery sees the SPA output produced after the build stage. See ADR-0023.
 RUN dotnet publish "Balance.Web.csproj" \
-    --no-build \
+    --no-restore \
     -c $BUILD_CONFIGURATION \
     -o /app/publish \
     -p:UseAppHost=false \
@@ -38,5 +48,5 @@ ENV DOTNET_ENVIRONMENT=Production
 ENV DOTNET_RUNNING_IN_CONTAINER_FAST_MODE=false
 WORKDIR /app
 COPY --from=publish /app/publish .
-HEALTHCHECK CMD curl --fail http://localhost:5248/healthz || exit 1
+HEALTHCHECK CMD curl --fail http://localhost:5248/api/healthz/live || exit 1
 ENTRYPOINT ["dotnet", "Balance.Web.dll"]

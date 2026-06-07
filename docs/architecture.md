@@ -27,7 +27,7 @@ Balance.slnx
 ```mermaid
 graph TD
     Web["Balance.Web<br/>(Microsoft.NET.Sdk.Web, exe)"]
-    Client["Balance.Web.Client<br/>(Microsoft.VisualStudio.JavaScript.Sdk, esproj)"]
+    Client["Balance.Web.Client<br/>(npm workspace, Vite)"]
     Sqlite[Balance.Data.Sqlite]
     Postgres[Balance.Data.PostgreSql]
     Services[Balance.Services]
@@ -53,7 +53,7 @@ Notes:
 - `Balance.Data` does **not** reference the provider-specific projects. It targets EF Core's relational abstractions and lets the host process load the right migrations assembly at runtime.
 - `Balance.Web` references both provider-specific projects directly so their migration assemblies are loaded.
 - `Balance.Integration.Ing` references `Balance.Services` (its extractors implement the Services-owned `IBankTransactionExtractor` contract) and is therefore composed *beside* Services at the host, not nested under it — see [Startup composition](#startup-composition) and [ADR-0018](adr/0018-integration-layer-composed-at-host.md).
-- `Balance.Web` references `Balance.Web.Client` with `ReferenceOutputAssembly="false"` — the esproj produces no .NET assembly; the project reference exists purely so MSBuild builds the SPA (`npm run build` → `dist/`) and packs its static assets into the ASP.NET publish output.
+- `Balance.Web.Client` is a plain npm workspace package — not a .NET project. `npm run build` (Vite) outputs straight into `src/Balance.Web/wwwroot/` (gitignored), where the standard static-web-assets discovery pipeline picks it up at publish and packs it into the ASP.NET publish output (ADR-0023). `dotnet build` never invokes npm.
 - `Balance.Tests` references `Balance.Web` and `Balance.Services` (transitively pulling in the rest). `Balance.Web`, `Balance.Services`, and `Balance.Integration.Ing` expose internals via `InternalsVisibleTo("Balance.Tests")`.
 
 ## Layers
@@ -106,11 +106,11 @@ Built with `WebApplication.CreateSlimBuilder` for fast startup and minimal defau
 - `Configuration/ConfigurationManagerExtensions.MapConfigurationSources` — in development and container-fast-mode, points JSON config providers at `AppContext.BaseDirectory` so the solution-root `appsettings.json` is found when running from source.
 - `Logging/LoggingBuilderExtensions.AddConsole` — single-line console logger with timestamps in containers, default console logger otherwise.
 - `ServiceCollectionExtensions.AddBalanceWeb` — OpenAPI, lowercase route options, forwarded-headers (proxy IP whitelist cleared — the app trusts any proxy by assumption that it never sits on the public internet directly), cookie authentication, authorization, antiforgery, permissive default CORS policy, health checks.
-- The SPA shell is served at `/` and any non-`/api` URL via `MapFallbackToFile("index.html")`; the SPA's built assets come from the `Balance.Web.Client` esproj reference and are picked up by `MapStaticAssets()` (ASP.NET Core 9+ static-web-assets pipeline).
+- The SPA shell is served at `/` and any non-`/api` URL via `MapFallbackToFile("index.html")`; the SPA's built assets live in `wwwroot/` (Vite `outDir`) and are picked up by `MapStaticAssets()` (ASP.NET Core 9+ static-web-assets pipeline). Unmatched `/api/*` URLs hit a fallback on the API group that returns a Problem Details 404, so they never fall through to the SPA shell.
 
 ### Balance.Web.Client
 
-React 19 + TypeScript + Vite 8 SPA. The `.esproj` (`Microsoft.VisualStudio.JavaScript.Sdk/1.0.5550578`) wraps `npm run build` and emits to `dist/`. The project is referenced from `Balance.Web` with `ReferenceOutputAssembly="false"` so MSBuild builds the SPA whenever `Balance.Web` builds, and the resulting static assets are packed into the publish output. During development, `npm run dev` runs the Vite dev server (default `http://localhost:5173`) with HMR; `vite.config.ts` proxies `/api` to the .NET host at `http://localhost:5248`, so the browser only ever talks to one origin and CORS stays out of the picture.
+React 19 + TypeScript + Vite 8 SPA, organised as a plain npm workspace package (the former `.esproj` was removed — ADR-0023). `npm run build` emits to `src/Balance.Web/wwwroot/`; the SPA builds on publish only, never as part of `dotnet build`. Generated TypeScript (`src/lib/api-types.gen.ts` from the build-emitted OpenAPI document, `src/routeTree.gen.ts` from TanStack Router) is committed, with a CI drift gate proving freshness. During development, `npm run dev` runs the Vite dev server (default `http://localhost:5173`) with HMR; `vite.config.ts` proxies `/api` to the .NET host at `http://localhost:5248`, so the browser only ever talks to one origin and CORS stays out of the picture.
 
 ### Balance.Tests
 
@@ -169,9 +169,13 @@ ExceptionHandler → StatusCodePages → ForwardedHeaders → DefaultFiles → R
   1. `dotnet tool restore`
   2. `dotnet restore`
   3. `dotnet csharpier check .`
-  4. `dotnet build --no-restore` (builds the SPA via the esproj — installs npm deps and generates the route tree)
-  5. `npm run lint` in `src/Balance.Web.Client` (ESLint, reusing the build's `node_modules` + generated route tree)
-  6. CodeQL analyze (public repos only)
-  7. `dotnet test` with cobertura coverage
-  8. Sticky PR comments for test results and coverage
+  4. `npm ci`
+  5. `dotnet build --no-restore` (server-only; emits `artifacts/openapi/Balance.Web.json`)
+  6. `npm run codegen` (regenerates `api-types.gen.ts` from the OpenAPI document)
+  7. `npm run lint`, `npm run format:check`, `npm run test` (ESLint, Prettier, vitest)
+  8. `npm run build` (Vite → `src/Balance.Web/wwwroot/`, regenerates `routeTree.gen.ts`)
+  9. `git diff --exit-code -- '*.gen.ts'` (committed generated files must match this build)
+  10. CodeQL analyze (public repos only)
+  11. `dotnet test` with cobertura coverage
+  12. Sticky PR comments for test results and coverage
 - A separate `codeql.yml` re-runs CodeQL on a weekly cron.

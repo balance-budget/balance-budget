@@ -9,7 +9,7 @@
  * once at projection time from the BT direction.
  */
 
-import type { components } from '../lib/api-types';
+import type { components } from '../lib/api-types.gen';
 import type { AccountId, CounterpartyId } from '../lib/domain';
 import { parseMoney } from '../lib/money';
 import type { BankAccount } from '../api/bankAccounts';

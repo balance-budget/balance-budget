@@ -5,7 +5,7 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "codegen": "openapi-typescript ../../artifacts/openapi/Balance.Web.json --output src/lib/api-types.ts",
+        "codegen": "openapi-typescript ../../artifacts/openapi/Balance.Web.json --output src/lib/api-types.gen.ts",
         "build": "vite build && tsc -b",
         "lint": "eslint .",
         "format": "prettier --write .",

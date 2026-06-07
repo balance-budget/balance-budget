@@ -22,9 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# esproj creates obj directory with a backslash in the name
-obj\
-
-# TanStack Router generated route tree
-src/routeTree.gen.ts

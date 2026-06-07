@@ -1,0 +1,3 @@
+# Generated TypeScript (committed, freshness enforced by the CI drift gate — ADR-0023).
+# Collapse in GitHub diffs.
+*.gen.ts linguist-generated=true
