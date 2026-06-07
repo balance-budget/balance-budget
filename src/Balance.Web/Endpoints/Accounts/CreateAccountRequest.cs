@@ -13,6 +13,7 @@ internal sealed record CreateAccountRequest(
     AccountType AccountType,
     CurrencyCode CurrencyCode,
     bool IsPostable = true,
+    bool IsLiquid = true,
     AccountId? ParentAccountId = null,
     string? IconName = null
 );

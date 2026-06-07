@@ -35,6 +35,12 @@ public sealed record CreateAccountInput
     public required AccountType AccountType { get; init; }
     public required CurrencyCode CurrencyCode { get; init; }
     public bool IsPostable { get; init; } = true;
+
+    /// <summary>
+    /// Whether the account counts toward liquid net worth. Meaningful only on Asset and
+    /// Liability accounts; accepted and ignored on other types.
+    /// </summary>
+    public bool IsLiquid { get; init; } = true;
     public AccountId? ParentAccountId { get; init; }
     public string? IconName { get; init; }
 }
@@ -46,6 +52,7 @@ public sealed record UpdateAccountInput
     public required AccountType AccountType { get; set; }
     public required CurrencyCode CurrencyCode { get; set; }
     public required bool IsPostable { get; set; }
+    public required bool IsLiquid { get; set; }
     public AccountId? ParentAccountId { get; set; }
     public string? IconName { get; set; }
 }

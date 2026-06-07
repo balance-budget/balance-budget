@@ -102,6 +102,102 @@ internal sealed class AccountEndpointsTests : EndpointsTestsBase
     }
 
     [Test]
+    public async Task CreateAccount_defaults_to_liquid()
+    {
+        using var client = Factory.CreateClient();
+
+        var request = new CreateAccountRequestDto($"Checking-{Guid.NewGuid():N}", "Asset", "EUR");
+        using var createResponse = await client.PostAsJsonAsync(
+            new Uri("/api/accounts", UriKind.Relative),
+            request
+        );
+
+        await Assert.That(createResponse.StatusCode).IsEqualTo(HttpStatusCode.Created);
+        var created = await createResponse.Content.ReadFromJsonAsync<AccountDto>();
+        await Assert.That(created!.IsLiquid).IsTrue();
+    }
+
+    [Test]
+    public async Task CreateAccount_illiquid_round_trips()
+    {
+        using var client = Factory.CreateClient();
+
+        var request = new CreateAccountRequestDto($"Home-{Guid.NewGuid():N}", "Asset", "EUR")
+        {
+            IsLiquid = false,
+        };
+        using var createResponse = await client.PostAsJsonAsync(
+            new Uri("/api/accounts", UriKind.Relative),
+            request
+        );
+
+        await Assert.That(createResponse.StatusCode).IsEqualTo(HttpStatusCode.Created);
+        var created = await createResponse.Content.ReadFromJsonAsync<AccountDto>();
+        await Assert.That(created!.IsLiquid).IsFalse();
+
+        using var getResponse = await client.GetAsync(
+            new Uri($"/api/accounts/{created.Id}", UriKind.Relative)
+        );
+        var fetched = await getResponse.Content.ReadFromJsonAsync<AccountDto>();
+        await Assert.That(fetched!.IsLiquid).IsFalse();
+    }
+
+    [Test]
+    public async Task UpdateAccount_flips_liquidity()
+    {
+        using var client = Factory.CreateClient();
+
+        var request = new CreateAccountRequestDto(
+            $"Mortgage-{Guid.NewGuid():N}",
+            "Liability",
+            "EUR"
+        );
+        using var createResponse = await client.PostAsJsonAsync(
+            new Uri("/api/accounts", UriKind.Relative),
+            request
+        );
+        var created = await createResponse.Content.ReadFromJsonAsync<AccountDto>();
+
+        using var patchResponse = await client.PatchAsJsonPatchAsync(
+            new Uri($"/api/accounts/{created!.Id}", UriKind.Relative),
+            [JsonPatchHelpers.Replace("/isLiquid", false)]
+        );
+
+        await Assert.That(patchResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var updated = await patchResponse.Content.ReadFromJsonAsync<AccountDto>();
+        await Assert.That(updated!.IsLiquid).IsFalse();
+    }
+
+    [Test]
+    public async Task UpdateAccount_accepts_liquidity_on_non_balance_sheet_types()
+    {
+        // Liquidity is meaningful only on Asset/Liability accounts, but the API
+        // accepts-and-ignores it elsewhere: no report reads the flag on other types, and
+        // rejecting it would couple re-typing an account to a flag reset.
+        using var client = Factory.CreateClient();
+
+        var request = new CreateAccountRequestDto(
+            $"Groceries-{Guid.NewGuid():N}",
+            "Expense",
+            "EUR"
+        );
+        using var createResponse = await client.PostAsJsonAsync(
+            new Uri("/api/accounts", UriKind.Relative),
+            request
+        );
+        var created = await createResponse.Content.ReadFromJsonAsync<AccountDto>();
+
+        using var patchResponse = await client.PatchAsJsonPatchAsync(
+            new Uri($"/api/accounts/{created!.Id}", UriKind.Relative),
+            [JsonPatchHelpers.Replace("/isLiquid", false)]
+        );
+
+        await Assert.That(patchResponse.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var updated = await patchResponse.Content.ReadFromJsonAsync<AccountDto>();
+        await Assert.That(updated!.IsLiquid).IsFalse();
+    }
+
+    [Test]
     public async Task CreateAccount_with_icon_name_round_trips()
     {
         using var client = Factory.CreateClient();
@@ -498,6 +594,7 @@ internal sealed record AccountDto(
     string CurrencyCode,
     string? Code = null,
     bool IsPostable = true,
+    bool IsLiquid = true,
     Guid? ParentAccountId = null,
     MoneyDto? Balance = null,
     BankAccountSummaryDto? BankAccount = null,
@@ -519,6 +616,7 @@ internal sealed record CreateAccountRequestDto(string Name, string AccountType, 
 {
     public string Code { get; init; } = $"AC{Guid.NewGuid():N}"[..16];
     public bool IsPostable { get; init; } = true;
+    public bool IsLiquid { get; init; } = true;
     public Guid? ParentAccountId { get; init; }
     public string? IconName { get; init; }
 }
