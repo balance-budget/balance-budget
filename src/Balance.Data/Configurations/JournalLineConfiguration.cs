@@ -44,6 +44,8 @@ internal sealed class JournalLineConfiguration : IEntityTypeConfiguration<Journa
 
         builder.Property(l => l.Description).HasMaxLength(512);
 
+        builder.Property(l => l.LoanPartId).HasConversion<LoanPartId.EfCoreValueConverter>();
+
         builder.Property(l => l.CreatedAt).HasConversion(DateConverters.UtcConverter);
         builder.Property(l => l.UpdatedAt).HasConversion(DateConverters.UtcConverter);
 
@@ -53,7 +55,16 @@ internal sealed class JournalLineConfiguration : IEntityTypeConfiguration<Journa
             .HasForeignKey(l => l.AccountId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Attribution is a tag, not ownership: deleting a LoanPart strips the tag and the
+        // posted history stands on its own (ADR-0025: the ledger is the source of truth).
+        builder
+            .HasOne<LoanPart>()
+            .WithMany()
+            .HasForeignKey(l => l.LoanPartId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         builder.HasIndex(l => l.JournalEntryId).HasDatabaseName("IX_JournalLines_JournalEntryId");
         builder.HasIndex(l => l.AccountId).HasDatabaseName("IX_JournalLines_AccountId");
+        builder.HasIndex(l => l.LoanPartId).HasDatabaseName("IX_JournalLines_LoanPartId");
     }
 }

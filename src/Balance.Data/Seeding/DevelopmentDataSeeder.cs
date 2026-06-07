@@ -68,6 +68,9 @@ internal static class DevelopmentDataSeeder
         await context.JournalLines.ExecuteDeleteAsync(cancellationToken);
         await context.BankTransactions.ExecuteDeleteAsync(cancellationToken);
         await context.JournalEntries.ExecuteDeleteAsync(cancellationToken);
+        await context.LoanPartRatePeriods.ExecuteDeleteAsync(cancellationToken);
+        await context.LoanParts.ExecuteDeleteAsync(cancellationToken);
+        await context.Loans.ExecuteDeleteAsync(cancellationToken);
         await context.BankAccounts.ExecuteDeleteAsync(cancellationToken);
         await context.Counterparties.ExecuteDeleteAsync(cancellationToken);
 
