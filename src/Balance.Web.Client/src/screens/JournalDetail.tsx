@@ -11,12 +11,12 @@ import {
     type JournalLine,
 } from '../api/journalEntries';
 import { useDetachBankTransaction, type BankTransactionDetail } from '../api/bankTransactions';
-import { useCounterparties } from '../api/counterparties';
+import { useCounterparties, useCreateCounterparty } from '../api/counterparties';
 import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import { AccountSelect } from '../components/AccountSelect';
 import { BankTransactionDetails } from '../components/BankTransactionDetails';
-import { Combobox } from '../components/Combobox';
-import { type ComboboxItem } from '../components/combobox.state';
+import { ComboBox } from '../components/ui/ComboBox';
+import { type ComboBoxItem } from '../components/ui/combobox.state';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ErrorState } from '../components/ErrorState';
 import { FieldError } from '../components/FieldError';
@@ -164,7 +164,7 @@ function BankTransactionPanelHead({ bt }: { bt: BankTransactionDetail }) {
                 disabled={detach.isPending}
                 aria-label="Detach bank transaction"
                 title="Detach this BT — returns it to the inbox and clears the matching line back to Uncleared."
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-12 text-fg-2 border border-border-strong hover:bg-surface-2 disabled:opacity-60"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-fg-2 border border-border-strong hover:bg-surface-2 disabled:opacity-60"
             >
                 <Icon name="unlink" size={14} strokeWidth={2} />
                 {detach.isPending ? 'Detaching…' : 'Detach'}
@@ -190,12 +190,12 @@ function DetailHeader({
                 <Link
                     to="/activity"
                     search={{ page: 1, q: '', account: '', from: '', to: '' }}
-                    className="text-12 text-fg-3 hover:text-fg-1 inline-flex items-center gap-1"
+                    className="text-xs text-fg-3 hover:text-fg-1 inline-flex items-center gap-1"
                 >
                     ← Activity
                 </Link>
                 <div className="flex items-center gap-2 mt-1">
-                    <h1 className="text-22 font-medium text-fg-1 truncate">
+                    <h1 className="text-xl font-medium text-fg-1 truncate">
                         {entry.counterpartyName ?? entry.description ?? '—'}
                     </h1>
                     {entry.bankTransactions.length > 0 ? (
@@ -207,7 +207,7 @@ function DetailHeader({
                         </span>
                     ) : null}
                 </div>
-                <span className="text-12 text-fg-3 tabular">
+                <span className="text-xs text-fg-3 tabular">
                     {entry.date}
                     {entry.counterpartyName && entry.description ? ` · ${entry.description}` : ''}
                 </span>
@@ -219,7 +219,7 @@ function DetailHeader({
                     <button
                         type="button"
                         onClick={onEdit}
-                        className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-fg-1 hover:bg-surface-2"
+                        className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1 hover:bg-surface-2"
                     >
                         <Icon name="pencil" size={14} strokeWidth={2} />
                         Edit
@@ -227,7 +227,7 @@ function DetailHeader({
                     <button
                         type="button"
                         onClick={onDelete}
-                        className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-danger hover:bg-surface-2"
+                        className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-danger hover:bg-surface-2"
                     >
                         <Icon name="trash" size={14} strokeWidth={2} />
                         Delete
@@ -247,7 +247,7 @@ function FromToSummary({
 }) {
     if (!projection.isSimplifiable) {
         return (
-            <span className="text-12 text-fg-2 mt-1">
+            <span className="text-xs text-fg-2 mt-1">
                 Split ({lineCount.toLocaleString('en-US')} lines)
             </span>
         );
@@ -257,7 +257,7 @@ function FromToSummary({
     const to = formatLegLabel(projection.toLegs);
 
     return (
-        <span className="text-12 text-fg-2 mt-1 inline-flex items-center gap-1">
+        <span className="text-xs text-fg-2 mt-1 inline-flex items-center gap-1">
             <span>{from}</span>
             <Icon name="chevron-right" size={10} strokeWidth={2} className="text-fg-3 shrink-0" />
             <span>{to}</span>
@@ -269,7 +269,7 @@ function LineTable({ entry, projection }: { entry: JournalEntry; projection: Jou
     const catalog = useCurrencyCatalog();
     return (
         <div className="flex flex-col">
-            <div className="hidden lg:grid grid-cols-[1fr_120px_120px_140px_minmax(120px,1.4fr)] gap-3 px-2 pb-2 text-11 text-fg-3 uppercase tracking-wider border-b border-border-soft">
+            <div className="hidden lg:grid grid-cols-[1fr_120px_120px_140px_minmax(120px,1.4fr)] gap-3 px-2 pb-2 text-xs text-fg-3 uppercase tracking-wider border-b border-border-soft">
                 <span>Account</span>
                 <span className="text-right">Debit</span>
                 <span className="text-right">Credit</span>
@@ -303,20 +303,20 @@ function LineRow({
     return (
         <div className="border-b border-border-soft last:border-b-0">
             <div className="hidden lg:grid grid-cols-[1fr_120px_120px_140px_minmax(120px,1.4fr)] gap-3 items-center px-2 py-2">
-                <span className="text-13 text-fg-1 truncate">{line.accountName}</span>
-                <span className="font-mono text-13 tabular text-right text-fg-1">
+                <span className="text-sm text-fg-1 truncate">{line.accountName}</span>
+                <span className="font-mono text-sm tabular text-right text-fg-1">
                     {isDebit ? moneyStr : ''}
                 </span>
-                <span className="font-mono text-13 tabular text-right text-fg-1">
+                <span className="font-mono text-sm tabular text-right text-fg-1">
                     {!isDebit ? moneyStr : ''}
                 </span>
                 <ReconciliationChip status={line.reconciliationStatus} />
-                <span className="text-12 text-fg-3 truncate">{line.description ?? ''}</span>
+                <span className="text-xs text-fg-3 truncate">{line.description ?? ''}</span>
             </div>
             <div className="lg:hidden flex flex-col gap-1 px-2 py-3">
                 <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-13 text-fg-1 truncate">{line.accountName}</span>
-                    <span className="font-mono text-13 tabular shrink-0 text-fg-1">
+                    <span className="text-sm text-fg-1 truncate">{line.accountName}</span>
+                    <span className="font-mono text-sm tabular shrink-0 text-fg-1">
                         {isDebit ? 'Dr ' : 'Cr '}
                         {moneyStr}
                     </span>
@@ -324,7 +324,7 @@ function LineRow({
                 <div className="flex items-center justify-between gap-2">
                     <ReconciliationChip status={line.reconciliationStatus} />
                     {line.description ? (
-                        <span className="text-12 text-fg-3 truncate">{line.description}</span>
+                        <span className="text-xs text-fg-3 truncate">{line.description}</span>
                     ) : null}
                 </div>
             </div>
@@ -342,7 +342,7 @@ function ReconciliationChip({ status }: { status: JournalLine['reconciliationSta
     return (
         <span
             className={cx(
-                'inline-flex items-center justify-center px-2 py-[2px] rounded-sm text-11 font-medium w-fit',
+                'inline-flex items-center justify-center px-2 py-[2px] rounded-lg text-xs font-medium w-fit',
                 CHIP_CLASS[status],
             )}
         >
@@ -364,6 +364,7 @@ function EditJournalEntry({
 }) {
     const replace = useReplaceJournalEntry();
     const counterparties = useCounterparties();
+    const createCounterparty = useCreateCounterparty();
     const catalog = useCurrencyCatalog();
     const toast = useToast();
 
@@ -394,13 +395,23 @@ function EditJournalEntry({
     const [topError, setTopError] = useState<string | null>(null);
     const [fieldErrors, setFieldErrors] = useState<FieldErrors | null>(null);
 
-    const counterpartyItems = useMemo<ComboboxItem<CounterpartyId | null>[]>(
+    const counterpartyItems = useMemo<ComboBoxItem<CounterpartyId | null>[]>(
         () =>
             [...(counterparties.data ?? [])]
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map(c => ({ key: c.id, label: c.name, value: c.id })),
         [counterparties.data],
     );
+
+    async function createAndSelectCounterparty(name: string) {
+        try {
+            const created = await createCounterparty.mutateAsync({ name });
+            setCounterpartyId(created.id);
+            toast.success(`Counterparty '${created.name}' created.`);
+        } catch (err) {
+            handleFormError(err, { setFieldErrors, setTopError, toast: toast.error });
+        }
+    }
 
     function updateLine(key: string, patch: Partial<EditLine>) {
         setLines(prev => prev.map(l => (l.key === key ? { ...l, ...patch } : l)));
@@ -481,8 +492,8 @@ function EditJournalEntry({
                         placeholder="Optional"
                     />
                     <div className="flex flex-col gap-1">
-                        <span className="text-12 font-medium text-fg-2">Counterparty</span>
-                        <Combobox
+                        <span className="text-xs font-medium text-fg-2">Counterparty</span>
+                        <ComboBox
                             name="CounterpartyId"
                             items={counterpartyItems}
                             value={counterpartyId}
@@ -491,6 +502,9 @@ function EditJournalEntry({
                             }}
                             onClear={() => {
                                 setCounterpartyId(null);
+                            }}
+                            onCreate={name => {
+                                void createAndSelectCounterparty(name);
                             }}
                             noneLabel="── None"
                             placeholder="Pick counterparty…"
@@ -547,7 +561,7 @@ function EditLines({
 }) {
     return (
         <div className="flex flex-col">
-            <div className="hidden lg:grid grid-cols-[1fr_90px_140px_140px_minmax(140px,1fr)_32px] gap-3 px-2 pb-2 text-11 text-fg-3 uppercase tracking-wider border-b border-border-soft">
+            <div className="hidden lg:grid grid-cols-[1fr_90px_140px_140px_minmax(140px,1fr)_32px] gap-3 px-2 pb-2 text-xs text-fg-3 uppercase tracking-wider border-b border-border-soft">
                 <span>Account</span>
                 <span>Side</span>
                 <span className="text-right">Amount</span>
@@ -571,7 +585,7 @@ function EditLines({
                 <button
                     type="button"
                     onClick={onAdd}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-12 text-fg-2 hover:text-fg-1 hover:bg-surface-2"
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-fg-2 hover:text-fg-1 hover:bg-surface-2"
                 >
                     <Icon name="plus" size={12} strokeWidth={2} />
                     Add line
@@ -606,7 +620,7 @@ function EditLineRow({
             <div className="flex flex-col gap-1">
                 {locked ? (
                     <span
-                        className="px-3 py-2 rounded-sm bg-surface-1 border border-border-soft text-fg-2 text-13 truncate"
+                        className="px-3 py-2 rounded-lg bg-surface-1 border border-border-soft text-fg-2 text-sm truncate"
                         title="Frozen — line is Cleared or Reconciled"
                     >
                         {frozenLabel}
@@ -657,7 +671,7 @@ function EditLineRow({
                 }}
                 maxLength={500}
                 placeholder="Optional"
-                inputClassName="text-13"
+                inputClassName="text-sm"
             />
             <IconButton
                 onPress={() => {
@@ -687,7 +701,7 @@ function BalanceFooter({
     const diff = Math.abs(totals.debitMinor - totals.creditMinor);
     const diffStr = formatMoney(diff, currencyCode, catalog);
     return (
-        <div className="flex items-center justify-end gap-4 mt-3 text-12 tabular">
+        <div className="flex items-center justify-end gap-4 mt-3 text-xs tabular">
             <span className="text-fg-3">
                 Σ Debit <span className="font-mono text-fg-1">{debitStr}</span>
             </span>

@@ -130,22 +130,22 @@ function UserRow({
     onToggle: (active: boolean) => void;
 }) {
     return (
-        <li className="flex items-center justify-between gap-3 px-3 py-[10px] rounded-sm bg-surface-2 border border-border-soft">
+        <li className="flex items-center justify-between gap-3 px-3 py-[10px] rounded-lg bg-surface-2 border border-border-soft">
             <div className="min-w-0">
-                <div className="text-14 font-medium text-fg-1 truncate">
+                <div className="text-sm font-medium text-fg-1 truncate">
                     {user.displayName}
                     {isSelf ? (
-                        <span className="ml-2 text-12 text-fg-3 font-normal">(you)</span>
+                        <span className="ml-2 text-xs text-fg-3 font-normal">(you)</span>
                     ) : null}
                 </div>
-                <div className="text-12 text-fg-3 truncate">{user.email}</div>
+                <div className="text-xs text-fg-3 truncate">{user.email}</div>
             </div>
             <div className="flex items-center gap-3 shrink-0">
                 <span
                     className={
                         user.isActive
-                            ? 'px-2 py-[3px] rounded-xs text-12 font-medium bg-success-soft text-success'
-                            : 'px-2 py-[3px] rounded-xs text-12 font-medium bg-danger-soft text-danger'
+                            ? 'px-2 py-[3px] rounded-sm text-xs font-medium bg-success-soft text-success'
+                            : 'px-2 py-[3px] rounded-sm text-xs font-medium bg-danger-soft text-danger'
                     }
                 >
                     {user.isActive ? 'Active' : 'Disabled'}
@@ -155,7 +155,7 @@ function UserRow({
                         onPress={() => {
                             onToggle(!user.isActive);
                         }}
-                        className="py-[5px] text-12"
+                        className="py-[5px] text-xs"
                     >
                         {user.isActive ? 'Disable' : 'Enable'}
                     </Button>

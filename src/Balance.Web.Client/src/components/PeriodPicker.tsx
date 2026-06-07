@@ -45,8 +45,8 @@ export function PeriodPicker({ period, onChange }: PeriodPickerProps) {
                 }}
                 fieldClassName={
                     active === 'custom'
-                        ? 'text-12 py-[4px] border-brand-primary'
-                        : 'text-12 py-[4px]'
+                        ? 'text-xs py-[4px] border-brand-primary'
+                        : 'text-xs py-[4px]'
                 }
             />
         </div>

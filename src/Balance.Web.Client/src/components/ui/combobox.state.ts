@@ -1,14 +1,14 @@
 /*
- * Pure helpers behind the shared typeahead `<Combobox>` (issue #84). Kept
+ * Pure helpers behind the shared typeahead `<ComboBox>` (issue #84). Kept
  * separately so the filter / grouping logic stays unit-testable without
- * spinning up a DOM. The component in `Combobox.tsx` binds these to React
+ * spinning up a DOM. The component in `ComboBox.tsx` binds these to React
  * Aria's ComboBox; option rendering, keyboard navigation, and overlay
  * positioning are React Aria's (ADR-0024).
  */
 
 import type { ReactNode } from 'react';
 
-export type ComboboxItem<T> = {
+export type ComboBoxItem<T> = {
     /** Stable string identifier — used as React key and for selection. */
     key: string;
     /** Plain-text label shown in the collapsed input once selected, and the
@@ -38,16 +38,16 @@ export function matchesQuery(label: string, query: string): boolean {
     return label.toLowerCase().includes(q);
 }
 
-export type Bucket<T> = { group: string | undefined; items: ComboboxItem<T>[] };
+export type Bucket<T> = { group: string | undefined; items: ComboBoxItem<T>[] };
 
 /** Partition items into ordered group buckets. Groups listed in `groupOrder`
  *  come first; leftovers keep first-seen order, matching how `<optgroup>`
  *  would have rendered them. Ungrouped items keep their relative order. */
 export function groupBuckets<T>(
-    items: readonly ComboboxItem<T>[],
+    items: readonly ComboBoxItem<T>[],
     groupOrder: readonly string[] | undefined,
 ): Bucket<T>[] {
-    const buckets = new Map<string | undefined, ComboboxItem<T>[]>();
+    const buckets = new Map<string | undefined, ComboBoxItem<T>[]>();
     for (const item of items) {
         const list = buckets.get(item.group) ?? [];
         list.push(item);

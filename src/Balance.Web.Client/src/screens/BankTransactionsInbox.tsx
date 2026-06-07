@@ -22,8 +22,8 @@ import {
 } from '../api/counterparties';
 import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import { AccountSelect } from '../components/AccountSelect';
-import { Combobox } from '../components/Combobox';
-import { type ComboboxItem } from '../components/combobox.state';
+import { ComboBox } from '../components/ui/ComboBox';
+import { type ComboBoxItem } from '../components/ui/combobox.state';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ErrorState } from '../components/ErrorState';
 import { FieldError } from '../components/FieldError';
@@ -235,14 +235,14 @@ function Body({
     }
 
     if (query.data.items.length === 0 && search !== '') {
-        return <div className="py-8 text-center text-14 text-fg-2">No matches for “{search}”.</div>;
+        return <div className="py-8 text-center text-sm text-fg-2">No matches for “{search}”.</div>;
     }
 
     if (query.data.items.length === 0 && page === 1) {
         return (
             <div className="py-8 flex flex-col items-center gap-2 text-center">
-                <span className="text-14 text-fg-2">{EMPTY_TITLE[filter]}</span>
-                <span className="text-12 text-fg-3">{EMPTY_HINT[filter]}</span>
+                <span className="text-sm text-fg-2">{EMPTY_TITLE[filter]}</span>
+                <span className="text-xs text-fg-3">{EMPTY_HINT[filter]}</span>
             </div>
         );
     }
@@ -289,7 +289,7 @@ function ReadOnlyList({
 }) {
     return (
         <div className="flex flex-col">
-            <div className="hidden lg:grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px_minmax(180px,200px)] gap-3 px-2 pb-2 text-11 text-fg-3 uppercase tracking-wider border-b border-border-soft">
+            <div className="hidden lg:grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px_minmax(180px,200px)] gap-3 px-2 pb-2 text-xs text-fg-3 uppercase tracking-wider border-b border-border-soft">
                 <span>Date</span>
                 <span>Description</span>
                 <span>Counterparty</span>
@@ -326,9 +326,9 @@ function ReadOnlyRow({
     return (
         <div className="border-b border-border-soft last:border-b-0">
             <div className="hidden lg:grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px_minmax(180px,200px)] gap-3 items-center px-2 py-2">
-                <span className="text-12 text-fg-3 tabular">{bankTransaction.bookingDate}</span>
+                <span className="text-xs text-fg-3 tabular">{bankTransaction.bookingDate}</span>
                 <div className="min-w-0 flex flex-col leading-tight">
-                    <span className="text-13 text-fg-1 truncate">
+                    <span className="text-sm text-fg-1 truncate">
                         {bankTransaction.description}
                     </span>
                     <ReferenceLine reference={bankTransaction.reference} />
@@ -340,10 +340,10 @@ function ReadOnlyRow({
             </div>
             <div className="lg:hidden flex flex-col gap-1 px-2 py-3">
                 <div className="flex items-center justify-between gap-3">
-                    <span className="text-12 text-fg-3 tabular">{bankTransaction.bookingDate}</span>
+                    <span className="text-xs text-fg-3 tabular">{bankTransaction.bookingDate}</span>
                     <AmountCell bankTransaction={bankTransaction} catalog={catalog} />
                 </div>
-                <span className="text-13 text-fg-1 truncate">{bankTransaction.description}</span>
+                <span className="text-sm text-fg-1 truncate">{bankTransaction.description}</span>
                 <ReferenceLine reference={bankTransaction.reference} />
                 <CounterpartyCell bankTransaction={bankTransaction} />
                 <StateChip bankTransaction={bankTransaction} />
@@ -357,12 +357,12 @@ function ReadOnlyRow({
 
 function StateChip({ bankTransaction }: { bankTransaction: BankTransaction }) {
     if (bankTransaction.journalEntryId) {
-        return <span className="text-11 text-success tabular">Categorised</span>;
+        return <span className="text-xs text-success tabular">Categorised</span>;
     }
     if (bankTransaction.dismissedAt) {
         const reason = bankTransaction.dismissedReason ?? '';
         return (
-            <span className="text-11 text-fg-3 tabular truncate">
+            <span className="text-xs text-fg-3 tabular truncate">
                 Dismissed{reason ? ` · ${reason}` : ''}
             </span>
         );
@@ -374,15 +374,15 @@ function CounterpartyCell({ bankTransaction }: { bankTransaction: BankTransactio
     const name = bankTransaction.counterpartyName;
     const iban = bankTransaction.counterpartyAccountNumber;
     if (!name && !iban) {
-        return <span className="text-12 text-fg-3">—</span>;
+        return <span className="text-xs text-fg-3">—</span>;
     }
     return (
         <div className="min-w-0 flex flex-col leading-tight">
-            <span className="text-12 text-fg-2 truncate" title={name ?? undefined}>
+            <span className="text-xs text-fg-2 truncate" title={name ?? undefined}>
                 {name ?? '—'}
             </span>
             {iban && (
-                <span className="text-11 text-fg-3 truncate tabular" title={iban}>
+                <span className="text-xs text-fg-3 truncate tabular" title={iban}>
                     {iban}
                 </span>
             )}
@@ -396,7 +396,7 @@ function CounterpartyCell({ bankTransaction }: { bankTransaction: BankTransactio
 function ReferenceLine({ reference }: { reference: string | null }) {
     if (!reference) return null;
     return (
-        <span className="text-11 text-fg-3 truncate" title={reference}>
+        <span className="text-xs text-fg-3 truncate" title={reference}>
             Ref: {reference}
         </span>
     );
@@ -412,7 +412,7 @@ function AmountCell({
     const money = bankTransaction.money;
     const colour = money.amount < 0 ? 'text-danger' : 'text-success';
     return (
-        <span className={cx('font-mono text-13 tabular text-right', colour)}>
+        <span className={cx('font-mono text-sm tabular text-right', colour)}>
             {formatMoney(money.amount, money.currencyCode, catalog, { sign: true })}
         </span>
     );
@@ -432,7 +432,7 @@ function ReadOnlyActions({
                     to="/journal/$id"
                     params={{ id: bankTransaction.journalEntryId }}
                     aria-label="View journal entry"
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-12 text-brand-primary hover:bg-brand-primary-soft"
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-brand-primary hover:bg-brand-primary-soft"
                 >
                     <Icon name="book-open" size={14} strokeWidth={2} />
                     View entry
@@ -449,7 +449,7 @@ function ReadOnlyActions({
                 to="/bank-transactions/$id/categorize"
                 params={{ id: bankTransaction.id }}
                 aria-label="Categorise"
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-12 text-brand-primary hover:bg-brand-primary-soft"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-brand-primary hover:bg-brand-primary-soft"
             >
                 <Icon name="check-circle" size={14} strokeWidth={2} />
                 Categorise
@@ -460,7 +460,7 @@ function ReadOnlyActions({
                     onDismiss(bankTransaction);
                 }}
                 aria-label="Dismiss"
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-12 text-fg-2 hover:text-fg-1 hover:bg-surface-2"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-fg-2 hover:text-fg-1 hover:bg-surface-2"
             >
                 <Icon name="x" size={14} strokeWidth={2} />
                 Dismiss
@@ -1022,7 +1022,7 @@ function InboxEditorReady({
         <div className="flex flex-col">
             <ActionBar {...actionBarProps} />
             <div className="hidden lg:flex flex-col">
-                <div className="grid grid-cols-[28px_88px_1fr_minmax(180px,1.4fr)_minmax(180px,1.4fr)_120px_120px] gap-3 px-2 pb-2 text-11 text-fg-3 uppercase tracking-wider border-b border-border-soft">
+                <div className="grid grid-cols-[28px_88px_1fr_minmax(180px,1.4fr)_minmax(180px,1.4fr)_120px_120px] gap-3 px-2 pb-2 text-xs text-fg-3 uppercase tracking-wider border-b border-border-soft">
                     <HeaderSelectAllCheckbox
                         state={allVisibleSelectionState(selection, visibleIds)}
                         onClick={onHeaderCheckboxClick}
@@ -1149,7 +1149,7 @@ function withoutKey<K, V>(map: Map<K, V>, key: K): Map<K, V> {
 
 function buildCounterpartyItems(
     counterparties: Counterparty[],
-): ComboboxItem<CounterpartyId | null>[] {
+): ComboBoxItem<CounterpartyId | null>[] {
     return [...counterparties]
         .sort((a, b) => a.name.localeCompare(b.name))
         .map(c => ({ key: c.id, label: c.name, value: c.id }));
@@ -1222,7 +1222,7 @@ type ActionBarProps = {
     selectedCurrencies: readonly string[];
     bulkCounterparty: BulkApplyCounterparty | null;
     bulkAccountId: AccountId | null;
-    counterpartyItems: ComboboxItem<CounterpartyId | null>[];
+    counterpartyItems: ComboBoxItem<CounterpartyId | null>[];
     /** The one currency shared by the selection, or null when it spans several
      *  (the account picker is disabled in that case). */
     bulkCurrency: string | null;
@@ -1287,7 +1287,7 @@ function ActionBar({
         if (bulkCounterparty?.kind !== 'new' || bulkCounterparty.name.trim().length === 0) {
             return counterpartyItems;
         }
-        const pending: ComboboxItem<CounterpartyId | null> = {
+        const pending: ComboBoxItem<CounterpartyId | null> = {
             key: '__pending_bulk__',
             label: `${bulkCounterparty.name.trim()} (new)`,
             value: null,
@@ -1298,15 +1298,15 @@ function ActionBar({
     if (!showSelection && !showSave) return null;
 
     return (
-        <div className="hidden lg:block mb-3 rounded-sm bg-brand-primary-soft border border-brand-primary/30">
+        <div className="hidden lg:block mb-3 rounded-lg bg-brand-primary-soft border border-brand-primary/30">
             {showSelection && (
                 <div className="px-3 py-2">
                     <div className="flex flex-wrap items-center gap-3">
-                        <span className="text-12 font-medium text-fg-1">
+                        <span className="text-xs font-medium text-fg-1">
                             {selectionCount.toString()} selected
                         </span>
                         <div className="min-w-[180px] flex-1 max-w-[260px]">
-                            <Combobox
+                            <ComboBox
                                 items={cpItemsWithPending}
                                 value={cpValue}
                                 onChange={id => {
@@ -1325,7 +1325,6 @@ function ActionBar({
                                     onBulkCounterpartyChange({ kind: 'new', name: typed });
                                 }}
                                 noneLabel="── None (self-transfer)"
-                                createLabel={typed => `+ Create '${typed}'`}
                                 placeholder="Counterparty…"
                                 disabled={saving}
                                 ariaLabel="Bulk counterparty"
@@ -1351,7 +1350,7 @@ function ActionBar({
                             type="button"
                             onClick={onApply}
                             disabled={!canApply}
-                            className="px-3 py-[7px] rounded-sm text-13 font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
+                            className="px-3 py-[7px] rounded-lg text-sm font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
                         >
                             Apply to {selectionCount.toString()} selected
                         </button>
@@ -1360,7 +1359,7 @@ function ActionBar({
                             onClick={onApplySuggestions}
                             disabled={saving}
                             title="Fill the selected rows with the IBAN-matched counterparty and the last-used account for that counterparty."
-                            className="px-3 py-[7px] rounded-sm text-13 font-medium text-fg-1 border border-border-strong hover:bg-surface-2 disabled:opacity-60"
+                            className="px-3 py-[7px] rounded-lg text-sm font-medium text-fg-1 border border-border-strong hover:bg-surface-2 disabled:opacity-60"
                         >
                             Apply suggestions
                         </button>
@@ -1368,7 +1367,7 @@ function ActionBar({
                             type="button"
                             onClick={onBulkDismiss}
                             disabled={saving}
-                            className="px-3 py-[7px] rounded-sm text-13 font-medium text-fg-1 border border-border-strong hover:bg-surface-2 disabled:opacity-60"
+                            className="px-3 py-[7px] rounded-lg text-sm font-medium text-fg-1 border border-border-strong hover:bg-surface-2 disabled:opacity-60"
                         >
                             Dismiss with reason…
                         </button>
@@ -1376,13 +1375,13 @@ function ActionBar({
                             type="button"
                             onClick={onClearSelection}
                             disabled={saving}
-                            className="px-2 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
+                            className="px-2 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
                         >
                             Clear
                         </button>
                     </div>
                     {mixedCurrency && (
-                        <p className="mt-1 text-11 text-fg-3">
+                        <p className="mt-1 text-xs text-fg-3">
                             Selected rows span {selectedCurrencies.join(' + ')} — Account can&apos;t
                             be bulk-applied.
                         </p>
@@ -1392,7 +1391,7 @@ function ActionBar({
             {showSelection && showSave && <div className="border-t border-border-soft" />}
             {showSave && (
                 <div className="flex items-center justify-between gap-3 px-3 py-2">
-                    <div className="flex items-center gap-3 text-12 text-fg-2">
+                    <div className="flex items-center gap-3 text-xs text-fg-2">
                         {saving && progress ? (
                             <span className="tabular">
                                 Saving {progress.done.toString()}/{progress.total.toString()}…
@@ -1408,7 +1407,7 @@ function ActionBar({
                             type="button"
                             onClick={onDiscard}
                             disabled={saving}
-                            className="px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
+                            className="px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
                         >
                             Discard
                         </button>
@@ -1416,7 +1415,7 @@ function ActionBar({
                             type="button"
                             onClick={onSave}
                             disabled={saving || readyCount === 0}
-                            className="px-3 py-[7px] rounded-sm text-13 font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
+                            className="px-3 py-[7px] rounded-lg text-sm font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
                         >
                             {saving
                                 ? 'Saving…'
@@ -1451,7 +1450,7 @@ function InboxRow({
     pristine: boolean;
     dismissDraft: string | null;
     error: string | null;
-    counterpartyItems: ComboboxItem<CounterpartyId | null>[];
+    counterpartyItems: ComboBoxItem<CounterpartyId | null>[];
     currencyCode: string;
     excludeAccountId: AccountId | null;
     catalog: CurrencyCatalog;
@@ -1476,16 +1475,16 @@ function InboxRow({
                 />
             </div>
             <div className="flex flex-col leading-tight pt-2">
-                <span className="text-12 text-fg-3 tabular">{bankTransaction.bookingDate}</span>
+                <span className="text-xs text-fg-3 tabular">{bankTransaction.bookingDate}</span>
                 {willDismiss ? <WillDismissIndicator /> : <StatusIndicator status={status} />}
             </div>
             <div className="min-w-0 flex flex-col leading-tight pt-2">
-                <span className="text-13 text-fg-1 truncate" title={bankTransaction.description}>
+                <span className="text-sm text-fg-1 truncate" title={bankTransaction.description}>
                     {bankTransaction.description}
                 </span>
                 {bankTransaction.counterpartyName && (
                     <span
-                        className="text-11 text-fg-3 truncate"
+                        className="text-xs text-fg-3 truncate"
                         title={bankTransaction.counterpartyName}
                     >
                         {bankTransaction.counterpartyName}
@@ -1493,7 +1492,7 @@ function InboxRow({
                 )}
                 {bankTransaction.counterpartyAccountNumber && (
                     <span
-                        className="text-11 text-fg-3 truncate tabular"
+                        className="text-xs text-fg-3 truncate tabular"
                         title={bankTransaction.counterpartyAccountNumber}
                     >
                         {bankTransaction.counterpartyAccountNumber}
@@ -1504,11 +1503,11 @@ function InboxRow({
                     <AttachHintBadge hint={bankTransaction.matchingJournalEntry} />
                 )}
                 {dismissDraft !== null && (
-                    <span className="text-11 text-warning mt-1 truncate">
+                    <span className="text-xs text-warning mt-1 truncate">
                         Reason: {dismissDraft}
                     </span>
                 )}
-                {error && <span className="text-11 text-danger mt-1">{error}</span>}
+                {error && <span className="text-xs text-danger mt-1">{error}</span>}
             </div>
             <CounterpartyPicker
                 draft={draft}
@@ -1540,20 +1539,20 @@ function InboxRow({
 function StatusIndicator({ status }: { status: RowStatus }) {
     if (status === 'ready') {
         return (
-            <span className="text-11 text-success tabular inline-flex items-center gap-1">
+            <span className="text-xs text-success tabular inline-flex items-center gap-1">
                 <span aria-hidden>●</span> ready
             </span>
         );
     }
     if (status === 'invalid') {
         return (
-            <span className="text-11 text-warning tabular inline-flex items-center gap-1">
+            <span className="text-xs text-warning tabular inline-flex items-center gap-1">
                 <span aria-hidden>⚠</span> invalid
             </span>
         );
     }
     return (
-        <span className="text-11 text-fg-3 tabular inline-flex items-center gap-1">
+        <span className="text-xs text-fg-3 tabular inline-flex items-center gap-1">
             <span aria-hidden>—</span>
         </span>
     );
@@ -1562,7 +1561,7 @@ function StatusIndicator({ status }: { status: RowStatus }) {
 function AttachHintBadge({ hint }: { hint: NonNullable<BankTransaction['matchingJournalEntry']> }) {
     return (
         <span
-            className="text-11 text-brand-primary mt-1 truncate inline-flex items-center gap-1"
+            className="text-xs text-brand-primary mt-1 truncate inline-flex items-center gap-1"
             title={`Auto-matched to JE on ${hint.date}`}
         >
             <Icon name="link" size={11} strokeWidth={2} />
@@ -1573,7 +1572,7 @@ function AttachHintBadge({ hint }: { hint: NonNullable<BankTransaction['matching
 
 function WillDismissIndicator() {
     return (
-        <span className="text-11 text-warning tabular inline-flex items-center gap-1">
+        <span className="text-xs text-warning tabular inline-flex items-center gap-1">
             <span aria-hidden>●</span> will dismiss
         </span>
     );
@@ -1586,7 +1585,7 @@ function CounterpartyPicker({
     disabled,
 }: {
     draft: RowDraft;
-    items: ComboboxItem<CounterpartyId | null>[];
+    items: ComboBoxItem<CounterpartyId | null>[];
     onPatch: (patch: Partial<RowDraft>) => void;
     disabled: boolean;
 }) {
@@ -1596,7 +1595,7 @@ function CounterpartyPicker({
         if (draft.counterpartyMode !== 'new' || draft.newCounterpartyName.trim().length === 0) {
             return items;
         }
-        const pending: ComboboxItem<CounterpartyId | null> = {
+        const pending: ComboBoxItem<CounterpartyId | null> = {
             key: '__pending__',
             label: `${draft.newCounterpartyName.trim()} (new)`,
             value: null,
@@ -1608,7 +1607,7 @@ function CounterpartyPicker({
         draft.counterpartyMode === 'existing' ? draft.counterpartyId : null;
 
     return (
-        <Combobox
+        <ComboBox
             items={effectiveItems}
             value={value}
             onChange={id => {
@@ -1633,7 +1632,6 @@ function CounterpartyPicker({
                 });
             }}
             noneLabel="── None (self-transfer)"
-            createLabel={typed => `+ Create '${typed}'`}
             placeholder="Pick counterparty…"
             disabled={disabled}
             ariaLabel="Counterparty"
@@ -1711,7 +1709,7 @@ function InboxRowActions({
                     disabled={disabled || attach.isPending}
                     aria-label={`Attach to ${hint.otherAccountName}`}
                     title={`Attach to JE on ${hint.date} (${hint.otherAccountName})`}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-12 text-brand-primary hover:bg-brand-primary-soft disabled:opacity-60"
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-brand-primary hover:bg-brand-primary-soft disabled:opacity-60"
                 >
                     <Icon name="link" size={14} strokeWidth={2} />
                     Attach
@@ -1722,7 +1720,7 @@ function InboxRowActions({
                 params={{ id: bankTransaction.id }}
                 aria-label="Edit details"
                 title="Edit details (splits, custom date)"
-                className="inline-flex items-center justify-center p-1 rounded-sm text-fg-3 hover:text-fg-1 hover:bg-surface-2"
+                className="inline-flex items-center justify-center p-1 rounded-lg text-fg-3 hover:text-fg-1 hover:bg-surface-2"
             >
                 <Icon name="pencil" size={14} strokeWidth={2} />
             </Link>
@@ -1732,7 +1730,7 @@ function InboxRowActions({
                 disabled={pristine || disabled}
                 aria-label="Reset draft"
                 title="Reset draft to server suggestion"
-                className="inline-flex items-center justify-center p-1 rounded-sm text-fg-3 hover:text-fg-1 hover:bg-surface-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="inline-flex items-center justify-center p-1 rounded-lg text-fg-3 hover:text-fg-1 hover:bg-surface-2 disabled:opacity-40 disabled:cursor-not-allowed"
             >
                 <Icon name="repeat" size={14} strokeWidth={2} />
             </button>
@@ -1744,7 +1742,7 @@ function InboxRowActions({
                 disabled={disabled}
                 aria-label="Dismiss"
                 title="Dismiss this row"
-                className="inline-flex items-center justify-center p-1 rounded-sm text-fg-3 hover:text-danger hover:bg-surface-2 disabled:opacity-40"
+                className="inline-flex items-center justify-center p-1 rounded-lg text-fg-3 hover:text-danger hover:bg-surface-2 disabled:opacity-40"
             >
                 <Icon name="x" size={14} strokeWidth={2} />
             </button>
@@ -1774,7 +1772,7 @@ function UndismissButton({ bankTransaction }: { bankTransaction: BankTransaction
                 onClick={() => void onClick()}
                 disabled={undismiss.isPending}
                 aria-label="Undismiss"
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-12 text-fg-2 hover:text-fg-1 hover:bg-surface-2 disabled:opacity-60"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-fg-2 hover:text-fg-1 hover:bg-surface-2 disabled:opacity-60"
             >
                 <Icon name="inbox" size={14} strokeWidth={2} />
                 Undismiss
@@ -1825,7 +1823,7 @@ function DismissDialog({
             >
                 <FormErrorBanner message={topError} />
                 <label className="flex flex-col gap-1">
-                    <span className="text-12 font-medium text-fg-2">Reason</span>
+                    <span className="text-xs font-medium text-fg-2">Reason</span>
                     <textarea
                         value={reason}
                         onChange={e => {
@@ -1836,7 +1834,7 @@ function DismissDialog({
                         rows={3}
                         autoFocus
                         placeholder="e.g. settled by journal entry X"
-                        className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong resize-none"
+                        className="px-3 py-2 rounded-lg bg-surface-2 border border-border-soft text-fg-1 text-sm focus:outline-none focus:border-border-strong resize-none"
                     />
                     <FieldError name="Reason" errors={fieldErrors} />
                 </label>
@@ -1845,14 +1843,14 @@ function DismissDialog({
                         type="button"
                         onClick={onClose}
                         disabled={dismiss.isPending}
-                        className="px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
+                        className="px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
                         disabled={dismiss.isPending}
-                        className="px-3 py-[7px] rounded-sm text-13 font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
+                        className="px-3 py-[7px] rounded-lg text-sm font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
                     >
                         {dismiss.isPending ? 'Dismissing…' : 'Dismiss'}
                     </button>
@@ -1896,7 +1894,7 @@ function BulkDismissDialog({
                 noValidate
             >
                 <label className="flex flex-col gap-1">
-                    <span className="text-12 font-medium text-fg-2">Reason</span>
+                    <span className="text-xs font-medium text-fg-2">Reason</span>
                     <textarea
                         value={reason}
                         onChange={e => {
@@ -1907,21 +1905,21 @@ function BulkDismissDialog({
                         rows={3}
                         autoFocus
                         placeholder="e.g. fee corrections, self-transfer siblings"
-                        className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong resize-none"
+                        className="px-3 py-2 rounded-lg bg-surface-2 border border-border-soft text-fg-1 text-sm focus:outline-none focus:border-border-strong resize-none"
                     />
                 </label>
                 <ModalFooter>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-fg-1"
+                        className="px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1"
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
                         disabled={!canSubmit}
-                        className="px-3 py-[7px] rounded-sm text-13 font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
+                        className="px-3 py-[7px] rounded-lg text-sm font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
                     >
                         Dismiss {selectionCount.toString()} row{selectionCount === 1 ? '' : 's'}
                     </button>

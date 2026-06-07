@@ -13,7 +13,7 @@ export function Breadcrumbs<T extends object>(props: BreadcrumbsProps<T>) {
     return (
         <AriaBreadcrumbs
             {...props}
-            className={cx('flex flex-wrap items-center gap-1 text-12', props.className)}
+            className={cx('flex flex-wrap items-center gap-1 text-xs', props.className)}
         />
     );
 }
@@ -30,7 +30,7 @@ export function Breadcrumb(props: BreadcrumbProps & Omit<LinkProps, 'className' 
             <Link
                 {...props}
                 className={
-                    'outline-none rounded-xs data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary ' +
+                    'outline-none rounded-sm data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary ' +
                     'data-[current]:text-fg-1 data-[current]:font-medium ' +
                     '[&:not([data-current])]:text-fg-3 [&:not([data-current])]:cursor-pointer ' +
                     '[&:not([data-current])]:data-[hovered]:text-fg-1'

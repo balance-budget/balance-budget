@@ -52,7 +52,7 @@ export function Tokens() {
                         title="Copy your token now"
                         subtitle={`This is the only time you'll see "${justCreated.metadata.name}" in full. Store it somewhere safe — it can't be retrieved again.`}
                     />
-                    <code className="block px-3 py-2 rounded-sm bg-bg-1 border border-border-soft font-mono text-13 text-fg-1 break-all">
+                    <code className="block px-3 py-2 rounded-lg bg-bg-1 border border-border-soft font-mono text-sm text-fg-1 break-all">
                         {justCreated.token}
                     </code>
                     <div className="mt-3">
@@ -60,7 +60,7 @@ export function Tokens() {
                             onPress={() => {
                                 setJustCreated(null);
                             }}
-                            className="py-[5px] text-12"
+                            className="py-[5px] text-xs"
                         >
                             I've copied it
                         </Button>
@@ -91,7 +91,7 @@ export function Tokens() {
                         ))}
                     </ul>
                 ) : (
-                    <p className="text-13 text-fg-3">No tokens yet.</p>
+                    <p className="text-sm text-fg-3">No tokens yet.</p>
                 )}
             </Panel>
 
@@ -135,13 +135,13 @@ function TokenRow({ token, onRevoke }: { token: Token; onRevoke: () => void }) {
     const isRevoked = !!token.revokedAt;
     const isExpired = token.expiresAt ? new Date(token.expiresAt) <= new Date() : false;
     return (
-        <li className="flex items-center justify-between gap-3 px-3 py-[10px] rounded-sm bg-surface-2 border border-border-soft">
+        <li className="flex items-center justify-between gap-3 px-3 py-[10px] rounded-lg bg-surface-2 border border-border-soft">
             <div className="min-w-0 flex-1">
-                <div className="text-14 font-medium text-fg-1 truncate">{token.name}</div>
-                <div className="text-12 text-fg-3 font-mono">
+                <div className="text-sm font-medium text-fg-1 truncate">{token.name}</div>
+                <div className="text-xs text-fg-3 font-mono">
                     {token.prefix}…{token.last4}
                 </div>
-                <div className="text-12 text-fg-3">
+                <div className="text-xs text-fg-3">
                     Created {new Date(token.createdAt).toLocaleDateString()}
                     {token.lastUsedAt
                         ? ` · last used ${new Date(token.lastUsedAt).toLocaleDateString()}`
@@ -153,15 +153,15 @@ function TokenRow({ token, onRevoke }: { token: Token; onRevoke: () => void }) {
             </div>
             <div className="shrink-0">
                 {isRevoked ? (
-                    <span className="px-2 py-[3px] rounded-xs text-12 font-medium bg-danger-soft text-danger">
+                    <span className="px-2 py-[3px] rounded-sm text-xs font-medium bg-danger-soft text-danger">
                         Revoked
                     </span>
                 ) : isExpired ? (
-                    <span className="px-2 py-[3px] rounded-xs text-12 font-medium bg-surface-3 text-fg-3">
+                    <span className="px-2 py-[3px] rounded-sm text-xs font-medium bg-surface-3 text-fg-3">
                         Expired
                     </span>
                 ) : (
-                    <Button onPress={onRevoke} className="py-[5px] text-12">
+                    <Button onPress={onRevoke} className="py-[5px] text-xs">
                         Revoke
                     </Button>
                 )}

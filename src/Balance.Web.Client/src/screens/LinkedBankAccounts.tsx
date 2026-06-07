@@ -50,7 +50,7 @@ export function LinkedBankAccountsSection({ owner }: { owner: Owner }) {
         <>
             <div>
                 {linked.length === 0 ? (
-                    <div className="py-3 text-13 text-fg-3">No bank accounts linked yet.</div>
+                    <div className="py-3 text-sm text-fg-3">No bank accounts linked yet.</div>
                 ) : (
                     linked.map(ba => (
                         <LinkedRow
@@ -68,7 +68,7 @@ export function LinkedBankAccountsSection({ owner }: { owner: Owner }) {
                         onClick={() => {
                             setCreating(true);
                         }}
-                        className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm text-13 font-medium text-brand-primary hover:bg-brand-primary-soft"
+                        className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-brand-primary hover:bg-brand-primary-soft"
                     >
                         <Icon name="plus" size={14} strokeWidth={2} />
                         Add bank account
@@ -116,14 +116,14 @@ function LinkedRow({
                 params={{ id: bankAccount.id }}
                 className="flex-1 min-w-0 flex items-center gap-3 hover:text-brand-primary"
             >
-                <span className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-md bg-brand-primary-soft text-brand-primary">
+                <span className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-xl bg-brand-primary-soft text-brand-primary">
                     <Icon name={bankAccountTypeIcon(bankAccount.type)} size={16} strokeWidth={2} />
                 </span>
                 <div className="flex-1 min-w-0 flex flex-col leading-tight">
-                    <span className="text-14 font-medium text-fg-1 truncate">
+                    <span className="text-sm font-medium text-fg-1 truncate">
                         {formatBankAccountLabel(bankAccount)}
                     </span>
-                    <span className="text-12 text-fg-3 tabular truncate">
+                    <span className="text-xs text-fg-3 tabular truncate">
                         {formatBankAccountSubline(bankAccount)}
                     </span>
                 </div>
@@ -133,7 +133,7 @@ function LinkedRow({
                 onClick={onReassign}
                 aria-label="Reassign"
                 title="Reassign to a different owner"
-                className="shrink-0 p-2 rounded-sm text-fg-3 hover:text-fg-1 hover:bg-surface-2"
+                className="shrink-0 p-2 rounded-lg text-fg-3 hover:text-fg-1 hover:bg-surface-2"
             >
                 <Icon name="arrow-left-right" size={14} strokeWidth={2} />
             </button>

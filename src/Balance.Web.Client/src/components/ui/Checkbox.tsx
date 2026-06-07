@@ -22,7 +22,7 @@ export function Checkbox({ errorMessage, ...props }: CheckboxProps) {
                         <span
                             aria-hidden="true"
                             className={
-                                'mt-[3px] flex size-4 shrink-0 items-center justify-center rounded-xs border transition-colors ' +
+                                'mt-[3px] flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors ' +
                                 'border-border-strong bg-surface-2 ' +
                                 'group-data-[selected]:border-brand-primary group-data-[selected]:bg-brand-primary ' +
                                 'group-data-[indeterminate]:border-brand-primary group-data-[indeterminate]:bg-brand-primary ' +

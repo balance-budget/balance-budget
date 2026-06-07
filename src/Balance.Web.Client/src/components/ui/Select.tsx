@@ -38,7 +38,7 @@ export function Select<T extends object>({
             <Button
                 className={
                     groupStyles +
-                    ' justify-between gap-2 px-3 py-2 text-start outline-none cursor-pointer ' +
+                    ' justify-between gap-2 px-3 text-start outline-none cursor-pointer ' +
                     'group-data-[invalid]:border-danger data-[focus-visible]:border-border-strong'
                 }
             >

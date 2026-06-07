@@ -63,7 +63,7 @@ export function DatePicker({
             <Group
                 className={cx(
                     groupStyles,
-                    'group-data-[invalid]:border-danger px-2 py-[5px] text-13',
+                    'group-data-[invalid]:border-danger px-3',
                     fieldClassName,
                 )}
             >

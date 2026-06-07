@@ -17,38 +17,38 @@ export function TopBar({ title, period, onMenuClick, onSearchClick }: TopBarProp
             <TopBarButton
                 onPress={onMenuClick}
                 aria-label="Open navigation"
-                className="md:hidden -ml-1 p-2 rounded-sm text-fg-2 data-[hovered]:text-fg-1 data-[hovered]:bg-surface-2"
+                className="md:hidden -ml-1 p-2 rounded-lg text-fg-2 data-[hovered]:text-fg-1 data-[hovered]:bg-surface-2"
             >
                 <Icon name="menu" size={20} strokeWidth={2} />
             </TopBarButton>
             <div className="flex flex-col gap-[2px] min-w-0">
-                <h1 className="text-18 md:text-22 font-semibold truncate">{title}</h1>
+                <h1 className="text-lg md:text-xl font-semibold truncate">{title}</h1>
                 {period ? (
-                    <span className="text-14 text-fg-3 whitespace-nowrap">{period}</span>
+                    <span className="text-sm text-fg-3 whitespace-nowrap">{period}</span>
                 ) : null}
             </div>
             <div className="ml-auto flex items-center gap-[10px]">
                 <TopBarButton
                     onPress={onSearchClick}
                     aria-label="Search"
-                    className="hidden md:flex w-[240px] h-9 px-[14px] items-center gap-2 rounded-sm bg-surface-2 border border-border-soft text-fg-3 text-14 data-[hovered]:bg-surface-3 data-[hovered]:text-fg-1"
+                    className="hidden md:flex w-[240px] h-9 px-[14px] items-center gap-2 rounded-lg bg-surface-2 border border-border-soft text-fg-3 text-sm data-[hovered]:bg-surface-3 data-[hovered]:text-fg-1"
                 >
                     <Icon name="search" size={16} strokeWidth={1.75} />
                     <span className="flex-1 min-w-0 text-left truncate">Search…</span>
-                    <kbd className="px-1.5 py-0.5 rounded bg-bg-1 text-11 tabular border border-border-soft">
+                    <kbd className="px-1.5 py-0.5 rounded bg-bg-1 text-xs tabular border border-border-soft">
                         {isMac ? '⌘K' : 'Ctrl K'}
                     </kbd>
                 </TopBarButton>
                 <TopBarButton
                     onPress={onSearchClick}
                     aria-label="Search"
-                    className="md:hidden w-9 h-9 rounded-sm bg-surface-2 border border-border-soft flex items-center justify-center text-fg-2 data-[hovered]:bg-surface-3 data-[hovered]:text-fg-1"
+                    className="md:hidden w-9 h-9 rounded-lg bg-surface-2 border border-border-soft flex items-center justify-center text-fg-2 data-[hovered]:bg-surface-3 data-[hovered]:text-fg-1"
                 >
                     <Icon name="search" size={18} strokeWidth={1.75} />
                 </TopBarButton>
                 <TopBarButton
                     aria-label="Notifications"
-                    className="w-9 h-9 rounded-sm bg-surface-2 border border-border-soft flex items-center justify-center text-fg-2 transition-colors duration-fast data-[hovered]:bg-surface-3 data-[hovered]:text-fg-1"
+                    className="w-9 h-9 rounded-lg bg-surface-2 border border-border-soft flex items-center justify-center text-fg-2 transition-colors duration-120 data-[hovered]:bg-surface-3 data-[hovered]:text-fg-1"
                 >
                     <Icon name="bell" size={18} strokeWidth={1.75} />
                 </TopBarButton>

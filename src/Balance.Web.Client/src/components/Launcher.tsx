@@ -53,13 +53,13 @@ export function Launcher({ open, onClose }: LauncherProps) {
             className={
                 'fixed inset-0 z-50 flex items-start justify-center pt-[12vh] px-4 overflow-y-auto ' +
                 'bg-surface-overlay backdrop-blur-sm ' +
-                'data-[entering]:opacity-0 data-[exiting]:opacity-0 transition-opacity duration-fast'
+                'data-[entering]:opacity-0 data-[exiting]:opacity-0 transition-opacity duration-120'
             }
         >
             <AriaModal className="w-[calc(100vw-32px)] max-w-[560px]">
                 <Dialog
                     aria-label="Search"
-                    className="flex flex-col bg-bg-1 border border-border-soft rounded-md shadow-overlay outline-none text-fg-1"
+                    className="flex flex-col bg-bg-1 border border-border-soft rounded-xl shadow-overlay outline-none text-fg-1"
                 >
                     <Autocomplete inputValue={query} onInputChange={setQuery}>
                         <SearchField
@@ -76,11 +76,11 @@ export function Launcher({ open, onClose }: LauncherProps) {
                             <Input
                                 placeholder="Search…"
                                 className={
-                                    'flex-1 bg-transparent outline-none text-14 text-fg-1 placeholder:text-fg-3 ' +
+                                    'flex-1 bg-transparent outline-none text-sm text-fg-1 placeholder:text-fg-3 ' +
                                     '[&::-webkit-search-cancel-button]:appearance-none'
                                 }
                             />
-                            <kbd className="px-1.5 py-0.5 rounded bg-surface-2 text-11 text-fg-3 tabular border border-border-soft">
+                            <kbd className="px-1.5 py-0.5 rounded bg-surface-2 text-xs text-fg-3 tabular border border-border-soft">
                                 Esc
                             </kbd>
                         </SearchField>
@@ -97,7 +97,7 @@ export function Launcher({ open, onClose }: LauncherProps) {
                                 aria-label="Search results"
                                 className="max-h-[60vh] overflow-y-auto scrollbar-sleek py-2 px-2 outline-none"
                                 renderEmptyState={() => (
-                                    <p className="px-4 py-6 text-center text-12 text-fg-3">
+                                    <p className="px-4 py-6 text-center text-xs text-fg-3">
                                         No matches for “{debounced}”.
                                     </p>
                                 )}
@@ -246,7 +246,7 @@ export function Launcher({ open, onClose }: LauncherProps) {
 }
 
 function Hint({ children }: { children: React.ReactNode }) {
-    return <p className="px-4 py-6 text-center text-12 text-fg-3">{children}</p>;
+    return <p className="px-4 py-6 text-center text-xs text-fg-3">{children}</p>;
 }
 
 function ResultSection({
@@ -264,7 +264,7 @@ function ResultSection({
     const moreCount = total - shown;
     return (
         <MenuSection className="pb-2">
-            <Header className="px-2 py-1 text-11 uppercase tracking-wider text-fg-3">
+            <Header className="px-2 py-1 text-xs uppercase tracking-wider text-fg-3">
                 {title}
             </Header>
             {children}
@@ -272,7 +272,7 @@ function ResultSection({
                 <MenuItem
                     isDisabled
                     textValue={`${moreCount.toString()} more`}
-                    className="px-2 pt-1 text-11 text-fg-3"
+                    className="px-2 pt-1 text-xs text-fg-3"
                 >
                     + {moreCount.toString()} more matching {title.toLowerCase()}
                 </MenuItem>
@@ -295,14 +295,14 @@ function ResultItem({
         <MenuItem
             {...props}
             className={
-                'w-full flex items-center gap-3 px-2 py-2 rounded-sm text-left cursor-pointer outline-none ' +
+                'w-full flex items-center gap-3 px-2 py-2 rounded-lg text-left cursor-pointer outline-none ' +
                 'data-[focused]:bg-surface-2 data-[hovered]:bg-surface-2'
             }
         >
             <Icon name={icon} size={14} strokeWidth={2} className="text-fg-3 shrink-0" />
-            <span className="flex-1 min-w-0 truncate text-13 text-fg-1">{primary}</span>
+            <span className="flex-1 min-w-0 truncate text-sm text-fg-1">{primary}</span>
             {secondary ? (
-                <span className="text-12 text-fg-3 tabular truncate max-w-[40%]">{secondary}</span>
+                <span className="text-xs text-fg-3 tabular truncate max-w-[40%]">{secondary}</span>
             ) : null}
         </MenuItem>
     );

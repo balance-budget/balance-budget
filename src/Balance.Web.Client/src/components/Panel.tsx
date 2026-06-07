@@ -20,7 +20,7 @@ export function Panel({ children, padding = 'md', className }: PanelProps) {
     return (
         <section
             className={cx(
-                'bg-surface-1 backdrop-blur-card border border-border-soft rounded-md',
+                'bg-surface-1 backdrop-blur-xl border border-border-soft rounded-xl',
                 PADDING_CLASS[padding],
                 className,
             )}
@@ -40,8 +40,8 @@ export function SectionHead({ title, subtitle, action }: SectionHeadProps) {
     return (
         <div className="flex items-baseline justify-between gap-4 mb-[14px]">
             <div className="flex flex-col gap-[2px] min-w-0">
-                <h2 className="text-16 font-semibold leading-snug">{title}</h2>
-                {subtitle ? <span className="text-14 text-fg-3">{subtitle}</span> : null}
+                <h2 className="text-base font-semibold leading-snug">{title}</h2>
+                {subtitle ? <span className="text-sm text-fg-3">{subtitle}</span> : null}
             </div>
             {action}
         </div>

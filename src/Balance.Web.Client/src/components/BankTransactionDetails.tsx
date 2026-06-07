@@ -52,7 +52,7 @@ export function BankTransactionDetails({
     }
 
     return (
-        <dl className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft grid grid-cols-[max-content_1fr] gap-x-3 gap-y-1 text-12">
+        <dl className="px-3 py-2 rounded-lg bg-surface-2 border border-border-soft grid grid-cols-[max-content_1fr] gap-x-3 gap-y-1 text-xs">
             {fields.map(field => (
                 <Fragment key={field.label}>
                     <dt className="text-fg-3">{field.label}</dt>

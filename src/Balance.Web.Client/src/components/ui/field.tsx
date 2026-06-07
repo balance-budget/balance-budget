@@ -1,8 +1,6 @@
 import {
     FieldError as AriaFieldError,
     type FieldErrorProps,
-    Group,
-    type GroupProps,
     Input as AriaInput,
     type InputProps,
     Label as AriaLabel,
@@ -12,17 +10,17 @@ import {
 } from 'react-aria-components';
 import { cx } from '../../lib/cx';
 import { composeTailwindRenderProps } from './compose';
-import { type FieldSize, groupStyles, inputStyles } from './styles';
+import { inputStyles } from './styles';
 
 export function Label(props: LabelProps) {
     return (
-        <AriaLabel {...props} className={cx('text-12 font-medium text-fg-2', props.className)} />
+        <AriaLabel {...props} className={cx('text-xs font-medium text-fg-2', props.className)} />
     );
 }
 
 export function Description(props: TextProps) {
     return (
-        <Text {...props} slot="description" className={cx('text-11 text-fg-3', props.className)} />
+        <Text {...props} slot="description" className={cx('text-xs text-fg-3', props.className)} />
     );
 }
 
@@ -30,22 +28,16 @@ export function FieldError(props: FieldErrorProps) {
     return (
         <AriaFieldError
             {...props}
-            className={composeTailwindRenderProps(props.className, 'text-12 text-danger')}
+            className={composeTailwindRenderProps(props.className, 'text-xs text-danger')}
         />
     );
 }
 
-export function Input({ fieldSize, ...props }: InputProps & { fieldSize?: FieldSize }) {
+export function Input(props: InputProps) {
     return (
         <AriaInput
             {...props}
-            className={composeTailwindRenderProps(props.className, inputStyles(fieldSize))}
+            className={composeTailwindRenderProps(props.className, inputStyles)}
         />
-    );
-}
-
-export function FieldGroup(props: GroupProps) {
-    return (
-        <Group {...props} className={composeTailwindRenderProps(props.className, groupStyles)} />
     );
 }

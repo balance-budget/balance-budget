@@ -11,16 +11,16 @@ import {
     type AccountId,
     type AccountType,
 } from '../lib/domain';
-import { Combobox } from './Combobox';
-import type { ComboboxItem } from './combobox.state';
+import { ComboBox } from './ui/ComboBox';
+import type { ComboBoxItem } from './ui/combobox.state';
 
 // Deep paths ("5131  Car › Insurance › Liability › Excess") need more room than
 // the narrow filter/inline triggers give, so the open list widens to at least
-// this regardless of the trigger width (capped to the viewport in Combobox).
+// this regardless of the trigger width (capped to the viewport in ComboBox).
 const LISTBOX_MIN_WIDTH = 360;
 
 /**
- * The single account picker used everywhere in the app. Wraps `<Combobox>` and
+ * The single account picker used everywhere in the app. Wraps `<ComboBox>` and
  * owns the rules the selectors must share (ADR-0019): each option shows the
  * account code as a muted prefix and the full path with the ancestors dimmed
  * ("5110  Car › Tax"), options are grouped by AccountType and sorted by code,
@@ -62,7 +62,7 @@ export type AccountSelectProps = {
     name?: string;
 };
 
-function toItem(account: Account, byId: ReadonlyMap<AccountId, Account>): ComboboxItem<AccountId> {
+function toItem(account: Account, byId: ReadonlyMap<AccountId, Account>): ComboBoxItem<AccountId> {
     const segments = accountPathSegments(byId, account.id);
     const leaf = segments[segments.length - 1];
     const ancestors = segments.slice(0, -1);
@@ -114,7 +114,7 @@ export function AccountSelect({
     // Inline arrays would re-run the memo every render; key on the contents.
     const excludeKey = (exclude ?? []).join(',');
 
-    const items = useMemo<ComboboxItem<AccountId>[]>(() => {
+    const items = useMemo<ComboBoxItem<AccountId>[]>(() => {
         const subtree = subtreeOf ? descendantAndSelfIds(all, subtreeOf) : null;
         const excludedSubtree = excludeSubtreeOf
             ? descendantAndSelfIds(all, excludeSubtreeOf)
@@ -157,7 +157,7 @@ export function AccountSelect({
     ]);
 
     return (
-        <Combobox
+        <ComboBox
             items={items}
             value={value}
             onChange={onChange}

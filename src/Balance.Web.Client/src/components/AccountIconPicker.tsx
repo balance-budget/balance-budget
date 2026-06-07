@@ -35,9 +35,9 @@ export function AccountIconPicker({ accountType, value, onChange }: AccountIconP
 
     return (
         <DialogTrigger isOpen={open} onOpenChange={setOpen}>
-            <Button className="flex items-center gap-2 p-1 -m-1 rounded-sm outline-none cursor-pointer data-[hovered]:bg-surface-2 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary">
+            <Button className="flex items-center gap-2 p-1 -m-1 rounded-lg outline-none cursor-pointer data-[hovered]:bg-surface-2 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary">
                 <AccountAvatar account={{ type: accountType, icon: value }} size="md" />
-                <span className="text-12 text-fg-3">
+                <span className="text-xs text-fg-3">
                     {value === null ? 'Default' : 'Custom'} — click to change
                 </span>
             </Button>
@@ -60,7 +60,7 @@ export function AccountIconPicker({ accountType, value, onChange }: AccountIconP
                         textValue={`Default for ${accountType}`}
                         className={({ isSelected }) =>
                             cx(
-                                'col-span-8 flex items-center gap-2 px-2 py-[6px] mb-1 rounded-sm text-12 cursor-pointer outline-none',
+                                'col-span-8 flex items-center gap-2 px-2 py-[6px] mb-1 rounded-lg text-xs cursor-pointer outline-none',
                                 'data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary',
                                 isSelected
                                     ? 'bg-brand-primary-soft text-brand-primary'
@@ -84,7 +84,7 @@ export function AccountIconPicker({ accountType, value, onChange }: AccountIconP
                             })}
                             className={({ isSelected }) =>
                                 cx(
-                                    'w-8 h-8 inline-flex items-center justify-center rounded-sm cursor-pointer outline-none',
+                                    'w-8 h-8 inline-flex items-center justify-center rounded-lg cursor-pointer outline-none',
                                     'data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary',
                                     !isSelected && 'data-[hovered]:bg-surface-2',
                                 )

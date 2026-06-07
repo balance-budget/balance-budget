@@ -33,7 +33,7 @@ export function StyledDateInput(props: Omit<DateInputProps, 'children'>) {
                 <DateSegment
                     segment={segment}
                     className={
-                        'px-[2px] rounded-xs tabular text-inherit outline-none caret-transparent ' +
+                        'px-[2px] rounded-sm tabular text-inherit outline-none caret-transparent ' +
                         'data-[placeholder]:text-fg-3 data-[disabled]:opacity-60 ' +
                         'data-[focused]:bg-brand-primary-soft data-[focused]:text-brand-primary ' +
                         'data-[invalid]:text-danger data-[invalid]:data-[focused]:text-brand-primary'
@@ -47,7 +47,7 @@ export function StyledDateInput(props: Omit<DateInputProps, 'children'>) {
 function headerSelect({ items, ...props }: CalendarMonthPickerAria | CalendarYearPickerAria) {
     return (
         <Select {...props} className="flex">
-            <Button className="flex items-center gap-1 px-2 py-1 rounded-xs text-13 font-medium text-fg-1 outline-none cursor-pointer data-[hovered]:bg-surface-2 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary">
+            <Button className="flex items-center gap-1 px-2 py-1 rounded-sm text-sm font-medium text-fg-1 outline-none cursor-pointer data-[hovered]:bg-surface-2 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary">
                 <SelectValue className="truncate" />
                 <ChevronDown size={12} aria-hidden="true" className="text-fg-3" />
             </Button>
@@ -69,7 +69,7 @@ export function CalendarPickerHeader() {
             <Button
                 slot="previous"
                 aria-label="Previous month"
-                className="flex items-center justify-center size-7 rounded-xs text-fg-3 outline-none cursor-pointer data-[hovered]:text-fg-1 data-[hovered]:bg-surface-2 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary data-[disabled]:opacity-40"
+                className="flex items-center justify-center size-7 rounded-sm text-fg-3 outline-none cursor-pointer data-[hovered]:text-fg-1 data-[hovered]:bg-surface-2 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary data-[disabled]:opacity-40"
             >
                 <ChevronLeft size={15} aria-hidden="true" />
             </Button>
@@ -80,7 +80,7 @@ export function CalendarPickerHeader() {
             <Button
                 slot="next"
                 aria-label="Next month"
-                className="flex items-center justify-center size-7 rounded-xs text-fg-3 outline-none cursor-pointer data-[hovered]:text-fg-1 data-[hovered]:bg-surface-2 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary data-[disabled]:opacity-40"
+                className="flex items-center justify-center size-7 rounded-sm text-fg-3 outline-none cursor-pointer data-[hovered]:text-fg-1 data-[hovered]:bg-surface-2 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary data-[disabled]:opacity-40"
             >
                 <ChevronRight size={15} aria-hidden="true" />
             </Button>
@@ -99,13 +99,13 @@ function cellClassName(renderProps: CalendarCellRenderProps): string {
     } = renderProps;
     const isEdge = isSelectionStart || isSelectionEnd;
     return cx(
-        'flex size-8 items-center justify-center text-12 tabular outline-none',
+        'flex size-8 items-center justify-center text-xs tabular outline-none',
         isOutsideMonth && 'hidden',
         isDisabled || isUnavailable ? 'text-fg-4' : 'cursor-pointer',
         // Range middles get the soft wash; edges (and single selections) go solid.
         isSelected && !isEdge && 'bg-brand-primary-soft text-brand-primary',
-        isEdge && 'bg-brand-primary text-white rounded-xs',
-        !isSelected && !isDisabled && !isUnavailable && 'rounded-xs data-[hovered]:bg-surface-3',
+        isEdge && 'bg-brand-primary text-white rounded-sm',
+        !isSelected && !isDisabled && !isUnavailable && 'rounded-sm data-[hovered]:bg-surface-3',
         renderProps.isFocusVisible && 'ring-1 ring-brand-primary',
     );
 }
@@ -120,7 +120,7 @@ export function CalendarMonthGrid({ offset }: { offset?: { months: number } }) {
         >
             <CalendarGridHeader>
                 {day => (
-                    <CalendarHeaderCell className="size-8 text-11 font-medium text-fg-3">
+                    <CalendarHeaderCell className="size-8 text-xs font-medium text-fg-3">
                         {day}
                     </CalendarHeaderCell>
                 )}

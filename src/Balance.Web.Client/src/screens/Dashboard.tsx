@@ -28,9 +28,9 @@ function RecentRow({ row }: { row: RegisterRow }) {
     const negative = row.amount.amount < 0;
     return (
         <div className="flex items-center justify-between gap-2">
-            <span className="text-12 text-fg-2 truncate">{label}</span>
+            <span className="text-xs text-fg-2 truncate">{label}</span>
             <span
-                className={cx('font-mono text-11 tabular', negative ? 'text-fg-2' : 'text-success')}
+                className={cx('font-mono text-xs tabular', negative ? 'text-fg-2' : 'text-success')}
             >
                 {formatMoney(row.amount.amount, row.amount.currencyCode, catalog, { sign: true })}
             </span>
@@ -92,8 +92,8 @@ function AccountRow({ account }: { account: Account }) {
             <div className="flex items-center gap-3">
                 <AccountAvatar account={account} size="md" />
                 <div className="flex flex-col gap-[2px] flex-1 min-w-0">
-                    <span className="text-14 font-medium text-fg-1 truncate">{account.name}</span>
-                    <span className="text-12 text-fg-3 truncate">
+                    <span className="text-sm font-medium text-fg-1 truncate">{account.name}</span>
+                    <span className="text-xs text-fg-3 truncate">
                         {account.type}
                         {identifier ? ` · ${identifier}` : ''}
                     </span>
@@ -142,7 +142,7 @@ function AccountsPanel() {
         );
 
     if (ledgerAccounts.length === 0) {
-        return <span className="text-13 text-fg-3">No accounts yet.</span>;
+        return <span className="text-sm text-fg-3">No accounts yet.</span>;
     }
 
     return (
@@ -207,7 +207,7 @@ function KpiStrip() {
                     size="big"
                     className={data.netWorth.amount < 0 ? 'text-danger' : ''}
                 />
-                <span className="text-14 text-fg-3">{subtext}</span>
+                <span className="text-sm text-fg-3">{subtext}</span>
             </Panel>
 
             <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
@@ -294,7 +294,7 @@ function AccountBalanceTrendPanel() {
                     onRetry={() => void trend.refetch()}
                 />
             ) : trend.data.series.length === 0 ? (
-                <div className="h-[240px] flex items-center justify-center text-13 text-fg-3">
+                <div className="h-[240px] flex items-center justify-center text-sm text-fg-3">
                     No balance history yet.
                 </div>
             ) : (
@@ -326,7 +326,7 @@ export function Dashboard() {
                         action={
                             <Link
                                 to="/accounts"
-                                className="text-13 font-medium text-fg-2 hover:text-brand-primary"
+                                className="text-sm font-medium text-fg-2 hover:text-brand-primary"
                             >
                                 All →
                             </Link>

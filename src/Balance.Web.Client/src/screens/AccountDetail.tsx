@@ -90,13 +90,13 @@ export function AccountDetail({
                     <div className="flex items-center gap-3 min-w-0">
                         <AccountAvatar account={account} size="md" />
                         <div className="flex flex-col gap-[2px] min-w-0">
-                            <Link to="/accounts" className="text-12 text-fg-3 hover:text-fg-1">
+                            <Link to="/accounts" className="text-xs text-fg-3 hover:text-fg-1">
                                 ← Accounts
                             </Link>
-                            <h1 className="text-22 font-medium text-fg-1 truncate">
+                            <h1 className="text-xl font-medium text-fg-1 truncate">
                                 {account.name}
                             </h1>
-                            <span className="text-12 text-fg-3">
+                            <span className="text-xs text-fg-3">
                                 {account.type} · {account.currencyCode}
                             </span>
                         </div>
@@ -114,7 +114,7 @@ export function AccountDetail({
                                 onClick={() => {
                                     setEditing(true);
                                 }}
-                                className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-fg-1 hover:bg-surface-2"
+                                className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1 hover:bg-surface-2"
                             >
                                 <Icon name="pencil" size={14} strokeWidth={2} />
                                 Edit
@@ -124,7 +124,7 @@ export function AccountDetail({
                                 onClick={() => {
                                     setDeleting(true);
                                 }}
-                                className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-danger hover:bg-surface-2"
+                                className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-danger hover:bg-surface-2"
                             >
                                 <Icon name="trash" size={14} strokeWidth={2} />
                                 Delete
@@ -244,7 +244,7 @@ function RegisterFilterBar({
                 onChange={range => {
                     onFiltersChange({ from: range.from, to: range.to });
                 }}
-                fieldClassName="text-12 py-[5px]"
+                fieldClassName="text-xs py-[5px]"
             />
             <TagGroup
                 aria-label="Status filter"
@@ -344,7 +344,7 @@ function RegisterTable({
             filters.to !== '' ||
             filters.status !== '';
         return (
-            <div className="py-6 text-center text-13 text-fg-3">
+            <div className="py-6 text-center text-sm text-fg-3">
                 {debouncedQ !== ''
                     ? `No matches for “${debouncedQ}”.`
                     : hasFilters
@@ -392,7 +392,7 @@ function RegisterTable({
             )}
             <div
                 className={cx(
-                    'hidden lg:grid gap-3 px-2 pb-2 text-11 text-fg-3 uppercase tracking-wider border-b border-border-soft',
+                    'hidden lg:grid gap-3 px-2 pb-2 text-xs text-fg-3 uppercase tracking-wider border-b border-border-soft',
                     gridClass,
                 )}
             >
@@ -469,8 +469,8 @@ function ReassignBar({
     }
 
     return (
-        <div className="flex flex-wrap items-center gap-3 mb-3 px-3 py-2 rounded-sm bg-surface-2 border border-border-soft">
-            <span className="text-13 text-fg-2 font-medium">
+        <div className="flex flex-wrap items-center gap-3 mb-3 px-3 py-2 rounded-lg bg-surface-2 border border-border-soft">
+            <span className="text-sm text-fg-2 font-medium">
                 {count} line{count === 1 ? '' : 's'} selected
             </span>
             <div className="w-72">
@@ -492,7 +492,7 @@ function ReassignBar({
                 onClick={() => {
                     setConfirming(true);
                 }}
-                className="inline-flex items-center gap-2 px-3 py-[7px] rounded-sm bg-brand-primary text-white text-13 font-medium hover:bg-brand-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg bg-brand-primary text-white text-sm font-medium hover:bg-brand-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 <Icon name="arrow-right" size={14} strokeWidth={2} />
                 Move
@@ -500,7 +500,7 @@ function ReassignBar({
             <button
                 type="button"
                 onClick={onDone}
-                className="px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-fg-1 hover:bg-surface-2"
+                className="px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1 hover:bg-surface-2"
             >
                 Clear selection
             </button>
@@ -595,7 +595,7 @@ function RegisterRowView({
     const amount = (
         <span
             className={cx(
-                'font-mono text-13 tabular text-right',
+                'font-mono text-sm tabular text-right',
                 negative ? 'text-danger' : 'text-success',
             )}
         >
@@ -603,7 +603,7 @@ function RegisterRowView({
         </span>
     );
     const counterLabel = (
-        <span className="text-12 text-fg-2 truncate">
+        <span className="text-xs text-fg-2 truncate">
             {counter ? counter.accountName : '—'}
             {extra > 0 ? <span className="text-fg-3"> +{extra}</span> : null}
         </span>
@@ -621,17 +621,17 @@ function RegisterRowView({
             <div className={cx('hidden lg:grid gap-3 items-center px-2 py-2', gridClass)}>
                 <span className="flex items-center">{checkbox}</span>
                 <Link to="/journal/$id" params={{ id: row.journalEntryId }} className="contents">
-                    <span className="text-12 text-fg-3 tabular">{row.date}</span>
+                    <span className="text-xs text-fg-3 tabular">{row.date}</span>
                     <div className="flex flex-col min-w-0">
-                        <span className="text-13 text-fg-1 truncate">{heading}</span>
+                        <span className="text-sm text-fg-1 truncate">{heading}</span>
                         {row.lineDescription ? (
-                            <span className="text-12 text-fg-3 truncate">
+                            <span className="text-xs text-fg-3 truncate">
                                 {row.lineDescription}
                             </span>
                         ) : null}
                     </div>
                     {showAccountColumn && (
-                        <span className="text-12 text-fg-2 truncate">{row.accountName}</span>
+                        <span className="text-xs text-fg-2 truncate">{row.accountName}</span>
                     )}
                     {counterLabel}
                     {amount}
@@ -645,15 +645,15 @@ function RegisterRowView({
                     className="flex-1 flex flex-col gap-1 min-w-0"
                 >
                     <div className="flex items-center justify-between gap-3">
-                        <span className="text-12 text-fg-3 tabular">{row.date}</span>
+                        <span className="text-xs text-fg-3 tabular">{row.date}</span>
                         {amount}
                     </div>
-                    <span className="text-13 text-fg-1 truncate">{heading}</span>
+                    <span className="text-sm text-fg-1 truncate">{heading}</span>
                     {row.lineDescription ? (
-                        <span className="text-12 text-fg-3 truncate">{row.lineDescription}</span>
+                        <span className="text-xs text-fg-3 truncate">{row.lineDescription}</span>
                     ) : null}
                     {showAccountColumn && (
-                        <span className="text-12 text-fg-2 truncate">{row.accountName}</span>
+                        <span className="text-xs text-fg-2 truncate">{row.accountName}</span>
                     )}
                     {counterLabel}
                 </Link>
