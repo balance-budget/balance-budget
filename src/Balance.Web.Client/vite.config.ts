@@ -3,9 +3,15 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
+import { openApiCodegen } from './vite-plugin-openapi-codegen.ts';
 
 export default defineConfig({
-    plugins: [tanstackRouter({ target: 'react', autoCodeSplitting: true }), react(), tailwindcss()],
+    plugins: [
+        openApiCodegen(),
+        tanstackRouter({ target: 'react', autoCodeSplitting: true }),
+        react(),
+        tailwindcss(),
+    ],
     build: {
         // Build straight into the ASP.NET host's web root so the standard
         // static-web-assets discovery pipeline picks the SPA up on publish
