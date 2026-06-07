@@ -80,4 +80,12 @@ public static class ErrorCodes
     public const string JournalLineStatusMutation = "journal.line_status_mutation";
     public const string JournalLineReassignTargetNotPostable =
         "journal.reassign_target_not_postable";
+
+    // Loan (ADR-0025)
+    public const string AccountLoanManaged = "account.loan_managed";
+    public const string LoanPartAccountSelection = "loan.part_account_selection";
+    public const string LoanPartAccountInvalid = "loan.part_account_invalid";
+    public const string LoanInterestAccountInvalid = "loan.interest_account_invalid";
+    public const string LoanRatePeriodConflict = "loan.rate_period_conflict";
+    public const string LoanPartAttributionInvalid = "loan.part_attribution_invalid";
 }
