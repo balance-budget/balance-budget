@@ -81,6 +81,7 @@ import {
     EvCharger,
     Road,
     Sofa,
+    ChevronDown,
 } from 'lucide-react';
 
 /*
@@ -106,6 +107,7 @@ const REGISTRY: Record<string, LucideIcon> = {
     car: Car,
     'check-circle': CheckCircle2,
     'chevron-right': ChevronRight,
+    'chevron-down': ChevronDown,
     'circle-question-mark': CircleQuestionMark,
     cloud: Cloud,
     coffee: Coffee,

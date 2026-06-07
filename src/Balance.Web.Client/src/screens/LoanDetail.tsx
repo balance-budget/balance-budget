@@ -607,7 +607,7 @@ function YearRows({
                         key={month.period}
                         className={`border-t border-border-soft/60 ${month.projected ? 'text-fg-2' : ''}`}
                     >
-                        <td className="py-1.5 pr-3">{month.period.slice(0, 7)}</td>
+                        <td className="py-1.5 pl-5 pr-3">{month.period.slice(0, 7)}</td>
                         {parts.map(p => {
                             const cell = month.cells[p.id];
                             return cell ? (
