@@ -24,6 +24,14 @@ public sealed class Account : BaseEntity<AccountId>
     public required bool IsPostable { get; set; }
 
     /// <summary>
+    /// Whether the account counts toward liquid net worth — money available for day-to-day
+    /// budgeting. A user judgment, meaningful only on Asset and Liability accounts; other types
+    /// carry the default and ignore it. Exempt from the subtree homogeneity rule (ADR-0019), so
+    /// children in one subtree may differ.
+    /// </summary>
+    public bool IsLiquid { get; set; } = true;
+
+    /// <summary>
     /// Self-reference forming the chart-of-accounts tree; <c>null</c> for a root account.
     /// </summary>
     public AccountId? ParentAccountId { get; set; }
