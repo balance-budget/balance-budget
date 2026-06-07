@@ -45,6 +45,10 @@ An **Account** representing where money comes from. Examples: Salary, Interest R
 **Expense**:
 An **Account** representing where money goes. Examples: Groceries, Rent, Utilities, Dining Out. Refunds reduce the expense by being credited on the same **Expense** account (expenses can be credited — it just lowers the balance).
 
+**Liquidity**:
+A per-**Account** property, **Liquid** (the default) or **Illiquid**, meaningful only on **Asset** and **Liability** **Accounts**. A *user judgment* answering "do I budget with this money?" — not a market-liquidity fact: an investment account sellable in days may still be Illiquid because it is not day-to-day money. Illiquid **Accounts** (e.g. Mortgage, the house's value, pensions, locked deposits) are excluded from **Liquid net worth** but always count toward **Net worth**. Unlike **AccountType** and **Currency**, Liquidity is *not* subject to the homogeneity rule — children in one subtree may differ (an emergency fund and a locked five-year deposit can share one "Savings" placeholder).
+_Avoid_: short-term / long-term (a maturity dimension — a 12-month term deposit is short-term yet Illiquid), current / non-current (the accounting balance-sheet split; close, but Liquidity is a budgeting judgment, not a maturity test).
+
 **JournalEntry**:
 One bookkeeping event in the double-entry ledger — a header record carrying date, description, and optional **Counterparty**, owning two or more **JournalLines** whose amounts net to zero. The unit of "I bought groceries", "I got paid", "I transferred money".
 _Avoid_: Transaction (reserved for the import-side concept — see below), posting, document.
@@ -166,6 +170,14 @@ _Avoid_: timeframe, date filter, "as of" (that names a point-in-time **Balance**
 An **Account**'s signed net change over a **Reporting period** — the window-scoped analogue of **Balance** (which is the all-time running total). Computed with the same **Sign convention** as **Balance** (debit-normal **Asset** / **Expense** vs credit-normal **Liability** / **Equity** / **Income**), but summed only over **JournalLines** whose **JournalEntry** `Date` falls inside the period. For a temporary P&L **Account** (**Income** / **Expense**) the Net movement is its period total; for a balance-sheet **Account** (**Asset** / **Liability** / **Equity**) it is the change in its **Balance** across the period. The quantity the **Money flow** uses to place each **Account** on the in- or out-side.
 _Avoid_: contribution (collides with "contribution margin"), delta, period balance, turnover.
 
+**Net worth**:
+The all-time signed total `Σ Asset Balances − Σ Liability Balances` over *all* **Asset** and **Liability** **Accounts** in one **Currency**, regardless of **Liquidity**. The complete financial picture — the house and the mortgage both count.
+_Avoid_: using "net worth" bare for the day-to-day budgeting headline (that is **Liquid net worth**); wealth, total balance.
+
+**Liquid net worth**:
+**Net worth** restricted to **Liquid** **Accounts** — the money available for day-to-day budgeting. Excludes Illiquid **Assets** and **Liabilities** (property value, mortgage, pensions, locked deposits) per each **Account**'s **Liquidity**.
+_Avoid_: available funds, disposable income (a flow concept, not a stock), "net worth" bare (that is the unrestricted total).
+
 **Distribution**:
 A **Report** breaking down **Net movement** across one **AccountType** family — either **Income** ("where money came from") or **Expense** ("where money went") — over a **Reporting period**, rolled up the **Chart of accounts** tree and drillable one level at a time. Amounts are net: a refund credited to an **Expense** lowers that slice; a clawback lowers the **Income** slice. A subtree whose **Net movement** is net-negative in the period is excluded from the part-of-whole rendering and surfaced as a note rather than drawn as a slice.
 _Avoid_: category breakdown, spending by category (category is banned — the slices are **Income** / **Expense** **Accounts**).
@@ -182,7 +194,7 @@ _Avoid_: cash flow (a specific, loaded accounting statement), Sankey (the chart 
 - A **Counterparty** is never an **Account** (this is an explicit departure from Firefly III, which models each payee as an expense/revenue account).
 - Each **Account** has exactly one **AccountType**.
 - **Accounts** form a tree via a nullable `Account.ParentAccountId` self-reference, to arbitrary depth; cycles are rejected (an **Account** may not become its own ancestor).
-- Every **Account** in a subtree shares one **AccountType** and one **CurrencyCode** (the homogeneity rule; the currency half relaxes when multi-currency lands).
+- Every **Account** in a subtree shares one **AccountType** and one **CurrencyCode** (the homogeneity rule; the currency half relaxes when multi-currency lands). **Liquidity** is exempt from the homogeneity rule — it may vary freely within a subtree.
 - An **Account** is either **Postable** (a leaf that **JournalLines** may reference) or a non-postable placeholder; an **Account** with children is never **Postable**, and a **JournalLine** never references a non-postable **Account**.
 - `Account.Code` is required and globally **unique**; `Account.Name` carries no uniqueness constraint.
 - A **BankAccount** may link only to a **Postable** **Account** (in addition to the existing `UNIQUE(AccountId)`).
