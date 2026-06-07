@@ -88,13 +88,77 @@ internal sealed class BankTransactionService : IBankTransactionService
         if (filter != BankTransactionListFilter.Inbox || rows.Count == 0)
             return new PagedOutput<BankTransactionOutput>(rows, totalCount);
 
+        var loanHints = await ComputeLoanPaymentHintsAsync(rows, cancellationToken);
         var withHints = new List<BankTransactionOutput>(rows.Count);
         foreach (var row in rows)
         {
             var hint = await _attachService.ComputeHintAsync(row.Id, cancellationToken);
-            withHints.Add(row with { MatchingJournalEntry = hint });
+            loanHints.TryGetValue(row.Id, out var loanHint);
+            withHints.Add(row with { MatchingJournalEntry = hint, LoanPaymentHint = loanHint });
         }
         return new PagedOutput<BankTransactionOutput>(withHints, totalCount);
+    }
+
+    /// <summary>
+    /// Loan-payment hints for one Inbox page (ADR-0025): a debit whose counterparty account
+    /// number belongs to a counterparty that is some Loan's lender gets pointed at that loan's
+    /// categorise mode. Resolved in one batch query; ambiguity (several loans at the same
+    /// lender) yields no hint, mirroring the Attach hint's "exactly one match" stance.
+    /// </summary>
+    private async Task<
+        Dictionary<BankTransactionId, LoanPaymentHintOutput>
+    > ComputeLoanPaymentHintsAsync(
+        IReadOnlyList<BankTransactionOutput> rows,
+        CancellationToken cancellationToken
+    )
+    {
+        var ibans = rows.Where(r =>
+                r.Money.Amount < 0 && !string.IsNullOrWhiteSpace(r.CounterpartyAccountNumber)
+            )
+            .Select(r => r.CounterpartyAccountNumber!)
+            .Distinct()
+            .ToList();
+        if (ibans.Count == 0)
+            return [];
+
+        var lenderLoans = await _dbContext
+            .BankAccounts.AsNoTracking()
+            .Where(b => b.CounterpartyId != null && b.Iban != null && ibans.Contains(b.Iban))
+            .Join(
+                _dbContext.Loans.AsNoTracking(),
+                b => b.CounterpartyId,
+                l => l.LenderCounterpartyId,
+                (b, l) =>
+                    new
+                    {
+                        b.Iban,
+                        l.Id,
+                        l.Name,
+                    }
+            )
+            .ToListAsync(cancellationToken);
+        if (lenderLoans.Count == 0)
+            return [];
+
+        var hintsByIban = lenderLoans
+            .GroupBy(x => x.Iban!)
+            .Where(g => g.Select(x => x.Id).Distinct().Count() == 1)
+            .ToDictionary(g => g.Key, g => new LoanPaymentHintOutput(g.First().Id, g.First().Name));
+
+        var hints = new Dictionary<BankTransactionId, LoanPaymentHintOutput>();
+        foreach (var row in rows)
+        {
+            if (
+                row.Money.Amount < 0
+                && row.CounterpartyAccountNumber is { } iban
+                && hintsByIban.TryGetValue(iban, out var hint)
+            )
+            {
+                hints[row.Id] = hint;
+            }
+        }
+
+        return hints;
     }
 
     public async Task<Result<BankTransactionDetailOutput>> GetAsync(

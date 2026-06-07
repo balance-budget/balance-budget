@@ -120,7 +120,10 @@ internal sealed class BankTransactionCategorisationService : IBankTransactionCat
                     line.AccountId,
                     line.Amount,
                     line.Description,
-                    ReconciliationStatus.Uncleared
+                    ReconciliationStatus.Uncleared,
+                    // Loan Part attribution (ADR-0025): passes through to the journal-entry
+                    // service, whose loan-managed guard validates the loan-aware shape.
+                    line.LoanPartId
                 )
             );
         }

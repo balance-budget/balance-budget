@@ -13,10 +13,15 @@ internal sealed record CategorizeBankTransactionRequest(
 
 internal sealed record NewCounterpartyRequest(string Name);
 
+/// <summary>
+/// <see cref="LoanPartId"/> marks a loan-mode line (ADR-0025): it attributes the line to a Loan
+/// Part, unlocking that part's loan-managed account (principal) and tagging interest lines.
+/// </summary>
 internal sealed record CategorizeBankTransactionLineRequest(
     AccountId AccountId,
     long Amount,
-    string? Description
+    string? Description,
+    LoanPartId? LoanPartId = null
 );
 
 internal sealed class CategorizeBankTransactionRequestValidator
