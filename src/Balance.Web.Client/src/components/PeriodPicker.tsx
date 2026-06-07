@@ -1,5 +1,6 @@
 import { detectPreset, PERIOD_PRESETS, presetRange, type ReportPeriod } from '../lib/reportPeriod';
 import { DateRangePicker } from './ui/DateRangePicker';
+import { selectedKey } from './ui/selection';
 import { ToggleButton, ToggleButtonGroup } from './ui/ToggleButtonGroup';
 
 type PeriodPickerProps = {
@@ -22,7 +23,7 @@ export function PeriodPicker({ period, onChange }: PeriodPickerProps) {
                 aria-label="Period presets"
                 selectedKeys={active === 'custom' ? [] : [active]}
                 onSelectionChange={keys => {
-                    const token = [...keys][0];
+                    const token = selectedKey(keys);
                     const preset = PERIOD_PRESETS.find(p => p.token === token);
                     if (preset) onChange(presetRange(preset.token));
                 }}

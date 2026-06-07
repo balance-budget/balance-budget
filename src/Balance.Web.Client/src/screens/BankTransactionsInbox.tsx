@@ -30,9 +30,11 @@ import { FieldError } from '../components/FieldError';
 import { FormErrorBanner } from '../components/FormErrorBanner';
 import { Icon } from '../components/Icon';
 import { Modal, ModalFooter } from '../components/ui/Modal';
+import { SearchField } from '../components/ui/SearchField';
+import { selectedKey } from '../components/ui/selection';
+import { Tag, TagGroup } from '../components/ui/TagGroup';
 import { Pagination } from '../components/Pagination';
 import { Panel, SectionHead } from '../components/Panel';
-import { SearchInput } from '../components/SearchInput';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/ui/Toast';
 import { cx } from '../lib/cx';
@@ -137,7 +139,8 @@ export function BankTransactionsInbox({
                 <SectionHead title="Bank transactions" subtitle={SUBTITLE[filter]} />
                 <div className="flex flex-col gap-3 mb-4">
                     <FilterChips value={filter} onChange={onFilterChange} />
-                    <SearchInput
+                    <SearchField
+                        aria-label="Search bank transactions"
                         value={q}
                         onChange={onSearchChange}
                         placeholder="Search description or counterparty…"
@@ -174,30 +177,22 @@ function FilterChips({
     onChange: (filter: BankTransactionFilter) => void;
 }) {
     return (
-        <div className="flex items-center gap-2" role="tablist" aria-label="Filter">
-            {BANK_TRANSACTION_FILTERS.map(filter => {
-                const active = filter === value;
-                return (
-                    <button
-                        key={filter}
-                        type="button"
-                        role="tab"
-                        aria-selected={active}
-                        onClick={() => {
-                            onChange(filter);
-                        }}
-                        className={cx(
-                            'px-3 py-1 rounded-sm text-12 font-medium select-none transition-colors',
-                            active
-                                ? 'bg-brand-primary-soft text-brand-primary'
-                                : 'text-fg-2 hover:bg-surface-2 hover:text-fg-1',
-                        )}
-                    >
-                        {FILTER_LABEL[filter]}
-                    </button>
-                );
-            })}
-        </div>
+        <TagGroup
+            aria-label="Filter"
+            selectionMode="single"
+            disallowEmptySelection
+            selectedKeys={[value]}
+            onSelectionChange={keys => {
+                const next = selectedKey(keys);
+                if (next !== undefined) onChange(next as BankTransactionFilter);
+            }}
+        >
+            {BANK_TRANSACTION_FILTERS.map(filter => (
+                <Tag key={filter} id={filter} shape="chip">
+                    {FILTER_LABEL[filter]}
+                </Tag>
+            ))}
+        </TagGroup>
     );
 }
 

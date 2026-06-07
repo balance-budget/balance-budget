@@ -18,9 +18,9 @@ import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Pagination } from '../components/Pagination';
 import { Panel, SectionHead } from '../components/Panel';
-import { SearchInput } from '../components/SearchInput';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/ui/Toast';
+import { SearchField } from '../components/ui/SearchField';
 import { cx } from '../lib/cx';
 import type { BankAccountId } from '../lib/domain';
 import { handleActionError } from '../lib/formErrors';
@@ -74,7 +74,8 @@ export function BankAccounts({
                 />
                 <OwnerFilterChips value={owner} onChange={onOwnerChange} />
                 <div className="mb-4">
-                    <SearchInput
+                    <SearchField
+                        aria-label="Search bank accounts"
                         value={q}
                         onChange={onSearchChange}
                         placeholder="Search bank accounts…"

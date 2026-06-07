@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { Button } from 'react-aria-components';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import logo from '../assets/logo.svg';
 import { Icon } from './Icon';
@@ -185,14 +186,13 @@ function AccountTreeNode({
                     // Floated over the link's reserved right padding (pr-8) so the
                     // active/hover background spans the full row width while the
                     // chevron stays its own clickable target.
-                    <button
-                        type="button"
-                        onClick={() => {
+                    <Button
+                        onPress={() => {
                             onToggle(account.id);
                         }}
                         aria-label={expanded ? 'Collapse' : 'Expand'}
                         aria-expanded={expanded}
-                        className="absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded-sm text-fg-3 hover:text-fg-1"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded-sm text-fg-3 cursor-pointer outline-none data-[hovered]:text-fg-1 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary"
                     >
                         <Icon
                             name="chevron-right"
@@ -202,7 +202,7 @@ function AccountTreeNode({
                                 expanded && 'rotate-90',
                             )}
                         />
-                    </button>
+                    </Button>
                 )}
             </div>
             {hasChildren && expanded && (
@@ -399,18 +399,16 @@ function CurrentUserCard() {
                 <span className="text-13 font-medium text-fg-1 truncate">{displayName}</span>
                 <span className="text-14 text-fg-3 truncate">{email}</span>
             </div>
-            <button
-                type="button"
-                onClick={() => {
+            <Button
+                onPress={() => {
                     void signOut();
                 }}
-                disabled={logout.isPending}
-                className="text-fg-3 hover:text-fg-1"
+                isDisabled={logout.isPending}
+                className="text-fg-3 cursor-pointer outline-none data-[hovered]:text-fg-1 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary rounded-xs"
                 aria-label="Sign out"
-                title="Sign out"
             >
                 <Icon name="log-out" size={16} />
-            </button>
+            </Button>
         </div>
     );
 }

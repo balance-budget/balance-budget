@@ -4,12 +4,12 @@ import { useAccounts, type Account } from '../api/accounts';
 import { useJournalEntries, type JournalEntry } from '../api/journalEntries';
 import { AccountSelect } from '../components/AccountSelect';
 import { DateRangePicker } from '../components/ui/DateRangePicker';
+import { SearchField } from '../components/ui/SearchField';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Pagination } from '../components/Pagination';
 import { Panel, SectionHead } from '../components/Panel';
 import { ProjectionAmount } from '../components/ProjectionAmount';
-import { SearchInput } from '../components/SearchInput';
 import { Skeleton } from '../components/Skeleton';
 import { type AccountId } from '../lib/domain';
 import { formatLegLabel, projectEntry, type JournalProjection } from '../lib/journalProjection';
@@ -64,7 +64,8 @@ export function Activity({
                 }
             />
             <div className="mb-4 flex flex-col gap-3">
-                <SearchInput
+                <SearchField
+                    aria-label="Search activity"
                     value={q}
                     onChange={onSearchChange}
                     placeholder="Search description or counterparty…"

@@ -14,12 +14,14 @@ import { AccountSelect } from '../components/AccountSelect';
 import { Amount } from '../components/Amount';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { DateRangePicker } from '../components/ui/DateRangePicker';
+import { SearchField } from '../components/ui/SearchField';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Pagination } from '../components/Pagination';
 import { Panel, SectionHead } from '../components/Panel';
-import { SearchInput } from '../components/SearchInput';
 import { Skeleton } from '../components/Skeleton';
+import { selectedKey } from '../components/ui/selection';
+import { Tag, TagGroup } from '../components/ui/TagGroup';
 import { useToast } from '../components/ui/Toast';
 import { accountPathLabel } from '../lib/accountTree';
 import { cx } from '../lib/cx';
@@ -140,7 +142,8 @@ export function AccountDetail({
             <Panel>
                 <SectionHead title="Register" subtitle="Chronological activity on this account." />
                 <div className="mb-4 flex flex-col gap-3">
-                    <SearchInput
+                    <SearchField
+                        aria-label="Search register"
                         value={q}
                         onChange={onSearchChange}
                         placeholder="Search description or counterparty…"
@@ -243,30 +246,29 @@ function RegisterFilterBar({
                 }}
                 fieldClassName="text-12 py-[5px]"
             />
-            <div className="flex items-center gap-2" role="tablist" aria-label="Status filter">
-                {STATUS_FILTERS.map(status => {
-                    const active = status === filters.status;
-                    return (
-                        <button
-                            key={status === '' ? 'all' : status}
-                            type="button"
-                            role="tab"
-                            aria-selected={active}
-                            onClick={() => {
-                                onFiltersChange({ status });
-                            }}
-                            className={cx(
-                                'px-3 py-1 rounded-sm text-12 font-medium select-none transition-colors',
-                                active
-                                    ? 'bg-brand-primary-soft text-brand-primary'
-                                    : 'text-fg-2 hover:bg-surface-2 hover:text-fg-1',
-                            )}
-                        >
-                            {STATUS_LABEL[status]}
-                        </button>
-                    );
-                })}
-            </div>
+            <TagGroup
+                aria-label="Status filter"
+                selectionMode="single"
+                disallowEmptySelection
+                selectedKeys={[filters.status === '' ? 'all' : filters.status]}
+                onSelectionChange={keys => {
+                    const next = selectedKey(keys);
+                    if (next === undefined) return;
+                    onFiltersChange({
+                        status: (next === 'all' ? '' : next) as RegisterStatusFilter,
+                    });
+                }}
+            >
+                {STATUS_FILTERS.map(status => (
+                    <Tag
+                        key={status === '' ? 'all' : status}
+                        id={status === '' ? 'all' : status}
+                        shape="chip"
+                    >
+                        {STATUS_LABEL[status]}
+                    </Tag>
+                ))}
+            </TagGroup>
         </div>
     );
 }

@@ -16,6 +16,7 @@ import { DatePicker } from '../components/ui/DatePicker';
 import { NumberField } from '../components/ui/NumberField';
 import { Select, SelectItem } from '../components/ui/Select';
 import { TextField } from '../components/ui/TextField';
+import { selectedKey } from '../components/ui/selection';
 import { useToast } from '../components/ui/Toast';
 import { cx } from '../lib/cx';
 import { todayIso } from '../lib/dates';
@@ -362,7 +363,7 @@ function ModeToggle({
             disallowEmptySelection
             selectedKeys={[mode]}
             onSelectionChange={keys => {
-                const next = [...keys][0];
+                const next = selectedKey(keys);
                 if (next === 'simple') onSwitchSimple();
                 if (next === 'advanced') onSwitchAdvanced();
             }}

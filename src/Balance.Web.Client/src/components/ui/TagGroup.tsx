@@ -28,13 +28,20 @@ export function TagGroup<T extends object>({ label, items, children, ...props }:
     );
 }
 
-export function Tag(props: TagProps) {
+const TAG_SHAPE = {
+    /** Rounded pill — preset/range selectors. */
+    pill: 'px-[10px] py-[5px] rounded-full text-11',
+    /** Squared chip — list filter rows. */
+    chip: 'px-3 py-1 rounded-sm text-12 data-[hovered]:bg-surface-2 transition-colors',
+};
+
+export function Tag({ shape = 'pill', ...props }: TagProps & { shape?: keyof typeof TAG_SHAPE }) {
     return (
         <AriaTag
             {...props}
             className={composeTailwindRenderProps(
                 props.className,
-                'px-[10px] py-[5px] rounded-full text-11 font-medium select-none cursor-pointer outline-none ' +
+                `${TAG_SHAPE[shape]} font-medium select-none cursor-pointer outline-none ` +
                     'text-fg-3 data-[hovered]:text-fg-1 ' +
                     'data-[selected]:bg-brand-primary-soft data-[selected]:text-brand-primary ' +
                     'data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary ' +

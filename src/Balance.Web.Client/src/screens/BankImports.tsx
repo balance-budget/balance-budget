@@ -1,4 +1,5 @@
-import { useId, useRef, useState } from 'react';
+import { useState } from 'react';
+import { FileTrigger } from 'react-aria-components';
 import { Link } from '@tanstack/react-router';
 import {
     bankAccountTypeIcon,
@@ -10,6 +11,7 @@ import {
 } from '../api/bankAccounts';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
+import { Button } from '../components/ui/Button';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { ApiError } from '../lib/http';
@@ -19,8 +21,6 @@ type ImportFeedback =
     | { kind: 'error'; message: string };
 
 function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
-    const inputId = useId();
-    const inputRef = useRef<HTMLInputElement>(null);
     const importStatement = useImportStatement();
     const [feedback, setFeedback] = useState<ImportFeedback | null>(null);
 
@@ -44,9 +44,6 @@ function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
                       ? err.message
                       : 'Import failed.';
             setFeedback({ kind: 'error', message });
-        } finally {
-            // Reset the input so picking the same file again still triggers a change.
-            if (inputRef.current) inputRef.current.value = '';
         }
     }
 
@@ -76,32 +73,18 @@ function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
                         No importer configured
                     </Link>
                 ) : (
-                    <>
-                        <label
-                            htmlFor={inputId}
-                            className={
-                                'inline-flex items-center gap-2 px-3 py-[7px] rounded-sm select-none ' +
-                                'bg-brand-primary text-white text-13 font-medium cursor-pointer ' +
-                                'hover:bg-brand-primary-dark transition-colors ' +
-                                (isUploading ? 'opacity-60 pointer-events-none' : '')
-                            }
-                        >
+                    <FileTrigger
+                        acceptedFileTypes={['.csv', 'text/csv', '.pdf', 'application/pdf']}
+                        onSelect={files => {
+                            const file = files?.[0];
+                            if (file) void onFileChosen(file);
+                        }}
+                    >
+                        <Button variant="primary" isDisabled={isUploading} className="shrink-0">
                             <Icon name="download" size={14} strokeWidth={2} />
                             {isUploading ? 'Importing…' : 'Import statement'}
-                        </label>
-                        <input
-                            ref={inputRef}
-                            id={inputId}
-                            type="file"
-                            accept=".csv,text/csv,.pdf,application/pdf"
-                            className="sr-only"
-                            onChange={e => {
-                                const file = e.target.files?.[0];
-                                if (file) void onFileChosen(file);
-                            }}
-                            disabled={isUploading}
-                        />
-                    </>
+                        </Button>
+                    </FileTrigger>
                 )}
             </div>
             {feedback?.kind === 'success' && (
