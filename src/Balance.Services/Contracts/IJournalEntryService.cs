@@ -67,11 +67,19 @@ public sealed record CreateJournalEntryInput(
     IReadOnlyList<CreateJournalLineInput> Lines
 );
 
+/// <summary>
+/// <see cref="LoanPartId"/> is the Loan Part attribution set only by loan-aware flows
+/// (ADR-0025). A line targeting a loan-managed account must carry the owning part's id — that
+/// attribution is what makes the flow loan-aware; generic flows never populate it and are
+/// refused. A line attributed to a part may only target that part's account (principal) or the
+/// loan's interest Expense account (interest, prepayment penalty).
+/// </summary>
 public sealed record CreateJournalLineInput(
     AccountId AccountId,
     long Amount,
     string? Description,
-    ReconciliationStatus ReconciliationStatus = ReconciliationStatus.Uncleared
+    ReconciliationStatus ReconciliationStatus = ReconciliationStatus.Uncleared,
+    LoanPartId? LoanPartId = null
 );
 
 /// <summary>

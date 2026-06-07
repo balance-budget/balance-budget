@@ -10,6 +10,7 @@ using Balance.Services.Currencies;
 using Balance.Services.Dashboard;
 using Balance.Services.Jobs;
 using Balance.Services.JournalEntries;
+using Balance.Services.Loans;
 using Balance.Services.Reports;
 using Balance.Services.Search;
 using FluentValidation;
@@ -55,6 +56,7 @@ public static class ServiceCollectionExtensions
             >()
             .AddScoped<IBankTransactionAttachService, BankTransactionAttachService>()
             .AddScoped<IJournalEntryService, JournalEntryService>()
+            .AddScoped<ILoanService, LoanService>()
             .AddScoped<ISearchService, SearchService>()
             .AddScoped<IDashboardService, DashboardService>()
             .AddScoped<IReportsService, ReportsService>()

@@ -1,0 +1,784 @@
+using Balance.Data;
+using Balance.Data.Configurations;
+using Balance.Data.Entities;
+using Balance.Data.Entities.Enums;
+using Balance.Data.Entities.Ids;
+using Balance.Services.Contracts;
+using Balance.Services.Helpers;
+using Microsoft.EntityFrameworkCore;
+
+namespace Balance.Services.Loans;
+
+internal sealed class LoanService : ILoanService
+{
+    private readonly BalanceDbContext _dbContext;
+    private readonly TimeProvider _timeProvider;
+
+    public LoanService(BalanceDbContext dbContext, TimeProvider timeProvider)
+    {
+        _dbContext = dbContext;
+        _timeProvider = timeProvider;
+    }
+
+    public async Task<IReadOnlyList<LoanOutput>> ListAsync(CancellationToken cancellationToken)
+    {
+        var loans = await LoadGraphsAsync(loanId: null, cancellationToken);
+        return [.. loans.Select(ToListOutput)];
+    }
+
+    public async Task<Result<LoanDetailOutput>> GetAsync(
+        LoanId id,
+        CancellationToken cancellationToken
+    )
+    {
+        var loans = await LoadGraphsAsync(id, cancellationToken);
+        if (loans.Count == 0)
+            return new NotFoundError("Loan", id.Value.ToString());
+
+        return ToDetailOutput(loans[0]);
+    }
+
+    public async Task<Result<UpdateLoanInput>> GetSnapshotAsync(
+        LoanId id,
+        CancellationToken cancellationToken
+    )
+    {
+        var snapshot = await _dbContext
+            .Loans.AsNoTracking()
+            .Where(l => l.Id == id)
+            .Select(l => new UpdateLoanInput
+            {
+                Name = l.Name,
+                LenderCounterpartyId = l.LenderCounterpartyId,
+                InterestExpenseAccountId = l.InterestExpenseAccountId,
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+        return snapshot is null ? new NotFoundError("Loan", id.Value.ToString()) : snapshot;
+    }
+
+    public async Task<Result<LoanDetailOutput>> CreateAsync(
+        CreateLoanInput input,
+        CancellationToken cancellationToken
+    )
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(input.Parts);
+
+        if (input.Parts.Count == 0)
+        {
+            return new InvariantError(
+                ErrorCodes.LoanPartAccountSelection,
+                "A Loan requires at least one Loan Part."
+            );
+        }
+
+        var referencesCheck = await EnsureReferencesAsync(
+            input.LenderCounterpartyId,
+            input.InterestExpenseAccountId,
+            cancellationToken
+        );
+        if (referencesCheck.IsFailure)
+            return referencesCheck.Error;
+
+        var currencyCheck = await _dbContext
+            .Currencies.Where(c => c.Code == input.CurrencyCode)
+            .EnsureExistsAsync("Currency", input.CurrencyCode.Value, cancellationToken);
+        if (currencyCheck.IsFailure)
+            return currencyCheck.Error;
+
+        // All accounts created or adopted in one transaction: a part-level failure rolls back
+        // the parent account and earlier siblings.
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(
+            cancellationToken
+        );
+
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
+        var parentResult = await CreateAccountAsync(
+            input.ParentAccountName,
+            input.ParentAccountCode,
+            input.CurrencyCode,
+            postable: false,
+            parentId: null,
+            now,
+            cancellationToken
+        );
+        if (parentResult.IsFailure)
+            return parentResult.Error;
+        var parent = parentResult.Value!;
+
+        var loan = new Loan
+        {
+            Id = new LoanId(Guid.CreateVersion7()),
+            Name = input.Name.Trim(),
+            LenderCounterpartyId = input.LenderCounterpartyId,
+            InterestExpenseAccountId = input.InterestExpenseAccountId,
+            ParentAccountId = parent.Id,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+        _dbContext.Loans.Add(loan);
+
+        foreach (var partInput in input.Parts)
+        {
+            var partResult = await AddPartCoreAsync(
+                loan,
+                parent,
+                partInput,
+                now,
+                cancellationToken
+            );
+            if (partResult.IsFailure)
+                return partResult.Error;
+        }
+
+        var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
+        if (saveResult.IsFailure)
+            return saveResult.Error;
+
+        await transaction.CommitAsync(cancellationToken);
+
+        return await GetAsync(loan.Id, cancellationToken);
+    }
+
+    public async Task<Result<LoanDetailOutput>> UpdateAsync(
+        LoanId id,
+        UpdateLoanInput input,
+        CancellationToken cancellationToken
+    )
+    {
+        ArgumentNullException.ThrowIfNull(input);
+
+        var loan = await _dbContext.Loans.FirstOrDefaultAsync(l => l.Id == id, cancellationToken);
+        if (loan is null)
+            return new NotFoundError("Loan", id.Value.ToString());
+
+        var referencesCheck = await EnsureReferencesAsync(
+            input.LenderCounterpartyId,
+            input.InterestExpenseAccountId,
+            cancellationToken
+        );
+        if (referencesCheck.IsFailure)
+            return referencesCheck.Error;
+
+        var trimmedName = input.Name?.Trim() ?? string.Empty;
+        if (trimmedName.Length == 0)
+        {
+            return new InvariantError(ErrorCodes.RequestInvalid, "Loan name cannot be empty.");
+        }
+
+        loan.Name = trimmedName;
+        loan.LenderCounterpartyId = input.LenderCounterpartyId;
+        loan.InterestExpenseAccountId = input.InterestExpenseAccountId;
+        loan.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
+
+        var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
+        if (saveResult.IsFailure)
+            return saveResult.Error;
+
+        return await GetAsync(loan.Id, cancellationToken);
+    }
+
+    public async Task<Result> DeleteAsync(LoanId id, CancellationToken cancellationToken)
+    {
+        // Rate periods and parts cascade; JournalLine attributions SET NULL; the accounts and
+        // their history stay (ADR-0025: the ledger is the source of truth, the loan is a layer).
+        return await _dbContext
+            .Loans.Where(l => l.Id == id)
+            .DeleteSingleAndCatchAsync("Loan", id.Value.ToString(), cancellationToken);
+    }
+
+    public async Task<Result<LoanDetailOutput>> AddPartAsync(
+        LoanId id,
+        CreateLoanPartInput input,
+        CancellationToken cancellationToken
+    )
+    {
+        ArgumentNullException.ThrowIfNull(input);
+
+        var loan = await _dbContext.Loans.FirstOrDefaultAsync(l => l.Id == id, cancellationToken);
+        if (loan is null)
+            return new NotFoundError("Loan", id.Value.ToString());
+
+        var parent = await _dbContext.Accounts.FirstAsync(
+            a => a.Id == loan.ParentAccountId,
+            cancellationToken
+        );
+
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(
+            cancellationToken
+        );
+
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
+        var partResult = await AddPartCoreAsync(loan, parent, input, now, cancellationToken);
+        if (partResult.IsFailure)
+            return partResult.Error;
+
+        loan.UpdatedAt = now;
+        var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
+        if (saveResult.IsFailure)
+            return saveResult.Error;
+
+        await transaction.CommitAsync(cancellationToken);
+
+        return await GetAsync(loan.Id, cancellationToken);
+    }
+
+    public async Task<Result<LoanDetailOutput>> AddRatePeriodAsync(
+        LoanId id,
+        LoanPartId partId,
+        CreateLoanRatePeriodInput input,
+        CancellationToken cancellationToken
+    )
+    {
+        ArgumentNullException.ThrowIfNull(input);
+
+        var part = await _dbContext.LoanParts.FirstOrDefaultAsync(
+            p => p.Id == partId && p.LoanId == id,
+            cancellationToken
+        );
+        if (part is null)
+            return new NotFoundError("LoanPart", partId.Value.ToString());
+
+        var conflictCheck = await _dbContext
+            .LoanPartRatePeriods.Where(r =>
+                r.LoanPartId == partId && r.EffectiveDate == input.EffectiveDate
+            )
+            .EnsureNoneAsync(
+                ErrorCodes.LoanRatePeriodConflict,
+                $"A rate period effective {input.EffectiveDate:yyyy-MM-dd} already exists for this part.",
+                cancellationToken
+            );
+        if (conflictCheck.IsFailure)
+            return conflictCheck.Error;
+
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
+        _dbContext.LoanPartRatePeriods.Add(
+            new LoanPartRatePeriod
+            {
+                Id = new LoanPartRatePeriodId(Guid.CreateVersion7()),
+                LoanPartId = partId,
+                EffectiveDate = input.EffectiveDate,
+                AnnualRatePercent = input.AnnualRatePercent,
+                FixedUntil = input.FixedUntil,
+                CreatedAt = now,
+                UpdatedAt = now,
+            }
+        );
+        part.UpdatedAt = now;
+
+        var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
+        if (saveResult.IsFailure)
+            return saveResult.Error;
+
+        return await GetAsync(id, cancellationToken);
+    }
+
+    private async Task<Result> AddPartCoreAsync(
+        Loan loan,
+        Account parent,
+        CreateLoanPartInput input,
+        DateTime now,
+        CancellationToken cancellationToken
+    )
+    {
+        ArgumentNullException.ThrowIfNull(input.RatePeriods);
+
+        if (input.AdoptAccountId.HasValue == (input.NewAccount is not null))
+        {
+            return new InvariantError(
+                ErrorCodes.LoanPartAccountSelection,
+                "Provide exactly one of AdoptAccountId or NewAccount per Loan Part."
+            );
+        }
+
+        if (input.RatePeriods.Count == 0)
+        {
+            return new InvariantError(
+                ErrorCodes.LoanRatePeriodConflict,
+                "A Loan Part requires at least one rate period."
+            );
+        }
+
+        if (
+            input.RatePeriods.Select(r => r.EffectiveDate).Distinct().Count()
+            != input.RatePeriods.Count
+        )
+        {
+            return new InvariantError(
+                ErrorCodes.LoanRatePeriodConflict,
+                "Rate periods must have distinct effective dates."
+            );
+        }
+
+        AccountId accountId;
+        if (input.AdoptAccountId is { } adoptId)
+        {
+            var adoptionResult = await AdoptAccountAsync(adoptId, parent, now, cancellationToken);
+            if (adoptionResult.IsFailure)
+                return adoptionResult.Error;
+            accountId = adoptId;
+        }
+        else
+        {
+            var newAccount = input.NewAccount!;
+            var accountResult = await CreateAccountAsync(
+                newAccount.Name,
+                newAccount.Code,
+                parent.CurrencyCode,
+                postable: true,
+                parent.Id,
+                now,
+                cancellationToken
+            );
+            if (accountResult.IsFailure)
+                return accountResult.Error;
+            accountId = accountResult.Value!.Id;
+
+            if (newAccount.OpeningBalance != 0)
+                AddOpeningBalanceEntry(accountId, newAccount, now);
+        }
+
+        var part = new LoanPart
+        {
+            Id = new LoanPartId(Guid.CreateVersion7()),
+            LoanId = loan.Id,
+            Label = input.Label.Trim(),
+            RepaymentType = input.RepaymentType,
+            StartDate = input.StartDate,
+            EndDate = input.EndDate,
+            AccountId = accountId,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+        foreach (var rate in input.RatePeriods)
+        {
+            part.RatePeriods.Add(
+                new LoanPartRatePeriod
+                {
+                    Id = new LoanPartRatePeriodId(Guid.CreateVersion7()),
+                    LoanPartId = part.Id,
+                    EffectiveDate = rate.EffectiveDate,
+                    AnnualRatePercent = rate.AnnualRatePercent,
+                    FixedUntil = rate.FixedUntil,
+                    CreatedAt = now,
+                    UpdatedAt = now,
+                }
+            );
+        }
+
+        _dbContext.LoanParts.Add(part);
+        return Result.Success;
+    }
+
+    // Adoption constraints (ADR-0025): Liability, postable, currency match, childless, not
+    // already loan-managed. Re-parents the leaf under the loan with history intact and defaults
+    // it to Illiquid — a mortgage should keep out of liquid net worth without manual fiddling.
+    private async Task<Result> AdoptAccountAsync(
+        AccountId adoptId,
+        Account parent,
+        DateTime now,
+        CancellationToken cancellationToken
+    )
+    {
+        var account = await _dbContext.Accounts.FirstOrDefaultAsync(
+            a => a.Id == adoptId,
+            cancellationToken
+        );
+        if (account is null)
+            return new NotFoundError("Account", adoptId.Value.ToString());
+
+        if (account.AccountType != AccountType.Liability || !account.IsPostable)
+        {
+            return new InvariantError(
+                ErrorCodes.LoanPartAccountInvalid,
+                "Only a postable Liability account can be adopted as a Loan Part."
+            );
+        }
+
+        if (account.CurrencyCode != parent.CurrencyCode)
+        {
+            return new InvariantError(
+                ErrorCodes.LoanPartAccountInvalid,
+                $"Account {adoptId.Value} is denominated in {account.CurrencyCode.Value}; "
+                    + $"the loan uses {parent.CurrencyCode.Value}."
+            );
+        }
+
+        var hasChildren = await _dbContext.Accounts.AnyAsync(
+            a => a.ParentAccountId == adoptId,
+            cancellationToken
+        );
+        if (hasChildren)
+        {
+            return new InvariantError(
+                ErrorCodes.LoanPartAccountInvalid,
+                "An account with children cannot be adopted as a Loan Part."
+            );
+        }
+
+        var managed = await LoanManagedAccounts.FindLoanManagedAsync(
+            _dbContext,
+            [adoptId],
+            cancellationToken
+        );
+        if (managed.Count > 0)
+            return LoanManagedAccounts.Refusal(adoptId);
+
+        // The pending graph isn't visible to the queries above: refuse adopting the same
+        // account twice within one create call.
+        var pendingTwice = _dbContext
+            .ChangeTracker.Entries<LoanPart>()
+            .Any(e => e.State == EntityState.Added && e.Entity.AccountId == adoptId);
+        if (pendingTwice)
+            return LoanManagedAccounts.Refusal(adoptId);
+
+        account.ParentAccountId = parent.Id;
+        account.IsLiquid = false;
+        account.UpdatedAt = now;
+        return Result.Success;
+    }
+
+    private async Task<Result<Account>> CreateAccountAsync(
+        string name,
+        string code,
+        CurrencyCode currencyCode,
+        bool postable,
+        AccountId? parentId,
+        DateTime now,
+        CancellationToken cancellationToken
+    )
+    {
+        var trimmedName = name?.Trim() ?? string.Empty;
+        var trimmedCode = code?.Trim() ?? string.Empty;
+        if (trimmedName.Length == 0)
+            return new InvariantError(ErrorCodes.AccountNameEmpty, "Account name cannot be empty.");
+
+        if (trimmedCode.Length == 0)
+            return new InvariantError(ErrorCodes.AccountCodeEmpty, "Account code cannot be empty.");
+
+        var codeCheck = await _dbContext
+            .Accounts.Where(a => a.Code == trimmedCode)
+            .EnsureNoneAsync(
+                ErrorCodes.AccountCodeTaken,
+                $"Account code '{trimmedCode}' is already taken.",
+                cancellationToken
+            );
+        if (codeCheck.IsFailure)
+            return codeCheck.Error;
+
+        // Codes created earlier in the same graph (parent vs. fresh parts) collide too.
+        var pendingCollision = _dbContext
+            .ChangeTracker.Entries<Account>()
+            .Any(e => e.State == EntityState.Added && e.Entity.Code == trimmedCode);
+        if (pendingCollision)
+        {
+            return new ConflictError(
+                ErrorCodes.AccountCodeTaken,
+                $"Account code '{trimmedCode}' is already taken."
+            );
+        }
+
+        var account = new Account
+        {
+            Id = new AccountId(Guid.CreateVersion7()),
+            Name = trimmedName,
+            Code = trimmedCode,
+            AccountType = AccountType.Liability,
+            CurrencyCode = currencyCode,
+            IsPostable = postable,
+            IsLiquid = false,
+            ParentAccountId = parentId,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+        _dbContext.Accounts.Add(account);
+        return account;
+    }
+
+    // The existing Opening balance convention: pair the account against the seeded Opening
+    // Balances equity account, both legs Reconciled, no bank import. A liability's opening
+    // principal is a credit, hence the negated amount on the part side.
+    private void AddOpeningBalanceEntry(
+        AccountId accountId,
+        NewLoanPartAccountInput input,
+        DateTime now
+    )
+    {
+        var entry = new JournalEntry
+        {
+            Id = new JournalEntryId(Guid.CreateVersion7()),
+            Date = input.OpeningDate,
+            Description = "Opening balance",
+            CounterpartyId = null,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+        entry.Lines.Add(OpeningLine(entry.Id, accountId, -input.OpeningBalance, now));
+        entry.Lines.Add(
+            OpeningLine(entry.Id, AccountSeed.OpeningBalancesId, input.OpeningBalance, now)
+        );
+        _dbContext.JournalEntries.Add(entry);
+    }
+
+    private static JournalLine OpeningLine(
+        JournalEntryId entryId,
+        AccountId accountId,
+        long amount,
+        DateTime now
+    ) =>
+        new()
+        {
+            Id = new JournalLineId(Guid.CreateVersion7()),
+            JournalEntryId = entryId,
+            AccountId = accountId,
+            Amount = amount,
+            ReconciliationStatus = ReconciliationStatus.Reconciled,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+
+    private async Task<Result> EnsureReferencesAsync(
+        CounterpartyId lenderCounterpartyId,
+        AccountId interestExpenseAccountId,
+        CancellationToken cancellationToken
+    )
+    {
+        var lenderCheck = await _dbContext
+            .Counterparties.Where(c => c.Id == lenderCounterpartyId)
+            .EnsureExistsAsync(
+                "Counterparty",
+                lenderCounterpartyId.Value.ToString(),
+                cancellationToken
+            );
+        if (lenderCheck.IsFailure)
+            return lenderCheck.Error;
+
+        var interestAccount = await _dbContext
+            .Accounts.AsNoTracking()
+            .Where(a => a.Id == interestExpenseAccountId)
+            .Select(a => new { a.AccountType, a.IsPostable })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (interestAccount is null)
+            return new NotFoundError("Account", interestExpenseAccountId.Value.ToString());
+
+        if (interestAccount.AccountType != AccountType.Expense || !interestAccount.IsPostable)
+        {
+            return new InvariantError(
+                ErrorCodes.LoanInterestAccountInvalid,
+                "The interest account must be a postable Expense account."
+            );
+        }
+
+        return Result.Success;
+    }
+
+    // ---- projections ------------------------------------------------------------------------
+
+    private sealed record LoanGraph(
+        Loan Loan,
+        string LenderName,
+        string InterestAccountName,
+        CurrencyCode CurrencyCode,
+        IReadOnlyList<LoanPartGraph> Parts,
+        DateOnly Today
+    );
+
+    private sealed record LoanPartGraph(
+        LoanPart Part,
+        string AccountName,
+        long OutstandingBalance,
+        IReadOnlyList<LoanPartRatePeriod> RatePeriods
+    );
+
+    private async Task<List<LoanGraph>> LoadGraphsAsync(
+        LoanId? loanId,
+        CancellationToken cancellationToken
+    )
+    {
+        var loansQuery = _dbContext
+            .Loans.AsNoTracking()
+            .Include(l => l.Parts)
+                .ThenInclude(p => p.RatePeriods)
+            .AsSplitQuery();
+        if (loanId is { } id)
+            loansQuery = loansQuery.Where(l => l.Id == id);
+
+        var loans = await loansQuery.OrderBy(l => l.Name).ToListAsync(cancellationToken);
+        if (loans.Count == 0)
+            return [];
+
+        var accountIds = loans
+            .SelectMany(l => l.Parts.Select(p => p.AccountId))
+            .Concat(loans.Select(l => l.ParentAccountId))
+            .Concat(loans.Select(l => l.InterestExpenseAccountId))
+            .Distinct()
+            .ToList();
+        var accounts = await _dbContext
+            .Accounts.AsNoTracking()
+            .Where(a => accountIds.Contains(a.Id))
+            .Select(a => new
+            {
+                a.Id,
+                a.Name,
+                a.CurrencyCode,
+                Balance = _dbContext
+                    .JournalLines.Where(l => l.AccountId == a.Id)
+                    .Sum(l => (long?)l.Amount)
+                    ?? 0L,
+            })
+            .ToDictionaryAsync(a => a.Id, cancellationToken);
+
+        var counterpartyIds = loans.Select(l => l.LenderCounterpartyId).Distinct().ToList();
+        var lenders = await _dbContext
+            .Counterparties.AsNoTracking()
+            .Where(c => counterpartyIds.Contains(c.Id))
+            .ToDictionaryAsync(c => c.Id, c => c.Name, cancellationToken);
+
+        var today = DateOnly.FromDateTime(_timeProvider.GetUtcNow().UtcDateTime);
+        var graphs = new List<LoanGraph>(loans.Count);
+        foreach (var loan in loans)
+        {
+            var parts = loan
+                .Parts.OrderBy(p => p.StartDate)
+                .ThenBy(p => p.Label)
+                .Select(p => new LoanPartGraph(
+                    p,
+                    accounts[p.AccountId].Name,
+                    // A liability's raw line sum is a credit (negative); outstanding principal
+                    // is its negation, floored at zero for display sanity.
+                    Math.Max(0L, -accounts[p.AccountId].Balance),
+                    [.. p.RatePeriods.OrderBy(r => r.EffectiveDate)]
+                ))
+                .ToList();
+            graphs.Add(
+                new LoanGraph(
+                    loan,
+                    lenders[loan.LenderCounterpartyId],
+                    accounts[loan.InterestExpenseAccountId].Name,
+                    accounts[loan.ParentAccountId].CurrencyCode,
+                    parts,
+                    today
+                )
+            );
+        }
+
+        return graphs;
+    }
+
+    private static LoanOutput ToListOutput(LoanGraph graph)
+    {
+        var summary = Summarize(graph);
+        return new LoanOutput(
+            graph.Loan.Id,
+            graph.Loan.Name,
+            graph.Loan.LenderCounterpartyId,
+            graph.LenderName,
+            graph.Loan.InterestExpenseAccountId,
+            graph.Loan.ParentAccountId,
+            graph.CurrencyCode,
+            summary.OutstandingBalance,
+            summary.CurrentPayment,
+            summary.WeightedAnnualRatePercent,
+            summary.IsEnded,
+            graph.Parts.Count
+        );
+    }
+
+    private static LoanDetailOutput ToDetailOutput(LoanGraph graph)
+    {
+        var summary = Summarize(graph);
+        return new LoanDetailOutput(
+            graph.Loan.Id,
+            graph.Loan.Name,
+            graph.Loan.LenderCounterpartyId,
+            graph.LenderName,
+            graph.Loan.InterestExpenseAccountId,
+            graph.InterestAccountName,
+            graph.Loan.ParentAccountId,
+            graph.CurrencyCode,
+            summary.OutstandingBalance,
+            summary.CurrentPayment,
+            summary.WeightedAnnualRatePercent,
+            summary.IsEnded,
+            [
+                .. graph.Parts.Select(p => new LoanPartOutput(
+                    p.Part.Id,
+                    p.Part.Label,
+                    p.Part.RepaymentType,
+                    p.Part.StartDate,
+                    p.Part.EndDate,
+                    p.Part.AccountId,
+                    p.AccountName,
+                    p.OutstandingBalance,
+                    CurrentRate(p, graph.Today),
+                    IsPartEnded(p, graph.Today),
+                    [
+                        .. p.RatePeriods.Select(r => new LoanRatePeriodOutput(
+                            r.Id,
+                            r.EffectiveDate,
+                            r.AnnualRatePercent,
+                            r.FixedUntil
+                        )),
+                    ]
+                )),
+            ]
+        );
+    }
+
+    private static (
+        long OutstandingBalance,
+        long CurrentPayment,
+        decimal? WeightedAnnualRatePercent,
+        bool IsEnded
+    ) Summarize(LoanGraph graph)
+    {
+        var outstanding = graph.Parts.Sum(p => p.OutstandingBalance);
+
+        var currentMonth = new DateOnly(graph.Today.Year, graph.Today.Month, 1);
+        var projection = AmortizationEngine.Project(
+            [.. graph.Parts.Select(p => ToSpec(p))],
+            currentMonth
+        );
+        var currentPayment = projection.Where(r => r.Period == currentMonth).Sum(r => r.Payment);
+
+        decimal? weightedRate = null;
+        if (outstanding > 0)
+        {
+            var weighted = graph.Parts.Sum(p =>
+                (CurrentRate(p, graph.Today) ?? 0m) * p.OutstandingBalance
+            );
+            weightedRate = Math.Round(weighted / outstanding, 4);
+        }
+
+        var isEnded = graph.Parts.All(p => IsPartEnded(p, graph.Today));
+        return (outstanding, currentPayment, weightedRate, isEnded);
+    }
+
+    private static bool IsPartEnded(LoanPartGraph part, DateOnly today) =>
+        part.OutstandingBalance == 0L || part.Part.EndDate < today;
+
+    private static decimal? CurrentRate(LoanPartGraph part, DateOnly today)
+    {
+        var inForce = part
+            .RatePeriods.Where(r => r.EffectiveDate <= today)
+            .OrderByDescending(r => r.EffectiveDate)
+            .FirstOrDefault();
+        inForce ??= part.RatePeriods.Count > 0 ? part.RatePeriods[0] : null;
+        return inForce?.AnnualRatePercent;
+    }
+
+    private static AmortizationPartSpec ToSpec(LoanPartGraph part) =>
+        new(
+            part.Part.Id,
+            part.Part.RepaymentType,
+            part.Part.EndDate,
+            part.OutstandingBalance,
+            [
+                .. part.RatePeriods.Select(r => new AmortizationRatePeriodSpec(
+                    r.EffectiveDate,
+                    r.AnnualRatePercent,
+                    r.FixedUntil
+                )),
+            ]
+        );
+}

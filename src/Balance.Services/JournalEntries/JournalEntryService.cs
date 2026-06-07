@@ -7,6 +7,7 @@ using Balance.Data.Helpers;
 using Balance.Services.Accounts;
 using Balance.Services.Contracts;
 using Balance.Services.Helpers;
+using Balance.Services.Loans;
 using Microsoft.EntityFrameworkCore;
 
 namespace Balance.Services.JournalEntries;
@@ -147,6 +148,16 @@ internal sealed class JournalEntryService : IJournalEntryService
         if (balanceCheck.IsFailure)
             return balanceCheck.Error;
 
+        // Loan-managed guard (ADR-0025): a line on a loan-managed account is only accepted when
+        // it carries the owning part's attribution — generic flows never set one.
+        var loanCheck = await LoanManagedAccounts.ValidateLineAttributionsAsync(
+            _dbContext,
+            input.Lines,
+            cancellationToken
+        );
+        if (loanCheck.IsFailure)
+            return loanCheck.Error;
+
         var referencesCheck = await EnsureCounterpartyExistsAsync(
             input.CounterpartyId,
             cancellationToken
@@ -176,6 +187,7 @@ internal sealed class JournalEntryService : IJournalEntryService
                     Amount = line.Amount,
                     ReconciliationStatus = line.ReconciliationStatus,
                     Description = line.Description.TrimToNull(),
+                    LoanPartId = line.LoanPartId,
                     CreatedAt = now,
                     UpdatedAt = now,
                 }
@@ -349,6 +361,59 @@ internal sealed class JournalEntryService : IJournalEntryService
             }
         }
 
+        // Loan-managed gate (ADR-0025), mirroring the ADR-0014 freeze: a line on a loan-managed
+        // account keeps its AccountId and Amount (description-only edits), cannot be removed,
+        // and no line can move onto a loan-managed account through this generic flow.
+        var bodyAccountIds = input
+            .Lines.Select(l => l.AccountId)
+            .Concat(entry.Lines.Select(l => l.AccountId))
+            .Distinct()
+            .ToList();
+        var loanManaged = await LoanManagedAccounts.FindLoanManagedAsync(
+            _dbContext,
+            bodyAccountIds,
+            cancellationToken
+        );
+        if (loanManaged.Count > 0)
+        {
+            var managedSet = loanManaged.ToHashSet();
+            foreach (var lineInput in input.Lines)
+            {
+                if (!managedSet.Contains(lineInput.AccountId))
+                    continue;
+
+                if (
+                    lineInput.Id is not { } lineId
+                    || !existingLines.TryGetValue(lineId, out var existing)
+                    || existing.AccountId != lineInput.AccountId
+                    || existing.Amount != lineInput.Amount
+                )
+                {
+                    return LoanManagedAccounts.Refusal(lineInput.AccountId);
+                }
+            }
+
+            foreach (var existing in entry.Lines)
+            {
+                if (managedSet.Contains(existing.AccountId) && !referencedIds.Contains(existing.Id))
+                {
+                    return LoanManagedAccounts.Refusal(existing.AccountId);
+                }
+
+                // Moving a line *off* a loan-managed account is equally a generic mutation of
+                // what the loan did; the frozen-line rule above only catches the new target.
+                if (
+                    managedSet.Contains(existing.AccountId)
+                    && input.Lines.Any(l =>
+                        l.Id == existing.Id && l.AccountId != existing.AccountId
+                    )
+                )
+                {
+                    return LoanManagedAccounts.Refusal(existing.AccountId);
+                }
+            }
+        }
+
         // Account / currency / sum-to-zero check on the *final* line set (the body shape).
         IReadOnlyList<CreateJournalLineInput> draftInputs =
         [
@@ -482,6 +547,17 @@ internal sealed class JournalEntryService : IJournalEntryService
                 );
             }
         }
+
+        // Loan-managed guard (ADR-0025): Reassign is a generic flow, so neither the target nor
+        // any source account may be loan-managed.
+        var guardIds = lines.Select(l => l.AccountId).Append(targetAccountId).Distinct().ToList();
+        var loanManaged = await LoanManagedAccounts.FindLoanManagedAsync(
+            _dbContext,
+            guardIds,
+            cancellationToken
+        );
+        if (loanManaged.Count > 0)
+            return LoanManagedAccounts.Refusal(loanManaged.First());
 
         // Every line must already be in the target's currency — amounts are minor units of the
         // posted account's currency, so a cross-currency move would silently re-denominate.

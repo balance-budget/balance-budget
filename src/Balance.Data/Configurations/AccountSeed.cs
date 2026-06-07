@@ -4,7 +4,7 @@ using Balance.Data.Entities.Ids;
 
 namespace Balance.Data.Configurations;
 
-internal static class AccountSeed
+public static class AccountSeed
 {
     public static readonly AccountId OpeningBalancesId = new(
         Guid.Parse("00000000-0000-7000-8000-000000000001")
