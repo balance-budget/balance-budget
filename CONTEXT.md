@@ -49,6 +49,34 @@ An **Account** representing where money goes. Examples: Groceries, Rent, Utiliti
 A per-**Account** property, **Liquid** (the default) or **Illiquid**, meaningful only on **Asset** and **Liability** **Accounts**. A *user judgment* answering "do I budget with this money?" — not a market-liquidity fact: an investment account sellable in days may still be Illiquid because it is not day-to-day money. Illiquid **Accounts** (e.g. Mortgage, the house's value, pensions, locked deposits) are excluded from **Liquid net worth** but always count toward **Net worth**. Unlike **AccountType** and **Currency**, Liquidity is *not* subject to the homogeneity rule — children in one subtree may differ (an emergency fund and a locked five-year deposit can share one "Savings" placeholder).
 _Avoid_: short-term / long-term (a maturity dimension — a 12-month term deposit is short-term yet Illiquid), current / non-current (the accounting balance-sheet split; close, but Liquidity is a budgeting judgment, not a maturity test).
 
+**Loan**:
+A borrowing agreement with a lender — a mortgage, a personal loan, a car loan — whose outstanding debt the ledger tracks. Not mortgage-specific: a mortgage is one kind of Loan. A Loan consists of one or more **Loan Parts** and is represented in the **Chart of accounts** as one non-postable **Liability** **Account** (the loan) with one postable child Account per **Loan Part** — *always*, even when the Loan has a single part. The loan-level outstanding debt is the parent's roll-up balance.
+_Avoid_: mortgage as the general term (one kind of Loan), liability (the **AccountType**, not the agreement), debt (vague).
+
+**Loan Part**:
+One component (Dutch: *leningdeel*) of a **Loan**, carrying its own interest rate, repayment type, start date, and term. Dutch mortgages routinely consist of several parts with different rates and types, and parts are added or split over a loan's life (rate renewals, renovations). Each Loan Part is represented by exactly one postable **Liability** **Account** under its **Loan**'s parent Account; the part's outstanding principal is that Account's balance.
+_Avoid_: component (collides with UI components in this codebase), tranche, leningdeel in code (English canonical term is Loan Part).
+
+**Loan-managed**:
+A property of a postable **Account** that belongs to a **Loan Part** (and of the **Loan**'s parent Account). Generic flows — manual **JournalEntry** creation, **Reassign**, plain **Categorisation** — refuse to target a Loan-managed Account; only loan-aware flows post to it. Within a loan-aware flow the engine's proposed amounts are *defaults the user may edit*: the bank's actual charge always wins over the calculation, and the schedule reconciles against posted reality, never the other way around.
+_Avoid_: locked (too absolute — loan-aware flows post freely), read-only, system account.
+
+**Loan payment**:
+The regular (monthly) composite debit a lender collects, covering interest for every **Loan Part** plus principal for the amortizing ones. Recorded as one **JournalEntry**: one bank-side line, one principal line per amortizing **Loan Part** (on that part's Account), and one interest line per **Loan Part** (all on the **Loan**'s single interest **Expense** Account), each counter-line attributed to its **Loan Part**. Produced via the loan-aware **Categorisation flow**, pre-filled from the engine's proposal.
+_Avoid_: installment, termijnbedrag (Dutch; UI/code use Loan payment), mortgage payment (mortgage-specific).
+
+**Extra repayment**:
+A principal-only payment outside the regular **Loan payment**, applied to one chosen **Loan Part** (Dutch: *extra aflossing*). Categorised through the loan-aware flow; any prepayment penalty (*boeterente*) is an additional interest-expense line on the same **JournalEntry**. Follows the Dutch-default policy: the part's end date is unchanged and the recalculated (lower) payment emerges automatically from the engine, which always derives the payment from current balance, rate, and remaining term. Term-shortening exists only as a what-if lever in simulation.
+_Avoid_: prepayment (ambiguous with paying early in the month), overpayment.
+
+**Rate period**:
+One entry in a **Loan Part**'s effective-dated list of interest rates: an effective date, an annual nominal rate, and an optional fixed-until date (Dutch: *rentevaste periode*). The rate in force for a month is the latest entry effective on or before it; future-dated entries (an accepted renewal offer) are legitimate and feed the projection. Monthly interest is the annual rate ÷ 12 on the balance at period start. History is appended, never overwritten.
+_Avoid_: interest change event (it is a fact with an effective date, not a replayed event), APR (effective-rate concept; this is the nominal rate).
+
+**Projection**:
+The derived future of a **Loan** — per period and per **Loan Part**, the expected interest, principal, payment, and remaining balance. *Computed, never stored*: a pure function of the part definitions, **Rate periods**, and current ledger balances, projected forward from an anchor of *(outstanding balance now, rate now, remaining term)* — never replayed from inception. Past periods come from ledger actuals, future periods from the Projection; a what-if scenario is the same computation with hypothetical extra repayments or rates overlaid, ephemeral and unpersisted.
+_Avoid_: amortization schedule as a noun implying a stored table (nothing is materialized), forecast (vague).
+
 **JournalEntry**:
 One bookkeeping event in the double-entry ledger — a header record carrying date, description, and optional **Counterparty**, owning two or more **JournalLines** whose amounts net to zero. The unit of "I bought groceries", "I got paid", "I transferred money".
 _Avoid_: Transaction (reserved for the import-side concept — see below), posting, document.
@@ -189,6 +217,12 @@ _Avoid_: cash flow (a specific, loaded accounting statement), Sankey (the chart 
 ## Relationships
 
 - A **JournalEntry** owns two or more **JournalLines** whose amounts net to zero.
+- A **Loan** owns one or more **Loan Parts**; a **Loan Part** belongs to exactly one **Loan**.
+- A **Loan** is represented by one non-postable **Liability** **Account**; each of its **Loan Parts** by one postable child **Account** of that parent. A part's Account is either created fresh or *adopted* — an existing postable **Liability** leaf re-parented under the loan with its history intact.
+- A **Loan** references its lender **Counterparty** (drives the Inbox's loan-payment hint) and exactly one postable **Expense** **Account** that receives all its interest.
+- A **Loan Part**'s Account (and the **Loan**'s parent Account) is **Loan-managed**: only loan-aware flows post to it.
+- A **Loan Part** owns an ordered, effective-dated list of **Rate periods**.
+- A **JournalLine** *may* reference one **Loan Part** (attribution, set only by loan-aware flows); principal lines are attributed intrinsically by their Account, interest lines explicitly.
 - Each **JournalLine** references exactly one **Account**.
 - A **JournalEntry** *may* reference one **Counterparty**; **JournalLines** do not reference **Counterparties**.
 - A **Counterparty** is never an **Account** (this is an explicit departure from Firefly III, which models each payee as an expense/revenue account).
