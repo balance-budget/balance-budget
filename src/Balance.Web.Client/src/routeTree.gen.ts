@@ -15,6 +15,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as PiggyBanksRouteImport } from './routes/piggy-banks'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as LoansRouteImport } from './routes/loans'
 import { Route as JournalRouteImport } from './routes/journal'
 import { Route as CounterpartiesRouteImport } from './routes/counterparties'
 import { Route as BudgetsRouteImport } from './routes/budgets'
@@ -24,12 +25,14 @@ import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as AccountsRouteImport } from './routes/accounts'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings.index'
+import { Route as LoansIndexRouteImport } from './routes/loans.index'
 import { Route as CounterpartiesIndexRouteImport } from './routes/counterparties.index'
 import { Route as BankTransactionsIndexRouteImport } from './routes/bank-transactions.index'
 import { Route as AccountsIndexRouteImport } from './routes/accounts.index'
 import { Route as SettingsUsersRouteImport } from './routes/settings.users'
 import { Route as SettingsTokensRouteImport } from './routes/settings.tokens'
 import { Route as SettingsBankAccountsRouteImport } from './routes/settings.bank-accounts'
+import { Route as LoansIdRouteImport } from './routes/loans.$id'
 import { Route as JournalNewRouteImport } from './routes/journal.new'
 import { Route as JournalIdRouteImport } from './routes/journal.$id'
 import { Route as CounterpartiesIdRouteImport } from './routes/counterparties.$id'
@@ -66,6 +69,11 @@ const PiggyBanksRoute = PiggyBanksRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoansRoute = LoansRouteImport.update({
+  id: '/loans',
+  path: '/loans',
   getParentRoute: () => rootRouteImport,
 } as any)
 const JournalRoute = JournalRouteImport.update({
@@ -113,6 +121,11 @@ const SettingsIndexRoute = SettingsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => SettingsRoute,
 } as any)
+const LoansIndexRoute = LoansIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LoansRoute,
+} as any)
 const CounterpartiesIndexRoute = CounterpartiesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -142,6 +155,11 @@ const SettingsBankAccountsRoute = SettingsBankAccountsRouteImport.update({
   id: '/bank-accounts',
   path: '/bank-accounts',
   getParentRoute: () => SettingsRoute,
+} as any)
+const LoansIdRoute = LoansIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => LoansRoute,
 } as any)
 const JournalNewRoute = JournalNewRouteImport.update({
   id: '/new',
@@ -190,6 +208,7 @@ export interface FileRoutesByFullPath {
   '/budgets': typeof BudgetsRoute
   '/counterparties': typeof CounterpartiesRouteWithChildren
   '/journal': typeof JournalRouteWithChildren
+  '/loans': typeof LoansRouteWithChildren
   '/login': typeof LoginRoute
   '/piggy-banks': typeof PiggyBanksRoute
   '/reports': typeof ReportsRoute
@@ -200,12 +219,14 @@ export interface FileRoutesByFullPath {
   '/counterparties/$id': typeof CounterpartiesIdRoute
   '/journal/$id': typeof JournalIdRoute
   '/journal/new': typeof JournalNewRoute
+  '/loans/$id': typeof LoansIdRoute
   '/settings/bank-accounts': typeof SettingsBankAccountsRouteWithChildren
   '/settings/tokens': typeof SettingsTokensRoute
   '/settings/users': typeof SettingsUsersRoute
   '/accounts/': typeof AccountsIndexRoute
   '/bank-transactions/': typeof BankTransactionsIndexRoute
   '/counterparties/': typeof CounterpartiesIndexRoute
+  '/loans/': typeof LoansIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/bank-transactions/$id/categorize': typeof BankTransactionsIdCategorizeRoute
   '/settings/bank-accounts/$id': typeof SettingsBankAccountsIdRoute
@@ -226,11 +247,13 @@ export interface FileRoutesByTo {
   '/counterparties/$id': typeof CounterpartiesIdRoute
   '/journal/$id': typeof JournalIdRoute
   '/journal/new': typeof JournalNewRoute
+  '/loans/$id': typeof LoansIdRoute
   '/settings/tokens': typeof SettingsTokensRoute
   '/settings/users': typeof SettingsUsersRoute
   '/accounts': typeof AccountsIndexRoute
   '/bank-transactions': typeof BankTransactionsIndexRoute
   '/counterparties': typeof CounterpartiesIndexRoute
+  '/loans': typeof LoansIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/bank-transactions/$id/categorize': typeof BankTransactionsIdCategorizeRoute
   '/settings/bank-accounts/$id': typeof SettingsBankAccountsIdRoute
@@ -246,6 +269,7 @@ export interface FileRoutesById {
   '/budgets': typeof BudgetsRoute
   '/counterparties': typeof CounterpartiesRouteWithChildren
   '/journal': typeof JournalRouteWithChildren
+  '/loans': typeof LoansRouteWithChildren
   '/login': typeof LoginRoute
   '/piggy-banks': typeof PiggyBanksRoute
   '/reports': typeof ReportsRoute
@@ -256,12 +280,14 @@ export interface FileRoutesById {
   '/counterparties/$id': typeof CounterpartiesIdRoute
   '/journal/$id': typeof JournalIdRoute
   '/journal/new': typeof JournalNewRoute
+  '/loans/$id': typeof LoansIdRoute
   '/settings/bank-accounts': typeof SettingsBankAccountsRouteWithChildren
   '/settings/tokens': typeof SettingsTokensRoute
   '/settings/users': typeof SettingsUsersRoute
   '/accounts/': typeof AccountsIndexRoute
   '/bank-transactions/': typeof BankTransactionsIndexRoute
   '/counterparties/': typeof CounterpartiesIndexRoute
+  '/loans/': typeof LoansIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/bank-transactions/$id/categorize': typeof BankTransactionsIdCategorizeRoute
   '/settings/bank-accounts/$id': typeof SettingsBankAccountsIdRoute
@@ -278,6 +304,7 @@ export interface FileRouteTypes {
     | '/budgets'
     | '/counterparties'
     | '/journal'
+    | '/loans'
     | '/login'
     | '/piggy-banks'
     | '/reports'
@@ -288,12 +315,14 @@ export interface FileRouteTypes {
     | '/counterparties/$id'
     | '/journal/$id'
     | '/journal/new'
+    | '/loans/$id'
     | '/settings/bank-accounts'
     | '/settings/tokens'
     | '/settings/users'
     | '/accounts/'
     | '/bank-transactions/'
     | '/counterparties/'
+    | '/loans/'
     | '/settings/'
     | '/bank-transactions/$id/categorize'
     | '/settings/bank-accounts/$id'
@@ -314,11 +343,13 @@ export interface FileRouteTypes {
     | '/counterparties/$id'
     | '/journal/$id'
     | '/journal/new'
+    | '/loans/$id'
     | '/settings/tokens'
     | '/settings/users'
     | '/accounts'
     | '/bank-transactions'
     | '/counterparties'
+    | '/loans'
     | '/settings'
     | '/bank-transactions/$id/categorize'
     | '/settings/bank-accounts/$id'
@@ -333,6 +364,7 @@ export interface FileRouteTypes {
     | '/budgets'
     | '/counterparties'
     | '/journal'
+    | '/loans'
     | '/login'
     | '/piggy-banks'
     | '/reports'
@@ -343,12 +375,14 @@ export interface FileRouteTypes {
     | '/counterparties/$id'
     | '/journal/$id'
     | '/journal/new'
+    | '/loans/$id'
     | '/settings/bank-accounts'
     | '/settings/tokens'
     | '/settings/users'
     | '/accounts/'
     | '/bank-transactions/'
     | '/counterparties/'
+    | '/loans/'
     | '/settings/'
     | '/bank-transactions/$id/categorize'
     | '/settings/bank-accounts/$id'
@@ -364,6 +398,7 @@ export interface RootRouteChildren {
   BudgetsRoute: typeof BudgetsRoute
   CounterpartiesRoute: typeof CounterpartiesRouteWithChildren
   JournalRoute: typeof JournalRouteWithChildren
+  LoansRoute: typeof LoansRouteWithChildren
   LoginRoute: typeof LoginRoute
   PiggyBanksRoute: typeof PiggyBanksRoute
   ReportsRoute: typeof ReportsRoute
@@ -414,6 +449,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/loans': {
+      id: '/loans'
+      path: '/loans'
+      fullPath: '/loans'
+      preLoaderRoute: typeof LoansRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/journal': {
@@ -479,6 +521,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsIndexRouteImport
       parentRoute: typeof SettingsRoute
     }
+    '/loans/': {
+      id: '/loans/'
+      path: '/'
+      fullPath: '/loans/'
+      preLoaderRoute: typeof LoansIndexRouteImport
+      parentRoute: typeof LoansRoute
+    }
     '/counterparties/': {
       id: '/counterparties/'
       path: '/'
@@ -520,6 +569,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings/bank-accounts'
       preLoaderRoute: typeof SettingsBankAccountsRouteImport
       parentRoute: typeof SettingsRoute
+    }
+    '/loans/$id': {
+      id: '/loans/$id'
+      path: '/$id'
+      fullPath: '/loans/$id'
+      preLoaderRoute: typeof LoansIdRouteImport
+      parentRoute: typeof LoansRoute
     }
     '/journal/new': {
       id: '/journal/new'
@@ -627,6 +683,18 @@ const JournalRouteChildren: JournalRouteChildren = {
 const JournalRouteWithChildren =
   JournalRoute._addFileChildren(JournalRouteChildren)
 
+interface LoansRouteChildren {
+  LoansIdRoute: typeof LoansIdRoute
+  LoansIndexRoute: typeof LoansIndexRoute
+}
+
+const LoansRouteChildren: LoansRouteChildren = {
+  LoansIdRoute: LoansIdRoute,
+  LoansIndexRoute: LoansIndexRoute,
+}
+
+const LoansRouteWithChildren = LoansRoute._addFileChildren(LoansRouteChildren)
+
 interface SettingsBankAccountsRouteChildren {
   SettingsBankAccountsIdRoute: typeof SettingsBankAccountsIdRoute
   SettingsBankAccountsIndexRoute: typeof SettingsBankAccountsIndexRoute
@@ -667,6 +735,7 @@ const rootRouteChildren: RootRouteChildren = {
   BudgetsRoute: BudgetsRoute,
   CounterpartiesRoute: CounterpartiesRouteWithChildren,
   JournalRoute: JournalRouteWithChildren,
+  LoansRoute: LoansRouteWithChildren,
   LoginRoute: LoginRoute,
   PiggyBanksRoute: PiggyBanksRoute,
   ReportsRoute: ReportsRoute,

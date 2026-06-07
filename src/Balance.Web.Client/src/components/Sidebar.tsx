@@ -35,6 +35,7 @@ const NAV_MAIN: NavLink[] = [
 
 const NAV_PLAN: NavLink[] = [
     { to: '/budgets', label: 'Budgets', iconName: 'line-chart' },
+    { to: '/loans', label: 'Loans', iconName: 'landmark' },
     { to: '/subscriptions', label: 'Subscriptions', iconName: 'repeat' },
     { to: '/piggy-banks', label: 'Piggy banks', iconName: 'piggy-bank' },
 ];
