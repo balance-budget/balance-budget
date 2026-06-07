@@ -32,6 +32,8 @@ internal sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
 
         builder.Property(a => a.IsPostable).IsRequired();
 
+        builder.Property(a => a.IsLiquid).IsRequired();
+
         builder.Property(a => a.ParentAccountId).HasConversion<AccountId.EfCoreValueConverter>();
 
         builder.Property(a => a.IconName).HasMaxLength(64);

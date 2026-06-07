@@ -45,6 +45,9 @@ namespace Balance.Data.Sqlite.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("IsLiquid")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("IsPostable")
                         .HasColumnType("INTEGER");
 
@@ -81,6 +84,7 @@ namespace Balance.Data.Sqlite.Migrations
                             Code = "3900",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CurrencyCode = "EUR",
+                            IsLiquid = true,
                             IsPostable = true,
                             Name = "Opening Balances",
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
