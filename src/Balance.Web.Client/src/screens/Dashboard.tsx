@@ -16,6 +16,8 @@ import { MtdDeltaChip } from '../components/MtdDeltaChip';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { TrendChart } from '../components/TrendChart';
+import { selectedKey } from '../components/ui/selection';
+import { ToggleButton, ToggleButtonGroup } from '../components/ui/ToggleButtonGroup';
 import { cx } from '../lib/cx';
 import { isLedgerAccount } from '../lib/domain';
 import { formatMoney } from '../lib/money';
@@ -264,25 +266,21 @@ function AccountBalanceTrendPanel() {
     };
 
     const pills = (
-        <div className="flex items-center gap-[6px]">
+        <ToggleButtonGroup
+            aria-label="Trend range"
+            disallowEmptySelection
+            selectedKeys={[range]}
+            onSelectionChange={keys => {
+                const next = selectedKey(keys);
+                if (next !== undefined) setRange(next as TrendRange);
+            }}
+        >
             {TREND_RANGES.map(p => (
-                <button
-                    key={p}
-                    type="button"
-                    onClick={() => {
-                        setRange(p);
-                    }}
-                    className={cx(
-                        'px-[10px] py-[5px] rounded-full text-11 font-medium select-none',
-                        p === range
-                            ? 'bg-brand-primary-soft text-brand-primary'
-                            : 'text-fg-3 hover:text-fg-1',
-                    )}
-                >
+                <ToggleButton key={p} id={p}>
                     {p}
-                </button>
+                </ToggleButton>
             ))}
-        </div>
+        </ToggleButtonGroup>
     );
 
     return (

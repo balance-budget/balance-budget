@@ -1,3 +1,4 @@
+import { Button } from 'react-aria-components';
 import { Icon } from './Icon';
 import { cx } from '../lib/cx';
 
@@ -108,21 +109,21 @@ function PageNumber({
 }) {
     const isCurrent = page === current;
     return (
-        <button
-            type="button"
-            aria-label={`Page ${page}`}
+        <Button
+            aria-label={`Page ${page.toString()}`}
             aria-current={isCurrent ? 'page' : undefined}
-            disabled={isCurrent}
-            onClick={onClick}
+            isDisabled={isCurrent}
+            onPress={onClick}
             className={cx(
-                'min-w-[28px] px-2 py-1 rounded-sm text-12 tabular text-center',
+                'min-w-[28px] px-2 py-1 rounded-sm text-12 tabular text-center outline-none',
+                'data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary',
                 isCurrent
                     ? 'bg-surface-2 text-fg-1 font-medium cursor-default'
-                    : 'text-fg-3 hover:text-fg-1 hover:bg-surface-2',
+                    : 'text-fg-3 cursor-pointer data-[hovered]:text-fg-1 data-[hovered]:bg-surface-2',
             )}
         >
             {page}
-        </button>
+        </Button>
     );
 }
 
@@ -140,14 +141,15 @@ function PageButton({
     onClick: () => void;
 }) {
     return (
-        <button
-            type="button"
+        <Button
             aria-label={label}
-            disabled={disabled}
-            onClick={onClick}
+            isDisabled={disabled}
+            onPress={onClick}
             className={cx(
-                'p-2 rounded-sm text-fg-3 hover:text-fg-1 hover:bg-surface-2',
-                disabled && 'opacity-30 hover:bg-transparent hover:text-fg-3 cursor-not-allowed',
+                'p-2 rounded-sm text-fg-3 outline-none cursor-pointer',
+                'data-[hovered]:text-fg-1 data-[hovered]:bg-surface-2',
+                'data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary',
+                disabled && 'opacity-30 cursor-not-allowed',
             )}
         >
             <Icon
@@ -156,6 +158,6 @@ function PageButton({
                 strokeWidth={2}
                 className={rotated ? 'rotate-180' : undefined}
             />
-        </button>
+        </Button>
     );
 }

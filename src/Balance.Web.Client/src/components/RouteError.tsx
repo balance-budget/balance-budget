@@ -1,3 +1,4 @@
+import { Button } from 'react-aria-components';
 import { useRouter, type ErrorComponentProps } from '@tanstack/react-router';
 
 /**
@@ -14,16 +15,15 @@ export function RouteError({ error, reset }: ErrorComponentProps) {
                 <p className="text-14 text-fg-3">
                     {error.message || 'An unexpected error occurred while loading this page.'}
                 </p>
-                <button
-                    type="button"
-                    onClick={() => {
+                <Button
+                    onPress={() => {
                         reset();
                         void router.invalidate();
                     }}
-                    className="h-9 px-4 inline-flex items-center rounded-sm bg-surface-2 border border-border-soft text-13 font-medium text-fg-1 hover:bg-surface-3"
+                    className="h-9 px-4 inline-flex items-center rounded-sm bg-surface-2 border border-border-soft text-13 font-medium text-fg-1 cursor-pointer outline-none data-[hovered]:bg-surface-3 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary"
                 >
                     Try again
-                </button>
+                </Button>
             </div>
         </div>
     );

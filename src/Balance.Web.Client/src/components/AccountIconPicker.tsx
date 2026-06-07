@@ -1,9 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
+import { Button, DialogTrigger, ListBox, ListBoxItem } from 'react-aria-components';
 import type { AccountType } from '../lib/domain';
 import { cx } from '../lib/cx';
 import { ACCOUNT_ICON_CHOICES, visualHintFor } from '../lib/visualHints';
 import { AccountAvatar } from './AccountAvatar';
 import { Icon } from './Icon';
+import { Popover } from './ui/Popover';
+import { selectedKey } from './ui/selection';
 
 type AccountIconPickerProps = {
     /** Drives the avatar tint and the "Default" icon — the picker re-tints live as the form's Type changes. */
@@ -13,6 +16,9 @@ type AccountIconPickerProps = {
     onChange: (icon: string | null) => void;
 };
 
+/** Sentinel id for the "Default" choice — clears back to the AccountType icon. */
+const DEFAULT_KEY = '__default__';
+
 /**
  * Avatar-shaped trigger that opens a popover grid of the curated account icons
  * (ACCOUNT_ICON_CHOICES) plus a "Default" choice that clears back to the
@@ -21,108 +27,74 @@ type AccountIconPickerProps = {
  */
 export function AccountIconPicker({ accountType, value, onChange }: AccountIconPickerProps) {
     const [open, setOpen] = useState(false);
-    const wrapperRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        if (!open) return;
-        function onDocClick(e: MouseEvent) {
-            if (wrapperRef.current?.contains(e.target as Node)) return;
-            setOpen(false);
-        }
-        function onKeyDown(e: KeyboardEvent) {
-            if (e.key === 'Escape') setOpen(false);
-        }
-        document.addEventListener('mousedown', onDocClick);
-        document.addEventListener('keydown', onKeyDown);
-        return () => {
-            document.removeEventListener('mousedown', onDocClick);
-            document.removeEventListener('keydown', onKeyDown);
-        };
-    }, [open]);
 
     const { accentColor, iconName: defaultIconName } = visualHintFor({
         type: accountType,
         icon: null,
     });
 
-    function commit(icon: string | null) {
-        onChange(icon);
-        setOpen(false);
-    }
-
     return (
-        <div ref={wrapperRef} className="relative">
-            <button
-                type="button"
-                aria-haspopup="listbox"
-                aria-expanded={open}
-                onClick={() => {
-                    setOpen(o => !o);
-                }}
-                className="flex items-center gap-2 p-1 -m-1 rounded-sm hover:bg-surface-2"
-            >
+        <DialogTrigger isOpen={open} onOpenChange={setOpen}>
+            <Button className="flex items-center gap-2 p-1 -m-1 rounded-sm outline-none cursor-pointer data-[hovered]:bg-surface-2 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary">
                 <AccountAvatar account={{ type: accountType, icon: value }} size="md" />
                 <span className="text-12 text-fg-3">
                     {value === null ? 'Default' : 'Custom'} — click to change
                 </span>
-            </button>
-            {open && (
-                <div
-                    role="listbox"
+            </Button>
+            <Popover placement="bottom start" className="w-[296px] p-2">
+                <ListBox
                     aria-label="Account icon"
-                    className={cx(
-                        'absolute top-full left-0 mt-1 z-50 w-[296px] p-2',
-                        'bg-bg-1 border border-border-soft rounded-sm shadow-overlay',
-                    )}
+                    layout="grid"
+                    selectionMode="single"
+                    selectedKeys={[value ?? DEFAULT_KEY]}
+                    onSelectionChange={keys => {
+                        const key = selectedKey(keys);
+                        if (key === undefined) return;
+                        onChange(key === DEFAULT_KEY ? null : String(key));
+                        setOpen(false);
+                    }}
+                    className="grid grid-cols-8 gap-1 outline-none"
                 >
-                    <button
-                        type="button"
-                        role="option"
-                        aria-selected={value === null}
-                        onClick={() => {
-                            commit(null);
-                        }}
-                        className={cx(
-                            'w-full flex items-center gap-2 px-2 py-[6px] mb-1 rounded-sm text-12',
-                            value === null
-                                ? 'bg-brand-primary-soft text-brand-primary'
-                                : 'text-fg-2 hover:bg-surface-2',
-                        )}
+                    <ListBoxItem
+                        id={DEFAULT_KEY}
+                        textValue={`Default for ${accountType}`}
+                        className={({ isSelected }) =>
+                            cx(
+                                'col-span-8 flex items-center gap-2 px-2 py-[6px] mb-1 rounded-sm text-12 cursor-pointer outline-none',
+                                'data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary',
+                                isSelected
+                                    ? 'bg-brand-primary-soft text-brand-primary'
+                                    : 'text-fg-2 data-[hovered]:bg-surface-2',
+                            )
+                        }
                     >
                         <Icon name={defaultIconName} size={14} strokeWidth={1.75} />
                         <span>Default for {accountType}</span>
-                    </button>
-                    <div className="grid grid-cols-8 gap-1">
-                        {ACCOUNT_ICON_CHOICES.map(icon => {
-                            const selected = icon === value;
-                            return (
-                                <button
-                                    key={icon}
-                                    type="button"
-                                    role="option"
-                                    aria-selected={selected}
-                                    title={icon}
-                                    onClick={() => {
-                                        commit(icon);
-                                    }}
-                                    style={{
-                                        color: accentColor,
-                                        background: selected
-                                            ? `color-mix(in srgb, ${accentColor} 16%, transparent)`
-                                            : undefined,
-                                    }}
-                                    className={cx(
-                                        'w-8 h-8 inline-flex items-center justify-center rounded-sm',
-                                        !selected && 'hover:bg-surface-2',
-                                    )}
-                                >
-                                    <Icon name={icon} size={16} strokeWidth={1.75} />
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
-        </div>
+                    </ListBoxItem>
+                    {ACCOUNT_ICON_CHOICES.map(icon => (
+                        <ListBoxItem
+                            key={icon}
+                            id={icon}
+                            textValue={icon}
+                            style={({ isSelected }) => ({
+                                color: accentColor,
+                                background: isSelected
+                                    ? `color-mix(in srgb, ${accentColor} 16%, transparent)`
+                                    : undefined,
+                            })}
+                            className={({ isSelected }) =>
+                                cx(
+                                    'w-8 h-8 inline-flex items-center justify-center rounded-sm cursor-pointer outline-none',
+                                    'data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary',
+                                    !isSelected && 'data-[hovered]:bg-surface-2',
+                                )
+                            }
+                        >
+                            <Icon name={icon} size={16} strokeWidth={1.75} />
+                        </ListBoxItem>
+                    ))}
+                </ListBox>
+            </Popover>
+        </DialogTrigger>
     );
 }

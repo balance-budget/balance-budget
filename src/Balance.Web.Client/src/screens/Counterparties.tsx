@@ -9,10 +9,10 @@ import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Pagination } from '../components/Pagination';
 import { Panel, SectionHead } from '../components/Panel';
-import { SearchInput } from '../components/SearchInput';
 import { Skeleton } from '../components/Skeleton';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useToast } from '../components/ui/Toast';
+import { SearchField } from '../components/ui/SearchField';
 import { handleActionError } from '../lib/formErrors';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
 import { CounterpartyFormModal } from './CounterpartyForm';
@@ -54,7 +54,8 @@ export function Counterparties({
                     }
                 />
                 <div className="mb-4">
-                    <SearchInput
+                    <SearchField
+                        aria-label="Search counterparties"
                         value={q}
                         onChange={onSearchChange}
                         placeholder="Search counterparties…"

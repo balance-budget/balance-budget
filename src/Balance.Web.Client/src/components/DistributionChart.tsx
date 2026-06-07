@@ -14,6 +14,7 @@ import type { ReportPeriod } from '../lib/reportPeriod';
 import { chartBaseColorForType, shadeOf } from '../lib/visualHints';
 import { ErrorState } from './ErrorState';
 import { Panel, SectionHead } from './Panel';
+import { Breadcrumb, Breadcrumbs } from './ui/Breadcrumbs';
 import { Skeleton } from './Skeleton';
 
 type DistributionChartProps = {
@@ -76,7 +77,7 @@ export function DistributionChart({ period, currency }: DistributionChartProps) 
         <Panel>
             <SectionHead
                 title="Distribution"
-                subtitle={<Breadcrumbs type={type} trail={trail} onJump={jumpTo} />}
+                subtitle={<DrillBreadcrumbs type={type} trail={trail} onJump={jumpTo} />}
                 action={toggle}
             />
             {distribution.isPending ? (
@@ -97,7 +98,7 @@ export function DistributionChart({ period, currency }: DistributionChartProps) 
     );
 }
 
-function Breadcrumbs({
+function DrillBreadcrumbs({
     type,
     trail,
     onJump,
@@ -108,35 +109,27 @@ function Breadcrumbs({
 }) {
     const rootLabel = type === 'income' ? 'All income' : 'All expenses';
     return (
-        <span className="flex flex-wrap items-center gap-1 text-14 text-fg-3">
-            <button
-                type="button"
-                onClick={() => {
+        <Breadcrumbs className="text-14 text-fg-3">
+            <Breadcrumb
+                isDisabled={trail.length === 0}
+                onPress={() => {
                     onJump(-1);
                 }}
-                className={cx(trail.length > 0 && 'hover:text-brand-primary')}
-                disabled={trail.length === 0}
             >
                 {rootLabel}
-            </button>
+            </Breadcrumb>
             {trail.map((crumb, i) => (
-                <span key={crumb.id} className="flex items-center gap-1">
-                    <span className="text-fg-3">/</span>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            onJump(i);
-                        }}
-                        className={cx(
-                            i < trail.length - 1 ? 'hover:text-brand-primary' : 'text-fg-1',
-                        )}
-                        disabled={i === trail.length - 1}
-                    >
-                        {crumb.name}
-                    </button>
-                </span>
+                <Breadcrumb
+                    key={crumb.id}
+                    isDisabled={i === trail.length - 1}
+                    onPress={() => {
+                        onJump(i);
+                    }}
+                >
+                    {crumb.name}
+                </Breadcrumb>
             ))}
-        </span>
+        </Breadcrumbs>
     );
 }
 
