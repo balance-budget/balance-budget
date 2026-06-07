@@ -29,7 +29,10 @@ import { Icon } from '../components/Icon';
 import { Modal, ModalFooter } from '../components/Modal';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
+import { IconButton } from '../components/ui/Button';
 import { DatePicker } from '../components/ui/DatePicker';
+import { NumberField } from '../components/ui/NumberField';
+import { TextField } from '../components/ui/TextField';
 import { useToast } from '../components/ui/Toast';
 import { todayIso } from '../lib/dates';
 import {
@@ -577,42 +580,37 @@ function LineRow({
                 />
                 <FieldError name={`lines[${index.toString()}].accountId`} errors={fieldErrors} />
             </div>
-            <div className="flex flex-col gap-1">
-                <input
-                    type="text"
-                    inputMode="decimal"
-                    value={line.amount}
-                    onChange={e => {
-                        onUpdate(index, { amount: e.target.value });
-                    }}
-                    placeholder="0.00"
-                    className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 text-right font-mono tabular focus:outline-none focus:border-border-strong"
-                />
-                <FieldError name={`lines[${index.toString()}].amount`} errors={fieldErrors} />
-            </div>
-            <div>
-                <input
-                    type="text"
-                    value={line.description}
-                    onChange={e => {
-                        onUpdate(index, { description: e.target.value });
-                    }}
-                    maxLength={500}
-                    placeholder="Optional"
-                    className="w-full px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-13 focus:outline-none focus:border-border-strong"
-                />
-            </div>
-            <button
-                type="button"
-                onClick={() => {
+            <NumberField
+                aria-label="Amount"
+                name={`lines[${index.toString()}].amount`}
+                value={line.amount === '' ? NaN : Number(line.amount)}
+                onChange={n => {
+                    onUpdate(index, { amount: Number.isNaN(n) ? '' : String(n) });
+                }}
+                formatOptions={{ style: 'currency', currency: currencyCode }}
+                placeholder="0.00"
+                inputClassName="text-right font-mono"
+            />
+            <TextField
+                aria-label="Line description"
+                value={line.description}
+                onChange={description => {
+                    onUpdate(index, { description });
+                }}
+                maxLength={500}
+                placeholder="Optional"
+                inputClassName="text-13"
+            />
+            <IconButton
+                onPress={() => {
                     onRemove(index);
                 }}
-                disabled={!canRemove}
-                title="Remove this line"
-                className="self-end lg:self-start mt-[6px] p-1 text-fg-3 hover:text-danger disabled:opacity-40 disabled:cursor-not-allowed"
+                isDisabled={!canRemove}
+                aria-label="Remove this line"
+                className="self-end lg:self-start mt-[6px] data-[hovered]:text-danger data-[hovered]:bg-transparent"
             >
                 <Icon name="trash" size={14} strokeWidth={2} />
-            </button>
+            </IconButton>
         </div>
     );
 }
