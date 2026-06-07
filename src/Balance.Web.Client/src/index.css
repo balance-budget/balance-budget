@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@plugin 'tailwindcss-react-aria-components';
 
 /*
  * Design tokens — Balance Design System.
