@@ -13,7 +13,7 @@ import { AccountAvatar } from '../components/AccountAvatar';
 import { AccountSelect } from '../components/AccountSelect';
 import { Amount } from '../components/Amount';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { DateInput } from '../components/DateInput';
+import { DateRangePicker } from '../components/ui/DateRangePicker';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Pagination } from '../components/Pagination';
@@ -235,25 +235,14 @@ function RegisterFilterBar({
                     ariaLabel="Filter by counter-account"
                 />
             </div>
-            <div className="flex items-center gap-1">
-                <DateInput
-                    value={filters.from}
-                    max={filters.to === '' ? undefined : filters.to}
-                    onChange={v => {
-                        onFiltersChange({ from: v });
-                    }}
-                    ariaLabel="From date"
-                />
-                <span className="text-12 text-fg-3">–</span>
-                <DateInput
-                    value={filters.to}
-                    min={filters.from === '' ? undefined : filters.from}
-                    onChange={v => {
-                        onFiltersChange({ to: v });
-                    }}
-                    ariaLabel="To date"
-                />
-            </div>
+            <DateRangePicker
+                aria-label="Date range"
+                value={{ from: filters.from, to: filters.to }}
+                onChange={range => {
+                    onFiltersChange({ from: range.from, to: range.to });
+                }}
+                fieldClassName="text-12 py-[5px]"
+            />
             <div className="flex items-center gap-2" role="tablist" aria-label="Status filter">
                 {STATUS_FILTERS.map(status => {
                     const active = status === filters.status;

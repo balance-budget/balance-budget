@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router';
 import { useAccounts, type Account } from '../api/accounts';
 import { useJournalEntries, type JournalEntry } from '../api/journalEntries';
 import { AccountSelect } from '../components/AccountSelect';
-import { DateInput } from '../components/DateInput';
+import { DateRangePicker } from '../components/ui/DateRangePicker';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Pagination } from '../components/Pagination';
@@ -109,25 +109,14 @@ function ActivityFilterBar({
                     ariaLabel="Filter by account"
                 />
             </div>
-            <div className="flex items-center gap-1">
-                <DateInput
-                    value={filters.from}
-                    max={filters.to === '' ? undefined : filters.to}
-                    onChange={v => {
-                        onFiltersChange({ from: v });
-                    }}
-                    ariaLabel="From date"
-                />
-                <span className="text-12 text-fg-3">–</span>
-                <DateInput
-                    value={filters.to}
-                    min={filters.from === '' ? undefined : filters.from}
-                    onChange={v => {
-                        onFiltersChange({ to: v });
-                    }}
-                    ariaLabel="To date"
-                />
-            </div>
+            <DateRangePicker
+                aria-label="Date range"
+                value={{ from: filters.from, to: filters.to }}
+                onChange={range => {
+                    onFiltersChange({ from: range.from, to: range.to });
+                }}
+                fieldClassName="text-12 py-[5px]"
+            />
         </div>
     );
 }

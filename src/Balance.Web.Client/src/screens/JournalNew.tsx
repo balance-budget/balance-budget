@@ -6,7 +6,6 @@ import { useCounterparties } from '../api/counterparties';
 import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import { useCreateJournalEntry } from '../api/journalEntries';
 import { AccountSelect } from '../components/AccountSelect';
-import { DateField } from '../components/DateField';
 import { ErrorState } from '../components/ErrorState';
 import { FieldError } from '../components/FieldError';
 import { FormErrorBanner } from '../components/FormErrorBanner';
@@ -14,6 +13,7 @@ import { Icon } from '../components/Icon';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { Button, IconButton } from '../components/ui/Button';
+import { DatePicker } from '../components/ui/DatePicker';
 import { Select, SelectItem } from '../components/ui/Select';
 import { TextField } from '../components/ui/TextField';
 import { useToast } from '../components/ui/Toast';
@@ -207,7 +207,6 @@ function JournalNewForm({
                         onAddCounterparty={() => {
                             setCreateCounterparty(true);
                         }}
-                        fieldErrors={fieldErrors}
                     />
                     <ModeToggle
                         mode={form.mode}
@@ -269,29 +268,23 @@ function HeaderInputs({
     counterparties,
     onPatch,
     onAddCounterparty,
-    fieldErrors,
 }: {
     form: FormState;
     counterparties: { id: CounterpartyId; name: string }[];
     onPatch: (patch: Partial<FormState['header']>) => void;
     onAddCounterparty: () => void;
-    fieldErrors: FieldErrors | null;
 }) {
     return (
         <div className="grid grid-cols-[140px_1fr_minmax(220px,300px)] gap-3 mb-4">
-            <label className="flex flex-col gap-1">
-                <span className="text-12 font-medium text-fg-2">Date</span>
-                <DateField
-                    value={form.header.date}
-                    onChange={date => {
-                        onPatch({ date });
-                    }}
-                    required
-                    ariaLabel="Date"
-                    className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
-                />
-                <FieldError name="Date" errors={fieldErrors} />
-            </label>
+            <DatePicker
+                label="Date"
+                name="Date"
+                value={form.header.date}
+                onChange={date => {
+                    onPatch({ date });
+                }}
+                isRequired
+            />
             <TextField
                 label="Description"
                 name="Description"

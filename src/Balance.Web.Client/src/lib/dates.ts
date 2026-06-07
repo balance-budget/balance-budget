@@ -2,26 +2,16 @@
  * Date formatters for charts. The chart axis cares about cadence (range
  * dictates whether the day-of-month is informative); tooltips want a full
  * human-readable date. Locale follows the browser's preference via
- * `Intl.DateTimeFormat(undefined, ...)`.
+ * `Intl.DateTimeFormat(undefined, ...)`. Parsing/arithmetic is
+ * `@internationalized/date` (ADR-0024) — no hand-rolled ISO handling.
  */
 
+import { getLocalTimeZone, parseDate, today } from '@internationalized/date';
 import type { TrendRange } from '../api/dashboard';
 
 /** Today's date as a local `YYYY-MM-DD` string (for date-input defaults). */
 export function todayIso(): string {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(now.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-}
-
-/** True when `value` is a real calendar day in strict `yyyy-MM-dd` form. */
-export function isValidIsoDate(value: string): boolean {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-    const [y = 0, m = 0, d = 0] = value.split('-').map(Number);
-    const parsed = new Date(y, m - 1, d);
-    return parsed.getFullYear() === y && parsed.getMonth() === m - 1 && parsed.getDate() === d;
+    return today(getLocalTimeZone()).toString();
 }
 
 const MONTH_SHORT = new Intl.DateTimeFormat(undefined, { month: 'short' });
@@ -65,7 +55,6 @@ export function formatTrendTooltipDate(date: string): string {
 function parseIsoDate(date: string): Date {
     // The wire emits ISO `YYYY-MM-DD` from DateOnly. `new Date('YYYY-MM-DD')`
     // parses as UTC midnight, which can drift a day in negative-UTC locales;
-    // construct from parts to keep the local calendar day stable.
-    const [year = 1970, month = 1, day = 1] = date.split('-').map(Number);
-    return new Date(year, month - 1, day);
+    // CalendarDate.toDate keeps the local calendar day stable.
+    return parseDate(date).toDate(getLocalTimeZone());
 }

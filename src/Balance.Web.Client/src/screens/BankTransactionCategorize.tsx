@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Form } from 'react-aria-components';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useAccounts, type Account } from '../api/accounts';
 import { useBankAccounts, type BankAccount } from '../api/bankAccounts';
@@ -21,7 +22,6 @@ import { AccountSelect } from '../components/AccountSelect';
 import { BankTransactionDetails } from '../components/BankTransactionDetails';
 import { Combobox } from '../components/Combobox';
 import { type ComboboxItem } from '../components/combobox.state';
-import { DateField } from '../components/DateField';
 import { ErrorState } from '../components/ErrorState';
 import { FieldError } from '../components/FieldError';
 import { FormErrorBanner } from '../components/FormErrorBanner';
@@ -29,6 +29,7 @@ import { Icon } from '../components/Icon';
 import { Modal, ModalFooter } from '../components/Modal';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
+import { DatePicker } from '../components/ui/DatePicker';
 import { useToast } from '../components/ui/Toast';
 import { todayIso } from '../lib/dates';
 import {
@@ -282,12 +283,12 @@ function CategorizeForm({
     }
 
     return (
-        <form
+        <Form
+            validationErrors={fieldErrors ?? undefined}
             onSubmit={e => {
                 e.preventDefault();
                 void submit();
             }}
-            noValidate
         >
             <Panel>
                 <SectionHead
@@ -351,7 +352,7 @@ function CategorizeForm({
                     </button>
                 </div>
             </Panel>
-        </form>
+        </Form>
     );
 }
 
@@ -368,19 +369,15 @@ function HeaderInputs({
 }) {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-[140px_1fr_minmax(220px,300px)] gap-3">
-            <label className="flex flex-col gap-1">
-                <span className="text-12 font-medium text-fg-2">Date</span>
-                <DateField
-                    value={form.date}
-                    onChange={date => {
-                        onPatch({ date });
-                    }}
-                    required
-                    ariaLabel="Date"
-                    className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
-                />
-                <FieldError name="Date" errors={fieldErrors} />
-            </label>
+            <DatePicker
+                label="Date"
+                name="Date"
+                value={form.date}
+                onChange={date => {
+                    onPatch({ date });
+                }}
+                isRequired
+            />
             <label className="flex flex-col gap-1">
                 <span className="text-12 font-medium text-fg-2">Description</span>
                 <input
