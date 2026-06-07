@@ -47,8 +47,9 @@ with Balance's existing Tailwind v4 `@theme` tokens. Concretely:
 
 - A `src/components/ui/` kit wraps each RAC component (`TextField`,
   `SearchField`, `NumberField`, `DatePicker`, `DateRangePicker`, `ComboBox`,
-  `Select`, `Checkbox`, `RadioGroup`, `TagGroup`, `Button`, `Modal`/`Dialog`,
-  `Toast`, `FileTrigger`, `Autocomplete`, `Breadcrumbs`, …) once, baking in
+  `Select`, `Checkbox`, `RadioGroup`, `TagGroup`, `ToggleButtonGroup`
+  (date-range presets), `Button`, `Modal`/`Dialog`, `Toast`, `FileTrigger`,
+  `Autocomplete`, `Breadcrumbs`, …) once, baking in
   Balance field chrome via a shared style helper; screens import only from
   `ui/`. State styling uses the official `tailwindcss-react-aria-components`
   plugin (`@plugin` in `index.css`).
@@ -94,7 +95,7 @@ with Balance's existing Tailwind v4 `@theme` tokens. Concretely:
   reads ISO.
 - Overlay layering moves to RAC's portalled `Popover`/`Modal`, retiring the
   z-index bug class. The intentional no-click-outside-dismiss behaviour of
-  the current `Modal` is preserved (`isDismissable={false}`).
+  the current `Modal` is preserved (RAC's `isDismissable` default).
 - `Combobox.tsx`, `combobox.state.ts(+test)`, `DateField.tsx`,
   `DateInput.tsx`, `Modal.tsx`, `Toast.tsx`, `SearchInput.tsx`, the
   `Launcher` listbox internals, and the ISO date helpers are deleted rather
