@@ -13,7 +13,7 @@ import type { Account } from '../api/accounts';
 import type { BankAccount } from '../api/bankAccounts';
 import type { BankTransaction } from '../api/bankTransactions';
 import type { SuggestedCounterAccount } from '../api/counterparties';
-import type { components } from '../lib/api-types';
+import type { components } from '../lib/api-types.gen';
 import type { AccountId, BankTransactionId, CounterpartyId } from '../lib/domain';
 
 type WireCategorizeRequest = components['schemas']['CategorizeBankTransactionRequest'];

@@ -10,7 +10,7 @@
  */
 
 import type { Currency, CurrencyCatalog } from '../api/currencies';
-import type { components } from './api-types';
+import type { components } from './api-types.gen';
 
 type WireMoney = components['schemas']['Money'];
 export type Money = { amount: number; currencyCode: string };

@@ -18,7 +18,7 @@
  *     debit / credit is non-zero per row, enforced by validation).
  */
 
-import type { components } from '../lib/api-types';
+import type { components } from '../lib/api-types.gen';
 import type { AccountId, CounterpartyId } from '../lib/domain';
 import { parseMoney, type ParseMoneyResult } from '../lib/money';
 

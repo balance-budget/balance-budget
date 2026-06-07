@@ -16,7 +16,7 @@
  * frozen lines are projected from their existing signed amount.
  */
 
-import type { components } from '../lib/api-types';
+import type { components } from '../lib/api-types.gen';
 import type { AccountId, JournalLineId } from '../lib/domain';
 import { parseMoney } from '../lib/money';
 

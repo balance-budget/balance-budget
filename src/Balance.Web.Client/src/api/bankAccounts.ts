@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { components } from '../lib/api-types';
+import type { components } from '../lib/api-types.gen';
 import {
     asAccountId,
     asBankAccountId,

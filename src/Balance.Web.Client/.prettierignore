@@ -1,7 +1,5 @@
 dist
 node_modules
-obj
 .tanstack
-src/routeTree.gen.ts
-src/lib/api-types.ts
+*.gen.ts
 package-lock.json

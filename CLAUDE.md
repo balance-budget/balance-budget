@@ -22,7 +22,7 @@ dotnet restore
 # Frontend npm packages (npm workspaces — single root node_modules covers Balance.Web.Client)
 npm install
 
-# Build (without restore) — also builds the SPA via the esproj reference
+# Build (without restore) — server-only; the SPA builds separately via npm (ADR-0023)
 dotnet build --no-restore -v:minimal
 
 # Generate EF core migrations (without build)
@@ -44,12 +44,18 @@ dotnet test --no-build -v:minimal
 dotnet test --no-build -v:minimal --treenode-filter "/Balance.Tests/Balance.Tests.Domain/MoneyTests/Equality_uses_amount_and_currency"
 
 # Run — two terminals during development
-# .NET host (serves /api/*, and the last built SPA at /)
+# .NET host (serves /api/*, and the last npm-built SPA at /)
 dotnet run --project src/Balance.Web/Balance.Web.csproj
 # Vite dev server (HMR; proxies /api → http://localhost:5248) — browse this URL
 npm run dev
 
-# Publish — bundles the SPA's dist into the ASP.NET publish output
+# Regenerate the typed API client after changing the backend API surface
+# (dotnet build emits artifacts/openapi/Balance.Web.json; output is committed, CI checks drift)
+npm run codegen
+
+# Publish — `npm run build` first: Vite outputs to src/Balance.Web/wwwroot and the
+# static-web-assets pipeline packs it into the publish output (ADR-0023)
+npm run build
 dotnet publish src/Balance.Web/Balance.Web.csproj -c Release
 ```
 
@@ -70,7 +76,7 @@ graph LR
     Postgres[Balance.Data.PostgreSql]
     IntegrationIng[Balance.Integration.Ing]
 
-    Web -->|esproj, ReferenceOutputAssembly=false| Client
+    Web -->|serves Vite build output from wwwroot| Client
     Web --> Services
     Services --> Data
     Data --> Configuration
@@ -86,7 +92,7 @@ graph LR
 
 **Layers**
 - `Balance.Web` — Minimal APIs (all under `/api`), middleware pipeline, Scalar/OpenAPI, and the SPA host (`MapStaticAssets()` + `MapFallbackToFile("index.html")`). Uses `WebApplication.CreateSlimBuilder`.
-- `Balance.Web.Client` — React 19 + TypeScript + Vite SPA. Built via an `.esproj` (`Microsoft.VisualStudio.JavaScript.Sdk`) that wraps `npm run build`; the resulting `dist/` is packed into the ASP.NET publish output via the project reference on `Balance.Web` (`ReferenceOutputAssembly="false"`).
+- `Balance.Web.Client` — React 19 + TypeScript + Vite SPA. A plain npm workspace package (no .NET project). `npm run build` outputs straight into `src/Balance.Web/wwwroot/` (gitignored), where the standard static-web-assets pipeline discovers it on publish (ADR-0023). `dotnet build` never invokes npm.
 - `Balance.Services` — Business logic, Quartz jobs, `IApplicationVersionService`, and the bank-import contract `IBankTransactionExtractor`. Composes `Configuration` + `Data` + `Jobs`.
 - `Balance.Integration.Ing` — ING bank-statement importers. References `Balance.Services` and implements `IBankTransactionExtractor`; composed at the host *beside* Services (a third `AddBalanceIntegrationIng()` call), not nested under it, to avoid a Services↔Integration reference cycle. See `docs/adr/0018-integration-layer-composed-at-host.md`. New banks are new `Balance.Integration.<Bank>` projects.
 - `Balance.Data` — EF Core `BalanceDbContext` (also implements `IDataProtectionKeyContext`), abstract `BaseEntity` (`Id`/`CreatedAt`/`UpdatedAt`), migration host extension, UTC value converters.
@@ -121,13 +127,13 @@ The web host startup follows this order:
 2. `AddBalanceServices` → `AddBalanceConfiguration` → `AddBalanceData` (registers `BalanceDbContext`, factory, and Data Protection persistence) → `AddBalanceJobs` (Quartz hosted service) → `IApplicationVersionService`.
 3. `AddBalanceWeb` — OpenAPI, lowercase routing, forwarded headers (trust any proxy IP, the app is assumed to sit behind a reverse proxy), cookie auth, antiforgery, permissive CORS, health checks.
 4. `MigrateDatabaseAsync(cancellationToken)` runs `dbContext.Database.MigrateAsync` on startup, logged through `Balance.Data/Logging/LoggerExtensions`.
-5. SPA hosting — `MapStaticAssets()` then `MapFallbackToFile("index.html")`. The SPA's `dist/` (from `Balance.Web.Client`) is bundled into the publish output via the esproj project reference.
+5. SPA hosting — `MapStaticAssets()` then `MapFallbackToFile("index.html")`. The SPA builds into `src/Balance.Web/wwwroot/` (Vite `outDir`), which the static-web-assets pipeline discovers and packs into the publish output (ADR-0023). Unmatched `/api/*` URLs hit an API-group fallback returning a Problem Details 404, never the SPA shell.
 6. API endpoints — every backend route is registered on `var api = app.MapGroup("/api")`: `/api/healthz/{live,ready}`, `/api/openapi/...`, `/api/docs/` (Scalar), and the feature endpoint groups.
 7. Middleware order (in `Program.cs`): `ExceptionHandler → StatusCodePages → ForwardedHeaders → DefaultFiles → Routing → CORS → Authentication → Authorization → Antiforgery`.
 
 ## CI
 
-`.github/workflows/build-and-test.yml`: `dotnet tool restore` → `dotnet restore` → CSharpier check → build → frontend ESLint (`npm run lint` from the repo root, which forwards to the `Balance.Web.Client` workspace and reuses the SPA build the esproj already ran) → CodeQL (public repos) → `dotnet test` with cobertura coverage. Test results and coverage are posted as sticky PR comments. A separate scheduled `codeql.yml` re-runs CodeQL weekly.
+`.github/workflows/build-and-test.yml`: `dotnet tool restore` → `dotnet restore` → `npm ci` → CSharpier check → `dotnet build` (server-only, emits the OpenAPI document) → `npm run codegen` → frontend lint, format check, vitest → `npm run build` (into `wwwroot/`, regenerates `routeTree.gen.ts`) → `.gen.ts` drift gate (`git diff --exit-code -- '*.gen.ts'`) → CodeQL (public repos) → `dotnet test` with cobertura coverage. Test results and coverage are posted as sticky PR comments. A separate scheduled `codeql.yml` re-runs CodeQL weekly.
 
 ## Notes for AI agents
 

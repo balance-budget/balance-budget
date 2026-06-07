@@ -71,7 +71,7 @@ import {
     type SaveAllOutcome,
     type SaveAllSummary,
 } from './bankTransactionsInbox.state';
-import type { components } from '../lib/api-types';
+import type { components } from '../lib/api-types.gen';
 
 type WireCounterparty = components['schemas']['CounterpartyOutput'];
 type WireJournalEntry = components['schemas']['JournalEntryOutput'];

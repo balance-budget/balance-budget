@@ -7,6 +7,11 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite';
 export default defineConfig({
     plugins: [tanstackRouter({ target: 'react', autoCodeSplitting: true }), react(), tailwindcss()],
     build: {
+        // Build straight into the ASP.NET host's web root so the standard
+        // static-web-assets discovery pipeline picks the SPA up on publish
+        // and MapStaticAssets() serves it. See ADR-0023.
+        outDir: '../Balance.Web/wwwroot',
+        emptyOutDir: true,
         sourcemap: true,
         rollupOptions: {
             output: {

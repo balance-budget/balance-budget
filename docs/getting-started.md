@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - .NET SDK **10.0.300** (or any `10.0.x` that satisfies `rollForward=latestMinor`). The version is pinned in `global.json`.
-- **Node.js 20+** for the React + Vite frontend (`Balance.Web.Client`). The esproj build invokes `npm` and Vite 8 requires Node 20.19+ / 22.12+.
+- **Node.js 20+** for the React + Vite frontend (`Balance.Web.Client`). Vite 8 requires Node 20.19+ / 22.12+; CI uses Node 24.
 - An IDE that understands the new `.slnx` solution format — Rider, Visual Studio 2022 17.11+, or VS Code with the C# Dev Kit.
 - (Optional) PostgreSQL 14+ if you want to run against the Postgres provider instead of SQLite.
 
@@ -13,7 +13,7 @@
 dotnet tool restore      # installs CSharpier as a local tool
 dotnet restore           # restores NuGet packages
 npm install              # restores SPA dependencies (npm workspace → root node_modules)
-dotnet build             # also runs `npm run build` via the esproj reference
+dotnet build             # server-only; the SPA builds separately via npm (ADR-0023)
 ```
 
 The repo is an [npm workspace](https://docs.npmjs.com/cli/v10/using-npm/workspaces): the SPA at `src/Balance.Web.Client` is declared as a workspace in the root `package.json`, so a single `npm install` at the repo root covers everything and produces one root `node_modules/`.
@@ -21,8 +21,12 @@ The repo is an [npm workspace](https://docs.npmjs.com/cli/v10/using-npm/workspac
 ## Common commands
 
 ```bash
-# Build (also builds the SPA via the esproj reference on Balance.Web)
+# Build (server-only; emits artifacts/openapi/Balance.Web.json for codegen)
 dotnet build --no-restore
+
+# Regenerate the typed API client after changing the backend API surface
+# (output src/lib/api-types.gen.ts is committed; CI fails if it drifts)
+npm run codegen
 
 # Format (CI fails if these report differences)
 dotnet csharpier check .
@@ -32,17 +36,19 @@ dotnet csharpier format .
 dotnet test
 
 # Run — two terminals during development
-# Terminal 1: .NET host (serves /api/*, and the last built SPA at /)
+# Terminal 1: .NET host (serves /api/*, and the last npm-built SPA at /)
 dotnet run --project src/Balance.Web/Balance.Web.csproj
 
 # Terminal 2: Vite dev server with HMR — browse http://localhost:5173
 npm run dev
 
-# Publish (bundles the SPA's dist into the publish output)
+# Publish (npm run build first — Vite outputs to src/Balance.Web/wwwroot, which the
+# static-web-assets pipeline discovers and packs into the publish output, ADR-0023)
+npm run build
 dotnet publish src/Balance.Web/Balance.Web.csproj -c Release
 ```
 
-During development, point your browser at the **Vite dev server** (`http://localhost:5173`) — it serves the SPA with HMR and proxies `/api/*` to the .NET host on `:5248` per `src/Balance.Web.Client/vite.config.ts`. The .NET host's `/` will still serve whatever SPA `dist/` was last built, which goes stale unless you rebuild — useful only for sanity-checking the published shape.
+During development, point your browser at the **Vite dev server** (`http://localhost:5173`) — it serves the SPA with HMR and proxies `/api/*` to the .NET host on `:5248` per `src/Balance.Web.Client/vite.config.ts`. The .NET host's `/` serves whatever `npm run build` last left in `src/Balance.Web/wwwroot/` — possibly nothing on a fresh clone, and stale until you rebuild. Useful only for sanity-checking the published shape.
 
 ## Configuration
 

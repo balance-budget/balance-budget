@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import type { components } from '../lib/api-types';
+import type { components } from '../lib/api-types.gen';
 import { getJson } from '../lib/http';
 import { toNumber } from '../lib/money';
 

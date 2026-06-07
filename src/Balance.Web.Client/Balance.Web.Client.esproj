@@ -1,7 +1,0 @@
-<Project Sdk="Microsoft.VisualStudio.JavaScript.Sdk/1.0.5550578">
-  <PropertyGroup>
-    <BuildCommand>npm run build</BuildCommand>
-    <ProductionBuildCommand>npm run build</ProductionBuildCommand>
-    <BuildOutputFolder>dist</BuildOutputFolder>
-  </PropertyGroup>
-</Project>
