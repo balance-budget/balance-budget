@@ -58,6 +58,8 @@ export type AccountSelectProps = {
     placeholder?: string;
     disabled?: boolean;
     ariaLabel?: string;
+    /** Field name for React Aria Form `validationErrors`. */
+    name?: string;
 };
 
 function toItem(account: Account, byId: ReadonlyMap<AccountId, Account>): ComboboxItem<AccountId> {
@@ -103,6 +105,7 @@ export function AccountSelect({
     placeholder,
     disabled,
     ariaLabel,
+    name,
 }: AccountSelectProps) {
     const accounts = useAccounts();
     const all = useMemo(() => accounts.data ?? [], [accounts.data]);
@@ -165,6 +168,7 @@ export function AccountSelect({
             placeholder={placeholder}
             disabled={disabled}
             ariaLabel={ariaLabel}
+            name={name}
             listboxMinWidth={LISTBOX_MIN_WIDTH}
         />
     );
