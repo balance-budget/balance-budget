@@ -1,5 +1,6 @@
-import { Modal, ModalFooter } from './Modal';
 import { FormErrorBanner } from './FormErrorBanner';
+import { Button } from './ui/Button';
+import { Modal, ModalFooter } from './ui/Modal';
 
 type ConfirmDialogProps = {
     open: boolean;
@@ -26,33 +27,21 @@ export function ConfirmDialog({
     busy = false,
     error = null,
 }: ConfirmDialogProps) {
-    const isDestructive = variant === 'destructive';
     return (
         <Modal open={open} onClose={onClose} title={title} width="sm">
             <FormErrorBanner message={error} />
             {message ? <p className="text-13 text-fg-2">{message}</p> : null}
             <ModalFooter>
-                <button
-                    type="button"
-                    onClick={onClose}
-                    disabled={busy}
-                    className="px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
-                >
+                <Button variant="ghost" onPress={onClose} isDisabled={busy}>
                     {cancelLabel}
-                </button>
-                <button
-                    type="button"
-                    onClick={onConfirm}
-                    disabled={busy}
-                    className={
-                        'px-3 py-[7px] rounded-sm text-13 font-medium text-white disabled:opacity-60 ' +
-                        (isDestructive
-                            ? 'bg-danger hover:bg-danger-strong'
-                            : 'bg-brand-primary hover:bg-brand-primary-dark')
-                    }
+                </Button>
+                <Button
+                    variant={variant === 'destructive' ? 'danger' : 'primary'}
+                    onPress={onConfirm}
+                    isDisabled={busy}
                 >
                     {busy ? 'Working…' : confirmLabel}
-                </button>
+                </Button>
             </ModalFooter>
         </Modal>
     );

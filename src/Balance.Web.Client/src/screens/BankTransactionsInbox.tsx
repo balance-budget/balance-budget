@@ -29,7 +29,7 @@ import { ErrorState } from '../components/ErrorState';
 import { FieldError } from '../components/FieldError';
 import { FormErrorBanner } from '../components/FormErrorBanner';
 import { Icon } from '../components/Icon';
-import { Modal, ModalFooter } from '../components/Modal';
+import { Modal, ModalFooter } from '../components/ui/Modal';
 import { Pagination } from '../components/Pagination';
 import { Panel, SectionHead } from '../components/Panel';
 import { SearchInput } from '../components/SearchInput';
