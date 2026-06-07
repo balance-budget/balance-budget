@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Form } from 'react-aria-components';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useAccounts, type Account } from '../api/accounts';
 import {
@@ -17,7 +18,6 @@ import { BankTransactionDetails } from '../components/BankTransactionDetails';
 import { Combobox } from '../components/Combobox';
 import { type ComboboxItem } from '../components/combobox.state';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { DateField } from '../components/DateField';
 import { ErrorState } from '../components/ErrorState';
 import { FieldError } from '../components/FieldError';
 import { FormErrorBanner } from '../components/FormErrorBanner';
@@ -25,6 +25,9 @@ import { Icon } from '../components/Icon';
 import { Panel, SectionHead } from '../components/Panel';
 import { ProjectionAmount } from '../components/ProjectionAmount';
 import { Skeleton } from '../components/Skeleton';
+import { Button } from '../components/ui/Button';
+import { DatePicker } from '../components/ui/DatePicker';
+import { TextField } from '../components/ui/TextField';
 import { useToast } from '../components/ui/Toast';
 import { accountPathLabel } from '../lib/accountTree';
 import { cx } from '../lib/cx';
@@ -436,12 +439,12 @@ function EditJournalEntry({
     }
 
     return (
-        <form
+        <Form
+            validationErrors={fieldErrors ?? undefined}
             onSubmit={e => {
                 e.preventDefault();
                 void submit();
             }}
-            noValidate
         >
             {entry.bankTransactions.map(bt => (
                 <Panel key={bt.id}>
@@ -460,31 +463,21 @@ function EditJournalEntry({
                 />
                 <FormErrorBanner message={topError} />
                 <div className="grid grid-cols-1 lg:grid-cols-[140px_1fr_minmax(180px,260px)] gap-3 mb-4">
-                    <label className="flex flex-col gap-1">
-                        <span className="text-12 font-medium text-fg-2">Date</span>
-                        <DateField
-                            value={date}
-                            onChange={setDate}
-                            required
-                            ariaLabel="Date"
-                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
-                        />
-                        <FieldError name="Date" errors={fieldErrors} />
-                    </label>
-                    <label className="flex flex-col gap-1">
-                        <span className="text-12 font-medium text-fg-2">Description</span>
-                        <input
-                            type="text"
-                            value={description}
-                            onChange={e => {
-                                setDescription(e.target.value);
-                            }}
-                            maxLength={500}
-                            placeholder="Optional"
-                            className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 focus:outline-none focus:border-border-strong"
-                        />
-                        <FieldError name="Description" errors={fieldErrors} />
-                    </label>
+                    <DatePicker
+                        label="Date"
+                        name="Date"
+                        value={date}
+                        onChange={setDate}
+                        isRequired
+                    />
+                    <TextField
+                        label="Description"
+                        name="Description"
+                        value={description}
+                        onChange={setDescription}
+                        maxLength={500}
+                        placeholder="Optional"
+                    />
                     <div className="flex flex-col gap-1">
                         <span className="text-12 font-medium text-fg-2">Counterparty</span>
                         <Combobox
@@ -517,24 +510,19 @@ function EditJournalEntry({
                 />
                 <BalanceFooter totals={totals} currencyCode={currencyCode} catalog={catalog} />
                 <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-border-soft">
-                    <button
-                        type="button"
-                        onClick={onCancel}
-                        disabled={replace.isPending}
-                        className="px-3 py-[7px] rounded-sm text-13 font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
-                    >
+                    <Button variant="ghost" onPress={onCancel} isDisabled={replace.isPending}>
                         Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         type="submit"
-                        disabled={replace.isPending || !totals.balanced}
-                        className="px-3 py-[7px] rounded-sm text-13 font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
+                        variant="primary"
+                        isDisabled={replace.isPending || !totals.balanced}
                     >
                         {replace.isPending ? 'Saving…' : 'Save'}
-                    </button>
+                    </Button>
                 </div>
             </Panel>
-        </form>
+        </Form>
     );
 }
 

@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { CalendarDate } from '@internationalized/date';
 import { defaultPeriod, detectPreset, parseIsoDate, presetRange } from './reportPeriod';
 
 // A fixed "today" mid-month so month/year boundary math is unambiguous.
-const TODAY = new Date(2026, 4, 15); // 2026-05-15 (local)
+const TODAY = new CalendarDate(2026, 5, 15);
 
 describe('presetRange', () => {
     it('this-month spans the first to the last day of the current month', () => {

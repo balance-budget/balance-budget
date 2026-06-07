@@ -3,8 +3,19 @@
  * dates that scopes an Insights Report. Presets are pure conveniences that set
  * from/to; the canonical state is the two ISO dates, which live in the route's
  * search params so a period is shareable. All arithmetic is on the local
- * calendar (the wire dates are DateOnly, so there's no time-of-day to mind).
+ * calendar via `@internationalized/date` (the wire dates are DateOnly, so
+ * there's no time-of-day to mind).
  */
+
+import {
+    type CalendarDate,
+    endOfMonth,
+    endOfYear,
+    getLocalTimeZone,
+    startOfMonth,
+    startOfYear,
+    today,
+} from '@internationalized/date';
 
 export type ReportPeriod = { from: string; to: string };
 
@@ -26,54 +37,48 @@ export const PERIOD_PRESETS: { token: Exclude<PeriodPreset, 'custom'>; label: st
     { token: 'last-90', label: 'Last 90 days' },
 ];
 
-function iso(d: Date): string {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
+function range(from: CalendarDate, to: CalendarDate): ReportPeriod {
+    return { from: from.toString(), to: to.toString() };
 }
 
-const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
-const endOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth() + 1, 0);
-const startOfYear = (d: Date) => new Date(d.getFullYear(), 0, 1);
-const endOfYear = (d: Date) => new Date(d.getFullYear(), 11, 31);
-const addDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
-
-/** The [from, to] range for a preset, evaluated against `today` (defaults to now). */
+/** The [from, to] range for a preset, evaluated against `now` (defaults to today). */
 export function presetRange(
     preset: Exclude<PeriodPreset, 'custom'>,
-    today: Date = new Date(),
+    now: CalendarDate = today(getLocalTimeZone()),
 ): ReportPeriod {
     switch (preset) {
         case 'this-month':
-            return { from: iso(startOfMonth(today)), to: iso(endOfMonth(today)) };
+            return range(startOfMonth(now), endOfMonth(now));
         case 'last-month': {
-            const m = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-            return { from: iso(startOfMonth(m)), to: iso(endOfMonth(m)) };
+            const m = now.subtract({ months: 1 });
+            return range(startOfMonth(m), endOfMonth(m));
         }
         case 'this-year':
-            return { from: iso(startOfYear(today)), to: iso(endOfYear(today)) };
+            return range(startOfYear(now), endOfYear(now));
         case 'last-year': {
-            const y = new Date(today.getFullYear() - 1, 0, 1);
-            return { from: iso(startOfYear(y)), to: iso(endOfYear(y)) };
+            const y = now.subtract({ years: 1 });
+            return range(startOfYear(y), endOfYear(y));
         }
         case 'last-30':
-            return { from: iso(addDays(today, -29)), to: iso(today) };
+            return range(now.subtract({ days: 29 }), now);
         case 'last-90':
-            return { from: iso(addDays(today, -89)), to: iso(today) };
+            return range(now.subtract({ days: 89 }), now);
     }
 }
 
 /** The default period when a route carries no params: the current month. */
-export function defaultPeriod(today: Date = new Date()): ReportPeriod {
-    return presetRange('this-month', today);
+export function defaultPeriod(now: CalendarDate = today(getLocalTimeZone())): ReportPeriod {
+    return presetRange('this-month', now);
 }
 
 /** Which preset a period matches exactly, or 'custom' when it lines up with none. */
-export function detectPreset(period: ReportPeriod, today: Date = new Date()): PeriodPreset {
+export function detectPreset(
+    period: ReportPeriod,
+    now: CalendarDate = today(getLocalTimeZone()),
+): PeriodPreset {
     for (const { token } of PERIOD_PRESETS) {
-        const range = presetRange(token, today);
-        if (range.from === period.from && range.to === period.to) return token;
+        const preset = presetRange(token, now);
+        if (preset.from === period.from && preset.to === period.to) return token;
     }
     return 'custom';
 }
