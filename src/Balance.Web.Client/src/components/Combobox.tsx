@@ -1,6 +1,12 @@
 import { ChevronDown, Plus } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { Button, ComboBox as AriaComboBox, Input, type Key } from 'react-aria-components';
+import { useContext, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import {
+    Button,
+    ComboBox as AriaComboBox,
+    ComboBoxStateContext,
+    Input,
+    type Key,
+} from 'react-aria-components';
 import { cx } from '../lib/cx';
 import { FieldError } from './ui/field';
 import { DropdownItem, DropdownListBox, DropdownSection } from './ui/ListBox';
@@ -68,19 +74,29 @@ export function Combobox<T>({
     listboxMinWidth,
 }: ComboboxProps<T>) {
     const selectedItem = useMemo(() => items.find(i => i.value === value) ?? null, [items, value]);
+    const selectedLabel = selectedItem?.label ?? '';
 
-    // While open the input is a query box (starts blank, shows all options);
-    // closed it displays the selection. This mirrors the previous Combobox.
-    const [open, setOpen] = useState(false);
-    const [typed, setTyped] = useState('');
+    // Fully-controlled input text. React Aria writes the committed/reverted
+    // text back through onInputChange, so the input always shows the selection
+    // when closed; while it still matches the selection the list is unfiltered
+    // (opening shows every option, not just the current one).
+    const [typed, setTyped] = useState(selectedLabel);
+    const [lastLabel, setLastLabel] = useState(selectedLabel);
+    if (selectedLabel !== lastLabel) {
+        // External selection change (form reset, parent state) — resync.
+        setLastLabel(selectedLabel);
+        setTyped(selectedLabel);
+    }
+
+    const query = typed === selectedLabel ? '' : typed;
 
     const filtered = useMemo(
-        () => items.filter(item => matchesQuery(item.searchText ?? item.label, typed)),
-        [items, typed],
+        () => items.filter(item => matchesQuery(item.searchText ?? item.label, query)),
+        [items, query],
     );
     const buckets = useMemo(() => groupBuckets(filtered, groupOrder), [filtered, groupOrder]);
 
-    const trimmed = typed.trim();
+    const trimmed = query.trim();
     const createText =
         createLabel !== undefined &&
         trimmed.length > 0 &&
@@ -88,16 +104,23 @@ export function Combobox<T>({
             ? createLabel(trimmed)
             : null;
 
+    const menuRef = useRef<{ close: () => void } | null>(null);
+
     function commit(key: Key | null) {
-        if (key === null) return;
-        if (key === NONE_KEY) {
-            onClear?.();
-        } else if (key === CREATE_KEY) {
-            onCreate?.(trimmed);
-        } else {
-            const item = items.find(i => i.key === key);
-            if (item) onChange(item.value);
-        }
+        if (key === null || key === NONE_KEY || key === CREATE_KEY) return;
+        const item = items.find(i => i.key === key);
+        if (item) onChange(item.value);
+        // With a mocked/lagging parent the controlled `value` may not change,
+        // in which case React Aria would keep the menu open — close explicitly.
+        menuRef.current?.close();
+    }
+
+    // Sentinel rows act, they never become the selection (the parent maps
+    // them to null / a new entity) — the documented onAction pattern.
+    function actOn(callback: () => void) {
+        callback();
+        setTyped(selectedLabel);
+        menuRef.current?.close();
     }
 
     return (
@@ -109,16 +132,11 @@ export function Combobox<T>({
             defaultFilter={() => true}
             value={selectedItem?.key ?? null}
             onChange={commit}
-            inputValue={open ? typed : (selectedItem?.label ?? '')}
-            onInputChange={v => {
-                if (open) setTyped(v);
-            }}
-            onOpenChange={isOpen => {
-                setOpen(isOpen);
-                setTyped('');
-            }}
+            inputValue={typed}
+            onInputChange={setTyped}
             className="group flex flex-col gap-1"
         >
+            <MenuStateBridge menuRef={menuRef} />
             <div className={cx(groupStyles, 'group-data-[invalid]:border-danger')}>
                 <Input
                     placeholder={placeholder}
@@ -143,6 +161,9 @@ export function Combobox<T>({
                             id={NONE_KEY}
                             textValue={noneLabel}
                             className="italic text-fg-3"
+                            onAction={() => {
+                                actOn(() => onClear?.());
+                            }}
                         >
                             {noneLabel}
                         </DropdownItem>
@@ -167,6 +188,9 @@ export function Combobox<T>({
                             id={CREATE_KEY}
                             textValue={createText}
                             className="text-brand-primary"
+                            onAction={() => {
+                                actOn(() => onCreate?.(trimmed));
+                            }}
                         >
                             <Plus size={12} strokeWidth={2} aria-hidden="true" />
                             <span className="truncate">{createText}</span>
@@ -176,6 +200,15 @@ export function Combobox<T>({
             </Popover>
         </AriaComboBox>
     );
+}
+
+/** Exposes the ComboBox's close() to the commit handler above. */
+function MenuStateBridge({ menuRef }: { menuRef: RefObject<{ close: () => void } | null> }) {
+    const state = useContext(ComboBoxStateContext);
+    useEffect(() => {
+        menuRef.current = state;
+    }, [menuRef, state]);
+    return null;
 }
 
 function OptionRow<T>({ item }: { item: ComboboxItem<T> }) {
