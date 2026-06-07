@@ -30,7 +30,10 @@ function RecentRow({ row }: { row: RegisterRow }) {
         <div className="flex items-center justify-between gap-2">
             <span className="text-xs text-fg-2 truncate">{label}</span>
             <span
-                className={cx('font-mono text-xs tabular', negative ? 'text-fg-2' : 'text-success')}
+                className={cx(
+                    'font-mono text-xs tabular-nums',
+                    negative ? 'text-fg-2' : 'text-success',
+                )}
             >
                 {formatMoney(row.amount.amount, row.amount.currencyCode, catalog, { sign: true })}
             </span>
@@ -162,15 +165,21 @@ function KpiStrip() {
         return (
             <section className="grid gap-[14px] grid-cols-1 sm:grid-cols-[1.3fr_1fr_1fr]">
                 <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
-                    <span className="eyebrow truncate">Net worth</span>
+                    <span className="text-xs font-medium text-fg-3 tracking-widest uppercase truncate">
+                        Net worth
+                    </span>
                     <Skeleton className="h-[44px] w-[180px]" />
                 </Panel>
                 <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
-                    <span className="eyebrow truncate">Income · MTD</span>
+                    <span className="text-xs font-medium text-fg-3 tracking-widest uppercase truncate">
+                        Income · MTD
+                    </span>
                     <Skeleton className="h-[22px] w-[120px]" />
                 </Panel>
                 <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
-                    <span className="eyebrow truncate">Expenses · MTD</span>
+                    <span className="text-xs font-medium text-fg-3 tracking-widest uppercase truncate">
+                        Expenses · MTD
+                    </span>
                     <Skeleton className="h-[22px] w-[120px]" />
                 </Panel>
             </section>
@@ -200,7 +209,9 @@ function KpiStrip() {
     return (
         <section className="grid gap-[14px] grid-cols-1 sm:grid-cols-[1.3fr_1fr_1fr]">
             <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
-                <span className="eyebrow truncate">Net worth</span>
+                <span className="text-xs font-medium text-fg-3 tracking-widest uppercase truncate">
+                    Net worth
+                </span>
                 <Amount
                     minor={data.netWorth.amount}
                     currencyCode={data.netWorth.currencyCode}
@@ -211,7 +222,9 @@ function KpiStrip() {
             </Panel>
 
             <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
-                <span className="eyebrow truncate">Income · MTD</span>
+                <span className="text-xs font-medium text-fg-3 tracking-widest uppercase truncate">
+                    Income · MTD
+                </span>
                 <Amount
                     minor={data.incomeMtd.amount}
                     currencyCode={data.incomeMtd.currencyCode}
@@ -225,7 +238,9 @@ function KpiStrip() {
             </Panel>
 
             <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
-                <span className="eyebrow truncate">Expenses · MTD</span>
+                <span className="text-xs font-medium text-fg-3 tracking-widest uppercase truncate">
+                    Expenses · MTD
+                </span>
                 <Amount
                     minor={data.expensesMtd.amount}
                     currencyCode={data.expensesMtd.currencyCode}

@@ -665,7 +665,7 @@ function AdvancedTotalsFooter({
     const creditStr = formatMoney(totals.creditMinor, currency, catalog);
     const diff = totals.debitMinor - totals.creditMinor;
     return (
-        <div className="flex items-center gap-4 text-xs tabular">
+        <div className="flex items-center gap-4 text-xs tabular-nums">
             <span className="text-fg-3">
                 Σ Debit <span className="font-mono text-fg-1">{debitStr}</span>
             </span>

@@ -250,7 +250,7 @@ function BankAccountRow({
                 <span className="text-sm font-medium text-fg-1 truncate">
                     {formatBankAccountLabel(bankAccount)}
                 </span>
-                <span className="text-xs text-fg-3 tabular truncate">
+                <span className="text-xs text-fg-3 tabular-nums truncate">
                     {formatBankAccountSubline(bankAccount)}
                 </span>
             </div>
@@ -373,7 +373,7 @@ function Field({ label, value }: { label: string; value: string | null }) {
     return (
         <div className="flex flex-col gap-[2px]">
             <dt className="text-xs text-fg-3 uppercase tracking-wider">{label}</dt>
-            <dd className="text-fg-1 tabular">{value ?? '—'}</dd>
+            <dd className="text-fg-1 tabular-nums">{value ?? '—'}</dd>
         </div>
     );
 }

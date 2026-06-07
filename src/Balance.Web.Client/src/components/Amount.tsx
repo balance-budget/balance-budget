@@ -5,7 +5,7 @@ import { splitMoney, type FormatOptions } from '../lib/money';
 type AmountProps = {
     minor: number;
     currencyCode: string;
-    /** big = 44px / medium = 22px / inline = 14px tabular */
+    /** big = 44px / medium = 22px / inline = 14px tabular-nums */
     size?: 'big' | 'medium' | 'inline';
     className?: string;
 } & FormatOptions;
@@ -25,13 +25,15 @@ const CENTS_SCALE: Record<NonNullable<AmountProps['size']>, string> = {
 /**
  * Render a Money value with the design system's three-tier emphasis: dim
  * currency symbol, full-weight integer, dim fractional tail. Always
- * tabular-aligned.
+ * tabular-nums-aligned.
  */
 export function Amount({ minor, currencyCode, size = 'medium', className, ...fmt }: AmountProps) {
     const catalog = useCurrencyCatalog();
     const m = splitMoney(minor, currencyCode, catalog, fmt);
     return (
-        <span className={cx('tabular inline-flex items-baseline', SIZE_CLASS[size], className)}>
+        <span
+            className={cx('tabular-nums inline-flex items-baseline', SIZE_CLASS[size], className)}
+        >
             {m.sign && <span className="mr-[0.05em]">{m.sign}</span>}
             <span className="text-fg-3 font-normal mr-[0.1em]">{m.symbol}</span>
             <span>{m.integer}</span>

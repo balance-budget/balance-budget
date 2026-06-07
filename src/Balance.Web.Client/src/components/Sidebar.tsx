@@ -14,7 +14,11 @@ import { isLedgerAccount } from '../lib/domain';
 import { formatMoney } from '../lib/money';
 
 function SectionLabel({ children }: { children: ReactNode }) {
-    return <div className="eyebrow px-3 pt-3 pb-[6px]">{children}</div>;
+    return (
+        <div className="text-xs font-medium text-fg-3 tracking-widest uppercase px-3 pt-3 pb-[6px]">
+            {children}
+        </div>
+    );
 }
 
 type NavLink = {
@@ -163,7 +167,9 @@ function AccountTreeNode({
                     <div className="flex-1 min-w-0 flex flex-col leading-tight">
                         <span className="truncate text-sm">{account.name}</span>
                         {identifier && (
-                            <span className="text-xs text-fg-3 truncate tabular">{identifier}</span>
+                            <span className="text-xs text-fg-3 truncate tabular-nums">
+                                {identifier}
+                            </span>
                         )}
                     </div>
                     {showBalance && (

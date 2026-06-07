@@ -80,7 +80,7 @@ export function Launcher({ open, onClose }: LauncherProps) {
                                     '[&::-webkit-search-cancel-button]:appearance-none'
                                 }
                             />
-                            <kbd className="px-1.5 py-0.5 rounded bg-surface-2 text-xs text-fg-3 tabular border border-border-soft">
+                            <kbd className="px-1.5 py-0.5 rounded bg-surface-2 text-xs text-fg-3 tabular-nums border border-border-soft">
                                 Esc
                             </kbd>
                         </SearchField>
@@ -302,7 +302,9 @@ function ResultItem({
             <Icon name={icon} size={14} strokeWidth={2} className="text-fg-3 shrink-0" />
             <span className="flex-1 min-w-0 truncate text-sm text-fg-1">{primary}</span>
             {secondary ? (
-                <span className="text-xs text-fg-3 tabular truncate max-w-[40%]">{secondary}</span>
+                <span className="text-xs text-fg-3 tabular-nums truncate max-w-[40%]">
+                    {secondary}
+                </span>
             ) : null}
         </MenuItem>
     );

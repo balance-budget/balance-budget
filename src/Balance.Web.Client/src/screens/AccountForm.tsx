@@ -143,7 +143,7 @@ export function AccountFormModal(props: Props) {
                     isRequired
                     maxLength={32}
                     placeholder="e.g. 5110"
-                    inputClassName="tabular"
+                    inputClassName="tabular-nums"
                     className="mb-3"
                 />
 

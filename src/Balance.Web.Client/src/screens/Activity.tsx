@@ -224,7 +224,7 @@ function JournalRow({
             className="block border-b border-border-soft last:border-b-0 hover:bg-surface-2"
         >
             <div className="hidden lg:grid grid-cols-[100px_24px_1fr_minmax(180px,1.2fr)_140px] gap-3 items-center px-2 py-2">
-                <span className="text-xs text-fg-3 tabular">{entry.date}</span>
+                <span className="text-xs text-fg-3 tabular-nums">{entry.date}</span>
                 <span className="flex items-center justify-center text-fg-3" aria-hidden="true">
                     {entry.hasBankTransactions ? (
                         <Icon name="download" size={12} strokeWidth={2} />
@@ -237,7 +237,9 @@ function JournalRow({
             <div className="lg:hidden flex flex-col gap-1 px-2 py-3">
                 <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-xs text-fg-3 tabular shrink-0">{entry.date}</span>
+                        <span className="text-xs text-fg-3 tabular-nums shrink-0">
+                            {entry.date}
+                        </span>
                         {entry.hasBankTransactions ? (
                             <Icon
                                 name="download"

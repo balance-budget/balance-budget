@@ -124,7 +124,7 @@ function AccountList({
                 if (!roots || roots.length === 0) return null;
                 return (
                     <div key={type} className="flex flex-col">
-                        <h3 className="eyebrow pb-1 mb-1 border-b border-border-soft">
+                        <h3 className="text-xs font-medium text-fg-3 tracking-widest uppercase pb-1 mb-1 border-b border-border-soft">
                             {TYPE_LABEL[type]}
                         </h3>
                         {roots.map(a => (
@@ -256,7 +256,7 @@ function AccountRow({
                             {account.name}
                         </span>
                     </span>
-                    <span className="text-xs text-fg-3 truncate tabular">
+                    <span className="text-xs text-fg-3 truncate tabular-nums">
                         {account.code}
                         {identifier ? ` · ${identifier}` : ''}
                     </span>

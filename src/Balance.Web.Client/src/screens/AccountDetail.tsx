@@ -595,7 +595,7 @@ function RegisterRowView({
     const amount = (
         <span
             className={cx(
-                'font-mono text-sm tabular text-right',
+                'font-mono text-sm tabular-nums text-right',
                 negative ? 'text-danger' : 'text-success',
             )}
         >
@@ -621,7 +621,7 @@ function RegisterRowView({
             <div className={cx('hidden lg:grid gap-3 items-center px-2 py-2', gridClass)}>
                 <span className="flex items-center">{checkbox}</span>
                 <Link to="/journal/$id" params={{ id: row.journalEntryId }} className="contents">
-                    <span className="text-xs text-fg-3 tabular">{row.date}</span>
+                    <span className="text-xs text-fg-3 tabular-nums">{row.date}</span>
                     <div className="flex flex-col min-w-0">
                         <span className="text-sm text-fg-1 truncate">{heading}</span>
                         {row.lineDescription ? (
@@ -645,7 +645,7 @@ function RegisterRowView({
                     className="flex-1 flex flex-col gap-1 min-w-0"
                 >
                     <div className="flex items-center justify-between gap-3">
-                        <span className="text-xs text-fg-3 tabular">{row.date}</span>
+                        <span className="text-xs text-fg-3 tabular-nums">{row.date}</span>
                         {amount}
                     </div>
                     <span className="text-sm text-fg-1 truncate">{heading}</span>

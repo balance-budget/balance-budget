@@ -33,7 +33,7 @@ export function StyledDateInput(props: Omit<DateInputProps, 'children'>) {
                 <DateSegment
                     segment={segment}
                     className={
-                        'px-[2px] rounded-sm tabular text-inherit outline-none caret-transparent ' +
+                        'px-[2px] rounded-sm tabular-nums text-inherit outline-none caret-transparent ' +
                         'data-[placeholder]:text-fg-3 data-[disabled]:opacity-60 ' +
                         'data-[focused]:bg-brand-primary-soft data-[focused]:text-brand-primary ' +
                         'data-[invalid]:text-danger data-[invalid]:data-[focused]:text-brand-primary'
@@ -99,7 +99,7 @@ function cellClassName(renderProps: CalendarCellRenderProps): string {
     } = renderProps;
     const isEdge = isSelectionStart || isSelectionEnd;
     return cx(
-        'flex size-8 items-center justify-center text-xs tabular outline-none',
+        'flex size-8 items-center justify-center text-xs tabular-nums outline-none',
         isOutsideMonth && 'hidden',
         isDisabled || isUnavailable ? 'text-fg-4' : 'cursor-pointer',
         // Range middles get the soft wash; edges (and single selections) go solid.

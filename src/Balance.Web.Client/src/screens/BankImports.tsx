@@ -59,7 +59,7 @@ function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
                     <span className="text-sm font-medium text-fg-1 truncate">
                         {formatBankAccountLabel(bankAccount)}
                     </span>
-                    <span className="text-xs text-fg-3 truncate tabular">
+                    <span className="text-xs text-fg-3 truncate tabular-nums">
                         {formatBankAccountSubline(bankAccount)}
                     </span>
                 </div>

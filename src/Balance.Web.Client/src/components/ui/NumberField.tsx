@@ -39,7 +39,7 @@ export function NumberField({
             {label !== undefined && <Label>{label}</Label>}
             <Input
                 placeholder={placeholder}
-                className={cx(inputStyles, 'tabular', inputClassName)}
+                className={cx(inputStyles, 'tabular-nums', inputClassName)}
             />
             {description !== undefined && <Description>{description}</Description>}
             <FieldError>{errorMessage}</FieldError>

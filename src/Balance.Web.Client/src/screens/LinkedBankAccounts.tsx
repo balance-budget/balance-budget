@@ -123,7 +123,7 @@ function LinkedRow({
                     <span className="text-sm font-medium text-fg-1 truncate">
                         {formatBankAccountLabel(bankAccount)}
                     </span>
-                    <span className="text-xs text-fg-3 tabular truncate">
+                    <span className="text-xs text-fg-3 tabular-nums truncate">
                         {formatBankAccountSubline(bankAccount)}
                     </span>
                 </div>

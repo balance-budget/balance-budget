@@ -11,7 +11,7 @@ export type TextFieldProps = AriaTextFieldProps & {
     description?: string;
     placeholder?: string;
     errorMessage?: string | ((validation: ValidationResult) => string);
-    /** Extra classes for the inner `<input>` (e.g. `tabular` for codes). */
+    /** Extra classes for the inner `<input>` (e.g. `tabular-nums` for codes). */
     inputClassName?: string;
 };
 
