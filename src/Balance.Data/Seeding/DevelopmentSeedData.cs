@@ -278,7 +278,7 @@ internal static class DevelopmentSeedData
                             checking,
                             salary,
                             employer,
-                            250_000,
+                            260_000,
                             "Monthly salary",
                             d,
                             reconciled
