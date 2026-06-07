@@ -25,8 +25,10 @@ import { Icon } from '../components/Icon';
 import { Panel, SectionHead } from '../components/Panel';
 import { ProjectionAmount } from '../components/ProjectionAmount';
 import { Skeleton } from '../components/Skeleton';
-import { Button } from '../components/ui/Button';
+import { Button, IconButton } from '../components/ui/Button';
 import { DatePicker } from '../components/ui/DatePicker';
+import { NumberField } from '../components/ui/NumberField';
+import { Select, SelectItem } from '../components/ui/Select';
 import { TextField } from '../components/ui/TextField';
 import { useToast } from '../components/ui/Toast';
 import { accountPathLabel } from '../lib/accountTree';
@@ -626,53 +628,50 @@ function EditLineRow({
                 )}
                 <FieldError name={`lines[${index.toString()}].accountId`} errors={fieldErrors} />
             </div>
-            <select
+            <Select
+                aria-label="Side"
                 value={line.side}
-                disabled={locked}
-                onChange={e => {
-                    onUpdate(line.key, { side: e.target.value as EditLine['side'] });
+                isDisabled={locked}
+                onChange={key => {
+                    if (key !== null) onUpdate(line.key, { side: key as EditLine['side'] });
                 }}
-                className="px-2 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-13 focus:outline-none focus:border-border-strong disabled:opacity-60 disabled:cursor-not-allowed"
             >
-                <option value="debit">Debit</option>
-                <option value="credit">Credit</option>
-            </select>
-            <div className="flex flex-col gap-1">
-                <input
-                    type="text"
-                    inputMode="decimal"
-                    value={line.amount}
-                    disabled={locked}
-                    onChange={e => {
-                        onUpdate(line.key, { amount: e.target.value });
-                    }}
-                    placeholder="0.00"
-                    className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 text-right font-mono tabular focus:outline-none focus:border-border-strong disabled:opacity-60 disabled:cursor-not-allowed"
-                />
-                <FieldError name={`lines[${index.toString()}].amount`} errors={fieldErrors} />
-            </div>
+                <SelectItem id="debit">Debit</SelectItem>
+                <SelectItem id="credit">Credit</SelectItem>
+            </Select>
+            <NumberField
+                aria-label="Amount"
+                name={`lines[${index.toString()}].amount`}
+                value={line.amount === '' ? NaN : Number(line.amount)}
+                isDisabled={locked}
+                onChange={n => {
+                    onUpdate(line.key, { amount: Number.isNaN(n) ? '' : String(n) });
+                }}
+                formatOptions={{ style: 'currency', currency: currencyCode }}
+                placeholder="0.00"
+                inputClassName="text-right font-mono"
+            />
             <ReconciliationChip status={line.status} />
-            <input
-                type="text"
+            <TextField
+                aria-label="Line description"
                 value={line.description}
-                onChange={e => {
-                    onUpdate(line.key, { description: e.target.value });
+                onChange={description => {
+                    onUpdate(line.key, { description });
                 }}
                 maxLength={500}
                 placeholder="Optional"
-                className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-13 focus:outline-none focus:border-border-strong"
+                inputClassName="text-13"
             />
-            <button
-                type="button"
-                onClick={() => {
+            <IconButton
+                onPress={() => {
                     onRemove(line.key);
                 }}
-                disabled={locked}
-                title={locked ? 'Frozen — line cannot be removed' : 'Remove this line'}
-                className="self-end lg:self-start mt-[6px] p-1 text-fg-3 hover:text-danger disabled:opacity-40 disabled:cursor-not-allowed"
+                isDisabled={locked}
+                aria-label={locked ? 'Frozen — line cannot be removed' : 'Remove this line'}
+                className="self-end lg:self-start mt-[6px] data-[hovered]:text-danger data-[hovered]:bg-transparent"
             >
                 <Icon name="trash" size={14} strokeWidth={2} />
-            </button>
+            </IconButton>
         </div>
     );
 }

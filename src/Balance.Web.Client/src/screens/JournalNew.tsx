@@ -14,6 +14,7 @@ import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { Button, IconButton } from '../components/ui/Button';
 import { DatePicker } from '../components/ui/DatePicker';
+import { NumberField } from '../components/ui/NumberField';
 import { Select, SelectItem } from '../components/ui/Select';
 import { TextField } from '../components/ui/TextField';
 import { useToast } from '../components/ui/Toast';
@@ -41,6 +42,12 @@ import {
 
 /** Sentinel id for the "None" option — RAC Select keys can't be null. */
 const NONE_COUNTERPARTY = '__none__';
+
+/** Currency-styled Intl options for amount fields; plain decimal until an
+ *  account (and thus a currency) is known. */
+function currencyFormat(currencyCode: string | null | undefined): Intl.NumberFormatOptions {
+    return currencyCode ? { style: 'currency', currency: currencyCode } : {};
+}
 
 export function JournalNew() {
     const accounts = useAccounts();
@@ -518,22 +525,20 @@ function SimpleLegColumn({
                                 errors={fieldErrors}
                             />
                         </div>
-                        <div className="w-[140px] shrink-0 flex flex-col gap-1">
-                            <input
-                                type="text"
-                                inputMode="decimal"
-                                value={leg.amount}
-                                onChange={e => {
-                                    onChange(side, i, { amount: e.target.value });
-                                }}
-                                placeholder="0.00"
-                                className="px-3 py-2 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-14 text-right font-mono tabular focus:outline-none focus:border-border-strong"
-                            />
-                            <FieldError
-                                name={`simple.${side}[${i.toString()}].amount`}
-                                errors={fieldErrors}
-                            />
-                        </div>
+                        <NumberField
+                            aria-label="Amount"
+                            name={`simple.${side}[${i.toString()}].amount`}
+                            value={leg.amount === '' ? NaN : Number(leg.amount)}
+                            onChange={n => {
+                                onChange(side, i, { amount: Number.isNaN(n) ? '' : String(n) });
+                            }}
+                            formatOptions={currencyFormat(
+                                legAccount?.currencyCode ?? anchorCurrency,
+                            )}
+                            placeholder="0.00"
+                            inputClassName="text-right font-mono"
+                            className="w-[140px] shrink-0"
+                        />
                         <IconButton
                             onPress={() => {
                                 onRemove(i);
@@ -618,38 +623,34 @@ function AdvancedLines({
                                 errors={fieldErrors}
                             />
                         </div>
-                        <div className="flex flex-col gap-1">
-                            <input
-                                type="text"
-                                inputMode="decimal"
-                                value={line.debit}
-                                onChange={e => {
-                                    updateLine(i, { debit: e.target.value });
-                                }}
-                                placeholder="0.00"
-                                className="px-2 py-1 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-13 text-right font-mono tabular focus:outline-none focus:border-border-strong"
-                            />
-                            <FieldError
-                                name={`advanced[${i.toString()}].debit`}
-                                errors={fieldErrors}
-                            />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                            <input
-                                type="text"
-                                inputMode="decimal"
-                                value={line.credit}
-                                onChange={e => {
-                                    updateLine(i, { credit: e.target.value });
-                                }}
-                                placeholder="0.00"
-                                className="px-2 py-1 rounded-sm bg-surface-2 border border-border-soft text-fg-1 text-13 text-right font-mono tabular focus:outline-none focus:border-border-strong"
-                            />
-                            <FieldError
-                                name={`advanced[${i.toString()}].credit`}
-                                errors={fieldErrors}
-                            />
-                        </div>
+                        <NumberField
+                            aria-label="Debit"
+                            name={`advanced[${i.toString()}].debit`}
+                            value={line.debit === '' ? NaN : Number(line.debit)}
+                            onChange={n => {
+                                updateLine(i, { debit: Number.isNaN(n) ? '' : String(n) });
+                            }}
+                            formatOptions={currencyFormat(
+                                lineAccount?.currencyCode ?? anchorCurrency,
+                            )}
+                            placeholder="0.00"
+                            fieldSize="sm"
+                            inputClassName="text-right font-mono"
+                        />
+                        <NumberField
+                            aria-label="Credit"
+                            name={`advanced[${i.toString()}].credit`}
+                            value={line.credit === '' ? NaN : Number(line.credit)}
+                            onChange={n => {
+                                updateLine(i, { credit: Number.isNaN(n) ? '' : String(n) });
+                            }}
+                            formatOptions={currencyFormat(
+                                lineAccount?.currencyCode ?? anchorCurrency,
+                            )}
+                            placeholder="0.00"
+                            fieldSize="sm"
+                            inputClassName="text-right font-mono"
+                        />
                         <TextField
                             aria-label="Line description"
                             value={line.description}
