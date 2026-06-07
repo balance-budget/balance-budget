@@ -52,8 +52,17 @@ internal static class DevelopmentSeedData
             var checking = Leaf("1100", "Checking", AccountType.Asset);
             var savings = Leaf("1200", "Savings", AccountType.Asset);
 
+            // Illiquid world: not day-to-day money, so excluded from liquid net worth — together
+            // with the mortgage these keep the dev dashboard's two net-worth figures visibly apart.
+            var investments = Leaf("1300", "Investments", AccountType.Asset, liquid: false);
+            var home = Leaf("1400", "Home", AccountType.Asset, liquid: false);
+
             var creditCard = Leaf("2100", "Credit Card", AccountType.Liability);
-            var mortgage = Leaf("2200", "Mortgage", AccountType.Liability);
+            var mortgage = Leaf("2200", "Mortgage", AccountType.Liability, liquid: false);
+
+            // Counter-account for revaluations of the illiquid assets (the seeded Opening
+            // Balances equity account stays reserved for onboarding entries).
+            var unrealizedGains = Leaf("3800", "Unrealized Gains", AccountType.Equity);
 
             var salary = Leaf("4100", "Salary", AccountType.Income);
             var interest = Leaf("4200", "Interest Received", AccountType.Income);
@@ -118,6 +127,7 @@ internal static class DevelopmentSeedData
             var school = Counterparty("Coursera");
             var onlineStore = Counterparty("Coolblue");
             var creditCardCo = Counterparty("ICS");
+            var broker = Counterparty("DeGiro");
 
             // Bank accounts (your side) linked to the postable asset leaves.
             var checkingBank = BankAccount(checking, BankAccountType.Current, "NL01BALA0000000001");
@@ -129,6 +139,8 @@ internal static class DevelopmentSeedData
             var openingDate = FirstOfMonth(_today).AddMonths(-12);
             Opening(checking, 1_000_000, openingDate); // €10,000.00
             Opening(savings, 2_500_000, openingDate); // €25,000.00
+            Opening(investments, 1_500_000, openingDate); // €15,000.00
+            Opening(home, 38_000_000, openingDate); // €380,000.00
             Opening(mortgage, -30_000_000, openingDate); // €300,000.00 outstanding
 
             // Recurring monthly spend on the checking account — one row per category so the whole
@@ -152,6 +164,7 @@ internal static class DevelopmentSeedData
                 (14, groceries, supermarket, -4_810, "Groceries"),
                 (18, financial, bank, -350, "Account fee"),
                 (22, groceries, supermarket, -6_390, "Groceries"),
+                (26, investments, broker, -25_000, "Investment contribution"),
             ];
 
             // Periodic spend (annual / quarterly / occasional), keyed off the calendar month so the
@@ -285,6 +298,31 @@ internal static class DevelopmentSeedData
                         monthStart,
                         2,
                         d => Cash(savings, interest, null, 250, "Savings interest", d)
+                    );
+
+                // Quarterly portfolio revaluation against Unrealized Gains — mostly growth with
+                // one losing quarter so both directions appear. Hand entries, no bank import.
+                if (monthStart.Month % 3 == 0)
+                    OnDay(
+                        monthStart,
+                        30,
+                        d =>
+                            Cash(
+                                investments,
+                                unrealizedGains,
+                                null,
+                                PortfolioRevaluation(monthStart.Month),
+                                "Portfolio revaluation",
+                                d
+                            )
+                    );
+
+                // Annual WOZ-style home revaluation — once a year, like the municipal assessment.
+                if (monthStart.Month == 2)
+                    OnDay(
+                        monthStart,
+                        20,
+                        d => Cash(home, unrealizedGains, null, 1_200_000, "WOZ revaluation", d)
                     );
             }
 
@@ -518,21 +556,39 @@ internal static class DevelopmentSeedData
             );
         }
 
+        // Quarterly mark-to-market deltas for the Investments account, keyed off the calendar
+        // month: growth in three quarters, one losing quarter (June), so reports show both signs.
+        private static long PortfolioRevaluation(int month) =>
+            month switch
+            {
+                3 => 40_000,
+                6 => -25_000,
+                9 => 55_000,
+                12 => 35_000,
+                _ => 0,
+            };
+
         private Account Branch(
             string code,
             string name,
             AccountType type,
             Account? parent = null
-        ) => AddAccount(code, name, type, postable: false, parent: parent?.Id);
+        ) => AddAccount(code, name, type, postable: false, liquid: true, parent: parent?.Id);
 
-        private Account Leaf(string code, string name, AccountType type, Account? parent = null) =>
-            AddAccount(code, name, type, postable: true, parent?.Id);
+        private Account Leaf(
+            string code,
+            string name,
+            AccountType type,
+            Account? parent = null,
+            bool liquid = true
+        ) => AddAccount(code, name, type, postable: true, liquid, parent?.Id);
 
         private Account AddAccount(
             string code,
             string name,
             AccountType type,
             bool postable,
+            bool liquid,
             AccountId? parent
         )
         {
@@ -544,6 +600,7 @@ internal static class DevelopmentSeedData
                 AccountType = type,
                 CurrencyCode = Eur,
                 IsPostable = postable,
+                IsLiquid = liquid,
                 ParentAccountId = parent,
                 CreatedAt = _structuralCreatedAt,
                 UpdatedAt = _structuralCreatedAt,
