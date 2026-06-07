@@ -33,6 +33,43 @@ internal static class LoanEndpoints
             .MapPost("/{id}/parts/{partId}/rate-periods", AddRatePeriodAsync)
             .WithValidation<LoanRatePeriodRequest>()
             .WithName("AddLoanPartRatePeriod");
+        group
+            .MapGet("/{id}/payment-proposal", GetPaymentProposalAsync)
+            .WithName("GetLoanPaymentProposal");
+        group
+            .MapPost("/{id}/projection", GetProjectionAsync)
+            .WithValidation<LoanProjectionRequest>()
+            .WithName("GetLoanProjection");
+    }
+
+    private static async Task<
+        Results<Ok<LoanPaymentProposalOutput>, NotFound<ProblemDetails>, ValidationProblem>
+    > GetPaymentProposalAsync(
+        [FromRoute] LoanId id,
+        [FromQuery] DateOnly month,
+        [FromServices] ILoanProjectionService projectionService,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await projectionService.GetPaymentProposalAsync(id, month, cancellationToken);
+        return result.ToOkReadOnly();
+    }
+
+    private static async Task<
+        Results<Ok<LoanProjectionOutput>, NotFound<ProblemDetails>, ValidationProblem>
+    > GetProjectionAsync(
+        [FromRoute] LoanId id,
+        [FromBody] LoanProjectionRequest request,
+        [FromServices] ILoanProjectionService projectionService,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await projectionService.GetProjectionAsync(
+            id,
+            request.ToInput(),
+            cancellationToken
+        );
+        return result.ToOkReadOnly();
     }
 
     private static async Task<Ok<IReadOnlyList<LoanOutput>>> ListAsync(

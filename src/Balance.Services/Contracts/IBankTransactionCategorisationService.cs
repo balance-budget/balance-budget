@@ -33,8 +33,15 @@ public sealed record CategorizeBankTransactionInput(
 
 public sealed record NewCounterpartyInput(string Name);
 
+/// <summary>
+/// <see cref="LoanPartId"/> switches the line into loan mode (ADR-0025): the attribution makes
+/// the categorisation loan-aware, allowing it to post to that part's loan-managed account
+/// (principal) or the loan's interest Expense account (interest, prepayment penalty). Amounts
+/// stay user-editable — the engine's proposal is a pre-fill, the bank's actual charge wins.
+/// </summary>
 public sealed record CategorizeBankTransactionLineInput(
     AccountId AccountId,
     long Amount,
-    string? Description
+    string? Description,
+    LoanPartId? LoanPartId = null
 );

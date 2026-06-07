@@ -240,7 +240,8 @@ internal static class BankTransactionEndpoints
             .. request.Lines.Select(l => new CategorizeBankTransactionLineInput(
                 l.AccountId,
                 l.Amount,
-                l.Description
+                l.Description,
+                l.LoanPartId
             )),
         ];
 
