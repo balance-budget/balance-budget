@@ -81,6 +81,7 @@ function account(id: AccountId, overrides: Partial<Account> = {}): Account {
         type: 'Expense',
         currencyCode: 'EUR',
         isPostable: true,
+        isLiquid: true,
         parentId: null,
         icon: null,
         balance: { amount: 0, currencyCode: 'EUR' },

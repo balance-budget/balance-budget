@@ -28,6 +28,9 @@ export type Account = {
     currencyCode: string;
     /** A leaf that journal lines may reference directly; false for a non-postable roll-up account. */
     isPostable: boolean;
+    /** Counts toward liquid net worth — false for the illiquid world (house, mortgage, pension).
+     *  Only meaningful on Asset/Liability accounts; other types carry the default true. */
+    isLiquid: boolean;
     /** Parent in the chart-of-accounts tree, or null for a root account (ADR-0019). */
     parentId: AccountId | null;
     /** User-chosen avatar icon name, or null to inherit the AccountType default. */
@@ -67,6 +70,7 @@ function toAccount(wire: WireAccount): Account {
         type: wire.accountType,
         currencyCode: wire.currencyCode,
         isPostable: wire.isPostable,
+        isLiquid: wire.isLiquid,
         parentId: wire.parentAccountId === null ? null : asAccountId(wire.parentAccountId),
         icon: wire.iconName,
         balance: toMoney(wire.balance, wire.currencyCode),
