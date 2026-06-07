@@ -36,7 +36,10 @@ internal sealed class DashboardService : IDashboardService
         var priorPeriodEnd = today.AddMonths(-1);
         var priorPeriodStart = priorPeriodEnd.GetMonthStart();
 
-        var netWorth = await ComputeNetWorthAsync(currencyCode, cancellationToken);
+        var (netWorth, liquidNetWorth) = await ComputeNetWorthAsync(
+            currencyCode,
+            cancellationToken
+        );
         var (income, expenses) = await ComputePeriodTotalsAsync(
             currencyCode,
             periodStart,
@@ -52,6 +55,7 @@ internal sealed class DashboardService : IDashboardService
 
         return new DashboardSummaryOutput(
             netWorth,
+            liquidNetWorth,
             income,
             expenses,
             incomePrior,
@@ -78,9 +82,13 @@ internal sealed class DashboardService : IDashboardService
             _ => throw new UnreachableException($"Unknown TrendRange '{range}'."),
         };
 
+        // Liquid assets only: the trend chart is the day-to-day companion to the liquid
+        // net worth KPI, and one illiquid line (a house) would flatten every other series.
         var assets = await _dbContext
             .Accounts.AsNoTracking()
-            .Where(a => a.AccountType == AccountType.Asset && a.CurrencyCode == currencyCode)
+            .Where(a =>
+                a.AccountType == AccountType.Asset && a.CurrencyCode == currencyCode && a.IsLiquid
+            )
             .Select(a => new { a.Id, a.Name })
             .ToListAsync(cancellationToken);
 
@@ -167,28 +175,38 @@ internal sealed class DashboardService : IDashboardService
     // Net Worth = sum(Asset balances) - sum(Liability balances), restricted to the
     // requested currency. Asset balances are +SUM(Amount); Liability balances are
     // -SUM(Amount). Subtracting the latter collapses to a single signed sum over
-    // both account types' lines.
-    private async Task<Money> ComputeNetWorthAsync(
+    // both account types' lines. Liquid net worth is the same sum restricted to
+    // liquid accounts, so one GROUP BY IsLiquid query yields both numbers.
+    private async Task<(Money NetWorth, Money LiquidNetWorth)> ComputeNetWorthAsync(
         CurrencyCode currencyCode,
         CancellationToken cancellationToken
     )
     {
-        var raw =
-            await _dbContext
-                .JournalLines.AsNoTracking()
-                .Where(l =>
-                    _dbContext.Accounts.Any(a =>
-                        a.Id == l.AccountId
-                        && a.CurrencyCode == currencyCode
-                        && (
-                            a.AccountType == AccountType.Asset
-                            || a.AccountType == AccountType.Liability
-                        )
-                    )
+        var rows = await _dbContext
+            .JournalLines.AsNoTracking()
+            .Join(
+                _dbContext.Accounts.AsNoTracking(),
+                l => l.AccountId,
+                a => a.Id,
+                (l, a) => new { l.Amount, Account = a }
+            )
+            .Where(x =>
+                x.Account.CurrencyCode == currencyCode
+                && (
+                    x.Account.AccountType == AccountType.Asset
+                    || x.Account.AccountType == AccountType.Liability
                 )
-                .SumAsync(l => (long?)l.Amount, cancellationToken)
-            ?? 0L;
-        return new Money(raw, currencyCode);
+            )
+            .GroupBy(x => x.Account.IsLiquid)
+            .Select(g => new { IsLiquid = g.Key, Sum = g.Sum(x => (long?)x.Amount) ?? 0L })
+            .ToListAsync(cancellationToken);
+
+        var liquidRaw = rows.FirstOrDefault(r => r.IsLiquid)?.Sum ?? 0L;
+        var illiquidRaw = rows.FirstOrDefault(r => !r.IsLiquid)?.Sum ?? 0L;
+        return (
+            new Money(checked(liquidRaw + illiquidRaw), currencyCode),
+            new Money(liquidRaw, currencyCode)
+        );
     }
 
     private async Task<(Money Income, Money Expenses)> ComputePeriodTotalsAsync(

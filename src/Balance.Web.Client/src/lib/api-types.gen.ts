@@ -659,6 +659,7 @@ export interface components {
             accountType: components["schemas"]["AccountType"];
             currencyCode: components["schemas"]["CurrencyCode"];
             isPostable: boolean;
+            isLiquid: boolean;
             parentAccountId: null | components["schemas"]["AccountId"];
             iconName: null | string;
             balance: components["schemas"]["Money"];
@@ -849,6 +850,8 @@ export interface components {
             currencyCode: components["schemas"]["CurrencyCode"];
             /** @default true */
             isPostable: boolean;
+            /** @default true */
+            isLiquid: boolean;
             parentAccountId?: unknown;
             iconName?: null | string;
         };
@@ -929,6 +932,7 @@ export interface components {
         };
         DashboardSummaryOutput: {
             netWorth: components["schemas"]["Money"];
+            liquidNetWorth: components["schemas"]["Money"];
             incomeMtd: components["schemas"]["Money"];
             expensesMtd: components["schemas"]["Money"];
             incomeMtdPrior: components["schemas"]["Money"];
@@ -1047,19 +1051,19 @@ export interface components {
             /** @enum {string} */
             op: "add" | "replace" | "test";
             /** @enum {string} */
-            path: "/name" | "/code" | "/accountType" | "/currencyCode" | "/isPostable" | "/parentAccountId" | "/iconName";
+            path: "/name" | "/code" | "/accountType" | "/currencyCode" | "/isPostable" | "/isLiquid" | "/parentAccountId" | "/iconName";
             value: unknown;
         } | {
             /** @enum {string} */
             op: "move" | "copy";
             /** @enum {string} */
-            path: "/name" | "/code" | "/accountType" | "/currencyCode" | "/isPostable" | "/parentAccountId" | "/iconName";
+            path: "/name" | "/code" | "/accountType" | "/currencyCode" | "/isPostable" | "/isLiquid" | "/parentAccountId" | "/iconName";
             from: string;
         } | {
             /** @enum {string} */
             op: "remove";
             /** @enum {string} */
-            path: "/name" | "/code" | "/accountType" | "/currencyCode" | "/isPostable" | "/parentAccountId" | "/iconName";
+            path: "/name" | "/code" | "/accountType" | "/currencyCode" | "/isPostable" | "/isLiquid" | "/parentAccountId" | "/iconName";
         })[];
         JsonPatchDocumentOfUpdateBankAccountInput: ({
             /** @enum {string} */
@@ -1307,6 +1311,7 @@ export interface components {
             accountType: "Asset" | "Liability" | "Equity" | "Income" | "Expense";
             currencyCode: string;
             isPostable: boolean;
+            isLiquid: boolean;
             parentAccountId?: unknown;
             iconName?: null | string;
         };
