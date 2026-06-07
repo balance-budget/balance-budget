@@ -578,6 +578,9 @@ namespace Balance.Data.Sqlite.Migrations
                     b.Property<Guid>("JournalEntryId")
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("LoanPartId")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("ReconciliationStatus")
                         .IsRequired()
                         .HasMaxLength(16)
@@ -594,10 +597,131 @@ namespace Balance.Data.Sqlite.Migrations
                     b.HasIndex("JournalEntryId")
                         .HasDatabaseName("IX_JournalLines_JournalEntryId");
 
+                    b.HasIndex("LoanPartId")
+                        .HasDatabaseName("IX_JournalLines_LoanPartId");
+
                     b.ToTable("JournalLines", null, t =>
                         {
                             t.HasCheckConstraint("CK_JournalLines_Amount_NonZero", "\"Amount\" <> 0");
                         });
+                });
+
+            modelBuilder.Entity("Balance.Data.Entities.Loan", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("InterestExpenseAccountId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("LenderCounterpartyId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ParentAccountId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InterestExpenseAccountId")
+                        .HasDatabaseName("IX_Loans_InterestExpenseAccountId");
+
+                    b.HasIndex("LenderCounterpartyId")
+                        .HasDatabaseName("IX_Loans_LenderCounterpartyId");
+
+                    b.HasIndex("ParentAccountId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Loans_ParentAccountId");
+
+                    b.ToTable("Loans", (string)null);
+                });
+
+            modelBuilder.Entity("Balance.Data.Entities.LoanPart", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("EndDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("LoanId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RepaymentType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_LoanParts_AccountId");
+
+                    b.HasIndex("LoanId")
+                        .HasDatabaseName("IX_LoanParts_LoanId");
+
+                    b.ToTable("LoanParts", (string)null);
+                });
+
+            modelBuilder.Entity("Balance.Data.Entities.LoanPartRatePeriod", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("AnnualRatePercent")
+                        .HasPrecision(8, 4)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("EffectiveDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly?>("FixedUntil")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("LoanPartId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LoanPartId", "EffectiveDate")
+                        .IsUnique()
+                        .HasDatabaseName("IX_LoanPartRatePeriods_LoanPartId_EffectiveDate");
+
+                    b.ToTable("LoanPartRatePeriods", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
@@ -772,6 +896,56 @@ namespace Balance.Data.Sqlite.Migrations
                         .HasForeignKey("JournalEntryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Balance.Data.Entities.LoanPart", null)
+                        .WithMany()
+                        .HasForeignKey("LoanPartId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("Balance.Data.Entities.Loan", b =>
+                {
+                    b.HasOne("Balance.Data.Entities.Account", null)
+                        .WithMany()
+                        .HasForeignKey("InterestExpenseAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Balance.Data.Entities.Counterparty", null)
+                        .WithMany()
+                        .HasForeignKey("LenderCounterpartyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Balance.Data.Entities.Account", null)
+                        .WithMany()
+                        .HasForeignKey("ParentAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Balance.Data.Entities.LoanPart", b =>
+                {
+                    b.HasOne("Balance.Data.Entities.Account", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Balance.Data.Entities.Loan", null)
+                        .WithMany("Parts")
+                        .HasForeignKey("LoanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Balance.Data.Entities.LoanPartRatePeriod", b =>
+                {
+                    b.HasOne("Balance.Data.Entities.LoanPart", null)
+                        .WithMany("RatePeriods")
+                        .HasForeignKey("LoanPartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<Balance.Data.Entities.Ids.UserId>", b =>
@@ -809,6 +983,16 @@ namespace Balance.Data.Sqlite.Migrations
             modelBuilder.Entity("Balance.Data.Entities.JournalEntry", b =>
                 {
                     b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Balance.Data.Entities.Loan", b =>
+                {
+                    b.Navigation("Parts");
+                });
+
+            modelBuilder.Entity("Balance.Data.Entities.LoanPart", b =>
+                {
+                    b.Navigation("RatePeriods");
                 });
 #pragma warning restore 612, 618
         }
