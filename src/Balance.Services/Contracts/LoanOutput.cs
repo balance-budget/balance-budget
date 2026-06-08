@@ -38,7 +38,22 @@ public sealed record LoanDetailOutput(
     long CurrentPayment,
     decimal? WeightedAnnualRatePercent,
     bool IsEnded,
-    IReadOnlyList<LoanPartOutput> Parts
+    IReadOnlyList<LoanPartOutput> Parts,
+    LoanConstructionDepositOutput? ConstructionDeposit
+);
+
+/// <summary>
+/// The optional Construction deposit configured on a Loan (ADR-0026): the linked Asset account,
+/// the Income account for the offset, the annual rate, and the deposit's current ledger balance
+/// (positive minor units). Null when the loan has no construction deposit.
+/// </summary>
+public sealed record LoanConstructionDepositOutput(
+    AccountId AccountId,
+    string AccountName,
+    AccountId InterestIncomeAccountId,
+    string InterestIncomeAccountName,
+    decimal AnnualRatePercent,
+    long Balance
 );
 
 public sealed record LoanPartOutput(

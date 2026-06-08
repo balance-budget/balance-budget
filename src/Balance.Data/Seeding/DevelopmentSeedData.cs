@@ -64,11 +64,20 @@ internal static class DevelopmentSeedData
             var investments = Leaf("1300", "Investments", AccountType.Asset, liquid: false);
             var home = Leaf("1400", "Home", AccountType.Asset, liquid: false);
 
+            // Construction deposit (ADR-0026): undisbursed mortgage money earmarked for building,
+            // a plain (non-loan-managed) Illiquid Asset the loan references for its interest offset.
+            var constructionDeposit = Leaf(
+                "1500",
+                "Construction Deposit",
+                AccountType.Asset,
+                liquid: false
+            );
+
             var creditCard = Leaf("2100", "Credit Card", AccountType.Liability);
 
             // The mortgage as a Loan subtree (ADR-0025): one non-postable parent, one postable
-            // Illiquid leaf per leningdeel — an annuity part and an interest-only part with
-            // different rates, the typical Dutch shape.
+            // Illiquid leaf per part — an annuity part and an interest-only part with different
+            // rates, a typical multi-part mortgage shape.
             var mortgage = AddAccount(
                 "2200",
                 "Mortgage",
@@ -98,6 +107,11 @@ internal static class DevelopmentSeedData
 
             var salary = Leaf("4100", "Salary", AccountType.Income);
             var interest = Leaf("4200", "Interest Received", AccountType.Income);
+            var depositInterest = Leaf(
+                "4250",
+                "Construction Deposit Interest",
+                AccountType.Income
+            );
             var taxReturn = Leaf("4300", "Tax Return", AccountType.Income);
 
             var housing = Branch("5100", "Housing", AccountType.Expense);
@@ -194,6 +208,12 @@ internal static class DevelopmentSeedData
             );
             RatePeriod(part2, openingDateForLoan, 2.9m, openingDateForLoan.AddYears(5));
 
+            // A Construction deposit on the loan (ADR-0026): during the build, interest accrued on
+            // the deposit offsets the loan interest, so the loan-payment proposal nets it out.
+            loan.ConstructionDepositAccountId = constructionDeposit.Id;
+            loan.ConstructionDepositInterestIncomeAccountId = depositInterest.Id;
+            loan.ConstructionDepositAnnualRatePercent = 3.6m;
+
             // Opening balances against the seeded Opening Balances equity account (AccountSeed), dated
             // a year back so every running balance starts from a realistic position. Entered by hand,
             // so both legs are Reconciled and there is no bank import.
@@ -204,6 +224,7 @@ internal static class DevelopmentSeedData
             Opening(home, 38_000_000, openingDate); // €380,000.00
             Opening(mortgagePart1, -24_000_000, openingDate); // €240,000.00 outstanding
             Opening(mortgagePart2, -6_000_000, openingDate); // €60,000.00 outstanding
+            Opening(constructionDeposit, 4_000_000, openingDate); // €40,000.00 still in the deposit
 
             // Recurring monthly spend on the checking account — one row per category so the whole
             // chart of accounts carries a year of activity. (day, contra account, counterparty, cents).

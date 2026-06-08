@@ -8,7 +8,7 @@ namespace Balance.Services.Loans;
 /// effective-dated rate periods, and anchor balances to projected per-month, per-part rows.
 /// Anchor-snapshot math, never inception replay — for an annuity, recomputing the payment from
 /// any point on a clean schedule yields the same payment, which is what makes an extra repayment
-/// need zero event machinery under the Dutch-default policy (end date fixed, payment lowered).
+/// need zero event machinery under the default policy (end date fixed, payment lowered).
 /// All amounts are minor units; monthly interest is the annual nominal rate ÷ 12 on the balance
 /// at period start, rounded to the cent.
 /// </summary>
@@ -249,7 +249,7 @@ internal sealed record AmortizationScenario(
 internal sealed record AmortizationExtraRepayment(LoanPartId PartId, DateOnly Date, long Amount);
 
 /// <summary>
-/// How an extra repayment reshapes the schedule. <see cref="LowerPayment"/> is the Dutch default:
+/// How an extra repayment reshapes the schedule. <see cref="LowerPayment"/> is the default:
 /// the end date stays fixed and the payment drops. <see cref="KeepPayment"/> holds the payment
 /// and finishes earlier — a simulator-only lever (ADR-0025).
 /// </summary>

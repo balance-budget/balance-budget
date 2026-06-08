@@ -5,7 +5,7 @@ using Balance.Data.Entities.Ids;
 namespace Balance.Data.Entities;
 
 /// <summary>
-/// One component (Dutch: leningdeel) of a <see cref="Loan"/>, carrying its own repayment type,
+/// One component of a <see cref="Loan"/>, carrying its own repayment type,
 /// term, and effective-dated rate history. Represented by exactly one postable Liability
 /// <see cref="Account"/> (<see cref="AccountId"/>) under the loan's parent account; the part's
 /// outstanding principal <em>is</em> that account's balance (ADR-0025).

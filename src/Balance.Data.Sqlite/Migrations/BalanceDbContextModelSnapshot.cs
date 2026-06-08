@@ -611,6 +611,16 @@ namespace Balance.Data.Sqlite.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("ConstructionDepositAccountId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("ConstructionDepositAnnualRatePercent")
+                        .HasPrecision(8, 4)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("ConstructionDepositInterestIncomeAccountId")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -632,6 +642,10 @@ namespace Balance.Data.Sqlite.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ConstructionDepositAccountId");
+
+                    b.HasIndex("ConstructionDepositInterestIncomeAccountId");
 
                     b.HasIndex("InterestExpenseAccountId")
                         .HasDatabaseName("IX_Loans_InterestExpenseAccountId");
@@ -905,6 +919,16 @@ namespace Balance.Data.Sqlite.Migrations
 
             modelBuilder.Entity("Balance.Data.Entities.Loan", b =>
                 {
+                    b.HasOne("Balance.Data.Entities.Account", null)
+                        .WithMany()
+                        .HasForeignKey("ConstructionDepositAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Balance.Data.Entities.Account", null)
+                        .WithMany()
+                        .HasForeignKey("ConstructionDepositInterestIncomeAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Balance.Data.Entities.Account", null)
                         .WithMany()
                         .HasForeignKey("InterestExpenseAccountId")

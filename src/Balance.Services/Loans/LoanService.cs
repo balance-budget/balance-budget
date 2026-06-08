@@ -51,6 +51,10 @@ internal sealed class LoanService : ILoanService
                 Name = l.Name,
                 LenderCounterpartyId = l.LenderCounterpartyId,
                 InterestExpenseAccountId = l.InterestExpenseAccountId,
+                ConstructionDepositAccountId = l.ConstructionDepositAccountId,
+                ConstructionDepositInterestIncomeAccountId =
+                    l.ConstructionDepositInterestIncomeAccountId,
+                ConstructionDepositAnnualRatePercent = l.ConstructionDepositAnnualRatePercent,
             })
             .FirstOrDefaultAsync(cancellationToken);
         return snapshot is null ? new NotFoundError("Loan", id.Value.ToString()) : snapshot;
@@ -86,6 +90,16 @@ internal sealed class LoanService : ILoanService
         if (currencyCheck.IsFailure)
             return currencyCheck.Error;
 
+        var depositCheck = await EnsureDepositReferencesAsync(
+            input.ConstructionDepositAccountId,
+            input.ConstructionDepositInterestIncomeAccountId,
+            input.ConstructionDepositAnnualRatePercent,
+            input.CurrencyCode,
+            cancellationToken
+        );
+        if (depositCheck.IsFailure)
+            return depositCheck.Error;
+
         // All accounts created or adopted in one transaction: a part-level failure rolls back
         // the parent account and earlier siblings.
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(
@@ -113,6 +127,10 @@ internal sealed class LoanService : ILoanService
             LenderCounterpartyId = input.LenderCounterpartyId,
             InterestExpenseAccountId = input.InterestExpenseAccountId,
             ParentAccountId = parent.Id,
+            ConstructionDepositAccountId = input.ConstructionDepositAccountId,
+            ConstructionDepositInterestIncomeAccountId =
+                input.ConstructionDepositInterestIncomeAccountId,
+            ConstructionDepositAnnualRatePercent = input.ConstructionDepositAnnualRatePercent,
             CreatedAt = now,
             UpdatedAt = now,
         };
@@ -166,9 +184,27 @@ internal sealed class LoanService : ILoanService
             return new InvariantError(ErrorCodes.RequestInvalid, "Loan name cannot be empty.");
         }
 
+        var loanCurrency = await _dbContext
+            .Accounts.Where(a => a.Id == loan.ParentAccountId)
+            .Select(a => a.CurrencyCode)
+            .FirstAsync(cancellationToken);
+        var depositCheck = await EnsureDepositReferencesAsync(
+            input.ConstructionDepositAccountId,
+            input.ConstructionDepositInterestIncomeAccountId,
+            input.ConstructionDepositAnnualRatePercent,
+            loanCurrency,
+            cancellationToken
+        );
+        if (depositCheck.IsFailure)
+            return depositCheck.Error;
+
         loan.Name = trimmedName;
         loan.LenderCounterpartyId = input.LenderCounterpartyId;
         loan.InterestExpenseAccountId = input.InterestExpenseAccountId;
+        loan.ConstructionDepositAccountId = input.ConstructionDepositAccountId;
+        loan.ConstructionDepositInterestIncomeAccountId =
+            input.ConstructionDepositInterestIncomeAccountId;
+        loan.ConstructionDepositAnnualRatePercent = input.ConstructionDepositAnnualRatePercent;
         loan.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
 
         var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
@@ -269,6 +305,164 @@ internal sealed class LoanService : ILoanService
         var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
         if (saveResult.IsFailure)
             return saveResult.Error;
+
+        return await GetAsync(id, cancellationToken);
+    }
+
+    public async Task<Result<LoanDetailOutput>> UpdatePartAsync(
+        LoanId id,
+        LoanPartId partId,
+        UpdateLoanPartInput input,
+        CancellationToken cancellationToken
+    )
+    {
+        ArgumentNullException.ThrowIfNull(input);
+
+        var part = await _dbContext.LoanParts.FirstOrDefaultAsync(
+            p => p.Id == partId && p.LoanId == id,
+            cancellationToken
+        );
+        if (part is null)
+            return new NotFoundError("LoanPart", partId.Value.ToString());
+
+        var label = input.Label?.Trim() ?? string.Empty;
+        if (label.Length == 0)
+            return new InvariantError(ErrorCodes.RequestInvalid, "Loan Part label cannot be empty.");
+        if (input.EndDate <= input.StartDate)
+            return new InvariantError(ErrorCodes.RequestInvalid, "EndDate must be after StartDate.");
+
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
+        part.Label = label;
+        part.RepaymentType = input.RepaymentType;
+        part.StartDate = input.StartDate;
+        part.EndDate = input.EndDate;
+        part.UpdatedAt = now;
+
+        var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
+        if (saveResult.IsFailure)
+            return saveResult.Error;
+
+        return await GetAsync(id, cancellationToken);
+    }
+
+    public async Task<Result<LoanDetailOutput>> DeletePartAsync(
+        LoanId id,
+        LoanPartId partId,
+        CancellationToken cancellationToken
+    )
+    {
+        var partExists = await _dbContext.LoanParts.AnyAsync(
+            p => p.Id == partId && p.LoanId == id,
+            cancellationToken
+        );
+        if (!partExists)
+            return new NotFoundError("LoanPart", partId.Value.ToString());
+
+        var partCount = await _dbContext.LoanParts.CountAsync(p => p.LoanId == id, cancellationToken);
+        if (partCount <= 1)
+        {
+            return new InvariantError(
+                ErrorCodes.LoanLastPart,
+                "A Loan must keep at least one part. Delete the whole Loan instead."
+            );
+        }
+
+        // Rate periods cascade; JournalLine attributions on the part's account SET NULL; the
+        // account and its posted history stay (ADR-0025).
+        var deleteResult = await _dbContext
+            .LoanParts.Where(p => p.Id == partId && p.LoanId == id)
+            .DeleteSingleAndCatchAsync("LoanPart", partId.Value.ToString(), cancellationToken);
+        if (deleteResult.IsFailure)
+            return deleteResult.Error;
+
+        return await GetAsync(id, cancellationToken);
+    }
+
+    public async Task<Result<LoanDetailOutput>> UpdateRatePeriodAsync(
+        LoanId id,
+        LoanPartId partId,
+        LoanPartRatePeriodId ratePeriodId,
+        CreateLoanRatePeriodInput input,
+        CancellationToken cancellationToken
+    )
+    {
+        ArgumentNullException.ThrowIfNull(input);
+
+        var rate = await _dbContext
+            .LoanPartRatePeriods.Where(r =>
+                r.Id == ratePeriodId
+                && r.LoanPartId == partId
+                && _dbContext.LoanParts.Any(p => p.Id == partId && p.LoanId == id)
+            )
+            .FirstOrDefaultAsync(cancellationToken);
+        if (rate is null)
+            return new NotFoundError("LoanPartRatePeriod", ratePeriodId.Value.ToString());
+
+        var conflictCheck = await _dbContext
+            .LoanPartRatePeriods.Where(r =>
+                r.LoanPartId == partId
+                && r.EffectiveDate == input.EffectiveDate
+                && r.Id != ratePeriodId
+            )
+            .EnsureNoneAsync(
+                ErrorCodes.LoanRatePeriodConflict,
+                $"A rate period effective {input.EffectiveDate:yyyy-MM-dd} already exists for this part.",
+                cancellationToken
+            );
+        if (conflictCheck.IsFailure)
+            return conflictCheck.Error;
+
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
+        rate.EffectiveDate = input.EffectiveDate;
+        rate.AnnualRatePercent = input.AnnualRatePercent;
+        rate.FixedUntil = input.FixedUntil;
+        rate.UpdatedAt = now;
+
+        var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
+        if (saveResult.IsFailure)
+            return saveResult.Error;
+
+        return await GetAsync(id, cancellationToken);
+    }
+
+    public async Task<Result<LoanDetailOutput>> DeleteRatePeriodAsync(
+        LoanId id,
+        LoanPartId partId,
+        LoanPartRatePeriodId ratePeriodId,
+        CancellationToken cancellationToken
+    )
+    {
+        var rateExists = await _dbContext.LoanPartRatePeriods.AnyAsync(
+            r =>
+                r.Id == ratePeriodId
+                && r.LoanPartId == partId
+                && _dbContext.LoanParts.Any(p => p.Id == partId && p.LoanId == id),
+            cancellationToken
+        );
+        if (!rateExists)
+            return new NotFoundError("LoanPartRatePeriod", ratePeriodId.Value.ToString());
+
+        var rateCount = await _dbContext.LoanPartRatePeriods.CountAsync(
+            r => r.LoanPartId == partId,
+            cancellationToken
+        );
+        if (rateCount <= 1)
+        {
+            return new InvariantError(
+                ErrorCodes.LoanRatePeriodLastRemaining,
+                "A Loan Part must keep at least one rate period."
+            );
+        }
+
+        var deleteResult = await _dbContext
+            .LoanPartRatePeriods.Where(r => r.Id == ratePeriodId && r.LoanPartId == partId)
+            .DeleteSingleAndCatchAsync(
+                "LoanPartRatePeriod",
+                ratePeriodId.Value.ToString(),
+                cancellationToken
+            );
+        if (deleteResult.IsFailure)
+            return deleteResult.Error;
 
         return await GetAsync(id, cancellationToken);
     }
@@ -572,6 +766,98 @@ internal sealed class LoanService : ILoanService
         return Result.Success;
     }
 
+    // The Construction deposit triple (ADR-0026): all three set or none. When set, the deposit is
+    // a plain postable Asset account (not loan-managed) in the loan's currency, the income account
+    // a postable Income account, and the rate within [0, 100].
+    private async Task<Result> EnsureDepositReferencesAsync(
+        AccountId? depositAccountId,
+        AccountId? incomeAccountId,
+        decimal? annualRatePercent,
+        CurrencyCode loanCurrency,
+        CancellationToken cancellationToken
+    )
+    {
+        var anySet =
+            depositAccountId is not null
+            || incomeAccountId is not null
+            || annualRatePercent is not null;
+        var allSet =
+            depositAccountId is not null
+            && incomeAccountId is not null
+            && annualRatePercent is not null;
+        if (!anySet)
+            return Result.Success;
+        if (!allSet)
+        {
+            return new InvariantError(
+                ErrorCodes.LoanDepositReferencesIncomplete,
+                "A Construction deposit needs an asset account, an income account, and a rate — set all three or none."
+            );
+        }
+
+        if (annualRatePercent is < 0m or > 100m)
+        {
+            return new InvariantError(
+                ErrorCodes.RequestInvalid,
+                "The Construction deposit rate must be between 0 and 100."
+            );
+        }
+
+        var depositAccount = await _dbContext
+            .Accounts.AsNoTracking()
+            .Where(a => a.Id == depositAccountId)
+            .Select(a => new
+            {
+                a.AccountType,
+                a.IsPostable,
+                a.CurrencyCode,
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (depositAccount is null)
+            return new NotFoundError("Account", depositAccountId!.Value.Value.ToString());
+        if (
+            depositAccount.AccountType != AccountType.Asset
+            || !depositAccount.IsPostable
+            || depositAccount.CurrencyCode != loanCurrency
+        )
+        {
+            return new InvariantError(
+                ErrorCodes.LoanDepositAccountInvalid,
+                $"The Construction deposit must be a postable Asset account in {loanCurrency.Value}."
+            );
+        }
+
+        var managed = await LoanManagedAccounts.FindLoanManagedAsync(
+            _dbContext,
+            [depositAccountId!.Value],
+            cancellationToken
+        );
+        if (managed.Count > 0)
+        {
+            return new InvariantError(
+                ErrorCodes.LoanDepositAccountInvalid,
+                "The Construction deposit account must not be loan-managed."
+            );
+        }
+
+        var incomeAccount = await _dbContext
+            .Accounts.AsNoTracking()
+            .Where(a => a.Id == incomeAccountId)
+            .Select(a => new { a.AccountType, a.IsPostable })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (incomeAccount is null)
+            return new NotFoundError("Account", incomeAccountId!.Value.Value.ToString());
+        if (incomeAccount.AccountType != AccountType.Income || !incomeAccount.IsPostable)
+        {
+            return new InvariantError(
+                ErrorCodes.LoanDepositIncomeAccountInvalid,
+                "The Construction deposit interest account must be a postable Income account."
+            );
+        }
+
+        return Result.Success;
+    }
+
     // ---- projections ------------------------------------------------------------------------
 
     private sealed record LoanGraph(
@@ -580,7 +866,8 @@ internal sealed class LoanService : ILoanService
         string InterestAccountName,
         CurrencyCode CurrencyCode,
         IReadOnlyList<LoanPartGraph> Parts,
-        DateOnly Today
+        DateOnly Today,
+        LoanConstructionDepositOutput? Deposit
     );
 
     private sealed record LoanPartGraph(
@@ -611,6 +898,16 @@ internal sealed class LoanService : ILoanService
             .SelectMany(l => l.Parts.Select(p => p.AccountId))
             .Concat(loans.Select(l => l.ParentAccountId))
             .Concat(loans.Select(l => l.InterestExpenseAccountId))
+            .Concat(
+                loans
+                    .Where(l => l.ConstructionDepositAccountId is not null)
+                    .Select(l => l.ConstructionDepositAccountId!.Value)
+            )
+            .Concat(
+                loans
+                    .Where(l => l.ConstructionDepositInterestIncomeAccountId is not null)
+                    .Select(l => l.ConstructionDepositInterestIncomeAccountId!.Value)
+            )
             .Distinct()
             .ToList();
         var accounts = await _dbContext
@@ -650,6 +947,25 @@ internal sealed class LoanService : ILoanService
                     [.. p.RatePeriods.OrderBy(r => r.EffectiveDate)]
                 ))
                 .ToList();
+
+            LoanConstructionDepositOutput? deposit = null;
+            if (
+                loan.ConstructionDepositAccountId is { } depositId
+                && loan.ConstructionDepositInterestIncomeAccountId is { } incomeId
+                && loan.ConstructionDepositAnnualRatePercent is { } depositRate
+            )
+            {
+                deposit = new LoanConstructionDepositOutput(
+                    depositId,
+                    accounts[depositId].Name,
+                    incomeId,
+                    accounts[incomeId].Name,
+                    depositRate,
+                    // An Asset's raw line sum is its (debit-normal) balance; floor at zero.
+                    Math.Max(0L, accounts[depositId].Balance)
+                );
+            }
+
             graphs.Add(
                 new LoanGraph(
                     loan,
@@ -657,12 +973,32 @@ internal sealed class LoanService : ILoanService
                     accounts[loan.InterestExpenseAccountId].Name,
                     accounts[loan.ParentAccountId].CurrencyCode,
                     parts,
-                    today
+                    today,
+                    deposit
                 )
             );
         }
 
         return graphs;
+    }
+
+    // The deposit-interest offset for one month (ADR-0026): deposit balance × monthly rate,
+    // capped at the month's gross interest so the proposal never goes negative.
+    private static long DepositOffsetForMonth(
+        LoanConstructionDepositOutput? deposit,
+        long grossInterest
+    )
+    {
+        if (deposit is null || deposit.Balance <= 0 || deposit.AnnualRatePercent <= 0m)
+            return 0L;
+
+        var monthly = (long)
+            Math.Round(
+                deposit.Balance * deposit.AnnualRatePercent / 100m / 12m,
+                0,
+                MidpointRounding.AwayFromZero
+            );
+        return Math.Min(Math.Max(0L, monthly), Math.Max(0L, grossInterest));
     }
 
     private static LoanOutput ToListOutput(LoanGraph graph)
@@ -721,7 +1057,8 @@ internal sealed class LoanService : ILoanService
                         )),
                     ]
                 )),
-            ]
+            ],
+            graph.Deposit
         );
     }
 
@@ -739,7 +1076,12 @@ internal sealed class LoanService : ILoanService
             [.. graph.Parts.Select(p => ToSpec(p))],
             currentMonth
         );
-        var currentPayment = projection.Where(r => r.Period == currentMonth).Sum(r => r.Payment);
+        var currentRows = projection.Where(r => r.Period == currentMonth).ToList();
+        // Net of the deposit-interest offset (ADR-0026): the headline payment matches the single
+        // netted debit the lender collects during construction; gross once the deposit drains.
+        var grossInterest = currentRows.Sum(r => r.Interest);
+        var currentPayment =
+            currentRows.Sum(r => r.Payment) - DepositOffsetForMonth(graph.Deposit, grossInterest);
 
         decimal? weightedRate = null;
         if (outstanding > 0)

@@ -30,9 +30,21 @@ internal static class LoanEndpoints
             .WithValidation<CreateLoanPartRequest>()
             .WithName("AddLoanPart");
         group
+            .MapPatch("/{id}/parts/{partId}", UpdatePartAsync)
+            .WithValidation<UpdateLoanPartRequest>()
+            .WithName("UpdateLoanPart");
+        group.MapDelete("/{id}/parts/{partId}", DeletePartAsync).WithName("DeleteLoanPart");
+        group
             .MapPost("/{id}/parts/{partId}/rate-periods", AddRatePeriodAsync)
             .WithValidation<LoanRatePeriodRequest>()
             .WithName("AddLoanPartRatePeriod");
+        group
+            .MapPatch("/{id}/parts/{partId}/rate-periods/{ratePeriodId}", UpdateRatePeriodAsync)
+            .WithValidation<LoanRatePeriodRequest>()
+            .WithName("UpdateLoanPartRatePeriod");
+        group
+            .MapDelete("/{id}/parts/{partId}/rate-periods/{ratePeriodId}", DeleteRatePeriodAsync)
+            .WithName("DeleteLoanPartRatePeriod");
         group
             .MapGet("/{id}/payment-proposal", GetPaymentProposalAsync)
             .WithName("GetLoanPaymentProposal");
@@ -172,6 +184,111 @@ internal static class LoanEndpoints
                 request.AnnualRatePercent,
                 request.FixedUntil
             ),
+            cancellationToken
+        );
+        return result.ToOk();
+    }
+
+    private static async Task<
+        Results<
+            Ok<LoanDetailOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > UpdatePartAsync(
+        [FromRoute] LoanId id,
+        [FromRoute] LoanPartId partId,
+        [FromBody] UpdateLoanPartRequest request,
+        [FromServices] ILoanService loanService,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await loanService.UpdatePartAsync(
+            id,
+            partId,
+            new UpdateLoanPartInput(
+                request.Label,
+                request.RepaymentType,
+                request.StartDate,
+                request.EndDate
+            ),
+            cancellationToken
+        );
+        return result.ToOk();
+    }
+
+    private static async Task<
+        Results<
+            Ok<LoanDetailOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > DeletePartAsync(
+        [FromRoute] LoanId id,
+        [FromRoute] LoanPartId partId,
+        [FromServices] ILoanService loanService,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await loanService.DeletePartAsync(id, partId, cancellationToken);
+        return result.ToOk();
+    }
+
+    private static async Task<
+        Results<
+            Ok<LoanDetailOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > UpdateRatePeriodAsync(
+        [FromRoute] LoanId id,
+        [FromRoute] LoanPartId partId,
+        [FromRoute] LoanPartRatePeriodId ratePeriodId,
+        [FromBody] LoanRatePeriodRequest request,
+        [FromServices] ILoanService loanService,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await loanService.UpdateRatePeriodAsync(
+            id,
+            partId,
+            ratePeriodId,
+            new CreateLoanRatePeriodInput(
+                request.EffectiveDate,
+                request.AnnualRatePercent,
+                request.FixedUntil
+            ),
+            cancellationToken
+        );
+        return result.ToOk();
+    }
+
+    private static async Task<
+        Results<
+            Ok<LoanDetailOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > DeleteRatePeriodAsync(
+        [FromRoute] LoanId id,
+        [FromRoute] LoanPartId partId,
+        [FromRoute] LoanPartRatePeriodId ratePeriodId,
+        [FromServices] ILoanService loanService,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await loanService.DeleteRatePeriodAsync(
+            id,
+            partId,
+            ratePeriodId,
             cancellationToken
         );
         return result.ToOk();

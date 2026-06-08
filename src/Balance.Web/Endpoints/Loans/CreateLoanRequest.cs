@@ -12,7 +12,10 @@ internal sealed record CreateLoanRequest(
     CurrencyCode CurrencyCode,
     string ParentAccountName,
     string ParentAccountCode,
-    IReadOnlyList<CreateLoanPartRequest> Parts
+    IReadOnlyList<CreateLoanPartRequest> Parts,
+    AccountId? ConstructionDepositAccountId = null,
+    AccountId? ConstructionDepositInterestIncomeAccountId = null,
+    decimal? ConstructionDepositAnnualRatePercent = null
 );
 
 internal sealed record CreateLoanPartRequest(
@@ -37,6 +40,26 @@ internal sealed record LoanRatePeriodRequest(
     decimal AnnualRatePercent,
     DateOnly? FixedUntil
 );
+
+internal sealed record UpdateLoanPartRequest(
+    string Label,
+    LoanRepaymentType RepaymentType,
+    DateOnly StartDate,
+    DateOnly EndDate
+);
+
+internal sealed class UpdateLoanPartRequestValidator : AbstractValidator<UpdateLoanPartRequest>
+{
+    public UpdateLoanPartRequestValidator()
+    {
+        RuleFor(x => x.Label).NotEmpty().MaximumLength(64);
+        RuleFor(x => x.RepaymentType).IsInEnum();
+        RuleFor(x => x.StartDate).NotEqual(default(DateOnly));
+        RuleFor(x => x.EndDate)
+            .GreaterThan(x => x.StartDate)
+            .WithMessage("EndDate must be after StartDate.");
+    }
+}
 
 internal sealed class CreateLoanRequestValidator : AbstractValidator<CreateLoanRequest>
 {
@@ -104,7 +127,10 @@ internal static class LoanRequestMappers
             request.CurrencyCode,
             request.ParentAccountName,
             request.ParentAccountCode,
-            [.. request.Parts.Select(p => p.ToInput())]
+            [.. request.Parts.Select(p => p.ToInput())],
+            request.ConstructionDepositAccountId,
+            request.ConstructionDepositInterestIncomeAccountId,
+            request.ConstructionDepositAnnualRatePercent
         );
 
     public static CreateLoanPartInput ToInput(this CreateLoanPartRequest request) =>
