@@ -327,9 +327,15 @@ internal sealed class LoanService : ILoanService
 
         var label = input.Label?.Trim() ?? string.Empty;
         if (label.Length == 0)
-            return new InvariantError(ErrorCodes.RequestInvalid, "Loan Part label cannot be empty.");
+            return new InvariantError(
+                ErrorCodes.RequestInvalid,
+                "Loan Part label cannot be empty."
+            );
         if (input.EndDate <= input.StartDate)
-            return new InvariantError(ErrorCodes.RequestInvalid, "EndDate must be after StartDate.");
+            return new InvariantError(
+                ErrorCodes.RequestInvalid,
+                "EndDate must be after StartDate."
+            );
 
         var now = _timeProvider.GetUtcNow().UtcDateTime;
         part.Label = label;
@@ -358,7 +364,10 @@ internal sealed class LoanService : ILoanService
         if (!partExists)
             return new NotFoundError("LoanPart", partId.Value.ToString());
 
-        var partCount = await _dbContext.LoanParts.CountAsync(p => p.LoanId == id, cancellationToken);
+        var partCount = await _dbContext.LoanParts.CountAsync(
+            p => p.LoanId == id,
+            cancellationToken
+        );
         if (partCount <= 1)
         {
             return new InvariantError(

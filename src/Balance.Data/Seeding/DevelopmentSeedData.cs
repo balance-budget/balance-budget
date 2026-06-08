@@ -107,11 +107,7 @@ internal static class DevelopmentSeedData
 
             var salary = Leaf("4100", "Salary", AccountType.Income);
             var interest = Leaf("4200", "Interest Received", AccountType.Income);
-            var depositInterest = Leaf(
-                "4250",
-                "Construction Deposit Interest",
-                AccountType.Income
-            );
+            var depositInterest = Leaf("4250", "Construction Deposit Interest", AccountType.Income);
             var taxReturn = Leaf("4300", "Tax Return", AccountType.Income);
 
             var housing = Branch("5100", "Housing", AccountType.Expense);

@@ -15,7 +15,8 @@ namespace Balance.Data.Sqlite.Migrations
                 name: "ConstructionDepositAccountId",
                 table: "Loans",
                 type: "TEXT",
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.AddColumn<decimal>(
                 name: "ConstructionDepositAnnualRatePercent",
@@ -23,23 +24,27 @@ namespace Balance.Data.Sqlite.Migrations
                 type: "TEXT",
                 precision: 8,
                 scale: 4,
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.AddColumn<Guid>(
                 name: "ConstructionDepositInterestIncomeAccountId",
                 table: "Loans",
                 type: "TEXT",
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Loans_ConstructionDepositAccountId",
                 table: "Loans",
-                column: "ConstructionDepositAccountId");
+                column: "ConstructionDepositAccountId"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Loans_ConstructionDepositInterestIncomeAccountId",
                 table: "Loans",
-                column: "ConstructionDepositInterestIncomeAccountId");
+                column: "ConstructionDepositInterestIncomeAccountId"
+            );
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Loans_Accounts_ConstructionDepositAccountId",
@@ -47,7 +52,8 @@ namespace Balance.Data.Sqlite.Migrations
                 column: "ConstructionDepositAccountId",
                 principalTable: "Accounts",
                 principalColumn: "Id",
-                onDelete: ReferentialAction.Restrict);
+                onDelete: ReferentialAction.Restrict
+            );
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Loans_Accounts_ConstructionDepositInterestIncomeAccountId",
@@ -55,7 +61,8 @@ namespace Balance.Data.Sqlite.Migrations
                 column: "ConstructionDepositInterestIncomeAccountId",
                 principalTable: "Accounts",
                 principalColumn: "Id",
-                onDelete: ReferentialAction.Restrict);
+                onDelete: ReferentialAction.Restrict
+            );
         }
 
         /// <inheritdoc />
@@ -63,31 +70,35 @@ namespace Balance.Data.Sqlite.Migrations
         {
             migrationBuilder.DropForeignKey(
                 name: "FK_Loans_Accounts_ConstructionDepositAccountId",
-                table: "Loans");
+                table: "Loans"
+            );
 
             migrationBuilder.DropForeignKey(
                 name: "FK_Loans_Accounts_ConstructionDepositInterestIncomeAccountId",
-                table: "Loans");
+                table: "Loans"
+            );
 
             migrationBuilder.DropIndex(
                 name: "IX_Loans_ConstructionDepositAccountId",
-                table: "Loans");
+                table: "Loans"
+            );
 
             migrationBuilder.DropIndex(
                 name: "IX_Loans_ConstructionDepositInterestIncomeAccountId",
-                table: "Loans");
+                table: "Loans"
+            );
 
-            migrationBuilder.DropColumn(
-                name: "ConstructionDepositAccountId",
-                table: "Loans");
+            migrationBuilder.DropColumn(name: "ConstructionDepositAccountId", table: "Loans");
 
             migrationBuilder.DropColumn(
                 name: "ConstructionDepositAnnualRatePercent",
-                table: "Loans");
+                table: "Loans"
+            );
 
             migrationBuilder.DropColumn(
                 name: "ConstructionDepositInterestIncomeAccountId",
-                table: "Loans");
+                table: "Loans"
+            );
         }
     }
 }
