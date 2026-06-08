@@ -35,6 +35,15 @@ internal sealed class LoanConfiguration : IEntityTypeConfiguration<Loan>
             .HasConversion<AccountId.EfCoreValueConverter>()
             .IsRequired();
 
+        // Construction deposit (ADR-0026): all three nullable, set together or not at all.
+        builder
+            .Property(l => l.ConstructionDepositAccountId)
+            .HasConversion<AccountId.EfCoreValueConverter>();
+        builder
+            .Property(l => l.ConstructionDepositInterestIncomeAccountId)
+            .HasConversion<AccountId.EfCoreValueConverter>();
+        builder.Property(l => l.ConstructionDepositAnnualRatePercent).HasPrecision(8, 4);
+
         builder.Property(l => l.CreatedAt).HasConversion(DateConverters.UtcConverter);
         builder.Property(l => l.UpdatedAt).HasConversion(DateConverters.UtcConverter);
 
@@ -54,6 +63,18 @@ internal sealed class LoanConfiguration : IEntityTypeConfiguration<Loan>
             .HasOne<Account>()
             .WithMany()
             .HasForeignKey(l => l.ParentAccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder
+            .HasOne<Account>()
+            .WithMany()
+            .HasForeignKey(l => l.ConstructionDepositAccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder
+            .HasOne<Account>()
+            .WithMany()
+            .HasForeignKey(l => l.ConstructionDepositInterestIncomeAccountId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasMany(l => l.Parts).WithOne().HasForeignKey(p => p.LoanId);

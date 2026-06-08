@@ -36,18 +36,65 @@ public interface ILoanService
     /// </summary>
     Task<Result> DeleteAsync(LoanId id, CancellationToken cancellationToken);
 
-    /// <summary>Adds a part to an existing loan — opknippen or borrowing extra (ADR-0025).</summary>
+    /// <summary>Adds a part to an existing loan — splitting a part or borrowing extra (ADR-0025).</summary>
     Task<Result<LoanDetailOutput>> AddPartAsync(
         LoanId id,
         CreateLoanPartInput input,
         CancellationToken cancellationToken
     );
 
-    /// <summary>Appends an effective-dated rate period; history is never overwritten.</summary>
+    /// <summary>
+    /// Edits a part's descriptive terms (label, repayment type, dates). The part's Account is
+    /// immutable — its balance is the outstanding principal, so re-pointing it would orphan
+    /// posted history (ADR-0025).
+    /// </summary>
+    Task<Result<LoanDetailOutput>> UpdatePartAsync(
+        LoanId id,
+        LoanPartId partId,
+        UpdateLoanPartInput input,
+        CancellationToken cancellationToken
+    );
+
+    /// <summary>
+    /// Deletes a Loan Part definition. The part's Account and its posted history stand untouched
+    /// (line attributions are cleared by the database, SET NULL); a Loan must keep at least one
+    /// part. Deleting the last part is refused — delete the whole Loan instead.
+    /// </summary>
+    Task<Result<LoanDetailOutput>> DeletePartAsync(
+        LoanId id,
+        LoanPartId partId,
+        CancellationToken cancellationToken
+    );
+
+    /// <summary>Appends an effective-dated rate period.</summary>
     Task<Result<LoanDetailOutput>> AddRatePeriodAsync(
         LoanId id,
         LoanPartId partId,
         CreateLoanRatePeriodInput input,
+        CancellationToken cancellationToken
+    );
+
+    /// <summary>
+    /// Edits a rate period to correct a mistake. Safe because the projection is computed, never
+    /// materialised (ADR-0025): the change only affects future proposals and the projected curve,
+    /// never posted Loan-payment lines. Guarded by the per-part effective-date uniqueness.
+    /// </summary>
+    Task<Result<LoanDetailOutput>> UpdateRatePeriodAsync(
+        LoanId id,
+        LoanPartId partId,
+        LoanPartRatePeriodId ratePeriodId,
+        CreateLoanRatePeriodInput input,
+        CancellationToken cancellationToken
+    );
+
+    /// <summary>
+    /// Deletes a rate period. A part must keep at least one rate period; deleting the last is
+    /// refused.
+    /// </summary>
+    Task<Result<LoanDetailOutput>> DeleteRatePeriodAsync(
+        LoanId id,
+        LoanPartId partId,
+        LoanPartRatePeriodId ratePeriodId,
         CancellationToken cancellationToken
     );
 }
@@ -59,7 +106,10 @@ public sealed record CreateLoanInput(
     CurrencyCode CurrencyCode,
     string ParentAccountName,
     string ParentAccountCode,
-    IReadOnlyList<CreateLoanPartInput> Parts
+    IReadOnlyList<CreateLoanPartInput> Parts,
+    AccountId? ConstructionDepositAccountId = null,
+    AccountId? ConstructionDepositInterestIncomeAccountId = null,
+    decimal? ConstructionDepositAnnualRatePercent = null
 );
 
 /// <summary>
@@ -94,9 +144,22 @@ public sealed record CreateLoanRatePeriodInput(
     DateOnly? FixedUntil
 );
 
+/// <summary>Editable terms of a Loan Part; the Account stays immutable (ADR-0025).</summary>
+public sealed record UpdateLoanPartInput(
+    string Label,
+    LoanRepaymentType RepaymentType,
+    DateOnly StartDate,
+    DateOnly EndDate
+);
+
 public sealed record UpdateLoanInput
 {
     public required string Name { get; set; }
     public required CounterpartyId LenderCounterpartyId { get; set; }
     public required AccountId InterestExpenseAccountId { get; set; }
+
+    // Construction deposit (ADR-0026): set all three or none.
+    public AccountId? ConstructionDepositAccountId { get; set; }
+    public AccountId? ConstructionDepositInterestIncomeAccountId { get; set; }
+    public decimal? ConstructionDepositAnnualRatePercent { get; set; }
 }

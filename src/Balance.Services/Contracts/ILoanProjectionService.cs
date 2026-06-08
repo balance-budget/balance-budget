@@ -37,8 +37,18 @@ public sealed record LoanPaymentProposalOutput(
     CurrencyCode CurrencyCode,
     AccountId InterestExpenseAccountId,
     IReadOnlyList<LoanPaymentProposalLineOutput> Lines,
-    long Total
+    long Total,
+    LoanDepositOffsetOutput? DepositOffset
 );
+
+/// <summary>
+/// The deposit-interest offset to pre-fill on the loan payment during construction (ADR-0026):
+/// an Income credit on <see cref="IncomeAccountId"/> of <see cref="Amount"/> minor units, so the
+/// entry's net matches the single netted debit the lender collects. Null when the loan has no
+/// Construction deposit or its balance is zero. <see cref="Total"/> on the proposal stays gross
+/// (sum of part payments); the net is <c>Total − DepositOffset.Amount</c>.
+/// </summary>
+public sealed record LoanDepositOffsetOutput(AccountId IncomeAccountId, long Amount);
 
 public sealed record LoanPaymentProposalLineOutput(
     LoanPartId LoanPartId,

@@ -54,13 +54,35 @@ internal sealed class LoanProjectionService : ILoanProjectionService
             );
         }
 
+        // Deposit-interest offset (ADR-0026): deposit balance × monthly rate, capped at the gross
+        // interest, credited to the income account so the entry's net matches the bank's debit.
+        LoanDepositOffsetOutput? depositOffset = null;
+        if (
+            graph is { DepositIncomeAccountId: { } incomeAccountId, DepositRate: { } depositRate }
+            && graph.DepositBalance > 0
+            && depositRate > 0m
+        )
+        {
+            var grossInterest = lines.Sum(l => l.Interest);
+            var monthly = (long)
+                Math.Round(
+                    graph.DepositBalance * depositRate / 100m / 12m,
+                    0,
+                    MidpointRounding.AwayFromZero
+                );
+            var amount = Math.Min(Math.Max(0L, monthly), grossInterest);
+            if (amount > 0)
+                depositOffset = new LoanDepositOffsetOutput(incomeAccountId, amount);
+        }
+
         return new LoanPaymentProposalOutput(
             graph.Loan.Id,
             requested,
             graph.CurrencyCode,
             graph.Loan.InterestExpenseAccountId,
             lines,
-            lines.Sum(l => l.Payment)
+            lines.Sum(l => l.Payment),
+            depositOffset
         );
     }
 
@@ -287,7 +309,10 @@ internal sealed class LoanProjectionService : ILoanProjectionService
         CurrencyCode CurrencyCode,
         IReadOnlyList<LoanPartGraph> Parts,
         IReadOnlyList<AmortizationPartSpec> Specs,
-        DateOnly CurrentMonth
+        DateOnly CurrentMonth,
+        AccountId? DepositIncomeAccountId,
+        decimal? DepositRate,
+        long DepositBalance
     );
 
     private sealed record LoanPartGraph(
@@ -308,6 +333,8 @@ internal sealed class LoanProjectionService : ILoanProjectionService
             return new NotFoundError("Loan", id.Value.ToString());
 
         var accountIds = loan.Parts.Select(p => p.AccountId).Append(loan.ParentAccountId).ToList();
+        if (loan.ConstructionDepositAccountId is { } depositAccountId)
+            accountIds.Add(depositAccountId);
         var accounts = await _dbContext
             .Accounts.AsNoTracking()
             .Where(a => accountIds.Contains(a.Id))
@@ -349,13 +376,21 @@ internal sealed class LoanProjectionService : ILoanProjectionService
             )),
         ];
 
+        var depositBalance =
+            loan.ConstructionDepositAccountId is { } depId
+                ? Math.Max(0L, accounts[depId].Balance)
+                : 0L;
+
         var today = DateOnly.FromDateTime(_timeProvider.GetUtcNow().UtcDateTime);
         return new LoanGraph(
             loan,
             accounts[loan.ParentAccountId].CurrencyCode,
             parts,
             specs,
-            FirstOfMonth(today)
+            FirstOfMonth(today),
+            loan.ConstructionDepositInterestIncomeAccountId,
+            loan.ConstructionDepositAnnualRatePercent,
+            depositBalance
         );
     }
 

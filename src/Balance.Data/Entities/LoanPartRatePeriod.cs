@@ -18,7 +18,7 @@ public sealed class LoanPartRatePeriod : BaseEntity<LoanPartRatePeriodId>
     public required decimal AnnualRatePercent { get; set; }
 
     /// <summary>
-    /// End of the rate-fixation period (Dutch: rentevaste periode), when known. Beyond this date
+    /// End of the rate-fixation period, when known. Beyond this date
     /// the projection stops being contractual and becomes an assumption.
     /// </summary>
     public DateOnly? FixedUntil { get; set; }

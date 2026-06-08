@@ -88,4 +88,9 @@ public static class ErrorCodes
     public const string LoanInterestAccountInvalid = "loan.interest_account_invalid";
     public const string LoanRatePeriodConflict = "loan.rate_period_conflict";
     public const string LoanPartAttributionInvalid = "loan.part_attribution_invalid";
+    public const string LoanLastPart = "loan.last_part";
+    public const string LoanRatePeriodLastRemaining = "loan.rate_period_last_remaining";
+    public const string LoanDepositReferencesIncomplete = "loan.deposit_references_incomplete";
+    public const string LoanDepositAccountInvalid = "loan.deposit_account_invalid";
+    public const string LoanDepositIncomeAccountInvalid = "loan.deposit_income_account_invalid";
 }
