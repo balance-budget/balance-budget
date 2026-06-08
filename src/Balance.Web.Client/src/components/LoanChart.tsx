@@ -198,8 +198,9 @@ export function LoanChart({ projection, height = 280 }: LoanChartProps) {
                     {mode === 'payments' && (
                         <>
                             {/* Repayment (darker shade) then interest (lighter shade) per part,
-                                same hue so a part reads as one colour with two bands. */}
-                            {projection.parts.map(p => (
+                                emitted back-to-back so each part stacks as one contiguous
+                                two-band block of a single hue (parts otherwise interleave). */}
+                            {projection.parts.flatMap(p => [
                                 <Area
                                     key={`pr:${p.id}`}
                                     dataKey={`pr:${p.id}`}
@@ -210,9 +211,7 @@ export function LoanChart({ projection, height = 280 }: LoanChartProps) {
                                     fillOpacity={0.8}
                                     strokeWidth={0.5}
                                     isAnimationActive={false}
-                                />
-                            ))}
-                            {projection.parts.map(p => (
+                                />,
                                 <Area
                                     key={`pi:${p.id}`}
                                     dataKey={`pi:${p.id}`}
@@ -223,8 +222,8 @@ export function LoanChart({ projection, height = 280 }: LoanChartProps) {
                                     fillOpacity={0.32}
                                     strokeWidth={0.5}
                                     isAnimationActive={false}
-                                />
-                            ))}
+                                />,
+                            ])}
                         </>
                     )}
                 </ComposedChart>
