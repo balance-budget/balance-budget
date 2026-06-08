@@ -70,12 +70,20 @@ A principal-only payment outside the regular **Loan payment**, applied to one ch
 _Avoid_: prepayment (ambiguous with paying early in the month), overpayment.
 
 **Rate period**:
-One entry in a **Loan Part**'s effective-dated list of interest rates: an effective date, an annual nominal rate, and an optional fixed-until date (Dutch: *rentevaste periode*). The rate in force for a month is the latest entry effective on or before it; future-dated entries (an accepted renewal offer) are legitimate and feed the projection. Monthly interest is the annual rate ÷ 12 on the balance at period start. History is appended, never overwritten.
+One entry in a **Loan Part**'s effective-dated list of interest rates: an effective date, an annual nominal rate, and an optional fixed-until date (Dutch: *rentevaste periode*). The rate in force for a month is the latest entry effective on or before it; future-dated entries (an accepted renewal offer) are legitimate and feed the projection. Monthly interest is the annual rate ÷ 12 on the balance at period start. Rate periods are dated *facts*, not replayed events — and because the **Projection** is computed, never materialised, a Rate period is freely editable and deletable to correct a mistake (wrong rate, wrong date, wrong fixed-until); the only guards are that a **Loan Part** always keeps **≥ 1** Rate period and that `(LoanPartId, EffectiveDate)` stays unique. Correcting a fact is not the same as rewriting history: editing a Rate period never touches posted **Loan payment** **JournalLines** (the bank's actual charge), only future proposals and the projected curve.
 _Avoid_: interest change event (it is a fact with an effective date, not a replayed event), APR (effective-rate concept; this is the nominal rate).
 
 **Projection**:
 The derived future of a **Loan** — per period and per **Loan Part**, the expected interest, principal, payment, and remaining balance. *Computed, never stored*: a pure function of the part definitions, **Rate periods**, and current ledger balances, projected forward from an anchor of *(outstanding balance now, rate now, remaining term)* — never replayed from inception. Past periods come from ledger actuals, future periods from the Projection; a what-if scenario is the same computation with hypothetical extra repayments or rates overlaid, ephemeral and unpersisted.
 _Avoid_: amortization schedule as a noun implying a stored table (nothing is materialized), forecast (vague).
+
+**Construction deposit**:
+An **Asset** **Account** holding mortgage money the lender has *not yet disbursed* — funds earmarked for building or renovation that you draw down as invoices come in (Dutch: *bouwdepot*). A plain, **not Loan-managed** Account: generic flows post to it freely — draw-downs are ordinary **JournalEntries** (direct disbursement: the lender pays the contractor, no **BankTransaction**) or **Self-transfers** (reimbursement: the lender repays you into Checking). A **Loan** *may* reference one Construction deposit, alongside a deposit-interest **Income** **Account** and a single editable annual rate, used only to compute the **Deposit-interest offset** on its **Loan payment**. Typically **Illiquid** (earmarked, not day-to-day money).
+_Avoid_: bouwdepot (Dutch), escrow (third-party connotation), construction loan (that is the borrowing, not the deposit), building fund.
+
+**Deposit-interest offset**:
+The **Income** line the loan-aware **Loan payment** proposal adds during construction — `Construction deposit balance at period start × monthly deposit rate`, credited to the **Loan**'s configured deposit-interest **Income** **Account**. It offsets the gross interest **Expense** so the **JournalEntry**'s net equals the *single netted debit* the lender actually collects; the deposit interest is *consumed as compensation* and never lands in the **Construction deposit** balance (which only shrinks via draws). Proposed as an editable default like every other amount, capped so it never exceeds the entry's gross interest; automatically €0 once the deposit balance reaches €0 (construction complete). Carries no **Loan Part** attribution — it is a loan-level line.
+_Avoid_: netting (describes the mechanism, not the line), deposit interest income (true, but the canonical concept is its offset role).
 
 **JournalEntry**:
 One bookkeeping event in the double-entry ledger — a header record carrying date, description, and optional **Counterparty**, owning two or more **JournalLines** whose amounts net to zero. The unit of "I bought groceries", "I got paid", "I transferred money".
@@ -220,6 +228,7 @@ _Avoid_: cash flow (a specific, loaded accounting statement), Sankey (the chart 
 - A **Loan** owns one or more **Loan Parts**; a **Loan Part** belongs to exactly one **Loan**.
 - A **Loan** is represented by one non-postable **Liability** **Account**; each of its **Loan Parts** by one postable child **Account** of that parent. A part's Account is either created fresh or *adopted* — an existing postable **Liability** leaf re-parented under the loan with its history intact.
 - A **Loan** references its lender **Counterparty** (drives the Inbox's loan-payment hint) and exactly one postable **Expense** **Account** that receives all its interest.
+- A **Loan** *may* reference one **Construction deposit** (an **Asset** **Account**), one postable **Income** **Account** for the **Deposit-interest offset**, and a single annual deposit rate — all three set together or not at all. The **Construction deposit** is *not* **Loan-managed**.
 - A **Loan Part**'s Account (and the **Loan**'s parent Account) is **Loan-managed**: only loan-aware flows post to it.
 - A **Loan Part** owns an ordered, effective-dated list of **Rate periods**.
 - A **JournalLine** *may* reference one **Loan Part** (attribution, set only by loan-aware flows); principal lines are attributed intrinsically by their Account, interest lines explicitly.
