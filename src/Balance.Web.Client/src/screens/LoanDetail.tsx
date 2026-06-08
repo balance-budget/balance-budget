@@ -166,7 +166,7 @@ function LoanDetailLoaded({ loan }: { loan: LoanDetailModel }) {
             <Panel>
                 <SectionHead
                     title="Parts"
-                    subtitle="Leningdelen — each with its own terms and rate history."
+                    subtitle="Parts — each with its own terms and rate history."
                 />
                 <PartsTable
                     loan={loan}
