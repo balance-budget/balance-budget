@@ -376,10 +376,9 @@ internal sealed class LoanProjectionService : ILoanProjectionService
             )),
         ];
 
-        var depositBalance =
-            loan.ConstructionDepositAccountId is { } depId
-                ? Math.Max(0L, accounts[depId].Balance)
-                : 0L;
+        var depositBalance = loan.ConstructionDepositAccountId is { } depId
+            ? Math.Max(0L, accounts[depId].Balance)
+            : 0L;
 
         var today = DateOnly.FromDateTime(_timeProvider.GetUtcNow().UtcDateTime);
         return new LoanGraph(
