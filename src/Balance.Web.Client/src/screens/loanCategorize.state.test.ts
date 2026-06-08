@@ -44,6 +44,7 @@ function proposal(): LoanProposal {
             },
         ],
         total: 110_000,
+        depositOffset: null,
     };
 }
 
@@ -81,6 +82,52 @@ describe('linesFromLoanProposal', () => {
 
         expect(lines).toHaveLength(1);
         expect(lines[0]?.accountId).toBeNull();
+    });
+
+    it('appends a credit offset line when the proposal carries a deposit offset', () => {
+        const depositIncome = asAccountId('00000000-0000-7000-8000-0000000000df');
+        const withOffset: LoanProposal = {
+            ...proposal(),
+            depositOffset: { incomeAccountId: depositIncome, amount: 12_000 },
+        };
+
+        const lines = linesFromLoanProposal(withOffset, null, formatTwoDecimals);
+
+        expect(lines).toHaveLength(4);
+        expect(lines[3]).toMatchObject({
+            accountId: depositIncome,
+            amount: '120.00',
+            credit: true,
+        });
+    });
+});
+
+describe('buildRequest with a deposit offset', () => {
+    it('nets the credit offset so lines balance to the bank debit', () => {
+        const depositIncome = asAccountId('00000000-0000-7000-8000-0000000000df');
+        const withOffset: LoanProposal = {
+            ...proposal(),
+            depositOffset: { incomeAccountId: depositIncome, amount: 12_000 },
+        };
+        // Gross 110_000 less the 12_000 offset = 98_000 net debit on the statement.
+        const form = initialForm({
+            today: '2026-06-07',
+            bookingDate: '2026-06-01',
+            description: 'Monthly payment',
+            resolvedCounterpartyId: null,
+            prefilledAccountId: null,
+            btAmountMinor: -98_000,
+            formatMagnitude: formatTwoDecimals,
+        });
+        form.lines = linesFromLoanProposal(withOffset, null, formatTwoDecimals);
+
+        const result = buildRequest(form, -98_000, 2);
+
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+        // Counter-side debits are positive; the offset is a negative (credit) income line.
+        expect(result.request.lines.map(l => l.amount)).toEqual([60_000, 30_000, 20_000, -12_000]);
+        expect(result.request.lines[3]?.accountId).toBe(depositIncome);
     });
 });
 

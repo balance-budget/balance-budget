@@ -8,7 +8,6 @@
 import type { LoanPeriodRow, LoanProjection, RepaymentPolicy } from '../api/loans';
 import type { LoanPartId } from '../lib/domain';
 import type { components } from '../lib/api-types.gen';
-import { parseMoney } from '../lib/money';
 
 type WireScenario = components['schemas']['LoanScenarioRequest'];
 
@@ -19,6 +18,49 @@ export type ChartRow = {
     proj: Record<string, number>;
     scenarioTotal: number | null;
 };
+
+export type PaymentChartRow = {
+    period: string;
+    /** Per-part repayment (principal + extra) for the period; key = LoanPartId. */
+    repay: Record<string, number>;
+    /** Per-part interest for the period; key = LoanPartId. */
+    interest: Record<string, number>;
+};
+
+/**
+ * The monthly payment composition over time: per part, repayment and interest.
+ * Actual months left of the anchor come from the ledger, the rest from the
+ * projection (scenario when active). Principal is floored at zero so the
+ * opening/borrowing month (a large negative "repayment") doesn't distort the
+ * flow view — that event belongs to the balance chart, not the payment one.
+ */
+export function buildPaymentRows(projection: LoanProjection): PaymentChartRow[] {
+    const byPeriod = new Map<string, PaymentChartRow>();
+    const row = (period: string): PaymentChartRow => {
+        let existing = byPeriod.get(period);
+        if (!existing) {
+            existing = { period, repay: {}, interest: {} };
+            byPeriod.set(period, existing);
+        }
+        return existing;
+    };
+
+    const fill = (r: LoanPeriodRow) => {
+        const rr = row(r.period);
+        rr.repay[r.loanPartId] = Math.max(0, r.principal + r.extraRepayment);
+        rr.interest[r.loanPartId] = Math.max(0, r.interest);
+    };
+
+    for (const r of projection.actuals) {
+        if (r.period >= projection.anchorMonth) continue;
+        fill(r);
+    }
+    for (const r of projection.scenario ?? projection.baseline) {
+        fill(r);
+    }
+
+    return [...byPeriod.values()].sort((a, b) => a.period.localeCompare(b.period));
+}
 
 export type ScheduleCell = {
     interest: number;
@@ -150,7 +192,7 @@ export type SimulatorRepayment = {
     id: string;
     loanPartId: LoanPartId | null;
     date: string; // ISO yyyy-MM-dd
-    amount: string; // major-units user input
+    amount: number | null; // major-units, from the currency NumberField (null when empty)
 };
 
 export type SimulatorState = {
@@ -166,7 +208,7 @@ export function nextRepaymentId(): string {
 }
 
 export function emptyRepayment(defaultDate: string): SimulatorRepayment {
-    return { id: nextRepaymentId(), loanPartId: null, date: defaultDate, amount: '' };
+    return { id: nextRepaymentId(), loanPartId: null, date: defaultDate, amount: null };
 }
 
 export function initialSimulator(defaultDate: string): SimulatorState {
@@ -185,10 +227,11 @@ export function initialSimulator(defaultDate: string): SimulatorState {
 export function buildScenario(state: SimulatorState, scale: number): WireScenario | null {
     const extraRepayments: WireScenario['extraRepayments'] = [];
     for (const r of state.repayments) {
-        if (r.loanPartId === null || r.date === '' || r.amount.trim() === '') continue;
-        const parsed = parseMoney(r.amount, scale);
-        if (!parsed.ok || parsed.minor <= 0) continue;
-        extraRepayments.push({ loanPartId: r.loanPartId, date: r.date, amount: parsed.minor });
+        if (r.loanPartId === null || r.date === '' || r.amount === null) continue;
+        if (!Number.isFinite(r.amount) || r.amount <= 0) continue;
+        const minor = Math.round(r.amount * 10 ** scale);
+        if (minor <= 0) continue;
+        extraRepayments.push({ loanPartId: r.loanPartId, date: r.date, amount: minor });
     }
 
     const assumedTrimmed = state.assumedRatePercent.trim();

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
     Area,
     CartesianGrid,
@@ -12,9 +12,10 @@ import {
 } from 'recharts';
 import type { LoanProjection } from '../api/loans';
 import { useCurrencyCatalog } from '../api/currencies';
+import { cx } from '../lib/cx';
 import { formatMoney, formatMoneyAxis } from '../lib/money';
 import { chartColorFor } from '../lib/visualHints';
-import { buildChartRows } from '../screens/loanDetail.state';
+import { buildChartRows, buildPaymentRows } from '../screens/loanDetail.state';
 
 type LoanChartProps = {
     projection: LoanProjection;
@@ -23,16 +24,22 @@ type LoanChartProps = {
 
 type FlatRow = { period: string } & Record<string, number | string | null>;
 
+type ChartMode = 'balance' | 'payments';
+
 /**
- * Outstanding balance stacked by part: posted actuals left of today (solid),
- * the engine projection right of today (faded), rate-fixation boundaries
- * marked per part, and — when the simulator is active — the scenario's total
- * balance overlaid as a dashed line (ADR-0025).
+ * Two views of the loan over one month axis (toggleable):
+ *  - "Balance" — outstanding balance stacked by part, posted actuals left of
+ *    today (solid) and the engine projection right of today (faded), with the
+ *    scenario total overlaid when the simulator is active.
+ *  - "Payments" — the monthly payment composition stacked by part, each part's
+ *    repayment and interest in the same hue at two shades (ADR-0026).
+ * Rate-fixation boundaries and the "today" marker show in both (ADR-0025).
  */
 export function LoanChart({ projection, height = 280 }: LoanChartProps) {
     const catalog = useCurrencyCatalog();
+    const [mode, setMode] = useState<ChartMode>('balance');
 
-    const { rows, hasScenario } = useMemo(() => {
+    const { balanceRows, hasScenario } = useMemo(() => {
         const chartRows = buildChartRows(projection);
         const flat: FlatRow[] = chartRows.map(r => {
             const row: FlatRow = { period: r.period, scenarioTotal: r.scenarioTotal };
@@ -40,8 +47,19 @@ export function LoanChart({ projection, height = 280 }: LoanChartProps) {
             for (const [partId, balance] of Object.entries(r.proj)) row[`p:${partId}`] = balance;
             return row;
         });
-        return { rows: flat, hasScenario: chartRows.some(r => r.scenarioTotal !== null) };
+        return { balanceRows: flat, hasScenario: chartRows.some(r => r.scenarioTotal !== null) };
     }, [projection]);
+
+    const paymentRows = useMemo(() => {
+        return buildPaymentRows(projection).map(r => {
+            const row: FlatRow = { period: r.period };
+            for (const [partId, v] of Object.entries(r.repay)) row[`pr:${partId}`] = v;
+            for (const [partId, v] of Object.entries(r.interest)) row[`pi:${partId}`] = v;
+            return row;
+        });
+    }, [projection]);
+
+    const rows = mode === 'balance' ? balanceRows : paymentRows;
 
     const ticks = useMemo(() => {
         // January of every nth year, thinned so long mortgages stay readable.
@@ -53,130 +71,213 @@ export function LoanChart({ projection, height = 280 }: LoanChartProps) {
     const labelByPart = new Map(projection.parts.map(p => [p.id as string, p.label]));
 
     return (
-        <ResponsiveContainer width="100%" height={height}>
-            <ComposedChart data={rows} margin={{ top: 10, right: 12, bottom: 0, left: 0 }}>
-                <CartesianGrid
-                    stroke="var(--color-border-soft)"
-                    vertical={false}
-                    strokeDasharray="2 4"
-                />
-                <XAxis
-                    dataKey="period"
-                    ticks={ticks}
-                    interval={0}
-                    tickFormatter={(p: string) => p.slice(0, 4)}
-                    tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                />
-                <YAxis
-                    domain={[0, 'auto']}
-                    tickFormatter={(v: number) =>
-                        formatMoneyAxis(v, projection.currencyCode, catalog)
-                    }
-                    tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                    width={64}
-                />
-                <Tooltip
-                    cursor={{
-                        stroke: 'var(--color-border-strong)',
-                        strokeWidth: 1,
-                        strokeDasharray: '2 2',
-                    }}
-                    contentStyle={{
-                        background: 'var(--color-bg-1)',
-                        border: '1px solid var(--color-border-soft)',
-                        borderRadius: 8,
-                        fontSize: 12,
-                        color: 'var(--color-fg-1)',
-                    }}
-                    labelFormatter={label => String(label).slice(0, 7)}
-                    formatter={(value, name) => [
-                        typeof value === 'number'
-                            ? formatMoney(value, projection.currencyCode, catalog)
-                            : String(value ?? ''),
-                        chartSeriesLabel(String(name), labelByPart),
-                    ]}
-                />
-                {/* Today: actuals to the left, projection to the right. */}
-                <ReferenceLine
-                    x={projection.anchorMonth}
-                    stroke="var(--color-border-strong)"
-                    strokeDasharray="4 3"
-                    label={{
-                        value: 'today',
-                        position: 'insideTopLeft',
-                        fill: 'var(--color-fg-3)',
-                        fontSize: 10,
-                    }}
-                />
-                {/* Rate-fixation boundaries: where the projection stops being contractual. */}
-                {projection.parts.map(p =>
-                    p.fixedUntil === null ? null : (
-                        <ReferenceLine
-                            key={`fix-${p.id}`}
-                            x={firstOfMonth(p.fixedUntil)}
-                            stroke={chartColorFor(p.accountId)}
-                            strokeDasharray="2 4"
-                            label={{
-                                value: `${p.label} fixed until`,
-                                position: 'insideTopRight',
-                                fill: 'var(--color-fg-3)',
-                                fontSize: 10,
-                            }}
-                        />
-                    ),
-                )}
-                {projection.parts.map(p => (
-                    <Area
-                        key={`a:${p.id}`}
-                        dataKey={`a:${p.id}`}
-                        stackId="actual"
-                        name={`a:${p.id}`}
-                        stroke={chartColorFor(p.accountId)}
-                        fill={chartColorFor(p.accountId)}
-                        fillOpacity={0.45}
-                        strokeWidth={1.5}
-                        isAnimationActive={false}
+        <div className="flex flex-col gap-2">
+            <div className="flex justify-end">
+                <SegmentedToggle mode={mode} onChange={setMode} />
+            </div>
+            <ResponsiveContainer width="100%" height={height}>
+                <ComposedChart data={rows} margin={{ top: 10, right: 12, bottom: 0, left: 0 }}>
+                    <CartesianGrid
+                        stroke="var(--color-border-soft)"
+                        vertical={false}
+                        strokeDasharray="2 4"
                     />
-                ))}
-                {projection.parts.map(p => (
-                    <Area
-                        key={`p:${p.id}`}
-                        dataKey={`p:${p.id}`}
-                        stackId="proj"
-                        name={`p:${p.id}`}
-                        stroke={chartColorFor(p.accountId)}
+                    <XAxis
+                        dataKey="period"
+                        ticks={ticks}
+                        interval={0}
+                        tickFormatter={(p: string) => p.slice(0, 4)}
+                        tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
+                        axisLine={false}
+                        tickLine={false}
+                    />
+                    <YAxis
+                        domain={[0, 'auto']}
+                        tickFormatter={(v: number) =>
+                            formatMoneyAxis(v, projection.currencyCode, catalog)
+                        }
+                        tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
+                        axisLine={false}
+                        tickLine={false}
+                        width={64}
+                    />
+                    <Tooltip
+                        cursor={{
+                            stroke: 'var(--color-border-strong)',
+                            strokeWidth: 1,
+                            strokeDasharray: '2 2',
+                        }}
+                        contentStyle={{
+                            background: 'var(--color-bg-1)',
+                            border: '1px solid var(--color-border-soft)',
+                            borderRadius: 8,
+                            fontSize: 12,
+                            color: 'var(--color-fg-1)',
+                        }}
+                        labelFormatter={label => String(label).slice(0, 7)}
+                        formatter={(value, name) => [
+                            typeof value === 'number'
+                                ? formatMoney(value, projection.currencyCode, catalog)
+                                : String(value ?? ''),
+                            chartSeriesLabel(String(name), labelByPart),
+                        ]}
+                    />
+                    {/* Today: actuals to the left, projection to the right. */}
+                    <ReferenceLine
+                        x={projection.anchorMonth}
+                        stroke="var(--color-border-strong)"
                         strokeDasharray="4 3"
-                        fill={chartColorFor(p.accountId)}
-                        fillOpacity={0.16}
-                        strokeWidth={1.25}
-                        isAnimationActive={false}
+                        label={{
+                            value: 'today',
+                            position: 'insideTopLeft',
+                            fill: 'var(--color-fg-3)',
+                            fontSize: 10,
+                        }}
                     />
-                ))}
-                {hasScenario && (
-                    <Line
-                        dataKey="scenarioTotal"
-                        name="scenarioTotal"
-                        stroke="var(--color-fg-1)"
-                        strokeWidth={1.75}
-                        strokeDasharray="6 3"
-                        dot={false}
-                        isAnimationActive={false}
-                    />
-                )}
-            </ComposedChart>
-        </ResponsiveContainer>
+                    {/* Rate-fixation boundaries: where the projection stops being contractual. */}
+                    {projection.parts.map(p =>
+                        p.fixedUntil === null ? null : (
+                            <ReferenceLine
+                                key={`fix-${p.id}`}
+                                x={firstOfMonth(p.fixedUntil)}
+                                stroke={chartColorFor(p.accountId)}
+                                strokeDasharray="2 4"
+                                label={{
+                                    value: `${p.label} fixed until`,
+                                    position: 'insideTopRight',
+                                    fill: 'var(--color-fg-3)',
+                                    fontSize: 10,
+                                }}
+                            />
+                        ),
+                    )}
+
+                    {mode === 'balance' && (
+                        <>
+                            {projection.parts.map(p => (
+                                <Area
+                                    key={`a:${p.id}`}
+                                    dataKey={`a:${p.id}`}
+                                    stackId="actual"
+                                    name={`a:${p.id}`}
+                                    stroke={chartColorFor(p.accountId)}
+                                    fill={chartColorFor(p.accountId)}
+                                    fillOpacity={0.45}
+                                    strokeWidth={1.5}
+                                    isAnimationActive={false}
+                                />
+                            ))}
+                            {projection.parts.map(p => (
+                                <Area
+                                    key={`p:${p.id}`}
+                                    dataKey={`p:${p.id}`}
+                                    stackId="proj"
+                                    name={`p:${p.id}`}
+                                    stroke={chartColorFor(p.accountId)}
+                                    strokeDasharray="4 3"
+                                    fill={chartColorFor(p.accountId)}
+                                    fillOpacity={0.16}
+                                    strokeWidth={1.25}
+                                    isAnimationActive={false}
+                                />
+                            ))}
+                            {hasScenario && (
+                                <Line
+                                    dataKey="scenarioTotal"
+                                    name="scenarioTotal"
+                                    stroke="var(--color-fg-1)"
+                                    strokeWidth={1.75}
+                                    strokeDasharray="6 3"
+                                    dot={false}
+                                    isAnimationActive={false}
+                                />
+                            )}
+                        </>
+                    )}
+
+                    {mode === 'payments' && (
+                        <>
+                            {/* Repayment (darker shade) then interest (lighter shade) per part,
+                                same hue so a part reads as one colour with two bands. */}
+                            {projection.parts.map(p => (
+                                <Area
+                                    key={`pr:${p.id}`}
+                                    dataKey={`pr:${p.id}`}
+                                    stackId="pay"
+                                    name={`pr:${p.id}`}
+                                    stroke={chartColorFor(p.accountId)}
+                                    fill={chartColorFor(p.accountId)}
+                                    fillOpacity={0.8}
+                                    strokeWidth={0.5}
+                                    isAnimationActive={false}
+                                />
+                            ))}
+                            {projection.parts.map(p => (
+                                <Area
+                                    key={`pi:${p.id}`}
+                                    dataKey={`pi:${p.id}`}
+                                    stackId="pay"
+                                    name={`pi:${p.id}`}
+                                    stroke={chartColorFor(p.accountId)}
+                                    fill={chartColorFor(p.accountId)}
+                                    fillOpacity={0.32}
+                                    strokeWidth={0.5}
+                                    isAnimationActive={false}
+                                />
+                            ))}
+                        </>
+                    )}
+                </ComposedChart>
+            </ResponsiveContainer>
+        </div>
+    );
+}
+
+function SegmentedToggle({
+    mode,
+    onChange,
+}: {
+    mode: ChartMode;
+    onChange: (m: ChartMode) => void;
+}) {
+    const item = (value: ChartMode, label: string) => (
+        <button
+            type="button"
+            onClick={() => {
+                onChange(value);
+            }}
+            className={cx(
+                'px-2.5 py-1 text-xs font-medium rounded-md transition-colors',
+                mode === value ? 'bg-bg-1 text-fg-1 shadow-sm' : 'text-fg-3 hover:text-fg-1',
+            )}
+            aria-pressed={mode === value}
+        >
+            {label}
+        </button>
+    );
+    return (
+        <div className="inline-flex items-center gap-0.5 rounded-lg bg-surface-2 p-0.5">
+            {item('balance', 'Balance')}
+            {item('payments', 'Payments')}
+        </div>
     );
 }
 
 function chartSeriesLabel(seriesName: string, labelByPart: Map<string, string>): string {
     if (seriesName === 'scenarioTotal') return 'What-if total';
-    const partId = seriesName.slice(2);
-    const label = labelByPart.get(partId) ?? 'Part';
-    return seriesName.startsWith('a:') ? label : `${label} (projected)`;
+    const colon = seriesName.indexOf(':');
+    const prefix = seriesName.slice(0, colon);
+    const label = labelByPart.get(seriesName.slice(colon + 1)) ?? 'Part';
+    switch (prefix) {
+        case 'p':
+            return `${label} (projected)`;
+        case 'pr':
+            return `${label} — repayment`;
+        case 'pi':
+            return `${label} — interest`;
+        default:
+            return label;
+    }
 }
 
 function firstOfMonth(date: string): string {
