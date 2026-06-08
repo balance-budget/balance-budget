@@ -27,6 +27,13 @@ export type LineInput = {
     description: string;
     /** Loan Part attribution — set only by the loan-aware mode (ADR-0025). */
     loanPartId?: LoanPartId | null;
+    /**
+     * A credit line on the *opposite* side from the other counter lines — the
+     * deposit-interest offset (ADR-0026): an Income credit that lowers the total
+     * so it matches the netted bank debit. The magnitude is still entered
+     * positive; this flips its sign at projection time.
+     */
+    credit?: boolean;
 };
 
 export type CategorizeFormState = {
@@ -216,6 +223,19 @@ export function linesFromLoanProposal(
             loanPartId: part.loanPartId,
         });
     }
+
+    // Construction deposit interest offset (ADR-0026): an Income credit that nets
+    // the gross interest down to the bank's actual debit during construction.
+    if (proposal.depositOffset && proposal.depositOffset.amount > 0 && lines.length > 0) {
+        lines.push({
+            id: nextLineId(),
+            accountId: proposal.depositOffset.incomeAccountId,
+            amount: formatMagnitude(proposal.depositOffset.amount),
+            description: 'Construction deposit interest offset',
+            credit: true,
+        });
+    }
+
     return lines.length === 0 ? [emptyLine()] : lines;
 }
 
@@ -251,7 +271,7 @@ export function computeTotals(
     let allocated = 0;
     for (const line of lines) {
         const projection = projectLine(line, scale);
-        if (projection.minor !== null) allocated += projection.minor;
+        if (projection.minor !== null) allocated += (line.credit ? -1 : 1) * projection.minor;
     }
     return {
         targetMinor: target,
@@ -306,11 +326,12 @@ export function buildRequest(
             errors[`lines[${i.toString()}].amount`] = ['Enter an amount greater than zero'];
             return;
         }
-        allocated += projection.minor;
+        const lineSign = line.credit ? -1 : 1;
+        allocated += lineSign * projection.minor;
         if (line.accountId !== null) {
             projected.push({
                 accountId: line.accountId,
-                amount: counterSign * projection.minor,
+                amount: counterSign * lineSign * projection.minor,
                 description: line.description.trim() === '' ? null : line.description.trim(),
                 loanPartId: line.loanPartId ?? null,
             });

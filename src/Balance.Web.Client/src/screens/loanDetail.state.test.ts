@@ -152,8 +152,8 @@ describe('buildScenario', () => {
     it('projects complete repayments to minor units and keeps the policy', () => {
         const state: SimulatorState = {
             repayments: [
-                { id: 'a', loanPartId: partA, date: '2026-08-01', amount: '5000' },
-                { id: 'b', loanPartId: null, date: '2026-09-01', amount: '100' }, // incomplete
+                { id: 'a', loanPartId: partA, date: '2026-08-01', amount: 5000 },
+                { id: 'b', loanPartId: null, date: '2026-09-01', amount: 100 }, // incomplete
             ],
             policy: 'KeepPayment',
             assumedRatePercent: '',

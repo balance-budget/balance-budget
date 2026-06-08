@@ -6,9 +6,14 @@ import {
     useAddLoanPart,
     useAddRatePeriod,
     useCreateLoan,
+    useUpdateLoan,
+    useUpdateLoanPart,
+    useUpdateRatePeriod,
     type LoanDetail,
     type LoanPart,
+    type LoanRatePeriod,
     type RepaymentType,
+    type UpdateLoanInput,
     type WireCreateLoanPartRequest,
 } from '../api/loans';
 import { AccountSelect } from '../components/AccountSelect';
@@ -23,7 +28,7 @@ import { Select, SelectItem } from '../components/ui/Select';
 import { TextField } from '../components/ui/TextField';
 import { useToast } from '../components/ui/Toast';
 import { todayIso } from '../lib/dates';
-import type { AccountId, CounterpartyId, LoanId } from '../lib/domain';
+import type { AccountId, CounterpartyId, LoanId, LoanPartId } from '../lib/domain';
 import { handleFormError } from '../lib/formErrors';
 import { parseMoney } from '../lib/money';
 
@@ -127,6 +132,125 @@ function buildPartRequest(part: PartDraft, scale: number): BuildPartResult {
     };
 }
 
+type DepositDraft = {
+    accountId: AccountId | null;
+    incomeAccountId: AccountId | null;
+    ratePercent: string;
+};
+
+function emptyDeposit(): DepositDraft {
+    return { accountId: null, incomeAccountId: null, ratePercent: '' };
+}
+
+type DepositRequestFields = {
+    constructionDepositAccountId: AccountId | null;
+    constructionDepositInterestIncomeAccountId: AccountId | null;
+    constructionDepositAnnualRatePercent: number | null;
+};
+
+type BuildDepositResult = { ok: true; value: DepositRequestFields } | { ok: false; error: string };
+
+// The Construction deposit is optional, but all three fields go together (ADR-0026).
+function buildDeposit(d: DepositDraft): BuildDepositResult {
+    const anySet =
+        d.accountId !== null || d.incomeAccountId !== null || d.ratePercent.trim() !== '';
+    const allSet =
+        d.accountId !== null && d.incomeAccountId !== null && d.ratePercent.trim() !== '';
+
+    if (!anySet) {
+        return {
+            ok: true,
+            value: {
+                constructionDepositAccountId: null,
+                constructionDepositInterestIncomeAccountId: null,
+                constructionDepositAnnualRatePercent: null,
+            },
+        };
+    }
+    if (!allSet) {
+        return {
+            ok: false,
+            error: 'A construction deposit needs an asset account, an income account, and a rate — set all three or none.',
+        };
+    }
+
+    const rate = Number(d.ratePercent.trim());
+    if (!Number.isFinite(rate) || rate < 0 || rate > 100) {
+        return { ok: false, error: 'Enter a valid deposit rate (0–100).' };
+    }
+    return {
+        ok: true,
+        value: {
+            constructionDepositAccountId: d.accountId,
+            constructionDepositInterestIncomeAccountId: d.incomeAccountId,
+            constructionDepositAnnualRatePercent: rate,
+        },
+    };
+}
+
+/** Optional Construction deposit (ADR-0026): a plain Asset account, an Income account, a rate. */
+function ConstructionDepositFields({
+    value,
+    currencyCode,
+    onChange,
+}: {
+    value: DepositDraft;
+    currencyCode: string;
+    onChange: (next: DepositDraft) => void;
+}) {
+    return (
+        <div className="rounded-lg border border-border-soft p-3 flex flex-col gap-3 mt-3">
+            <div className="flex flex-col gap-0.5">
+                <span className="text-sm font-medium text-fg-1">
+                    Construction deposit (optional)
+                </span>
+                <span className="text-xs text-fg-3">
+                    Undisbursed mortgage money earmarked for building. Its interest offsets the loan
+                    payment during construction.
+                </span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1">
+                    <span className="text-xs font-medium text-fg-2">Deposit account</span>
+                    <AccountSelect
+                        value={value.accountId}
+                        onChange={accountId => {
+                            onChange({ ...value, accountId });
+                        }}
+                        postableOnly
+                        type="Asset"
+                        currencyCode={currencyCode}
+                        placeholder="Asset account holding the deposit…"
+                        ariaLabel="Construction deposit account"
+                    />
+                </div>
+                <div className="flex flex-col gap-1">
+                    <span className="text-xs font-medium text-fg-2">Interest income account</span>
+                    <AccountSelect
+                        value={value.incomeAccountId}
+                        onChange={incomeAccountId => {
+                            onChange({ ...value, incomeAccountId });
+                        }}
+                        postableOnly
+                        type="Income"
+                        placeholder="Income account for deposit interest…"
+                        ariaLabel="Deposit interest income account"
+                    />
+                </div>
+            </div>
+            <TextField
+                label="Deposit annual rate (%)"
+                value={value.ratePercent}
+                onChange={ratePercent => {
+                    onChange({ ...value, ratePercent });
+                }}
+                placeholder="e.g. 3.6"
+                inputClassName="tabular-nums"
+            />
+        </div>
+    );
+}
+
 export function LoanFormModal({ onClose }: { onClose: () => void }) {
     const create = useCreateLoan();
     const toast = useToast();
@@ -140,6 +264,7 @@ export function LoanFormModal({ onClose }: { onClose: () => void }) {
     const [parentName, setParentName] = useState('');
     const [parentCode, setParentCode] = useState('');
     const [parts, setParts] = useState<PartDraft[]>([emptyPart(0)]);
+    const [deposit, setDeposit] = useState<DepositDraft>(emptyDeposit);
     const [topError, setTopError] = useState<string | null>(null);
     const [fieldErrors, setFieldErrors] = useState<Record<string, string[]> | null>(null);
 
@@ -180,6 +305,12 @@ export function LoanFormModal({ onClose }: { onClose: () => void }) {
             partRequests.push(built.request);
         }
 
+        const depositResult = buildDeposit(deposit);
+        if (!depositResult.ok) {
+            setTopError(depositResult.error);
+            return;
+        }
+
         try {
             await create.mutateAsync({
                 name,
@@ -189,6 +320,7 @@ export function LoanFormModal({ onClose }: { onClose: () => void }) {
                 parentAccountName: parentName.trim() === '' ? name.trim() : parentName.trim(),
                 parentAccountCode: parentCode.trim(),
                 parts: partRequests,
+                ...depositResult.value,
             });
             toast.success('Loan created.');
             onClose();
@@ -319,6 +451,12 @@ export function LoanFormModal({ onClose }: { onClose: () => void }) {
                         />
                     ))}
                 </div>
+
+                <ConstructionDepositFields
+                    value={deposit}
+                    currencyCode={currencyCode}
+                    onChange={setDeposit}
+                />
 
                 <ModalFooter>
                     <Button variant="ghost" onPress={onClose} isDisabled={create.isPending}>
@@ -624,8 +762,8 @@ export function AddRatePeriodModal({
                         onChange={setFixedUntil}
                     />
                     <span className="text-xs text-fg-3">
-                        Rate history is appended, never overwritten. A future effective date records
-                        an accepted renewal offer.
+                        A future effective date records an accepted renewal offer. Existing rates
+                        can be edited or removed from the part&apos;s rate history.
                     </span>
                 </div>
                 <ModalFooter>
@@ -634,6 +772,339 @@ export function AddRatePeriodModal({
                     </Button>
                     <Button type="submit" variant="primary" isDisabled={addRatePeriod.isPending}>
                         {addRatePeriod.isPending ? 'Adding…' : 'Add rate period'}
+                    </Button>
+                </ModalFooter>
+            </Form>
+        </Modal>
+    );
+}
+
+/** Edit the loan-level terms: name, lender, interest account, and the Construction deposit. */
+export function EditLoanModal({ loan, onClose }: { loan: LoanDetail; onClose: () => void }) {
+    const update = useUpdateLoan();
+    const toast = useToast();
+    const counterparties = useCounterparties();
+
+    const [name, setName] = useState(loan.name);
+    const [lenderId, setLenderId] = useState<CounterpartyId | null>(loan.lenderCounterpartyId);
+    const [interestAccountId, setInterestAccountId] = useState<AccountId | null>(
+        loan.interestExpenseAccountId,
+    );
+    const [deposit, setDeposit] = useState<DepositDraft>(() =>
+        loan.constructionDeposit
+            ? {
+                  accountId: loan.constructionDeposit.accountId,
+                  incomeAccountId: loan.constructionDeposit.interestIncomeAccountId,
+                  ratePercent: String(loan.constructionDeposit.annualRatePercent),
+              }
+            : emptyDeposit(),
+    );
+    const [topError, setTopError] = useState<string | null>(null);
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string[]> | null>(null);
+
+    const lenderItems = useMemo(
+        () =>
+            [...(counterparties.data ?? [])]
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map(c => ({ key: c.id, label: c.name, value: c.id })),
+        [counterparties.data],
+    );
+
+    async function submit() {
+        setTopError(null);
+        setFieldErrors(null);
+        if (name.trim() === '') {
+            setTopError('The loan needs a name.');
+            return;
+        }
+        if (lenderId === null) {
+            setTopError('Pick the lender.');
+            return;
+        }
+        if (interestAccountId === null) {
+            setTopError('Pick the interest expense account.');
+            return;
+        }
+        const depositResult = buildDeposit(deposit);
+        if (!depositResult.ok) {
+            setTopError(depositResult.error);
+            return;
+        }
+
+        const original: UpdateLoanInput = {
+            name: loan.name,
+            lenderCounterpartyId: loan.lenderCounterpartyId,
+            interestExpenseAccountId: loan.interestExpenseAccountId,
+            constructionDepositAccountId: loan.constructionDeposit?.accountId ?? null,
+            constructionDepositInterestIncomeAccountId:
+                loan.constructionDeposit?.interestIncomeAccountId ?? null,
+            constructionDepositAnnualRatePercent:
+                loan.constructionDeposit?.annualRatePercent ?? null,
+        };
+        const edited: UpdateLoanInput = {
+            name: name.trim(),
+            lenderCounterpartyId: lenderId,
+            interestExpenseAccountId: interestAccountId,
+            ...depositResult.value,
+        };
+
+        try {
+            await update.mutateAsync({ id: loan.id, original, edited });
+            toast.success('Loan updated.');
+            onClose();
+        } catch (err) {
+            handleFormError(err, { setFieldErrors, setTopError, toast: toast.error });
+        }
+    }
+
+    return (
+        <Modal open onClose={onClose} title="Edit loan" width="lg">
+            <Form
+                validationErrors={fieldErrors ?? undefined}
+                onSubmit={e => {
+                    e.preventDefault();
+                    void submit();
+                }}
+            >
+                <FormErrorBanner message={topError} />
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                    <TextField
+                        label="Name"
+                        name="Name"
+                        value={name}
+                        onChange={setName}
+                        isRequired
+                        maxLength={128}
+                        autoFocus
+                    />
+                    <div className="flex flex-col gap-1">
+                        <span className="text-xs font-medium text-fg-2">Lender</span>
+                        <ComboBox
+                            items={lenderItems}
+                            value={lenderId}
+                            onChange={setLenderId}
+                            placeholder="Pick the lender…"
+                            ariaLabel="Lender"
+                        />
+                    </div>
+                </div>
+                <div className="flex flex-col gap-1 mb-1">
+                    <span className="text-xs font-medium text-fg-2">Interest expense account</span>
+                    <AccountSelect
+                        value={interestAccountId}
+                        onChange={setInterestAccountId}
+                        postableOnly
+                        type="Expense"
+                        placeholder="e.g. Mortgage interest"
+                        ariaLabel="Interest expense account"
+                    />
+                    <FieldError name="InterestExpenseAccountId" errors={fieldErrors} />
+                </div>
+
+                <ConstructionDepositFields
+                    value={deposit}
+                    currencyCode={loan.currencyCode}
+                    onChange={setDeposit}
+                />
+
+                <ModalFooter>
+                    <Button variant="ghost" onPress={onClose} isDisabled={update.isPending}>
+                        Cancel
+                    </Button>
+                    <Button type="submit" variant="primary" isDisabled={update.isPending}>
+                        {update.isPending ? 'Saving…' : 'Save changes'}
+                    </Button>
+                </ModalFooter>
+            </Form>
+        </Modal>
+    );
+}
+
+/** Edit a part's terms. The part's account is immutable (ADR-0025). */
+export function EditLoanPartModal({
+    loanId,
+    part,
+    onClose,
+}: {
+    loanId: LoanId;
+    part: LoanPart;
+    onClose: () => void;
+}) {
+    const update = useUpdateLoanPart();
+    const toast = useToast();
+    const [label, setLabel] = useState(part.label);
+    const [repaymentType, setRepaymentType] = useState<RepaymentType>(part.repaymentType);
+    const [startDate, setStartDate] = useState(part.startDate);
+    const [endDate, setEndDate] = useState(part.endDate);
+    const [topError, setTopError] = useState<string | null>(null);
+
+    async function submit() {
+        setTopError(null);
+        if (label.trim() === '') {
+            setTopError('A part needs a label.');
+            return;
+        }
+        if (endDate === '' || endDate <= startDate) {
+            setTopError('End date must be after the start date.');
+            return;
+        }
+        try {
+            await update.mutateAsync({
+                id: loanId,
+                partId: part.id,
+                request: { label: label.trim(), repaymentType, startDate, endDate },
+            });
+            toast.success('Part updated.');
+            onClose();
+        } catch (err) {
+            handleFormError(err, {
+                setFieldErrors: () => undefined,
+                setTopError,
+                toast: toast.error,
+            });
+        }
+    }
+
+    return (
+        <Modal open onClose={onClose} title={`Edit part — ${part.label}`} width="sm">
+            <Form
+                onSubmit={e => {
+                    e.preventDefault();
+                    void submit();
+                }}
+            >
+                <FormErrorBanner message={topError} />
+                <div className="flex flex-col gap-3">
+                    <TextField
+                        label="Label"
+                        value={label}
+                        onChange={setLabel}
+                        isRequired
+                        autoFocus
+                        maxLength={64}
+                    />
+                    <div className="flex flex-col gap-1">
+                        <span className="text-xs font-medium text-fg-2">Repayment type</span>
+                        <Select
+                            aria-label="Repayment type"
+                            value={repaymentType}
+                            onChange={key => {
+                                if (key !== null) setRepaymentType(key as RepaymentType);
+                            }}
+                        >
+                            {REPAYMENT_TYPES.map(t => (
+                                <SelectItem key={t.id} id={t.id}>
+                                    {t.label}
+                                </SelectItem>
+                            ))}
+                        </Select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                        <DatePicker label="Start date" value={startDate} onChange={setStartDate} />
+                        <DatePicker label="End date" value={endDate} onChange={setEndDate} />
+                    </div>
+                    <span className="text-xs text-fg-3">
+                        The part&apos;s account holds its principal and posted history, so it
+                        can&apos;t be changed here.
+                    </span>
+                </div>
+                <ModalFooter>
+                    <Button variant="ghost" onPress={onClose} isDisabled={update.isPending}>
+                        Cancel
+                    </Button>
+                    <Button type="submit" variant="primary" isDisabled={update.isPending}>
+                        {update.isPending ? 'Saving…' : 'Save changes'}
+                    </Button>
+                </ModalFooter>
+            </Form>
+        </Modal>
+    );
+}
+
+/** Edit an existing rate period (ADR-0026: corrections are safe — the projection is computed). */
+export function EditRatePeriodModal({
+    loanId,
+    partId,
+    rate,
+    onClose,
+}: {
+    loanId: LoanId;
+    partId: LoanPartId;
+    rate: LoanRatePeriod;
+    onClose: () => void;
+}) {
+    const update = useUpdateRatePeriod();
+    const toast = useToast();
+    const [effectiveDate, setEffectiveDate] = useState(rate.effectiveDate);
+    const [ratePercent, setRatePercent] = useState(String(rate.annualRatePercent));
+    const [fixedUntil, setFixedUntil] = useState(rate.fixedUntil ?? '');
+    const [topError, setTopError] = useState<string | null>(null);
+
+    async function submit() {
+        setTopError(null);
+        const parsed = Number(ratePercent.trim());
+        if (ratePercent.trim() === '' || !Number.isFinite(parsed) || parsed < 0) {
+            setTopError('Enter a valid annual rate (e.g. 3.8).');
+            return;
+        }
+        try {
+            await update.mutateAsync({
+                id: loanId,
+                partId,
+                ratePeriodId: rate.id,
+                request: {
+                    effectiveDate,
+                    annualRatePercent: parsed,
+                    fixedUntil: fixedUntil === '' ? null : fixedUntil,
+                },
+            });
+            toast.success('Rate period updated.');
+            onClose();
+        } catch (err) {
+            handleFormError(err, {
+                setFieldErrors: () => undefined,
+                setTopError,
+                toast: toast.error,
+            });
+        }
+    }
+
+    return (
+        <Modal open onClose={onClose} title="Edit rate period" width="sm">
+            <Form
+                onSubmit={e => {
+                    e.preventDefault();
+                    void submit();
+                }}
+            >
+                <FormErrorBanner message={topError} />
+                <div className="flex flex-col gap-3">
+                    <DatePicker
+                        label="Effective date"
+                        value={effectiveDate}
+                        onChange={setEffectiveDate}
+                    />
+                    <TextField
+                        label="Annual rate (%)"
+                        value={ratePercent}
+                        onChange={setRatePercent}
+                        isRequired
+                        autoFocus
+                        placeholder="e.g. 4.1"
+                        inputClassName="tabular-nums"
+                    />
+                    <DatePicker
+                        label="Fixed until (optional)"
+                        value={fixedUntil}
+                        onChange={setFixedUntil}
+                    />
+                </div>
+                <ModalFooter>
+                    <Button variant="ghost" onPress={onClose} isDisabled={update.isPending}>
+                        Cancel
+                    </Button>
+                    <Button type="submit" variant="primary" isDisabled={update.isPending}>
+                        {update.isPending ? 'Saving…' : 'Save changes'}
                     </Button>
                 </ModalFooter>
             </Form>
