@@ -601,6 +601,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/loans/{id}/parts/{partId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["DeleteLoanPart"];
+        options?: never;
+        head?: never;
+        patch: operations["UpdateLoanPart"];
+        trace?: never;
+    };
     "/api/loans/{id}/parts/{partId}/rate-periods": {
         parameters: {
             query?: never;
@@ -615,6 +631,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/loans/{id}/parts/{partId}/rate-periods/{ratePeriodId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["DeleteLoanPartRatePeriod"];
+        options?: never;
+        head?: never;
+        patch: operations["UpdateLoanPartRatePeriod"];
         trace?: never;
     };
     "/api/loans/{id}/payment-proposal": {
@@ -1024,6 +1056,10 @@ export interface components {
             parentAccountName: string;
             parentAccountCode: string;
             parts: components["schemas"]["CreateLoanPartRequest"][];
+            constructionDepositAccountId?: unknown;
+            constructionDepositInterestIncomeAccountId?: unknown;
+            /** Format: double */
+            constructionDepositAnnualRatePercent?: null | number | string;
         };
         CreateTokenRequest: {
             name: string;
@@ -1244,20 +1280,35 @@ export interface components {
             /** @enum {string} */
             op: "add" | "replace" | "test";
             /** @enum {string} */
-            path: "/name" | "/lenderCounterpartyId" | "/interestExpenseAccountId";
+            path: "/name" | "/lenderCounterpartyId" | "/interestExpenseAccountId" | "/constructionDepositAccountId" | "/constructionDepositInterestIncomeAccountId" | "/constructionDepositAnnualRatePercent";
             value: unknown;
         } | {
             /** @enum {string} */
             op: "move" | "copy";
             /** @enum {string} */
-            path: "/name" | "/lenderCounterpartyId" | "/interestExpenseAccountId";
+            path: "/name" | "/lenderCounterpartyId" | "/interestExpenseAccountId" | "/constructionDepositAccountId" | "/constructionDepositInterestIncomeAccountId" | "/constructionDepositAnnualRatePercent";
             from: string;
         } | {
             /** @enum {string} */
             op: "remove";
             /** @enum {string} */
-            path: "/name" | "/lenderCounterpartyId" | "/interestExpenseAccountId";
+            path: "/name" | "/lenderCounterpartyId" | "/interestExpenseAccountId" | "/constructionDepositAccountId" | "/constructionDepositInterestIncomeAccountId" | "/constructionDepositAnnualRatePercent";
         })[];
+        LoanConstructionDepositOutput: {
+            accountId: components["schemas"]["AccountId"];
+            accountName: string;
+            interestIncomeAccountId: components["schemas"]["AccountId"];
+            interestIncomeAccountName: string;
+            /** Format: double */
+            annualRatePercent: number | string;
+            /** Format: int64 */
+            balance: number | string;
+        };
+        LoanDepositOffsetOutput: {
+            incomeAccountId: components["schemas"]["AccountId"];
+            /** Format: int64 */
+            amount: number | string;
+        };
         LoanDetailOutput: {
             id: components["schemas"]["LoanId"];
             name: string;
@@ -1275,6 +1326,7 @@ export interface components {
             weightedAnnualRatePercent: null | number | string;
             isEnded: boolean;
             parts: components["schemas"]["LoanPartOutput"][];
+            constructionDeposit: null | components["schemas"]["LoanConstructionDepositOutput"];
         };
         /** Format: uuid */
         LoanId: string;
@@ -1341,6 +1393,7 @@ export interface components {
             lines: components["schemas"]["LoanPaymentProposalLineOutput"][];
             /** Format: int64 */
             total: number | string;
+            depositOffset: null | components["schemas"]["LoanDepositOffsetOutput"];
         };
         LoanPeriodRowOutput: {
             /** Format: date */
@@ -1651,6 +1704,18 @@ export interface components {
             lenderCounterpartyId: string;
             /** Format: uuid */
             interestExpenseAccountId: string;
+            constructionDepositAccountId?: unknown;
+            constructionDepositInterestIncomeAccountId?: unknown;
+            /** Format: double */
+            constructionDepositAnnualRatePercent?: null | number | string;
+        };
+        UpdateLoanPartRequest: {
+            label: string;
+            repaymentType: components["schemas"]["LoanRepaymentType"];
+            /** Format: date */
+            startDate: string;
+            /** Format: date */
+            endDate: string;
         };
         /** Format: uuid */
         UserId: string;
@@ -4305,6 +4370,128 @@ export interface operations {
             };
         };
     };
+    DeleteLoanPart: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["LoanId"];
+                partId: components["schemas"]["LoanPartId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoanDetailOutput"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    UpdateLoanPart: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["LoanId"];
+                partId: components["schemas"]["LoanPartId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateLoanPartRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoanDetailOutput"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     AddLoanPartRatePeriod: {
         parameters: {
             query?: never;
@@ -4312,6 +4499,130 @@ export interface operations {
             path: {
                 id: components["schemas"]["LoanId"];
                 partId: components["schemas"]["LoanPartId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoanRatePeriodRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoanDetailOutput"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    DeleteLoanPartRatePeriod: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["LoanId"];
+                partId: components["schemas"]["LoanPartId"];
+                ratePeriodId: components["schemas"]["LoanPartRatePeriodId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoanDetailOutput"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    UpdateLoanPartRatePeriod: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["LoanId"];
+                partId: components["schemas"]["LoanPartId"];
+                ratePeriodId: components["schemas"]["LoanPartRatePeriodId"];
             };
             cookie?: never;
         };

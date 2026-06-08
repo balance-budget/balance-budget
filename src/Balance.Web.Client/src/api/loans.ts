@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { compare } from 'fast-json-patch';
 import type { components } from '../lib/api-types.gen';
 import {
     asAccountId,
@@ -12,7 +13,14 @@ import {
     type LoanPartId,
     type LoanPartRatePeriodId,
 } from '../lib/domain';
-import { deleteRequest, getJson, postJson } from '../lib/http';
+import {
+    deleteJson,
+    deleteRequest,
+    getJson,
+    patchJson,
+    patchJsonBody,
+    postJson,
+} from '../lib/http';
 import { toNumber } from '../lib/money';
 import { accountsKeys } from './accounts';
 
@@ -25,6 +33,7 @@ type WireProjection = components['schemas']['LoanProjectionOutput'];
 type WirePeriodRow = components['schemas']['LoanPeriodRowOutput'];
 export type WireCreateLoanRequest = components['schemas']['CreateLoanRequest'];
 export type WireCreateLoanPartRequest = components['schemas']['CreateLoanPartRequest'];
+export type WireUpdateLoanPartRequest = components['schemas']['UpdateLoanPartRequest'];
 export type WireRatePeriodRequest = components['schemas']['LoanRatePeriodRequest'];
 export type WireLoanScenarioRequest = components['schemas']['LoanScenarioRequest'];
 
@@ -67,9 +76,29 @@ export type LoanPart = {
     ratePeriods: LoanRatePeriod[];
 };
 
+export type LoanConstructionDeposit = {
+    accountId: AccountId;
+    accountName: string;
+    interestIncomeAccountId: AccountId;
+    interestIncomeAccountName: string;
+    annualRatePercent: number;
+    balance: number;
+};
+
 export type LoanDetail = Omit<Loan, 'partCount'> & {
     interestExpenseAccountName: string;
     parts: LoanPart[];
+    constructionDeposit: LoanConstructionDeposit | null;
+};
+
+/** The editable loan-level shape; the JSON-Patch source for {@link useUpdateLoan}. */
+export type UpdateLoanInput = {
+    name: string;
+    lenderCounterpartyId: CounterpartyId;
+    interestExpenseAccountId: AccountId;
+    constructionDepositAccountId: AccountId | null;
+    constructionDepositInterestIncomeAccountId: AccountId | null;
+    constructionDepositAnnualRatePercent: number | null;
 };
 
 export type LoanProposalLine = {
@@ -81,6 +110,11 @@ export type LoanProposalLine = {
     payment: number;
 };
 
+export type LoanDepositOffset = {
+    incomeAccountId: AccountId;
+    amount: number;
+};
+
 export type LoanProposal = {
     loanId: LoanId;
     month: string;
@@ -88,6 +122,7 @@ export type LoanProposal = {
     interestExpenseAccountId: AccountId;
     lines: LoanProposalLine[];
     total: number;
+    depositOffset: LoanDepositOffset | null;
 };
 
 export type LoanPeriodRow = {
@@ -192,6 +227,18 @@ function toLoanDetail(wire: WireLoanDetail): LoanDetail {
             wire.weightedAnnualRatePercent === null ? null : Number(wire.weightedAnnualRatePercent),
         isEnded: wire.isEnded,
         parts: wire.parts.map(toLoanPart),
+        constructionDeposit: wire.constructionDeposit
+            ? {
+                  accountId: asAccountId(wire.constructionDeposit.accountId),
+                  accountName: wire.constructionDeposit.accountName,
+                  interestIncomeAccountId: asAccountId(
+                      wire.constructionDeposit.interestIncomeAccountId,
+                  ),
+                  interestIncomeAccountName: wire.constructionDeposit.interestIncomeAccountName,
+                  annualRatePercent: Number(wire.constructionDeposit.annualRatePercent),
+                  balance: toNumber(wire.constructionDeposit.balance),
+              }
+            : null,
     };
 }
 
@@ -281,6 +328,12 @@ export function useLoanPaymentProposal(id: LoanId | null, month: string) {
                     payment: toNumber(l.payment),
                 })),
                 total: toNumber(wire.total),
+                depositOffset: wire.depositOffset
+                    ? {
+                          incomeAccountId: asAccountId(wire.depositOffset.incomeAccountId),
+                          amount: toNumber(wire.depositOffset.amount),
+                      }
+                    : null,
             } satisfies LoanProposal;
         },
         enabled: id !== null,
@@ -372,6 +425,114 @@ export function useAddRatePeriod() {
                 args.request,
                 new AbortController().signal,
                 'add rate period',
+            );
+            return toLoanDetail(wire);
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: loansKeys.all });
+        },
+    });
+}
+
+export function useUpdateLoan() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (args: {
+            id: LoanId;
+            original: UpdateLoanInput;
+            edited: UpdateLoanInput;
+        }) => {
+            const patch = compare(args.original, args.edited);
+            const wire = await patchJson<WireLoanDetail>(
+                `/api/loans/${args.id}`,
+                patch,
+                new AbortController().signal,
+                'update loan',
+            );
+            return toLoanDetail(wire);
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: loansKeys.all });
+            await queryClient.invalidateQueries({ queryKey: accountsKeys.all });
+        },
+    });
+}
+
+export function useUpdateLoanPart() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (args: {
+            id: LoanId;
+            partId: LoanPartId;
+            request: WireUpdateLoanPartRequest;
+        }) => {
+            const wire = await patchJsonBody<WireLoanDetail>(
+                `/api/loans/${args.id}/parts/${args.partId}`,
+                args.request,
+                new AbortController().signal,
+                'update loan part',
+            );
+            return toLoanDetail(wire);
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: loansKeys.all });
+        },
+    });
+}
+
+export function useDeleteLoanPart() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (args: { id: LoanId; partId: LoanPartId }) => {
+            const wire = await deleteJson<WireLoanDetail>(
+                `/api/loans/${args.id}/parts/${args.partId}`,
+                new AbortController().signal,
+                'delete loan part',
+            );
+            return toLoanDetail(wire);
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: loansKeys.all });
+            await queryClient.invalidateQueries({ queryKey: accountsKeys.all });
+        },
+    });
+}
+
+export function useUpdateRatePeriod() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (args: {
+            id: LoanId;
+            partId: LoanPartId;
+            ratePeriodId: LoanPartRatePeriodId;
+            request: WireRatePeriodRequest;
+        }) => {
+            const wire = await patchJsonBody<WireLoanDetail>(
+                `/api/loans/${args.id}/parts/${args.partId}/rate-periods/${args.ratePeriodId}`,
+                args.request,
+                new AbortController().signal,
+                'update rate period',
+            );
+            return toLoanDetail(wire);
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: loansKeys.all });
+        },
+    });
+}
+
+export function useDeleteRatePeriod() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (args: {
+            id: LoanId;
+            partId: LoanPartId;
+            ratePeriodId: LoanPartRatePeriodId;
+        }) => {
+            const wire = await deleteJson<WireLoanDetail>(
+                `/api/loans/${args.id}/parts/${args.partId}/rate-periods/${args.ratePeriodId}`,
+                new AbortController().signal,
+                'delete rate period',
             );
             return toLoanDetail(wire);
         },
