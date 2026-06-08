@@ -212,12 +212,40 @@ export async function patchJson<T>(
     return (await response.json()) as T;
 }
 
+/**
+ * PATCH with a plain JSON body (not RFC 6902) — for endpoints that take a full
+ * replacement payload rather than a patch document. Server returns the updated
+ * resource.
+ */
+export async function patchJsonBody<T>(
+    url: string,
+    body: unknown,
+    signal: AbortSignal,
+    label: string,
+): Promise<T> {
+    const response = await sendMutation(
+        url,
+        'PATCH',
+        JSON.stringify(body),
+        { 'Content-Type': 'application/json' },
+        signal,
+        label,
+    );
+    return (await response.json()) as T;
+}
+
 export async function deleteRequest(
     url: string,
     signal: AbortSignal,
     label: string,
 ): Promise<void> {
     await sendMutation(url, 'DELETE', null, {}, signal, label);
+}
+
+/** DELETE that returns the updated parent resource (sub-resource deletes). */
+export async function deleteJson<T>(url: string, signal: AbortSignal, label: string): Promise<T> {
+    const response = await sendMutation(url, 'DELETE', null, {}, signal, label);
+    return (await response.json()) as T;
 }
 
 /**
