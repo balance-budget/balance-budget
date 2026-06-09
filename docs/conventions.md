@@ -187,3 +187,9 @@ Refs: #42
 - Namespaces mirror the folder structure: `Balance.<Project>[.<SubFolder>]`.
 - Static helper classes that extend a framework type follow the `<TypeName>Extensions` convention (e.g. `HostExtensions`, `DbContextOptionsBuilderExtensions`).
 - DI registration classes are always called `ServiceCollectionExtensions` (one per layer) or `<Feature>ServiceCollectionExtensions` (within a layer).
+
+## Language and spelling
+
+- **US English everywhere** — identifiers, comments, UI copy, error-code strings, docs, and ADRs (e.g. `categorize`, `normalize`, `color`, `behavior`, `serialize`). Words spelled the same in both dialects stay as-is (`optimistic`, `noise`, `surprise`, `advertise`).
+- **Frontend copy** is wrapped with Lingui and lint-enforced (no untranslated strings); see [ADR-0022](adr/0022-frontend-i18n-language-and-region-formatting.md). The domain term is **journal entry** (not bare "entry"); avoid abbreviations like "BT"/"JE" in user-facing text.
+- **No gratuitous em-dashes** in prose or UI copy — use a hyphen, colon, or parentheses. A standalone `—` as an empty-value placeholder (e.g. a blank table cell) is fine.
