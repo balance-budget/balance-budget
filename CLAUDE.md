@@ -142,7 +142,11 @@ The web host startup follows this order:
 - **Match the existing DI pattern** when adding a new layer or feature module: a single `AddBalance*` extension that internally composes its dependencies.
 - **Don't pin package versions in `.csproj`** — add or update the `PackageVersion` entry in `Directory.Packages.props`.
 - **EF Core migrations** must be generated against the provider-specific assembly: The migrations assembly is wired up in `DbContextOptionsBuilderExtensions.UseProvider`.
--- **Don't suppress warnings.** Don't use #pragma or SuppressMessageAttribute. Only use .editorconfig and only for global rules. Always try to fix the issue in code first.  
+- **Don't suppress warnings.** Don't use #pragma or SuppressMessageAttribute. Only use .editorconfig and only for global rules. Always try to fix the issue in code first.  
+- **Make sure to create individual commits that make sense**.
+- **Only build/test when neccesary**, these can be long running operations.
+- Prefer running targeted tests instead of the full suite.
+- Submit changes as a PR when done
 
 ## Agent skills
 
