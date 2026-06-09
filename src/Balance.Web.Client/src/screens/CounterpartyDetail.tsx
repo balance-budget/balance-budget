@@ -101,7 +101,7 @@ export function CounterpartyDetail({ id, page, onPageChange }: Props) {
             <Panel>
                 <SectionHead
                     title={<Trans>Journal entries</Trans>}
-                    subtitle={<Trans>Every entry referencing {cp.name}.</Trans>}
+                    subtitle={<Trans>Every journal entry referencing {cp.name}.</Trans>}
                 />
                 <JournalEntriesSection
                     counterpartyId={cp.id}

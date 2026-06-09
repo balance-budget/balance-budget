@@ -263,7 +263,11 @@ function JournalNewForm({
                         <Trans>Cancel</Trans>
                     </Link>
                     <Button type="submit" variant="primary" isDisabled={create.isPending}>
-                        {create.isPending ? <Trans>Creating…</Trans> : <Trans>Create entry</Trans>}
+                        {create.isPending ? (
+                            <Trans>Creating…</Trans>
+                        ) : (
+                            <Trans>Create journal entry</Trans>
+                        )}
                     </Button>
                 </div>
             </Panel>
@@ -371,7 +375,7 @@ function ModeToggle({
                 aria-label={
                     canSwitchToSimple
                         ? t`Switch to the personal-finance shape`
-                        : t`Multi-source-multi-destination entries can only be edited in Advanced.`
+                        : t`Multi-source-multi-destination journal entries can only be edited in Advanced.`
                 }
                 className={segmentClass(mode === 'simple')}
             >

@@ -14,7 +14,7 @@ export const Route = createFileRoute('/bank-transactions/$id/categorize')({
         const { loan } = Route.useSearch();
         return <BankTransactionCategorize id={asBankTransactionId(id)} loanId={loan ?? null} />;
     },
-    staticData: { title: msg`Categorise bank transaction` },
+    staticData: { title: msg`Categorize bank transaction` },
     validateSearch: (raw: Record<string, unknown>): CategorizeSearch => ({
         loan: typeof raw.loan === 'string' && raw.loan !== '' ? asLoanId(raw.loan) : undefined,
     }),

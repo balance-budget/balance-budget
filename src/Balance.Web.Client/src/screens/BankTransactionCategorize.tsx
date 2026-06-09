@@ -144,11 +144,11 @@ function NotCategorisableState({ bt }: { bt: BankTransaction }) {
     const { t } = useLingui();
     const reason = bt.journalEntryId
         ? t`This row already has a journal entry.`
-        : t`This row is dismissed. Undismiss it first to categorise.`;
+        : t`This row is dismissed. Undismiss it first to categorize.`;
     return (
         <Panel>
             <SectionHead
-                title={t`Categorise bank transaction`}
+                title={t`Categorize bank transaction`}
                 action={
                     <Link
                         to="/bank-transactions"
@@ -318,7 +318,7 @@ function CategorizeForm({
         }
         try {
             const created = await categorize.mutateAsync({ id: bt.id, request: result.request });
-            toast.success(t`Categorised.`);
+            toast.success(t`Categorized.`);
             await navigate({ to: '/journal/$id', params: { id: created.id } });
         } catch (err) {
             handleFormError(err, { setFieldErrors, setTopError, toast: toast.error });
@@ -335,7 +335,7 @@ function CategorizeForm({
         >
             <Panel>
                 <SectionHead
-                    title={t`Categorise bank transaction`}
+                    title={t`Categorize bank transaction`}
                     subtitle={t`Turn this bank row into a journal entry.`}
                     action={
                         <Link
@@ -410,7 +410,7 @@ function CategorizeForm({
                         disabled={categorize.isPending}
                         className="px-3 py-[7px] rounded-lg text-sm font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
                     >
-                        {categorize.isPending ? t`Categorising…` : t`Categorise`}
+                        {categorize.isPending ? t`Categorizing…` : t`Categorize`}
                     </button>
                 </div>
             </Panel>
@@ -763,7 +763,7 @@ function LoanModePanel({
                     search={{}}
                     className="ml-auto text-fg-3 hover:text-fg-1"
                 >
-                    <Trans>Categorise normally</Trans>
+                    <Trans>Categorize normally</Trans>
                 </Link>
             </div>
             {proposal !== null && proposal.lines.length > 1 && (
@@ -853,7 +853,7 @@ function AttachOptionsPanel({
                     >
                         <Icon name="link" size={13} strokeWidth={2} />
                         <Trans>
-                            Attach to JE on {hint.date} · {hint.otherAccountName}
+                            Attach to journal entry on {hint.date} · {hint.otherAccountName}
                         </Trans>
                     </button>
                 )}
@@ -866,10 +866,10 @@ function AttachOptionsPanel({
                     className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-fg-1 border border-border-strong hover:bg-surface-1 disabled:opacity-60"
                 >
                     <Icon name="search" size={13} strokeWidth={2} />
-                    <Trans>Pick a JE to attach to…</Trans>
+                    <Trans>Pick a journal entry to attach to…</Trans>
                 </button>
                 <span className="text-fg-3">
-                    <Trans>or scroll down to create a new JE.</Trans>
+                    <Trans>or scroll down to create a new journal entry.</Trans>
                 </span>
             </div>
 
