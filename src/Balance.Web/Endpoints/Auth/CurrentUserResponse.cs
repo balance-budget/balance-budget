@@ -6,5 +6,8 @@ internal sealed record CurrentUserResponse(
     UserId Id,
     string Email,
     string DisplayName,
-    string AuthScheme
+    string AuthScheme,
+    string? Language,
+    string? DateFormat,
+    string? NumberFormat
 );
