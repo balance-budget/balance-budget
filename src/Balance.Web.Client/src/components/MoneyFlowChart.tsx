@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useCallback, useMemo, useState } from 'react';
 import { Rectangle, ResponsiveContainer, Sankey, Tooltip } from 'recharts';
 import { useCurrencyCatalog } from '../api/currencies';
@@ -54,6 +55,7 @@ function collapse(expanded: Set<string>, id: string, nodes: readonly MoneyFlowNo
 }
 
 export function MoneyFlowChart({ period, currency }: MoneyFlowChartProps) {
+    const { t } = useLingui();
     const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
     const expandedIds = useMemo(() => [...expanded], [expanded]);
     const flow = useMoneyFlow(period, currency, expandedIds);
@@ -92,8 +94,8 @@ export function MoneyFlowChart({ period, currency }: MoneyFlowChartProps) {
     return (
         <Panel>
             <SectionHead
-                title="Money flow"
-                subtitle="Where money came in and where it went"
+                title={<Trans>Money flow</Trans>}
+                subtitle={<Trans>Where money came in and where it went</Trans>}
                 action={
                     expanded.size > 0 ? (
                         <button
@@ -103,7 +105,7 @@ export function MoneyFlowChart({ period, currency }: MoneyFlowChartProps) {
                             }}
                             className="px-[10px] py-[5px] rounded-full text-xs font-medium text-fg-3 hover:text-fg-1 select-none"
                         >
-                            Collapse all
+                            <Trans>Collapse all</Trans>
                         </button>
                     ) : undefined
                 }
@@ -112,12 +114,12 @@ export function MoneyFlowChart({ period, currency }: MoneyFlowChartProps) {
                 <Skeleton className="h-[420px] w-full" />
             ) : flow.isError ? (
                 <ErrorState
-                    message="Couldn't load the money flow."
+                    message={t`Couldn't load the money flow.`}
                     onRetry={() => void flow.refetch()}
                 />
             ) : !data || data.links.length === 0 ? (
                 <div className="h-[420px] flex items-center justify-center text-sm text-fg-3">
-                    No money moved in this period.
+                    <Trans>No money moved in this period.</Trans>
                 </div>
             ) : (
                 <SankeyDiagram

@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { plural } from '@lingui/core/macro';
+import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useAccount, useAccounts, useDeleteAccount, type Account } from '../api/accounts';
 import { useCurrencyCatalog } from '../api/currencies';
@@ -60,6 +62,7 @@ export function AccountDetail({
     onSearchChange: (q: string) => void;
     onFiltersChange: (patch: Partial<RegisterFilterState>) => void;
 }) {
+    const { t } = useLingui();
     const query = useAccount(id);
     const [editing, setEditing] = useState(false);
     const [deleting, setDeleting] = useState(false);
@@ -76,7 +79,10 @@ export function AccountDetail({
     if (query.isError) {
         return (
             <Panel>
-                <ErrorState message="Couldn't load account." onRetry={() => void query.refetch()} />
+                <ErrorState
+                    message={t`Couldn't load account.`}
+                    onRetry={() => void query.refetch()}
+                />
             </Panel>
         );
     }
@@ -91,7 +97,7 @@ export function AccountDetail({
                         <AccountAvatar account={account} size="md" />
                         <div className="flex flex-col gap-[2px] min-w-0">
                             <Link to="/accounts" className="text-xs text-fg-3 hover:text-fg-1">
-                                ← Accounts
+                                <Trans>← Accounts</Trans>
                             </Link>
                             <h1 className="text-xl font-medium text-fg-1 truncate">
                                 {account.name}
@@ -117,7 +123,7 @@ export function AccountDetail({
                                 className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1 hover:bg-surface-2"
                             >
                                 <Icon name="pencil" size={14} strokeWidth={2} />
-                                Edit
+                                <Trans>Edit</Trans>
                             </button>
                             <button
                                 type="button"
@@ -127,7 +133,7 @@ export function AccountDetail({
                                 className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-danger hover:bg-surface-2"
                             >
                                 <Icon name="trash" size={14} strokeWidth={2} />
-                                Delete
+                                <Trans>Delete</Trans>
                             </button>
                         </div>
                     </div>
@@ -135,18 +141,21 @@ export function AccountDetail({
             </Panel>
 
             <Panel>
-                <SectionHead title="Linked bank account" />
+                <SectionHead title={<Trans>Linked bank account</Trans>} />
                 <LinkedBankAccountsSection owner={{ kind: 'account', id: account.id }} />
             </Panel>
 
             <Panel>
-                <SectionHead title="Register" subtitle="Chronological activity on this account." />
+                <SectionHead
+                    title={<Trans>Register</Trans>}
+                    subtitle={<Trans>Chronological activity on this account.</Trans>}
+                />
                 <div className="mb-4 flex flex-col gap-3">
                     <SearchField
-                        aria-label="Search register"
+                        aria-label={t`Search register`}
                         value={q}
                         onChange={onSearchChange}
-                        placeholder="Search description or counterparty…"
+                        placeholder={t`Search description or counterparty…`}
                     />
                     <RegisterFilterBar
                         account={account}
@@ -186,13 +195,6 @@ export function AccountDetail({
 
 const STATUS_FILTERS: readonly RegisterStatusFilter[] = ['', 'Uncleared', 'Cleared', 'Reconciled'];
 
-const STATUS_LABEL: Record<RegisterStatusFilter, string> = {
-    '': 'All',
-    Uncleared: 'Uncleared',
-    Cleared: 'Cleared',
-    Reconciled: 'Reconciled',
-};
-
 function RegisterFilterBar({
     account,
     filters,
@@ -202,6 +204,13 @@ function RegisterFilterBar({
     filters: RegisterFilterState;
     onFiltersChange: (patch: Partial<RegisterFilterState>) => void;
 }) {
+    const { t } = useLingui();
+    const statusLabel: Record<RegisterStatusFilter, string> = {
+        '': t`All`,
+        Uncleared: t`Uncleared`,
+        Cleared: t`Cleared`,
+        Reconciled: t`Reconciled`,
+    };
     return (
         <div className="flex flex-wrap items-center gap-2">
             {!account.isPostable && (
@@ -218,9 +227,9 @@ function RegisterFilterBar({
                         onClear={() => {
                             onFiltersChange({ posted: null });
                         }}
-                        noneLabel="Any sub-account"
-                        placeholder="Sub-account…"
-                        ariaLabel="Filter by sub-account"
+                        noneLabel={t`Any sub-account`}
+                        placeholder={t`Sub-account…`}
+                        ariaLabel={t`Filter by sub-account`}
                     />
                 </div>
             )}
@@ -233,13 +242,13 @@ function RegisterFilterBar({
                     onClear={() => {
                         onFiltersChange({ counter: null });
                     }}
-                    noneLabel="Any counter-account"
-                    placeholder="Counter-account…"
-                    ariaLabel="Filter by counter-account"
+                    noneLabel={t`Any counter-account`}
+                    placeholder={t`Counter-account…`}
+                    ariaLabel={t`Filter by counter-account`}
                 />
             </div>
             <DateRangePicker
-                aria-label="Date range"
+                aria-label={t`Date range`}
                 value={{ from: filters.from, to: filters.to }}
                 onChange={range => {
                     onFiltersChange({ from: range.from, to: range.to });
@@ -247,7 +256,7 @@ function RegisterFilterBar({
                 fieldClassName="text-xs py-[5px]"
             />
             <TagGroup
-                aria-label="Status filter"
+                aria-label={t`Status filter`}
                 selectionMode="single"
                 disallowEmptySelection
                 selectedKeys={[filters.status === '' ? 'all' : filters.status]}
@@ -265,7 +274,7 @@ function RegisterFilterBar({
                         id={status === '' ? 'all' : status}
                         shape="chip"
                     >
-                        {STATUS_LABEL[status]}
+                        {statusLabel[status]}
                     </Tag>
                 ))}
             </TagGroup>
@@ -286,6 +295,7 @@ function RegisterTable({
     filters: RegisterFilterState;
     onPageChange: (p: number) => void;
 }) {
+    const { t } = useLingui();
     const skip = (page - 1) * REGISTER_PAGE_SIZE;
     const debouncedQ = useDebouncedValue(q, 200);
     const registerFilters: RegisterFilters = { q: debouncedQ, ...filters };
@@ -332,7 +342,10 @@ function RegisterTable({
 
     if (register.isError) {
         return (
-            <ErrorState message="Couldn't load register." onRetry={() => void register.refetch()} />
+            <ErrorState
+                message={t`Couldn't load register.`}
+                onRetry={() => void register.refetch()}
+            />
         );
     }
 
@@ -346,10 +359,10 @@ function RegisterTable({
         return (
             <div className="py-6 text-center text-sm text-fg-3">
                 {debouncedQ !== ''
-                    ? `No matches for “${debouncedQ}”.`
+                    ? t`No matches for “${debouncedQ}”.`
                     : hasFilters
-                      ? 'No rows match the current filters.'
-                      : 'No journal entries yet.'}
+                      ? t`No rows match the current filters.`
+                      : t`No journal entries yet.`}
             </div>
         );
     }
@@ -403,11 +416,23 @@ function RegisterTable({
                         onClick={toggleAll}
                     />
                 </span>
-                <span>Date</span>
-                <span>Description</span>
-                {showAccountColumn && <span>Account</span>}
-                <span>Counter</span>
-                <span className="text-right">Amount</span>
+                <span>
+                    <Trans>Date</Trans>
+                </span>
+                <span>
+                    <Trans>Description</Trans>
+                </span>
+                {showAccountColumn && (
+                    <span>
+                        <Trans>Account</Trans>
+                    </span>
+                )}
+                <span>
+                    <Trans>Counter</Trans>
+                </span>
+                <span className="text-right">
+                    <Trans>Amount</Trans>
+                </span>
             </div>
             {rows.map(row => (
                 <RegisterRowView
@@ -441,6 +466,7 @@ function ReassignBar({
     selectedIds: readonly JournalLineId[];
     onDone: () => void;
 }) {
+    const { t } = useLingui();
     const accounts = useAccounts();
     const reassign = useReassignJournalLines();
     const toast = useToast();
@@ -458,7 +484,10 @@ function ReassignBar({
         try {
             await reassign.mutateAsync({ lineIds: selectedIds, targetAccountId: target });
             toast.success(
-                `Moved ${String(count)} line${count === 1 ? '' : 's'} to “${targetName}”.`,
+                t`Moved ${plural(count, {
+                    one: '# line',
+                    other: '# lines',
+                })} to “${targetName}”.`,
             );
             setConfirming(false);
             setTarget(null);
@@ -471,7 +500,7 @@ function ReassignBar({
     return (
         <div className="flex flex-wrap items-center gap-3 mb-3 px-3 py-2 rounded-lg bg-surface-2 border border-border-soft">
             <span className="text-sm text-fg-2 font-medium">
-                {count} line{count === 1 ? '' : 's'} selected
+                <Plural value={count} one="# line selected" other="# lines selected" />
             </span>
             <div className="w-72">
                 {/* Reassign targets: postable accounts in the lines' currency (every line on
@@ -482,8 +511,8 @@ function ReassignBar({
                     onChange={setTarget}
                     postableOnly
                     currencyCode={account.currencyCode}
-                    placeholder="Move to account…"
-                    ariaLabel="Move selected lines to account"
+                    placeholder={t`Move to account…`}
+                    ariaLabel={t`Move selected lines to account`}
                 />
             </div>
             <button
@@ -495,14 +524,14 @@ function ReassignBar({
                 className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg bg-brand-primary text-white text-sm font-medium hover:bg-brand-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 <Icon name="arrow-right" size={14} strokeWidth={2} />
-                Move
+                <Trans>Move</Trans>
             </button>
             <button
                 type="button"
                 onClick={onDone}
                 className="px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1 hover:bg-surface-2"
             >
-                Clear selection
+                <Trans>Clear selection</Trans>
             </button>
             {confirming && (
                 <ConfirmDialog
@@ -511,9 +540,12 @@ function ReassignBar({
                         setConfirming(false);
                     }}
                     onConfirm={() => void onConfirm()}
-                    title={`Move ${String(count)} line${count === 1 ? '' : 's'} to “${targetName}”?`}
-                    message="Only the selected side of each entry moves — dates, amounts and the other side stay untouched. The whole batch moves together, or not at all."
-                    confirmLabel="Move"
+                    title={t`Move ${plural(count, {
+                        one: '# line',
+                        other: '# lines',
+                    })} to “${targetName}”?`}
+                    message={t`Only the selected side of each entry moves — dates, amounts and the other side stay untouched. The whole batch moves together, or not at all.`}
+                    confirmLabel={t`Move`}
                     busy={reassign.isPending}
                     error={error}
                 />
@@ -533,11 +565,12 @@ function RowSelectCheckbox({
     onChange: () => void;
     ariaLabel: string;
 }) {
+    const { t } = useLingui();
     return (
         <input
             type="checkbox"
             aria-label={ariaLabel}
-            title={disabled ? 'Cleared and reconciled lines can’t be moved.' : undefined}
+            title={disabled ? t`Cleared and reconciled lines can’t be moved.` : undefined}
             checked={selected}
             disabled={disabled}
             onChange={onChange}
@@ -555,6 +588,7 @@ function HeaderSelectAllCheckbox({
     onClick: () => void;
     disabled: boolean;
 }) {
+    const { t } = useLingui();
     function setRef(el: HTMLInputElement | null) {
         if (el) el.indeterminate = state === 'some';
     }
@@ -562,7 +596,7 @@ function HeaderSelectAllCheckbox({
         <input
             ref={setRef}
             type="checkbox"
-            aria-label="Select all movable rows on this page"
+            aria-label={t`Select all movable rows on this page`}
             checked={state === 'all'}
             disabled={disabled}
             onChange={onClick}
@@ -586,6 +620,7 @@ function RegisterRowView({
     selected: boolean;
     onToggle: () => void;
 }) {
+    const { t } = useLingui();
     const counter = row.counter[0];
     const extra = row.counter.length - 1;
     const negative = row.amount.amount < 0;
@@ -613,7 +648,7 @@ function RegisterRowView({
             selected={selected}
             disabled={!movable}
             onChange={onToggle}
-            ariaLabel={`Select line of ${row.date}`}
+            ariaLabel={t`Select line of ${row.date}`}
         />
     );
     return (
@@ -663,6 +698,7 @@ function RegisterRowView({
 }
 
 function DeleteAccountDialog({ account, onClose }: { account: Account; onClose: () => void }) {
+    const { t } = useLingui();
     const del = useDeleteAccount();
     const toast = useToast();
     const navigate = useNavigate();
@@ -672,7 +708,7 @@ function DeleteAccountDialog({ account, onClose }: { account: Account; onClose: 
         setError(null);
         try {
             await del.mutateAsync(account.id);
-            toast.success(`Deleted “${account.name}”.`);
+            toast.success(t`Deleted “${account.name}”.`);
             await navigate({ to: '/accounts' });
         } catch (err) {
             handleActionError(err, { setError, toast: toast.error });
@@ -684,9 +720,9 @@ function DeleteAccountDialog({ account, onClose }: { account: Account; onClose: 
             open
             onClose={onClose}
             onConfirm={() => void onConfirm()}
-            title={`Delete “${account.name}”?`}
-            message="This can't be undone. Accounts with journal entries can't be deleted until those are removed first."
-            confirmLabel="Delete"
+            title={t`Delete “${account.name}”?`}
+            message={t`This can't be undone. Accounts with journal entries can't be deleted until those are removed first.`}
+            confirmLabel={t`Delete`}
             variant="destructive"
             busy={del.isPending}
             error={error}

@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import { FormErrorBanner } from './FormErrorBanner';
 import { Button } from './ui/Button';
 import { Modal, ModalFooter } from './ui/Modal';
@@ -21,26 +22,27 @@ export function ConfirmDialog({
     onConfirm,
     title,
     message,
-    confirmLabel = 'Confirm',
-    cancelLabel = 'Cancel',
+    confirmLabel,
+    cancelLabel,
     variant = 'primary',
     busy = false,
     error = null,
 }: ConfirmDialogProps) {
+    const { t } = useLingui();
     return (
         <Modal open={open} onClose={onClose} title={title} width="sm">
             <FormErrorBanner message={error} />
             {message ? <p className="text-sm text-fg-2">{message}</p> : null}
             <ModalFooter>
                 <Button variant="ghost" onPress={onClose} isDisabled={busy}>
-                    {cancelLabel}
+                    {cancelLabel ?? t`Cancel`}
                 </Button>
                 <Button
                     variant={variant === 'destructive' ? 'danger' : 'primary'}
                     onPress={onConfirm}
                     isDisabled={busy}
                 >
-                    {busy ? 'Working…' : confirmLabel}
+                    {busy ? t`Working…` : (confirmLabel ?? t`Confirm`)}
                 </Button>
             </ModalFooter>
         </Modal>

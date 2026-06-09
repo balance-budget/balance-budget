@@ -10,6 +10,8 @@ import {
     XAxis,
     YAxis,
 } from 'recharts';
+import { t } from '@lingui/core/macro';
+import { useLingui } from '@lingui/react/macro';
 import type { LoanProjection } from '../api/loans';
 import { useCurrencyCatalog } from '../api/currencies';
 import { cx } from '../lib/cx';
@@ -36,6 +38,7 @@ type ChartMode = 'balance' | 'payments';
  * Rate-fixation boundaries and the "today" marker show in both (ADR-0025).
  */
 export function LoanChart({ projection, height = 280 }: LoanChartProps) {
+    const { t } = useLingui();
     const catalog = useCurrencyCatalog();
     const [mode, setMode] = useState<ChartMode>('balance');
 
@@ -128,7 +131,7 @@ export function LoanChart({ projection, height = 280 }: LoanChartProps) {
                         stroke="var(--color-border-strong)"
                         strokeDasharray="4 3"
                         label={{
-                            value: 'today',
+                            value: t`today`,
                             position: 'insideTopLeft',
                             fill: 'var(--color-fg-3)',
                             fontSize: 10,
@@ -143,7 +146,7 @@ export function LoanChart({ projection, height = 280 }: LoanChartProps) {
                                 stroke={chartColorFor(p.accountId)}
                                 strokeDasharray="2 4"
                                 label={{
-                                    value: `${p.label} fixed until`,
+                                    value: t`${p.label} fixed until`,
                                     position: 'insideTopRight',
                                     fill: 'var(--color-fg-3)',
                                     fontSize: 10,
@@ -239,6 +242,7 @@ function SegmentedToggle({
     mode: ChartMode;
     onChange: (m: ChartMode) => void;
 }) {
+    const { t } = useLingui();
     const item = (value: ChartMode, label: string) => (
         <button
             type="button"
@@ -256,24 +260,24 @@ function SegmentedToggle({
     );
     return (
         <div className="inline-flex items-center gap-0.5 rounded-lg bg-surface-2 p-0.5">
-            {item('balance', 'Balance')}
-            {item('payments', 'Payments')}
+            {item('balance', t`Balance`)}
+            {item('payments', t`Payments`)}
         </div>
     );
 }
 
 function chartSeriesLabel(seriesName: string, labelByPart: Map<string, string>): string {
-    if (seriesName === 'scenarioTotal') return 'What-if total';
+    if (seriesName === 'scenarioTotal') return t`What-if total`;
     const colon = seriesName.indexOf(':');
     const prefix = seriesName.slice(0, colon);
-    const label = labelByPart.get(seriesName.slice(colon + 1)) ?? 'Part';
+    const label = labelByPart.get(seriesName.slice(colon + 1)) ?? t`Part`;
     switch (prefix) {
         case 'p':
-            return `${label} (projected)`;
+            return t`${label} (projected)`;
         case 'pr':
-            return `${label} — repayment`;
+            return t`${label} — repayment`;
         case 'pi':
-            return `${label} — interest`;
+            return t`${label} — interest`;
         default:
             return label;
     }

@@ -1,4 +1,5 @@
 import { Fragment } from 'react';
+import { useLingui } from '@lingui/react/macro';
 import type { CurrencyCatalog } from '../api/currencies';
 import type { BankTransactionDetail } from '../api/bankTransactions';
 import { cx } from '../lib/cx';
@@ -13,37 +14,38 @@ export function BankTransactionDetails({
     bt: BankTransactionDetail;
     catalog: CurrencyCatalog;
 }) {
+    const { t } = useLingui();
     const fields: Field[] = [];
 
-    fields.push({ label: 'Date', value: bt.bookingDate });
-    fields.push({ label: 'Description', value: bt.description });
+    fields.push({ label: t`Date`, value: bt.bookingDate });
+    fields.push({ label: t`Description`, value: bt.description });
     fields.push({
-        label: 'Counterparty',
+        label: t`Counterparty`,
         value: formatCounterparty(bt.counterpartyName, bt.counterpartyAccountNumber),
     });
     fields.push({
-        label: 'Amount',
+        label: t`Amount`,
         value: formatMoney(bt.money.amount, bt.money.currencyCode, catalog, { sign: true }),
         tone: bt.money.amount < 0 ? 'negative' : 'positive',
     });
-    if (bt.valueDate !== null) fields.push({ label: 'Value date', value: bt.valueDate });
-    if (bt.reference !== null) fields.push({ label: 'Reference', value: bt.reference });
-    if (bt.mandateId !== null) fields.push({ label: 'Mandate ID', value: bt.mandateId });
+    if (bt.valueDate !== null) fields.push({ label: t`Value date`, value: bt.valueDate });
+    if (bt.reference !== null) fields.push({ label: t`Reference`, value: bt.reference });
+    if (bt.mandateId !== null) fields.push({ label: t`Mandate ID`, value: bt.mandateId });
     if (bt.sepaCreditorId !== null) {
-        fields.push({ label: 'SEPA creditor ID', value: bt.sepaCreditorId });
+        fields.push({ label: t`SEPA creditor ID`, value: bt.sepaCreditorId });
     }
     if (bt.foreignAmount !== null && bt.foreignCurrencyCode !== null) {
         fields.push({
-            label: 'Foreign amount',
+            label: t`Foreign amount`,
             value: formatMoney(bt.foreignAmount, bt.foreignCurrencyCode, catalog, {
                 sign: false,
             }),
         });
     }
     if (bt.exchangeRate !== null) {
-        fields.push({ label: 'Exchange rate', value: bt.exchangeRate.toString() });
+        fields.push({ label: t`Exchange rate`, value: bt.exchangeRate.toString() });
     }
-    if (bt.importerKey !== null) fields.push({ label: 'Importer', value: bt.importerKey });
+    if (bt.importerKey !== null) fields.push({ label: t`Importer`, value: bt.importerKey });
 
     for (const entry of bt.metadata) {
         const value =

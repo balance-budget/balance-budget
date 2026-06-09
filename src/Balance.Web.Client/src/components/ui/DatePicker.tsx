@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import { CalendarDays } from 'lucide-react';
 import {
     Button,
@@ -48,6 +49,7 @@ export function DatePicker({
     fieldClassName,
     ...props
 }: DatePickerProps) {
+    const { t } = useLingui();
     return (
         <AriaDatePicker
             {...props}
@@ -69,7 +71,7 @@ export function DatePicker({
             >
                 <StyledDateInput className="flex flex-1 items-center" />
                 <Button
-                    aria-label="Open calendar"
+                    aria-label={t`Open calendar`}
                     className="flex items-center px-1 text-fg-3 outline-none cursor-pointer data-[hovered]:text-fg-1 data-[focus-visible]:text-fg-1 data-[disabled]:opacity-60"
                 >
                     <CalendarDays size={15} strokeWidth={2} aria-hidden="true" />

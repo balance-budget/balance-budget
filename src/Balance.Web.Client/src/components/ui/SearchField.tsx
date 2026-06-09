@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import { Search, X } from 'lucide-react';
 import {
     Button,
@@ -15,6 +16,7 @@ export type SearchFieldProps = AriaSearchFieldProps & {
 
 /** Toolbar search box — standard field chrome with an icon prefix and clear button. */
 export function SearchField({ placeholder, ...props }: SearchFieldProps) {
+    const { t } = useLingui();
     return (
         <AriaSearchField
             {...props}
@@ -28,7 +30,7 @@ export function SearchField({ placeholder, ...props }: SearchFieldProps) {
                     <Search size={14} strokeWidth={1.75} />
                 </span>
                 <Input
-                    placeholder={placeholder ?? 'Search…'}
+                    placeholder={placeholder ?? t`Search…`}
                     className={
                         'h-full flex-1 min-w-0 px-2 bg-transparent outline-none ' +
                         '[&::-webkit-search-cancel-button]:appearance-none'

@@ -1,3 +1,6 @@
+import { msg } from '@lingui/core/macro';
+import { type MessageDescriptor } from '@lingui/core';
+import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { accountIdentifier, useAccounts, type Account } from '../api/accounts';
@@ -51,6 +54,7 @@ const EMPTY_REGISTER_FILTERS: RegisterFilters = {
 };
 
 function RecentActivity({ account }: { account: Account }) {
+    const { t } = useLingui();
     const register = useAccountRegister(account.id, 0, 5, EMPTY_REGISTER_FILTERS);
 
     if (register.isPending) {
@@ -66,7 +70,7 @@ function RecentActivity({ account }: { account: Account }) {
         return (
             <div className="pl-12">
                 <ErrorState
-                    message="Couldn't load recent activity."
+                    message={t`Couldn't load recent activity.`}
                     onRetry={() => void register.refetch()}
                 />
             </div>
@@ -115,6 +119,7 @@ function AccountRow({ account }: { account: Account }) {
 }
 
 function AccountsPanel() {
+    const { t } = useLingui();
     const accounts = useAccounts();
 
     if (accounts.isPending) {
@@ -129,7 +134,10 @@ function AccountsPanel() {
 
     if (accounts.isError) {
         return (
-            <ErrorState message="Couldn't load accounts." onRetry={() => void accounts.refetch()} />
+            <ErrorState
+                message={t`Couldn't load accounts.`}
+                onRetry={() => void accounts.refetch()}
+            />
         );
     }
 
@@ -145,7 +153,11 @@ function AccountsPanel() {
         );
 
     if (ledgerAccounts.length === 0) {
-        return <span className="text-sm text-fg-3">No accounts yet.</span>;
+        return (
+            <span className="text-sm text-fg-3">
+                <Trans>No accounts yet.</Trans>
+            </span>
+        );
     }
 
     return (
@@ -158,6 +170,7 @@ function AccountsPanel() {
 }
 
 function KpiStrip() {
+    const { t } = useLingui();
     const summary = useDashboardSummary();
     const accounts = useAccounts();
 
@@ -166,19 +179,19 @@ function KpiStrip() {
             <section className="grid gap-[14px] grid-cols-1 sm:grid-cols-[1.3fr_1fr_1fr]">
                 <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
                     <span className="text-xs font-medium text-fg-3 tracking-widest uppercase truncate">
-                        Net worth
+                        <Trans>Net worth</Trans>
                     </span>
                     <Skeleton className="h-[44px] w-[180px]" />
                 </Panel>
                 <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
                     <span className="text-xs font-medium text-fg-3 tracking-widest uppercase truncate">
-                        Income · MTD
+                        <Trans>Income · MTD</Trans>
                     </span>
                     <Skeleton className="h-[22px] w-[120px]" />
                 </Panel>
                 <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
                     <span className="text-xs font-medium text-fg-3 tracking-widest uppercase truncate">
-                        Expenses · MTD
+                        <Trans>Expenses · MTD</Trans>
                     </span>
                     <Skeleton className="h-[22px] w-[120px]" />
                 </Panel>
@@ -190,7 +203,7 @@ function KpiStrip() {
         return (
             <section>
                 <ErrorState
-                    message="Couldn't load the dashboard summary."
+                    message={t`Couldn't load the dashboard summary.`}
                     onRetry={() => void summary.refetch()}
                 />
             </section>
@@ -202,9 +215,13 @@ function KpiStrip() {
     // alongside their leaves would double-count.
     const accountCount = accounts.data?.filter(a => isLedgerAccount(a) && a.isPostable).length;
     const subtext =
-        accountCount !== undefined
-            ? `Across ${accountCount} ${accountCount === 1 ? 'account' : 'accounts'}`
-            : ' ';
+        accountCount !== undefined ? (
+            <Trans>
+                Across <Plural value={accountCount} one="# account" other="# accounts" />
+            </Trans>
+        ) : (
+            ' '
+        );
 
     // The liquid-headline form only kicks in once an illiquid account exists — comparing
     // the two amounts instead would misfire when a house exactly offsets its mortgage.
@@ -215,7 +232,7 @@ function KpiStrip() {
         <section className="grid gap-[14px] grid-cols-1 sm:grid-cols-[1.3fr_1fr_1fr]">
             <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
                 <span className="text-xs font-medium text-fg-3 tracking-widest uppercase truncate">
-                    {hasIlliquid ? 'Liquid net worth' : 'Net worth'}
+                    {hasIlliquid ? t`Liquid net worth` : t`Net worth`}
                 </span>
                 <Amount
                     minor={headline.amount}
@@ -225,7 +242,7 @@ function KpiStrip() {
                 />
                 {hasIlliquid ? (
                     <span className="text-sm text-fg-3 inline-flex items-baseline gap-[0.35em]">
-                        Net worth
+                        <Trans>Net worth</Trans>
                         <Amount
                             minor={data.netWorth.amount}
                             currencyCode={data.netWorth.currencyCode}
@@ -240,7 +257,7 @@ function KpiStrip() {
 
             <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
                 <span className="text-xs font-medium text-fg-3 tracking-widest uppercase truncate">
-                    Income · MTD
+                    <Trans>Income · MTD</Trans>
                 </span>
                 <Amount
                     minor={data.incomeMtd.amount}
@@ -256,7 +273,7 @@ function KpiStrip() {
 
             <Panel padding="sm" className="flex flex-col gap-1 justify-between min-h-[120px]">
                 <span className="text-xs font-medium text-fg-3 tracking-widest uppercase truncate">
-                    Expenses · MTD
+                    <Trans>Expenses · MTD</Trans>
                 </span>
                 <Amount
                     minor={data.expensesMtd.amount}
@@ -274,14 +291,15 @@ function KpiStrip() {
     );
 }
 
-const RANGE_SUBTITLE: Record<TrendRange, string> = {
-    '1M': 'Balance over time · Last month',
-    '3M': 'Balance over time · Last 3 months',
-    '6M': 'Balance over time · Last 6 months',
-    '1Y': 'Balance over time · Last year',
+const RANGE_SUBTITLE: Record<TrendRange, MessageDescriptor> = {
+    '1M': msg`Balance over time · Last month`,
+    '3M': msg`Balance over time · Last 3 months`,
+    '6M': msg`Balance over time · Last 6 months`,
+    '1Y': msg`Balance over time · Last year`,
 };
 
 function AccountBalanceTrendPanel() {
+    const { t, i18n } = useLingui();
     const [range, setRange] = useState<TrendRange>('3M');
     const trend = useAccountBalanceTrend(range);
     // Lives here (not in TrendChart) so toggles survive a range switch, during
@@ -299,7 +317,7 @@ function AccountBalanceTrendPanel() {
 
     const pills = (
         <ToggleButtonGroup
-            aria-label="Trend range"
+            aria-label={t`Trend range`}
             disallowEmptySelection
             selectedKeys={[range]}
             onSelectionChange={keys => {
@@ -317,17 +335,21 @@ function AccountBalanceTrendPanel() {
 
     return (
         <Panel>
-            <SectionHead title="Account balances" subtitle={RANGE_SUBTITLE[range]} action={pills} />
+            <SectionHead
+                title={<Trans>Account balances</Trans>}
+                subtitle={i18n._(RANGE_SUBTITLE[range])}
+                action={pills}
+            />
             {trend.isPending ? (
                 <Skeleton className="h-[240px] w-full" />
             ) : trend.isError ? (
                 <ErrorState
-                    message="Couldn't load the balance trend."
+                    message={t`Couldn't load the balance trend.`}
                     onRetry={() => void trend.refetch()}
                 />
             ) : trend.data.series.length === 0 ? (
                 <div className="h-[240px] flex items-center justify-center text-sm text-fg-3">
-                    No balance history yet.
+                    <Trans>No balance history yet.</Trans>
                 </div>
             ) : (
                 <TrendChart
@@ -354,13 +376,13 @@ export function Dashboard() {
 
                 <Panel>
                     <SectionHead
-                        title="Accounts"
+                        title={<Trans>Accounts</Trans>}
                         action={
                             <Link
                                 to="/accounts"
                                 className="text-sm font-medium text-fg-2 hover:text-brand-primary"
                             >
-                                All →
+                                <Trans>All →</Trans>
                             </Link>
                         }
                     />

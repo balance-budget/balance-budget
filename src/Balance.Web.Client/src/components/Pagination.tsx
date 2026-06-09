@@ -1,4 +1,5 @@
 import { Button } from 'react-aria-components';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { Icon } from './Icon';
 import { cx } from '../lib/cx';
 
@@ -18,14 +19,21 @@ export function Pagination({ page, pageSize, totalCount, onPageChange }: Paginat
     const to = Math.min(current * pageSize, totalCount);
     const tokens = buildPageTokens(current, totalPages);
 
+    const { t } = useLingui();
     return (
         <div className="flex items-center justify-between gap-3 pt-3">
             <span className="text-xs text-fg-3 tabular-nums">
-                {totalCount === 0 ? '—' : `${from}–${to} of ${totalCount}`}
+                {totalCount === 0 ? (
+                    '—'
+                ) : (
+                    <Trans>
+                        {from}–{to} of {totalCount}
+                    </Trans>
+                )}
             </span>
             <div className="flex items-center gap-1">
                 <PageButton
-                    label="Previous page"
+                    label={t`Previous page`}
                     icon="chevron-right"
                     rotated
                     disabled={!hasPrev}
@@ -54,7 +62,7 @@ export function Pagination({ page, pageSize, totalCount, onPageChange }: Paginat
                     ),
                 )}
                 <PageButton
-                    label="Next page"
+                    label={t`Next page`}
                     icon="chevron-right"
                     disabled={!hasNext}
                     onClick={() => {
@@ -107,10 +115,11 @@ function PageNumber({
     current: number;
     onClick: () => void;
 }) {
+    const { t } = useLingui();
     const isCurrent = page === current;
     return (
         <Button
-            aria-label={`Page ${page.toString()}`}
+            aria-label={t`Page ${page}`}
             aria-current={isCurrent ? 'page' : undefined}
             isDisabled={isCurrent}
             onPress={onClick}

@@ -1,3 +1,6 @@
+import { msg } from '@lingui/core/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
+import { type MessageDescriptor } from '@lingui/core';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Button } from 'react-aria-components';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
@@ -23,29 +26,29 @@ function SectionLabel({ children }: { children: ReactNode }) {
 
 type NavLink = {
     to: string;
-    label: string;
+    label: MessageDescriptor;
     iconName: string;
 };
 
 const NAV_MAIN: NavLink[] = [
-    { to: '/', label: 'Dashboard', iconName: 'layout-dashboard' },
-    { to: '/activity', label: 'Activity', iconName: 'book-open' },
-    { to: '/reports', label: 'Insights', iconName: 'line-chart' },
+    { to: '/', label: msg`Dashboard`, iconName: 'layout-dashboard' },
+    { to: '/activity', label: msg`Activity`, iconName: 'book-open' },
+    { to: '/reports', label: msg`Insights`, iconName: 'line-chart' },
 ];
 
 const NAV_PLAN: NavLink[] = [
-    { to: '/budgets', label: 'Budgets', iconName: 'line-chart' },
-    { to: '/loans', label: 'Loans', iconName: 'landmark' },
-    { to: '/subscriptions', label: 'Subscriptions', iconName: 'repeat' },
-    { to: '/piggy-banks', label: 'Piggy banks', iconName: 'piggy-bank' },
+    { to: '/budgets', label: msg`Budgets`, iconName: 'line-chart' },
+    { to: '/loans', label: msg`Loans`, iconName: 'landmark' },
+    { to: '/subscriptions', label: msg`Subscriptions`, iconName: 'repeat' },
+    { to: '/piggy-banks', label: msg`Piggy banks`, iconName: 'piggy-bank' },
 ];
 
 const NAV_OTHER: NavLink[] = [
-    { to: '/accounts', label: 'Accounts', iconName: 'wallet' },
-    { to: '/counterparties', label: 'Counterparties', iconName: 'user' },
-    { to: '/bank-transactions', label: 'Bank transactions', iconName: 'inbox' },
-    { to: '/bank-imports', label: 'Bank imports', iconName: 'download' },
-    { to: '/settings', label: 'Settings', iconName: 'settings' },
+    { to: '/accounts', label: msg`Accounts`, iconName: 'wallet' },
+    { to: '/counterparties', label: msg`Counterparties`, iconName: 'user' },
+    { to: '/bank-transactions', label: msg`Bank transactions`, iconName: 'inbox' },
+    { to: '/bank-imports', label: msg`Bank imports`, iconName: 'download' },
+    { to: '/settings', label: msg`Settings`, iconName: 'settings' },
 ];
 
 function NavGroup({
@@ -53,10 +56,11 @@ function NavGroup({
     items,
     currentPath,
 }: {
-    title?: string;
+    title?: ReactNode;
     items: NavLink[];
     currentPath: string;
 }) {
+    const { i18n } = useLingui();
     return (
         <div className="flex flex-col gap-[2px]">
             {title && <SectionLabel>{title}</SectionLabel>}
@@ -81,7 +85,7 @@ function NavGroup({
                             strokeWidth={1.75}
                             className="shrink-0"
                         />
-                        <span>{item.label}</span>
+                        <span>{i18n._(item.label)}</span>
                     </Link>
                 );
             })}
@@ -135,6 +139,7 @@ function AccountTreeNode({
     expandedIds: Set<string>;
     onToggle: (id: string) => void;
 }) {
+    const { t } = useLingui();
     const catalog = useCurrencyCatalog();
     const identifier = accountIdentifier(account);
     const isNegative = account.balance.amount < 0;
@@ -197,7 +202,7 @@ function AccountTreeNode({
                         onPress={() => {
                             onToggle(account.id);
                         }}
-                        aria-label={expanded ? 'Collapse' : 'Expand'}
+                        aria-label={expanded ? t`Collapse` : t`Expand`}
                         aria-expanded={expanded}
                         className="absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded-lg text-fg-3 cursor-pointer outline-none data-[hovered]:text-fg-1 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary"
                     >
@@ -240,7 +245,7 @@ function AccountTreeSection({
     expandedIds,
     onToggle,
 }: {
-    title: string;
+    title: ReactNode;
     roots: Account[];
     childrenByParent: Map<string | null, Account[]>;
     expandedIds: Set<string>;
@@ -264,6 +269,7 @@ function AccountTreeSection({
 }
 
 function AccountsGroup() {
+    const { t } = useLingui();
     const { data, isPending, isError, refetch } = useAccounts();
     const pathname = useRouterState({ select: s => s.location.pathname });
     const [expandedIds, setExpandedIds] = useState<Set<string>>(loadExpandedIds);
@@ -288,7 +294,9 @@ function AccountsGroup() {
     if (isPending) {
         return (
             <div className="flex flex-col gap-[2px]">
-                <SectionLabel>Accounts</SectionLabel>
+                <SectionLabel>
+                    <Trans>Accounts</Trans>
+                </SectionLabel>
                 <div className="flex flex-col gap-[6px] px-3 py-2">
                     <Skeleton className="h-[14px] w-32" />
                     <Skeleton className="h-[14px] w-24" />
@@ -301,9 +309,14 @@ function AccountsGroup() {
     if (isError) {
         return (
             <div className="flex flex-col gap-[2px]">
-                <SectionLabel>Accounts</SectionLabel>
+                <SectionLabel>
+                    <Trans>Accounts</Trans>
+                </SectionLabel>
                 <div className="px-3 py-2">
-                    <ErrorState message="Couldn't load accounts." onRetry={() => void refetch()} />
+                    <ErrorState
+                        message={t`Couldn't load accounts.`}
+                        onRetry={() => void refetch()}
+                    />
                 </div>
             </div>
         );
@@ -312,8 +325,12 @@ function AccountsGroup() {
     if (data.length === 0) {
         return (
             <div className="flex flex-col gap-[2px]">
-                <SectionLabel>Accounts</SectionLabel>
-                <div className="px-3 py-2 text-xs text-fg-3">No accounts yet.</div>
+                <SectionLabel>
+                    <Trans>Accounts</Trans>
+                </SectionLabel>
+                <div className="px-3 py-2 text-xs text-fg-3">
+                    <Trans>No accounts yet.</Trans>
+                </div>
             </div>
         );
     }
@@ -340,28 +357,28 @@ function AccountsGroup() {
     return (
         <>
             <AccountTreeSection
-                title="Assets"
+                title={<Trans>Assets</Trans>}
                 roots={assetRoots}
                 childrenByParent={childrenByParent}
                 expandedIds={effectiveExpanded}
                 onToggle={toggle}
             />
             <AccountTreeSection
-                title="Liabilities"
+                title={<Trans>Liabilities</Trans>}
                 roots={liabilityRoots}
                 childrenByParent={childrenByParent}
                 expandedIds={effectiveExpanded}
                 onToggle={toggle}
             />
             <AccountTreeSection
-                title="Income"
+                title={<Trans>Income</Trans>}
                 roots={incomeRoots}
                 childrenByParent={childrenByParent}
                 expandedIds={effectiveExpanded}
                 onToggle={toggle}
             />
             <AccountTreeSection
-                title="Expenses"
+                title={<Trans>Expenses</Trans>}
                 roots={expenseRoots}
                 childrenByParent={childrenByParent}
                 expandedIds={effectiveExpanded}
@@ -381,6 +398,7 @@ function initials(name: string): string {
 }
 
 function CurrentUserCard() {
+    const { t } = useLingui();
     const me = useCurrentUser();
     const logout = useLogout();
     const navigate = useNavigate();
@@ -412,7 +430,7 @@ function CurrentUserCard() {
                 }}
                 isDisabled={logout.isPending}
                 className="text-fg-3 cursor-pointer outline-none data-[hovered]:text-fg-1 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary rounded-sm"
-                aria-label="Sign out"
+                aria-label={t`Sign out`}
             >
                 <Icon name="log-out" size={16} />
             </Button>
@@ -454,8 +472,12 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
                 <nav className="flex flex-col gap-1 overflow-y-auto scrollbar-sleek -mr-4 pr-4">
                     <NavGroup items={NAV_MAIN} currentPath={pathname} />
                     <AccountsGroup />
-                    <NavGroup title="Plan" items={NAV_PLAN} currentPath={pathname} />
-                    <NavGroup title="Manage" items={NAV_OTHER} currentPath={pathname} />
+                    <NavGroup title={<Trans>Plan</Trans>} items={NAV_PLAN} currentPath={pathname} />
+                    <NavGroup
+                        title={<Trans>Manage</Trans>}
+                        items={NAV_OTHER}
+                        currentPath={pathname}
+                    />
                 </nav>
 
                 <CurrentUserCard />

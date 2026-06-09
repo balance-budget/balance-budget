@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { Link } from '@tanstack/react-router';
 import { useAccounts, type Account } from '../api/accounts';
 import { useJournalEntries, type JournalEntry } from '../api/journalEntries';
@@ -39,6 +40,7 @@ export function Activity({
     onSearchChange: (q: string) => void;
     onFiltersChange: (patch: Partial<ActivityFilterState>) => void;
 }) {
+    const { t } = useLingui();
     const skip = (page - 1) * PAGE_SIZE;
     const debouncedQ = useDebouncedValue(q, 200);
     const entries = useJournalEntries(skip, PAGE_SIZE, debouncedQ, {
@@ -51,24 +53,24 @@ export function Activity({
     return (
         <Panel>
             <SectionHead
-                title="Activity"
-                subtitle="Every bookkeeping event, newest first."
+                title={<Trans>Activity</Trans>}
+                subtitle={<Trans>Every bookkeeping event, newest first.</Trans>}
                 action={
                     <Link
                         to="/journal/new"
                         className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg bg-brand-primary text-white text-sm font-medium hover:bg-brand-primary-dark"
                     >
                         <Icon name="plus" size={14} strokeWidth={2} />
-                        New entry
+                        <Trans>New entry</Trans>
                     </Link>
                 }
             />
             <div className="mb-4 flex flex-col gap-3">
                 <SearchField
-                    aria-label="Search activity"
+                    aria-label={t`Search activity`}
                     value={q}
                     onChange={onSearchChange}
-                    placeholder="Search description or counterparty…"
+                    placeholder={t`Search description or counterparty…`}
                 />
                 <ActivityFilterBar filters={filters} onFiltersChange={onFiltersChange} />
             </div>
@@ -91,6 +93,7 @@ function ActivityFilterBar({
     filters: ActivityFilterState;
     onFiltersChange: (patch: Partial<ActivityFilterState>) => void;
 }) {
+    const { t } = useLingui();
     return (
         <div className="flex flex-wrap items-center gap-2">
             <div className="w-64">
@@ -105,13 +108,13 @@ function ActivityFilterBar({
                     onClear={() => {
                         onFiltersChange({ account: null });
                     }}
-                    noneLabel="Any account"
-                    placeholder="Account…"
-                    ariaLabel="Filter by account"
+                    noneLabel={t`Any account`}
+                    placeholder={t`Account…`}
+                    ariaLabel={t`Filter by account`}
                 />
             </div>
             <DateRangePicker
-                aria-label="Date range"
+                aria-label={t`Date range`}
                 value={{ from: filters.from, to: filters.to }}
                 onChange={range => {
                     onFiltersChange({ from: range.from, to: range.to });
@@ -137,6 +140,7 @@ function JournalBody({
     filtered: boolean;
     onPageChange: (p: number) => void;
 }) {
+    const { t } = useLingui();
     const accountById = useMemo(
         () => new Map<AccountId, Account>(accounts.map(a => [a.id, a])),
         [accounts],
@@ -157,20 +161,24 @@ function JournalBody({
     if (entries.isError) {
         return (
             <ErrorState
-                message="Couldn't load journal entries."
+                message={t`Couldn't load journal entries.`}
                 onRetry={() => void entries.refetch()}
             />
         );
     }
 
     if (entries.data.items.length === 0 && query !== '') {
-        return <div className="py-8 text-center text-sm text-fg-2">No matches for “{query}”.</div>;
+        return (
+            <div className="py-8 text-center text-sm text-fg-2">
+                <Trans>No matches for “{query}”.</Trans>
+            </div>
+        );
     }
 
     if (entries.data.items.length === 0 && filtered) {
         return (
             <div className="py-8 text-center text-sm text-fg-2">
-                No entries match the current filters.
+                <Trans>No entries match the current filters.</Trans>
             </div>
         );
     }
@@ -178,9 +186,11 @@ function JournalBody({
     if (entries.data.items.length === 0 && page === 1) {
         return (
             <div className="py-8 flex flex-col items-center gap-2 text-center">
-                <span className="text-sm text-fg-2">No journal entries yet.</span>
+                <span className="text-sm text-fg-2">
+                    <Trans>No journal entries yet.</Trans>
+                </span>
                 <span className="text-xs text-fg-3">
-                    Create one manually or import a bank statement.
+                    <Trans>Create one manually or import a bank statement.</Trans>
                 </span>
             </div>
         );
@@ -189,11 +199,19 @@ function JournalBody({
     return (
         <div className="flex flex-col">
             <div className="hidden lg:grid grid-cols-[100px_24px_1fr_minmax(180px,1.2fr)_140px] gap-3 px-2 pb-2 text-xs text-fg-3 uppercase tracking-wider border-b border-border-soft">
-                <span>Date</span>
+                <span>
+                    <Trans>Date</Trans>
+                </span>
                 <span />
-                <span>Counterparty</span>
-                <span>From → To</span>
-                <span className="text-right">Amount</span>
+                <span>
+                    <Trans>Counterparty</Trans>
+                </span>
+                <span>
+                    <Trans>From</Trans> → <Trans>To</Trans>
+                </span>
+                <span className="text-right">
+                    <Trans>Amount</Trans>
+                </span>
             </div>
             {entries.data.items.map(entry => (
                 <JournalRow key={entry.id} entry={entry} accountById={accountById} />
@@ -266,7 +284,13 @@ function FromToCell({
     lineCount: number;
 }) {
     if (!projection.isSimplifiable) {
-        return <span className="text-xs text-fg-3 truncate">Split ({lineCount} lines)</span>;
+        return (
+            <span className="text-xs text-fg-3 truncate">
+                <Trans>
+                    Split (<Plural value={lineCount} one="# line" other="# lines" />)
+                </Trans>
+            </span>
+        );
     }
 
     const fromLabel = formatLegLabel(projection.fromLegs);

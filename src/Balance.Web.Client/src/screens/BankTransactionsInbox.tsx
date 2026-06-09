@@ -1,5 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link, useBlocker } from '@tanstack/react-router';
+import { plural, t } from '@lingui/core/macro';
+import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { accountsKeys, useAccounts, type Account } from '../api/accounts';
 import { bankAccountsKeys, useBankAccounts, type BankAccount } from '../api/bankAccounts';
@@ -82,33 +84,45 @@ type WireSuggested = components['schemas']['SuggestedCounterAccountOutput'];
 
 const PAGE_SIZE = 50;
 
-const FILTER_LABEL: Record<BankTransactionFilter, string> = {
-    Inbox: 'Inbox',
-    Matched: 'Matched',
-    Dismissed: 'Dismissed',
-    All: 'All',
-};
+function filterLabel(filter: BankTransactionFilter): string {
+    const labels: Record<BankTransactionFilter, string> = {
+        Inbox: t`Inbox`,
+        Matched: t`Matched`,
+        Dismissed: t`Dismissed`,
+        All: t`All`,
+    };
+    return labels[filter];
+}
 
-const SUBTITLE: Record<BankTransactionFilter, string> = {
-    Inbox: 'Bank rows waiting for a journal entry. Pick Counterparty and Account inline; Save all when you’re happy.',
-    Matched: 'Bank rows that have been categorised into a journal entry.',
-    Dismissed: 'Bank rows you marked as not needing a journal entry.',
-    All: 'Every imported bank row, regardless of state.',
-};
+function subtitleFor(filter: BankTransactionFilter): string {
+    const subtitles: Record<BankTransactionFilter, string> = {
+        Inbox: t`Bank rows waiting for a journal entry. Pick Counterparty and Account inline; Save all when you’re happy.`,
+        Matched: t`Bank rows that have been categorised into a journal entry.`,
+        Dismissed: t`Bank rows you marked as not needing a journal entry.`,
+        All: t`Every imported bank row, regardless of state.`,
+    };
+    return subtitles[filter];
+}
 
-const EMPTY_TITLE: Record<BankTransactionFilter, string> = {
-    Inbox: "You're caught up.",
-    Matched: 'Nothing categorised yet.',
-    Dismissed: 'Nothing dismissed.',
-    All: 'No bank transactions yet.',
-};
+function emptyTitleFor(filter: BankTransactionFilter): string {
+    const titles: Record<BankTransactionFilter, string> = {
+        Inbox: t`You're caught up.`,
+        Matched: t`Nothing categorised yet.`,
+        Dismissed: t`Nothing dismissed.`,
+        All: t`No bank transactions yet.`,
+    };
+    return titles[filter];
+}
 
-const EMPTY_HINT: Record<BankTransactionFilter, string> = {
-    Inbox: 'Imported rows that need categorising will appear here.',
-    Matched: 'Categorise an inbox row to see it here.',
-    Dismissed: 'Dismissed rows live here for audit.',
-    All: 'Import a bank statement from Bank imports to get started.',
-};
+function emptyHintFor(filter: BankTransactionFilter): string {
+    const hints: Record<BankTransactionFilter, string> = {
+        Inbox: t`Imported rows that need categorising will appear here.`,
+        Matched: t`Categorise an inbox row to see it here.`,
+        Dismissed: t`Dismissed rows live here for audit.`,
+        All: t`Import a bank statement from Bank imports to get started.`,
+    };
+    return hints[filter];
+}
 
 type Props = {
     page: number;
@@ -127,6 +141,7 @@ export function BankTransactionsInbox({
     onFilterChange,
     onSearchChange,
 }: Props) {
+    const { t } = useLingui();
     const skip = (page - 1) * PAGE_SIZE;
     const debouncedQ = useDebouncedValue(q, 200);
     const query = useBankTransactions(skip, PAGE_SIZE, filter, debouncedQ);
@@ -136,14 +151,14 @@ export function BankTransactionsInbox({
     return (
         <>
             <Panel>
-                <SectionHead title="Bank transactions" subtitle={SUBTITLE[filter]} />
+                <SectionHead title={t`Bank transactions`} subtitle={subtitleFor(filter)} />
                 <div className="flex flex-col gap-3 mb-4">
                     <FilterChips value={filter} onChange={onFilterChange} />
                     <SearchField
-                        aria-label="Search bank transactions"
+                        aria-label={t`Search bank transactions`}
                         value={q}
                         onChange={onSearchChange}
-                        placeholder="Search description or counterparty…"
+                        placeholder={t`Search description or counterparty…`}
                     />
                 </div>
                 <Body
@@ -176,9 +191,10 @@ function FilterChips({
     value: BankTransactionFilter;
     onChange: (filter: BankTransactionFilter) => void;
 }) {
+    const { t } = useLingui();
     return (
         <TagGroup
-            aria-label="Filter"
+            aria-label={t`Filter`}
             selectionMode="single"
             disallowEmptySelection
             selectedKeys={[value]}
@@ -189,7 +205,7 @@ function FilterChips({
         >
             {BANK_TRANSACTION_FILTERS.map(filter => (
                 <Tag key={filter} id={filter} shape="chip">
-                    {FILTER_LABEL[filter]}
+                    {filterLabel(filter)}
                 </Tag>
             ))}
         </TagGroup>
@@ -213,6 +229,7 @@ function Body({
     onPageChange: (page: number) => void;
     onDismiss: (bt: BankTransaction) => void;
 }) {
+    const { t } = useLingui();
     if (query.isPending) {
         return (
             <div className="flex flex-col gap-2">
@@ -228,21 +245,25 @@ function Body({
     if (query.isError) {
         return (
             <ErrorState
-                message="Couldn't load bank transactions."
+                message={t`Couldn't load bank transactions.`}
                 onRetry={() => void query.refetch()}
             />
         );
     }
 
     if (query.data.items.length === 0 && search !== '') {
-        return <div className="py-8 text-center text-sm text-fg-2">No matches for “{search}”.</div>;
+        return (
+            <div className="py-8 text-center text-sm text-fg-2">
+                <Trans>No matches for “{search}”.</Trans>
+            </div>
+        );
     }
 
     if (query.data.items.length === 0 && page === 1) {
         return (
             <div className="py-8 flex flex-col items-center gap-2 text-center">
-                <span className="text-sm text-fg-2">{EMPTY_TITLE[filter]}</span>
-                <span className="text-xs text-fg-3">{EMPTY_HINT[filter]}</span>
+                <span className="text-sm text-fg-2">{emptyTitleFor(filter)}</span>
+                <span className="text-xs text-fg-3">{emptyHintFor(filter)}</span>
             </div>
         );
     }
@@ -290,11 +311,21 @@ function ReadOnlyList({
     return (
         <div className="flex flex-col">
             <div className="hidden lg:grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px_minmax(180px,200px)] gap-3 px-2 pb-2 text-xs text-fg-3 uppercase tracking-wider border-b border-border-soft">
-                <span>Date</span>
-                <span>Description</span>
-                <span>Counterparty</span>
-                <span className="text-right">Amount</span>
-                <span className="text-right">Actions</span>
+                <span>
+                    <Trans>Date</Trans>
+                </span>
+                <span>
+                    <Trans>Description</Trans>
+                </span>
+                <span>
+                    <Trans>Counterparty</Trans>
+                </span>
+                <span className="text-right">
+                    <Trans>Amount</Trans>
+                </span>
+                <span className="text-right">
+                    <Trans>Actions</Trans>
+                </span>
             </div>
             {bankTransactions.map(bt => (
                 <ReadOnlyRow
@@ -361,13 +392,18 @@ function ReadOnlyRow({
 
 function StateChip({ bankTransaction }: { bankTransaction: BankTransaction }) {
     if (bankTransaction.journalEntryId) {
-        return <span className="text-xs text-success tabular-nums">Categorised</span>;
+        return (
+            <span className="text-xs text-success tabular-nums">
+                <Trans>Categorised</Trans>
+            </span>
+        );
     }
     if (bankTransaction.dismissedAt) {
         const reason = bankTransaction.dismissedReason ?? '';
         return (
             <span className="text-xs text-fg-3 tabular-nums truncate">
-                Dismissed{reason ? ` · ${reason}` : ''}
+                <Trans>Dismissed</Trans>
+                {reason ? ` · ${reason}` : ''}
             </span>
         );
     }
@@ -401,7 +437,7 @@ function ReferenceLine({ reference }: { reference: string | null }) {
     if (!reference) return null;
     return (
         <span className="text-xs text-fg-3 truncate" title={reference}>
-            Ref: {reference}
+            <Trans>Ref: {reference}</Trans>
         </span>
     );
 }
@@ -429,17 +465,18 @@ function ReadOnlyActions({
     bankTransaction: BankTransaction;
     onDismiss: (bt: BankTransaction) => void;
 }) {
+    const { t } = useLingui();
     if (bankTransaction.journalEntryId) {
         return (
             <div className="flex items-center justify-end">
                 <Link
                     to="/journal/$id"
                     params={{ id: bankTransaction.journalEntryId }}
-                    aria-label="View journal entry"
+                    aria-label={t`View journal entry`}
                     className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-brand-primary hover:bg-brand-primary-soft"
                 >
                     <Icon name="book-open" size={14} strokeWidth={2} />
-                    View entry
+                    <Trans>View entry</Trans>
                 </Link>
             </div>
         );
@@ -452,22 +489,22 @@ function ReadOnlyActions({
             <Link
                 to="/bank-transactions/$id/categorize"
                 params={{ id: bankTransaction.id }}
-                aria-label="Categorise"
+                aria-label={t`Categorise`}
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-brand-primary hover:bg-brand-primary-soft"
             >
                 <Icon name="check-circle" size={14} strokeWidth={2} />
-                Categorise
+                <Trans>Categorise</Trans>
             </Link>
             <button
                 type="button"
                 onClick={() => {
                     onDismiss(bankTransaction);
                 }}
-                aria-label="Dismiss"
+                aria-label={t`Dismiss`}
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-fg-2 hover:text-fg-1 hover:bg-surface-2"
             >
                 <Icon name="x" size={14} strokeWidth={2} />
-                Dismiss
+                <Trans>Dismiss</Trans>
             </button>
         </div>
     );
@@ -492,6 +529,7 @@ function InboxEditor({
     onPageChange: (page: number) => void;
     onDismiss: (bt: BankTransaction) => void;
 }) {
+    const { t } = useLingui();
     const accounts = useAccounts();
     const counterparties = useCounterparties();
     const bankAccounts = useBankAccounts();
@@ -507,13 +545,16 @@ function InboxEditor({
     }
     if (accounts.isError) {
         return (
-            <ErrorState message="Couldn't load accounts." onRetry={() => void accounts.refetch()} />
+            <ErrorState
+                message={t`Couldn't load accounts.`}
+                onRetry={() => void accounts.refetch()}
+            />
         );
     }
     if (counterparties.isError) {
         return (
             <ErrorState
-                message="Couldn't load counterparties."
+                message={t`Couldn't load counterparties.`}
                 onRetry={() => void counterparties.refetch()}
             />
         );
@@ -521,7 +562,7 @@ function InboxEditor({
     if (bankAccounts.isError) {
         return (
             <ErrorState
-                message="Couldn't load bank accounts."
+                message={t`Couldn't load bank accounts.`}
                 onRetry={() => void bankAccounts.refetch()}
             />
         );
@@ -563,6 +604,7 @@ function InboxEditorReady({
     onPageChange: (page: number) => void;
     onDismiss: (bt: BankTransaction) => void;
 }) {
+    const { t } = useLingui();
     const toast = useToast();
     const queryClient = useQueryClient();
 
@@ -836,11 +878,11 @@ function InboxEditorReady({
         }
 
         const parts: string[] = [];
-        if (filled > 0) parts.push(`${filled.toString()} filled`);
-        if (cpOnly > 0) parts.push(`${cpOnly.toString()} got counterparty only`);
-        if (pending > 0) parts.push(`${pending.toString()} still loading`);
-        if (noMatch > 0) parts.push(`${noMatch.toString()} had no suggestion`);
-        const msg = parts.length > 0 ? parts.join(', ') : 'No suggestions to apply.';
+        if (filled > 0) parts.push(t`${filled.toString()} filled`);
+        if (cpOnly > 0) parts.push(t`${cpOnly.toString()} got counterparty only`);
+        if (pending > 0) parts.push(t`${pending.toString()} still loading`);
+        if (noMatch > 0) parts.push(t`${noMatch.toString()} had no suggestion`);
+        const msg = parts.length > 0 ? parts.join(', ') : t`No suggestions to apply.`;
         if (filled === 0 && cpOnly === 0) toast.error(msg);
         else toast.success(msg);
     }
@@ -1032,12 +1074,24 @@ function InboxEditorReady({
                         onClick={onHeaderCheckboxClick}
                         disabled={saving || visibleIds.length === 0}
                     />
-                    <span>Date</span>
-                    <span>Description</span>
-                    <span>Counterparty</span>
-                    <span>Account</span>
-                    <span className="text-right">Amount</span>
-                    <span className="text-right">Actions</span>
+                    <span>
+                        <Trans>Date</Trans>
+                    </span>
+                    <span>
+                        <Trans>Description</Trans>
+                    </span>
+                    <span>
+                        <Trans>Counterparty</Trans>
+                    </span>
+                    <span>
+                        <Trans>Account</Trans>
+                    </span>
+                    <span className="text-right">
+                        <Trans>Amount</Trans>
+                    </span>
+                    <span className="text-right">
+                        <Trans>Actions</Trans>
+                    </span>
                 </div>
                 {visibleBts.map(bt => {
                     const prefill = prefillByBt.get(bt.id);
@@ -1113,13 +1167,13 @@ function InboxEditorReady({
                     discardAll();
                     setDiscardOpen(false);
                 }}
-                title="Discard unsaved drafts?"
+                title={t`Discard unsaved drafts?`}
                 message={
                     dirtyCount > 0
-                        ? `Reset all ${dirtyCount.toString()} unsaved drafts back to the server-suggested values.`
+                        ? t`Reset all ${dirtyCount.toString()} unsaved drafts back to the server-suggested values.`
                         : undefined
                 }
-                confirmLabel="Discard"
+                confirmLabel={t`Discard`}
                 variant="destructive"
             />
 
@@ -1132,11 +1186,12 @@ function InboxEditorReady({
                     onConfirm={() => {
                         blocker.proceed();
                     }}
-                    title="Leave with unsaved drafts?"
-                    message={`You have ${dirtyCount.toString()} unsaved draft${
-                        dirtyCount === 1 ? '' : 's'
-                    }. Leaving will discard them.`}
-                    confirmLabel="Leave"
+                    title={t`Leave with unsaved drafts?`}
+                    message={t`You have ${plural(dirtyCount, {
+                        one: '# unsaved draft',
+                        other: '# unsaved drafts',
+                    })}. Leaving will discard them.`}
+                    confirmLabel={t`Leave`}
                     variant="destructive"
                 />
             )}
@@ -1208,11 +1263,12 @@ function HeaderSelectAllCheckbox({
     function setRef(el: HTMLInputElement | null) {
         if (el) el.indeterminate = state === 'some';
     }
+    const { t } = useLingui();
     return (
         <input
             ref={setRef}
             type="checkbox"
-            aria-label="Select all visible rows"
+            aria-label={t`Select all visible rows`}
             checked={state === 'all'}
             disabled={disabled}
             onChange={onClick}
@@ -1278,6 +1334,7 @@ function ActionBar({
     onSave,
     onDiscard,
 }: ActionBarProps) {
+    const { t } = useLingui();
     const showSelection = selectionCount > 0;
     const showSave = dirtyCount > 0 || saving;
 
@@ -1293,11 +1350,11 @@ function ActionBar({
         }
         const pending: ComboBoxItem<CounterpartyId | null> = {
             key: '__pending_bulk__',
-            label: `${bulkCounterparty.name.trim()} (new)`,
+            label: t`${bulkCounterparty.name.trim()} (new)`,
             value: null,
         };
         return [pending, ...counterpartyItems];
-    }, [bulkCounterparty, counterpartyItems]);
+    }, [bulkCounterparty, counterpartyItems, t]);
 
     if (!showSelection && !showSave) return null;
 
@@ -1307,7 +1364,7 @@ function ActionBar({
                 <div className="px-3 py-2">
                     <div className="flex flex-wrap items-center gap-3">
                         <span className="text-xs font-medium text-fg-1">
-                            {selectionCount.toString()} selected
+                            <Trans>{selectionCount.toString()} selected</Trans>
                         </span>
                         <div className="min-w-[180px] flex-1 max-w-[260px]">
                             <ComboBox
@@ -1328,10 +1385,10 @@ function ActionBar({
                                 onCreate={typed => {
                                     onBulkCounterpartyChange({ kind: 'new', name: typed });
                                 }}
-                                noneLabel="── None (self-transfer)"
-                                placeholder="Counterparty…"
+                                noneLabel={t`── None (self-transfer)`}
+                                placeholder={t`Counterparty…`}
                                 disabled={saving}
-                                ariaLabel="Bulk counterparty"
+                                ariaLabel={t`Bulk counterparty`}
                             />
                         </div>
                         <div className="min-w-[180px] flex-1 max-w-[260px]">
@@ -1344,10 +1401,10 @@ function ActionBar({
                                 currencyCode={bulkCurrency ?? undefined}
                                 exclude={[...excludeAccountIds]}
                                 placeholder={
-                                    mixedCurrency ? 'Account (mixed currencies)' : 'Account…'
+                                    mixedCurrency ? t`Account (mixed currencies)` : t`Account…`
                                 }
                                 disabled={accountDisabled}
-                                ariaLabel="Bulk account"
+                                ariaLabel={t`Bulk account`}
                             />
                         </div>
                         <button
@@ -1356,16 +1413,16 @@ function ActionBar({
                             disabled={!canApply}
                             className="px-3 py-[7px] rounded-lg text-sm font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
                         >
-                            Apply to {selectionCount.toString()} selected
+                            <Trans>Apply to {selectionCount.toString()} selected</Trans>
                         </button>
                         <button
                             type="button"
                             onClick={onApplySuggestions}
                             disabled={saving}
-                            title="Fill the selected rows with the IBAN-matched counterparty and the last-used account for that counterparty."
+                            title={t`Fill the selected rows with the IBAN-matched counterparty and the last-used account for that counterparty.`}
                             className="px-3 py-[7px] rounded-lg text-sm font-medium text-fg-1 border border-border-strong hover:bg-surface-2 disabled:opacity-60"
                         >
-                            Apply suggestions
+                            <Trans>Apply suggestions</Trans>
                         </button>
                         <button
                             type="button"
@@ -1373,7 +1430,7 @@ function ActionBar({
                             disabled={saving}
                             className="px-3 py-[7px] rounded-lg text-sm font-medium text-fg-1 border border-border-strong hover:bg-surface-2 disabled:opacity-60"
                         >
-                            Dismiss with reason…
+                            <Trans>Dismiss with reason…</Trans>
                         </button>
                         <button
                             type="button"
@@ -1381,13 +1438,15 @@ function ActionBar({
                             disabled={saving}
                             className="px-2 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
                         >
-                            Clear
+                            <Trans>Clear</Trans>
                         </button>
                     </div>
                     {mixedCurrency && (
                         <p className="mt-1 text-xs text-fg-3">
-                            Selected rows span {selectedCurrencies.join(' + ')} — Account can&apos;t
-                            be bulk-applied.
+                            <Trans>
+                                Selected rows span {selectedCurrencies.join(' + ')} — Account
+                                can&apos;t be bulk-applied.
+                            </Trans>
                         </p>
                     )}
                 </div>
@@ -1398,11 +1457,15 @@ function ActionBar({
                     <div className="flex items-center gap-3 text-xs text-fg-2">
                         {saving && progress ? (
                             <span className="tabular-nums">
-                                Saving {progress.done.toString()}/{progress.total.toString()}…
+                                <Trans>
+                                    Saving {progress.done.toString()}/{progress.total.toString()}…
+                                </Trans>
                             </span>
                         ) : (
                             <span>
-                                {dirtyCount.toString()} unsaved · {readyCount.toString()} ready
+                                <Trans>
+                                    {dirtyCount.toString()} unsaved · {readyCount.toString()} ready
+                                </Trans>
                             </span>
                         )}
                     </div>
@@ -1413,7 +1476,7 @@ function ActionBar({
                             disabled={saving}
                             className="px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
                         >
-                            Discard
+                            <Trans>Discard</Trans>
                         </button>
                         <button
                             type="button"
@@ -1421,9 +1484,11 @@ function ActionBar({
                             disabled={saving || readyCount === 0}
                             className="px-3 py-[7px] rounded-lg text-sm font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
                         >
-                            {saving
-                                ? 'Saving…'
-                                : `Save ${readyCount.toString()} row${readyCount === 1 ? '' : 's'}`}
+                            {saving ? (
+                                t`Saving…`
+                            ) : (
+                                <Plural value={readyCount} one="Save # row" other="Save # rows" />
+                            )}
                         </button>
                     </div>
                 </div>
@@ -1465,6 +1530,7 @@ function InboxRow({
     onReset: () => void;
     onDismiss: (bt: BankTransaction) => void;
 }) {
+    const { t } = useLingui();
     const status = rowStatus(draft);
     const willDismiss = dismissDraft !== null;
 
@@ -1475,7 +1541,7 @@ function InboxRow({
                     selected={selected}
                     disabled={saving}
                     onClick={onCheckboxClick}
-                    ariaLabel={`Select bank transaction ${bankTransaction.description}`}
+                    ariaLabel={t`Select bank transaction ${bankTransaction.description}`}
                 />
             </div>
             <div className="flex flex-col leading-tight pt-2">
@@ -1516,7 +1582,7 @@ function InboxRow({
                 )}
                 {dismissDraft !== null && (
                     <span className="text-xs text-warning mt-1 truncate">
-                        Reason: {dismissDraft}
+                        <Trans>Reason: {dismissDraft}</Trans>
                     </span>
                 )}
                 {error && <span className="text-xs text-danger mt-1">{error}</span>}
@@ -1552,14 +1618,14 @@ function StatusIndicator({ status }: { status: RowStatus }) {
     if (status === 'ready') {
         return (
             <span className="text-xs text-success tabular-nums inline-flex items-center gap-1">
-                <span aria-hidden>●</span> ready
+                <span aria-hidden>●</span> <Trans>ready</Trans>
             </span>
         );
     }
     if (status === 'invalid') {
         return (
             <span className="text-xs text-warning tabular-nums inline-flex items-center gap-1">
-                <span aria-hidden>⚠</span> invalid
+                <span aria-hidden>⚠</span> <Trans>invalid</Trans>
             </span>
         );
     }
@@ -1571,13 +1637,14 @@ function StatusIndicator({ status }: { status: RowStatus }) {
 }
 
 function AttachHintBadge({ hint }: { hint: NonNullable<BankTransaction['matchingJournalEntry']> }) {
+    const { t } = useLingui();
     return (
         <span
             className="text-xs text-brand-primary mt-1 truncate inline-flex items-center gap-1"
-            title={`Auto-matched to JE on ${hint.date}`}
+            title={t`Auto-matched to JE on ${hint.date}`}
         >
             <Icon name="link" size={11} strokeWidth={2} />
-            Matches JE · {hint.otherAccountName}
+            <Trans>Matches JE · {hint.otherAccountName}</Trans>
         </span>
     );
 }
@@ -1590,16 +1657,17 @@ function LoanPaymentHintBadge({
     bankTransactionId: BankTransaction['id'];
     hint: NonNullable<BankTransaction['loanPaymentHint']>;
 }) {
+    const { t } = useLingui();
     return (
         <Link
             to="/bank-transactions/$id/categorize"
             params={{ id: bankTransactionId }}
             search={{ loan: hint.loanId }}
             className="text-xs text-brand-primary mt-1 truncate inline-flex items-center gap-1 hover:underline"
-            title={`Looks like a payment on ${hint.loanName}`}
+            title={t`Looks like a payment on ${hint.loanName}`}
         >
             <Icon name="landmark" size={11} strokeWidth={2} />
-            Loan payment · {hint.loanName}
+            <Trans>Loan payment · {hint.loanName}</Trans>
         </Link>
     );
 }
@@ -1607,7 +1675,7 @@ function LoanPaymentHintBadge({
 function WillDismissIndicator() {
     return (
         <span className="text-xs text-warning tabular-nums inline-flex items-center gap-1">
-            <span aria-hidden>●</span> will dismiss
+            <span aria-hidden>●</span> <Trans>will dismiss</Trans>
         </span>
     );
 }
@@ -1623,6 +1691,7 @@ function CounterpartyPicker({
     onPatch: (patch: Partial<RowDraft>) => void;
     disabled: boolean;
 }) {
+    const { t } = useLingui();
     // Render the in-progress "new" name as a synthetic item, so the user sees
     // what they typed across renders.
     const effectiveItems = useMemo(() => {
@@ -1631,11 +1700,11 @@ function CounterpartyPicker({
         }
         const pending: ComboBoxItem<CounterpartyId | null> = {
             key: '__pending__',
-            label: `${draft.newCounterpartyName.trim()} (new)`,
+            label: t`${draft.newCounterpartyName.trim()} (new)`,
             value: null,
         };
         return [pending, ...items];
-    }, [draft.counterpartyMode, draft.newCounterpartyName, items]);
+    }, [draft.counterpartyMode, draft.newCounterpartyName, items, t]);
 
     const value: CounterpartyId | null =
         draft.counterpartyMode === 'existing' ? draft.counterpartyId : null;
@@ -1665,10 +1734,10 @@ function CounterpartyPicker({
                     newCounterpartyName: typed,
                 });
             }}
-            noneLabel="── None (self-transfer)"
-            placeholder="Pick counterparty…"
+            noneLabel={t`── None (self-transfer)`}
+            placeholder={t`Pick counterparty…`}
             disabled={disabled}
-            ariaLabel="Counterparty"
+            ariaLabel={t`Counterparty`}
         />
     );
 }
@@ -1686,6 +1755,7 @@ function AccountPicker({
     onPatch: (patch: Partial<RowDraft>) => void;
     disabled: boolean;
 }) {
+    const { t } = useLingui();
     return (
         <AccountSelect
             value={draft.accountId}
@@ -1695,9 +1765,9 @@ function AccountPicker({
             postableOnly
             currencyCode={currencyCode}
             exclude={excludeAccountId ? [excludeAccountId] : undefined}
-            placeholder="Pick account…"
+            placeholder={t`Pick account…`}
             disabled={disabled}
-            ariaLabel="Account"
+            ariaLabel={t`Account`}
         />
     );
 }
@@ -1715,6 +1785,7 @@ function InboxRowActions({
     onReset: () => void;
     onDismiss: (bt: BankTransaction) => void;
 }) {
+    const { t } = useLingui();
     const attach = useAttachBankTransaction();
     const toast = useToast();
     const hint = bankTransaction.matchingJournalEntry;
@@ -1726,7 +1797,7 @@ function InboxRowActions({
                 id: bankTransaction.id,
                 journalEntryId: hint.id,
             });
-            toast.success(`Attached to ${hint.otherAccountName}.`);
+            toast.success(t`Attached to ${hint.otherAccountName}.`);
         } catch (err) {
             if (err instanceof Error) {
                 toast.error(err.message);
@@ -1741,19 +1812,19 @@ function InboxRowActions({
                     type="button"
                     onClick={() => void onAttachClick()}
                     disabled={disabled || attach.isPending}
-                    aria-label={`Attach to ${hint.otherAccountName}`}
-                    title={`Attach to JE on ${hint.date} (${hint.otherAccountName})`}
+                    aria-label={t`Attach to ${hint.otherAccountName}`}
+                    title={t`Attach to JE on ${hint.date} (${hint.otherAccountName})`}
                     className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-brand-primary hover:bg-brand-primary-soft disabled:opacity-60"
                 >
                     <Icon name="link" size={14} strokeWidth={2} />
-                    Attach
+                    <Trans>Attach</Trans>
                 </button>
             )}
             <Link
                 to="/bank-transactions/$id/categorize"
                 params={{ id: bankTransaction.id }}
-                aria-label="Edit details"
-                title="Edit details (splits, custom date)"
+                aria-label={t`Edit details`}
+                title={t`Edit details (splits, custom date)`}
                 className="inline-flex items-center justify-center p-1 rounded-lg text-fg-3 hover:text-fg-1 hover:bg-surface-2"
             >
                 <Icon name="pencil" size={14} strokeWidth={2} />
@@ -1762,8 +1833,8 @@ function InboxRowActions({
                 type="button"
                 onClick={onReset}
                 disabled={pristine || disabled}
-                aria-label="Reset draft"
-                title="Reset draft to server suggestion"
+                aria-label={t`Reset draft`}
+                title={t`Reset draft to server suggestion`}
                 className="inline-flex items-center justify-center p-1 rounded-lg text-fg-3 hover:text-fg-1 hover:bg-surface-2 disabled:opacity-40 disabled:cursor-not-allowed"
             >
                 <Icon name="repeat" size={14} strokeWidth={2} />
@@ -1774,8 +1845,8 @@ function InboxRowActions({
                     onDismiss(bankTransaction);
                 }}
                 disabled={disabled}
-                aria-label="Dismiss"
-                title="Dismiss this row"
+                aria-label={t`Dismiss`}
+                title={t`Dismiss this row`}
                 className="inline-flex items-center justify-center p-1 rounded-lg text-fg-3 hover:text-danger hover:bg-surface-2 disabled:opacity-40"
             >
                 <Icon name="x" size={14} strokeWidth={2} />
@@ -1785,13 +1856,14 @@ function InboxRowActions({
 }
 
 function UndismissButton({ bankTransaction }: { bankTransaction: BankTransaction }) {
+    const { t } = useLingui();
     const undismiss = useUndismissBankTransaction();
     const toast = useToast();
 
     async function onClick() {
         try {
             await undismiss.mutateAsync(bankTransaction.id);
-            toast.success('Restored to inbox.');
+            toast.success(t`Restored to inbox.`);
         } catch (err) {
             if (err instanceof Error) {
                 toast.error(err.message);
@@ -1805,11 +1877,11 @@ function UndismissButton({ bankTransaction }: { bankTransaction: BankTransaction
                 type="button"
                 onClick={() => void onClick()}
                 disabled={undismiss.isPending}
-                aria-label="Undismiss"
+                aria-label={t`Undismiss`}
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-fg-2 hover:text-fg-1 hover:bg-surface-2 disabled:opacity-60"
             >
                 <Icon name="inbox" size={14} strokeWidth={2} />
-                Undismiss
+                <Trans>Undismiss</Trans>
             </button>
         </div>
     );
@@ -1822,6 +1894,7 @@ function DismissDialog({
     bankTransaction: BankTransaction;
     onClose: () => void;
 }) {
+    const { t } = useLingui();
     const dismiss = useDismissBankTransaction();
     const toast = useToast();
     const [reason, setReason] = useState('');
@@ -1833,7 +1906,7 @@ function DismissDialog({
         setFieldErrors(null);
         try {
             await dismiss.mutateAsync({ id: bankTransaction.id, reason });
-            toast.success('Dismissed.');
+            toast.success(t`Dismissed.`);
             onClose();
         } catch (err) {
             handleFormError(err, { setFieldErrors, setTopError, toast: toast.error });
@@ -1844,8 +1917,8 @@ function DismissDialog({
         <Modal
             open
             onClose={onClose}
-            title="Dismiss bank transaction"
-            description="Mark this row as not needing a journal entry. You can undismiss later."
+            title={t`Dismiss bank transaction`}
+            description={t`Mark this row as not needing a journal entry. You can undismiss later.`}
             width="sm"
         >
             <form
@@ -1857,7 +1930,9 @@ function DismissDialog({
             >
                 <FormErrorBanner message={topError} />
                 <label className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-fg-2">Reason</span>
+                    <span className="text-xs font-medium text-fg-2">
+                        <Trans>Reason</Trans>
+                    </span>
                     <textarea
                         value={reason}
                         onChange={e => {
@@ -1867,7 +1942,7 @@ function DismissDialog({
                         maxLength={500}
                         rows={3}
                         autoFocus
-                        placeholder="e.g. settled by journal entry X"
+                        placeholder={t`e.g. settled by journal entry X`}
                         className="px-3 py-2 rounded-lg bg-surface-2 border border-border-soft text-fg-1 text-sm focus:outline-none focus:border-border-strong resize-none"
                     />
                     <FieldError name="Reason" errors={fieldErrors} />
@@ -1879,14 +1954,14 @@ function DismissDialog({
                         disabled={dismiss.isPending}
                         className="px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1 disabled:opacity-60"
                     >
-                        Cancel
+                        <Trans>Cancel</Trans>
                     </button>
                     <button
                         type="submit"
                         disabled={dismiss.isPending}
                         className="px-3 py-[7px] rounded-lg text-sm font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
                     >
-                        {dismiss.isPending ? 'Dismissing…' : 'Dismiss'}
+                        {dismiss.isPending ? t`Dismissing…` : t`Dismiss`}
                     </button>
                 </ModalFooter>
             </form>
@@ -1903,6 +1978,7 @@ function BulkDismissDialog({
     onClose: () => void;
     onConfirm: (reason: string) => void;
 }) {
+    const { t } = useLingui();
     const [reason, setReason] = useState('');
     const trimmed = reason.trim();
     const canSubmit = trimmed.length > 0;
@@ -1916,8 +1992,11 @@ function BulkDismissDialog({
         <Modal
             open
             onClose={onClose}
-            title={`Dismiss ${selectionCount.toString()} bank transaction${selectionCount === 1 ? '' : 's'}`}
-            description="Stage these rows for dismissal. Save-all to commit; until then you can review or reset per row."
+            title={t`Dismiss ${plural(selectionCount, {
+                one: '# bank transaction',
+                other: '# bank transactions',
+            })}`}
+            description={t`Stage these rows for dismissal. Save-all to commit; until then you can review or reset per row.`}
             width="sm"
         >
             <form
@@ -1928,7 +2007,9 @@ function BulkDismissDialog({
                 noValidate
             >
                 <label className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-fg-2">Reason</span>
+                    <span className="text-xs font-medium text-fg-2">
+                        <Trans>Reason</Trans>
+                    </span>
                     <textarea
                         value={reason}
                         onChange={e => {
@@ -1938,7 +2019,7 @@ function BulkDismissDialog({
                         maxLength={500}
                         rows={3}
                         autoFocus
-                        placeholder="e.g. fee corrections, self-transfer siblings"
+                        placeholder={t`e.g. fee corrections, self-transfer siblings`}
                         className="px-3 py-2 rounded-lg bg-surface-2 border border-border-soft text-fg-1 text-sm focus:outline-none focus:border-border-strong resize-none"
                     />
                 </label>
@@ -1948,14 +2029,14 @@ function BulkDismissDialog({
                         onClick={onClose}
                         className="px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1"
                     >
-                        Cancel
+                        <Trans>Cancel</Trans>
                     </button>
                     <button
                         type="submit"
                         disabled={!canSubmit}
                         className="px-3 py-[7px] rounded-lg text-sm font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
                     >
-                        Dismiss {selectionCount.toString()} row{selectionCount === 1 ? '' : 's'}
+                        <Plural value={selectionCount} one="Dismiss # row" other="Dismiss # rows" />
                     </button>
                 </ModalFooter>
             </form>
@@ -1964,5 +2045,5 @@ function BulkDismissDialog({
 }
 
 function formatSaveAllToast(summary: SaveAllSummary): string {
-    return `${summary.categorised.toString()} categorised, ${summary.dismissed.toString()} dismissed, ${summary.failed.toString()} failed.`;
+    return t`${summary.categorised.toString()} categorised, ${summary.dismissed.toString()} dismissed, ${summary.failed.toString()} failed.`;
 }

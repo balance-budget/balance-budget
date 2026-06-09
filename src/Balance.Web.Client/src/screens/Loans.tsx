@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
+import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { useLoans, type Loan } from '../api/loans';
 import { Amount } from '../components/Amount';
 import { Empty } from '../components/Empty';
@@ -21,8 +22,12 @@ export function Loans() {
         <>
             <Panel>
                 <SectionHead
-                    title="Loans"
-                    subtitle="Mortgages and other loans, tracked part by part over the ledger."
+                    title={<Trans>Loans</Trans>}
+                    subtitle={
+                        <Trans>
+                            Mortgages and other loans, tracked part by part over the ledger.
+                        </Trans>
+                    }
                     action={
                         <button
                             type="button"
@@ -32,7 +37,7 @@ export function Loans() {
                             className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg bg-brand-primary text-white text-sm font-medium hover:bg-brand-primary-dark"
                         >
                             <Icon name="plus" size={14} strokeWidth={2} />
-                            New loan
+                            <Trans>New loan</Trans>
                         </button>
                     }
                 />
@@ -51,16 +56,18 @@ export function Loans() {
 }
 
 function LoanList({ loans }: { loans: ReturnType<typeof useLoans> }) {
+    const { t } = useLingui();
+
     if (loans.isPending) return <Skeleton className="h-24" />;
 
-    if (loans.isError) return <ErrorState message="Couldn't load loans." />;
+    if (loans.isError) return <ErrorState message={t`Couldn't load loans.`} />;
 
     const items = loans.data;
     if (items.length === 0) {
         return (
             <Empty
-                title="No loans yet"
-                hint="Define your mortgage or another loan to split monthly payments into interest and principal, and to see where the debt is heading."
+                title={t`No loans yet`}
+                hint={t`Define your mortgage or another loan to split monthly payments into interest and principal, and to see where the debt is heading.`}
             />
         );
     }
@@ -76,7 +83,7 @@ function LoanList({ loans }: { loans: ReturnType<typeof useLoans> }) {
             {ended.length > 0 && (
                 <>
                     <div className="text-xs font-medium text-fg-3 uppercase tracking-wide mt-4 mb-1">
-                        Ended
+                        <Trans>Ended</Trans>
                     </div>
                     {ended.map(loan => (
                         <LoanRow key={loan.id} loan={loan} />
@@ -88,6 +95,7 @@ function LoanList({ loans }: { loans: ReturnType<typeof useLoans> }) {
 }
 
 function LoanRow({ loan }: { loan: Loan }) {
+    const { t } = useLingui();
     return (
         <Link
             to="/loans/$id"
@@ -100,30 +108,30 @@ function LoanRow({ loan }: { loan: Loan }) {
                     <span className="text-sm font-medium text-fg-1 truncate">{loan.name}</span>
                     {loan.isEnded && (
                         <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-surface-2 text-fg-3">
-                            Ended
+                            <Trans>Ended</Trans>
                         </span>
                     )}
                 </div>
                 <div className="text-xs text-fg-3 mt-0.5 truncate">
-                    {loan.lenderName} · {loan.partCount.toString()}{' '}
-                    {loan.partCount === 1 ? 'part' : 'parts'}
+                    {loan.lenderName} ·{' '}
+                    <Plural value={loan.partCount} one="# part" other="# parts" />
                 </div>
             </div>
-            <Stat label="Outstanding">
+            <Stat label={t`Outstanding`}>
                 <Amount
                     minor={loan.outstandingBalance}
                     currencyCode={loan.currencyCode}
                     size="inline"
                 />
             </Stat>
-            <Stat label="Monthly payment">
+            <Stat label={t`Monthly payment`}>
                 <Amount
                     minor={loan.currentPayment}
                     currencyCode={loan.currencyCode}
                     size="inline"
                 />
             </Stat>
-            <Stat label="Weighted rate">
+            <Stat label={t`Weighted rate`}>
                 <span className="text-sm font-medium tabular-nums">
                     {loan.weightedAnnualRatePercent === null
                         ? '—'

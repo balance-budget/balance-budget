@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import { X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Dialog, Heading, Modal as AriaModal, ModalOverlay } from 'react-aria-components';
@@ -25,6 +26,7 @@ const WIDTH_CLASS: Record<NonNullable<ModalProps['width']>, string> = {
  * — which is React Aria's `isDismissable` default.
  */
 export function Modal({ open, onClose, title, description, children, width = 'md' }: ModalProps) {
+    const { t } = useLingui();
     return (
         <ModalOverlay
             isOpen={open}
@@ -53,7 +55,7 @@ export function Modal({ open, onClose, title, description, children, width = 'md
                         </div>
                         <IconButton
                             onPress={onClose}
-                            aria-label="Close"
+                            aria-label={t`Close`}
                             className="shrink-0 -mr-1 -mt-1"
                         >
                             <X size={16} strokeWidth={2} aria-hidden="true" />

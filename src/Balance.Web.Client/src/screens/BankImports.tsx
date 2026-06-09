@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FileTrigger } from 'react-aria-components';
 import { Link } from '@tanstack/react-router';
+import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import {
     bankAccountTypeIcon,
     formatBankAccountLabel,
@@ -21,6 +22,7 @@ type ImportFeedback =
     | { kind: 'error'; message: string };
 
 function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
+    const { t } = useLingui();
     const importStatement = useImportStatement();
     const [feedback, setFeedback] = useState<ImportFeedback | null>(null);
 
@@ -42,7 +44,7 @@ function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
                     ? err.message
                     : err instanceof Error
                       ? err.message
-                      : 'Import failed.';
+                      : t`Import failed.`;
             setFeedback({ kind: 'error', message });
         }
     }
@@ -68,9 +70,9 @@ function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
                         to="/settings/bank-accounts/$id"
                         params={{ id: bankAccount.id }}
                         className="shrink-0 text-xs text-fg-3 hover:text-fg-1 underline decoration-dotted underline-offset-2"
-                        title="Set an importer on this bank account to enable statement imports."
+                        title={t`Set an importer on this bank account to enable statement imports.`}
                     >
-                        No importer configured
+                        <Trans>No importer configured</Trans>
                     </Link>
                 ) : (
                     <FileTrigger
@@ -82,17 +84,26 @@ function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
                     >
                         <Button variant="primary" isDisabled={isUploading} className="shrink-0">
                             <Icon name="download" size={14} strokeWidth={2} />
-                            {isUploading ? 'Importing…' : 'Import statement'}
+                            {isUploading ? t`Importing…` : t`Import statement`}
                         </Button>
                     </FileTrigger>
                 )}
             </div>
             {feedback?.kind === 'success' && (
                 <div className="pl-12 text-xs text-success">
-                    Imported {feedback.imported}
-                    {feedback.skipped > 0
-                        ? ` · skipped ${feedback.skipped} duplicate${feedback.skipped === 1 ? '' : 's'}`
-                        : ''}
+                    <Trans>Imported {feedback.imported}</Trans>
+                    {feedback.skipped > 0 ? (
+                        <>
+                            {' · '}
+                            <Plural
+                                value={feedback.skipped}
+                                one="skipped # duplicate"
+                                other="skipped # duplicates"
+                            />
+                        </>
+                    ) : (
+                        ''
+                    )}
                     .
                 </div>
             )}
@@ -104,6 +115,7 @@ function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
 }
 
 function ImportsPanel() {
+    const { t } = useLingui();
     const bankAccounts = useBankAccounts();
 
     if (bankAccounts.isPending) {
@@ -119,7 +131,7 @@ function ImportsPanel() {
     if (bankAccounts.isError) {
         return (
             <ErrorState
-                message="Couldn't load bank accounts."
+                message={t`Couldn't load bank accounts.`}
                 onRetry={() => void bankAccounts.refetch()}
             />
         );
@@ -132,7 +144,7 @@ function ImportsPanel() {
     if (targets.length === 0) {
         return (
             <span className="text-sm text-fg-3">
-                No bank accounts linked to one of your own accounts yet.
+                <Trans>No bank accounts linked to one of your own accounts yet.</Trans>
             </span>
         );
     }
@@ -147,11 +159,12 @@ function ImportsPanel() {
 }
 
 export function BankImports() {
+    const { t } = useLingui();
     return (
         <Panel>
             <SectionHead
-                title="Import statements"
-                subtitle="Upload an ING current-account CSV against the matching bank account. Re-uploads are safe — duplicate rows are skipped."
+                title={t`Import statements`}
+                subtitle={t`Upload an ING current-account CSV against the matching bank account. Re-uploads are safe — duplicate rows are skipped.`}
             />
             <ImportsPanel />
         </Panel>

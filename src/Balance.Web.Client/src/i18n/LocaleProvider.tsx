@@ -34,6 +34,7 @@ const LocaleContext = createContext<LocaleContextValue>({
     region: DEFAULT_REGION,
 });
 
+// eslint-disable-next-line react-refresh/only-export-components -- the provider and its hook belong together; HMR cost is negligible for a top-level provider.
 export function useLocaleSettings(): LocaleContextValue {
     return useContext(LocaleContext);
 }

@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
+import { Trans, useLingui } from '@lingui/react/macro';
+import { t } from '@lingui/core/macro';
 import {
     BANK_ACCOUNT_OWNER_FILTERS,
     bankAccountTypeIcon,
@@ -29,10 +31,9 @@ import { BankAccountFormModal } from './BankAccountForm';
 
 const PAGE_SIZE = 50;
 
-const OWNER_FILTER_LABEL: Record<BankAccountOwnerFilter, string> = {
-    Mine: 'Mine',
-    Others: 'Others',
-};
+function ownerFilterLabel(o: BankAccountOwnerFilter, t: ReturnType<typeof useLingui>['t']): string {
+    return o === 'Mine' ? t`Mine` : t`Others`;
+}
 
 type Props = {
     owner: BankAccountOwnerFilter;
@@ -51,14 +52,15 @@ export function BankAccounts({
     onPageChange,
     onSearchChange,
 }: Props) {
+    const { t } = useLingui();
     const [creating, setCreating] = useState(false);
 
     return (
         <>
             <Panel>
                 <SectionHead
-                    title="Bank accounts"
-                    subtitle="The real-world bank accounts behind your ledger accounts and counterparties."
+                    title={t`Bank accounts`}
+                    subtitle={t`The real-world bank accounts behind your ledger accounts and counterparties.`}
                     action={
                         <button
                             type="button"
@@ -68,17 +70,17 @@ export function BankAccounts({
                             className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg bg-brand-primary text-white text-sm font-medium hover:bg-brand-primary-dark"
                         >
                             <Icon name="plus" size={14} strokeWidth={2} />
-                            New bank account
+                            <Trans>New bank account</Trans>
                         </button>
                     }
                 />
                 <OwnerFilterChips value={owner} onChange={onOwnerChange} />
                 <div className="mb-4">
                     <SearchField
-                        aria-label="Search bank accounts"
+                        aria-label={t`Search bank accounts`}
                         value={q}
                         onChange={onSearchChange}
-                        placeholder="Search bank accounts…"
+                        placeholder={t`Search bank accounts…`}
                     />
                 </div>
                 <BankAccountList owner={owner} page={page} q={q} onPageChange={onPageChange} />
@@ -103,8 +105,9 @@ function OwnerFilterChips({
     value: BankAccountOwnerFilter;
     onChange: (owner: BankAccountOwnerFilter) => void;
 }) {
+    const { t } = useLingui();
     return (
-        <div className="flex items-center gap-2 mb-4" role="tablist" aria-label="Owner filter">
+        <div className="flex items-center gap-2 mb-4" role="tablist" aria-label={t`Owner filter`}>
             {BANK_ACCOUNT_OWNER_FILTERS.map(o => {
                 const active = o === value;
                 return (
@@ -123,7 +126,7 @@ function OwnerFilterChips({
                                 : 'text-fg-2 hover:bg-surface-2 hover:text-fg-1',
                         )}
                     >
-                        {OWNER_FILTER_LABEL[o]}
+                        {ownerFilterLabel(o, t)}
                     </button>
                 );
             })}
@@ -142,6 +145,7 @@ function BankAccountList({
     q: string;
     onPageChange: (page: number) => void;
 }) {
+    const { t } = useLingui();
     const skip = (page - 1) * PAGE_SIZE;
     const debouncedQ = useDebouncedValue(q, 200);
     const query = useBankAccountsPage(skip, PAGE_SIZE, debouncedQ, owner);
@@ -161,7 +165,7 @@ function BankAccountList({
     if (query.isError) {
         return (
             <ErrorState
-                message="Couldn't load bank accounts."
+                message={t`Couldn't load bank accounts.`}
                 onRetry={() => void query.refetch()}
             />
         );
@@ -171,19 +175,21 @@ function BankAccountList({
 
     if (items.length === 0 && debouncedQ !== '') {
         return (
-            <div className="py-8 text-center text-sm text-fg-2">No matches for “{debouncedQ}”.</div>
+            <div className="py-8 text-center text-sm text-fg-2">
+                <Trans>No matches for “{debouncedQ}”.</Trans>
+            </div>
         );
     }
 
     if (items.length === 0 && page === 1) {
         const title =
             owner === 'Mine'
-                ? 'No bank accounts of your own yet.'
-                : 'No counterparty bank accounts.';
+                ? t`No bank accounts of your own yet.`
+                : t`No counterparty bank accounts.`;
         const hint =
             owner === 'Mine'
-                ? 'Add one to attach to a ledger account.'
-                : 'Counterparty bank accounts appear as you categorise imported transactions.';
+                ? t`Add one to attach to a ledger account.`
+                : t`Counterparty bank accounts appear as you categorise imported transactions.`;
         return (
             <div className="py-8 flex flex-col items-center gap-2 text-center">
                 <span className="text-sm text-fg-2">{title}</span>
@@ -220,10 +226,10 @@ function resolveOwnerLabel(
     counterpartiesById: Map<string, { name: string }>,
 ): string {
     if (ba.accountId) {
-        return accountsById.get(ba.accountId)?.name ?? 'Unknown account';
+        return accountsById.get(ba.accountId)?.name ?? t`Unknown account`;
     }
     if (ba.counterpartyId) {
-        return counterpartiesById.get(ba.counterpartyId)?.name ?? 'Unknown counterparty';
+        return counterpartiesById.get(ba.counterpartyId)?.name ?? t`Unknown counterparty`;
     }
     return '—';
 }
@@ -235,7 +241,8 @@ function BankAccountRow({
     bankAccount: BankAccount;
     ownerLabel: string;
 }) {
-    const ownerKind = bankAccount.accountId ? 'Account' : 'Counterparty';
+    const { t } = useLingui();
+    const ownerKind = bankAccount.accountId ? t`Account` : t`Counterparty`;
 
     return (
         <Link
@@ -264,6 +271,7 @@ function BankAccountRow({
 }
 
 export function BankAccountDetail({ id }: { id: BankAccountId }) {
+    const { t } = useLingui();
     const query = useBankAccount(id);
     const [editing, setEditing] = useState(false);
     const [deleting, setDeleting] = useState(false);
@@ -281,7 +289,7 @@ export function BankAccountDetail({ id }: { id: BankAccountId }) {
         return (
             <Panel>
                 <ErrorState
-                    message="Couldn't load bank account."
+                    message={t`Couldn't load bank account.`}
                     onRetry={() => void query.refetch()}
                 />
             </Panel>
@@ -300,7 +308,7 @@ export function BankAccountDetail({ id }: { id: BankAccountId }) {
                             search={{ owner: 'Mine', page: 1, q: '' }}
                             className="text-xs text-fg-3 hover:text-fg-1"
                         >
-                            ← Bank accounts
+                            ← <Trans>Bank accounts</Trans>
                         </Link>
                         <h1 className="text-xl font-medium text-fg-1 truncate">
                             {formatBankAccountLabel(ba)}
@@ -315,7 +323,7 @@ export function BankAccountDetail({ id }: { id: BankAccountId }) {
                             className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1 hover:bg-surface-2"
                         >
                             <Icon name="pencil" size={14} strokeWidth={2} />
-                            Edit
+                            <Trans>Edit</Trans>
                         </button>
                         <button
                             type="button"
@@ -325,7 +333,7 @@ export function BankAccountDetail({ id }: { id: BankAccountId }) {
                             className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-danger hover:bg-surface-2"
                         >
                             <Icon name="trash" size={14} strokeWidth={2} />
-                            Delete
+                            <Trans>Delete</Trans>
                         </button>
                     </div>
                 </div>
@@ -354,17 +362,18 @@ export function BankAccountDetail({ id }: { id: BankAccountId }) {
 }
 
 function BankAccountDetails({ bankAccount }: { bankAccount: BankAccount }) {
+    const { t } = useLingui();
     return (
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-            <Field label="Type" value={bankAccount.type} />
-            <Field label="IBAN" value={bankAccount.iban} />
-            <Field label="Account number" value={bankAccount.accountNumber} />
-            <Field label="Card identifier" value={bankAccount.cardIdentifier} />
-            <Field label="BIC" value={bankAccount.bic} />
-            <Field label="Bank name" value={bankAccount.bankName} />
-            <Field label="Account holder" value={bankAccount.accountHolderName} />
-            <Field label="Currency" value={bankAccount.currencyCode} />
-            <Field label="Importer" value={bankAccount.importerKey} />
+            <Field label={t`Type`} value={bankAccount.type} />
+            <Field label={t`IBAN`} value={bankAccount.iban} />
+            <Field label={t`Account number`} value={bankAccount.accountNumber} />
+            <Field label={t`Card identifier`} value={bankAccount.cardIdentifier} />
+            <Field label={t`BIC`} value={bankAccount.bic} />
+            <Field label={t`Bank name`} value={bankAccount.bankName} />
+            <Field label={t`Account holder`} value={bankAccount.accountHolderName} />
+            <Field label={t`Currency`} value={bankAccount.currencyCode} />
+            <Field label={t`Importer`} value={bankAccount.importerKey} />
         </dl>
     );
 }
@@ -385,6 +394,7 @@ function DeleteBankAccountDialog({
     bankAccount: BankAccount;
     onClose: () => void;
 }) {
+    const { t } = useLingui();
     const del = useDeleteBankAccount();
     const toast = useToast();
     const [error, setError] = useState<string | null>(null);
@@ -393,7 +403,7 @@ function DeleteBankAccountDialog({
         setError(null);
         try {
             await del.mutateAsync(bankAccount.id);
-            toast.success('Bank account deleted.');
+            toast.success(t`Bank account deleted.`);
             onClose();
         } catch (err) {
             handleActionError(err, { setError, toast: toast.error });
@@ -405,9 +415,9 @@ function DeleteBankAccountDialog({
             open
             onClose={onClose}
             onConfirm={() => void onConfirm()}
-            title="Delete this bank account?"
-            message="This can't be undone."
-            confirmLabel="Delete"
+            title={t`Delete this bank account?`}
+            message={t`This can't be undone.`}
+            confirmLabel={t`Delete`}
             variant="destructive"
             busy={del.isPending}
             error={error}

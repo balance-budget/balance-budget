@@ -12,3 +12,1948 @@ msgstr ""
 "Last-Translator: \n"
 "Language-Team: \n"
 "Plural-Forms: \n"
+
+#. placeholder {0}: current.fixedUntil
+#. placeholder {0}: rate.fixedUntil
+msgid " · fixed until {0}"
+msgstr " · fixed until {0}"
+
+msgid "— click to change"
+msgstr "— click to change"
+
+msgid "(no description)"
+msgstr "(no description)"
+
+msgid "(none)"
+msgstr "(none)"
+
+msgid "(you)"
+msgstr "(you)"
+
+#. placeholder {0}: loan.partCount
+msgid "{0, plural, one {# part} other {# parts}}"
+msgstr "{0, plural, one {# part} other {# parts}}"
+
+#. placeholder {0}: feedback.skipped
+msgid "{0, plural, one {skipped # duplicate} other {skipped # duplicates}}"
+msgstr "{0, plural, one {skipped # duplicate} other {skipped # duplicates}}"
+
+#. placeholder {0}: loan.lenderName
+#. placeholder {1}: loan.interestExpenseAccountName
+msgid "{0} · interest on {1}"
+msgstr "{0} · interest on {1}"
+
+#. placeholder {0}: bulkCounterparty.name.trim()
+#. placeholder {0}: draft.newCounterpartyName.trim()
+#. placeholder {0}: form.newCounterpartyName.trim()
+msgid "{0} (new)"
+msgstr "{0} (new)"
+
+#. placeholder {0}: summary.categorised.toString()
+#. placeholder {1}: summary.dismissed.toString()
+#. placeholder {2}: summary.failed.toString()
+msgid "{0} categorised, {1} dismissed, {2} failed."
+msgstr "{0} categorised, {1} dismissed, {2} failed."
+
+#. placeholder {0}: filled.toString()
+msgid "{0} filled"
+msgstr "{0} filled"
+
+#. placeholder {0}: p.label
+msgid "{0} fixed until"
+msgstr "{0} fixed until"
+
+#. placeholder {0}: cpOnly.toString()
+msgid "{0} got counterparty only"
+msgstr "{0} got counterparty only"
+
+#. placeholder {0}: noMatch.toString()
+msgid "{0} had no suggestion"
+msgstr "{0} had no suggestion"
+
+#. placeholder {0}: fmt(year.totalInterest)
+#. placeholder {1}: fmt(year.totalPrincipal)
+msgid "{0} interest · {1} principal"
+msgstr "{0} interest · {1} principal"
+
+#. placeholder {0}: moreCount.toString()
+msgid "{0} more"
+msgstr "{0} more"
+
+#. placeholder {0}: selectionCount.toString()
+msgid "{0} selected"
+msgstr "{0} selected"
+
+#. placeholder {0}: pending.toString()
+msgid "{0} still loading"
+msgstr "{0} still loading"
+
+#. placeholder {0}: dirtyCount.toString()
+#. placeholder {1}: readyCount.toString()
+msgid "{0} unsaved · {1} ready"
+msgstr "{0} unsaved · {1} ready"
+
+#. placeholder {0}: Math.abs(percent)
+msgid "{0}% vs Last month"
+msgstr "{0}% vs Last month"
+
+msgid "{count, plural, one {# line selected} other {# lines selected}}"
+msgstr "{count, plural, one {# line selected} other {# lines selected}}"
+
+msgid "{from}–{to} of {totalCount}"
+msgstr "{from}–{to} of {totalCount}"
+
+msgid "{label} — interest"
+msgstr "{label} — interest"
+
+msgid "{label} — repayment"
+msgstr "{label} — repayment"
+
+msgid "{label} (projected)"
+msgstr "{label} (projected)"
+
+msgid "{readyCount, plural, one {Save # row} other {Save # rows}}"
+msgstr "{readyCount, plural, one {Save # row} other {Save # rows}}"
+
+msgid "{selectionCount, plural, one {Dismiss # row} other {Dismiss # rows}}"
+msgstr "{selectionCount, plural, one {Dismiss # row} other {Dismiss # rows}}"
+
+msgid "← Accounts"
+msgstr "← Accounts"
+
+msgid "← Activity"
+msgstr "← Activity"
+
+msgid "← Cancel"
+msgstr "← Cancel"
+
+#. placeholder {0}: moreCount.toString()
+#. placeholder {1}: title.toLowerCase()
+msgid "+ {0} more matching {1}"
+msgstr "+ {0} more matching {1}"
+
+msgid "── None"
+msgstr "── None"
+
+msgid "── None (self-transfer)"
+msgstr "── None (self-transfer)"
+
+msgid "A construction deposit needs an asset account, an income account, and a "
+"rate — set all three or none."
+msgstr "A construction deposit needs an asset account, an income account, and a "
+"rate — set all three or none."
+
+msgid "A fresh part account needs a name and a code."
+msgstr "A fresh part account needs a name and a code."
+
+msgid "A future effective date records an accepted renewal offer. Existing "
+"rates can be edited or removed from the part's rate history."
+msgstr "A future effective date records an accepted renewal offer. Existing "
+"rates can be edited or removed from the part's rate history."
+
+msgid "A loan must keep at least one part"
+msgstr "A loan must keep at least one part"
+
+msgid "A part must keep at least one rate period"
+msgstr "A part must keep at least one rate period"
+
+msgid "A part needs a label."
+msgstr "A part needs a label."
+
+msgid "Account"
+msgstr "Account"
+
+msgid "Account (mixed currencies)"
+msgstr "Account (mixed currencies)"
+
+msgid "Account balances"
+msgstr "Account balances"
+
+msgid "Account code"
+msgstr "Account code"
+
+msgid "Account holder"
+msgstr "Account holder"
+
+msgid "Account holder name"
+msgstr "Account holder name"
+
+msgid "Account icon"
+msgstr "Account icon"
+
+msgid "Account name"
+msgstr "Account name"
+
+msgid "Account number"
+msgstr "Account number"
+
+msgid "Account to adopt"
+msgstr "Account to adopt"
+
+msgid "Account…"
+msgstr "Account…"
+
+msgid "Accounts"
+msgstr "Accounts"
+
+msgid "Across {accountCount, plural, one {# account} other {# accounts}}"
+msgstr "Across {accountCount, plural, one {# account} other {# accounts}}"
+
+msgid "Actions"
+msgstr "Actions"
+
+msgid "Active"
+msgstr "Active"
+
+msgid "Activity"
+msgstr "Activity"
+
+msgid "Add"
+msgstr "Add"
+
+msgid "Add bank account"
+msgstr "Add bank account"
+
+msgid "Add line"
+msgstr "Add line"
+
+msgid "Add loan part"
+msgstr "Add loan part"
+
+msgid "Add one to attach to a ledger account."
+msgstr "Add one to attach to a ledger account."
+
+msgid "Add part"
+msgstr "Add part"
+
+msgid "Add rate period"
+msgstr "Add rate period"
+
+msgid "Add repayment"
+msgstr "Add repayment"
+
+msgid "Add the parties you receive money from or pay to."
+msgstr "Add the parties you receive money from or pay to."
+
+msgid "Add user"
+msgstr "Add user"
+
+msgid "Add your first ledger account to get started."
+msgstr "Add your first ledger account to get started."
+
+msgid "Adding…"
+msgstr "Adding…"
+
+msgid "Adopt an existing account"
+msgstr "Adopt an existing account"
+
+msgid "Advanced"
+msgstr "Advanced"
+
+msgid "After repaying extra"
+msgstr "After repaying extra"
+
+msgid "All"
+msgstr "All"
+
+msgid "All →"
+msgstr "All →"
+
+msgid "All expenses"
+msgstr "All expenses"
+
+msgid "All income"
+msgstr "All income"
+
+msgid "Allocated"
+msgstr "Allocated"
+
+msgid "Amount"
+msgstr "Amount"
+
+msgid "An unexpected error occurred while loading this page."
+msgstr "An unexpected error occurred while loading this page."
+
+msgid "Annual rate (%)"
+msgstr "Annual rate (%)"
+
+msgid "Annuity"
+msgstr "Annuity"
+
+msgid "Any account"
+msgstr "Any account"
+
+msgid "Any counter-account"
+msgstr "Any counter-account"
+
+msgid "Any sub-account"
+msgstr "Any sub-account"
+
+msgid "Apply suggestions"
+msgstr "Apply suggestions"
+
+#. placeholder {0}: selectionCount.toString()
+msgid "Apply to {0} selected"
+msgstr "Apply to {0} selected"
+
+msgid "As on the lender's statement"
+msgstr "As on the lender's statement"
+
+msgid "Asset account holding the deposit…"
+msgstr "Asset account holding the deposit…"
+
+msgid "Assets"
+msgstr "Assets"
+
+msgid "Assumed rate after fixation (%)"
+msgstr "Assumed rate after fixation (%)"
+
+#. placeholder {0}: loan.constructionDeposit.annualRatePercent.toFixed(2)
+msgid "at {0}% — interest offsets the payment until it drains."
+msgstr "at {0}% — interest offsets the payment until it drains."
+
+msgid "Attach"
+msgstr "Attach"
+
+#. placeholder {0}: hint.otherAccountName
+msgid "Attach to {0}"
+msgstr "Attach to {0}"
+
+#. placeholder {0}: hint.date
+#. placeholder {1}: hint.otherAccountName
+msgid "Attach to JE on {0} · {1}"
+msgstr "Attach to JE on {0} · {1}"
+
+#. placeholder {0}: hint.date
+#. placeholder {1}: hint.otherAccountName
+msgid "Attach to JE on {0} ({1})"
+msgstr "Attach to JE on {0} ({1})"
+
+#. placeholder {0}: hint.otherAccountName
+msgid "Attached to {0}."
+msgstr "Attached to {0}."
+
+msgid "Attached."
+msgstr "Attached."
+
+#. placeholder {0}: hint.date
+msgid "Auto-matched to JE on {0}"
+msgstr "Auto-matched to JE on {0}"
+
+msgid "Back to inbox"
+msgstr "Back to inbox"
+
+msgid "Balance"
+msgstr "Balance"
+
+msgid "Balance & payments"
+msgstr "Balance & payments"
+
+msgid "Balance over time · Last 3 months"
+msgstr "Balance over time · Last 3 months"
+
+msgid "Balance over time · Last 6 months"
+msgstr "Balance over time · Last 6 months"
+
+msgid "Balance over time · Last month"
+msgstr "Balance over time · Last month"
+
+msgid "Balance over time · Last year"
+msgstr "Balance over time · Last year"
+
+msgid "Balanced"
+msgstr "Balanced"
+
+msgid "Bank account"
+msgstr "Bank account"
+
+msgid "Bank account deleted."
+msgstr "Bank account deleted."
+
+msgid "Bank accounts"
+msgstr "Bank accounts"
+
+msgid "Bank imports"
+msgstr "Bank imports"
+
+msgid "Bank name"
+msgstr "Bank name"
+
+msgid "Bank rows that have been categorised into a journal entry."
+msgstr "Bank rows that have been categorised into a journal entry."
+
+msgid "Bank rows waiting for a journal entry. Pick Counterparty and Account "
+"inline; Save all when you’re happy."
+msgstr "Bank rows waiting for a journal entry. Pick Counterparty and Account "
+"inline; Save all when you’re happy."
+
+msgid "Bank rows you marked as not needing a journal entry."
+msgstr "Bank rows you marked as not needing a journal entry."
+
+msgid "Bank transaction"
+msgstr "Bank transaction"
+
+msgid "Bank transactions"
+msgstr "Bank transactions"
+
+msgid "BIC"
+msgstr "BIC"
+
+msgid "Budgets"
+msgstr "Budgets"
+
+msgid "Bulk account"
+msgstr "Bulk account"
+
+msgid "Bulk counterparty"
+msgstr "Bulk counterparty"
+
+msgid "Can contain transactions"
+msgstr "Can contain transactions"
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "Card"
+msgstr "Card"
+
+msgid "Card identifier"
+msgstr "Card identifier"
+
+msgid "Card identifier is required. Card accounts are owned-only."
+msgstr "Card identifier is required. Card accounts are owned-only."
+
+msgid "Categorise"
+msgstr "Categorise"
+
+msgid "Categorise an inbox row to see it here."
+msgstr "Categorise an inbox row to see it here."
+
+msgid "Categorise bank transaction"
+msgstr "Categorise bank transaction"
+
+msgid "Categorise normally"
+msgstr "Categorise normally"
+
+msgid "Categorised"
+msgstr "Categorised"
+
+msgid "Categorised."
+msgstr "Categorised."
+
+msgid "Categorising…"
+msgstr "Categorising…"
+
+msgid "Chronological activity on this account."
+msgstr "Chronological activity on this account."
+
+msgid "Clear"
+msgstr "Clear"
+
+msgid "Clear selection"
+msgstr "Clear selection"
+
+msgid "Cleared"
+msgstr "Cleared"
+
+msgid "Cleared and Reconciled lines are frozen — only their description can be "
+"edited."
+msgstr "Cleared and Reconciled lines are frozen — only their description can be "
+"edited."
+
+msgid "Cleared and reconciled lines can’t be moved."
+msgstr "Cleared and reconciled lines can’t be moved."
+
+msgid "Close"
+msgstr "Close"
+
+msgid "Code"
+msgstr "Code"
+
+msgid "Collapse"
+msgstr "Collapse"
+
+msgid "Collapse all"
+msgstr "Collapse all"
+
+msgid "Collapse rate history"
+msgstr "Collapse rate history"
+
+msgid "Computing the proposal…"
+msgstr "Computing the proposal…"
+
+msgid "Confirm"
+msgstr "Confirm"
+
+msgid "Construction deposit"
+msgstr "Construction deposit"
+
+msgid "Construction deposit (optional)"
+msgstr "Construction deposit (optional)"
+
+msgid "Construction deposit account"
+msgstr "Construction deposit account"
+
+msgid "Couldn't compute the projection."
+msgstr "Couldn't compute the projection."
+
+msgid "Couldn't delete the loan."
+msgstr "Couldn't delete the loan."
+
+msgid "Couldn't delete the part."
+msgstr "Couldn't delete the part."
+
+msgid "Couldn't delete the rate period."
+msgstr "Couldn't delete the rate period."
+
+msgid "Couldn't load account."
+msgstr "Couldn't load account."
+
+msgid "Couldn't load accounts."
+msgstr "Couldn't load accounts."
+
+msgid "Couldn't load bank account."
+msgstr "Couldn't load bank account."
+
+msgid "Couldn't load bank accounts."
+msgstr "Couldn't load bank accounts."
+
+msgid "Couldn't load bank transaction."
+msgstr "Couldn't load bank transaction."
+
+msgid "Couldn't load bank transactions."
+msgstr "Couldn't load bank transactions."
+
+msgid "Couldn't load candidates."
+msgstr "Couldn't load candidates."
+
+msgid "Couldn't load counterparties."
+msgstr "Couldn't load counterparties."
+
+msgid "Couldn't load counterparty."
+msgstr "Couldn't load counterparty."
+
+msgid "Couldn't load journal entries."
+msgstr "Couldn't load journal entries."
+
+msgid "Couldn't load journal entry."
+msgstr "Couldn't load journal entry."
+
+msgid "Couldn't load loans."
+msgstr "Couldn't load loans."
+
+msgid "Couldn't load recent activity."
+msgstr "Couldn't load recent activity."
+
+msgid "Couldn't load register."
+msgstr "Couldn't load register."
+
+msgid "Couldn't load the balance trend."
+msgstr "Couldn't load the balance trend."
+
+msgid "Couldn't load the dashboard summary."
+msgstr "Couldn't load the dashboard summary."
+
+msgid "Couldn't load the distribution."
+msgstr "Couldn't load the distribution."
+
+msgid "Couldn't load the money flow."
+msgstr "Couldn't load the money flow."
+
+msgid "Couldn't load this loan."
+msgstr "Couldn't load this loan."
+
+msgid "Counter"
+msgstr "Counter"
+
+msgid "Counter-account…"
+msgstr "Counter-account…"
+
+msgid "Counterparties"
+msgstr "Counterparties"
+
+msgid "Counterparty"
+msgstr "Counterparty"
+
+#. placeholder {0}: created.name
+msgid "Counterparty '{0}' created."
+msgstr "Counterparty '{0}' created."
+
+msgid "Counterparty bank accounts appear as you categorise imported "
+"transactions."
+msgstr "Counterparty bank accounts appear as you categorise imported "
+"transactions."
+
+msgid "Counterparty…"
+msgstr "Counterparty…"
+
+msgid "Cr "
+msgstr "Cr "
+
+msgid "Create"
+msgstr "Create"
+
+msgid "Create '{trimmed}'"
+msgstr "Create '{trimmed}'"
+
+msgid "Create a fresh account"
+msgstr "Create a fresh account"
+
+msgid "Create account"
+msgstr "Create account"
+
+msgid "Create entry"
+msgstr "Create entry"
+
+msgid "Create loan"
+msgstr "Create loan"
+
+msgid "Create one manually or import a bank statement."
+msgstr "Create one manually or import a bank statement."
+
+msgid "Create the first account. This wizard becomes unavailable once a user "
+"exists."
+msgstr "Create the first account. This wizard becomes unavailable once a user "
+"exists."
+
+msgid "Create user"
+msgstr "Create user"
+
+msgid "Creating…"
+msgstr "Creating…"
+
+msgid "Credit"
+msgstr "Credit"
+
+msgid "Currency"
+msgstr "Currency"
+
+msgid "Current"
+msgstr "Current"
+
+msgid "Custom"
+msgstr "Custom"
+
+msgid "Dashboard"
+msgstr "Dashboard"
+
+msgid "Date"
+msgstr "Date"
+
+msgid "Date format"
+msgstr "Date format"
+
+msgid "Date range"
+msgstr "Date range"
+
+msgid "Date window (±days)"
+msgstr "Date window (±days)"
+
+msgid "Day · Month · Year"
+msgstr "Day · Month · Year"
+
+msgid "Debit"
+msgstr "Debit"
+
+msgid "Default"
+msgstr "Default"
+
+msgid "Default for {accountType}"
+msgstr "Default for {accountType}"
+
+msgid "Defaults to the loan name"
+msgstr "Defaults to the loan name"
+
+msgid "Define your mortgage or another loan to split monthly payments into "
+"interest and principal, and to see where the debt is heading."
+msgstr "Define your mortgage or another loan to split monthly payments into "
+"interest and principal, and to see where the debt is heading."
+
+msgid "Delete"
+msgstr "Delete"
+
+#. placeholder {0}: account.name
+#. placeholder {0}: counterparty.name
+msgid "Delete “{0}”?"
+msgstr "Delete “{0}”?"
+
+msgid "Delete “{name}”?"
+msgstr "Delete “{name}”?"
+
+#. placeholder {0}: deletingPart.label
+msgid "Delete {0}?"
+msgstr "Delete {0}?"
+
+msgid "Delete loan"
+msgstr "Delete loan"
+
+msgid "Delete part"
+msgstr "Delete part"
+
+msgid "Delete rate"
+msgstr "Delete rate"
+
+msgid "Delete rate period"
+msgstr "Delete rate period"
+
+msgid "Delete this bank account?"
+msgstr "Delete this bank account?"
+
+msgid "Delete this journal entry?"
+msgstr "Delete this journal entry?"
+
+msgid "Delete this loan?"
+msgstr "Delete this loan?"
+
+msgid "Delete this rate period?"
+msgstr "Delete this rate period?"
+
+#. placeholder {0}: account.name
+#. placeholder {0}: counterparty.name
+msgid "Deleted “{0}”."
+msgstr "Deleted “{0}”."
+
+msgid "Deleted “{name}”."
+msgstr "Deleted “{name}”."
+
+msgid "Deleted journal entry “{label}”."
+msgstr "Deleted journal entry “{label}”."
+
+msgid "Deposit account"
+msgstr "Deposit account"
+
+msgid "Deposit annual rate (%)"
+msgstr "Deposit annual rate (%)"
+
+msgid "Deposit interest income account"
+msgstr "Deposit interest income account"
+
+msgid "Description"
+msgstr "Description"
+
+msgid "Detach"
+msgstr "Detach"
+
+msgid "Detach bank transaction"
+msgstr "Detach bank transaction"
+
+msgid "Detach this BT — returns it to the inbox and clears the matching line "
+"back to Uncleared."
+msgstr "Detach this BT — returns it to the inbox and clears the matching line "
+"back to Uncleared."
+
+msgid "Detached. Bank transaction returned to the inbox."
+msgstr "Detached. Bank transaction returned to the inbox."
+
+msgid "Detaching…"
+msgstr "Detaching…"
+
+msgid "Disable"
+msgstr "Disable"
+
+msgid "Disabled"
+msgstr "Disabled"
+
+msgid "Discard"
+msgstr "Discard"
+
+msgid "Discard unsaved drafts?"
+msgstr "Discard unsaved drafts?"
+
+msgid "Dismiss"
+msgstr "Dismiss"
+
+msgid "Dismiss {selectionCount, plural, one {# bank transaction} other {# bank "
+"transactions}}"
+msgstr "Dismiss {selectionCount, plural, one {# bank transaction} other {# bank "
+"transactions}}"
+
+msgid "Dismiss bank transaction"
+msgstr "Dismiss bank transaction"
+
+msgid "Dismiss this row"
+msgstr "Dismiss this row"
+
+msgid "Dismiss with reason…"
+msgstr "Dismiss with reason…"
+
+msgid "Dismissed"
+msgstr "Dismissed"
+
+msgid "Dismissed rows live here for audit."
+msgstr "Dismissed rows live here for audit."
+
+msgid "Dismissed."
+msgstr "Dismissed."
+
+msgid "Dismissing…"
+msgstr "Dismissing…"
+
+msgid "Display name"
+msgstr "Display name"
+
+msgid "Display preferences saved."
+msgstr "Display preferences saved."
+
+msgid "Distribution"
+msgstr "Distribution"
+
+msgid "Double-entry detail."
+msgstr "Double-entry detail."
+
+msgid "Dr "
+msgstr "Dr "
+
+msgid "Drives the Inbox's loan-payment hint."
+msgstr "Drives the Inbox's loan-payment hint."
+
+msgid "e.g. 2200"
+msgstr "e.g. 2200"
+
+msgid "e.g. 3.6"
+msgstr "e.g. 3.6"
+
+msgid "e.g. 3.8"
+msgstr "e.g. 3.8"
+
+msgid "e.g. 4.1"
+msgstr "e.g. 4.1"
+
+msgid "e.g. 5110"
+msgstr "e.g. 5110"
+
+msgid "e.g. fee corrections, self-transfer siblings"
+msgstr "e.g. fee corrections, self-transfer siblings"
+
+msgid "e.g. Mortgage Hoofdstraat 1"
+msgstr "e.g. Mortgage Hoofdstraat 1"
+
+msgid "e.g. Mortgage interest"
+msgstr "e.g. Mortgage interest"
+
+msgid "e.g. settled by journal entry X"
+msgstr "e.g. settled by journal entry X"
+
+msgid "Edit"
+msgstr "Edit"
+
+msgid "Edit account"
+msgstr "Edit account"
+
+msgid "Edit bank account"
+msgstr "Edit bank account"
+
+msgid "Edit counterparty"
+msgstr "Edit counterparty"
+
+msgid "Edit details"
+msgstr "Edit details"
+
+msgid "Edit details (splits, custom date)"
+msgstr "Edit details (splits, custom date)"
+
+msgid "Edit entry"
+msgstr "Edit entry"
+
+msgid "Edit loan"
+msgstr "Edit loan"
+
+msgid "Edit part"
+msgstr "Edit part"
+
+#. placeholder {0}: part.label
+msgid "Edit part — {0}"
+msgstr "Edit part — {0}"
+
+msgid "Edit rate period"
+msgstr "Edit rate period"
+
+msgid "Effective date"
+msgstr "Effective date"
+
+msgid "Email"
+msgstr "Email"
+
+msgid "Email or password is incorrect."
+msgstr "Email or password is incorrect."
+
+msgid "Enable"
+msgstr "Enable"
+
+msgid "End date"
+msgstr "End date"
+
+msgid "End date must be after the start date."
+msgstr "End date must be after the start date."
+
+msgid "Ended"
+msgstr "Ended"
+
+msgid "English"
+msgstr "English"
+
+msgid "English is the only language for now."
+msgstr "English is the only language for now."
+
+msgid "Enter a valid annual rate (e.g. 3.8)."
+msgstr "Enter a valid annual rate (e.g. 3.8)."
+
+msgid "Enter a valid deposit rate (0–100)."
+msgstr "Enter a valid deposit rate (0–100)."
+
+msgid "Enter a valid opening balance."
+msgstr "Enter a valid opening balance."
+
+msgid "Enter your email and password to continue."
+msgstr "Enter your email and password to continue."
+
+msgid "Every bookkeeping event, newest first."
+msgstr "Every bookkeeping event, newest first."
+
+#. placeholder {0}: cp.name
+msgid "Every entry referencing {0}."
+msgstr "Every entry referencing {0}."
+
+msgid "Every imported bank row, regardless of state."
+msgstr "Every imported bank row, regardless of state."
+
+msgid "Every part needs a label."
+msgstr "Every part needs a label."
+
+msgid "Every part needs an end date."
+msgstr "Every part needs an end date."
+
+msgid "Exchange rate"
+msgstr "Exchange rate"
+
+msgid "Existing mortgage / loan account…"
+msgstr "Existing mortgage / loan account…"
+
+msgid "Expand"
+msgstr "Expand"
+
+msgid "Expenses"
+msgstr "Expenses"
+
+msgid "Expenses · MTD"
+msgstr "Expenses · MTD"
+
+msgid "Extra repayment amount"
+msgstr "Extra repayment amount"
+
+msgid "Fill the selected rows with the IBAN-matched counterparty and the "
+"last-used account for that counterparty."
+msgstr "Fill the selected rows with the IBAN-matched counterparty and the "
+"last-used account for that counterparty."
+
+msgid "Filter"
+msgstr "Filter"
+
+msgid "Filter by account"
+msgstr "Filter by account"
+
+msgid "Filter by counter-account"
+msgstr "Filter by counter-account"
+
+msgid "Filter by sub-account"
+msgstr "Filter by sub-account"
+
+msgid "Filter…"
+msgstr "Filter…"
+
+msgid "First-run setup"
+msgstr "First-run setup"
+
+msgid "Fixed until (optional)"
+msgstr "Fixed until (optional)"
+
+msgid "Foreign amount"
+msgstr "Foreign amount"
+
+msgid "From"
+msgstr "From"
+
+#. placeholder {0}: rate.effectiveDate
+msgid "from {0}"
+msgstr "from {0}"
+
+msgid "From bank import"
+msgstr "From bank import"
+
+msgid "Frozen — line cannot be removed"
+msgstr "Frozen — line cannot be removed"
+
+msgid "Frozen — line is Cleared or Reconciled"
+msgstr "Frozen — line is Cleared or Reconciled"
+
+msgid "Future"
+msgstr "Future"
+
+msgid "General-journal table — explicit debit / credit per line."
+msgstr "General-journal table — explicit debit / credit per line."
+
+msgid "How dates and numbers are displayed. The interface language is separate "
+"from formatting."
+msgstr "How dates and numbers are displayed. The interface language is separate "
+"from formatting."
+
+msgid "Hypothetical extra repayments — nothing is saved."
+msgstr "Hypothetical extra repayments — nothing is saved."
+
+msgid "IBAN"
+msgstr "IBAN"
+
+msgid "IBAN is required."
+msgstr "IBAN is required."
+
+msgid "IBAN or Account number is required."
+msgstr "IBAN or Account number is required."
+
+msgid "Icon"
+msgstr "Icon"
+
+msgid "Import a bank statement from Bank imports to get started."
+msgstr "Import a bank statement from Bank imports to get started."
+
+msgid "Import failed."
+msgstr "Import failed."
+
+msgid "Import statement"
+msgstr "Import statement"
+
+msgid "Import statements"
+msgstr "Import statements"
+
+#. placeholder {0}: feedback.imported
+msgid "Imported {0}"
+msgstr "Imported {0}"
+
+msgid "Imported row this entry was categorised from."
+msgstr "Imported row this entry was categorised from."
+
+msgid "Imported rows that need categorising will appear here."
+msgstr "Imported rows that need categorising will appear here."
+
+msgid "Importer"
+msgstr "Importer"
+
+msgid "Importing…"
+msgstr "Importing…"
+
+msgid "In force"
+msgstr "In force"
+
+msgid "Inbox"
+msgstr "Inbox"
+
+msgid "Income"
+msgstr "Income"
+
+msgid "Income · MTD"
+msgstr "Income · MTD"
+
+msgid "Income account for deposit interest…"
+msgstr "Income account for deposit interest…"
+
+msgid "Insights"
+msgstr "Insights"
+
+msgid "Interest"
+msgstr "Interest"
+
+msgid "Interest expense account"
+msgstr "Interest expense account"
+
+msgid "Interest income account"
+msgstr "Interest income account"
+
+msgid "Interest saved"
+msgstr "Interest saved"
+
+msgid "Interest-only"
+msgstr "Interest-only"
+
+msgid "invalid"
+msgstr "invalid"
+
+msgid "ISO 8601"
+msgstr "ISO 8601"
+
+msgid "Journal entries"
+msgstr "Journal entries"
+
+msgid "Journal entry created."
+msgstr "Journal entry created."
+
+msgid "Journal entry saved."
+msgstr "Journal entry saved."
+
+msgid "Keep the payment, finish earlier"
+msgstr "Keep the payment, finish earlier"
+
+msgid "Label"
+msgstr "Label"
+
+msgid "Language"
+msgstr "Language"
+
+msgid "Language & formatting"
+msgstr "Language & formatting"
+
+msgid "Leave"
+msgstr "Leave"
+
+msgid "Leave with unsaved drafts?"
+msgstr "Leave with unsaved drafts?"
+
+msgid "Ledger accounts in the double-entry sense — assets, liabilities, income, "
+"expenses, equity."
+msgstr "Ledger accounts in the double-entry sense — assets, liabilities, "
+"income, expenses, equity."
+
+msgid "Lender"
+msgstr "Lender"
+
+msgid "Liabilities"
+msgstr "Liabilities"
+
+msgid "Liability account"
+msgstr "Liability account"
+
+msgid "Line description"
+msgstr "Line description"
+
+msgid "Linear"
+msgstr "Linear"
+
+msgid "Lines"
+msgstr "Lines"
+
+msgid "Linked bank account"
+msgstr "Linked bank account"
+
+msgid "Linked bank accounts"
+msgstr "Linked bank accounts"
+
+msgid "Liquid — counts toward liquid net worth"
+msgstr "Liquid — counts toward liquid net worth"
+
+msgid "Liquid net worth"
+msgstr "Liquid net worth"
+
+msgid "Loan created."
+msgstr "Loan created."
+
+msgid "Loan deleted."
+msgstr "Loan deleted."
+
+msgid "Loan part"
+msgstr "Loan part"
+
+msgid "Loan part…"
+msgstr "Loan part…"
+
+msgid "Loan parts"
+msgstr "Loan parts"
+
+msgid "Loan payment"
+msgstr "Loan payment"
+
+#. placeholder {0}: hint.loanName
+msgid "Loan payment · {0}"
+msgstr "Loan payment · {0}"
+
+msgid "Loan updated."
+msgstr "Loan updated."
+
+msgid "Loans"
+msgstr "Loans"
+
+msgid "Logins that have access to this ledger."
+msgstr "Logins that have access to this ledger."
+
+#. placeholder {0}: hint.loanName
+msgid "Looks like a payment on {0}"
+msgstr "Looks like a payment on {0}"
+
+msgid "Lower the monthly payment (default)"
+msgstr "Lower the monthly payment (default)"
+
+msgid "Manage"
+msgstr "Manage"
+
+msgid "Mandate ID"
+msgstr "Mandate ID"
+
+msgid "Mark this row as not needing a journal entry. You can undismiss later."
+msgstr "Mark this row as not needing a journal entry. You can undismiss later."
+
+msgid "Matched"
+msgstr "Matched"
+
+#. placeholder {0}: hint.otherAccountName
+msgid "Matches JE · {0}"
+msgstr "Matches JE · {0}"
+
+msgid "Minimum 12 characters."
+msgstr "Minimum 12 characters."
+
+msgid "Money arrives in these accounts (debit)."
+msgstr "Money arrives in these accounts (debit)."
+
+msgid "Money flow"
+msgstr "Money flow"
+
+msgid "Money leaves these accounts (credit)."
+msgstr "Money leaves these accounts (credit)."
+
+msgid "Money moved from one or more sources to one or more destinations."
+msgstr "Money moved from one or more sources to one or more destinations."
+
+msgid "Month · Day · Year"
+msgstr "Month · Day · Year"
+
+msgid "Monthly payment"
+msgstr "Monthly payment"
+
+msgid "Mortgages and other loans, tracked part by part over the ledger."
+msgstr "Mortgages and other loans, tracked part by part over the ledger."
+
+msgid "Move"
+msgstr "Move"
+
+msgid "Move {count, plural, one {# line} other {# lines}} to “{targetName}”?"
+msgstr "Move {count, plural, one {# line} other {# lines}} to “{targetName}”?"
+
+msgid "Move selected lines to account"
+msgstr "Move selected lines to account"
+
+msgid "Move to account…"
+msgstr "Move to account…"
+
+msgid "Moved {count, plural, one {# line} other {# lines}} to “{targetName}”."
+msgstr "Moved {count, plural, one {# line} other {# lines}} to “{targetName}”."
+
+msgid "Multi-source-multi-destination entries can only be edited in Advanced."
+msgstr "Multi-source-multi-destination entries can only be edited in Advanced."
+
+msgid "Name"
+msgstr "Name"
+
+msgid "Net negative this period — see the breakdown."
+msgstr "Net negative this period — see the breakdown."
+
+msgid "Net negative this period (excluded from the chart)"
+msgstr "Net negative this period (excluded from the chart)"
+
+msgid "Net worth"
+msgstr "Net worth"
+
+msgid "New account"
+msgstr "New account"
+
+msgid "New bank account"
+msgstr "New bank account"
+
+msgid "New counterparty"
+msgstr "New counterparty"
+
+msgid "New entry"
+msgstr "New entry"
+
+msgid "New journal entry"
+msgstr "New journal entry"
+
+msgid "New loan"
+msgstr "New loan"
+
+msgid "New rate"
+msgstr "New rate"
+
+#. placeholder {0}: part.label
+msgid "New rate period — {0}"
+msgstr "New rate period — {0}"
+
+msgid "Next month"
+msgstr "Next month"
+
+msgid "Next page"
+msgstr "Next page"
+
+msgid "No accounts yet."
+msgstr "No accounts yet."
+
+msgid "No balance history yet."
+msgstr "No balance history yet."
+
+msgid "No bank accounts linked to one of your own accounts yet."
+msgstr "No bank accounts linked to one of your own accounts yet."
+
+msgid "No bank accounts linked yet."
+msgstr "No bank accounts linked yet."
+
+msgid "No bank accounts of your own yet."
+msgstr "No bank accounts of your own yet."
+
+msgid "No bank transactions yet."
+msgstr "No bank transactions yet."
+
+msgid "No counterparties yet."
+msgstr "No counterparties yet."
+
+msgid "No counterparty bank accounts."
+msgstr "No counterparty bank accounts."
+
+msgid "No entries match the current filters."
+msgstr "No entries match the current filters."
+
+msgid "No importer configured"
+msgstr "No importer configured"
+
+msgid "No journal entries yet for this counterparty."
+msgstr "No journal entries yet for this counterparty."
+
+msgid "No journal entries yet."
+msgstr "No journal entries yet."
+
+msgid "No loans yet"
+msgstr "No loans yet"
+
+msgid "No matches for “{debounced}”."
+msgstr "No matches for “{debounced}”."
+
+msgid "No matches for “{debouncedQ}”."
+msgstr "No matches for “{debouncedQ}”."
+
+msgid "No matches for “{query}”."
+msgstr "No matches for “{query}”."
+
+msgid "No matches for “{search}”."
+msgstr "No matches for “{search}”."
+
+msgid "No money moved in this period."
+msgstr "No money moved in this period."
+
+msgid "No rows match the current filters."
+msgstr "No rows match the current filters."
+
+msgid "No structural matches in this window. Widen the date range or fall back "
+"to creating a new JE below."
+msgstr "No structural matches in this window. Widen the date range or fall back "
+"to creating a new JE below."
+
+msgid "No suggestions to apply."
+msgstr "No suggestions to apply."
+
+msgid "None — top level"
+msgstr "None — top level"
+
+msgid "Nothing categorised yet."
+msgstr "Nothing categorised yet."
+
+msgid "Nothing dismissed."
+msgstr "Nothing dismissed."
+
+msgid "Nothing posted or projected yet."
+msgstr "Nothing posted or projected yet."
+
+msgid "Notifications"
+msgstr "Notifications"
+
+msgid "Number format"
+msgstr "Number format"
+
+#. placeholder {0}: formatMoney(Math.abs(diff), currency, catalog)
+msgid "Off by {0}"
+msgstr "Off by {0}"
+
+msgid "Off by {diffStr}"
+msgstr "Off by {diffStr}"
+
+msgid "Only non-postable accounts of the same type and currency can be parents."
+msgstr "Only non-postable accounts of the same type and currency can be "
+"parents."
+
+msgid "Only the selected side of each entry moves — dates, amounts and the "
+"other side stay untouched. The whole batch moves together, or not at "
+"all."
+msgstr "Only the selected side of each entry moves — dates, amounts and the "
+"other side stay untouched. The whole batch moves together, or not at "
+"all."
+
+msgid "Open calendar"
+msgstr "Open calendar"
+
+msgid "Open navigation"
+msgstr "Open navigation"
+
+msgid "Opening balance ({currencyCode})"
+msgstr "Opening balance ({currencyCode})"
+
+msgid "Optional"
+msgstr "Optional"
+
+msgid "or scroll down to create a new JE."
+msgstr "or scroll down to create a new JE."
+
+msgid "Outstanding"
+msgstr "Outstanding"
+
+msgid "Outstanding principal"
+msgstr "Outstanding principal"
+
+msgid "Over by"
+msgstr "Over by"
+
+msgid "Owner"
+msgstr "Owner"
+
+msgid "Owner account"
+msgstr "Owner account"
+
+msgid "Owner counterparty"
+msgstr "Owner counterparty"
+
+msgid "Owner filter"
+msgstr "Owner filter"
+
+msgid "Page {page}"
+msgstr "Page {page}"
+
+msgid "Pages"
+msgstr "Pages"
+
+msgid "Parent account"
+msgstr "Parent account"
+
+msgid "Parent account code"
+msgstr "Parent account code"
+
+msgid "Parent account name"
+msgstr "Parent account name"
+
+msgid "Part"
+msgstr "Part"
+
+#. placeholder {0}: (index + 1).toString()
+msgid "Part {0}"
+msgstr "Part {0}"
+
+msgid "Part added."
+msgstr "Part added."
+
+msgid "Part deleted."
+msgstr "Part deleted."
+
+msgid "Part updated."
+msgstr "Part updated."
+
+msgid "Parts"
+msgstr "Parts"
+
+msgid "Parts — each with its own terms and rate history."
+msgstr "Parts — each with its own terms and rate history."
+
+msgid "Parts in this payment:"
+msgstr "Parts in this payment:"
+
+msgid "Password"
+msgstr "Password"
+
+msgid "Past rows are posted actuals; future rows are the projection (the "
+"what-if scenario when active)."
+msgstr "Past rows are posted actuals; future rows are the projection (the "
+"what-if scenario when active)."
+
+msgid "Payment change"
+msgstr "Payment change"
+
+msgid "Payments"
+msgstr "Payments"
+
+msgid "Period"
+msgstr "Period"
+
+msgid "Period presets"
+msgstr "Period presets"
+
+msgid "Pick a JE to attach to…"
+msgstr "Pick a JE to attach to…"
+
+msgid "Pick a journal entry to attach to"
+msgstr "Pick a journal entry to attach to"
+
+msgid "Pick account…"
+msgstr "Pick account…"
+
+msgid "Pick counterparty…"
+msgstr "Pick counterparty…"
+
+msgid "Pick the interest expense account."
+msgstr "Pick the interest expense account."
+
+msgid "Pick the lender."
+msgstr "Pick the lender."
+
+msgid "Pick the lender…"
+msgstr "Pick the lender…"
+
+msgid "Pick the liability account to adopt."
+msgstr "Pick the liability account to adopt."
+
+msgid "Piggy banks"
+msgstr "Piggy banks"
+
+msgid "Plan"
+msgstr "Plan"
+
+msgid "Posted actuals to the left of today, the engine's projection to the "
+"right."
+msgstr "Posted actuals to the left of today, the engine's projection to the "
+"right."
+
+#. placeholder {0}: proposal.month.slice(0, 7)
+msgid "Pre-filled from the schedule for {0} — adjust the amounts to match the "
+"bank's charge."
+msgstr "Pre-filled from the schedule for {0} — adjust the amounts to match the "
+"bank's charge."
+
+msgid "Previous month"
+msgstr "Previous month"
+
+msgid "Previous page"
+msgstr "Previous page"
+
+msgid "Principal"
+msgstr "Principal"
+
+msgid "Projected"
+msgstr "Projected"
+
+msgid "Rate"
+msgstr "Rate"
+
+msgid "Rate fixed until (optional)"
+msgstr "Rate fixed until (optional)"
+
+msgid "Rate period added."
+msgstr "Rate period added."
+
+msgid "Rate period deleted."
+msgstr "Rate period deleted."
+
+msgid "Rate period updated."
+msgstr "Rate period updated."
+
+msgid "Re-parented under the loan with its posted history intact."
+msgstr "Re-parented under the loan with its posted history intact."
+
+msgid "ready"
+msgstr "ready"
+
+msgid "Real-world parties on the other side of journal entries."
+msgstr "Real-world parties on the other side of journal entries."
+
+msgid "Reason"
+msgstr "Reason"
+
+msgid "Reason: {dismissDraft}"
+msgstr "Reason: {dismissDraft}"
+
+msgid "Reassign"
+msgstr "Reassign"
+
+msgid "Reassign to a different owner"
+msgstr "Reassign to a different owner"
+
+msgid "Reconciled"
+msgstr "Reconciled"
+
+msgid "Ref: {reference}"
+msgstr "Ref: {reference}"
+
+msgid "Reference"
+msgstr "Reference"
+
+msgid "Register"
+msgstr "Register"
+
+msgid "Remove last"
+msgstr "Remove last"
+
+msgid "Remove part"
+msgstr "Remove part"
+
+msgid "Remove this leg"
+msgstr "Remove this leg"
+
+msgid "Remove this line"
+msgstr "Remove this line"
+
+msgid "Repayment date"
+msgstr "Repayment date"
+
+msgid "Repayment policy"
+msgstr "Repayment policy"
+
+msgid "Repayment type"
+msgstr "Repayment type"
+
+msgid "Reporting period"
+msgstr "Reporting period"
+
+msgid "Required when configured at deploy time via <0>Auth:SetupToken</0>."
+msgstr "Required when configured at deploy time via <0>Auth:SetupToken</0>."
+
+#. placeholder {0}: dirtyCount.toString()
+msgid "Reset all {0} unsaved drafts back to the server-suggested values."
+msgstr "Reset all {0} unsaved drafts back to the server-suggested values."
+
+msgid "Reset draft"
+msgstr "Reset draft"
+
+msgid "Reset draft to server suggestion"
+msgstr "Reset draft to server suggestion"
+
+msgid "Restored to inbox."
+msgstr "Restored to inbox."
+
+msgid "Retry"
+msgstr "Retry"
+
+msgid "Roll-up account"
+msgstr "Roll-up account"
+
+msgid "Runs until"
+msgstr "Runs until"
+
+msgid "Save"
+msgstr "Save"
+
+msgid "Save changes"
+msgstr "Save changes"
+
+#. placeholder {0}: progress.done.toString()
+#. placeholder {1}: progress.total.toString()
+msgid "Saving {0}/{1}…"
+msgstr "Saving {0}/{1}…"
+
+msgid "Saving…"
+msgstr "Saving…"
+
+msgid "Savings"
+msgstr "Savings"
+
+msgid "Schedule"
+msgstr "Schedule"
+
+msgid "Search"
+msgstr "Search"
+
+msgid "Search activity"
+msgstr "Search activity"
+
+msgid "Search bank accounts"
+msgstr "Search bank accounts"
+
+msgid "Search bank accounts…"
+msgstr "Search bank accounts…"
+
+msgid "Search bank transactions"
+msgstr "Search bank transactions"
+
+msgid "Search counterparties"
+msgstr "Search counterparties"
+
+msgid "Search counterparties…"
+msgstr "Search counterparties…"
+
+msgid "Search description or counterparty…"
+msgstr "Search description or counterparty…"
+
+msgid "Search query"
+msgstr "Search query"
+
+msgid "Search register"
+msgstr "Search register"
+
+msgid "Search results"
+msgstr "Search results"
+
+msgid "Search…"
+msgstr "Search…"
+
+msgid "Searching…"
+msgstr "Searching…"
+
+msgid "Select a counterparty…"
+msgstr "Select a counterparty…"
+
+msgid "Select all movable rows on this page"
+msgstr "Select all movable rows on this page"
+
+msgid "Select all visible rows"
+msgstr "Select all visible rows"
+
+msgid "Select an account…"
+msgstr "Select an account…"
+
+#. placeholder {0}: bankTransaction.description
+msgid "Select bank transaction {0}"
+msgstr "Select bank transaction {0}"
+
+#. placeholder {0}: row.date
+msgid "Select line of {0}"
+msgstr "Select line of {0}"
+
+msgid "Select…"
+msgstr "Select…"
+
+#. placeholder {0}: selectedCurrencies.join(' + ')
+msgid "Selected rows span {0} — Account can't be bulk-applied."
+msgstr "Selected rows span {0} — Account can't be bulk-applied."
+
+msgid "SEPA creditor ID"
+msgstr "SEPA creditor ID"
+
+msgid "Set an importer on this bank account to enable statement imports."
+msgstr "Set an importer on this bank account to enable statement imports."
+
+msgid "Settings"
+msgstr "Settings"
+
+msgid "Setup is unavailable. Either a user already exists, or the setup token "
+"does not match."
+msgstr "Setup is unavailable. Either a user already exists, or the setup token "
+"does not match."
+
+msgid "Setup token"
+msgstr "Setup token"
+
+msgid "Show rate history"
+msgstr "Show rate history"
+
+msgid "Sibling-of-self-transfer?"
+msgstr "Sibling-of-self-transfer?"
+
+msgid "Side"
+msgstr "Side"
+
+msgid "Sign in"
+msgstr "Sign in"
+
+msgid "Sign out"
+msgstr "Sign out"
+
+msgid "Signing in…"
+msgstr "Signing in…"
+
+msgid "Simple"
+msgstr "Simple"
+
+msgid "Something went wrong"
+msgstr "Something went wrong"
+
+msgid "Something went wrong."
+msgstr "Something went wrong."
+
+#. placeholder {0}: formatNumber(lineCount)
+msgid "Split ({0} lines)"
+msgstr "Split ({0} lines)"
+
+msgid "Split ({lineCount, plural, one {# line} other {# lines}})"
+msgstr "Split ({lineCount, plural, one {# line} other {# lines}})"
+
+msgid "Stage these rows for dismissal. Save-all to commit; until then you can "
+"review or reset per row."
+msgstr "Stage these rows for dismissal. Save-all to commit; until then you can "
+"review or reset per row."
+
+msgid "Start date"
+msgstr "Start date"
+
+msgid "Statement importer"
+msgstr "Statement importer"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Status filter"
+msgstr "Status filter"
+
+msgid "Structural matches with an Uncleared bank-side slot. Widen the date "
+"window to surface near-misses."
+msgstr "Structural matches with an Uncleared bank-side slot. Widen the date "
+"window to surface near-misses."
+
+msgid "Sub-account…"
+msgstr "Sub-account…"
+
+msgid "Subscriptions"
+msgstr "Subscriptions"
+
+msgid "Switch to the personal-finance shape"
+msgstr "Switch to the personal-finance shape"
+
+msgid "Target"
+msgstr "Target"
+
+#. placeholder {0}: deletingRate.rate.annualRatePercent.toFixed(2)
+#. placeholder {1}: deletingRate.rate.effectiveDate
+#. placeholder {2}: deletingRate.part.label
+msgid "The {0}% rate effective {1} is removed from {2}. Projections recompute; "
+"posted entries are untouched."
+msgstr "The {0}% rate effective {1} is removed from {2}. Projections recompute; "
+"posted entries are untouched."
+
+msgid "The loan definition, its parts, and rate history are removed. The "
+"accounts and every posted entry stay untouched."
+msgstr "The loan definition, its parts, and rate history are removed. The "
+"accounts and every posted entry stay untouched."
+
+msgid "The loan needs a name."
+msgstr "The loan needs a name."
+
+msgid "The part definition and its rate history are removed. Its account and "
+"every posted entry stay untouched — it becomes an ordinary account "
+"again."
+msgstr "The part definition and its rate history are removed. Its account and "
+"every posted entry stay untouched — it becomes an ordinary account "
+"again."
+
+msgid "The part's account holds its principal and posted history, so it can't "
+"be changed here."
+msgstr "The part's account holds its principal and posted history, so it can't "
+"be changed here."
+
+msgid "The real-world bank accounts behind your ledger accounts and "
+"counterparties."
+msgstr "The real-world bank accounts behind your ledger accounts and "
+"counterparties."
+
+msgid "This can't be undone."
+msgstr "This can't be undone."
+
+msgid "This can't be undone. Accounts with journal entries can't be deleted "
+"until those are removed first."
+msgstr "This can't be undone. Accounts with journal entries can't be deleted "
+"until those are removed first."
+
+msgid "This can't be undone. The bookkeeping lines on every affected account "
+"will disappear with it."
+msgstr "This can't be undone. The bookkeeping lines on every affected account "
+"will disappear with it."
+
+msgid "This row already has a journal entry."
+msgstr "This row already has a journal entry."
+
+msgid "This row is dismissed. Undismiss it first to categorise."
+msgstr "This row is dismissed. Undismiss it first to categorise."
+
+msgid "This screen is not built yet."
+msgstr "This screen is not built yet."
+
+msgid "To"
+msgstr "To"
+
+msgid "today"
+msgstr "today"
+
+msgid "Total"
+msgstr "Total"
+
+msgid "Trend range"
+msgstr "Trend range"
+
+msgid "Try again"
+msgstr "Try again"
+
+msgid "Turn this bank row into a journal entry."
+msgstr "Turn this bank row into a journal entry."
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Type to search accounts, counterparties, bank accounts, journal entries."
+msgstr "Type to search accounts, counterparties, bank accounts, journal "
+"entries."
+
+msgid "Unallocated"
+msgstr "Unallocated"
+
+msgid "Uncheck for long-term holdings such as a house, mortgage, or investment "
+"portfolio."
+msgstr "Uncheck for long-term holdings such as a house, mortgage, or investment "
+"portfolio."
+
+msgid "Uncheck to make this a roll-up account that only totals its children."
+msgstr "Uncheck to make this a roll-up account that only totals its children."
+
+msgid "Uncleared"
+msgstr "Uncleared"
+
+msgid "Undisbursed mortgage money earmarked for building. Its interest offsets "
+"the loan payment during construction."
+msgstr "Undisbursed mortgage money earmarked for building. Its interest offsets "
+"the loan payment during construction."
+
+msgid "Undismiss"
+msgstr "Undismiss"
+
+msgid "Unknown account"
+msgstr "Unknown account"
+
+msgid "Unknown counterparty"
+msgstr "Unknown counterparty"
+
+msgid "Upload an ING current-account CSV against the matching bank account. "
+"Re-uploads are safe — duplicate rows are skipped."
+msgstr "Upload an ING current-account CSV against the matching bank account. "
+"Re-uploads are safe — duplicate rows are skipped."
+
+msgid "Users"
+msgstr "Users"
+
+msgid "Value date"
+msgstr "Value date"
+
+msgid "View entry"
+msgstr "View entry"
+
+msgid "View journal entry"
+msgstr "View journal entry"
+
+msgid "Weighted rate"
+msgstr "Weighted rate"
+
+msgid "What if…"
+msgstr "What if…"
+
+msgid "What-if total"
+msgstr "What-if total"
+
+msgid "Where money came in and where it went"
+msgstr "Where money came in and where it went"
+
+msgid "will dismiss"
+msgstr "will dismiss"
+
+msgid "Working…"
+msgstr "Working…"
+
+msgid "You have {dirtyCount, plural, one {# unsaved draft} other {# unsaved "
+"drafts}}. Leaving will discard them."
+msgstr "You have {dirtyCount, plural, one {# unsaved draft} other {# unsaved "
+"drafts}}. Leaving will discard them."
+
+msgid "You're caught up."
+msgstr "You're caught up."
+
+msgid "Σ Credit <0>{creditStr}</0>"
+msgstr "Σ Credit <0>{creditStr}</0>"
+
+msgid "Σ Debit / Credit"
+msgstr "Σ Debit / Credit"
+
+msgid "Σ Debit <0>{debitStr}</0>"
+msgstr "Σ Debit <0>{debitStr}</0>"

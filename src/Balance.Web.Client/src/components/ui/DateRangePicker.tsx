@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import { CalendarDays } from 'lucide-react';
 import {
     Button,
@@ -54,6 +55,7 @@ export function DateRangePicker({
     fieldClassName,
     ...props
 }: DateRangePickerProps) {
+    const { t } = useLingui();
     const start = parseIsoDate(value.from);
     const end = parseIsoDate(value.to);
 
@@ -86,7 +88,7 @@ export function DateRangePicker({
                 </span>
                 <StyledDateInput slot="end" className="flex items-center" />
                 <Button
-                    aria-label="Open calendar"
+                    aria-label={t`Open calendar`}
                     className="flex items-center pl-2 pr-1 text-fg-3 outline-none cursor-pointer data-[hovered]:text-fg-1 data-[focus-visible]:text-fg-1 data-[disabled]:opacity-60"
                 >
                     <CalendarDays size={15} strokeWidth={2} aria-hidden="true" />

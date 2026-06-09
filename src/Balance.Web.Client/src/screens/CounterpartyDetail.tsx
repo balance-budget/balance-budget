@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useAccounts, type Account } from '../api/accounts';
 import { useCounterparty, useDeleteCounterparty } from '../api/counterparties';
@@ -26,6 +27,7 @@ type Props = {
 };
 
 export function CounterpartyDetail({ id, page, onPageChange }: Props) {
+    const { t } = useLingui();
     const query = useCounterparty(id);
     const [editing, setEditing] = useState(false);
     const [deleting, setDeleting] = useState(false);
@@ -43,7 +45,7 @@ export function CounterpartyDetail({ id, page, onPageChange }: Props) {
         return (
             <Panel>
                 <ErrorState
-                    message="Couldn't load counterparty."
+                    message={t`Couldn't load counterparty.`}
                     onRetry={() => void query.refetch()}
                 />
             </Panel>
@@ -62,7 +64,7 @@ export function CounterpartyDetail({ id, page, onPageChange }: Props) {
                             search={{ page: 1, q: '' }}
                             className="text-xs text-fg-3 hover:text-fg-1 inline-flex items-center gap-1"
                         >
-                            ← Counterparties
+                            ← <Trans>Counterparties</Trans>
                         </Link>
                         <h1 className="text-xl font-medium text-fg-1 truncate">{cp.name}</h1>
                     </div>
@@ -75,7 +77,7 @@ export function CounterpartyDetail({ id, page, onPageChange }: Props) {
                             className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1 hover:bg-surface-2"
                         >
                             <Icon name="pencil" size={14} strokeWidth={2} />
-                            Edit
+                            <Trans>Edit</Trans>
                         </button>
                         <button
                             type="button"
@@ -85,21 +87,21 @@ export function CounterpartyDetail({ id, page, onPageChange }: Props) {
                             className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-danger hover:bg-surface-2"
                         >
                             <Icon name="trash" size={14} strokeWidth={2} />
-                            Delete
+                            <Trans>Delete</Trans>
                         </button>
                     </div>
                 </div>
             </Panel>
 
             <Panel>
-                <SectionHead title="Linked bank accounts" />
+                <SectionHead title={<Trans>Linked bank accounts</Trans>} />
                 <LinkedBankAccountsSection owner={{ kind: 'counterparty', id: cp.id }} />
             </Panel>
 
             <Panel>
                 <SectionHead
-                    title="Journal entries"
-                    subtitle={`Every entry referencing ${cp.name}.`}
+                    title={<Trans>Journal entries</Trans>}
+                    subtitle={<Trans>Every entry referencing {cp.name}.</Trans>}
                 />
                 <JournalEntriesSection
                     counterpartyId={cp.id}
@@ -139,6 +141,7 @@ function JournalEntriesSection({
     page: number;
     onPageChange: (page: number) => void;
 }) {
+    const { t } = useLingui();
     const skip = (page - 1) * PAGE_SIZE;
     const entries = useJournalEntries(skip, PAGE_SIZE, '', { counterpartyId });
     const accounts = useAccounts();
@@ -161,7 +164,7 @@ function JournalEntriesSection({
     if (entries.isError) {
         return (
             <ErrorState
-                message="Couldn't load journal entries."
+                message={t`Couldn't load journal entries.`}
                 onRetry={() => void entries.refetch()}
             />
         );
@@ -170,7 +173,7 @@ function JournalEntriesSection({
     if (entries.data.items.length === 0 && page === 1) {
         return (
             <div className="py-6 text-center text-sm text-fg-3">
-                No journal entries yet for this counterparty.
+                <Trans>No journal entries yet for this counterparty.</Trans>
             </div>
         );
     }
@@ -178,10 +181,18 @@ function JournalEntriesSection({
     return (
         <div className="flex flex-col">
             <div className="hidden lg:grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px] gap-3 px-2 pb-2 text-xs text-fg-3 uppercase tracking-wider border-b border-border-soft">
-                <span>Date</span>
-                <span>Description</span>
-                <span>From → To</span>
-                <span className="text-right">Amount</span>
+                <span>
+                    <Trans>Date</Trans>
+                </span>
+                <span>
+                    <Trans>Description</Trans>
+                </span>
+                <span>
+                    <Trans>From</Trans> → <Trans>To</Trans>
+                </span>
+                <span className="text-right">
+                    <Trans>Amount</Trans>
+                </span>
             </div>
             {entries.data.items.map(entry => (
                 <CounterpartyEntryRow key={entry.id} entry={entry} accountById={accountById} />
@@ -237,7 +248,13 @@ function FromToCell({
     lineCount: number;
 }) {
     if (!projection.isSimplifiable) {
-        return <span className="text-xs text-fg-3 truncate">Split ({lineCount} lines)</span>;
+        return (
+            <span className="text-xs text-fg-3 truncate">
+                <Trans>
+                    Split (<Plural value={lineCount} one="# line" other="# lines" />)
+                </Trans>
+            </span>
+        );
     }
     const fromLabel = formatLegLabel(projection.fromLegs);
     const toLabel = formatLegLabel(projection.toLegs);
@@ -259,6 +276,7 @@ function DeleteCounterpartyDialog({
     name: string;
     onClose: () => void;
 }) {
+    const { t } = useLingui();
     const del = useDeleteCounterparty();
     const toast = useToast();
     const navigate = useNavigate();
@@ -268,7 +286,7 @@ function DeleteCounterpartyDialog({
         setError(null);
         try {
             await del.mutateAsync(id);
-            toast.success(`Deleted “${name}”.`);
+            toast.success(t`Deleted “${name}”.`);
             await navigate({ to: '/counterparties', search: { page: 1, q: '' } });
         } catch (err) {
             handleActionError(err, { setError, toast: toast.error });
@@ -280,9 +298,9 @@ function DeleteCounterpartyDialog({
             open
             onClose={onClose}
             onConfirm={() => void onConfirm()}
-            title={`Delete “${name}”?`}
-            message="This can't be undone."
-            confirmLabel="Delete"
+            title={t`Delete “${name}”?`}
+            message={t`This can't be undone.`}
+            confirmLabel={t`Delete`}
             variant="destructive"
             busy={del.isPending}
             error={error}

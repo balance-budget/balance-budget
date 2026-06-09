@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Form } from 'react-aria-components';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useNavigate } from '@tanstack/react-router';
 import { useLogin } from '../api/auth';
 import { FormErrorBanner } from '../components/FormErrorBanner';
@@ -9,6 +10,7 @@ import { ApiError } from '../lib/http';
 import logo from '../assets/logo.svg';
 
 export function Login({ returnTo }: { returnTo?: string }) {
+    const { t } = useLingui();
     const navigate = useNavigate();
     const login = useLogin();
     const [email, setEmail] = useState('');
@@ -26,7 +28,7 @@ export function Login({ returnTo }: { returnTo?: string }) {
     const errorMessage =
         login.error instanceof ApiError
             ? login.error.status === 401
-                ? 'Email or password is incorrect.'
+                ? t`Email or password is incorrect.`
                 : login.error.message
             : login.error instanceof Error
               ? login.error.message
@@ -41,8 +43,12 @@ export function Login({ returnTo }: { returnTo?: string }) {
                 </span>
             </header>
             <div className="px-5 pt-1 pb-5">
-                <h1 className="text-base font-semibold leading-snug mb-1">Sign in</h1>
-                <p className="text-sm text-fg-3 mb-4">Enter your email and password to continue.</p>
+                <h1 className="text-base font-semibold leading-snug mb-1">
+                    <Trans>Sign in</Trans>
+                </h1>
+                <p className="text-sm text-fg-3 mb-4">
+                    <Trans>Enter your email and password to continue.</Trans>
+                </p>
                 <Form
                     onSubmit={e => {
                         e.preventDefault();
@@ -51,7 +57,7 @@ export function Login({ returnTo }: { returnTo?: string }) {
                 >
                     <FormErrorBanner message={errorMessage} />
                     <TextField
-                        label="Email"
+                        label={t`Email`}
                         type="email"
                         isRequired
                         autoComplete="username"
@@ -61,7 +67,7 @@ export function Login({ returnTo }: { returnTo?: string }) {
                         className="mb-3"
                     />
                     <TextField
-                        label="Password"
+                        label={t`Password`}
                         type="password"
                         isRequired
                         autoComplete="current-password"
@@ -75,7 +81,7 @@ export function Login({ returnTo }: { returnTo?: string }) {
                         isDisabled={login.isPending}
                         className="w-full"
                     >
-                        {login.isPending ? 'Signing in…' : 'Sign in'}
+                        {login.isPending ? <Trans>Signing in…</Trans> : <Trans>Sign in</Trans>}
                     </Button>
                 </Form>
             </div>

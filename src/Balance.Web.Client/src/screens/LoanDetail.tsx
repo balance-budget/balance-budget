@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { t as coreT } from '@lingui/core/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useCurrencyCatalog } from '../api/currencies';
 import {
     useDeleteLoan,
@@ -47,6 +49,7 @@ import {
 } from './loanDetail.state';
 
 export function LoanDetail({ id }: { id: LoanId }) {
+    const { t } = useLingui();
     const loan = useLoan(id);
 
     if (loan.isPending) {
@@ -60,7 +63,7 @@ export function LoanDetail({ id }: { id: LoanId }) {
     if (loan.isError) {
         return (
             <Panel>
-                <ErrorState message="Couldn't load this loan." />
+                <ErrorState message={t`Couldn't load this loan.`} />
             </Panel>
         );
     }
@@ -69,6 +72,7 @@ export function LoanDetail({ id }: { id: LoanId }) {
 }
 
 function LoanDetailLoaded({ loan }: { loan: LoanDetailModel }) {
+    const { t } = useLingui();
     const navigate = useNavigate();
     const toast = useToast();
     const deleteLoan = useDeleteLoan();
@@ -104,7 +108,7 @@ function LoanDetailLoaded({ loan }: { loan: LoanDetailModel }) {
             <Panel>
                 <SectionHead
                     title={loan.name}
-                    subtitle={`${loan.lenderName} · interest on ${loan.interestExpenseAccountName}`}
+                    subtitle={t`${loan.lenderName} · interest on ${loan.interestExpenseAccountName}`}
                     action={
                         <div className="flex items-center gap-2">
                             <Button
@@ -114,7 +118,7 @@ function LoanDetailLoaded({ loan }: { loan: LoanDetailModel }) {
                                 }}
                             >
                                 <Icon name="pencil" size={14} strokeWidth={2} />
-                                Edit
+                                <Trans>Edit</Trans>
                             </Button>
                             <Button
                                 variant="secondary"
@@ -123,7 +127,7 @@ function LoanDetailLoaded({ loan }: { loan: LoanDetailModel }) {
                                 }}
                             >
                                 <Icon name="plus" size={14} strokeWidth={2} />
-                                Add part
+                                <Trans>Add part</Trans>
                             </Button>
                             <Button
                                 variant="danger"
@@ -131,36 +135,36 @@ function LoanDetailLoaded({ loan }: { loan: LoanDetailModel }) {
                                     setDeleting(true);
                                 }}
                             >
-                                Delete
+                                <Trans>Delete</Trans>
                             </Button>
                         </div>
                     }
                 />
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <Kpi label="Outstanding">
+                    <Kpi label={t`Outstanding`}>
                         <Amount
                             minor={loan.outstandingBalance}
                             currencyCode={loan.currencyCode}
                             size="medium"
                         />
                     </Kpi>
-                    <Kpi label="Monthly payment">
+                    <Kpi label={t`Monthly payment`}>
                         <Amount
                             minor={loan.currentPayment}
                             currencyCode={loan.currencyCode}
                             size="medium"
                         />
                     </Kpi>
-                    <Kpi label="Weighted rate">
+                    <Kpi label={t`Weighted rate`}>
                         <span className="text-xl font-medium tabular-nums">
                             {loan.weightedAnnualRatePercent === null
                                 ? '—'
                                 : `${loan.weightedAnnualRatePercent.toFixed(2)}%`}
                         </span>
                     </Kpi>
-                    <Kpi label="Status">
+                    <Kpi label={t`Status`}>
                         <span className="text-xl font-medium">
-                            {loan.isEnded ? 'Ended' : 'Active'}
+                            {loan.isEnded ? <Trans>Ended</Trans> : <Trans>Active</Trans>}
                         </span>
                     </Kpi>
                 </div>
@@ -168,7 +172,7 @@ function LoanDetailLoaded({ loan }: { loan: LoanDetailModel }) {
                     <div className="mt-3 rounded-lg bg-surface-2 px-3 py-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                         <span className="inline-flex items-center gap-1.5 text-fg-2">
                             <Icon name="landmark" size={13} strokeWidth={2} />
-                            Construction deposit
+                            <Trans>Construction deposit</Trans>
                         </span>
                         <span className="text-fg-3">
                             {loan.constructionDeposit.accountName} ·{' '}
@@ -177,8 +181,10 @@ function LoanDetailLoaded({ loan }: { loan: LoanDetailModel }) {
                                 currencyCode={loan.currencyCode}
                                 size="inline"
                             />{' '}
-                            at {loan.constructionDeposit.annualRatePercent.toFixed(2)}% — interest
-                            offsets the payment until it drains.
+                            <Trans>
+                                at {loan.constructionDeposit.annualRatePercent.toFixed(2)}% —
+                                interest offsets the payment until it drains.
+                            </Trans>
                         </span>
                     </div>
                 )}
@@ -187,13 +193,18 @@ function LoanDetailLoaded({ loan }: { loan: LoanDetailModel }) {
             <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4 items-start">
                 <Panel>
                     <SectionHead
-                        title="Balance & payments"
-                        subtitle="Posted actuals to the left of today, the engine's projection to the right."
+                        title={<Trans>Balance & payments</Trans>}
+                        subtitle={
+                            <Trans>
+                                Posted actuals to the left of today, the engine&apos;s projection to
+                                the right.
+                            </Trans>
+                        }
                     />
                     {projection.isPending ? (
                         <Skeleton className="h-[280px]" />
                     ) : projection.isError ? (
-                        <ErrorState message="Couldn't compute the projection." />
+                        <ErrorState message={t`Couldn't compute the projection.`} />
                     ) : (
                         <LoanChart projection={projection.data} />
                     )}
@@ -201,8 +212,8 @@ function LoanDetailLoaded({ loan }: { loan: LoanDetailModel }) {
 
                 <Panel>
                     <SectionHead
-                        title="What if…"
-                        subtitle="Hypothetical extra repayments — nothing is saved."
+                        title={<Trans>What if…</Trans>}
+                        subtitle={<Trans>Hypothetical extra repayments — nothing is saved.</Trans>}
                     />
                     <Simulator
                         loan={loan}
@@ -215,8 +226,8 @@ function LoanDetailLoaded({ loan }: { loan: LoanDetailModel }) {
 
             <Panel>
                 <SectionHead
-                    title="Parts"
-                    subtitle="Parts — each with its own terms and rate history."
+                    title={<Trans>Parts</Trans>}
+                    subtitle={<Trans>Parts — each with its own terms and rate history.</Trans>}
                 />
                 <PartsTable
                     loan={loan}
@@ -240,8 +251,13 @@ function LoanDetailLoaded({ loan }: { loan: LoanDetailModel }) {
 
             <Panel>
                 <SectionHead
-                    title="Schedule"
-                    subtitle="Past rows are posted actuals; future rows are the projection (the what-if scenario when active)."
+                    title={<Trans>Schedule</Trans>}
+                    subtitle={
+                        <Trans>
+                            Past rows are posted actuals; future rows are the projection (the
+                            what-if scenario when active).
+                        </Trans>
+                    }
                 />
                 {projection.data ? (
                     <ScheduleTable projection={projection.data} />
@@ -297,9 +313,9 @@ function LoanDetailLoaded({ loan }: { loan: LoanDetailModel }) {
             {deletingPart && (
                 <ConfirmDialog
                     open
-                    title={`Delete ${deletingPart.label}?`}
-                    message="The part definition and its rate history are removed. Its account and every posted entry stay untouched — it becomes an ordinary account again."
-                    confirmLabel="Delete part"
+                    title={t`Delete ${deletingPart.label}?`}
+                    message={t`The part definition and its rate history are removed. Its account and every posted entry stay untouched — it becomes an ordinary account again.`}
+                    confirmLabel={t`Delete part`}
                     variant="destructive"
                     busy={deletePart.isPending}
                     onClose={() => {
@@ -312,10 +328,10 @@ function LoanDetailLoaded({ loan }: { loan: LoanDetailModel }) {
                                     id: loan.id,
                                     partId: deletingPart.id,
                                 });
-                                toast.success('Part deleted.');
+                                toast.success(t`Part deleted.`);
                                 setDeletingPart(null);
                             } catch {
-                                toast.error("Couldn't delete the part.");
+                                toast.error(t`Couldn't delete the part.`);
                             }
                         })();
                     }}
@@ -324,9 +340,9 @@ function LoanDetailLoaded({ loan }: { loan: LoanDetailModel }) {
             {deletingRate && (
                 <ConfirmDialog
                     open
-                    title="Delete this rate period?"
-                    message={`The ${deletingRate.rate.annualRatePercent.toFixed(2)}% rate effective ${deletingRate.rate.effectiveDate} is removed from ${deletingRate.part.label}. Projections recompute; posted entries are untouched.`}
-                    confirmLabel="Delete rate"
+                    title={t`Delete this rate period?`}
+                    message={t`The ${deletingRate.rate.annualRatePercent.toFixed(2)}% rate effective ${deletingRate.rate.effectiveDate} is removed from ${deletingRate.part.label}. Projections recompute; posted entries are untouched.`}
+                    confirmLabel={t`Delete rate`}
                     variant="destructive"
                     busy={deleteRate.isPending}
                     onClose={() => {
@@ -340,10 +356,10 @@ function LoanDetailLoaded({ loan }: { loan: LoanDetailModel }) {
                                     partId: deletingRate.part.id,
                                     ratePeriodId: deletingRate.rate.id,
                                 });
-                                toast.success('Rate period deleted.');
+                                toast.success(t`Rate period deleted.`);
                                 setDeletingRate(null);
                             } catch {
-                                toast.error("Couldn't delete the rate period.");
+                                toast.error(t`Couldn't delete the rate period.`);
                             }
                         })();
                     }}
@@ -352,9 +368,9 @@ function LoanDetailLoaded({ loan }: { loan: LoanDetailModel }) {
             {deleting && (
                 <ConfirmDialog
                     open
-                    title="Delete this loan?"
-                    message="The loan definition, its parts, and rate history are removed. The accounts and every posted entry stay untouched."
-                    confirmLabel="Delete loan"
+                    title={t`Delete this loan?`}
+                    message={t`The loan definition, its parts, and rate history are removed. The accounts and every posted entry stay untouched.`}
+                    confirmLabel={t`Delete loan`}
                     variant="destructive"
                     busy={deleteLoan.isPending}
                     onClose={() => {
@@ -364,10 +380,10 @@ function LoanDetailLoaded({ loan }: { loan: LoanDetailModel }) {
                         void (async () => {
                             try {
                                 await deleteLoan.mutateAsync(loan.id);
-                                toast.success('Loan deleted.');
+                                toast.success(t`Loan deleted.`);
                                 await navigate({ to: '/loans' });
                             } catch {
-                                toast.error("Couldn't delete the loan.");
+                                toast.error(t`Couldn't delete the loan.`);
                             }
                         })();
                     }}
@@ -401,6 +417,7 @@ function PartsTable({
     onEditRate: (partId: LoanPartId, rate: LoanRatePeriod) => void;
     onDeleteRate: (part: LoanPart, rate: LoanRatePeriod) => void;
 }) {
+    const { t } = useLingui();
     const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set());
     const canDeletePart = loan.parts.length > 1;
 
@@ -426,7 +443,9 @@ function PartsTable({
                                     toggle(part.id);
                                 }}
                                 className="text-fg-3 hover:text-fg-1"
-                                aria-label={isOpen ? 'Collapse rate history' : 'Show rate history'}
+                                aria-label={
+                                    isOpen ? t`Collapse rate history` : t`Show rate history`
+                                }
                             >
                                 <Icon
                                     name={isOpen ? 'chevron-down' : 'chevron-right'}
@@ -440,9 +459,9 @@ function PartsTable({
                                 </div>
                                 <div className="text-xs text-fg-3 truncate">{part.accountName}</div>
                             </div>
-                            <PartStat label="Type" value={partTypeLabel(part.repaymentType)} />
+                            <PartStat label={t`Type`} value={partTypeLabel(part.repaymentType)} />
                             <PartStat
-                                label="Outstanding"
+                                label={t`Outstanding`}
                                 value={
                                     <Amount
                                         minor={part.outstandingBalance}
@@ -452,21 +471,21 @@ function PartsTable({
                                 }
                             />
                             <PartStat
-                                label="Rate"
+                                label={t`Rate`}
                                 value={
                                     part.currentAnnualRatePercent === null
                                         ? '—'
                                         : `${part.currentAnnualRatePercent.toFixed(2)}%${fixedUntilSuffix(part)}`
                                 }
                             />
-                            <PartStat label="Runs until" value={part.endDate} />
+                            <PartStat label={t`Runs until`} value={part.endDate} />
                             <div className="flex items-center gap-1">
                                 <Button
                                     variant="ghost"
                                     onPress={() => {
                                         onEditPart(part);
                                     }}
-                                    aria-label="Edit part"
+                                    aria-label={t`Edit part`}
                                 >
                                     <Icon name="pencil" size={14} strokeWidth={2} />
                                 </Button>
@@ -478,8 +497,8 @@ function PartsTable({
                                     isDisabled={!canDeletePart}
                                     aria-label={
                                         canDeletePart
-                                            ? 'Delete part'
-                                            : 'A loan must keep at least one part'
+                                            ? t`Delete part`
+                                            : t`A loan must keep at least one part`
                                     }
                                 >
                                     <Icon name="trash" size={14} strokeWidth={2} />
@@ -513,6 +532,7 @@ function RateTimeline({
     onEditRate: (partId: LoanPartId, rate: LoanRatePeriod) => void;
     onDeleteRate: (part: LoanPart, rate: LoanRatePeriod) => void;
 }) {
+    const { t } = useLingui();
     const today = todayIso();
     const sorted = [...part.ratePeriods].sort((a, b) =>
         a.effectiveDate.localeCompare(b.effectiveDate),
@@ -536,17 +556,17 @@ function RateTimeline({
                                 {rate.annualRatePercent.toFixed(2)}%
                             </span>
                             <span className="text-fg-3 truncate">
-                                from {rate.effectiveDate}
-                                {rate.fixedUntil ? ` · fixed until ${rate.fixedUntil}` : ''}
+                                <Trans>from {rate.effectiveDate}</Trans>
+                                {rate.fixedUntil ? t` · fixed until ${rate.fixedUntil}` : ''}
                             </span>
                             {inForce && (
                                 <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-brand-primary/15 text-brand-primary">
-                                    In force
+                                    <Trans>In force</Trans>
                                 </span>
                             )}
                             {future && (
                                 <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-surface-3 text-fg-3">
-                                    Future
+                                    <Trans>Future</Trans>
                                 </span>
                             )}
                         </div>
@@ -555,7 +575,7 @@ function RateTimeline({
                             onPress={() => {
                                 onEditRate(part.id, rate);
                             }}
-                            aria-label="Edit rate period"
+                            aria-label={t`Edit rate period`}
                         >
                             <Icon name="pencil" size={13} strokeWidth={2} />
                         </Button>
@@ -567,8 +587,8 @@ function RateTimeline({
                             isDisabled={!canDeleteRate}
                             aria-label={
                                 canDeleteRate
-                                    ? 'Delete rate period'
-                                    : 'A part must keep at least one rate period'
+                                    ? t`Delete rate period`
+                                    : t`A part must keep at least one rate period`
                             }
                         >
                             <Icon name="trash" size={13} strokeWidth={2} />
@@ -584,7 +604,7 @@ function RateTimeline({
                     }}
                 >
                     <Icon name="percent" size={13} strokeWidth={2} />
-                    New rate
+                    <Trans>New rate</Trans>
                 </Button>
             </div>
         </div>
@@ -595,11 +615,11 @@ function fixedUntilSuffix(part: LoanPart): string {
     const current = [...part.ratePeriods]
         .filter(r => r.effectiveDate <= todayIso())
         .sort((a, b) => b.effectiveDate.localeCompare(a.effectiveDate))[0];
-    return current?.fixedUntil ? ` · fixed until ${current.fixedUntil}` : '';
+    return current?.fixedUntil ? coreT` · fixed until ${current.fixedUntil}` : '';
 }
 
 function partTypeLabel(type: LoanPart['repaymentType']): string {
-    return type === 'InterestOnly' ? 'Interest-only' : type;
+    return type === 'InterestOnly' ? coreT`Interest-only` : type;
 }
 
 function PartStat({ label, value }: { label: string; value: React.ReactNode }) {
@@ -624,6 +644,7 @@ function Simulator({
     onChange: (next: SimulatorState) => void;
     totals: LoanProjection['totals'];
 }) {
+    const { t } = useLingui();
     const catalog = useCurrencyCatalog();
     const partItems = loan.parts.map(p => ({
         key: p.id,
@@ -649,12 +670,12 @@ function Simulator({
                                 ),
                             });
                         }}
-                        placeholder="Loan part…"
-                        ariaLabel="Loan part"
+                        placeholder={t`Loan part…`}
+                        ariaLabel={t`Loan part`}
                     />
                     <div className="grid grid-cols-2 gap-2">
                         <DatePicker
-                            aria-label="Repayment date"
+                            aria-label={t`Repayment date`}
                             value={repayment.date}
                             onChange={date => {
                                 onChange({
@@ -666,7 +687,7 @@ function Simulator({
                             }}
                         />
                         <NumberField
-                            aria-label="Extra repayment amount"
+                            aria-label={t`Extra repayment amount`}
                             value={repayment.amount ?? Number.NaN}
                             onChange={amount => {
                                 onChange({
@@ -684,7 +705,7 @@ function Simulator({
                                 currency: loan.currencyCode,
                                 currencyDisplay: 'narrowSymbol',
                             }}
-                            placeholder="Amount"
+                            placeholder={t`Amount`}
                             inputClassName="tabular-nums"
                         />
                     </div>
@@ -701,7 +722,7 @@ function Simulator({
                     }}
                 >
                     <Icon name="plus" size={13} strokeWidth={2} />
-                    Add repayment
+                    <Trans>Add repayment</Trans>
                 </Button>
                 {simulator.repayments.length > 1 && (
                     <Button
@@ -713,15 +734,17 @@ function Simulator({
                             });
                         }}
                     >
-                        Remove last
+                        <Trans>Remove last</Trans>
                     </Button>
                 )}
             </div>
 
             <div className="flex flex-col gap-1">
-                <span className="text-xs font-medium text-fg-2">After repaying extra</span>
+                <span className="text-xs font-medium text-fg-2">
+                    <Trans>After repaying extra</Trans>
+                </span>
                 <Select
-                    aria-label="Repayment policy"
+                    aria-label={t`Repayment policy`}
                     value={simulator.policy}
                     onChange={key => {
                         if (key !== null) {
@@ -732,35 +755,42 @@ function Simulator({
                         }
                     }}
                 >
-                    <SelectItem id="LowerPayment">Lower the monthly payment (default)</SelectItem>
-                    <SelectItem id="KeepPayment">Keep the payment, finish earlier</SelectItem>
+                    <SelectItem
+                        id="LowerPayment"
+                        textValue={t`Lower the monthly payment (default)`}
+                    >
+                        <Trans>Lower the monthly payment (default)</Trans>
+                    </SelectItem>
+                    <SelectItem id="KeepPayment" textValue={t`Keep the payment, finish earlier`}>
+                        <Trans>Keep the payment, finish earlier</Trans>
+                    </SelectItem>
                 </Select>
             </div>
 
             <TextField
-                label="Assumed rate after fixation (%)"
+                label={t`Assumed rate after fixation (%)`}
                 value={simulator.assumedRatePercent}
                 onChange={assumedRatePercent => {
                     onChange({ ...simulator, assumedRatePercent });
                 }}
-                placeholder="Optional"
+                placeholder={t`Optional`}
                 inputClassName="tabular-nums"
             />
 
             {totals && (
                 <div className="rounded-lg bg-surface-2 p-3 flex flex-col gap-1.5 text-sm">
                     <TotalsRow
-                        label="Interest saved"
+                        label={t`Interest saved`}
                         value={formatMoney(totals.interestSaved, loan.currencyCode, catalog)}
                     />
                     <TotalsRow
-                        label="Payment change"
+                        label={t`Payment change`}
                         value={formatMoney(totals.nextPaymentDelta, loan.currencyCode, catalog, {
                             sign: true,
                         })}
                     />
                     <TotalsRow
-                        label="End date"
+                        label={t`End date`}
                         value={
                             totals.scenarioEndDate === totals.baselineEndDate
                                 ? (totals.baselineEndDate ?? '—')
@@ -791,7 +821,11 @@ function ScheduleTable({ projection }: { projection: LoanProjection }) {
     const catalog = useCurrencyCatalog();
 
     if (years.length === 0) {
-        return <div className="text-sm text-fg-3">Nothing posted or projected yet.</div>;
+        return (
+            <div className="text-sm text-fg-3">
+                <Trans>Nothing posted or projected yet.</Trans>
+            </div>
+        );
     }
 
     const fmt = (minor: number) => formatMoney(minor, projection.currencyCode, catalog);
@@ -801,7 +835,9 @@ function ScheduleTable({ projection }: { projection: LoanProjection }) {
             <table className="w-full text-sm tabular-nums">
                 <thead>
                     <tr className="text-left text-xs text-fg-3">
-                        <th className="py-1.5 pr-3 font-medium">Period</th>
+                        <th className="py-1.5 pr-3 font-medium">
+                            <Trans>Period</Trans>
+                        </th>
                         {projection.parts.map(p => (
                             <th
                                 key={p.id}
@@ -812,7 +848,7 @@ function ScheduleTable({ projection }: { projection: LoanProjection }) {
                             </th>
                         ))}
                         <th className="py-1.5 pl-3 font-medium text-right border-l border-border-soft">
-                            Balance
+                            <Trans>Balance</Trans>
                         </th>
                     </tr>
                     <tr className="text-left text-[11px] text-fg-3">
@@ -850,9 +886,15 @@ function ScheduleTable({ projection }: { projection: LoanProjection }) {
 function SubHeaders() {
     return (
         <>
-            <th className="py-1 px-3 font-normal border-l border-border-soft">Interest</th>
-            <th className="py-1 px-3 font-normal">Principal</th>
-            <th className="py-1 px-3 font-normal">Balance</th>
+            <th className="py-1 px-3 font-normal border-l border-border-soft">
+                <Trans>Interest</Trans>
+            </th>
+            <th className="py-1 px-3 font-normal">
+                <Trans>Principal</Trans>
+            </th>
+            <th className="py-1 px-3 font-normal">
+                <Trans>Balance</Trans>
+            </th>
         </>
     );
 }
@@ -888,7 +930,7 @@ function YearRows({
                         {year.year.toString()}
                         {year.projected && (
                             <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-surface-2 text-fg-3">
-                                Projected
+                                <Trans>Projected</Trans>
                             </span>
                         )}
                     </span>
@@ -897,7 +939,9 @@ function YearRows({
                     className="py-2 px-3 text-fg-2 border-l border-border-soft"
                     colSpan={parts.length * 3}
                 >
-                    {fmt(year.totalInterest)} interest · {fmt(year.totalPrincipal)} principal
+                    <Trans>
+                        {fmt(year.totalInterest)} interest · {fmt(year.totalPrincipal)} principal
+                    </Trans>
                 </td>
                 <td className="py-2 pl-3 text-right font-medium border-l border-border-soft">
                     {lastMonth ? fmt(lastMonth.totalBalance) : '—'}

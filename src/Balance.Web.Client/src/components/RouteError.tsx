@@ -1,4 +1,5 @@
 import { Button } from 'react-aria-components';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useRouter, type ErrorComponentProps } from '@tanstack/react-router';
 
 /**
@@ -8,12 +9,15 @@ import { useRouter, type ErrorComponentProps } from '@tanstack/react-router';
  */
 export function RouteError({ error, reset }: ErrorComponentProps) {
     const router = useRouter();
+    const { t } = useLingui();
     return (
         <div className="flex-1 flex items-center justify-center p-8">
             <div className="max-w-md flex flex-col items-center gap-4 text-center">
-                <h2 className="text-xl font-semibold text-fg-1">Something went wrong</h2>
+                <h2 className="text-xl font-semibold text-fg-1">
+                    <Trans>Something went wrong</Trans>
+                </h2>
                 <p className="text-sm text-fg-3">
-                    {error.message || 'An unexpected error occurred while loading this page.'}
+                    {error.message || t`An unexpected error occurred while loading this page.`}
                 </p>
                 <Button
                     onPress={() => {
@@ -22,7 +26,7 @@ export function RouteError({ error, reset }: ErrorComponentProps) {
                     }}
                     className="h-9 px-4 inline-flex items-center rounded-lg bg-surface-2 border border-border-soft text-sm font-medium text-fg-1 cursor-pointer outline-none data-[hovered]:bg-surface-3 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary"
                 >
-                    Try again
+                    <Trans>Try again</Trans>
                 </Button>
             </div>
         </div>

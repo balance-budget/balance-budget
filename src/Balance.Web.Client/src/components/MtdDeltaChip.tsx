@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro';
 import type { Money } from '../api/accounts';
 import { cx } from '../lib/cx';
 
@@ -47,7 +48,9 @@ export function MtdDeltaChip({ current, prior, polarity }: Props) {
             )}
         >
             <span className="text-[9px]">{arrow}</span>
-            <span>{Math.abs(percent)}% vs Last month</span>
+            <span>
+                <Trans>{Math.abs(percent)}% vs Last month</Trans>
+            </span>
         </span>
     );
 }
