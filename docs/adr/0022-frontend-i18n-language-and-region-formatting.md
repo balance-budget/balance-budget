@@ -143,3 +143,14 @@ English/invariant.
   editable-widget formatting is limited to what a single tag can express.
 - Adding a language later (`nl`) is: a second `.po`, a language option, and
   translating RAC's built-ins comes free.
+
+## Follow-up
+
+- **Dutch (`nl-NL`) and Traditional Chinese (`zh-TW`) added** — the predicted
+  "second catalog plus a language option" path was exercised verbatim: two
+  `src/locales/{locale}/messages.po` catalogs, both registered in
+  `lingui.config.ts` and statically imported in `src/i18n/i18n.ts` so
+  `activateLanguage` stays synchronous, plus an enabled Language `<Select>` in
+  Preferences. `language` remains opaque to the backend (length-validated only),
+  so no migration was needed. Language names render each in their own script
+  (`English` / `Nederlands` / `繁體中文`) and are intentionally not translated.
