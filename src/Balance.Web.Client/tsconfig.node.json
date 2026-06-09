@@ -25,5 +25,5 @@
         "erasableSyntaxOnly": true,
         "noFallthroughCasesInSwitch": true
     },
-    "include": ["vite.config.ts", "vite-plugin-openapi-codegen.ts"]
+    "include": ["vite.config.ts", "vite-plugin-openapi-codegen.ts", "lingui.config.ts"]
 }
