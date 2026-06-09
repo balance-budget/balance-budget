@@ -328,7 +328,7 @@ internal static class DevelopmentSeedData
                         monthStart,
                         s.Day,
                         d =>
-                            Categorised(
+                            Categorized(
                                 checkingBank,
                                 checking,
                                 s.Contra,
@@ -345,7 +345,7 @@ internal static class DevelopmentSeedData
                             monthStart,
                             p.Day,
                             d =>
-                                Categorised(
+                                Categorized(
                                     checkingBank,
                                     checking,
                                     p.Contra,
@@ -367,7 +367,7 @@ internal static class DevelopmentSeedData
                     monthStart,
                     27,
                     d =>
-                        Categorised(
+                        Categorized(
                             checkingBank,
                             checking,
                             creditCard,
@@ -390,7 +390,7 @@ internal static class DevelopmentSeedData
                     monthStart,
                     25,
                     d =>
-                        Categorised(
+                        Categorized(
                             checkingBank,
                             checking,
                             salary,
@@ -467,10 +467,10 @@ internal static class DevelopmentSeedData
             };
         }
 
-        // A categorised bank row: a balanced entry whose bank-side line is Cleared (or Reconciled),
+        // A categorized bank row: a balanced entry whose bank-side line is Cleared (or Reconciled),
         // plus the imported BankTransaction attached to it. The bank-tx amount equals the bank-side
         // line amount under the deliberate raw-equality match (ADR-0012).
-        private void Categorised(
+        private void Categorized(
             BankAccount bank,
             Account bankSide,
             Account contra,
@@ -570,7 +570,7 @@ internal static class DevelopmentSeedData
 
         // A loan payment in its loan-aware posted shape (ADR-0025): the single bank debit
         // covering every part, with each counter-line attributed to its Loan Part. The bank-tx
-        // carries the lender's IBAN so re-categorising it later resolves the hint again.
+        // carries the lender's IBAN so re-categorizing it later resolves the hint again.
         private void LoanPayment(
             BankAccount bank,
             Account bankSide,

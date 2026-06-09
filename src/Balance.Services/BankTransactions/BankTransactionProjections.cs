@@ -42,7 +42,7 @@ internal static class BankTransactionProjections
     private static readonly Func<BankTransaction, BankTransactionOutput> ToOutputCompiled =
         ToOutput.Compile();
 
-    /// <summary>In-memory equivalent of <see cref="ToOutput"/> for already-materialised entities.</summary>
+    /// <summary>In-memory equivalent of <see cref="ToOutput"/> for already-materialized entities.</summary>
     public static BankTransactionOutput ToOutputInMemory(BankTransaction bankTransaction) =>
         ToOutputCompiled(bankTransaction);
 

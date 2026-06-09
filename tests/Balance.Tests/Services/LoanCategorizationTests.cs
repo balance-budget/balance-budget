@@ -8,12 +8,12 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Balance.Tests.Services;
 
-internal sealed class LoanCategorisationTests : EndpointsTestsBase
+internal sealed class LoanCategorizationTests : EndpointsTestsBase
 {
     private static readonly CurrencyCode Eur = new("EUR");
 
     [Test]
-    public async Task Loan_aware_categorise_posts_attributed_payment_with_correct_entry_shape(
+    public async Task Loan_aware_categorize_posts_attributed_payment_with_correct_entry_shape(
         CancellationToken cancellationToken
     )
     {
@@ -28,7 +28,7 @@ internal sealed class LoanCategorisationTests : EndpointsTestsBase
         );
 
         // Scoped to a subset of parts: only part A's principal and interest are posted.
-        var result = await fixture.CategorisationService.CategorizeAsync(
+        var result = await fixture.CategorizationService.CategorizeAsync(
             bankTransaction.Id,
             new CategorizeBankTransactionInput(
                 CounterpartyId: fixture.LenderId,
@@ -81,7 +81,7 @@ internal sealed class LoanCategorisationTests : EndpointsTestsBase
     }
 
     [Test]
-    public async Task Plain_categorise_refuses_loan_managed_target(
+    public async Task Plain_categorize_refuses_loan_managed_target(
         CancellationToken cancellationToken
     )
     {
@@ -94,13 +94,13 @@ internal sealed class LoanCategorisationTests : EndpointsTestsBase
             cancellationToken
         );
 
-        var result = await fixture.CategorisationService.CategorizeAsync(
+        var result = await fixture.CategorizationService.CategorizeAsync(
             bankTransaction.Id,
             new CategorizeBankTransactionInput(
                 CounterpartyId: fixture.LenderId,
                 NewCounterparty: null,
                 Date: bankTransaction.BookingDate,
-                Description: "Plain categorise onto a part account",
+                Description: "Plain categorize onto a part account",
                 Lines:
                 [
                     new CategorizeBankTransactionLineInput(loan.Parts[0].AccountId, 120_000, null),
@@ -224,8 +224,8 @@ internal sealed class LoanCategorisationTests : EndpointsTestsBase
         var bankTransactionService =
             scope.ServiceProvider.GetRequiredService<IBankTransactionService>();
         var counterpartyService = scope.ServiceProvider.GetRequiredService<ICounterpartyService>();
-        var categorisationService =
-            scope.ServiceProvider.GetRequiredService<IBankTransactionCategorisationService>();
+        var categorizationService =
+            scope.ServiceProvider.GetRequiredService<IBankTransactionCategorizationService>();
         var loanService = scope.ServiceProvider.GetRequiredService<ILoanService>();
         var projectionService = scope.ServiceProvider.GetRequiredService<ILoanProjectionService>();
 
@@ -293,7 +293,7 @@ internal sealed class LoanCategorisationTests : EndpointsTestsBase
         return new Fixture(
             scope,
             bankTransactionService,
-            categorisationService,
+            categorizationService,
             loanService,
             projectionService,
             checking.Id,
@@ -315,7 +315,7 @@ internal sealed class LoanCategorisationTests : EndpointsTestsBase
     private sealed record Fixture(
         AsyncServiceScope Scope,
         IBankTransactionService BankTransactionService,
-        IBankTransactionCategorisationService CategorisationService,
+        IBankTransactionCategorizationService CategorizationService,
         ILoanService LoanService,
         ILoanProjectionService ProjectionService,
         AccountId CheckingAccountId,

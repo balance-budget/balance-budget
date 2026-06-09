@@ -31,7 +31,7 @@ internal static class AdminUserEndpoints
     {
         var now = timeProvider.GetUtcNow();
         // SQLite cannot translate a DateTimeOffset comparison on LockoutEnd in the projection,
-        // so materialise the rows first and compute IsActive in memory.
+        // so materialize the rows first and compute IsActive in memory.
         var rows = await db
             .Users.AsNoTracking()
             .OrderBy(u => u.Email)

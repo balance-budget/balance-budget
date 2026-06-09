@@ -74,7 +74,7 @@ internal sealed class IngSavingsAccountTransactionExtractor : IBankTransactionEx
             return Array.Empty<BankTransaction>();
 
         var ownIdentifiers = OwnIdentifiers(bankAccount);
-        var firstAccount = NormaliseAccount(rows[0].Account);
+        var firstAccount = NormalizeAccount(rows[0].Account);
 
         if (!ownIdentifiers.Contains(firstAccount))
         {
@@ -87,7 +87,7 @@ internal sealed class IngSavingsAccountTransactionExtractor : IBankTransactionEx
 
         foreach (var row in rows)
         {
-            if (NormaliseAccount(row.Account) != firstAccount)
+            if (NormalizeAccount(row.Account) != firstAccount)
             {
                 return new InvariantError(
                     ErrorCodes.ImportAccountColumnDivergence,
@@ -152,7 +152,7 @@ internal sealed class IngSavingsAccountTransactionExtractor : IBankTransactionEx
             // account, resolved from its IBAN in the 'Counterparty' column, not by name.
             CounterpartyName = null,
             CounterpartyAccountNumber = NullIfBlank(row.CounterParty),
-            RawSource = RowHasher.Normalise(row.RawRecord),
+            RawSource = RowHasher.Normalize(row.RawRecord),
             RowHash = RowHasher.Hash(row.RawRecord),
             ImporterKey = ImporterKey,
             Metadata = BuildMetadata(row),
@@ -200,9 +200,9 @@ internal sealed class IngSavingsAccountTransactionExtractor : IBankTransactionEx
     {
         var identifiers = new HashSet<string>(StringComparer.Ordinal);
         if (!string.IsNullOrWhiteSpace(bankAccount.Iban))
-            identifiers.Add(NormaliseAccount(bankAccount.Iban));
+            identifiers.Add(NormalizeAccount(bankAccount.Iban));
         if (!string.IsNullOrWhiteSpace(bankAccount.AccountNumber))
-            identifiers.Add(NormaliseAccount(bankAccount.AccountNumber));
+            identifiers.Add(NormalizeAccount(bankAccount.AccountNumber));
         return identifiers;
     }
 
@@ -210,7 +210,7 @@ internal sealed class IngSavingsAccountTransactionExtractor : IBankTransactionEx
     // the current-account side emits the same number contiguous (e.g. "D59590523"). Strip
     // spaces and dashes and uppercase so both forms compare equal — keeping the ADR 0012
     // self-transfer Attach symmetric across the current- and savings-account imports.
-    private static string NormaliseAccount(string? value) =>
+    private static string NormalizeAccount(string? value) =>
         value is null
             ? string.Empty
             : value

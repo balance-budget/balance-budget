@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Balance.Tests.Services;
 
-internal sealed class BankTransactionCategorisationServiceTests : EndpointsTestsBase
+internal sealed class BankTransactionCategorizationServiceTests : EndpointsTestsBase
 {
     [Test]
     public async Task CategorizeAsync_happy_path_with_existing_counterparty_creates_balanced_entry(
@@ -36,7 +36,7 @@ internal sealed class BankTransactionCategorisationServiceTests : EndpointsTests
             cancellationToken
         );
 
-        var result = await fixture.CategorisationService.CategorizeAsync(
+        var result = await fixture.CategorizationService.CategorizeAsync(
             bankTransaction.Id,
             new CategorizeBankTransactionInput(
                 CounterpartyId: counterparty.Id,
@@ -88,7 +88,7 @@ internal sealed class BankTransactionCategorisationServiceTests : EndpointsTests
             cancellationToken
         );
 
-        var result = await fixture.CategorisationService.CategorizeAsync(
+        var result = await fixture.CategorizationService.CategorizeAsync(
             bankTransaction.Id,
             new CategorizeBankTransactionInput(
                 CounterpartyId: null,
@@ -138,7 +138,7 @@ internal sealed class BankTransactionCategorisationServiceTests : EndpointsTests
             cancellationToken
         );
 
-        var result = await fixture.CategorisationService.CategorizeAsync(
+        var result = await fixture.CategorizationService.CategorizeAsync(
             bankTransaction.Id,
             new CategorizeBankTransactionInput(
                 CounterpartyId: null,
@@ -195,7 +195,7 @@ internal sealed class BankTransactionCategorisationServiceTests : EndpointsTests
             cancellationToken
         );
 
-        var result = await fixture.CategorisationService.CategorizeAsync(
+        var result = await fixture.CategorizationService.CategorizeAsync(
             bankTransaction.Id,
             new CategorizeBankTransactionInput(
                 CounterpartyId: counterparty.Id,
@@ -241,7 +241,7 @@ internal sealed class BankTransactionCategorisationServiceTests : EndpointsTests
             cancellationToken
         );
 
-        var result = await fixture.CategorisationService.CategorizeAsync(
+        var result = await fixture.CategorizationService.CategorizeAsync(
             bankTransaction.Id,
             new CategorizeBankTransactionInput(
                 CounterpartyId: counterparty.Id,
@@ -258,7 +258,7 @@ internal sealed class BankTransactionCategorisationServiceTests : EndpointsTests
     }
 
     [Test]
-    public async Task CategorizeAsync_already_categorised_returns_conflict(
+    public async Task CategorizeAsync_already_categorized_returns_conflict(
         CancellationToken cancellationToken
     )
     {
@@ -281,7 +281,7 @@ internal sealed class BankTransactionCategorisationServiceTests : EndpointsTests
             cancellationToken
         );
 
-        var first = await fixture.CategorisationService.CategorizeAsync(
+        var first = await fixture.CategorizationService.CategorizeAsync(
             bankTransaction.Id,
             new CategorizeBankTransactionInput(
                 CounterpartyId: counterparty.Id,
@@ -294,7 +294,7 @@ internal sealed class BankTransactionCategorisationServiceTests : EndpointsTests
         );
         await Assert.That(first.IsSuccess).IsTrue();
 
-        var second = await fixture.CategorisationService.CategorizeAsync(
+        var second = await fixture.CategorizationService.CategorizeAsync(
             bankTransaction.Id,
             new CategorizeBankTransactionInput(
                 CounterpartyId: counterparty.Id,
@@ -309,7 +309,7 @@ internal sealed class BankTransactionCategorisationServiceTests : EndpointsTests
         await Assert.That(second.IsFailure).IsTrue();
         await Assert.That(second.Error).IsTypeOf<ConflictError>();
         var conflict = (ConflictError)second.Error!;
-        await Assert.That(conflict.Code).IsEqualTo(ErrorCodes.BankTransactionAlreadyCategorised);
+        await Assert.That(conflict.Code).IsEqualTo(ErrorCodes.BankTransactionAlreadyCategorized);
     }
 
     [Test]
@@ -343,7 +343,7 @@ internal sealed class BankTransactionCategorisationServiceTests : EndpointsTests
         );
         await Assert.That(dismissResult.IsSuccess).IsTrue();
 
-        var result = await fixture.CategorisationService.CategorizeAsync(
+        var result = await fixture.CategorizationService.CategorizeAsync(
             bankTransaction.Id,
             new CategorizeBankTransactionInput(
                 CounterpartyId: counterparty.Id,
@@ -379,7 +379,7 @@ internal sealed class BankTransactionCategorisationServiceTests : EndpointsTests
             cancellationToken
         );
 
-        var result = await fixture.CategorisationService.CategorizeAsync(
+        var result = await fixture.CategorizationService.CategorizeAsync(
             new BankTransactionId(Guid.NewGuid()),
             new CategorizeBankTransactionInput(
                 CounterpartyId: counterparty.Id,
@@ -414,7 +414,7 @@ internal sealed class BankTransactionCategorisationServiceTests : EndpointsTests
             cancellationToken
         );
 
-        var result = await fixture.CategorisationService.CategorizeAsync(
+        var result = await fixture.CategorizationService.CategorizeAsync(
             bankTransaction.Id,
             new CategorizeBankTransactionInput(
                 CounterpartyId: null,
@@ -468,7 +468,7 @@ internal sealed class BankTransactionCategorisationServiceTests : EndpointsTests
             cancellationToken
         );
 
-        var result = await fixture.CategorisationService.CategorizeAsync(
+        var result = await fixture.CategorizationService.CategorizeAsync(
             bankTransaction.Id,
             new CategorizeBankTransactionInput(
                 CounterpartyId: counterparty.Id,
@@ -483,7 +483,7 @@ internal sealed class BankTransactionCategorisationServiceTests : EndpointsTests
         await Assert.That(result.IsFailure).IsTrue();
         await Assert.That(result.Error).IsTypeOf<InvariantError>();
         var invariant = (InvariantError)result.Error!;
-        await Assert.That(invariant.Code).IsEqualTo(ErrorCodes.CategoriseCounterpartySelection);
+        await Assert.That(invariant.Code).IsEqualTo(ErrorCodes.CategorizeCounterpartySelection);
     }
 
     private async Task<Fixture> SeedAsync(CancellationToken cancellationToken)
@@ -494,8 +494,8 @@ internal sealed class BankTransactionCategorisationServiceTests : EndpointsTests
         var bankTransactionService =
             scope.ServiceProvider.GetRequiredService<IBankTransactionService>();
         var counterpartyService = scope.ServiceProvider.GetRequiredService<ICounterpartyService>();
-        var categorisationService =
-            scope.ServiceProvider.GetRequiredService<IBankTransactionCategorisationService>();
+        var categorizationService =
+            scope.ServiceProvider.GetRequiredService<IBankTransactionCategorizationService>();
 
         var ownedAccount = (
             await accountService.CreateAsync(
@@ -531,7 +531,7 @@ internal sealed class BankTransactionCategorisationServiceTests : EndpointsTests
             bankAccountService,
             bankTransactionService,
             counterpartyService,
-            categorisationService,
+            categorizationService,
             ownedAccount.Id,
             ownedBankAccount.Id
         );
@@ -543,7 +543,7 @@ internal sealed class BankTransactionCategorisationServiceTests : EndpointsTests
         IBankAccountService BankAccountService,
         IBankTransactionService BankTransactionService,
         ICounterpartyService CounterpartyService,
-        IBankTransactionCategorisationService CategorisationService,
+        IBankTransactionCategorizationService CategorizationService,
         AccountId OwnedAccountId,
         BankAccountId OwnedBankAccountId
     ) : IAsyncDisposable

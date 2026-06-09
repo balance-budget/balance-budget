@@ -75,7 +75,7 @@ internal sealed class IngModernCreditCardStatementParser : IngCreditCardStatemen
             if (!match.Success)
                 continue;
 
-            return NormaliseLinkedAccount(match.Value);
+            return NormalizeLinkedAccount(match.Value);
         }
 
         throw new InvalidOperationException("No counter-party line found");

@@ -11,7 +11,7 @@ namespace Balance.Services.Contracts;
 public interface ILoanProjectionService
 {
     /// <summary>
-    /// The engine-computed payment proposal for one month, feeding the loan-aware categorise
+    /// The engine-computed payment proposal for one month, feeding the loan-aware categorize
     /// pre-fill. Amounts are editable defaults — the bank's actual charge wins.
     /// </summary>
     Task<Result<LoanPaymentProposalOutput>> GetPaymentProposalAsync(

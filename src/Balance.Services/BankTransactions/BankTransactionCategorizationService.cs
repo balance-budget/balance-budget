@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Balance.Services.BankTransactions;
 
-internal sealed class BankTransactionCategorisationService : IBankTransactionCategorisationService
+internal sealed class BankTransactionCategorizationService : IBankTransactionCategorizationService
 {
     private readonly BalanceDbContext _dbContext;
     private readonly IBankAccountService _bankAccountService;
@@ -15,7 +15,7 @@ internal sealed class BankTransactionCategorisationService : IBankTransactionCat
     private readonly IJournalEntryService _journalEntryService;
     private readonly TimeProvider _timeProvider;
 
-    public BankTransactionCategorisationService(
+    public BankTransactionCategorizationService(
         BalanceDbContext dbContext,
         IBankAccountService bankAccountService,
         ICounterpartyService counterpartyService,
@@ -54,15 +54,15 @@ internal sealed class BankTransactionCategorisationService : IBankTransactionCat
         {
             return new InvariantError(
                 ErrorCodes.BankTransactionDismissed,
-                "BankTransaction has been dismissed; undismiss before categorising."
+                "BankTransaction has been dismissed; undismiss before categorizing."
             );
         }
 
         if (bankTransaction.JournalEntryId is not null)
         {
             return new ConflictError(
-                ErrorCodes.BankTransactionAlreadyCategorised,
-                "BankTransaction has already been categorised."
+                ErrorCodes.BankTransactionAlreadyCategorized,
+                "BankTransaction has already been categorized."
             );
         }
 
@@ -142,7 +142,7 @@ internal sealed class BankTransactionCategorisationService : IBankTransactionCat
 
         // Per ADR 0012, the BT↔JE link lives on the BankTransaction side now. Set the
         // newly-created JE's id on the tracked BT inside the same transaction so a JE
-        // creation failure rolls back cleanly, and a successful categorise hides the row
+        // creation failure rolls back cleanly, and a successful categorize hides the row
         // from the Inbox via the `b.JournalEntryId IS NULL` filter.
         bankTransaction.JournalEntryId = entryResult.Value!.Id;
         bankTransaction.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
@@ -169,7 +169,7 @@ internal sealed class BankTransactionCategorisationService : IBankTransactionCat
         if (input.CounterpartyId.HasValue && input.NewCounterparty is not null)
         {
             return new InvariantError(
-                ErrorCodes.CategoriseCounterpartySelection,
+                ErrorCodes.CategorizeCounterpartySelection,
                 "Provide at most one of CounterpartyId or NewCounterparty."
             );
         }

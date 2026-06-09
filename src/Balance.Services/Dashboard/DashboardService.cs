@@ -32,7 +32,7 @@ internal sealed class DashboardService : IDashboardService
 
         // SPLM (same-period-last-month) window. `DateOnly.AddMonths(-1)` clamps to the
         // prior month's last day when today doesn't exist there (Mar 31 → Feb 28/29),
-        // which is the end-of-month edge behaviour user story 15 requires.
+        // which is the end-of-month edge behavior user story 15 requires.
         var priorPeriodEnd = today.AddMonths(-1);
         var priorPeriodStart = priorPeriodEnd.GetMonthStart();
 

@@ -7,7 +7,7 @@ public enum BankTransactionListFilter
 {
     /// <summary>
     /// Rows with no referencing <c>JournalEntry</c> and no <c>DismissedAt</c>.
-    /// Oldest-first by <c>BookingDate</c> — statement order, the categorisation queue.
+    /// Oldest-first by <c>BookingDate</c> — statement order, the categorization queue.
     /// </summary>
     Inbox = 0,
 

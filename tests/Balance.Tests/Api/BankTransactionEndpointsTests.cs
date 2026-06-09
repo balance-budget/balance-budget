@@ -372,7 +372,7 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
             BookingDate: new DateOnly(2026, 5, 17),
             Amount: 1234L,
             CurrencyCode: "EUR",
-            Description: "Already categorised"
+            Description: "Already categorized"
         );
         using var btxResponse = await client.PostAsJsonAsync(
             new Uri("/api/bank-transactions", UriKind.Relative),
@@ -381,7 +381,7 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
         var btx = await btxResponse.Content.ReadFromJsonAsync<BankTransactionDto>();
         var counter = await CreateAccountAsync(client, "Income-BTX-Cat1");
 
-        // Per ADR 0012 the BT↔JE link lives on the BankTransaction side; categorise the BT
+        // Per ADR 0012 the BT↔JE link lives on the BankTransaction side; categorize the BT
         // through its own endpoint to establish that link (the JE PUT/POST surface no longer
         // carries a BankTransactionId field).
         var categorizeRequest = new
@@ -408,7 +408,7 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
 
         using var dismiss = await client.PostAsJsonAsync(
             new Uri($"/api/bank-transactions/{btx.Id}/dismiss", UriKind.Relative),
-            new DismissBankTransactionRequestDto("Try to dismiss after categorising.")
+            new DismissBankTransactionRequestDto("Try to dismiss after categorizing.")
         );
         await Assert.That(dismiss.StatusCode).IsEqualTo(HttpStatusCode.Conflict);
     }
@@ -802,7 +802,7 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
                 CounterpartyId = counterparty.Id,
                 NewCounterparty = (object?)null,
                 Date = btx.BookingDate,
-                Description = "Categorised AH",
+                Description = "Categorized AH",
                 Lines = new[]
                 {
                     new
@@ -868,7 +868,7 @@ internal sealed class BankTransactionEndpointsTests : EndpointsTestsBase
     }
 
     [Test]
-    public async Task CategorizeBankTransaction_already_categorised_returns_409()
+    public async Task CategorizeBankTransaction_already_categorized_returns_409()
     {
         using var client = Factory.CreateClient();
         var btx = await CreateOwnedBankTransactionAsync(client, "NL30RABO0BTX03001", -100L);

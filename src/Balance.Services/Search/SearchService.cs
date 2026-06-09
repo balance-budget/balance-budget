@@ -26,7 +26,7 @@ internal sealed class SearchService : ISearchService
 
         var needle = query.Trim();
         var likePattern = $"%{needle}%";
-        // Card identifiers are stored normalised (uppercase, spaces stripped). Normalise
+        // Card identifiers are stored normalized (uppercase, spaces stripped). Normalize
         // the query the same way so that "1234 5678" matches "1234************5678".
         var cardNeedle = needle
             .Replace(" ", string.Empty, StringComparison.Ordinal)

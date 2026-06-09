@@ -24,7 +24,7 @@ public sealed record MoneyFlowOutput(
 /// <summary>
 /// One node in the <see cref="MoneyFlowOutput"/>. <see cref="Id"/> is the account's id as a string,
 /// or <c>"hub"</c> for the central node. <see cref="Kind"/> drives styling: the hub is distinct, and
-/// account nodes carry their <c>AccountType</c> so the renderer can colour income/expense vs the
+/// account nodes carry their <c>AccountType</c> so the renderer can color income/expense vs the
 /// balance sheet. <see cref="ParentId"/> is the account's parent id (<c>null</c> for roots and the
 /// hub), letting the client walk ancestry to prune descendants on collapse. <see cref="HasChildren"/>
 /// is <c>true</c> only when expanding this node would reveal at least one child with non-zero net

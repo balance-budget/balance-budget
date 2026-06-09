@@ -92,7 +92,7 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
             return Array.Empty<BankTransaction>();
 
         var ownIdentifiers = OwnIdentifiers(bankAccount);
-        var firstAccount = Normalise(rows[0].Account);
+        var firstAccount = Normalize(rows[0].Account);
 
         if (!ownIdentifiers.Contains(firstAccount))
         {
@@ -105,7 +105,7 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
 
         foreach (var row in rows)
         {
-            if (Normalise(row.Account) != firstAccount)
+            if (Normalize(row.Account) != firstAccount)
             {
                 return new InvariantError(
                     ErrorCodes.ImportAccountColumnDivergence,
@@ -165,7 +165,7 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
             Description = description,
             CounterpartyName = counterpartyName,
             CounterpartyAccountNumber = counterpartyAccountNumber,
-            RawSource = RowHasher.Normalise(row.RawRecord),
+            RawSource = RowHasher.Normalize(row.RawRecord),
             RowHash = RowHasher.Hash(row.RawRecord),
             ValueDate = note.ValueDate,
             Reference = NullIfBlank(note.Reference),
@@ -324,13 +324,13 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
     {
         var identifiers = new HashSet<string>(StringComparer.Ordinal);
         if (!string.IsNullOrWhiteSpace(bankAccount.Iban))
-            identifiers.Add(Normalise(bankAccount.Iban));
+            identifiers.Add(Normalize(bankAccount.Iban));
         if (!string.IsNullOrWhiteSpace(bankAccount.AccountNumber))
-            identifiers.Add(Normalise(bankAccount.AccountNumber));
+            identifiers.Add(Normalize(bankAccount.AccountNumber));
         return identifiers;
     }
 
-    private static string Normalise(string? value) =>
+    private static string Normalize(string? value) =>
         value is null
             ? string.Empty
             : value.Replace(" ", "", StringComparison.Ordinal).ToUpperInvariant();

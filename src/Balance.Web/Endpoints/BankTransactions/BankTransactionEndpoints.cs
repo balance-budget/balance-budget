@@ -231,7 +231,7 @@ internal static class BankTransactionEndpoints
     > CategorizeAsync(
         [FromRoute] BankTransactionId id,
         [FromBody] CategorizeBankTransactionRequest request,
-        [FromServices] IBankTransactionCategorisationService categorisationService,
+        [FromServices] IBankTransactionCategorizationService categorizationService,
         CancellationToken cancellationToken
     )
     {
@@ -245,7 +245,7 @@ internal static class BankTransactionEndpoints
             )),
         ];
 
-        var result = await categorisationService.CategorizeAsync(
+        var result = await categorizationService.CategorizeAsync(
             id,
             new CategorizeBankTransactionInput(
                 CounterpartyId: request.CounterpartyId,

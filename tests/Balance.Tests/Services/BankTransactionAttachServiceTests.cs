@@ -14,7 +14,7 @@ namespace Balance.Tests.Services;
 /// candidate list (ADR 0013).
 ///
 /// All tests seed a sibling self-transfer scenario: BT-A on the current-account is
-/// categorised as a self-transfer to a savings own-account, leaving the savings line
+/// categorized as a self-transfer to a savings own-account, leaving the savings line
 /// Uncleared. BT-B then arrives on the savings statement; the predicate decides whether
 /// BT-B may attach to BT-A's JE.
 /// </summary>
@@ -72,7 +72,7 @@ internal sealed class BankTransactionAttachServiceTests : EndpointsTestsBase
         await Assert.That(second.IsFailure).IsTrue();
         await Assert.That(second.Error).IsTypeOf<ConflictError>();
         var conflict = (ConflictError)second.Error!;
-        await Assert.That(conflict.Code).IsEqualTo(ErrorCodes.BankTransactionAlreadyCategorised);
+        await Assert.That(conflict.Code).IsEqualTo(ErrorCodes.BankTransactionAlreadyCategorized);
     }
 
     [Test]
@@ -227,7 +227,7 @@ internal sealed class BankTransactionAttachServiceTests : EndpointsTestsBase
         await Assert.That(detach.IsSuccess).IsTrue();
         var entry = detach.Value!;
         await Assert.That(entry.BankTransactions).Count().IsEqualTo(1);
-        // One line is Cleared (originally categorised side), the other should be Uncleared again.
+        // One line is Cleared (originally categorized side), the other should be Uncleared again.
         await Assert
             .That(entry.Lines.Count(l => l.ReconciliationStatus == ReconciliationStatus.Uncleared))
             .IsEqualTo(1);
@@ -300,7 +300,7 @@ internal sealed class BankTransactionAttachServiceTests : EndpointsTestsBase
     {
         await using var fixture = await SeedSelfTransferScenarioAsync(cancellationToken);
 
-        // Categorise an additional BT on the current-account as a second self-transfer to
+        // Categorize an additional BT on the current-account as a second self-transfer to
         // the same savings account at the same amount — this creates a second JE that the
         // sibling BT would also satisfy the predicate against.
         var secondaryBt = await fixture.CreateOwnBtAsync(
@@ -310,7 +310,7 @@ internal sealed class BankTransactionAttachServiceTests : EndpointsTestsBase
             counterpartyAccountNumber: fixture.SavingsIban,
             cancellationToken
         );
-        var secondJe = await fixture.CategorisationService.CategorizeAsync(
+        var secondJe = await fixture.CategorizationService.CategorizeAsync(
             secondaryBt.Id,
             new CategorizeBankTransactionInput(
                 CounterpartyId: null,
@@ -401,7 +401,7 @@ internal sealed class BankTransactionAttachServiceTests : EndpointsTestsBase
     ///  * Current-account own-Account + BankAccount (NL01 IBAN)
     ///  * Savings own-Account + BankAccount (NL02 IBAN)
     ///  * BT-A on the current-account with CounterpartyAccountNumber = savings IBAN,
-    ///    Amount = -25000, categorised as a self-transfer to savings (savings line Uncleared)
+    ///    Amount = -25000, categorized as a self-transfer to savings (savings line Uncleared)
     ///  * BT-B on the savings account with CounterpartyAccountNumber = current IBAN,
     ///    Amount = 25000 (positive — money in to savings), unattached
     /// </summary>
@@ -417,8 +417,8 @@ internal sealed class BankTransactionAttachServiceTests : EndpointsTestsBase
         var bankAccountService = scope.ServiceProvider.GetRequiredService<IBankAccountService>();
         var bankTransactionService =
             scope.ServiceProvider.GetRequiredService<IBankTransactionService>();
-        var categorisationService =
-            scope.ServiceProvider.GetRequiredService<IBankTransactionCategorisationService>();
+        var categorizationService =
+            scope.ServiceProvider.GetRequiredService<IBankTransactionCategorizationService>();
         var attachService =
             scope.ServiceProvider.GetRequiredService<IBankTransactionAttachService>();
 
@@ -496,7 +496,7 @@ internal sealed class BankTransactionAttachServiceTests : EndpointsTestsBase
             )
         ).Value!;
 
-        var jeResult = await categorisationService.CategorizeAsync(
+        var jeResult = await categorizationService.CategorizeAsync(
             btA.Id,
             new CategorizeBankTransactionInput(
                 CounterpartyId: null,
@@ -527,7 +527,7 @@ internal sealed class BankTransactionAttachServiceTests : EndpointsTestsBase
         return new Fixture(
             scope,
             bankTransactionService,
-            categorisationService,
+            categorizationService,
             attachService,
             currentBank.Id,
             savingsBank.Id,
@@ -542,7 +542,7 @@ internal sealed class BankTransactionAttachServiceTests : EndpointsTestsBase
     private sealed record Fixture(
         AsyncServiceScope Scope,
         IBankTransactionService BankTransactionService,
-        IBankTransactionCategorisationService CategorisationService,
+        IBankTransactionCategorizationService CategorizationService,
         IBankTransactionAttachService AttachService,
         BankAccountId CurrentAccountBankAccountId,
         BankAccountId SavingsAccountBankAccountId,
