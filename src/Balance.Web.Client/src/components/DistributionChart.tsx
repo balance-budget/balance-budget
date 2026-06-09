@@ -218,7 +218,7 @@ function DistributionBody({
                     </ResponsiveContainer>
                 ) : (
                     <div className="h-full flex items-center justify-center text-xs text-fg-3 text-center px-4">
-                        <Trans>Net negative this period — see the breakdown.</Trans>
+                        <Trans>Net negative this period - see the breakdown.</Trans>
                     </div>
                 )}
                 {pieData.length > 0 && (

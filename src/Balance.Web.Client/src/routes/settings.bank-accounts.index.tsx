@@ -1,3 +1,4 @@
+import { msg } from '@lingui/core/macro';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { BANK_ACCOUNT_OWNER_FILTERS, type BankAccountOwnerFilter } from '../api/bankAccounts';
 import { BankAccounts } from '../screens/BankAccounts';
@@ -33,7 +34,7 @@ export const Route = createFileRoute('/settings/bank-accounts/')({
             />
         );
     },
-    staticData: { title: 'Bank accounts' },
+    staticData: { title: msg`Bank accounts` },
     validateSearch: (raw: Record<string, unknown>): Search => ({
         owner: isOwner(raw.owner) ? raw.owner : 'Mine',
         page: parsePage(raw.page),

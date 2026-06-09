@@ -170,7 +170,7 @@ function BankTransactionPanelHead({ bt }: { bt: BankTransactionDetail }) {
                 onClick={() => void onDetachClick()}
                 disabled={detach.isPending}
                 aria-label={t`Detach bank transaction`}
-                title={t`Detach this BT — returns it to the inbox and clears the matching line back to Uncleared.`}
+                title={t`Detach this BT - returns it to the inbox and clears the matching line back to Uncleared.`}
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-fg-2 border border-border-strong hover:bg-surface-2 disabled:opacity-60"
             >
                 <Icon name="unlink" size={14} strokeWidth={2} />
@@ -493,7 +493,7 @@ function EditJournalEntry({
                     title={<Trans>Edit entry</Trans>}
                     subtitle={
                         <Trans>
-                            Cleared and Reconciled lines are frozen — only their description can be
+                            Cleared and Reconciled lines are frozen - only their description can be
                             edited.
                         </Trans>
                     }
@@ -658,7 +658,7 @@ function EditLineRow({
                 {locked ? (
                     <span
                         className="px-3 py-2 rounded-lg bg-surface-1 border border-border-soft text-fg-2 text-sm truncate"
-                        title={t`Frozen — line is Cleared or Reconciled`}
+                        title={t`Frozen - line is Cleared or Reconciled`}
                     >
                         {frozenLabel}
                     </span>
@@ -719,7 +719,7 @@ function EditLineRow({
                     onRemove(line.key);
                 }}
                 isDisabled={locked}
-                aria-label={locked ? t`Frozen — line cannot be removed` : t`Remove this line`}
+                aria-label={locked ? t`Frozen - line cannot be removed` : t`Remove this line`}
                 className="self-end lg:self-start mt-[6px] data-[hovered]:text-danger data-[hovered]:bg-transparent"
             >
                 <Icon name="trash" size={14} strokeWidth={2} />

@@ -9,6 +9,7 @@
  * date, and custom description are still the detail page's job.
  */
 
+import { t } from '@lingui/core/macro';
 import type { Account } from '../api/accounts';
 import type { BankAccount } from '../api/bankAccounts';
 import type { BankTransaction } from '../api/bankTransactions';
@@ -293,7 +294,7 @@ export async function runSaveAll(
         const status = rowStatus(draft);
         if (status !== 'ready') {
             failed += 1;
-            deps.onRowResult?.(row.id, { ok: false, error: 'Row is not ready' });
+            deps.onRowResult?.(row.id, { ok: false, error: t`Row is not ready` });
             deps.onProgress?.(categorised + dismissed + failed, total);
             continue;
         }
@@ -312,7 +313,7 @@ export async function runSaveAll(
         const request = buildRowRequest(row.bt, draft, created);
         if (request === null) {
             failed += 1;
-            deps.onRowResult?.(row.id, { ok: false, error: 'Row is not ready' });
+            deps.onRowResult?.(row.id, { ok: false, error: t`Row is not ready` });
             deps.onProgress?.(categorised + dismissed + failed, total);
             continue;
         }
@@ -332,7 +333,7 @@ export async function runSaveAll(
 
 function errorMessage(err: unknown): string {
     if (err instanceof Error) return err.message;
-    return 'Failed';
+    return t`Failed`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

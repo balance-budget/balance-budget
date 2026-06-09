@@ -1,3 +1,4 @@
+import { msg } from '@lingui/core/macro';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Insights } from '../screens/Insights';
 import { defaultPeriod, parseIsoDate } from '../lib/reportPeriod';
@@ -25,7 +26,7 @@ export const Route = createFileRoute('/reports')({
             />
         );
     },
-    staticData: { title: 'Insights' },
+    staticData: { title: msg`Insights` },
     validateSearch: (raw: Record<string, unknown>): InsightsSearch => {
         const fallback = defaultPeriod();
         return {

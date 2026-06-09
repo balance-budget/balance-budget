@@ -1,3 +1,4 @@
+import { msg } from '@lingui/core/macro';
 import { createFileRoute } from '@tanstack/react-router';
 import { BankTransactionCategorize } from '../screens/BankTransactionCategorize';
 import { asBankTransactionId, asLoanId, type LoanId } from '../lib/domain';
@@ -13,7 +14,7 @@ export const Route = createFileRoute('/bank-transactions/$id/categorize')({
         const { loan } = Route.useSearch();
         return <BankTransactionCategorize id={asBankTransactionId(id)} loanId={loan ?? null} />;
     },
-    staticData: { title: 'Categorise bank transaction' },
+    staticData: { title: msg`Categorise bank transaction` },
     validateSearch: (raw: Record<string, unknown>): CategorizeSearch => ({
         loan: typeof raw.loan === 'string' && raw.loan !== '' ? asLoanId(raw.loan) : undefined,
     }),

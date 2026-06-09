@@ -16,6 +16,7 @@
  * frozen lines are projected from their existing signed amount.
  */
 
+import { t } from '@lingui/core/macro';
 import type { components } from '../lib/api-types.gen';
 import type { AccountId, JournalLineId } from '../lib/domain';
 import { parseMoney } from '../lib/money';
@@ -131,7 +132,7 @@ export function buildReplaceRequest(ctx: BuildReplaceContext): BuildReplaceResul
     const wireLines: WireReplaceLine[] = [];
 
     if (ctx.date.trim() === '') {
-        errors.date = ['Required'];
+        errors.date = [t`Required`];
     }
 
     let nonEmptyCount = 0;
@@ -150,7 +151,7 @@ export function buildReplaceRequest(ctx: BuildReplaceContext): BuildReplaceResul
         const amountKey = `lines[${i.toString()}].amount`;
 
         if (line.accountId === null) {
-            errors[accountKey] = ['Select an account.'];
+            errors[accountKey] = [t`Select an account.`];
         }
         const parsed = parseMoney(line.amount, ctx.scale);
         if (!parsed.ok) {
@@ -159,7 +160,7 @@ export function buildReplaceRequest(ctx: BuildReplaceContext): BuildReplaceResul
         }
         const magnitude = Math.abs(parsed.minor);
         if (magnitude === 0) {
-            errors[amountKey] = ['Amount must be non-zero.'];
+            errors[amountKey] = [t`Amount must be non-zero.`];
             return;
         }
 
@@ -179,7 +180,7 @@ export function buildReplaceRequest(ctx: BuildReplaceContext): BuildReplaceResul
     });
 
     if (nonEmptyCount < 2) {
-        errors.lines = ['At least two lines are required.'];
+        errors.lines = [t`At least two lines are required.`];
     }
 
     if (Object.keys(errors).length > 0) {
@@ -190,7 +191,7 @@ export function buildReplaceRequest(ctx: BuildReplaceContext): BuildReplaceResul
         return {
             ok: false,
             fieldErrors: errors,
-            topError: 'Debit and Credit totals must balance to zero.',
+            topError: t`Debit and Credit totals must balance to zero.`,
         };
     }
 

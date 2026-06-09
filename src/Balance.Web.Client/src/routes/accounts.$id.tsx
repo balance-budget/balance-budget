@@ -1,3 +1,4 @@
+import { msg } from '@lingui/core/macro';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import type { RegisterStatusFilter } from '../api/register';
 import { AccountDetail, type RegisterFilterState } from '../screens/AccountDetail';
@@ -62,7 +63,7 @@ export const Route = createFileRoute('/accounts/$id')({
             />
         );
     },
-    staticData: { title: 'Account' },
+    staticData: { title: msg`Account` },
     validateSearch: (raw: Record<string, unknown>): RegisterSearch => ({
         page: parsePage(raw.page),
         q: parseQ(raw.q),

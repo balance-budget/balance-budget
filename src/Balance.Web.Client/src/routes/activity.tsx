@@ -1,3 +1,4 @@
+import { msg } from '@lingui/core/macro';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Activity, type ActivityFilterState } from '../screens/Activity';
 import { asAccountId } from '../lib/domain';
@@ -47,7 +48,7 @@ export const Route = createFileRoute('/activity')({
             />
         );
     },
-    staticData: { title: 'Activity' },
+    staticData: { title: msg`Activity` },
     validateSearch: (raw: Record<string, unknown>): ActivitySearch => ({
         page: parsePage(raw.page),
         q: parseQ(raw.q),

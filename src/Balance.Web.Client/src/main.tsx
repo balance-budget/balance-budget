@@ -1,4 +1,5 @@
 import { StrictMode } from 'react';
+import type { MessageDescriptor } from '@lingui/core';
 import { createRoot } from 'react-dom/client';
 import { createRouter, RouterProvider } from '@tanstack/react-router';
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -77,7 +78,7 @@ declare module '@tanstack/react-router' {
     // Route-level static metadata — each createFileRoute may set this so
     // __root can render a title without a hand-maintained pathname map.
     interface StaticDataRouteOption {
-        title?: string;
+        title?: MessageDescriptor;
     }
 }
 /* eslint-enable @typescript-eslint/consistent-type-definitions */

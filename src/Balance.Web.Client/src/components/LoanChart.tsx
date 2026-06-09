@@ -275,9 +275,9 @@ function chartSeriesLabel(seriesName: string, labelByPart: Map<string, string>):
         case 'p':
             return t`${label} (projected)`;
         case 'pr':
-            return t`${label} — repayment`;
+            return t`${label} - repayment`;
         case 'pi':
-            return t`${label} — interest`;
+            return t`${label} - interest`;
         default:
             return label;
     }

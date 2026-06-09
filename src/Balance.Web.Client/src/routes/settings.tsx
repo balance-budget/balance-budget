@@ -1,9 +1,12 @@
+import type { MessageDescriptor } from '@lingui/core';
+import { msg } from '@lingui/core/macro';
 import { createFileRoute, Link, Outlet, useRouterState } from '@tanstack/react-router';
+import { i18n } from '../i18n/i18n';
 import { cx } from '../lib/cx';
 
 export const Route = createFileRoute('/settings')({
     component: SettingsLayout,
-    staticData: { title: 'Settings' },
+    staticData: { title: msg`Settings` },
 });
 
 const SUB_NAV: {
@@ -12,12 +15,12 @@ const SUB_NAV: {
         | '/settings/users'
         | '/settings/tokens'
         | '/settings/preferences';
-    label: string;
+    label: MessageDescriptor;
 }[] = [
-    { to: '/settings/bank-accounts', label: 'Bank accounts' },
-    { to: '/settings/users', label: 'Users' },
-    { to: '/settings/tokens', label: 'API tokens' },
-    { to: '/settings/preferences', label: 'Preferences' },
+    { to: '/settings/bank-accounts', label: msg`Bank accounts` },
+    { to: '/settings/users', label: msg`Users` },
+    { to: '/settings/tokens', label: msg`API tokens` },
+    { to: '/settings/preferences', label: msg`Preferences` },
 ];
 
 // eslint-disable-next-line react-refresh/only-export-components -- TanStack file routes export `Route` (metadata) alongside the component; that's the documented pattern.
@@ -39,7 +42,7 @@ function SettingsLayout() {
                                     : 'text-fg-2 hover:bg-surface-2 hover:text-fg-1',
                             )}
                         >
-                            {item.label}
+                            {i18n._(item.label)}
                         </Link>
                     );
                 })}

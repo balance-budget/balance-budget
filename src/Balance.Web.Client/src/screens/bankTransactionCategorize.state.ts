@@ -9,6 +9,7 @@
  * once at projection time from the BT direction.
  */
 
+import { t } from '@lingui/core/macro';
 import type { components } from '../lib/api-types.gen';
 import type { AccountId, CounterpartyId, LoanPartId } from '../lib/domain';
 import { parseMoney } from '../lib/money';
@@ -211,7 +212,7 @@ export function linesFromLoanProposal(
                 id: nextLineId(),
                 accountId: part.partAccountId,
                 amount: formatMagnitude(part.principal),
-                description: `${part.label} — principal`,
+                description: t`${part.label} - principal`,
                 loanPartId: part.loanPartId,
             });
         }
@@ -219,7 +220,7 @@ export function linesFromLoanProposal(
             id: nextLineId(),
             accountId: proposal.interestExpenseAccountId,
             amount: formatMagnitude(part.interest),
-            description: `${part.label} — interest`,
+            description: t`${part.label} - interest`,
             loanPartId: part.loanPartId,
         });
     }
@@ -231,7 +232,7 @@ export function linesFromLoanProposal(
             id: nextLineId(),
             accountId: proposal.depositOffset.incomeAccountId,
             amount: formatMagnitude(proposal.depositOffset.amount),
-            description: 'Construction deposit interest offset',
+            description: t`Construction deposit interest offset`,
             credit: true,
         });
     }
@@ -250,7 +251,7 @@ export function projectLine(line: LineInput, scale: number): LineProjection {
         return { minor: null, error: parsed.error };
     }
     if (parsed.minor < 0) {
-        return { minor: null, error: 'Enter a positive amount' };
+        return { minor: null, error: t`Enter a positive amount` };
     }
     return { minor: parsed.minor, error: null };
 }
@@ -290,7 +291,7 @@ export function buildRequest(
     let topError: string | undefined;
 
     if (form.date.trim() === '') {
-        errors.date = ['Required'];
+        errors.date = [t`Required`];
     }
 
     // 'existing' mode with a null counterpartyId is a valid self-transfer
@@ -299,9 +300,9 @@ export function buildRequest(
     if (form.counterpartyMode === 'new') {
         const trimmed = form.newCounterpartyName.trim();
         if (trimmed.length === 0) {
-            errors['newCounterparty.name'] = ['Required'];
+            errors['newCounterparty.name'] = [t`Required`];
         } else if (trimmed.length > 200) {
-            errors['newCounterparty.name'] = ['At most 200 characters'];
+            errors['newCounterparty.name'] = [t`At most 200 characters`];
         }
     }
 
@@ -315,7 +316,7 @@ export function buildRequest(
         if (empty) return;
         nonEmptyCount += 1;
         if (line.accountId === null) {
-            errors[`lines[${i.toString()}].accountId`] = ['Required'];
+            errors[`lines[${i.toString()}].accountId`] = [t`Required`];
         }
         const projection = projectLine(line, scale);
         if (projection.error) {
@@ -323,7 +324,7 @@ export function buildRequest(
             return;
         }
         if (projection.minor === null || projection.minor <= 0) {
-            errors[`lines[${i.toString()}].amount`] = ['Enter an amount greater than zero'];
+            errors[`lines[${i.toString()}].amount`] = [t`Enter an amount greater than zero`];
             return;
         }
         const lineSign = line.credit ? -1 : 1;
@@ -339,15 +340,15 @@ export function buildRequest(
     });
 
     if (nonEmptyCount === 0) {
-        errors.lines = ['Add at least one line.'];
+        errors.lines = [t`Add at least one line.`];
     } else if (Object.keys(errors).length === 0) {
         const target = Math.abs(btAmountMinor);
         if (allocated !== target) {
             const diff = target - allocated;
             topError =
                 diff > 0
-                    ? `Lines are under-allocated. Allocate the remaining amount.`
-                    : `Lines are over-allocated. Reduce one or more amounts.`;
+                    ? t`Lines are under-allocated. Allocate the remaining amount.`
+                    : t`Lines are over-allocated. Reduce one or more amounts.`;
         }
     }
 

@@ -99,11 +99,15 @@ export function ComboBox<T>({
     const buckets = useMemo(() => groupBuckets(filtered, groupOrder), [filtered, groupOrder]);
 
     const trimmed = query.trim();
+    // Quote the typed text via a value, not inside the message: ICU MessageFormat
+    // treats single quotes as escapes, so `Create '{x}'` would render the
+    // placeholder literally (ADR-0022).
+    const quotedQuery = `'${trimmed}'`;
     const createText =
         onCreate !== undefined &&
         trimmed.length > 0 &&
         !items.some(i => i.label.toLowerCase() === trimmed.toLowerCase())
-            ? (createLabel?.(trimmed) ?? t`Create '${trimmed}'`)
+            ? (createLabel?.(trimmed) ?? t`Create ${quotedQuery}`)
             : null;
 
     const menuRef = useRef<{ close: () => void } | null>(null);

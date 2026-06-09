@@ -164,7 +164,7 @@ export function BankImports() {
         <Panel>
             <SectionHead
                 title={t`Import statements`}
-                subtitle={t`Upload an ING current-account CSV against the matching bank account. Re-uploads are safe — duplicate rows are skipped.`}
+                subtitle={t`Upload an ING current-account CSV against the matching bank account. Re-uploads are safe - duplicate rows are skipped.`}
             />
             <ImportsPanel />
         </Panel>
