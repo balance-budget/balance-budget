@@ -1037,11 +1037,11 @@ msgstr "End date must be after the start date."
 msgid "Ended"
 msgstr "Ended"
 
-msgid "English"
-msgstr "English"
+#~ msgid "English"
+#~ msgstr "English"
 
-msgid "English is the only language for now."
-msgstr "English is the only language for now."
+#~ msgid "English is the only language for now."
+#~ msgstr "English is the only language for now."
 
 msgid "Enter a positive amount"
 msgstr "Enter a positive amount"
@@ -2109,6 +2109,9 @@ msgid "The {0}% rate effective {1} is removed from {2}. Projections recompute; "
 "posted entries are untouched."
 msgstr "The {0}% rate effective {1} is removed from {2}. Projections recompute; "
 "posted entries are untouched."
+
+msgid "The interface language. Formatting below is set separately."
+msgstr "The interface language. Formatting below is set separately."
 
 msgid "The loan definition, its parts, and rate history are removed. The "
 "accounts and every posted entry stay untouched."

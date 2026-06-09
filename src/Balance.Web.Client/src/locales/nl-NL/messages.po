@@ -1,0 +1,2097 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-06-09 15:08+0200\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: nl-NL\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
+
+#. placeholder {0}: formatInstant(token.expiresAt, TOKEN_DATE)
+msgid " · expires {0}"
+msgstr " · verloopt {0}"
+
+#. placeholder {0}: current.fixedUntil
+#. placeholder {0}: rate.fixedUntil
+msgid " · fixed until {0}"
+msgstr " · vast tot {0}"
+
+#. placeholder {0}: formatInstant(token.lastUsedAt, TOKEN_DATE)
+msgid " · last used {0}"
+msgstr " · laatst gebruikt {0}"
+
+msgid " · never used"
+msgstr " · nooit gebruikt"
+
+msgid "· click to change"
+msgstr "· klik om te wijzigen"
+
+msgid "(no description)"
+msgstr "(geen omschrijving)"
+
+msgid "(none)"
+msgstr "(geen)"
+
+msgid "(you)"
+msgstr "(jij)"
+
+#. placeholder {0}: loan.partCount
+msgid "{0, plural, one {# part} other {# parts}}"
+msgstr "{0, plural, one {# deel} other {# delen}}"
+
+#. placeholder {0}: feedback.skipped
+msgid "{0, plural, one {skipped # duplicate} other {skipped # duplicates}}"
+msgstr "{0, plural, one {# duplicaat overgeslagen} other {# duplicaten "
+"overgeslagen}}"
+
+#. placeholder {0}: part.label
+msgid "{0} - interest"
+msgstr "{0} - rente"
+
+#. placeholder {0}: part.label
+msgid "{0} - principal"
+msgstr "{0} - hoofdsom"
+
+#. placeholder {0}: loan.lenderName
+#. placeholder {1}: loan.interestExpenseAccountName
+msgid "{0} · interest on {1}"
+msgstr "{0} · rente op {1}"
+
+#. placeholder {0}: bulkCounterparty.name.trim()
+#. placeholder {0}: draft.newCounterpartyName.trim()
+#. placeholder {0}: form.newCounterpartyName.trim()
+msgid "{0} (new)"
+msgstr "{0} (nieuw)"
+
+#. placeholder {0}: summary.categorized.toString()
+#. placeholder {1}: summary.dismissed.toString()
+#. placeholder {2}: summary.failed.toString()
+msgid "{0} categorized, {1} dismissed, {2} failed."
+msgstr "{0} gecategoriseerd, {1} genegeerd, {2} mislukt."
+
+#. placeholder {0}: filled.toString()
+msgid "{0} filled"
+msgstr "{0} ingevuld"
+
+#. placeholder {0}: p.label
+msgid "{0} fixed until"
+msgstr "{0} vast tot"
+
+#. placeholder {0}: cpOnly.toString()
+msgid "{0} got counterparty only"
+msgstr "{0} kreeg alleen een tegenpartij"
+
+#. placeholder {0}: noMatch.toString()
+msgid "{0} had no suggestion"
+msgstr "{0} had geen suggestie"
+
+#. placeholder {0}: fmt(year.totalInterest)
+#. placeholder {1}: fmt(year.totalPrincipal)
+msgid "{0} interest · {1} principal"
+msgstr "{0} rente · {1} hoofdsom"
+
+#. placeholder {0}: moreCount.toString()
+msgid "{0} more"
+msgstr "{0} meer"
+
+#. placeholder {0}: selectionCount.toString()
+msgid "{0} selected"
+msgstr "{0} geselecteerd"
+
+#. placeholder {0}: pending.toString()
+msgid "{0} still loading"
+msgstr "{0} worden nog geladen"
+
+#. placeholder {0}: dirtyCount.toString()
+#. placeholder {1}: readyCount.toString()
+msgid "{0} unsaved · {1} ready"
+msgstr "{0} niet opgeslagen · {1} klaar"
+
+#. placeholder {0}: Math.abs(percent)
+msgid "{0}% vs Last month"
+msgstr "{0}% t.o.v. vorige maand"
+
+msgid "{count, plural, one {# line selected} other {# lines selected}}"
+msgstr "{count, plural, one {# regel geselecteerd} other {# regels "
+"geselecteerd}}"
+
+msgid "{from}–{to} of {totalCount}"
+msgstr "{from}–{to} van {totalCount}"
+
+msgid "{label} - interest"
+msgstr "{label} - rente"
+
+msgid "{label} - repayment"
+msgstr "{label} - aflossing"
+
+msgid "{label} (projected)"
+msgstr "{label} (verwacht)"
+
+msgid "{readyCount, plural, one {Save # row} other {Save # rows}}"
+msgstr "{readyCount, plural, one {# rij opslaan} other {# rijen opslaan}}"
+
+msgid "{selectionCount, plural, one {Dismiss # row} other {Dismiss # rows}}"
+msgstr "{selectionCount, plural, one {# rij negeren} other {# rijen negeren}}"
+
+msgid "← Accounts"
+msgstr "← Rekeningen"
+
+msgid "← Activity"
+msgstr "← Activiteit"
+
+msgid "← Cancel"
+msgstr "← Annuleren"
+
+#. placeholder {0}: moreCount.toString()
+#. placeholder {1}: title.toLowerCase()
+msgid "+ {0} more matching {1}"
+msgstr "+ {0} meer die overeenkomen met {1}"
+
+msgid "── None"
+msgstr "── Geen"
+
+msgid "── None (self-transfer)"
+msgstr "── Geen (eigen overboeking)"
+
+msgid "A construction deposit needs an asset account, an income account, and a "
+"rate - set all three or none."
+msgstr "Een bouwdepot vereist een activarekening, een opbrengstenrekening en "
+"een rente - stel alle drie in, of geen enkele."
+
+msgid "A fresh part account needs a name and a code."
+msgstr "Een nieuwe deelrekening vereist een naam en een code."
+
+msgid "A future effective date records an accepted renewal offer. Existing "
+"rates can be edited or removed from the part's rate history."
+msgstr "Een toekomstige ingangsdatum legt een geaccepteerd verlengingsaanbod "
+"vast. Bestaande rentes kun je bewerken of verwijderen uit de "
+"rentehistorie van het deel."
+
+msgid "A loan must keep at least one part"
+msgstr "Een lening moet minstens één deel behouden"
+
+msgid "A part must keep at least one rate period"
+msgstr "Een deel moet minstens één renteperiode behouden"
+
+msgid "A part needs a label."
+msgstr "Een deel heeft een label nodig."
+
+msgid "Account"
+msgstr "Rekening"
+
+msgid "Account (mixed currencies)"
+msgstr "Rekening (gemengde valuta)"
+
+msgid "Account balances"
+msgstr "Rekeningsaldi"
+
+msgid "Account code"
+msgstr "Rekeningcode"
+
+msgid "Account holder"
+msgstr "Rekeninghouder"
+
+msgid "Account holder name"
+msgstr "Naam rekeninghouder"
+
+msgid "Account icon"
+msgstr "Rekeningpictogram"
+
+msgid "Account name"
+msgstr "Rekeningnaam"
+
+msgid "Account number"
+msgstr "Rekeningnummer"
+
+msgid "Account to adopt"
+msgstr "Over te nemen rekening"
+
+msgid "Account…"
+msgstr "Rekening…"
+
+msgid "Accounts"
+msgstr "Rekeningen"
+
+msgid "Across {accountCount, plural, one {# account} other {# accounts}}"
+msgstr "Over {accountCount, plural, one {# rekening} other {# rekeningen}}"
+
+msgid "Actions"
+msgstr "Acties"
+
+msgid "Active"
+msgstr "Actief"
+
+msgid "Activity"
+msgstr "Activiteit"
+
+msgid "Add"
+msgstr "Toevoegen"
+
+msgid "Add at least one line."
+msgstr "Voeg minstens één regel toe."
+
+msgid "Add bank account"
+msgstr "Bankrekening toevoegen"
+
+msgid "Add line"
+msgstr "Regel toevoegen"
+
+msgid "Add loan part"
+msgstr "Leningdeel toevoegen"
+
+msgid "Add one to attach to a ledger account."
+msgstr "Voeg er een toe om aan een grootboekrekening te koppelen."
+
+msgid "Add part"
+msgstr "Deel toevoegen"
+
+msgid "Add rate period"
+msgstr "Renteperiode toevoegen"
+
+msgid "Add repayment"
+msgstr "Aflossing toevoegen"
+
+msgid "Add the parties you receive money from or pay to."
+msgstr "Voeg de partijen toe van wie je geld ontvangt of aan wie je betaalt."
+
+msgid "Add user"
+msgstr "Gebruiker toevoegen"
+
+msgid "Add your first ledger account to get started."
+msgstr "Voeg je eerste grootboekrekening toe om te beginnen."
+
+msgid "Adding…"
+msgstr "Toevoegen…"
+
+msgid "Adopt an existing account"
+msgstr "Een bestaande rekening overnemen"
+
+msgid "Advanced"
+msgstr "Geavanceerd"
+
+msgid "After repaying extra"
+msgstr "Na extra aflossen"
+
+msgid "All"
+msgstr "Alle"
+
+msgid "All →"
+msgstr "Alle →"
+
+msgid "All expenses"
+msgstr "Alle uitgaven"
+
+msgid "All income"
+msgstr "Alle inkomsten"
+
+msgid "Allocated"
+msgstr "Toegewezen"
+
+msgid "Amount"
+msgstr "Bedrag"
+
+msgid "Amount must be non-zero."
+msgstr "Bedrag mag niet nul zijn."
+
+msgid "An unexpected error occurred while loading this page."
+msgstr "Er is een onverwachte fout opgetreden bij het laden van deze pagina."
+
+msgid "Annual rate (%)"
+msgstr "Jaarrente (%)"
+
+msgid "Annuity"
+msgstr "Annuïteit"
+
+msgid "Any account"
+msgstr "Elke rekening"
+
+msgid "Any counter-account"
+msgstr "Elke tegenrekening"
+
+msgid "Any sub-account"
+msgstr "Elke subrekening"
+
+msgid "API tokens"
+msgstr "API-tokens"
+
+msgid "Apply suggestions"
+msgstr "Suggesties toepassen"
+
+#. placeholder {0}: selectionCount.toString()
+msgid "Apply to {0} selected"
+msgstr "Toepassen op {0} geselecteerd"
+
+msgid "As on the lender's statement"
+msgstr "Zoals op het overzicht van de kredietverstrekker"
+
+msgid "Asset account holding the deposit…"
+msgstr "Activarekening met het depot…"
+
+msgid "Assets"
+msgstr "Activa"
+
+msgid "Assumed rate after fixation (%)"
+msgstr "Aangenomen rente na rentevaste periode (%)"
+
+#. placeholder {0}: loan.constructionDeposit.annualRatePercent.toFixed(2)
+msgid "at {0}% - interest offsets the payment until it drains."
+msgstr "tegen {0}% - rente compenseert de betaling tot het depot leeg is."
+
+msgid "At least two lines are required."
+msgstr "Er zijn minstens twee regels vereist."
+
+msgid "At most 200 characters"
+msgstr "Maximaal 200 tekens"
+
+msgid "Attach"
+msgstr "Koppelen"
+
+#. placeholder {0}: hint.otherAccountName
+msgid "Attach to {0}"
+msgstr "Koppelen aan {0}"
+
+#. placeholder {0}: hint.date
+#. placeholder {1}: hint.otherAccountName
+msgid "Attach to journal entry on {0} · {1}"
+msgstr "Koppelen aan journaalpost op {0} · {1}"
+
+#. placeholder {0}: hint.date
+#. placeholder {1}: hint.otherAccountName
+msgid "Attach to journal entry on {0} ({1})"
+msgstr "Koppelen aan journaalpost op {0} ({1})"
+
+#. placeholder {0}: hint.otherAccountName
+msgid "Attached to {0}."
+msgstr "Gekoppeld aan {0}."
+
+msgid "Attached."
+msgstr "Gekoppeld."
+
+#. placeholder {0}: hint.date
+msgid "Auto-matched to journal entry on {0}"
+msgstr "Automatisch gekoppeld aan journaalpost op {0}"
+
+msgid "Back to inbox"
+msgstr "Terug naar postvak"
+
+msgid "Balance"
+msgstr "Saldo"
+
+msgid "Balance & payments"
+msgstr "Saldo & betalingen"
+
+msgid "Balance over time · Last 3 months"
+msgstr "Saldo in de tijd · Afgelopen 3 maanden"
+
+msgid "Balance over time · Last 6 months"
+msgstr "Saldo in de tijd · Afgelopen 6 maanden"
+
+msgid "Balance over time · Last month"
+msgstr "Saldo in de tijd · Afgelopen maand"
+
+msgid "Balance over time · Last year"
+msgstr "Saldo in de tijd · Afgelopen jaar"
+
+msgid "Balanced"
+msgstr "In balans"
+
+msgid "Bank account"
+msgstr "Bankrekening"
+
+msgid "Bank account deleted."
+msgstr "Bankrekening verwijderd."
+
+msgid "Bank accounts"
+msgstr "Bankrekeningen"
+
+msgid "Bank imports"
+msgstr "Bankimports"
+
+msgid "Bank name"
+msgstr "Banknaam"
+
+msgid "Bank rows that have been categorized into a journal entry."
+msgstr "Bankregels die in een journaalpost zijn gecategoriseerd."
+
+msgid "Bank rows waiting for a journal entry. Pick Counterparty and Account "
+"inline; Save all when you’re happy."
+msgstr "Bankregels die op een journaalpost wachten. Kies inline een tegenpartij "
+"en rekening; sla alles op zodra je tevreden bent."
+
+msgid "Bank rows you marked as not needing a journal entry."
+msgstr "Bankregels die je hebt gemarkeerd als zonder journaalpost."
+
+msgid "Bank transaction"
+msgstr "Banktransactie"
+
+msgid "Bank transactions"
+msgstr "Banktransacties"
+
+msgid "BIC"
+msgstr "BIC"
+
+msgid "Budgets"
+msgstr "Budgetten"
+
+msgid "Bulk account"
+msgstr "Bulkrekening"
+
+msgid "Bulk counterparty"
+msgstr "Bulktegenpartij"
+
+msgid "Can contain transactions"
+msgstr "Kan transacties bevatten"
+
+msgid "Cancel"
+msgstr "Annuleren"
+
+msgid "Card"
+msgstr "Kaart"
+
+msgid "Card identifier"
+msgstr "Kaartidentificatie"
+
+msgid "Card identifier is required. Card accounts are owned-only."
+msgstr "Kaartidentificatie is vereist. Kaartrekeningen zijn alleen eigen "
+"rekeningen."
+
+msgid "Categorize"
+msgstr "Categoriseren"
+
+msgid "Categorize an inbox row to see it here."
+msgstr "Categoriseer een postvakregel om deze hier te zien."
+
+msgid "Categorize bank transaction"
+msgstr "Banktransactie categoriseren"
+
+msgid "Categorize normally"
+msgstr "Normaal categoriseren"
+
+msgid "Categorized"
+msgstr "Gecategoriseerd"
+
+msgid "Categorized."
+msgstr "Gecategoriseerd."
+
+msgid "Categorizing…"
+msgstr "Categoriseren…"
+
+msgid "Chronological activity on this account."
+msgstr "Chronologische activiteit op deze rekening."
+
+msgid "Clear"
+msgstr "Wissen"
+
+msgid "Clear selection"
+msgstr "Selectie wissen"
+
+msgid "Cleared"
+msgstr "Verwerkt"
+
+msgid "Cleared and Reconciled lines are frozen - only their description can be "
+"edited."
+msgstr "Verwerkte en afgestemde regels zijn bevroren - alleen de omschrijving "
+"kan worden bewerkt."
+
+msgid "Cleared and reconciled lines can’t be moved."
+msgstr "Verwerkte en afgestemde regels kunnen niet worden verplaatst."
+
+msgid "Close"
+msgstr "Sluiten"
+
+msgid "Code"
+msgstr "Code"
+
+msgid "Collapse"
+msgstr "Inklappen"
+
+msgid "Collapse all"
+msgstr "Alles inklappen"
+
+msgid "Collapse rate history"
+msgstr "Rentehistorie inklappen"
+
+msgid "Computing the proposal…"
+msgstr "Voorstel berekenen…"
+
+msgid "Confirm"
+msgstr "Bevestigen"
+
+msgid "Construction deposit"
+msgstr "Bouwdepot"
+
+msgid "Construction deposit (optional)"
+msgstr "Bouwdepot (optioneel)"
+
+msgid "Construction deposit account"
+msgstr "Bouwdepotrekening"
+
+msgid "Construction deposit interest offset"
+msgstr "Rentecompensatie bouwdepot"
+
+msgid "Copy your token now"
+msgstr "Kopieer je token nu"
+
+msgid "Couldn't compute the projection."
+msgstr "Kon de prognose niet berekenen."
+
+msgid "Couldn't delete the loan."
+msgstr "Kon de lening niet verwijderen."
+
+msgid "Couldn't delete the part."
+msgstr "Kon het deel niet verwijderen."
+
+msgid "Couldn't delete the rate period."
+msgstr "Kon de renteperiode niet verwijderen."
+
+msgid "Couldn't load account."
+msgstr "Kon rekening niet laden."
+
+msgid "Couldn't load accounts."
+msgstr "Kon rekeningen niet laden."
+
+msgid "Couldn't load bank account."
+msgstr "Kon bankrekening niet laden."
+
+msgid "Couldn't load bank accounts."
+msgstr "Kon bankrekeningen niet laden."
+
+msgid "Couldn't load bank transaction."
+msgstr "Kon banktransactie niet laden."
+
+msgid "Couldn't load bank transactions."
+msgstr "Kon banktransacties niet laden."
+
+msgid "Couldn't load candidates."
+msgstr "Kon kandidaten niet laden."
+
+msgid "Couldn't load counterparties."
+msgstr "Kon tegenpartijen niet laden."
+
+msgid "Couldn't load counterparty."
+msgstr "Kon tegenpartij niet laden."
+
+msgid "Couldn't load journal entries."
+msgstr "Kon journaalposten niet laden."
+
+msgid "Couldn't load journal entry."
+msgstr "Kon journaalpost niet laden."
+
+msgid "Couldn't load loans."
+msgstr "Kon leningen niet laden."
+
+msgid "Couldn't load recent activity."
+msgstr "Kon recente activiteit niet laden."
+
+msgid "Couldn't load register."
+msgstr "Kon register niet laden."
+
+msgid "Couldn't load the balance trend."
+msgstr "Kon de saldotrend niet laden."
+
+msgid "Couldn't load the dashboard summary."
+msgstr "Kon de dashboardsamenvatting niet laden."
+
+msgid "Couldn't load the distribution."
+msgstr "Kon de verdeling niet laden."
+
+msgid "Couldn't load the money flow."
+msgstr "Kon de geldstroom niet laden."
+
+msgid "Couldn't load this loan."
+msgstr "Kon deze lening niet laden."
+
+msgid "Counter"
+msgstr "Tegen"
+
+msgid "Counter-account…"
+msgstr "Tegenrekening…"
+
+msgid "Counterparties"
+msgstr "Tegenpartijen"
+
+msgid "Counterparty"
+msgstr "Tegenpartij"
+
+#. placeholder {0}: created.name
+msgid "Counterparty '{0}' created."
+msgstr "Tegenpartij '{0}' aangemaakt."
+
+msgid "Counterparty bank accounts appear as you categorize imported "
+"transactions."
+msgstr "Bankrekeningen van tegenpartijen verschijnen terwijl je geïmporteerde "
+"transacties categoriseert."
+
+msgid "Counterparty…"
+msgstr "Tegenpartij…"
+
+msgid "Cr "
+msgstr "Cr "
+
+msgid "Create"
+msgstr "Aanmaken"
+
+msgid "Create {quotedQuery}"
+msgstr "{quotedQuery} aanmaken"
+
+msgid "Create a fresh account"
+msgstr "Een nieuwe rekening aanmaken"
+
+msgid "Create account"
+msgstr "Rekening aanmaken"
+
+msgid "Create journal entry"
+msgstr "Journaalpost aanmaken"
+
+msgid "Create loan"
+msgstr "Lening aanmaken"
+
+msgid "Create one manually or import a bank statement."
+msgstr "Maak er handmatig een aan of importeer een bankafschrift."
+
+msgid "Create the first account. This wizard becomes unavailable once a user "
+"exists."
+msgstr "Maak de eerste account aan. Deze wizard is niet meer beschikbaar zodra "
+"er een gebruiker bestaat."
+
+msgid "Create token"
+msgstr "Token aanmaken"
+
+msgid "Create user"
+msgstr "Gebruiker aanmaken"
+
+#. placeholder {0}: formatInstant(token.createdAt, TOKEN_DATE)
+msgid "Created {0}"
+msgstr "Aangemaakt {0}"
+
+msgid "Creating…"
+msgstr "Aanmaken…"
+
+msgid "Credit"
+msgstr "Credit"
+
+msgid "Currency"
+msgstr "Valuta"
+
+msgid "Current"
+msgstr "Huidig"
+
+msgid "Custom"
+msgstr "Aangepast"
+
+msgid "Dashboard"
+msgstr "Dashboard"
+
+msgid "Date"
+msgstr "Datum"
+
+msgid "Date format"
+msgstr "Datumnotatie"
+
+msgid "Date range"
+msgstr "Datumbereik"
+
+msgid "Date window (±days)"
+msgstr "Datumvenster (±dagen)"
+
+msgid "Day · Month · Year"
+msgstr "Dag · Maand · Jaar"
+
+msgid "Debit"
+msgstr "Debet"
+
+msgid "Debit and Credit totals must balance to zero."
+msgstr "Debet- en credittotalen moeten op nul sluiten."
+
+msgid "Default"
+msgstr "Standaard"
+
+msgid "Default for {accountType}"
+msgstr "Standaard voor {accountType}"
+
+msgid "Defaults to the loan name"
+msgstr "Standaard de naam van de lening"
+
+msgid "Define your mortgage or another loan to split monthly payments into "
+"interest and principal, and to see where the debt is heading."
+msgstr "Definieer je hypotheek of een andere lening om maandbetalingen te "
+"splitsen in rente en hoofdsom, en om te zien waar de schuld naartoe "
+"gaat."
+
+msgid "Delete"
+msgstr "Verwijderen"
+
+#. placeholder {0}: account.name
+#. placeholder {0}: counterparty.name
+msgid "Delete “{0}”?"
+msgstr "“{0}” verwijderen?"
+
+msgid "Delete “{name}”?"
+msgstr "“{name}” verwijderen?"
+
+#. placeholder {0}: deletingPart.label
+msgid "Delete {0}?"
+msgstr "{0} verwijderen?"
+
+msgid "Delete loan"
+msgstr "Lening verwijderen"
+
+msgid "Delete part"
+msgstr "Deel verwijderen"
+
+msgid "Delete rate"
+msgstr "Rente verwijderen"
+
+msgid "Delete rate period"
+msgstr "Renteperiode verwijderen"
+
+msgid "Delete this bank account?"
+msgstr "Deze bankrekening verwijderen?"
+
+msgid "Delete this journal entry?"
+msgstr "Deze journaalpost verwijderen?"
+
+msgid "Delete this loan?"
+msgstr "Deze lening verwijderen?"
+
+msgid "Delete this rate period?"
+msgstr "Deze renteperiode verwijderen?"
+
+#. placeholder {0}: account.name
+#. placeholder {0}: counterparty.name
+msgid "Deleted “{0}”."
+msgstr "“{0}” verwijderd."
+
+msgid "Deleted “{name}”."
+msgstr "“{name}” verwijderd."
+
+msgid "Deleted journal entry “{label}”."
+msgstr "Journaalpost “{label}” verwijderd."
+
+msgid "Deposit account"
+msgstr "Depotrekening"
+
+msgid "Deposit annual rate (%)"
+msgstr "Jaarrente depot (%)"
+
+msgid "Deposit interest income account"
+msgstr "Opbrengstenrekening depotrente"
+
+msgid "Description"
+msgstr "Omschrijving"
+
+msgid "Detach"
+msgstr "Ontkoppelen"
+
+msgid "Detach bank transaction"
+msgstr "Banktransactie ontkoppelen"
+
+msgid "Detach this bank transaction - returns it to the inbox and clears the "
+"matching line back to Uncleared."
+msgstr "Deze banktransactie ontkoppelen - zet hem terug in het postvak en zet "
+"de bijbehorende regel terug op Niet verwerkt."
+
+msgid "Detached. Bank transaction returned to the inbox."
+msgstr "Ontkoppeld. Banktransactie teruggezet in het postvak."
+
+msgid "Detaching…"
+msgstr "Ontkoppelen…"
+
+msgid "Disable"
+msgstr "Uitschakelen"
+
+msgid "Disabled"
+msgstr "Uitgeschakeld"
+
+msgid "Discard"
+msgstr "Verwerpen"
+
+msgid "Discard unsaved drafts?"
+msgstr "Niet-opgeslagen concepten verwerpen?"
+
+msgid "Dismiss"
+msgstr "Negeren"
+
+msgid "Dismiss {selectionCount, plural, one {# bank transaction} other {# bank "
+"transactions}}"
+msgstr "{selectionCount, plural, one {# banktransactie} other {# "
+"banktransacties}} negeren"
+
+msgid "Dismiss bank transaction"
+msgstr "Banktransactie negeren"
+
+msgid "Dismiss this row"
+msgstr "Deze rij negeren"
+
+msgid "Dismiss with reason…"
+msgstr "Negeren met reden…"
+
+msgid "Dismissed"
+msgstr "Genegeerd"
+
+msgid "Dismissed rows live here for audit."
+msgstr "Genegeerde rijen blijven hier bewaard voor controle."
+
+msgid "Dismissed."
+msgstr "Genegeerd."
+
+msgid "Dismissing…"
+msgstr "Negeren…"
+
+msgid "Display name"
+msgstr "Weergavenaam"
+
+msgid "Display preferences saved."
+msgstr "Weergavevoorkeuren opgeslagen."
+
+msgid "Distribution"
+msgstr "Verdeling"
+
+msgid "Double-entry detail."
+msgstr "Detail van dubbel boekhouden."
+
+msgid "Dr "
+msgstr "Dr "
+
+msgid "Drives the Inbox's loan-payment hint."
+msgstr "Stuurt de hint voor leningbetalingen in het postvak aan."
+
+msgid "e.g. 2200"
+msgstr "bijv. 2200"
+
+msgid "e.g. 3.6"
+msgstr "bijv. 3.6"
+
+msgid "e.g. 3.8"
+msgstr "bijv. 3.8"
+
+msgid "e.g. 4.1"
+msgstr "bijv. 4.1"
+
+msgid "e.g. 5110"
+msgstr "bijv. 5110"
+
+msgid "e.g. fee corrections, self-transfer siblings"
+msgstr "bijv. kostencorrecties, tegenboekingen van eigen overboekingen"
+
+msgid "e.g. ING importer cron"
+msgstr "bijv. ING-importer cron"
+
+msgid "e.g. Mortgage Hoofdstraat 1"
+msgstr "bijv. Hypotheek Hoofdstraat 1"
+
+msgid "e.g. Mortgage interest"
+msgstr "bijv. Hypotheekrente"
+
+msgid "e.g. settled by journal entry X"
+msgstr "bijv. afgewikkeld via journaalpost X"
+
+msgid "Edit"
+msgstr "Bewerken"
+
+msgid "Edit account"
+msgstr "Rekening bewerken"
+
+msgid "Edit bank account"
+msgstr "Bankrekening bewerken"
+
+msgid "Edit counterparty"
+msgstr "Tegenpartij bewerken"
+
+msgid "Edit details"
+msgstr "Details bewerken"
+
+msgid "Edit details (splits, custom date)"
+msgstr "Details bewerken (splitsingen, aangepaste datum)"
+
+msgid "Edit journal entry"
+msgstr "Journaalpost bewerken"
+
+msgid "Edit loan"
+msgstr "Lening bewerken"
+
+msgid "Edit part"
+msgstr "Deel bewerken"
+
+#. placeholder {0}: part.label
+msgid "Edit part - {0}"
+msgstr "Deel bewerken - {0}"
+
+msgid "Edit rate period"
+msgstr "Renteperiode bewerken"
+
+msgid "Effective date"
+msgstr "Ingangsdatum"
+
+msgid "Email"
+msgstr "E-mail"
+
+msgid "Email or password is incorrect."
+msgstr "E-mail of wachtwoord is onjuist."
+
+msgid "Enable"
+msgstr "Inschakelen"
+
+msgid "End date"
+msgstr "Einddatum"
+
+msgid "End date must be after the start date."
+msgstr "Einddatum moet na de begindatum liggen."
+
+msgid "Ended"
+msgstr "Beëindigd"
+
+msgid "Enter a positive amount"
+msgstr "Voer een positief bedrag in"
+
+msgid "Enter a valid annual rate (e.g. 3.8)."
+msgstr "Voer een geldige jaarrente in (bijv. 3.8)."
+
+msgid "Enter a valid deposit rate (0–100)."
+msgstr "Voer een geldige depotrente in (0–100)."
+
+msgid "Enter a valid opening balance."
+msgstr "Voer een geldig beginsaldo in."
+
+msgid "Enter an amount greater than zero"
+msgstr "Voer een bedrag groter dan nul in"
+
+msgid "Enter Debit or Credit."
+msgstr "Voer debet of credit in."
+
+msgid "Enter your email and password to continue."
+msgstr "Voer je e-mail en wachtwoord in om door te gaan."
+
+msgid "Every bookkeeping event, newest first."
+msgstr "Elke boekhoudgebeurtenis, nieuwste eerst."
+
+msgid "Every imported bank row, regardless of state."
+msgstr "Elke geïmporteerde bankregel, ongeacht de status."
+
+#. placeholder {0}: cp.name
+msgid "Every journal entry referencing {0}."
+msgstr "Elke journaalpost die verwijst naar {0}."
+
+msgid "Every part needs a label."
+msgstr "Elk deel heeft een label nodig."
+
+msgid "Every part needs an end date."
+msgstr "Elk deel heeft een einddatum nodig."
+
+msgid "Exchange rate"
+msgstr "Wisselkoers"
+
+msgid "Existing mortgage / loan account…"
+msgstr "Bestaande hypotheek- / leningrekening…"
+
+msgid "Expand"
+msgstr "Uitklappen"
+
+msgid "Expenses"
+msgstr "Uitgaven"
+
+msgid "Expenses · MTD"
+msgstr "Uitgaven · deze maand"
+
+msgid "Expired"
+msgstr "Verlopen"
+
+msgid "Expires (optional)"
+msgstr "Verloopt (optioneel)"
+
+msgid "Extra repayment amount"
+msgstr "Bedrag extra aflossing"
+
+msgid "Failed"
+msgstr "Mislukt"
+
+msgid "Fill the selected rows with the IBAN-matched counterparty and the "
+"last-used account for that counterparty."
+msgstr "Vul de geselecteerde rijen met de op IBAN gematchte tegenpartij en de "
+"laatst gebruikte rekening voor die tegenpartij."
+
+msgid "Filter"
+msgstr "Filter"
+
+msgid "Filter by account"
+msgstr "Filteren op rekening"
+
+msgid "Filter by counter-account"
+msgstr "Filteren op tegenrekening"
+
+msgid "Filter by sub-account"
+msgstr "Filteren op subrekening"
+
+msgid "Filter…"
+msgstr "Filteren…"
+
+msgid "First-run setup"
+msgstr "Eerste installatie"
+
+msgid "Fixed until (optional)"
+msgstr "Vast tot (optioneel)"
+
+msgid "Foreign amount"
+msgstr "Bedrag in vreemde valuta"
+
+msgid "From"
+msgstr "Van"
+
+#. placeholder {0}: rate.effectiveDate
+msgid "from {0}"
+msgstr "vanaf {0}"
+
+msgid "From and To amounts must balance to zero."
+msgstr "Van- en Naar-bedragen moeten op nul sluiten."
+
+msgid "From bank import"
+msgstr "Uit bankimport"
+
+msgid "Frozen - line cannot be removed"
+msgstr "Bevroren - regel kan niet worden verwijderd"
+
+msgid "Frozen - line is Cleared or Reconciled"
+msgstr "Bevroren - regel is verwerkt of afgestemd"
+
+msgid "Future"
+msgstr "Toekomst"
+
+msgid "General-journal table - explicit debit / credit per line."
+msgstr "Memoriaaltabel - expliciet debet / credit per regel."
+
+msgid "How dates and numbers are displayed. The interface language is separate "
+"from formatting."
+msgstr "Hoe datums en getallen worden weergegeven. De interfacetaal staat los "
+"van de opmaak."
+
+msgid "Hypothetical extra repayments - nothing is saved."
+msgstr "Hypothetische extra aflossingen - er wordt niets opgeslagen."
+
+msgid "I've copied it"
+msgstr "Ik heb het gekopieerd"
+
+msgid "IBAN"
+msgstr "IBAN"
+
+msgid "IBAN is required."
+msgstr "IBAN is vereist."
+
+msgid "IBAN or Account number is required."
+msgstr "IBAN of rekeningnummer is vereist."
+
+msgid "Icon"
+msgstr "Pictogram"
+
+msgid "Import a bank statement from Bank imports to get started."
+msgstr "Importeer een bankafschrift via Bankimports om te beginnen."
+
+msgid "Import failed."
+msgstr "Import mislukt."
+
+msgid "Import statement"
+msgstr "Afschrift importeren"
+
+msgid "Import statements"
+msgstr "Afschriften importeren"
+
+#. placeholder {0}: feedback.imported
+msgid "Imported {0}"
+msgstr "{0} geïmporteerd"
+
+msgid "Imported row this journal entry was categorized from."
+msgstr "Geïmporteerde regel waaruit deze journaalpost is gecategoriseerd."
+
+msgid "Imported rows that need categorizing will appear here."
+msgstr "Geïmporteerde regels die nog gecategoriseerd moeten worden, verschijnen "
+"hier."
+
+msgid "Importer"
+msgstr "Importer"
+
+msgid "Importing…"
+msgstr "Importeren…"
+
+msgid "In force"
+msgstr "Van kracht"
+
+msgid "Inbox"
+msgstr "Postvak"
+
+msgid "Income"
+msgstr "Inkomsten"
+
+msgid "Income · MTD"
+msgstr "Inkomsten · deze maand"
+
+msgid "Income account for deposit interest…"
+msgstr "Opbrengstenrekening voor depotrente…"
+
+msgid "Insights"
+msgstr "Inzichten"
+
+msgid "Interest"
+msgstr "Rente"
+
+msgid "Interest expense account"
+msgstr "Kostenrekening rente"
+
+msgid "Interest income account"
+msgstr "Opbrengstenrekening rente"
+
+msgid "Interest saved"
+msgstr "Bespaarde rente"
+
+msgid "Interest-only"
+msgstr "Aflossingsvrij"
+
+msgid "invalid"
+msgstr "ongeldig"
+
+msgid "ISO 8601"
+msgstr "ISO 8601"
+
+msgid "Journal"
+msgstr "Dagboek"
+
+msgid "Journal entries"
+msgstr "Journaalposten"
+
+msgid "Journal entry"
+msgstr "Journaalpost"
+
+msgid "Journal entry created."
+msgstr "Journaalpost aangemaakt."
+
+msgid "Journal entry saved."
+msgstr "Journaalpost opgeslagen."
+
+msgid "Keep the payment, finish earlier"
+msgstr "Houd de betaling gelijk, eerder klaar"
+
+msgid "Label"
+msgstr "Label"
+
+msgid "Language"
+msgstr "Taal"
+
+msgid "Language & formatting"
+msgstr "Taal & opmaak"
+
+msgid "Leave"
+msgstr "Verlaten"
+
+msgid "Leave with unsaved drafts?"
+msgstr "Verlaten met niet-opgeslagen concepten?"
+
+msgid "Ledger accounts in the double-entry sense - assets, liabilities, income, "
+"expenses, equity."
+msgstr "Grootboekrekeningen in de zin van dubbel boekhouden - activa, passiva, "
+"opbrengsten, kosten, eigen vermogen."
+
+msgid "Lender"
+msgstr "Kredietverstrekker"
+
+msgid "Liabilities"
+msgstr "Passiva"
+
+msgid "Liability account"
+msgstr "Passivarekening"
+
+msgid "Line description"
+msgstr "Regelomschrijving"
+
+msgid "Linear"
+msgstr "Lineair"
+
+msgid "Lines"
+msgstr "Regels"
+
+msgid "Lines are over-allocated. Reduce one or more amounts."
+msgstr "Regels zijn te veel toegewezen. Verlaag een of meer bedragen."
+
+msgid "Lines are under-allocated. Allocate the remaining amount."
+msgstr "Regels zijn te weinig toegewezen. Wijs het resterende bedrag toe."
+
+msgid "Linked bank account"
+msgstr "Gekoppelde bankrekening"
+
+msgid "Linked bank accounts"
+msgstr "Gekoppelde bankrekeningen"
+
+msgid "Liquid - counts toward liquid net worth"
+msgstr "Liquide - telt mee voor het liquide vermogen"
+
+msgid "Liquid net worth"
+msgstr "Liquide vermogen"
+
+msgid "Loading…"
+msgstr "Laden…"
+
+msgid "Loan"
+msgstr "Lening"
+
+msgid "Loan created."
+msgstr "Lening aangemaakt."
+
+msgid "Loan deleted."
+msgstr "Lening verwijderd."
+
+msgid "Loan part"
+msgstr "Leningdeel"
+
+msgid "Loan part…"
+msgstr "Leningdeel…"
+
+msgid "Loan parts"
+msgstr "Leningdelen"
+
+msgid "Loan payment"
+msgstr "Leningbetaling"
+
+#. placeholder {0}: hint.loanName
+msgid "Loan payment · {0}"
+msgstr "Leningbetaling · {0}"
+
+msgid "Loan updated."
+msgstr "Lening bijgewerkt."
+
+msgid "Loans"
+msgstr "Leningen"
+
+msgid "Logins that have access to this ledger."
+msgstr "Logins met toegang tot dit grootboek."
+
+#. placeholder {0}: hint.loanName
+msgid "Looks like a payment on {0}"
+msgstr "Lijkt op een betaling op {0}"
+
+msgid "Lower the monthly payment (default)"
+msgstr "Verlaag de maandbetaling (standaard)"
+
+msgid "Manage"
+msgstr "Beheren"
+
+msgid "Mandate ID"
+msgstr "Machtigingskenmerk"
+
+msgid "Mark this row as not needing a journal entry. You can undismiss later."
+msgstr "Markeer deze rij als zonder journaalpost. Je kunt dit later ongedaan "
+"maken."
+
+msgid "Matched"
+msgstr "Gematcht"
+
+#. placeholder {0}: hint.otherAccountName
+msgid "Matches journal entry · {0}"
+msgstr "Komt overeen met journaalpost · {0}"
+
+msgid "Minimum 12 characters."
+msgstr "Minimaal 12 tekens."
+
+msgid "Money arrives in these accounts (debit)."
+msgstr "Geld komt binnen op deze rekeningen (debet)."
+
+msgid "Money flow"
+msgstr "Geldstroom"
+
+msgid "Money leaves these accounts (credit)."
+msgstr "Geld verlaat deze rekeningen (credit)."
+
+msgid "Money moved from one or more sources to one or more destinations."
+msgstr "Geld verplaatst van een of meer bronnen naar een of meer bestemmingen."
+
+msgid "Month · Day · Year"
+msgstr "Maand · Dag · Jaar"
+
+msgid "Monthly payment"
+msgstr "Maandbetaling"
+
+msgid "Mortgages and other loans, tracked part by part over the ledger."
+msgstr "Hypotheken en andere leningen, deel voor deel gevolgd in het grootboek."
+
+msgid "Move"
+msgstr "Verplaatsen"
+
+msgid "Move {count, plural, one {# line} other {# lines}} to “{targetName}”?"
+msgstr "{count, plural, one {# regel} other {# regels}} verplaatsen naar "
+"“{targetName}”?"
+
+msgid "Move selected lines to account"
+msgstr "Geselecteerde regels naar rekening verplaatsen"
+
+msgid "Move to account…"
+msgstr "Verplaatsen naar rekening…"
+
+msgid "Moved {count, plural, one {# line} other {# lines}} to “{targetName}”."
+msgstr "{count, plural, one {# regel} other {# regels}} verplaatst naar "
+"“{targetName}”."
+
+msgid "Multi-source-multi-destination journal entries can only be edited in "
+"Advanced."
+msgstr "Journaalposten met meerdere bronnen en bestemmingen kunnen alleen in "
+"Geavanceerd worden bewerkt."
+
+msgid "Name"
+msgstr "Naam"
+
+msgid "Net negative this period - see the breakdown."
+msgstr "Netto negatief deze periode - zie de uitsplitsing."
+
+msgid "Net negative this period (excluded from the chart)"
+msgstr "Netto negatief deze periode (uitgesloten van de grafiek)"
+
+msgid "Net worth"
+msgstr "Nettovermogen"
+
+msgid "New account"
+msgstr "Nieuwe rekening"
+
+msgid "New bank account"
+msgstr "Nieuwe bankrekening"
+
+msgid "New counterparty"
+msgstr "Nieuwe tegenpartij"
+
+msgid "New journal entry"
+msgstr "Nieuwe journaalpost"
+
+msgid "New loan"
+msgstr "Nieuwe lening"
+
+msgid "New rate"
+msgstr "Nieuwe rente"
+
+#. placeholder {0}: part.label
+msgid "New rate period - {0}"
+msgstr "Nieuwe renteperiode - {0}"
+
+msgid "Next month"
+msgstr "Volgende maand"
+
+msgid "Next page"
+msgstr "Volgende pagina"
+
+msgid "No accounts yet."
+msgstr "Nog geen rekeningen."
+
+msgid "No balance history yet."
+msgstr "Nog geen saldohistorie."
+
+msgid "No bank accounts linked to one of your own accounts yet."
+msgstr "Nog geen bankrekeningen gekoppeld aan een van je eigen rekeningen."
+
+msgid "No bank accounts linked yet."
+msgstr "Nog geen bankrekeningen gekoppeld."
+
+msgid "No bank accounts of your own yet."
+msgstr "Nog geen eigen bankrekeningen."
+
+msgid "No bank transactions yet."
+msgstr "Nog geen banktransacties."
+
+msgid "No counterparties yet."
+msgstr "Nog geen tegenpartijen."
+
+msgid "No counterparty bank accounts."
+msgstr "Geen bankrekeningen van tegenpartijen."
+
+msgid "No importer configured"
+msgstr "Geen importer geconfigureerd"
+
+msgid "No journal entries match the current filters."
+msgstr "Geen journaalposten komen overeen met de huidige filters."
+
+msgid "No journal entries yet for this counterparty."
+msgstr "Nog geen journaalposten voor deze tegenpartij."
+
+msgid "No journal entries yet."
+msgstr "Nog geen journaalposten."
+
+msgid "No loans yet"
+msgstr "Nog geen leningen"
+
+msgid "No matches for “{debounced}”."
+msgstr "Geen resultaten voor “{debounced}”."
+
+msgid "No matches for “{debouncedQ}”."
+msgstr "Geen resultaten voor “{debouncedQ}”."
+
+msgid "No matches for “{query}”."
+msgstr "Geen resultaten voor “{query}”."
+
+msgid "No matches for “{search}”."
+msgstr "Geen resultaten voor “{search}”."
+
+msgid "No money moved in this period."
+msgstr "In deze periode is er geen geld verplaatst."
+
+msgid "No rows match the current filters."
+msgstr "Geen rijen komen overeen met de huidige filters."
+
+msgid "No structural matches in this window. Widen the date range or fall back "
+"to creating a new JE below."
+msgstr "Geen structurele overeenkomsten in dit venster. Verbreed het "
+"datumbereik of maak hieronder een nieuwe journaalpost aan."
+
+msgid "No suggestions to apply."
+msgstr "Geen suggesties om toe te passen."
+
+msgid "No tokens yet."
+msgstr "Nog geen tokens."
+
+msgid "None - top level"
+msgstr "Geen - hoogste niveau"
+
+msgid "Nothing categorized yet."
+msgstr "Nog niets gecategoriseerd."
+
+msgid "Nothing dismissed."
+msgstr "Niets genegeerd."
+
+msgid "Nothing posted or projected yet."
+msgstr "Nog niets geboekt of geprognosticeerd."
+
+msgid "Notifications"
+msgstr "Meldingen"
+
+msgid "Number format"
+msgstr "Getalnotatie"
+
+#. placeholder {0}: formatMoney(Math.abs(diff), currency, catalog)
+msgid "Off by {0}"
+msgstr "{0} ernaast"
+
+msgid "Off by {diffStr}"
+msgstr "{diffStr} ernaast"
+
+msgid "Only non-postable accounts of the same type and currency can be parents."
+msgstr "Alleen niet-boekbare rekeningen van hetzelfde type en dezelfde valuta "
+"kunnen bovenliggend zijn."
+
+msgid "Only the selected side of each journal entry moves - dates, amounts and "
+"the other side stay untouched. The whole batch moves together, or not at "
+"all."
+msgstr "Alleen de geselecteerde zijde van elke journaalpost verplaatst - "
+"datums, bedragen en de andere zijde blijven ongewijzigd. De hele batch "
+"verplaatst samen, of helemaal niet."
+
+msgid "Open calendar"
+msgstr "Kalender openen"
+
+msgid "Open navigation"
+msgstr "Navigatie openen"
+
+msgid "Opening balance ({currencyCode})"
+msgstr "Beginsaldo ({currencyCode})"
+
+msgid "Optional"
+msgstr "Optioneel"
+
+msgid "or scroll down to create a new journal entry."
+msgstr "of scroll omlaag om een nieuwe journaalpost aan te maken."
+
+msgid "Outstanding"
+msgstr "Uitstaand"
+
+msgid "Outstanding principal"
+msgstr "Uitstaande hoofdsom"
+
+msgid "Over by"
+msgstr "Te veel met"
+
+msgid "Owner"
+msgstr "Eigenaar"
+
+msgid "Owner account"
+msgstr "Eigenaarsrekening"
+
+msgid "Owner counterparty"
+msgstr "Eigenaar-tegenpartij"
+
+msgid "Owner filter"
+msgstr "Eigenaarsfilter"
+
+msgid "Page {page}"
+msgstr "Pagina {page}"
+
+msgid "Pages"
+msgstr "Pagina's"
+
+msgid "Parent account"
+msgstr "Bovenliggende rekening"
+
+msgid "Parent account code"
+msgstr "Code bovenliggende rekening"
+
+msgid "Parent account name"
+msgstr "Naam bovenliggende rekening"
+
+msgid "Part"
+msgstr "Deel"
+
+#. placeholder {0}: (index + 1).toString()
+msgid "Part {0}"
+msgstr "Deel {0}"
+
+msgid "Part added."
+msgstr "Deel toegevoegd."
+
+msgid "Part deleted."
+msgstr "Deel verwijderd."
+
+msgid "Part updated."
+msgstr "Deel bijgewerkt."
+
+msgid "Parts"
+msgstr "Delen"
+
+msgid "Parts - each with its own terms and rate history."
+msgstr "Delen - elk met eigen voorwaarden en rentehistorie."
+
+msgid "Parts in this payment:"
+msgstr "Delen in deze betaling:"
+
+msgid "Password"
+msgstr "Wachtwoord"
+
+msgid "Past rows are posted actuals; future rows are the projection (the "
+"what-if scenario when active)."
+msgstr "Verleden rijen zijn geboekte werkelijke cijfers; toekomstige rijen zijn "
+"de prognose (het wat-als-scenario indien actief)."
+
+msgid "Payment change"
+msgstr "Wijziging betaling"
+
+msgid "Payments"
+msgstr "Betalingen"
+
+msgid "Period"
+msgstr "Periode"
+
+msgid "Period presets"
+msgstr "Periodevoorinstellingen"
+
+msgid "Personal access tokens for CLI scripts, importers, and third-party "
+"callers."
+msgstr "Persoonlijke toegangstokens voor CLI-scripts, importers en externe "
+"aanroepen."
+
+msgid "Pick a journal entry to attach to"
+msgstr "Kies een journaalpost om aan te koppelen"
+
+msgid "Pick a journal entry to attach to…"
+msgstr "Kies een journaalpost om aan te koppelen…"
+
+msgid "Pick account…"
+msgstr "Kies rekening…"
+
+msgid "Pick counterparty…"
+msgstr "Kies tegenpartij…"
+
+msgid "Pick the interest expense account."
+msgstr "Kies de kostenrekening voor rente."
+
+msgid "Pick the lender."
+msgstr "Kies de kredietverstrekker."
+
+msgid "Pick the lender…"
+msgstr "Kies de kredietverstrekker…"
+
+msgid "Pick the liability account to adopt."
+msgstr "Kies de over te nemen passivarekening."
+
+msgid "Piggy banks"
+msgstr "Spaarpotten"
+
+msgid "Plan"
+msgstr "Plan"
+
+msgid "Posted actuals to the left of today, the engine's projection to the "
+"right."
+msgstr "Geboekte werkelijke cijfers links van vandaag, de prognose van de "
+"engine rechts."
+
+#. placeholder {0}: proposal.month.slice(0, 7)
+msgid "Pre-filled from the schedule for {0} - adjust the amounts to match the "
+"bank's charge."
+msgstr "Vooraf ingevuld op basis van het schema voor {0} - pas de bedragen aan "
+"de afschrijving van de bank aan."
+
+msgid "Preferences"
+msgstr "Voorkeuren"
+
+msgid "Previous month"
+msgstr "Vorige maand"
+
+msgid "Previous page"
+msgstr "Vorige pagina"
+
+msgid "Principal"
+msgstr "Hoofdsom"
+
+msgid "Projected"
+msgstr "Verwacht"
+
+msgid "Rate"
+msgstr "Rente"
+
+msgid "Rate fixed until (optional)"
+msgstr "Rente vast tot (optioneel)"
+
+msgid "Rate period added."
+msgstr "Renteperiode toegevoegd."
+
+msgid "Rate period deleted."
+msgstr "Renteperiode verwijderd."
+
+msgid "Rate period updated."
+msgstr "Renteperiode bijgewerkt."
+
+msgid "Re-parented under the loan with its posted history intact."
+msgstr "Onder de lening geplaatst met de geboekte historie intact."
+
+msgid "ready"
+msgstr "klaar"
+
+msgid "Real-world parties on the other side of journal entries."
+msgstr "Echte partijen aan de andere kant van journaalposten."
+
+msgid "Reason"
+msgstr "Reden"
+
+msgid "Reason: {dismissDraft}"
+msgstr "Reden: {dismissDraft}"
+
+msgid "Reassign"
+msgstr "Opnieuw toewijzen"
+
+msgid "Reassign to a different owner"
+msgstr "Aan een andere eigenaar toewijzen"
+
+msgid "Reconciled"
+msgstr "Afgestemd"
+
+msgid "Ref: {reference}"
+msgstr "Ref: {reference}"
+
+msgid "Reference"
+msgstr "Referentie"
+
+msgid "Register"
+msgstr "Register"
+
+msgid "Remove last"
+msgstr "Laatste verwijderen"
+
+msgid "Remove part"
+msgstr "Deel verwijderen"
+
+msgid "Remove this leg"
+msgstr "Deze boeking verwijderen"
+
+msgid "Remove this line"
+msgstr "Deze regel verwijderen"
+
+msgid "Repayment date"
+msgstr "Aflossingsdatum"
+
+msgid "Repayment policy"
+msgstr "Aflossingsbeleid"
+
+msgid "Repayment type"
+msgstr "Aflossingstype"
+
+msgid "Reporting period"
+msgstr "Rapportageperiode"
+
+msgid "Required"
+msgstr "Vereist"
+
+msgid "Required when configured at deploy time via <0>Auth:SetupToken</0>."
+msgstr "Vereist wanneer geconfigureerd bij deployment via "
+"<0>Auth:SetupToken</0>."
+
+#. placeholder {0}: dirtyCount.toString()
+msgid "Reset all {0} unsaved drafts back to the server-suggested values."
+msgstr "Zet alle {0} niet-opgeslagen concepten terug naar de door de server "
+"voorgestelde waarden."
+
+msgid "Reset draft"
+msgstr "Concept resetten"
+
+msgid "Reset draft to server suggestion"
+msgstr "Concept terugzetten naar serversuggestie"
+
+msgid "Restored to inbox."
+msgstr "Teruggezet in het postvak."
+
+msgid "Retry"
+msgstr "Opnieuw proberen"
+
+msgid "Revoke"
+msgstr "Intrekken"
+
+msgid "Revoked"
+msgstr "Ingetrokken"
+
+msgid "Roll-up account"
+msgstr "Verzamelrekening"
+
+msgid "Row is not ready"
+msgstr "Rij is niet klaar"
+
+msgid "Runs until"
+msgstr "Loopt tot"
+
+msgid "Save"
+msgstr "Opslaan"
+
+msgid "Save changes"
+msgstr "Wijzigingen opslaan"
+
+#. placeholder {0}: progress.done.toString()
+#. placeholder {1}: progress.total.toString()
+msgid "Saving {0}/{1}…"
+msgstr "Opslaan {0}/{1}…"
+
+msgid "Saving…"
+msgstr "Opslaan…"
+
+msgid "Savings"
+msgstr "Sparen"
+
+msgid "Schedule"
+msgstr "Schema"
+
+msgid "Search"
+msgstr "Zoeken"
+
+msgid "Search activity"
+msgstr "Activiteit zoeken"
+
+msgid "Search bank accounts"
+msgstr "Bankrekeningen zoeken"
+
+msgid "Search bank accounts…"
+msgstr "Bankrekeningen zoeken…"
+
+msgid "Search bank transactions"
+msgstr "Banktransacties zoeken"
+
+msgid "Search counterparties"
+msgstr "Tegenpartijen zoeken"
+
+msgid "Search counterparties…"
+msgstr "Tegenpartijen zoeken…"
+
+msgid "Search description or counterparty…"
+msgstr "Omschrijving of tegenpartij zoeken…"
+
+msgid "Search query"
+msgstr "Zoekopdracht"
+
+msgid "Search register"
+msgstr "Register zoeken"
+
+msgid "Search results"
+msgstr "Zoekresultaten"
+
+msgid "Search…"
+msgstr "Zoeken…"
+
+msgid "Searching…"
+msgstr "Zoeken…"
+
+msgid "Select a counterparty…"
+msgstr "Selecteer een tegenpartij…"
+
+msgid "Select all movable rows on this page"
+msgstr "Selecteer alle verplaatsbare rijen op deze pagina"
+
+msgid "Select all visible rows"
+msgstr "Selecteer alle zichtbare rijen"
+
+msgid "Select an account."
+msgstr "Selecteer een rekening."
+
+msgid "Select an account…"
+msgstr "Selecteer een rekening…"
+
+#. placeholder {0}: bankTransaction.description
+msgid "Select bank transaction {0}"
+msgstr "Banktransactie {0} selecteren"
+
+#. placeholder {0}: row.date
+msgid "Select line of {0}"
+msgstr "Regel van {0} selecteren"
+
+msgid "Select…"
+msgstr "Selecteren…"
+
+#. placeholder {0}: selectedCurrencies.join(' + ')
+msgid "Selected rows span {0} - Account can't be bulk-applied."
+msgstr "Geselecteerde rijen omvatten {0} - rekening kan niet in bulk worden "
+"toegepast."
+
+msgid "SEPA creditor ID"
+msgstr "SEPA-incassant-ID"
+
+msgid "Set an importer on this bank account to enable statement imports."
+msgstr "Stel een importer in op deze bankrekening om afschriftimports in te "
+"schakelen."
+
+msgid "Settings"
+msgstr "Instellingen"
+
+msgid "Setup is unavailable. Either a user already exists, or the setup token "
+"does not match."
+msgstr "Installatie is niet beschikbaar. Er bestaat al een gebruiker, of het "
+"installatietoken komt niet overeen."
+
+msgid "Setup token"
+msgstr "Installatietoken"
+
+msgid "Show rate history"
+msgstr "Rentehistorie tonen"
+
+msgid "Sibling-of-self-transfer?"
+msgstr "Tegenboeking van eigen overboeking?"
+
+msgid "Side"
+msgstr "Zijde"
+
+msgid "Sign in"
+msgstr "Inloggen"
+
+msgid "Sign out"
+msgstr "Uitloggen"
+
+msgid "Signing in…"
+msgstr "Inloggen…"
+
+msgid "Simple"
+msgstr "Eenvoudig"
+
+msgid "Something went wrong"
+msgstr "Er ging iets mis"
+
+msgid "Something went wrong."
+msgstr "Er ging iets mis."
+
+#. placeholder {0}: formatNumber(lineCount)
+msgid "Split ({0} lines)"
+msgstr "Splitsen ({0} regels)"
+
+msgid "Split ({lineCount, plural, one {# line} other {# lines}})"
+msgstr "Splitsen ({lineCount, plural, one {# regel} other {# regels}})"
+
+msgid "Stage these rows for dismissal. Save-all to commit; until then you can "
+"review or reset per row."
+msgstr "Zet deze rijen klaar om te negeren. Sla alles op om te bevestigen; tot "
+"dan kun je per rij beoordelen of resetten."
+
+msgid "Start date"
+msgstr "Begindatum"
+
+msgid "Statement importer"
+msgstr "Afschriftimporter"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Status filter"
+msgstr "Statusfilter"
+
+msgid "Structural matches with an Uncleared bank-side slot. Widen the date "
+"window to surface near-misses."
+msgstr "Structurele overeenkomsten met een niet-verwerkte plek aan de "
+"bankzijde. Verbreed het datumvenster om bijna-overeenkomsten te tonen."
+
+msgid "Sub-account…"
+msgstr "Subrekening…"
+
+msgid "Subscriptions"
+msgstr "Abonnementen"
+
+msgid "Switch to the personal-finance shape"
+msgstr "Schakel over naar de privéfinanciënweergave"
+
+msgid "Target"
+msgstr "Doel"
+
+#. placeholder {0}: deletingRate.rate.annualRatePercent.toFixed(2)
+#. placeholder {1}: deletingRate.rate.effectiveDate
+#. placeholder {2}: deletingRate.part.label
+msgid "The {0}% rate effective {1} is removed from {2}. Projections recompute; "
+"posted entries are untouched."
+msgstr "De rente van {0}%, ingaand {1}, wordt verwijderd uit {2}. Prognoses "
+"worden herberekend; geboekte posten blijven ongewijzigd."
+
+msgid "The interface language. Formatting below is set separately."
+msgstr "De interfacetaal. De opmaak hieronder stel je apart in."
+
+msgid "The loan definition, its parts, and rate history are removed. The "
+"accounts and every posted entry stay untouched."
+msgstr "De leningdefinitie, de delen en de rentehistorie worden verwijderd. De "
+"rekeningen en alle geboekte posten blijven ongewijzigd."
+
+msgid "The loan needs a name."
+msgstr "De lening heeft een naam nodig."
+
+msgid "The part definition and its rate history are removed. Its account and "
+"every posted entry stay untouched - it becomes an ordinary account "
+"again."
+msgstr "De deeldefinitie en de rentehistorie worden verwijderd. De rekening en "
+"alle geboekte posten blijven ongewijzigd - het wordt weer een gewone "
+"rekening."
+
+msgid "The part's account holds its principal and posted history, so it can't "
+"be changed here."
+msgstr "De rekening van het deel bevat de hoofdsom en geboekte historie en kan "
+"hier daarom niet worden gewijzigd."
+
+msgid "The real-world bank accounts behind your ledger accounts and "
+"counterparties."
+msgstr "De echte bankrekeningen achter je grootboekrekeningen en tegenpartijen."
+
+msgid "This can't be undone."
+msgstr "Dit kan niet ongedaan worden gemaakt."
+
+msgid "This can't be undone. Accounts with journal entries can't be deleted "
+"until those are removed first."
+msgstr "Dit kan niet ongedaan worden gemaakt. Rekeningen met journaalposten "
+"kunnen pas worden verwijderd nadat die zijn verwijderd."
+
+msgid "This can't be undone. The bookkeeping lines on every affected account "
+"will disappear with it."
+msgstr "Dit kan niet ongedaan worden gemaakt. De boekingsregels op elke "
+"betrokken rekening verdwijnen ermee."
+
+#. placeholder {0}: justCreated.metadata.name
+msgid "This is the only time you'll see \"{0}\" in full. Store it somewhere "
+"safe - it can't be retrieved again."
+msgstr "Dit is de enige keer dat je \"{0}\" volledig ziet. Bewaar het op een "
+"veilige plek - het kan niet opnieuw worden opgehaald."
+
+msgid "This row already has a journal entry."
+msgstr "Deze rij heeft al een journaalpost."
+
+msgid "This row is dismissed. Undismiss it first to categorize."
+msgstr "Deze rij is genegeerd. Maak het negeren eerst ongedaan om te "
+"categoriseren."
+
+msgid "This screen is not built yet."
+msgstr "Dit scherm is nog niet gebouwd."
+
+msgid "To"
+msgstr "Naar"
+
+msgid "today"
+msgstr "vandaag"
+
+msgid "Total"
+msgstr "Totaal"
+
+msgid "Trend range"
+msgstr "Trendbereik"
+
+msgid "Try again"
+msgstr "Opnieuw proberen"
+
+msgid "Turn this bank row into a journal entry."
+msgstr "Maak van deze bankregel een journaalpost."
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Type to search accounts, counterparties, bank accounts, journal entries."
+msgstr "Typ om te zoeken naar rekeningen, tegenpartijen, bankrekeningen en "
+"journaalposten."
+
+msgid "Unallocated"
+msgstr "Niet toegewezen"
+
+msgid "Uncheck for long-term holdings such as a house, mortgage, or investment "
+"portfolio."
+msgstr "Schakel uit voor langetermijnbezit zoals een huis, hypotheek of "
+"beleggingsportefeuille."
+
+msgid "Uncheck to make this a roll-up account that only totals its children."
+msgstr "Schakel uit om hiervan een verzamelrekening te maken die alleen de "
+"onderliggende rekeningen optelt."
+
+msgid "Uncleared"
+msgstr "Niet verwerkt"
+
+msgid "Undisbursed mortgage money earmarked for building. Its interest offsets "
+"the loan payment during construction."
+msgstr "Niet-uitgekeerd hypotheekgeld bestemd voor de bouw. De rente "
+"compenseert de leningbetaling tijdens de bouw."
+
+msgid "Undismiss"
+msgstr "Negeren ongedaan maken"
+
+msgid "Unknown account"
+msgstr "Onbekende rekening"
+
+msgid "Unknown counterparty"
+msgstr "Onbekende tegenpartij"
+
+msgid "Upload an ING current-account CSV against the matching bank account. "
+"Re-uploads are safe - duplicate rows are skipped."
+msgstr "Upload een CSV van een ING-betaalrekening tegen de bijbehorende "
+"bankrekening. Opnieuw uploaden is veilig - dubbele rijen worden "
+"overgeslagen."
+
+msgid "Use Debit or Credit, not both."
+msgstr "Gebruik debet of credit, niet beide."
+
+msgid "Users"
+msgstr "Gebruikers"
+
+msgid "Value date"
+msgstr "Valutadatum"
+
+msgid "View journal entry"
+msgstr "Journaalpost bekijken"
+
+msgid "Weighted rate"
+msgstr "Gewogen rente"
+
+msgid "What if…"
+msgstr "Wat als…"
+
+msgid "What-if total"
+msgstr "Wat-als-totaal"
+
+msgid "Where money came in and where it went"
+msgstr "Waar geld binnenkwam en waar het naartoe ging"
+
+msgid "will dismiss"
+msgstr "wordt genegeerd"
+
+msgid "Working…"
+msgstr "Bezig…"
+
+msgid "You have {dirtyCount, plural, one {# unsaved draft} other {# unsaved "
+"drafts}}. Leaving will discard them."
+msgstr "Je hebt {dirtyCount, plural, one {# niet-opgeslagen concept} other {# "
+"niet-opgeslagen concepten}}. Bij vertrek worden ze verworpen."
+
+msgid "You're caught up."
+msgstr "Je bent helemaal bij."
+
+msgid "Σ Credit <0>{creditStr}</0>"
+msgstr "Σ Credit <0>{creditStr}</0>"
+
+msgid "Σ Debit / Credit"
+msgstr "Σ Debet / Credit"
+
+msgid "Σ Debit <0>{debitStr}</0>"
+msgstr "Σ Debet <0>{debitStr}</0>"

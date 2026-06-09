@@ -7,7 +7,7 @@ import { formatter } from '@lingui/format-po';
 // them and CI fails if they differ from what the source produces.
 export default defineConfig({
     sourceLocale: 'en',
-    locales: ['en'],
+    locales: ['en', 'nl-NL', 'zh-TW'],
     catalogs: [
         {
             path: '<rootDir>/src/locales/{locale}/messages',
