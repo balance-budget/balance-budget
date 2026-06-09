@@ -26,7 +26,7 @@ function fetchCurrencies(signal: AbortSignal): Promise<WireCurrency[]> {
 }
 
 // minorUnitScale comes through as `number | string` for the same long-int
-// reason as Money — normalise. Code/name/symbol are required on the wire.
+// reason as Money — normalize. Code/name/symbol are required on the wire.
 function toCurrency(wire: WireCurrency): Currency {
     return {
         code: wire.code,

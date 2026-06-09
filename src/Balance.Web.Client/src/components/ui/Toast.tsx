@@ -13,7 +13,7 @@ import { Icon } from '../Icon';
 
 /*
  * React Aria's Toast is still exported under UNSTABLE_ prefixes (RAC 1.18).
- * The unstable imports are confined to this file (ADR-0024) so stabilisation
+ * The unstable imports are confined to this file (ADR-0024) so stabilization
  * is a one-file rename; the rest of the app talks to the `useToast()` facade.
  */
 

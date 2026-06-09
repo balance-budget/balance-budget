@@ -125,7 +125,7 @@ export function BankTransactionCategorize({ id, loanId }: Props) {
     }
 
     if (bt.data.journalEntryId !== null || bt.data.dismissedAt !== null) {
-        return <NotCategorisableState bt={bt.data} />;
+        return <NotCategorizableState bt={bt.data} />;
     }
 
     return (
@@ -140,7 +140,7 @@ export function BankTransactionCategorize({ id, loanId }: Props) {
     );
 }
 
-function NotCategorisableState({ bt }: { bt: BankTransaction }) {
+function NotCategorizableState({ bt }: { bt: BankTransaction }) {
     const { t } = useLingui();
     const reason = bt.journalEntryId
         ? t`This row already has a journal entry.`
@@ -724,7 +724,7 @@ function UnallocatedFooter({
 /**
  * Loan-aware mode header (ADR-0025): names the loan, lets the user scope the
  * payment to a subset of parts (banks that debit parts separately), and offers
- * the way back to plain categorisation. The engine's proposal is applied to
+ * the way back to plain categorization. The engine's proposal is applied to
  * the editable lines below.
  */
 function LoanModePanel({
@@ -809,7 +809,7 @@ function filterSuggestionsByCurrency(
 //  1. Quick attach — only when the strict predicate hit a unique JE (the hint).
 //  2. Pick a JE — manual JE-picker over structural candidates with a widened
 //     date window the user controls.
-//  3. Create a new JE — the existing categorise form below this panel.
+//  3. Create a new JE — the existing categorize form below this panel.
 // ─────────────────────────────────────────────────────────────────────────────
 
 function AttachOptionsPanel({

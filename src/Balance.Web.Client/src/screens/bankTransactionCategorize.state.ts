@@ -1,9 +1,9 @@
 /*
- * Pure form-state helpers for the Bank transaction categorisation form. Keeps
+ * Pure form-state helpers for the Bank transaction categorization form. Keeps
  * the user-input ↔ wire-shape projection out of the React component.
  *
  * Sign rule on the wire (mirrors the server-side rule in
- * `BankTransactionCategorisationService`): the bank-side line uses
+ * `BankTransactionCategorizationService`): the bank-side line uses
  * `+BT.Money.Amount`, so the counter-side lines must sum to `-BT.Money.Amount`.
  * The form takes positive magnitudes from the user — the sign is determined
  * once at projection time from the BT direction.
@@ -109,11 +109,11 @@ export function initialForm(args: {
  *      submits with CounterpartyId = null.
  *   2. Else if the matched BankAccount has CounterpartyId IS NOT NULL, the
  *      counterparty is identified and the suggestions effect supplies the
- *      last-used counter-side Account(s) (existing behaviour).
+ *      last-used counter-side Account(s) (existing behavior).
  *   3. Otherwise (null IBAN, no match, or a BankAccount with neither side
  *      set) the resolver returns `none` and the form opens empty.
  *
- * Whitespace and casing are normalised before comparison to match the import
+ * Whitespace and casing are normalized before comparison to match the import
  * paths' lenient IBAN handling.
  */
 export type OpenContext =
@@ -126,8 +126,8 @@ export function resolveOpenContext(
     bankAccounts: readonly BankAccount[],
 ): OpenContext {
     if (counterpartyAccountNumber === null) return { kind: 'none' };
-    const normalised = counterpartyAccountNumber.replace(/\s+/g, '').toUpperCase();
-    if (normalised.length === 0) return { kind: 'none' };
+    const normalized = counterpartyAccountNumber.replace(/\s+/g, '').toUpperCase();
+    if (normalized.length === 0) return { kind: 'none' };
 
     // Two passes: self-transfer wins over a same-IBAN counterparty row if both
     // exist (ADR 0010 keeps them mutually exclusive on one BankAccount, but
@@ -135,7 +135,7 @@ export function resolveOpenContext(
     let counterpartyCandidate: CounterpartyId | null = null;
     for (const ba of bankAccounts) {
         if (!ba.iban) continue;
-        if (ba.iban.replace(/\s+/g, '').toUpperCase() !== normalised) continue;
+        if (ba.iban.replace(/\s+/g, '').toUpperCase() !== normalized) continue;
         if (ba.accountId !== null) {
             return { kind: 'self-transfer', prefilledAccountId: ba.accountId };
         }

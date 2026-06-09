@@ -450,9 +450,9 @@ function AmountCell({
     catalog: CurrencyCatalog;
 }) {
     const money = bankTransaction.money;
-    const colour = money.amount < 0 ? 'text-danger' : 'text-success';
+    const color = money.amount < 0 ? 'text-danger' : 'text-success';
     return (
-        <span className={cx('font-mono text-sm tabular-nums text-right', colour)}>
+        <span className={cx('font-mono text-sm tabular-nums text-right', color)}>
             {formatMoney(money.amount, money.currencyCode, catalog, { sign: true })}
         </span>
     );
@@ -748,7 +748,7 @@ function InboxEditorReady({
 
     function patchDraft(id: BankTransactionId, patch: Partial<RowDraft>) {
         setRowErrors(prev => withoutKey(prev, id));
-        // Mutual exclusion: editing the categorise picker clears the dismiss draft.
+        // Mutual exclusion: editing the categorize picker clears the dismiss draft.
         setDismissDrafts(prev => withoutKey(prev, id));
         setUserOverrides(prev => {
             const next = new Map(prev);
@@ -769,7 +769,7 @@ function InboxEditorReady({
     const selectionAnchorRef = useRef<BankTransactionId | null>(null);
     // Bulk picker values live here so they survive Apply, Clear, and pagination
     // — re-applying the same CP+Account across page after page of similar rows
-    // is the common categorisation flow.
+    // is the common categorization flow.
     const [bulkCounterparty, setBulkCounterparty] = useState<BulkApplyCounterparty | null>(null);
     const [bulkAccountId, setBulkAccountId] = useState<AccountId | null>(null);
     function setSelectionAnchor(id: BankTransactionId | null) {
@@ -893,7 +893,7 @@ function InboxEditorReady({
         const targets = visibleSelection();
         setDismissDrafts(prev => setBulkDismissDrafts(prev, targets, trimmed));
         // Mutual exclusion: setting a dismiss draft clears any in-progress
-        // categorise draft for that row.
+        // categorize draft for that row.
         setUserOverrides(prev => removeKeysFor(prev, targets));
         setRowErrors(prev => removeKeysFor(prev, targets));
     }
@@ -963,7 +963,7 @@ function InboxEditorReady({
                 return {
                     id,
                     bt,
-                    action: { kind: 'categorise' as const, draft: draftFor(id) },
+                    action: { kind: 'categorize' as const, draft: draftFor(id) },
                 };
             })
             .filter((r): r is NonNullable<typeof r> => r !== null);
@@ -983,7 +983,7 @@ function InboxEditorReady({
                     `/api/bank-transactions/${id}/categorize`,
                     request,
                     new AbortController().signal,
-                    'categorise bank transaction',
+                    'categorize bank transaction',
                 );
             },
             dismiss: async (id, reason) => {
@@ -1311,7 +1311,7 @@ type ActionBarProps = {
  * Picker values (`bulkCounterparty`, `bulkAccountId`) are owned by the parent
  * so they survive Apply, Clear, and pagination — re-applying the same
  * counterparty + account across multiple pages of similar rows is the common
- * categorisation flow.
+ * categorization flow.
  */
 function ActionBar({
     selectionCount,
@@ -1649,7 +1649,7 @@ function AttachHintBadge({ hint }: { hint: NonNullable<BankTransaction['matching
     );
 }
 
-/** Loan-payment hint (ADR-0025): one click into the loan-aware categorise mode. */
+/** Loan-payment hint (ADR-0025): one click into the loan-aware categorize mode. */
 function LoanPaymentHintBadge({
     bankTransactionId,
     hint,
@@ -2045,5 +2045,5 @@ function BulkDismissDialog({
 }
 
 function formatSaveAllToast(summary: SaveAllSummary): string {
-    return t`${summary.categorised.toString()} categorized, ${summary.dismissed.toString()} dismissed, ${summary.failed.toString()} failed.`;
+    return t`${summary.categorized.toString()} categorized, ${summary.dismissed.toString()} dismissed, ${summary.failed.toString()} failed.`;
 }

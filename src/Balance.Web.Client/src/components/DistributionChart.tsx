@@ -170,7 +170,7 @@ function DistributionBody({
         name: s.name,
         value: s.amount.amount,
         // recharts spreads each datum onto its sector, so a per-entry `fill`
-        // colours the slice — no deprecated <Cell> needed.
+        // colors the slice — no deprecated <Cell> needed.
         fill: colorByAccount.get(s.accountId) ?? baseColor,
     }));
 

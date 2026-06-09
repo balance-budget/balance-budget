@@ -38,7 +38,7 @@ describe('defaultPeriod', () => {
 });
 
 describe('detectPreset', () => {
-    it('recognises a range that matches a preset exactly', () => {
+    it('recognizes a range that matches a preset exactly', () => {
         expect(detectPreset({ from: '2026-05-01', to: '2026-05-31' }, TODAY)).toBe('this-month');
         expect(detectPreset({ from: '2025-01-01', to: '2025-12-31' }, TODAY)).toBe('last-year');
     });

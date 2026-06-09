@@ -14,7 +14,7 @@ type MoneyFlowChartProps = {
     currency: string;
 };
 
-// One colour per node kind. The hub is neutral; income/expense and the three
+// One color per node kind. The hub is neutral; income/expense and the three
 // balance-sheet types reuse the category palette so the diagram reads the same
 // way as the rest of the app.
 const KIND_COLOR: Record<MoneyFlowNodeKind, string> = {
@@ -196,7 +196,7 @@ type FlowNodeProps = {
     onToggle?: (id: string) => void;
 };
 
-// Custom Sankey node: a coloured bar with its account name placed on the
+// Custom Sankey node: a colored bar with its account name placed on the
 // outward side — pure sources (income, drawdowns) on the left, everything from
 // the hub rightward (expenses, savings) on the right — so labels never sit on
 // top of the flows. Nodes with children carry a circled +/− on the outward edge
