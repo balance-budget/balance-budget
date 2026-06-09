@@ -32,7 +32,7 @@ This caused recurring friction:
 ### Considered alternatives
 
 1. **Re-create the project-reference integration with custom MSBuild**
-   (`DefineStaticWebAssets` extensibility). Preserves behaviour exactly but
+   (`DefineStaticWebAssets` extensibility). Preserves behavior exactly but
    swaps one under-documented SDK corner for another.
 2. **Plain copy + `UseStaticFiles`** (`ResolvedFileToPublish` mapping `dist/**`
    into `wwwroot/`). Simple, but abandons `MapStaticAssets` and its

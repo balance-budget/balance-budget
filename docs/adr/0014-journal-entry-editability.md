@@ -2,7 +2,7 @@
 
 A `JournalLine` is fully editable iff its `ReconciliationStatus == Uncleared`; `Cleared` and `Reconciled` lines are frozen except for `Description`. The edit surface is a full-body `PUT /api/journal-entries/{id}` carrying the desired final state.
 
-We rejected gating editability entry-wide on `ReconciliationStatus` (either direction either re-points a bank-confirmed line or freezes every imported entry once categorisation completes) and folding `ReconciliationStatus` mutation into the PUT (flipping status belongs to the future reconciliation pass, which gets its own endpoint).
+We rejected gating editability entry-wide on `ReconciliationStatus` (either direction either re-points a bank-confirmed line or freezes every imported entry once categorization completes) and folding `ReconciliationStatus` mutation into the PUT (flipping status belongs to the future reconciliation pass, which gets its own endpoint).
 
 ## Editing surface
 

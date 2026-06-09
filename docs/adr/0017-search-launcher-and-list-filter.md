@@ -8,4 +8,4 @@ Search is two deliberately separate surfaces. A **Cmd-K launcher** queries `GET 
 
 Every list endpoint returns a uniform `PagedOutput<T> { Items, TotalCount }` driving a sliding-window numbered paginator; `PAGE_SIZE = 50`.
 
-We rejected unifying the two surfaces (the list filter needs filter-on-visible-list semantics for bulk-categorising the Inbox with selection intact across pagination, which a flat results page breaks), query syntax in the box, and Postgres-specific `ILIKE`/trigram/FTS — plain `field.Contains(term)` is milliseconds at realistic volumes, and the single-provider deployment makes the case-sensitivity difference acceptable.
+We rejected unifying the two surfaces (the list filter needs filter-on-visible-list semantics for bulk-categorizing the Inbox with selection intact across pagination, which a flat results page breaks), query syntax in the box, and Postgres-specific `ILIKE`/trigram/FTS — plain `field.Contains(term)` is milliseconds at realistic volumes, and the single-provider deployment makes the case-sensitivity difference acceptable.

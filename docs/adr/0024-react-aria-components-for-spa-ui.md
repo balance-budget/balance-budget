@@ -75,7 +75,7 @@ with Balance's existing Tailwind v4 `@theme` tokens. Concretely:
   follow-up slice. `Pagination` and purely presentational components stay
   custom.
 - **Testing:** `@react-aria/test-utils` pattern testers cover app-specific
-  behaviour (AccountSelect filtering/sentinels/hierarchy, minor-units
+  behavior (AccountSelect filtering/sentinels/hierarchy, minor-units
   conversion, preset↔custom range interplay, server-error surfacing) — RAC's
   own keyboard/ARIA machinery is not re-tested.
 
@@ -85,7 +85,7 @@ with Balance's existing Tailwind v4 `@theme` tokens. Concretely:
   `tailwindcss-react-aria-components`, and `@react-aria/test-utils` (dev).
   Zero vendored component source.
 - RAC's Toast is currently exported under `UNSTABLE_` prefixes; the unstable
-  imports are confined to `ui/Toast.tsx` so stabilisation is a one-file
+  imports are confined to `ui/Toast.tsx` so stabilization is a one-file
   rename. Toast auto-dismiss moves from 3 s to 5 s per RAC's accessibility
   guidance.
 - Input chrome consistency is enforced structurally (one kit) instead of by
@@ -94,7 +94,7 @@ with Balance's existing Tailwind v4 `@theme` tokens. Concretely:
   `dd-mm-jjjj` segments and `1.234,56`); the app stops pretending everyone
   reads ISO.
 - Overlay layering moves to RAC's portalled `Popover`/`Modal`, retiring the
-  z-index bug class. The intentional no-click-outside-dismiss behaviour of
+  z-index bug class. The intentional no-click-outside-dismiss behavior of
   the current `Modal` is preserved (RAC's `isDismissable` default).
 - `Combobox.tsx`, `combobox.state.ts(+test)`, `DateField.tsx`,
   `DateInput.tsx`, `Modal.tsx`, `Toast.tsx`, `SearchInput.tsx`, the

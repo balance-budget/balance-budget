@@ -110,7 +110,7 @@ Built with `WebApplication.CreateSlimBuilder` for fast startup and minimal defau
 
 ### Balance.Web.Client
 
-React 19 + TypeScript + Vite 8 SPA, organised as a plain npm workspace package (the former `.esproj` was removed — ADR-0023). `npm run build` emits to `src/Balance.Web/wwwroot/`; the SPA builds on publish only, never as part of `dotnet build`. Generated TypeScript (`src/lib/api-types.gen.ts` from the build-emitted OpenAPI document, `src/routeTree.gen.ts` from TanStack Router) is committed, with a CI drift gate proving freshness. During development, `npm run dev` runs the Vite dev server (default `http://localhost:5173`) with HMR; `vite.config.ts` proxies `/api` to the .NET host at `http://localhost:5248`, so the browser only ever talks to one origin and CORS stays out of the picture.
+React 19 + TypeScript + Vite 8 SPA, organized as a plain npm workspace package (the former `.esproj` was removed — ADR-0023). `npm run build` emits to `src/Balance.Web/wwwroot/`; the SPA builds on publish only, never as part of `dotnet build`. Generated TypeScript (`src/lib/api-types.gen.ts` from the build-emitted OpenAPI document, `src/routeTree.gen.ts` from TanStack Router) is committed, with a CI drift gate proving freshness. During development, `npm run dev` runs the Vite dev server (default `http://localhost:5173`) with HMR; `vite.config.ts` proxies `/api` to the .NET host at `http://localhost:5248`, so the browser only ever talks to one origin and CORS stays out of the picture.
 
 ### Balance.Tests
 
@@ -161,7 +161,7 @@ ExceptionHandler → StatusCodePages → ForwardedHeaders → DefaultFiles → R
   - `EnableNETAnalyzers=true`, `AnalysisMode=All`, `AnalysisLevel=latest`
   - `LangVersion=latest`
   - `UseArtifactsOutput=true` — all build output goes under `/artifacts/`, gitignored.
-- `Directory.Packages.props` — centralised package versions (`ManagePackageVersionsCentrally=true`).
+- `Directory.Packages.props` — centralized package versions (`ManagePackageVersionsCentrally=true`).
 - `global.json` — pins SDK `10.0.300` with `rollForward=latestMinor`, registers `Microsoft.Testing.Platform` as the test runner.
 - `dotnet-tools.json` — CSharpier `1.2.6` as the project-local formatter.
 - `.editorconfig` — minimal; disables `CA2007` (no `ConfigureAwait` on tasks in app code).
