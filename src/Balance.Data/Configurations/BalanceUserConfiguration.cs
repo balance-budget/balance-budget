@@ -13,5 +13,8 @@ internal sealed class BalanceUserConfiguration : IEntityTypeConfiguration<Balanc
 
         builder.Property(u => u.Id).HasConversion<UserId.EfCoreValueConverter>();
         builder.Property(u => u.DisplayName).IsRequired().HasMaxLength(128);
+        builder.Property(u => u.Language).HasMaxLength(16);
+        builder.Property(u => u.DateFormat).HasMaxLength(16);
+        builder.Property(u => u.NumberFormat).HasMaxLength(16);
     }
 }

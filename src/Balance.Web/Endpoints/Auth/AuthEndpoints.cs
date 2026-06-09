@@ -42,6 +42,12 @@ internal static class AuthEndpoints
         group.MapPost("/logout", LogoutAsync).RequireAuthorization().WithName("Logout");
 
         group.MapGet("/me", MeAsync).WithName("Me");
+
+        group
+            .MapPut("/me/preferences", UpdatePreferencesAsync)
+            .RequireAuthorization()
+            .WithValidation<UpdateUserPreferencesRequest>()
+            .WithName("UpdateUserPreferences");
     }
 
     public static void MapAntiforgery(this IEndpointRouteBuilder app)
@@ -194,9 +200,44 @@ internal static class AuthEndpoints
                 user.Id,
                 user.Email ?? string.Empty,
                 user.DisplayName,
-                identity.AuthenticationType ?? string.Empty
+                identity.AuthenticationType ?? string.Empty,
+                user.Language,
+                user.DateFormat,
+                user.NumberFormat
             )
         );
+    }
+
+    // PUT (replace) semantics: the SPA always sends the full preference set, so a
+    // null field clears that preference back to the application default. The values
+    // are opaque to the backend (ADR-0022) — validated for length only.
+    private static async Task<
+        Results<NoContent, UnauthorizedHttpResult, ValidationProblem>
+    > UpdatePreferencesAsync(
+        [FromBody] UpdateUserPreferencesRequest request,
+        [FromServices] UserManager<BalanceUser> userManager,
+        HttpContext httpContext
+    )
+    {
+        var userIdClaim = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userIdClaim is null || !Guid.TryParse(userIdClaim, out var userIdValue))
+        {
+            return TypedResults.Unauthorized();
+        }
+
+        var userId = new UserId(userIdValue);
+        var user = await userManager.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user is null)
+        {
+            return TypedResults.Unauthorized();
+        }
+
+        user.Language = request.Language;
+        user.DateFormat = request.DateFormat;
+        user.NumberFormat = request.NumberFormat;
+        await userManager.UpdateAsync(user);
+
+        return TypedResults.NoContent();
     }
 
     private static Ok<AntiforgeryTokenResponse> AntiforgeryTokenAsync(
