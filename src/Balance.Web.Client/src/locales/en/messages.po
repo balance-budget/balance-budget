@@ -1300,6 +1300,18 @@ msgstr "Language"
 msgid "Language & formatting"
 msgstr "Language & formatting"
 
+msgid "Last 30 days"
+msgstr "Last 30 days"
+
+msgid "Last 90 days"
+msgstr "Last 90 days"
+
+msgid "Last month"
+msgstr "Last month"
+
+msgid "Last year"
+msgstr "Last year"
+
 msgid "Leave"
 msgstr "Leave"
 
@@ -2164,6 +2176,9 @@ msgid "This is the only time you'll see \"{0}\" in full. Store it somewhere "
 msgstr "This is the only time you'll see \"{0}\" in full. Store it somewhere "
 "safe - it can't be retrieved again."
 
+msgid "This month"
+msgstr "This month"
+
 msgid "This row already has a journal entry."
 msgstr "This row already has a journal entry."
 
@@ -2175,6 +2190,9 @@ msgstr "This row is dismissed. Undismiss it first to categorize."
 
 msgid "This screen is not built yet."
 msgstr "This screen is not built yet."
+
+msgid "This year"
+msgstr "This year"
 
 msgid "To"
 msgstr "To"

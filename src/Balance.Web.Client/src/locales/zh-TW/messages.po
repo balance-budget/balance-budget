@@ -1166,6 +1166,18 @@ msgstr "語言"
 msgid "Language & formatting"
 msgstr "語言與格式"
 
+msgid "Last 30 days"
+msgstr "過去 30 天"
+
+msgid "Last 90 days"
+msgstr "過去 90 天"
+
+msgid "Last month"
+msgstr "上個月"
+
+msgid "Last year"
+msgstr "去年"
+
 msgid "Leave"
 msgstr "離開"
 
@@ -1934,6 +1946,9 @@ msgid "This is the only time you'll see \"{0}\" in full. Store it somewhere "
 "safe - it can't be retrieved again."
 msgstr "這是你唯一一次能看到完整的「{0}」。請妥善保存 - 之後無法再次取得。"
 
+msgid "This month"
+msgstr "本月"
+
 msgid "This row already has a journal entry."
 msgstr "此列已有日記帳分錄。"
 
@@ -1942,6 +1957,9 @@ msgstr "此列已被忽略。請先取消忽略再分類。"
 
 msgid "This screen is not built yet."
 msgstr "此畫面尚未建置。"
+
+msgid "This year"
+msgstr "今年"
 
 msgid "To"
 msgstr "至"

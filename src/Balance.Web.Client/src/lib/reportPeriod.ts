@@ -7,6 +7,8 @@
  * there's no time-of-day to mind).
  */
 
+import { msg } from '@lingui/core/macro';
+import type { MessageDescriptor } from '@lingui/core';
 import {
     type CalendarDate,
     endOfMonth,
@@ -28,13 +30,18 @@ export type PeriodPreset =
     | 'last-90'
     | 'custom';
 
-export const PERIOD_PRESETS: { token: Exclude<PeriodPreset, 'custom'>; label: string }[] = [
-    { token: 'this-month', label: 'This month' },
-    { token: 'last-month', label: 'Last month' },
-    { token: 'this-year', label: 'This year' },
-    { token: 'last-year', label: 'Last year' },
-    { token: 'last-30', label: 'Last 30 days' },
-    { token: 'last-90', label: 'Last 90 days' },
+// Labels are MessageDescriptors (the `msg` macro) so they're extracted for
+// translation; resolve them at the render site with `i18n._(label)`.
+export const PERIOD_PRESETS: {
+    token: Exclude<PeriodPreset, 'custom'>;
+    label: MessageDescriptor;
+}[] = [
+    { token: 'this-month', label: msg`This month` },
+    { token: 'last-month', label: msg`Last month` },
+    { token: 'this-year', label: msg`This year` },
+    { token: 'last-year', label: msg`Last year` },
+    { token: 'last-30', label: msg`Last 30 days` },
+    { token: 'last-90', label: msg`Last 90 days` },
 ];
 
 function range(from: CalendarDate, to: CalendarDate): ReportPeriod {
