@@ -1,16 +1,21 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { components } from '../lib/api-types.gen';
-import { getJson, postJsonNoContent, refreshAntiforgeryToken } from '../lib/http';
+import { getJson, postJsonNoContent, putJsonNoContent, refreshAntiforgeryToken } from '../lib/http';
 
 type WireCurrentUser = components['schemas']['CurrentUserResponse'];
 type WireLoginRequest = components['schemas']['LoginRequest'];
 type WireSetupRequest = components['schemas']['SetupRequest'];
+type WireUpdatePreferences = components['schemas']['UpdateUserPreferencesRequest'];
 
 export type CurrentUser = {
     id: string;
     email: string;
     displayName: string;
     authScheme: string;
+    // Display preferences (ADR-0022); null means "use the default".
+    language: string | null;
+    dateFormat: string | null;
+    numberFormat: string | null;
 };
 
 export const authKeys = {
@@ -23,6 +28,9 @@ function toCurrentUser(wire: WireCurrentUser): CurrentUser {
         email: wire.email,
         displayName: wire.displayName,
         authScheme: wire.authScheme,
+        language: wire.language,
+        dateFormat: wire.dateFormat,
+        numberFormat: wire.numberFormat,
     };
 }
 
@@ -78,6 +86,24 @@ export function useLogout() {
         onSuccess: () => {
             queryClient.setQueryData(authKeys.me, null);
             queryClient.clear();
+        },
+    });
+}
+
+export function useUpdatePreferences() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (request: WireUpdatePreferences) => {
+            const ctrl = new AbortController();
+            await putJsonNoContent(
+                '/api/auth/me/preferences',
+                request,
+                ctrl.signal,
+                'save preferences',
+            );
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: authKeys.me });
         },
     });
 }

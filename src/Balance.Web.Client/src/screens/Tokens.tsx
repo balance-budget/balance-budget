@@ -12,6 +12,11 @@ import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { Button } from '../components/ui/Button';
 import { TextField } from '../components/ui/TextField';
+import { formatInstant } from '../i18n/format';
+
+// Token timestamps are instants — formatted in the browser's local timezone,
+// field order following the date preference (ADR-0022).
+const TOKEN_DATE: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
 import { ApiError } from '../lib/http';
 
 export function Tokens() {
@@ -142,12 +147,12 @@ function TokenRow({ token, onRevoke }: { token: Token; onRevoke: () => void }) {
                     {token.prefix}…{token.last4}
                 </div>
                 <div className="text-xs text-fg-3">
-                    Created {new Date(token.createdAt).toLocaleDateString()}
+                    Created {formatInstant(token.createdAt, TOKEN_DATE)}
                     {token.lastUsedAt
-                        ? ` · last used ${new Date(token.lastUsedAt).toLocaleDateString()}`
+                        ? ` · last used ${formatInstant(token.lastUsedAt, TOKEN_DATE)}`
                         : ' · never used'}
                     {token.expiresAt
-                        ? ` · expires ${new Date(token.expiresAt).toLocaleDateString()}`
+                        ? ` · expires ${formatInstant(token.expiresAt, TOKEN_DATE)}`
                         : ''}
                 </div>
             </div>
