@@ -118,7 +118,7 @@ These are conventions to follow when adding new code. See [docs/conventions.md](
 - **Visibility.** Default to `internal`; expose `public` only where another project legitimately needs the type. `Balance.Web` and `Balance.Services` use `InternalsVisibleTo` to share internals with `Balance.Tests`.
 - **Formatting.** CSharpier is the source of truth — CI fails on any deviation. Always run `dotnet csharpier format .` before committing.
 - **Commits.** Use [Conventional Commits](https://www.conventionalcommits.org/): `type(scope): summary` in the imperative mood. Types: `feat`, `fix`, `docs`, `chore`, `refactor`, `style`, `test`, `ci`, `build`, `perf`, `revert`. Scope (optional, lowercase) names the area (`reports`, `ing`, `client`/`spa`, `data`, `web`, `accounts`, `bank-accounts`, `bank-transactions`, `dashboard`, `sidebar`, `auth`, `settings`, …). Reference issues/PRs in a footer (`Refs: #NN`, `Closes #NN`), not the subject. Breaking changes use `type(scope)!:`. See [docs/conventions.md](docs/conventions.md#commit-messages).
-- **Build hygiene.** `Directory.Build.props` enforces `TreatWarningsAsErrors=true`, nullable enabled, `AnalysisMode=All`, `LangVersion=latest`, and `UseArtifactsOutput=true`. Package versions are centralised in `Directory.Packages.props` — never pin a version inside a `.csproj`.
+- **Build hygiene.** `Directory.Build.props` enforces `TreatWarningsAsErrors=true`, nullable enabled, `AnalysisMode=All`, `LangVersion=latest`, and `UseArtifactsOutput=true`. Package versions are centralized in `Directory.Packages.props` — never pin a version inside a `.csproj`.
 
 ## Runtime composition
 

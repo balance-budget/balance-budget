@@ -28,7 +28,7 @@ export default defineConfig({
             output: {
                 advancedChunks: {
                     // Keep every es-toolkit module in a single chunk. Rolldown
-                    // mis-links its lazily-initialised CommonJS factories when
+                    // mis-links its lazily-initialized CommonJS factories when
                     // they are shared across split chunks (recharts core vs the
                     // Sankey in the reports chunk), emitting a self-referential
                     // `var n = n()` that throws "n is not a function" at runtime.
