@@ -6,7 +6,13 @@ import { Panel, SectionHead } from '../components/Panel';
 import { Button } from '../components/ui/Button';
 import { Select, SelectItem } from '../components/ui/Select';
 import { useToast } from '../components/ui/Toast';
-import { DEFAULT_LANGUAGE } from '../i18n/i18n';
+import {
+    DEFAULT_LANGUAGE,
+    LANGUAGE_NAMES,
+    SUPPORTED_LANGUAGES,
+    isSupportedLanguage,
+    type Language,
+} from '../i18n/i18n';
 import {
     DATE_FORMATS,
     NUMBER_FORMATS,
@@ -40,10 +46,17 @@ export function Preferences() {
     const toast = useToast();
 
     const current = resolveRegion(user?.dateFormat, user?.numberFormat);
+    const currentLanguage: Language = isSupportedLanguage(user?.language)
+        ? user.language
+        : DEFAULT_LANGUAGE;
+    const [language, setLanguage] = useState<Language>(currentLanguage);
     const [dateFormat, setDateFormat] = useState<DateFormatPref>(current.dateFormat);
     const [numberFormat, setNumberFormat] = useState<NumberFormatPref>(current.numberFormat);
 
-    const dirty = dateFormat !== current.dateFormat || numberFormat !== current.numberFormat;
+    const dirty =
+        language !== currentLanguage ||
+        dateFormat !== current.dateFormat ||
+        numberFormat !== current.numberFormat;
 
     const dateLabel: Record<DateFormatPref, string> = {
         iso: t`ISO 8601`,
@@ -54,7 +67,7 @@ export function Preferences() {
     async function persist() {
         try {
             await save.mutateAsync({
-                language: DEFAULT_LANGUAGE,
+                language,
                 dateFormat,
                 numberFormat,
             });
@@ -81,13 +94,17 @@ export function Preferences() {
             >
                 <Select
                     label={t`Language`}
-                    value={DEFAULT_LANGUAGE}
-                    isDisabled
-                    description={t`English is the only language for now.`}
+                    value={language}
+                    onChange={key => {
+                        setLanguage(key as Language);
+                    }}
+                    description={t`The interface language. Formatting below is set separately.`}
                 >
-                    <SelectItem id="en">
-                        <Trans>English</Trans>
-                    </SelectItem>
+                    {SUPPORTED_LANGUAGES.map(lang => (
+                        <SelectItem key={lang} id={lang}>
+                            {LANGUAGE_NAMES[lang]}
+                        </SelectItem>
+                    ))}
                 </Select>
 
                 <Select
