@@ -1,6 +1,6 @@
 # Balance Budget <img src="/img/logo.png?raw=true" width="120" align="right" alt="Balance Budget logo">
 
-A self-hostable **personal-finance tool backed by a rigorous double-entry ledger**. Instead of envelopes or single-entry categories, every event is a balanced journal entry — so transfers, refunds, splits, and reporting all fall out of one consistent, auditable shape. Import your bank statements, categorise them from an inbox, and read your money back through net-worth and money-flow reports.
+A self-hostable **personal-finance tool backed by a rigorous double-entry ledger**. Instead of envelopes or single-entry categories, every event is a balanced journal entry — so transfers, refunds, splits, and reporting all fall out of one consistent, auditable shape. Import your bank statements, categorize them from an inbox, and read your money back through net-worth and money-flow reports.
 
 > **Status:** a personal project, shared as open source. It is feature-complete enough to use, but it is built for its author's needs — not a polished product. See [Contributing](#contributing) before opening a PR.
 
@@ -12,7 +12,7 @@ A self-hostable **personal-finance tool backed by a rigorous double-entry ledger
 - **Double-entry ledger.** Accounts (Asset / Liability / Equity / Income / Expense), journal entries whose lines net to zero, money stored as exact integer minor units.
 - **Nested chart of accounts.** A self-referential account tree with roll-up placeholder parents and postable leaves.
 - **Bank-statement import.** Bank-agnostic, deduplicated, immutable `BankTransaction` records; ING CSV and PDF importers (current, savings, and credit-card layouts) out of the box. New banks are new integration projects.
-- **Categorisation inbox.** Work imported rows into journal entries one at a time or in bulk, with self-transfer detection, attach/detach to existing entries, and a manual picker.
+- **Categorization inbox.** Work imported rows into journal entries one at a time or in bulk, with self-transfer detection, attach/detach to existing entries, and a manual picker.
 - **Insights.** Distribution and a signed money-flow (Sankey) report over a chosen period.
 - **Search.** A ⌘K launcher plus per-list filters.
 - **Multi-user shared ledger.** Cookie auth for the SPA, opaque personal access tokens for third-party clients; every user shares one household ledger.
