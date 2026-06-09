@@ -7,7 +7,7 @@ import { ComboBox } from './ComboBox';
 import type { ComboBoxItem } from './combobox.state';
 
 /*
- * App-specific ComboBox behaviour on top of React Aria's ComboBox: searchText
+ * App-specific ComboBox behavior on top of React Aria's ComboBox: searchText
  * matching, group ordering, and the None/Create sentinel rows. React Aria's
  * own keyboard/ARIA machinery is not re-tested here (Adobe covers that).
  */

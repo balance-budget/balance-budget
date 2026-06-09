@@ -23,7 +23,7 @@ const DEFAULT_KEY = '__default__';
 /**
  * Avatar-shaped trigger that opens a popover grid of the curated account icons
  * (ACCOUNT_ICON_CHOICES) plus a "Default" choice that clears back to the
- * AccountType's icon. Colours are never picked here — the tint always follows
+ * AccountType's icon. Colors are never picked here — the tint always follows
  * the AccountType.
  */
 export function AccountIconPicker({ accountType, value, onChange }: AccountIconPickerProps) {

@@ -94,8 +94,8 @@ type AccountVisual = {
     icon: string | null;
 };
 
-// The icon honours the user's custom choice (falling back to the type default for
-// null or no-longer-offered names); the accent colour is never user-chosen — it
+// The icon honors the user's custom choice (falling back to the type default for
+// null or no-longer-offered names); the accent color is never user-chosen — it
 // always derives from the AccountType so lists stay type-grouped at a glance.
 export function visualHintFor(account: AccountVisual): VisualHint {
     return {
@@ -109,7 +109,7 @@ export function visualHintFor(account: AccountVisual): VisualHint {
 
 // A distribution donut only ever shows one AccountType at a time, so its
 // slices read best as one hue — the type accent — rather than a grab-bag of
-// palette colours. Same-hue slices are then pulled apart by shade (below).
+// palette colors. Same-hue slices are then pulled apart by shade (below).
 export function chartBaseColorForType(accountType: AccountType): string {
     return ACCENT_BY_TYPE[accountType];
 }
@@ -138,7 +138,7 @@ const CHART_PALETTE: readonly string[] = [
 ];
 
 // FNV-1a 32-bit. Deterministic and dependency-free; collisions are harmless
-// beyond two trend lines sharing a colour.
+// beyond two trend lines sharing a color.
 function hashId(id: string): number {
     let hash = 2166136261;
     for (let i = 0; i < id.length; i++) {

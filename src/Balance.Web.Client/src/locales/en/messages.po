@@ -77,7 +77,7 @@ msgstr "{0} (new)"
 #~ msgid "{0} categorised, {1} dismissed, {2} failed."
 #~ msgstr "{0} categorised, {1} dismissed, {2} failed."
 
-#. placeholder {0}: summary.categorised.toString()
+#. placeholder {0}: summary.categorized.toString()
 #. placeholder {1}: summary.dismissed.toString()
 #. placeholder {2}: summary.failed.toString()
 msgid "{0} categorized, {1} dismissed, {2} failed."

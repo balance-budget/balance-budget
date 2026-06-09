@@ -300,7 +300,7 @@ describe('isPristine', () => {
 });
 
 describe('buildRowRequest', () => {
-    it('projects a ready row to a single-line categorise request with the inverse sign', () => {
+    it('projects a ready row to a single-line categorize request with the inverse sign', () => {
         const row = bt({ money: { amount: -4200, currencyCode: 'EUR' } });
         const draft: RowDraft = {
             counterpartyMode: 'existing',
@@ -365,9 +365,9 @@ describe('buildRowRequest', () => {
 });
 
 describe('runSaveAll', () => {
-    function categoriseAction(draft: Partial<RowDraft> = {}): SaveAllAction {
+    function categorizeAction(draft: Partial<RowDraft> = {}): SaveAllAction {
         return {
-            kind: 'categorise',
+            kind: 'categorize',
             draft: {
                 counterpartyMode: 'existing',
                 counterpartyId: cpA,
@@ -390,7 +390,7 @@ describe('runSaveAll', () => {
         return {
             id: asBankTransactionId(id),
             bt: bt(btOverride),
-            action: categoriseAction(draft),
+            action: categorizeAction(draft),
         };
     }
 
@@ -406,7 +406,7 @@ describe('runSaveAll', () => {
         };
     }
 
-    it('runs categorise sequentially in row order', async () => {
+    it('runs categorize sequentially in row order', async () => {
         const order: BankTransactionId[] = [];
         let inFlight = 0;
         let maxInFlight = 0;
@@ -427,12 +427,12 @@ describe('runSaveAll', () => {
             categorize,
             dismiss: vi.fn(),
         });
-        expect(summary).toEqual({ categorised: 3, dismissed: 0, failed: 0 });
+        expect(summary).toEqual({ categorized: 3, dismissed: 0, failed: 0 });
         expect(order).toEqual(rows.map(r => r.id));
         expect(maxInFlight).toBe(1);
     });
 
-    it('preflights each distinct new counterparty name once, before any categorise call', async () => {
+    it('preflights each distinct new counterparty name once, before any categorize call', async () => {
         const events: string[] = [];
         const createCounterparty = vi.fn((name: string) => {
             events.push(`create:${name}`);
@@ -466,17 +466,17 @@ describe('runSaveAll', () => {
             dismiss: vi.fn(),
         });
 
-        expect(summary.categorised).toBe(3);
+        expect(summary.categorized).toBe(3);
         expect(createCounterparty).toHaveBeenCalledTimes(2);
         expect(createCounterparty).toHaveBeenNthCalledWith(1, 'Acme Co');
         expect(createCounterparty).toHaveBeenNthCalledWith(2, 'Beta');
-        // every create happens before any categorise
+        // every create happens before any categorize
         const firstCategorize = events.findIndex(e => e.startsWith('categorize:'));
         const lastCreate = events.findLastIndex(e => e.startsWith('create:'));
         expect(firstCategorize).toBeGreaterThan(lastCreate);
     });
 
-    it('continues past a failed categorise (best-effort, no abort) and reports the failure per row', async () => {
+    it('continues past a failed categorize (best-effort, no abort) and reports the failure per row', async () => {
         const outcomes: { id: BankTransactionId; ok: boolean; error?: string }[] = [];
         let call = 0;
         const categorize = vi.fn(() => {
@@ -498,7 +498,7 @@ describe('runSaveAll', () => {
                     outcome.ok ? { id, ok: true } : { id, ok: false, error: outcome.error },
                 ),
         });
-        expect(summary).toEqual({ categorised: 2, dismissed: 0, failed: 1 });
+        expect(summary).toEqual({ categorized: 2, dismissed: 0, failed: 1 });
         expect(categorize).toHaveBeenCalledTimes(3);
         expect(outcomes).toEqual([
             { id: rows[0]?.id, ok: true },
@@ -539,7 +539,7 @@ describe('runSaveAll', () => {
                 if (!outcome.ok) failures.push({ id, error: outcome.error });
             },
         });
-        expect(summary).toEqual({ categorised: 1, dismissed: 0, failed: 2 });
+        expect(summary).toEqual({ categorized: 1, dismissed: 0, failed: 2 });
         expect(categorize).toHaveBeenCalledTimes(1);
         expect(failures.map(f => f.id)).toEqual([rows[0]?.id, rows[1]?.id]);
     });
@@ -575,13 +575,13 @@ describe('runSaveAll', () => {
             categorize,
             dismiss,
         });
-        expect(summary).toEqual({ categorised: 0, dismissed: 2, failed: 0 });
+        expect(summary).toEqual({ categorized: 0, dismissed: 2, failed: 0 });
         expect(categorize).not.toHaveBeenCalled();
         expect(dismiss).toHaveBeenNthCalledWith(1, rows[0]?.id, 'fee correction');
         expect(dismiss).toHaveBeenNthCalledWith(2, rows[1]?.id, 'test transaction');
     });
 
-    it('mixes categorise and dismiss actions sequentially in row order', async () => {
+    it('mixes categorize and dismiss actions sequentially in row order', async () => {
         const events: string[] = [];
         const categorize = vi.fn((id: BankTransactionId) => {
             events.push(`categorize:${id}`);
@@ -602,7 +602,7 @@ describe('runSaveAll', () => {
             categorize,
             dismiss,
         });
-        expect(summary).toEqual({ categorised: 2, dismissed: 2, failed: 0 });
+        expect(summary).toEqual({ categorized: 2, dismissed: 2, failed: 0 });
         expect(events).toEqual([
             `categorize:${rows[0]?.id ?? ''}`,
             `dismiss:${rows[1]?.id ?? ''}:self-transfer sibling`,
@@ -632,7 +632,7 @@ describe('runSaveAll', () => {
                     outcome.ok ? { id, ok: true } : { id, ok: false, error: outcome.error },
                 ),
         });
-        expect(summary).toEqual({ categorised: 0, dismissed: 1, failed: 1 });
+        expect(summary).toEqual({ categorized: 0, dismissed: 1, failed: 1 });
         expect(dismiss).toHaveBeenCalledTimes(2);
         expect(outcomes).toEqual([
             { id: rows[0]?.id, ok: false, error: 'dismiss boom' },
@@ -909,7 +909,7 @@ describe('bulk dismiss-draft mutual exclusion', () => {
     // Compose the three helpers the React component composes when the user
     // confirms a bulk-dismiss modal: write the reason to dismissDrafts and
     // clear the same ids from userOverrides + rowErrors.
-    it('staging a dismiss reason and clearing categorise overrides+errors for those ids', () => {
+    it('staging a dismiss reason and clearing categorize overrides+errors for those ids', () => {
         const overrides = new Map<BankTransactionId, Partial<RowDraft>>([
             [id1, { counterpartyMode: 'existing', counterpartyId: cpA }],
             [id5, { counterpartyMode: 'existing', counterpartyId: cpB }],
@@ -926,14 +926,14 @@ describe('bulk dismiss-draft mutual exclusion', () => {
         // Reason carried per-row on every selected id.
         expect(newDrafts.get(id1)).toBe('fee correction');
         expect(newDrafts.get(id2)).toBe('fee correction');
-        // Mutual exclusion: categorise overrides + errors cleared for those ids.
+        // Mutual exclusion: categorize overrides + errors cleared for those ids.
         expect(newOverrides.has(id1)).toBe(false);
         expect(newErrors.has(id1)).toBe(false);
         // Unrelated rows untouched.
         expect(newOverrides.get(id5)?.counterpartyId).toBe(cpB);
     });
 
-    it('applying a categorise patch clears the dismiss draft on those ids', () => {
+    it('applying a categorize patch clears the dismiss draft on those ids', () => {
         const overrides = new Map<BankTransactionId, Partial<RowDraft>>();
         const drafts = new Map<BankTransactionId, string>([
             [id1, 'staged for dismiss'],

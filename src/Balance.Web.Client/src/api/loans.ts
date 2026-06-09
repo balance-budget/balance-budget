@@ -301,7 +301,7 @@ export function useLoan(id: LoanId) {
 }
 
 /**
- * Engine-computed pre-fill for the loan-aware categorise mode. `month` is any
+ * Engine-computed pre-fill for the loan-aware categorize mode. `month` is any
  * date in the target month (the BT booking date).
  */
 export function useLoanPaymentProposal(id: LoanId | null, month: string) {

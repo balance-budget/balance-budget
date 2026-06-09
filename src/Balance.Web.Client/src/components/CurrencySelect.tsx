@@ -25,7 +25,7 @@ export function CurrencySelect({ value, onChange }: CurrencySelectProps) {
                 <Trans>Currency</Trans>
             </span>
             <Select
-                aria-labelledby="currency-select-label"
+                aria-labeledby="currency-select-label"
                 value={value}
                 onChange={key => {
                     if (key !== null) onChange(String(key));

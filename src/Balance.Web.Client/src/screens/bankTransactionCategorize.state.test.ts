@@ -155,7 +155,7 @@ describe('resolveOpenContext', () => {
         expect(resolveOpenContext('NL00BANK9999999999', [own])).toEqual({ kind: 'none' });
     });
 
-    it('normalises whitespace and case before comparing IBANs', () => {
+    it('normalizes whitespace and case before comparing IBANs', () => {
         const own = bankAccount({
             id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1',
             iban: 'NL00 BANK 0000 0000 01',

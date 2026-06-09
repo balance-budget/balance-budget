@@ -58,17 +58,17 @@ export function resolveCounterpartyByIban(
     bankAccounts: readonly BankAccount[],
 ): CounterpartyId | null {
     if (!iban) return null;
-    const normalised = iban.replace(/\s+/g, '').toUpperCase();
+    const normalized = iban.replace(/\s+/g, '').toUpperCase();
     for (const ba of bankAccounts) {
         if (!ba.iban) continue;
-        if (ba.iban.replace(/\s+/g, '').toUpperCase() !== normalised) continue;
+        if (ba.iban.replace(/\s+/g, '').toUpperCase() !== normalized) continue;
         if (ba.counterpartyId !== null) return ba.counterpartyId;
     }
     return null;
 }
 
 /** Pick the best suggested counter-side account for a single-line bulk row,
- *  honouring the per-row currency filter and excluding the BT's own bank-side
+ *  honoring the per-row currency filter and excluding the BT's own bank-side
  *  account. Returns null when no suggestion fits. */
 export function pickSuggestedAccountId(
     suggestions: readonly SuggestedCounterAccount[],
@@ -163,7 +163,7 @@ export function collectNewCounterpartyNames(drafts: Iterable<RowDraft>): string[
  *
  *  For 'new' counterparty rows, the caller passes in the
  *  `createdCounterpartiesByName` map populated by the preflight pass, so the
- *  row is committed as an existing-CP categorise. */
+ *  row is committed as an existing-CP categorize. */
 export function buildRowRequest(
     bt: BankTransaction,
     draft: RowDraft,
@@ -201,12 +201,12 @@ export function buildRowRequest(
     };
 }
 
-/** Issue #86: a Save-all row can either categorise (existing draft pipeline)
+/** Issue #86: a Save-all row can either categorize (existing draft pipeline)
  *  or dismiss (new flow with a reason). The two are mutually exclusive at the
- *  component level (setting a dismiss-draft clears any categorise override and
+ *  component level (setting a dismiss-draft clears any categorize override and
  *  vice versa), so the orchestrator only sees one action per row. */
 export type SaveAllAction =
-    | { kind: 'categorise'; draft: RowDraft }
+    | { kind: 'categorize'; draft: RowDraft }
     | { kind: 'dismiss'; reason: string };
 
 export type SaveAllRow = {
@@ -227,7 +227,7 @@ export type SaveAllDeps = {
 };
 
 export type SaveAllSummary = {
-    categorised: number;
+    categorized: number;
     dismissed: number;
     failed: number;
 };
@@ -241,7 +241,7 @@ export type SaveAllSummary = {
  *    row that depends on that name as failed; the remaining rows still run.
  *
  * 2. Per row, *sequentially*: call `categorize`. Sequential rather than
- *    parallel is required because the categorise service inserts a
+ *    parallel is required because the categorize service inserts a
  *    counterparty-side BankAccount keyed on `CounterpartyAccountNumber` and
  *    multiple rows sharing the same IBAN would race the `UNIQUE(Iban)` index,
  *    producing `ConflictError` on all but the first.
@@ -252,12 +252,12 @@ export async function runSaveAll(
     rows: readonly SaveAllRow[],
     deps: SaveAllDeps,
 ): Promise<SaveAllSummary> {
-    // Preflight only looks at categorise rows; dismiss rows carry just a reason.
-    const categoriseDrafts: RowDraft[] = [];
+    // Preflight only looks at categorize rows; dismiss rows carry just a reason.
+    const categorizeDrafts: RowDraft[] = [];
     for (const row of rows) {
-        if (row.action.kind === 'categorise') categoriseDrafts.push(row.action.draft);
+        if (row.action.kind === 'categorize') categorizeDrafts.push(row.action.draft);
     }
-    const names = collectNewCounterpartyNames(categoriseDrafts);
+    const names = collectNewCounterpartyNames(categorizeDrafts);
     const created = new Map<string, CounterpartyId>();
     const failedNames = new Map<string, string>();
     for (const name of names) {
@@ -270,7 +270,7 @@ export async function runSaveAll(
         }
     }
 
-    let categorised = 0;
+    let categorized = 0;
     let dismissed = 0;
     let failed = 0;
     const total = rows.length;
@@ -286,7 +286,7 @@ export async function runSaveAll(
                 failed += 1;
                 deps.onRowResult?.(row.id, { ok: false, error: errorMessage(err) });
             }
-            deps.onProgress?.(categorised + dismissed + failed, total);
+            deps.onProgress?.(categorized + dismissed + failed, total);
             continue;
         }
 
@@ -295,7 +295,7 @@ export async function runSaveAll(
         if (status !== 'ready') {
             failed += 1;
             deps.onRowResult?.(row.id, { ok: false, error: t`Row is not ready` });
-            deps.onProgress?.(categorised + dismissed + failed, total);
+            deps.onProgress?.(categorized + dismissed + failed, total);
             continue;
         }
 
@@ -305,7 +305,7 @@ export async function runSaveAll(
             if (cpError !== undefined) {
                 failed += 1;
                 deps.onRowResult?.(row.id, { ok: false, error: cpError });
-                deps.onProgress?.(categorised + dismissed + failed, total);
+                deps.onProgress?.(categorized + dismissed + failed, total);
                 continue;
             }
         }
@@ -314,21 +314,21 @@ export async function runSaveAll(
         if (request === null) {
             failed += 1;
             deps.onRowResult?.(row.id, { ok: false, error: t`Row is not ready` });
-            deps.onProgress?.(categorised + dismissed + failed, total);
+            deps.onProgress?.(categorized + dismissed + failed, total);
             continue;
         }
         try {
             await deps.categorize(row.id, request);
-            categorised += 1;
+            categorized += 1;
             deps.onRowResult?.(row.id, { ok: true });
         } catch (err) {
             failed += 1;
             deps.onRowResult?.(row.id, { ok: false, error: errorMessage(err) });
         }
-        deps.onProgress?.(categorised + dismissed + failed, total);
+        deps.onProgress?.(categorized + dismissed + failed, total);
     }
 
-    return { categorised, dismissed, failed };
+    return { categorized, dismissed, failed };
 }
 
 function errorMessage(err: unknown): string {
@@ -488,7 +488,7 @@ export function applyBulkPatchToOverride(
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Bulk dismiss-draft helpers (issue #86). Pure helpers so the React component
-// owns only state wiring; mutual exclusion against the categorise override map
+// owns only state wiring; mutual exclusion against the categorize override map
 // is enforced by the component, which composes these with `removeKeysFor`.
 // ─────────────────────────────────────────────────────────────────────────────
 

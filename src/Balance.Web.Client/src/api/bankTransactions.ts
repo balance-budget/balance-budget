@@ -221,7 +221,7 @@ export function useCategorizeBankTransaction() {
                 `/api/bank-transactions/${args.id}/categorize`,
                 args.request,
                 new AbortController().signal,
-                'categorise bank transaction',
+                'categorize bank transaction',
             );
             // Brand the escaping id at the boundary (ADR-0006). Mapped inline rather than
             // through journalEntries' toEntry to avoid deepening the existing import cycle.
