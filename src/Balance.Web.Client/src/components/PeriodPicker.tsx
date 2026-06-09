@@ -16,7 +16,7 @@ type PeriodPickerProps = {
  * (or a shared URL) lights up none of them.
  */
 export function PeriodPicker({ period, onChange }: PeriodPickerProps) {
-    const { t } = useLingui();
+    const { t, i18n } = useLingui();
     const active = detectPreset(period);
 
     return (
@@ -32,7 +32,7 @@ export function PeriodPicker({ period, onChange }: PeriodPickerProps) {
             >
                 {PERIOD_PRESETS.map(p => (
                     <ToggleButton key={p.token} id={p.token}>
-                        {p.label}
+                        {i18n._(p.label)}
                     </ToggleButton>
                 ))}
             </ToggleButtonGroup>

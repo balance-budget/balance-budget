@@ -1183,6 +1183,18 @@ msgstr "Taal"
 msgid "Language & formatting"
 msgstr "Taal & opmaak"
 
+msgid "Last 30 days"
+msgstr "Afgelopen 30 dagen"
+
+msgid "Last 90 days"
+msgstr "Afgelopen 90 dagen"
+
+msgid "Last month"
+msgstr "Vorige maand"
+
+msgid "Last year"
+msgstr "Vorig jaar"
+
 msgid "Leave"
 msgstr "Verlaten"
 
@@ -1979,6 +1991,9 @@ msgid "This is the only time you'll see \"{0}\" in full. Store it somewhere "
 msgstr "Dit is de enige keer dat je \"{0}\" volledig ziet. Bewaar het op een "
 "veilige plek - het kan niet opnieuw worden opgehaald."
 
+msgid "This month"
+msgstr "Deze maand"
+
 msgid "This row already has a journal entry."
 msgstr "Deze rij heeft al een journaalpost."
 
@@ -1988,6 +2003,9 @@ msgstr "Deze rij is genegeerd. Maak het negeren eerst ongedaan om te "
 
 msgid "This screen is not built yet."
 msgstr "Dit scherm is nog niet gebouwd."
+
+msgid "This year"
+msgstr "Dit jaar"
 
 msgid "To"
 msgstr "Naar"
