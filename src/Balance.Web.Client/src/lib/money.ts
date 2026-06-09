@@ -10,6 +10,7 @@
  */
 
 import type { Currency, CurrencyCatalog } from '../api/currencies';
+import { activeDecimalSeparator, activeNumberLocale } from '../i18n/format';
 import type { components } from './api-types.gen';
 
 type WireMoney = components['schemas']['Money'];
@@ -108,7 +109,7 @@ export function splitMoney(
     const integerPart = Math.floor(absMinor / divisor);
     const fractionPart = absMinor - integerPart * divisor;
 
-    const integerStr = integerPart.toLocaleString('en-US');
+    const integerStr = integerPart.toLocaleString(activeNumberLocale());
     const fractionStr = scale > 0 ? fractionPart.toString().padStart(scale, '0') : '';
 
     let sign: '+' | '−' | '' = '';
@@ -131,7 +132,7 @@ export function formatMoney(
     opts: FormatOptions = {},
 ): string {
     const m = splitMoney(minor, currencyCode, catalog, opts);
-    const sep = m.fraction ? '.' : '';
+    const sep = m.fraction ? activeDecimalSeparator() : '';
     return `${m.sign}${m.symbol}${m.integer}${sep}${m.fraction}`;
 }
 
@@ -202,7 +203,7 @@ export function formatMoneyAxis(
     const sign = negative ? MINUS : '';
 
     if (absMajor < 10_000) {
-        const integer = Math.round(absMajor).toLocaleString('en-US');
+        const integer = Math.round(absMajor).toLocaleString(activeNumberLocale());
         return `${sign}${symbol}${integer}`;
     }
 

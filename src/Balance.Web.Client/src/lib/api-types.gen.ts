@@ -84,6 +84,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/me/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["UpdateUserPreferences"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/users": {
         parameters: {
             query?: never;
@@ -1084,6 +1100,9 @@ export interface components {
             email: string;
             displayName: string;
             authScheme: string;
+            language: null | string;
+            dateFormat: null | string;
+            numberFormat: null | string;
         };
         DashboardSummaryOutput: {
             netWorth: components["schemas"]["Money"];
@@ -1717,6 +1736,11 @@ export interface components {
             /** Format: date */
             endDate: string;
         };
+        UpdateUserPreferencesRequest: {
+            language: null | string;
+            dateFormat: null | string;
+            numberFormat: null | string;
+        };
         /** Format: uuid */
         UserId: string;
         UserResponse: {
@@ -1859,6 +1883,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CurrentUserResponse"];
+                };
+            };
+        };
+    };
+    UpdateUserPreferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateUserPreferencesRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
         };

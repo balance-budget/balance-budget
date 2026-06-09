@@ -15,6 +15,7 @@ import './index.css';
 import { authKeys } from './api/auth';
 import { RouteError } from './components/RouteError';
 import { AppToastRegion } from './components/ui/Toast';
+import { LocaleProvider } from './i18n/LocaleProvider';
 import { ApiError } from './lib/http';
 import { routeTree } from './routeTree.gen';
 
@@ -87,8 +88,10 @@ if (!rootElement) throw new Error('Missing #root element in index.html');
 createRoot(rootElement).render(
     <StrictMode>
         <QueryClientProvider client={queryClient}>
-            <RouterProvider router={router} />
-            <AppToastRegion />
+            <LocaleProvider>
+                <RouterProvider router={router} />
+                <AppToastRegion />
+            </LocaleProvider>
         </QueryClientProvider>
     </StrictMode>,
 );

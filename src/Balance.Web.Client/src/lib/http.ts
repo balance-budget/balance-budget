@@ -191,6 +191,22 @@ export async function putJson<T>(
     return (await response.json()) as T;
 }
 
+export async function putJsonNoContent(
+    url: string,
+    body: unknown,
+    signal: AbortSignal,
+    label: string,
+): Promise<void> {
+    await sendMutation(
+        url,
+        'PUT',
+        JSON.stringify(body),
+        { 'Content-Type': 'application/json' },
+        signal,
+        label,
+    );
+}
+
 /**
  * RFC 6902 JSON Patch. `patch` is the array of operations produced by
  * fast-json-patch's `compare()`. Server returns the updated resource.

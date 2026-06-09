@@ -1,34 +1,19 @@
 /*
  * Date formatters for charts. The chart axis cares about cadence (range
  * dictates whether the day-of-month is informative); tooltips want a full
- * human-readable date. Locale follows the browser's preference via
- * `Intl.DateTimeFormat(undefined, ...)`. Parsing/arithmetic is
+ * human-readable date. Formatting goes through `i18n/format` so the order
+ * follows the user's date preference (ADR-0022); parsing/arithmetic is
  * `@internationalized/date` (ADR-0024) — no hand-rolled ISO handling.
  */
 
-import { getLocalTimeZone, parseDate, today } from '@internationalized/date';
+import { getLocalTimeZone, today } from '@internationalized/date';
 import type { TrendRange } from '../api/dashboard';
+import { formatDate, parseIsoDate } from '../i18n/format';
 
 /** Today's date as a local `YYYY-MM-DD` string (for date-input defaults). */
 export function todayIso(): string {
     return today(getLocalTimeZone()).toString();
 }
-
-const MONTH_SHORT = new Intl.DateTimeFormat(undefined, { month: 'short' });
-const MONTH_DAY_SHORT = new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    day: 'numeric',
-});
-const MONTH_YEAR_SHORT = new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    year: '2-digit',
-});
-const TOOLTIP_DATE = new Intl.DateTimeFormat(undefined, {
-    weekday: 'short',
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-});
 
 /**
  * Range-aware x-axis tick formatter. 1M gives weekly ticks where day-of-month
@@ -37,24 +22,21 @@ const TOOLTIP_DATE = new Intl.DateTimeFormat(undefined, {
  * every label.
  */
 export function formatTrendAxisDate(date: string, range: TrendRange): string {
-    const parsed = parseIsoDate(date);
     if (range === '1M') {
-        return MONTH_DAY_SHORT.format(parsed);
+        return formatDate(date, { month: 'short', day: 'numeric' });
     }
-    if (range === '1Y' && parsed.getMonth() === 0) {
-        return MONTH_YEAR_SHORT.format(parsed);
+    if (range === '1Y' && parseIsoDate(date).getMonth() === 0) {
+        return formatDate(date, { month: 'short', year: '2-digit' });
     }
-    return MONTH_SHORT.format(parsed);
+    return formatDate(date, { month: 'short' });
 }
 
 /** Full tooltip date, e.g. "Tue, May 14, 2026". */
 export function formatTrendTooltipDate(date: string): string {
-    return TOOLTIP_DATE.format(parseIsoDate(date));
-}
-
-function parseIsoDate(date: string): Date {
-    // The wire emits ISO `YYYY-MM-DD` from DateOnly. `new Date('YYYY-MM-DD')`
-    // parses as UTC midnight, which can drift a day in negative-UTC locales;
-    // CalendarDate.toDate keeps the local calendar day stable.
-    return parseDate(date).toDate(getLocalTimeZone());
+    return formatDate(date, {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+    });
 }

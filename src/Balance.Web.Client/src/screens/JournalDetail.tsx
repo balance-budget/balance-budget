@@ -31,6 +31,7 @@ import { NumberField } from '../components/ui/NumberField';
 import { Select, SelectItem } from '../components/ui/Select';
 import { TextField } from '../components/ui/TextField';
 import { useToast } from '../components/ui/Toast';
+import { formatNumber } from '../i18n/format';
 import { accountPathLabel } from '../lib/accountTree';
 import { cx } from '../lib/cx';
 import { type AccountId, type CounterpartyId, type JournalEntryId } from '../lib/domain';
@@ -247,9 +248,7 @@ function FromToSummary({
 }) {
     if (!projection.isSimplifiable) {
         return (
-            <span className="text-xs text-fg-2 mt-1">
-                Split ({lineCount.toLocaleString('en-US')} lines)
-            </span>
+            <span className="text-xs text-fg-2 mt-1">Split ({formatNumber(lineCount)} lines)</span>
         );
     }
 
