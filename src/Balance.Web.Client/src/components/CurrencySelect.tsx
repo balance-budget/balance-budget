@@ -1,4 +1,5 @@
 import { useCurrencies } from '../api/currencies';
+import { Trans } from '@lingui/react/macro';
 import { Select, SelectItem } from './ui/Select';
 
 type CurrencySelectProps = {
@@ -20,7 +21,9 @@ export function CurrencySelect({ value, onChange }: CurrencySelectProps) {
 
     return (
         <div className="flex items-center gap-2 text-xs text-fg-3">
-            <span id="currency-select-label">Currency</span>
+            <span id="currency-select-label">
+                <Trans>Currency</Trans>
+            </span>
             <Select
                 aria-labelledby="currency-select-label"
                 value={value}

@@ -40,7 +40,7 @@ export function AccountIconPicker({ accountType, value, onChange }: AccountIconP
             <Button className="flex items-center gap-2 p-1 -m-1 rounded-lg outline-none cursor-pointer data-[hovered]:bg-surface-2 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary">
                 <AccountAvatar account={{ type: accountType, icon: value }} size="md" />
                 <span className="text-xs text-fg-3">
-                    {value === null ? t`Default` : t`Custom`} <Trans>— click to change</Trans>
+                    {value === null ? t`Default` : t`Custom`} <Trans>· click to change</Trans>
                 </span>
             </Button>
             <Popover placement="bottom start" className="w-[296px] p-2">

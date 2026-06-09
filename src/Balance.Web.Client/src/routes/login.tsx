@@ -1,3 +1,4 @@
+import { msg } from '@lingui/core/macro';
 import { createFileRoute } from '@tanstack/react-router';
 import { Login } from '../screens/Login';
 
@@ -11,5 +12,5 @@ export const Route = createFileRoute('/login')({
         const { returnTo } = Route.useSearch();
         return <Login returnTo={returnTo} />;
     },
-    staticData: { title: 'Sign in' },
+    staticData: { title: msg`Sign in` },
 });

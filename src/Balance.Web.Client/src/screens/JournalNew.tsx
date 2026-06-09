@@ -206,7 +206,7 @@ function JournalNewForm({
                                 Money moved from one or more sources to one or more destinations.
                             </Trans>
                         ) : (
-                            <Trans>General-journal table — explicit debit / credit per line.</Trans>
+                            <Trans>General-journal table - explicit debit / credit per line.</Trans>
                         )
                     }
                     action={

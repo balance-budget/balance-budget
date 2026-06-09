@@ -1,3 +1,4 @@
+import { msg } from '@lingui/core/macro';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { BANK_TRANSACTION_FILTERS, type BankTransactionFilter } from '../api/bankTransactions';
 import { BankTransactionsInbox } from '../screens/BankTransactionsInbox';
@@ -35,7 +36,7 @@ export const Route = createFileRoute('/bank-transactions/')({
             />
         );
     },
-    staticData: { title: 'Bank transactions' },
+    staticData: { title: msg`Bank transactions` },
     validateSearch: (raw: Record<string, unknown>): Search => ({
         page: parsePage(raw.page),
         filter: isFilter(raw.filter) ? raw.filter : 'Inbox',

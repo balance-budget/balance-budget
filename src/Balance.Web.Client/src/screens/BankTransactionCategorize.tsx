@@ -752,7 +752,7 @@ function LoanModePanel({
                 ) : (
                     <span className="text-fg-3">
                         <Trans>
-                            Pre-filled from the schedule for {proposal.month.slice(0, 7)} — adjust
+                            Pre-filled from the schedule for {proposal.month.slice(0, 7)} - adjust
                             the amounts to match the bank&apos;s charge.
                         </Trans>
                     </span>

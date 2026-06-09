@@ -172,7 +172,7 @@ function buildDeposit(d: DepositDraft): BuildDepositResult {
     if (!allSet) {
         return {
             ok: false,
-            error: t`A construction deposit needs an asset account, an income account, and a rate — set all three or none.`,
+            error: t`A construction deposit needs an asset account, an income account, and a rate - set all three or none.`,
         };
     }
 
@@ -756,7 +756,7 @@ export function AddRatePeriodModal({
     }
 
     return (
-        <Modal open onClose={onClose} title={t`New rate period — ${part.label}`} width="sm">
+        <Modal open onClose={onClose} title={t`New rate period - ${part.label}`} width="sm">
             <Form
                 onSubmit={e => {
                     e.preventDefault();
@@ -1001,7 +1001,7 @@ export function EditLoanPartModal({
     }
 
     return (
-        <Modal open onClose={onClose} title={t`Edit part — ${part.label}`} width="sm">
+        <Modal open onClose={onClose} title={t`Edit part - ${part.label}`} width="sm">
             <Form
                 onSubmit={e => {
                     e.preventDefault();

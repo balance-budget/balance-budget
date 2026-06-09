@@ -188,7 +188,7 @@ export function AccountFormModal(props: Props) {
                 >
                     {currencyList.map(c => (
                         <SelectItem key={c.code} id={c.code}>
-                            {c.code} — {c.name}
+                            {c.code} - {c.name}
                         </SelectItem>
                     ))}
                 </Select>
@@ -213,8 +213,8 @@ export function AccountFormModal(props: Props) {
                         currencyCode={currencyCode || undefined}
                         excludeSubtreeOf={props.mode === 'edit' ? props.account.id : undefined}
                         disabled={currencyCode === ''}
-                        noneLabel={t`None — top level`}
-                        placeholder={t`None — top level`}
+                        noneLabel={t`None - top level`}
+                        placeholder={t`None - top level`}
                         ariaLabel={t`Parent account`}
                     />
                     <span className="text-xs text-fg-3">
@@ -246,7 +246,7 @@ export function AccountFormModal(props: Props) {
                         <Checkbox isSelected={isLiquid} onChange={setIsLiquid}>
                             <span className="flex flex-col">
                                 <span className="text-xs font-medium text-fg-2">
-                                    <Trans>Liquid — counts toward liquid net worth</Trans>
+                                    <Trans>Liquid - counts toward liquid net worth</Trans>
                                 </span>
                                 <span className="text-xs text-fg-3">
                                     <Trans>

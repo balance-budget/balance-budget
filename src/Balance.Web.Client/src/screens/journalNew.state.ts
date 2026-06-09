@@ -18,6 +18,7 @@
  *     debit / credit is non-zero per row, enforced by validation).
  */
 
+import { t } from '@lingui/core/macro';
 import type { components } from '../lib/api-types.gen';
 import type { AccountId, CounterpartyId } from '../lib/domain';
 import { parseMoney, type ParseMoneyResult } from '../lib/money';
@@ -153,7 +154,7 @@ function requireAccount(
     errors: FieldErrors,
 ): AccountId | null {
     if (accountId === null) {
-        addFieldError(errors, key, 'Select an account.');
+        addFieldError(errors, key, t`Select an account.`);
         return null;
     }
     return accountId;
@@ -179,7 +180,7 @@ function parseAmount(
         return null;
     }
     if (parsed.minor === 0) {
-        addFieldError(errors, key, 'Amount must be non-zero.');
+        addFieldError(errors, key, t`Amount must be non-zero.`);
         return null;
     }
     return parsed.minor;
@@ -239,7 +240,7 @@ export function simpleStateToCreateRequest(
         return {
             ok: false,
             fieldErrors: errors,
-            topError: 'From and To amounts must balance to zero.',
+            topError: t`From and To amounts must balance to zero.`,
         };
     }
 
@@ -264,11 +265,11 @@ export function advancedStateToCreateRequest(
         const hasDebit = line.debit.trim().length > 0;
         const hasCredit = line.credit.trim().length > 0;
         if (hasDebit && hasCredit) {
-            addFieldError(errors, debitKey, 'Use Debit or Credit, not both.');
+            addFieldError(errors, debitKey, t`Use Debit or Credit, not both.`);
             return;
         }
         if (!hasDebit && !hasCredit) {
-            addFieldError(errors, debitKey, 'Enter Debit or Credit.');
+            addFieldError(errors, debitKey, t`Enter Debit or Credit.`);
             return;
         }
         const minor = hasDebit
@@ -293,7 +294,7 @@ export function advancedStateToCreateRequest(
         return {
             ok: false,
             fieldErrors: errors,
-            topError: 'Debit and Credit totals must balance to zero.',
+            topError: t`Debit and Credit totals must balance to zero.`,
         };
     }
 

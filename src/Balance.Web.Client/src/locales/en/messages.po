@@ -13,13 +13,27 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#. placeholder {0}: formatInstant(token.expiresAt, TOKEN_DATE)
+msgid " · expires {0}"
+msgstr " · expires {0}"
+
 #. placeholder {0}: current.fixedUntil
 #. placeholder {0}: rate.fixedUntil
 msgid " · fixed until {0}"
 msgstr " · fixed until {0}"
 
-msgid "— click to change"
-msgstr "— click to change"
+#. placeholder {0}: formatInstant(token.lastUsedAt, TOKEN_DATE)
+msgid " · last used {0}"
+msgstr " · last used {0}"
+
+msgid " · never used"
+msgstr " · never used"
+
+#~ msgid "— click to change"
+#~ msgstr "— click to change"
+
+msgid "· click to change"
+msgstr "· click to change"
 
 msgid "(no description)"
 msgstr "(no description)"
@@ -37,6 +51,14 @@ msgstr "{0, plural, one {# part} other {# parts}}"
 #. placeholder {0}: feedback.skipped
 msgid "{0, plural, one {skipped # duplicate} other {skipped # duplicates}}"
 msgstr "{0, plural, one {skipped # duplicate} other {skipped # duplicates}}"
+
+#. placeholder {0}: part.label
+msgid "{0} - interest"
+msgstr "{0} - interest"
+
+#. placeholder {0}: part.label
+msgid "{0} - principal"
+msgstr "{0} - principal"
 
 #. placeholder {0}: loan.lenderName
 #. placeholder {1}: loan.interestExpenseAccountName
@@ -103,11 +125,17 @@ msgstr "{count, plural, one {# line selected} other {# lines selected}}"
 msgid "{from}–{to} of {totalCount}"
 msgstr "{from}–{to} of {totalCount}"
 
-msgid "{label} — interest"
-msgstr "{label} — interest"
+msgid "{label} - interest"
+msgstr "{label} - interest"
 
-msgid "{label} — repayment"
-msgstr "{label} — repayment"
+msgid "{label} - repayment"
+msgstr "{label} - repayment"
+
+#~ msgid "{label} — interest"
+#~ msgstr "{label} — interest"
+
+#~ msgid "{label} — repayment"
+#~ msgstr "{label} — repayment"
 
 msgid "{label} (projected)"
 msgstr "{label} (projected)"
@@ -139,9 +167,14 @@ msgid "── None (self-transfer)"
 msgstr "── None (self-transfer)"
 
 msgid "A construction deposit needs an asset account, an income account, and a "
-"rate — set all three or none."
+"rate - set all three or none."
 msgstr "A construction deposit needs an asset account, an income account, and a "
-"rate — set all three or none."
+"rate - set all three or none."
+
+#~ msgid "A construction deposit needs an asset account, an income account, and a "
+#~ "rate — set all three or none."
+#~ msgstr "A construction deposit needs an asset account, an income account, and a "
+#~ "rate — set all three or none."
 
 msgid "A fresh part account needs a name and a code."
 msgstr "A fresh part account needs a name and a code."
@@ -211,6 +244,9 @@ msgstr "Activity"
 msgid "Add"
 msgstr "Add"
 
+msgid "Add at least one line."
+msgstr "Add at least one line."
+
 msgid "Add bank account"
 msgstr "Add bank account"
 
@@ -271,6 +307,9 @@ msgstr "Allocated"
 msgid "Amount"
 msgstr "Amount"
 
+msgid "Amount must be non-zero."
+msgstr "Amount must be non-zero."
+
 msgid "An unexpected error occurred while loading this page."
 msgstr "An unexpected error occurred while loading this page."
 
@@ -288,6 +327,9 @@ msgstr "Any counter-account"
 
 msgid "Any sub-account"
 msgstr "Any sub-account"
+
+msgid "API tokens"
+msgstr "API tokens"
 
 msgid "Apply suggestions"
 msgstr "Apply suggestions"
@@ -309,8 +351,18 @@ msgid "Assumed rate after fixation (%)"
 msgstr "Assumed rate after fixation (%)"
 
 #. placeholder {0}: loan.constructionDeposit.annualRatePercent.toFixed(2)
-msgid "at {0}% — interest offsets the payment until it drains."
-msgstr "at {0}% — interest offsets the payment until it drains."
+msgid "at {0}% - interest offsets the payment until it drains."
+msgstr "at {0}% - interest offsets the payment until it drains."
+
+#. placeholder {0}: loan.constructionDeposit.annualRatePercent.toFixed(2)
+#~ msgid "at {0}% — interest offsets the payment until it drains."
+#~ msgstr "at {0}% — interest offsets the payment until it drains."
+
+msgid "At least two lines are required."
+msgstr "At least two lines are required."
+
+msgid "At most 200 characters"
+msgstr "At most 200 characters"
 
 msgid "Attach"
 msgstr "Attach"
@@ -456,10 +508,15 @@ msgstr "Clear selection"
 msgid "Cleared"
 msgstr "Cleared"
 
-msgid "Cleared and Reconciled lines are frozen — only their description can be "
+msgid "Cleared and Reconciled lines are frozen - only their description can be "
 "edited."
-msgstr "Cleared and Reconciled lines are frozen — only their description can be "
+msgstr "Cleared and Reconciled lines are frozen - only their description can be "
 "edited."
+
+#~ msgid "Cleared and Reconciled lines are frozen — only their description can be "
+#~ "edited."
+#~ msgstr "Cleared and Reconciled lines are frozen — only their description can be "
+#~ "edited."
 
 msgid "Cleared and reconciled lines can’t be moved."
 msgstr "Cleared and reconciled lines can’t be moved."
@@ -493,6 +550,12 @@ msgstr "Construction deposit (optional)"
 
 msgid "Construction deposit account"
 msgstr "Construction deposit account"
+
+msgid "Construction deposit interest offset"
+msgstr "Construction deposit interest offset"
+
+msgid "Copy your token now"
+msgstr "Copy your token now"
 
 msgid "Couldn't compute the projection."
 msgstr "Couldn't compute the projection."
@@ -593,8 +656,11 @@ msgstr "Cr "
 msgid "Create"
 msgstr "Create"
 
-msgid "Create '{trimmed}'"
-msgstr "Create '{trimmed}'"
+#~ msgid "Create '{trimmed}'"
+#~ msgstr "Create '{trimmed}'"
+
+msgid "Create {quotedQuery}"
+msgstr "Create {quotedQuery}"
 
 msgid "Create a fresh account"
 msgstr "Create a fresh account"
@@ -616,8 +682,15 @@ msgid "Create the first account. This wizard becomes unavailable once a user "
 msgstr "Create the first account. This wizard becomes unavailable once a user "
 "exists."
 
+msgid "Create token"
+msgstr "Create token"
+
 msgid "Create user"
 msgstr "Create user"
+
+#. placeholder {0}: formatInstant(token.createdAt, TOKEN_DATE)
+msgid "Created {0}"
+msgstr "Created {0}"
 
 msgid "Creating…"
 msgstr "Creating…"
@@ -654,6 +727,9 @@ msgstr "Day · Month · Year"
 
 msgid "Debit"
 msgstr "Debit"
+
+msgid "Debit and Credit totals must balance to zero."
+msgstr "Debit and Credit totals must balance to zero."
 
 msgid "Default"
 msgstr "Default"
@@ -737,10 +813,15 @@ msgstr "Detach"
 msgid "Detach bank transaction"
 msgstr "Detach bank transaction"
 
-msgid "Detach this BT — returns it to the inbox and clears the matching line "
+msgid "Detach this BT - returns it to the inbox and clears the matching line "
 "back to Uncleared."
-msgstr "Detach this BT — returns it to the inbox and clears the matching line "
+msgstr "Detach this BT - returns it to the inbox and clears the matching line "
 "back to Uncleared."
+
+#~ msgid "Detach this BT — returns it to the inbox and clears the matching line "
+#~ "back to Uncleared."
+#~ msgstr "Detach this BT — returns it to the inbox and clears the matching line "
+#~ "back to Uncleared."
 
 msgid "Detached. Bank transaction returned to the inbox."
 msgstr "Detached. Bank transaction returned to the inbox."
@@ -825,6 +906,9 @@ msgstr "e.g. 5110"
 msgid "e.g. fee corrections, self-transfer siblings"
 msgstr "e.g. fee corrections, self-transfer siblings"
 
+msgid "e.g. ING importer cron"
+msgstr "e.g. ING importer cron"
+
 msgid "e.g. Mortgage Hoofdstraat 1"
 msgstr "e.g. Mortgage Hoofdstraat 1"
 
@@ -862,8 +946,12 @@ msgid "Edit part"
 msgstr "Edit part"
 
 #. placeholder {0}: part.label
-msgid "Edit part — {0}"
-msgstr "Edit part — {0}"
+msgid "Edit part - {0}"
+msgstr "Edit part - {0}"
+
+#. placeholder {0}: part.label
+#~ msgid "Edit part — {0}"
+#~ msgstr "Edit part — {0}"
 
 msgid "Edit rate period"
 msgstr "Edit rate period"
@@ -895,6 +983,9 @@ msgstr "English"
 msgid "English is the only language for now."
 msgstr "English is the only language for now."
 
+msgid "Enter a positive amount"
+msgstr "Enter a positive amount"
+
 msgid "Enter a valid annual rate (e.g. 3.8)."
 msgstr "Enter a valid annual rate (e.g. 3.8)."
 
@@ -903,6 +994,12 @@ msgstr "Enter a valid deposit rate (0–100)."
 
 msgid "Enter a valid opening balance."
 msgstr "Enter a valid opening balance."
+
+msgid "Enter an amount greater than zero"
+msgstr "Enter an amount greater than zero"
+
+msgid "Enter Debit or Credit."
+msgstr "Enter Debit or Credit."
 
 msgid "Enter your email and password to continue."
 msgstr "Enter your email and password to continue."
@@ -938,8 +1035,17 @@ msgstr "Expenses"
 msgid "Expenses · MTD"
 msgstr "Expenses · MTD"
 
+msgid "Expired"
+msgstr "Expired"
+
+msgid "Expires (optional)"
+msgstr "Expires (optional)"
+
 msgid "Extra repayment amount"
 msgstr "Extra repayment amount"
+
+msgid "Failed"
+msgstr "Failed"
 
 msgid "Fill the selected rows with the IBAN-matched counterparty and the "
 "last-used account for that counterparty."
@@ -977,28 +1083,46 @@ msgstr "From"
 msgid "from {0}"
 msgstr "from {0}"
 
+msgid "From and To amounts must balance to zero."
+msgstr "From and To amounts must balance to zero."
+
 msgid "From bank import"
 msgstr "From bank import"
 
-msgid "Frozen — line cannot be removed"
-msgstr "Frozen — line cannot be removed"
+msgid "Frozen - line cannot be removed"
+msgstr "Frozen - line cannot be removed"
 
-msgid "Frozen — line is Cleared or Reconciled"
-msgstr "Frozen — line is Cleared or Reconciled"
+msgid "Frozen - line is Cleared or Reconciled"
+msgstr "Frozen - line is Cleared or Reconciled"
+
+#~ msgid "Frozen — line cannot be removed"
+#~ msgstr "Frozen — line cannot be removed"
+
+#~ msgid "Frozen — line is Cleared or Reconciled"
+#~ msgstr "Frozen — line is Cleared or Reconciled"
 
 msgid "Future"
 msgstr "Future"
 
-msgid "General-journal table — explicit debit / credit per line."
-msgstr "General-journal table — explicit debit / credit per line."
+msgid "General-journal table - explicit debit / credit per line."
+msgstr "General-journal table - explicit debit / credit per line."
+
+#~ msgid "General-journal table — explicit debit / credit per line."
+#~ msgstr "General-journal table — explicit debit / credit per line."
 
 msgid "How dates and numbers are displayed. The interface language is separate "
 "from formatting."
 msgstr "How dates and numbers are displayed. The interface language is separate "
 "from formatting."
 
-msgid "Hypothetical extra repayments — nothing is saved."
-msgstr "Hypothetical extra repayments — nothing is saved."
+msgid "Hypothetical extra repayments - nothing is saved."
+msgstr "Hypothetical extra repayments - nothing is saved."
+
+#~ msgid "Hypothetical extra repayments — nothing is saved."
+#~ msgstr "Hypothetical extra repayments — nothing is saved."
+
+msgid "I've copied it"
+msgstr "I've copied it"
 
 msgid "IBAN"
 msgstr "IBAN"
@@ -1079,8 +1203,14 @@ msgstr "invalid"
 msgid "ISO 8601"
 msgstr "ISO 8601"
 
+msgid "Journal"
+msgstr "Journal"
+
 msgid "Journal entries"
 msgstr "Journal entries"
+
+msgid "Journal entry"
+msgstr "Journal entry"
 
 msgid "Journal entry created."
 msgstr "Journal entry created."
@@ -1106,10 +1236,15 @@ msgstr "Leave"
 msgid "Leave with unsaved drafts?"
 msgstr "Leave with unsaved drafts?"
 
-msgid "Ledger accounts in the double-entry sense — assets, liabilities, income, "
+msgid "Ledger accounts in the double-entry sense - assets, liabilities, income, "
 "expenses, equity."
-msgstr "Ledger accounts in the double-entry sense — assets, liabilities, "
+msgstr "Ledger accounts in the double-entry sense - assets, liabilities, "
 "income, expenses, equity."
+
+#~ msgid "Ledger accounts in the double-entry sense — assets, liabilities, income, "
+#~ "expenses, equity."
+#~ msgstr "Ledger accounts in the double-entry sense — assets, liabilities, "
+#~ "income, expenses, equity."
 
 msgid "Lender"
 msgstr "Lender"
@@ -1129,17 +1264,32 @@ msgstr "Linear"
 msgid "Lines"
 msgstr "Lines"
 
+msgid "Lines are over-allocated. Reduce one or more amounts."
+msgstr "Lines are over-allocated. Reduce one or more amounts."
+
+msgid "Lines are under-allocated. Allocate the remaining amount."
+msgstr "Lines are under-allocated. Allocate the remaining amount."
+
 msgid "Linked bank account"
 msgstr "Linked bank account"
 
 msgid "Linked bank accounts"
 msgstr "Linked bank accounts"
 
-msgid "Liquid — counts toward liquid net worth"
-msgstr "Liquid — counts toward liquid net worth"
+msgid "Liquid - counts toward liquid net worth"
+msgstr "Liquid - counts toward liquid net worth"
+
+#~ msgid "Liquid — counts toward liquid net worth"
+#~ msgstr "Liquid — counts toward liquid net worth"
 
 msgid "Liquid net worth"
 msgstr "Liquid net worth"
+
+msgid "Loading…"
+msgstr "Loading…"
+
+msgid "Loan"
+msgstr "Loan"
 
 msgid "Loan created."
 msgstr "Loan created."
@@ -1240,8 +1390,11 @@ msgstr "Multi-source-multi-destination entries can only be edited in Advanced."
 msgid "Name"
 msgstr "Name"
 
-msgid "Net negative this period — see the breakdown."
-msgstr "Net negative this period — see the breakdown."
+msgid "Net negative this period - see the breakdown."
+msgstr "Net negative this period - see the breakdown."
+
+#~ msgid "Net negative this period — see the breakdown."
+#~ msgstr "Net negative this period — see the breakdown."
 
 msgid "Net negative this period (excluded from the chart)"
 msgstr "Net negative this period (excluded from the chart)"
@@ -1271,8 +1424,12 @@ msgid "New rate"
 msgstr "New rate"
 
 #. placeholder {0}: part.label
-msgid "New rate period — {0}"
-msgstr "New rate period — {0}"
+msgid "New rate period - {0}"
+msgstr "New rate period - {0}"
+
+#. placeholder {0}: part.label
+#~ msgid "New rate period — {0}"
+#~ msgstr "New rate period — {0}"
 
 msgid "Next month"
 msgstr "Next month"
@@ -1345,8 +1502,14 @@ msgstr "No structural matches in this window. Widen the date range or fall back 
 msgid "No suggestions to apply."
 msgstr "No suggestions to apply."
 
-msgid "None — top level"
-msgstr "None — top level"
+msgid "No tokens yet."
+msgstr "No tokens yet."
+
+msgid "None - top level"
+msgstr "None - top level"
+
+#~ msgid "None — top level"
+#~ msgstr "None — top level"
 
 msgid "Nothing categorised yet."
 msgstr "Nothing categorised yet."
@@ -1374,12 +1537,19 @@ msgid "Only non-postable accounts of the same type and currency can be parents."
 msgstr "Only non-postable accounts of the same type and currency can be "
 "parents."
 
-msgid "Only the selected side of each entry moves — dates, amounts and the "
+msgid "Only the selected side of each entry moves - dates, amounts and the "
 "other side stay untouched. The whole batch moves together, or not at "
 "all."
-msgstr "Only the selected side of each entry moves — dates, amounts and the "
+msgstr "Only the selected side of each entry moves - dates, amounts and the "
 "other side stay untouched. The whole batch moves together, or not at "
 "all."
+
+#~ msgid "Only the selected side of each entry moves — dates, amounts and the "
+#~ "other side stay untouched. The whole batch moves together, or not at "
+#~ "all."
+#~ msgstr "Only the selected side of each entry moves — dates, amounts and the "
+#~ "other side stay untouched. The whole batch moves together, or not at "
+#~ "all."
 
 msgid "Open calendar"
 msgstr "Open calendar"
@@ -1451,8 +1621,11 @@ msgstr "Part updated."
 msgid "Parts"
 msgstr "Parts"
 
-msgid "Parts — each with its own terms and rate history."
-msgstr "Parts — each with its own terms and rate history."
+msgid "Parts - each with its own terms and rate history."
+msgstr "Parts - each with its own terms and rate history."
+
+#~ msgid "Parts — each with its own terms and rate history."
+#~ msgstr "Parts — each with its own terms and rate history."
 
 msgid "Parts in this payment:"
 msgstr "Parts in this payment:"
@@ -1476,6 +1649,11 @@ msgstr "Period"
 
 msgid "Period presets"
 msgstr "Period presets"
+
+msgid "Personal access tokens for CLI scripts, importers, and third-party "
+"callers."
+msgstr "Personal access tokens for CLI scripts, importers, and third-party "
+"callers."
 
 msgid "Pick a JE to attach to…"
 msgstr "Pick a JE to attach to…"
@@ -1513,10 +1691,19 @@ msgstr "Posted actuals to the left of today, the engine's projection to the "
 "right."
 
 #. placeholder {0}: proposal.month.slice(0, 7)
-msgid "Pre-filled from the schedule for {0} — adjust the amounts to match the "
+msgid "Pre-filled from the schedule for {0} - adjust the amounts to match the "
 "bank's charge."
-msgstr "Pre-filled from the schedule for {0} — adjust the amounts to match the "
+msgstr "Pre-filled from the schedule for {0} - adjust the amounts to match the "
 "bank's charge."
+
+#. placeholder {0}: proposal.month.slice(0, 7)
+#~ msgid "Pre-filled from the schedule for {0} — adjust the amounts to match the "
+#~ "bank's charge."
+#~ msgstr "Pre-filled from the schedule for {0} — adjust the amounts to match the "
+#~ "bank's charge."
+
+msgid "Preferences"
+msgstr "Preferences"
 
 msgid "Previous month"
 msgstr "Previous month"
@@ -1602,6 +1789,9 @@ msgstr "Repayment type"
 msgid "Reporting period"
 msgstr "Reporting period"
 
+msgid "Required"
+msgstr "Required"
+
 msgid "Required when configured at deploy time via <0>Auth:SetupToken</0>."
 msgstr "Required when configured at deploy time via <0>Auth:SetupToken</0>."
 
@@ -1621,8 +1811,17 @@ msgstr "Restored to inbox."
 msgid "Retry"
 msgstr "Retry"
 
+msgid "Revoke"
+msgstr "Revoke"
+
+msgid "Revoked"
+msgstr "Revoked"
+
 msgid "Roll-up account"
 msgstr "Roll-up account"
+
+msgid "Row is not ready"
+msgstr "Row is not ready"
 
 msgid "Runs until"
 msgstr "Runs until"
@@ -1695,6 +1894,9 @@ msgstr "Select all movable rows on this page"
 msgid "Select all visible rows"
 msgstr "Select all visible rows"
 
+msgid "Select an account."
+msgstr "Select an account."
+
 msgid "Select an account…"
 msgstr "Select an account…"
 
@@ -1710,8 +1912,12 @@ msgid "Select…"
 msgstr "Select…"
 
 #. placeholder {0}: selectedCurrencies.join(' + ')
-msgid "Selected rows span {0} — Account can't be bulk-applied."
-msgstr "Selected rows span {0} — Account can't be bulk-applied."
+msgid "Selected rows span {0} - Account can't be bulk-applied."
+msgstr "Selected rows span {0} - Account can't be bulk-applied."
+
+#. placeholder {0}: selectedCurrencies.join(' + ')
+#~ msgid "Selected rows span {0} — Account can't be bulk-applied."
+#~ msgstr "Selected rows span {0} — Account can't be bulk-applied."
 
 msgid "SEPA creditor ID"
 msgstr "SEPA creditor ID"
@@ -1815,11 +2021,18 @@ msgid "The loan needs a name."
 msgstr "The loan needs a name."
 
 msgid "The part definition and its rate history are removed. Its account and "
-"every posted entry stay untouched — it becomes an ordinary account "
+"every posted entry stay untouched - it becomes an ordinary account "
 "again."
 msgstr "The part definition and its rate history are removed. Its account and "
-"every posted entry stay untouched — it becomes an ordinary account "
+"every posted entry stay untouched - it becomes an ordinary account "
 "again."
+
+#~ msgid "The part definition and its rate history are removed. Its account and "
+#~ "every posted entry stay untouched — it becomes an ordinary account "
+#~ "again."
+#~ msgstr "The part definition and its rate history are removed. Its account and "
+#~ "every posted entry stay untouched — it becomes an ordinary account "
+#~ "again."
 
 msgid "The part's account holds its principal and posted history, so it can't "
 "be changed here."
@@ -1843,6 +2056,12 @@ msgid "This can't be undone. The bookkeeping lines on every affected account "
 "will disappear with it."
 msgstr "This can't be undone. The bookkeeping lines on every affected account "
 "will disappear with it."
+
+#. placeholder {0}: justCreated.metadata.name
+msgid "This is the only time you'll see \"{0}\" in full. Store it somewhere "
+"safe - it can't be retrieved again."
+msgstr "This is the only time you'll see \"{0}\" in full. Store it somewhere "
+"safe - it can't be retrieved again."
 
 msgid "This row already has a journal entry."
 msgstr "This row already has a journal entry."
@@ -1907,9 +2126,17 @@ msgid "Unknown counterparty"
 msgstr "Unknown counterparty"
 
 msgid "Upload an ING current-account CSV against the matching bank account. "
-"Re-uploads are safe — duplicate rows are skipped."
+"Re-uploads are safe - duplicate rows are skipped."
 msgstr "Upload an ING current-account CSV against the matching bank account. "
-"Re-uploads are safe — duplicate rows are skipped."
+"Re-uploads are safe - duplicate rows are skipped."
+
+#~ msgid "Upload an ING current-account CSV against the matching bank account. "
+#~ "Re-uploads are safe — duplicate rows are skipped."
+#~ msgstr "Upload an ING current-account CSV against the matching bank account. "
+#~ "Re-uploads are safe — duplicate rows are skipped."
+
+msgid "Use Debit or Credit, not both."
+msgstr "Use Debit or Credit, not both."
 
 msgid "Users"
 msgstr "Users"

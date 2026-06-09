@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { Trans } from '@lingui/react/macro';
 import { createRootRoute, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
 import { useCurrentUser } from '../api/auth';
+import { i18n } from '../i18n/i18n';
 import { Launcher } from '../components/Launcher';
 import { Sidebar } from '../components/Sidebar';
 import { TopBar } from '../components/TopBar';
@@ -10,7 +12,10 @@ export const Route = createRootRoute({
         const navigate = useNavigate();
         const pathname = useRouterState({ select: s => s.location.pathname });
         const title = useRouterState({
-            select: s => s.matches.at(-1)?.staticData.title ?? 'Balance',
+            select: s => {
+                const descriptor = s.matches.at(-1)?.staticData.title;
+                return descriptor ? i18n._(descriptor) : 'Balance';
+            },
         });
 
         const isAuthRoute = pathname === '/login' || pathname === '/setup';
@@ -72,7 +77,7 @@ export const Route = createRootRoute({
         if (currentUserQuery.isLoading || currentUserQuery.data === null) {
             return (
                 <div className="min-h-screen flex items-center justify-center text-sm text-fg-3">
-                    Loading…
+                    <Trans>Loading…</Trans>
                 </div>
             );
         }

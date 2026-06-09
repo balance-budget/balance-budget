@@ -1,3 +1,4 @@
+import { msg } from '@lingui/core/macro';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Counterparties } from '../screens/Counterparties';
 import { parsePage, parseQ, type PageQSearch } from '../lib/routeSearch';
@@ -19,7 +20,7 @@ export const Route = createFileRoute('/counterparties/')({
             />
         );
     },
-    staticData: { title: 'Counterparties' },
+    staticData: { title: msg`Counterparties` },
     validateSearch: (raw: Record<string, unknown>): PageQSearch => ({
         page: parsePage(raw.page),
         q: parseQ(raw.q),

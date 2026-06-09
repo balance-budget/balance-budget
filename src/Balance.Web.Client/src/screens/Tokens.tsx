@@ -13,13 +13,15 @@ import { Skeleton } from '../components/Skeleton';
 import { Button } from '../components/ui/Button';
 import { TextField } from '../components/ui/TextField';
 import { formatInstant } from '../i18n/format';
+import { ApiError } from '../lib/http';
+import { Trans, useLingui } from '@lingui/react/macro';
 
 // Token timestamps are instants — formatted in the browser's local timezone,
 // field order following the date preference (ADR-0022).
 const TOKEN_DATE: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
-import { ApiError } from '../lib/http';
 
 export function Tokens() {
+    const { t } = useLingui();
     const tokensQuery = useTokens();
     const create = useCreateToken();
     const revoke = useRevokeToken();
@@ -54,8 +56,13 @@ export function Tokens() {
             {justCreated ? (
                 <Panel className="border-warning/40 bg-warning-soft">
                     <SectionHead
-                        title="Copy your token now"
-                        subtitle={`This is the only time you'll see "${justCreated.metadata.name}" in full. Store it somewhere safe — it can't be retrieved again.`}
+                        title={<Trans>Copy your token now</Trans>}
+                        subtitle={
+                            <Trans>
+                                This is the only time you'll see "{justCreated.metadata.name}" in
+                                full. Store it somewhere safe - it can't be retrieved again.
+                            </Trans>
+                        }
                     />
                     <code className="block px-3 py-2 rounded-lg bg-bg-1 border border-border-soft font-mono text-sm text-fg-1 break-all">
                         {justCreated.token}
@@ -67,7 +74,7 @@ export function Tokens() {
                             }}
                             className="py-[5px] text-xs"
                         >
-                            I've copied it
+                            <Trans>I've copied it</Trans>
                         </Button>
                     </div>
                 </Panel>
@@ -75,8 +82,13 @@ export function Tokens() {
 
             <Panel>
                 <SectionHead
-                    title="API tokens"
-                    subtitle="Personal access tokens for CLI scripts, importers, and third-party callers."
+                    title={<Trans>API tokens</Trans>}
+                    subtitle={
+                        <Trans>
+                            Personal access tokens for CLI scripts, importers, and third-party
+                            callers.
+                        </Trans>
+                    }
                 />
                 {tokensQuery.isPending ? (
                     <div className="flex flex-col gap-2">
@@ -96,12 +108,14 @@ export function Tokens() {
                         ))}
                     </ul>
                 ) : (
-                    <p className="text-sm text-fg-3">No tokens yet.</p>
+                    <p className="text-sm text-fg-3">
+                        <Trans>No tokens yet.</Trans>
+                    </p>
                 )}
             </Panel>
 
             <Panel>
-                <SectionHead title="Create token" />
+                <SectionHead title={<Trans>Create token</Trans>} />
                 <Form
                     onSubmit={e => {
                         e.preventDefault();
@@ -111,15 +125,15 @@ export function Tokens() {
                 >
                     <FormErrorBanner message={createError} />
                     <TextField
-                        label="Name"
+                        label={t`Name`}
                         isRequired
-                        placeholder="e.g. ING importer cron"
+                        placeholder={t`e.g. ING importer cron`}
                         value={name}
                         onChange={setName}
                         className="mb-3"
                     />
                     <TextField
-                        label="Expires (optional)"
+                        label={t`Expires (optional)`}
                         type="datetime-local"
                         value={expiresAt}
                         onChange={setExpiresAt}
@@ -127,7 +141,11 @@ export function Tokens() {
                     />
                     <div>
                         <Button type="submit" variant="primary" isDisabled={create.isPending}>
-                            {create.isPending ? 'Creating…' : 'Create token'}
+                            {create.isPending ? (
+                                <Trans>Creating…</Trans>
+                            ) : (
+                                <Trans>Create token</Trans>
+                            )}
                         </Button>
                     </div>
                 </Form>
@@ -147,27 +165,29 @@ function TokenRow({ token, onRevoke }: { token: Token; onRevoke: () => void }) {
                     {token.prefix}…{token.last4}
                 </div>
                 <div className="text-xs text-fg-3">
-                    Created {formatInstant(token.createdAt, TOKEN_DATE)}
-                    {token.lastUsedAt
-                        ? ` · last used ${formatInstant(token.lastUsedAt, TOKEN_DATE)}`
-                        : ' · never used'}
-                    {token.expiresAt
-                        ? ` · expires ${formatInstant(token.expiresAt, TOKEN_DATE)}`
-                        : ''}
+                    <Trans>Created {formatInstant(token.createdAt, TOKEN_DATE)}</Trans>
+                    {token.lastUsedAt ? (
+                        <Trans> · last used {formatInstant(token.lastUsedAt, TOKEN_DATE)}</Trans>
+                    ) : (
+                        <Trans> · never used</Trans>
+                    )}
+                    {token.expiresAt ? (
+                        <Trans> · expires {formatInstant(token.expiresAt, TOKEN_DATE)}</Trans>
+                    ) : null}
                 </div>
             </div>
             <div className="shrink-0">
                 {isRevoked ? (
                     <span className="px-2 py-[3px] rounded-sm text-xs font-medium bg-danger-soft text-danger">
-                        Revoked
+                        <Trans>Revoked</Trans>
                     </span>
                 ) : isExpired ? (
                     <span className="px-2 py-[3px] rounded-sm text-xs font-medium bg-surface-3 text-fg-3">
-                        Expired
+                        <Trans>Expired</Trans>
                     </span>
                 ) : (
                     <Button onPress={onRevoke} className="py-[5px] text-xs">
-                        Revoke
+                        <Trans>Revoke</Trans>
                     </Button>
                 )}
             </div>
