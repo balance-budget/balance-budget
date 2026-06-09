@@ -74,8 +74,14 @@ msgstr "{0} (new)"
 #. placeholder {0}: summary.categorised.toString()
 #. placeholder {1}: summary.dismissed.toString()
 #. placeholder {2}: summary.failed.toString()
-msgid "{0} categorised, {1} dismissed, {2} failed."
-msgstr "{0} categorised, {1} dismissed, {2} failed."
+#~ msgid "{0} categorised, {1} dismissed, {2} failed."
+#~ msgstr "{0} categorised, {1} dismissed, {2} failed."
+
+#. placeholder {0}: summary.categorised.toString()
+#. placeholder {1}: summary.dismissed.toString()
+#. placeholder {2}: summary.failed.toString()
+msgid "{0} categorized, {1} dismissed, {2} failed."
+msgstr "{0} categorized, {1} dismissed, {2} failed."
 
 #. placeholder {0}: filled.toString()
 msgid "{0} filled"
@@ -373,13 +379,23 @@ msgstr "Attach to {0}"
 
 #. placeholder {0}: hint.date
 #. placeholder {1}: hint.otherAccountName
-msgid "Attach to JE on {0} · {1}"
-msgstr "Attach to JE on {0} · {1}"
+#~ msgid "Attach to JE on {0} · {1}"
+#~ msgstr "Attach to JE on {0} · {1}"
 
 #. placeholder {0}: hint.date
 #. placeholder {1}: hint.otherAccountName
-msgid "Attach to JE on {0} ({1})"
-msgstr "Attach to JE on {0} ({1})"
+#~ msgid "Attach to JE on {0} ({1})"
+#~ msgstr "Attach to JE on {0} ({1})"
+
+#. placeholder {0}: hint.date
+#. placeholder {1}: hint.otherAccountName
+msgid "Attach to journal entry on {0} · {1}"
+msgstr "Attach to journal entry on {0} · {1}"
+
+#. placeholder {0}: hint.date
+#. placeholder {1}: hint.otherAccountName
+msgid "Attach to journal entry on {0} ({1})"
+msgstr "Attach to journal entry on {0} ({1})"
 
 #. placeholder {0}: hint.otherAccountName
 msgid "Attached to {0}."
@@ -389,8 +405,12 @@ msgid "Attached."
 msgstr "Attached."
 
 #. placeholder {0}: hint.date
-msgid "Auto-matched to JE on {0}"
-msgstr "Auto-matched to JE on {0}"
+#~ msgid "Auto-matched to JE on {0}"
+#~ msgstr "Auto-matched to JE on {0}"
+
+#. placeholder {0}: hint.date
+msgid "Auto-matched to journal entry on {0}"
+msgstr "Auto-matched to journal entry on {0}"
 
 msgid "Back to inbox"
 msgstr "Back to inbox"
@@ -431,8 +451,11 @@ msgstr "Bank imports"
 msgid "Bank name"
 msgstr "Bank name"
 
-msgid "Bank rows that have been categorised into a journal entry."
-msgstr "Bank rows that have been categorised into a journal entry."
+#~ msgid "Bank rows that have been categorised into a journal entry."
+#~ msgstr "Bank rows that have been categorised into a journal entry."
+
+msgid "Bank rows that have been categorized into a journal entry."
+msgstr "Bank rows that have been categorized into a journal entry."
 
 msgid "Bank rows waiting for a journal entry. Pick Counterparty and Account "
 "inline; Save all when you’re happy."
@@ -475,26 +498,47 @@ msgstr "Card identifier"
 msgid "Card identifier is required. Card accounts are owned-only."
 msgstr "Card identifier is required. Card accounts are owned-only."
 
-msgid "Categorise"
-msgstr "Categorise"
+#~ msgid "Categorise"
+#~ msgstr "Categorise"
 
-msgid "Categorise an inbox row to see it here."
-msgstr "Categorise an inbox row to see it here."
+#~ msgid "Categorise an inbox row to see it here."
+#~ msgstr "Categorise an inbox row to see it here."
 
-msgid "Categorise bank transaction"
-msgstr "Categorise bank transaction"
+#~ msgid "Categorise bank transaction"
+#~ msgstr "Categorise bank transaction"
 
-msgid "Categorise normally"
-msgstr "Categorise normally"
+#~ msgid "Categorise normally"
+#~ msgstr "Categorise normally"
 
-msgid "Categorised"
-msgstr "Categorised"
+#~ msgid "Categorised"
+#~ msgstr "Categorised"
 
-msgid "Categorised."
-msgstr "Categorised."
+#~ msgid "Categorised."
+#~ msgstr "Categorised."
 
-msgid "Categorising…"
-msgstr "Categorising…"
+#~ msgid "Categorising…"
+#~ msgstr "Categorising…"
+
+msgid "Categorize"
+msgstr "Categorize"
+
+msgid "Categorize an inbox row to see it here."
+msgstr "Categorize an inbox row to see it here."
+
+msgid "Categorize bank transaction"
+msgstr "Categorize bank transaction"
+
+msgid "Categorize normally"
+msgstr "Categorize normally"
+
+msgid "Categorized"
+msgstr "Categorized"
+
+msgid "Categorized."
+msgstr "Categorized."
+
+msgid "Categorizing…"
+msgstr "Categorizing…"
 
 msgid "Chronological activity on this account."
 msgstr "Chronological activity on this account."
@@ -642,9 +686,14 @@ msgstr "Counterparty"
 msgid "Counterparty '{0}' created."
 msgstr "Counterparty '{0}' created."
 
-msgid "Counterparty bank accounts appear as you categorise imported "
+#~ msgid "Counterparty bank accounts appear as you categorise imported "
+#~ "transactions."
+#~ msgstr "Counterparty bank accounts appear as you categorise imported "
+#~ "transactions."
+
+msgid "Counterparty bank accounts appear as you categorize imported "
 "transactions."
-msgstr "Counterparty bank accounts appear as you categorise imported "
+msgstr "Counterparty bank accounts appear as you categorize imported "
 "transactions."
 
 msgid "Counterparty…"
@@ -668,8 +717,11 @@ msgstr "Create a fresh account"
 msgid "Create account"
 msgstr "Create account"
 
-msgid "Create entry"
-msgstr "Create entry"
+#~ msgid "Create entry"
+#~ msgstr "Create entry"
+
+msgid "Create journal entry"
+msgstr "Create journal entry"
 
 msgid "Create loan"
 msgstr "Create loan"
@@ -813,10 +865,15 @@ msgstr "Detach"
 msgid "Detach bank transaction"
 msgstr "Detach bank transaction"
 
-msgid "Detach this BT - returns it to the inbox and clears the matching line "
-"back to Uncleared."
-msgstr "Detach this BT - returns it to the inbox and clears the matching line "
-"back to Uncleared."
+msgid "Detach this bank transaction - returns it to the inbox and clears the "
+"matching line back to Uncleared."
+msgstr "Detach this bank transaction - returns it to the inbox and clears the "
+"matching line back to Uncleared."
+
+#~ msgid "Detach this BT - returns it to the inbox and clears the matching line "
+#~ "back to Uncleared."
+#~ msgstr "Detach this BT - returns it to the inbox and clears the matching line "
+#~ "back to Uncleared."
 
 #~ msgid "Detach this BT — returns it to the inbox and clears the matching line "
 #~ "back to Uncleared."
@@ -936,8 +993,11 @@ msgstr "Edit details"
 msgid "Edit details (splits, custom date)"
 msgstr "Edit details (splits, custom date)"
 
-msgid "Edit entry"
-msgstr "Edit entry"
+#~ msgid "Edit entry"
+#~ msgstr "Edit entry"
+
+msgid "Edit journal entry"
+msgstr "Edit journal entry"
 
 msgid "Edit loan"
 msgstr "Edit loan"
@@ -1008,11 +1068,15 @@ msgid "Every bookkeeping event, newest first."
 msgstr "Every bookkeeping event, newest first."
 
 #. placeholder {0}: cp.name
-msgid "Every entry referencing {0}."
-msgstr "Every entry referencing {0}."
+#~ msgid "Every entry referencing {0}."
+#~ msgstr "Every entry referencing {0}."
 
 msgid "Every imported bank row, regardless of state."
 msgstr "Every imported bank row, regardless of state."
+
+#. placeholder {0}: cp.name
+msgid "Every journal entry referencing {0}."
+msgstr "Every journal entry referencing {0}."
 
 msgid "Every part needs a label."
 msgstr "Every part needs a label."
@@ -1152,11 +1216,17 @@ msgstr "Import statements"
 msgid "Imported {0}"
 msgstr "Imported {0}"
 
-msgid "Imported row this entry was categorised from."
-msgstr "Imported row this entry was categorised from."
+#~ msgid "Imported row this entry was categorised from."
+#~ msgstr "Imported row this entry was categorised from."
 
-msgid "Imported rows that need categorising will appear here."
-msgstr "Imported rows that need categorising will appear here."
+msgid "Imported row this journal entry was categorized from."
+msgstr "Imported row this journal entry was categorized from."
+
+#~ msgid "Imported rows that need categorising will appear here."
+#~ msgstr "Imported rows that need categorising will appear here."
+
+msgid "Imported rows that need categorizing will appear here."
+msgstr "Imported rows that need categorizing will appear here."
 
 msgid "Importer"
 msgstr "Importer"
@@ -1342,8 +1412,12 @@ msgid "Matched"
 msgstr "Matched"
 
 #. placeholder {0}: hint.otherAccountName
-msgid "Matches JE · {0}"
-msgstr "Matches JE · {0}"
+#~ msgid "Matches JE · {0}"
+#~ msgstr "Matches JE · {0}"
+
+#. placeholder {0}: hint.otherAccountName
+msgid "Matches journal entry · {0}"
+msgstr "Matches journal entry · {0}"
 
 msgid "Minimum 12 characters."
 msgstr "Minimum 12 characters."
@@ -1384,8 +1458,13 @@ msgstr "Move to account…"
 msgid "Moved {count, plural, one {# line} other {# lines}} to “{targetName}”."
 msgstr "Moved {count, plural, one {# line} other {# lines}} to “{targetName}”."
 
-msgid "Multi-source-multi-destination entries can only be edited in Advanced."
-msgstr "Multi-source-multi-destination entries can only be edited in Advanced."
+#~ msgid "Multi-source-multi-destination entries can only be edited in Advanced."
+#~ msgstr "Multi-source-multi-destination entries can only be edited in Advanced."
+
+msgid "Multi-source-multi-destination journal entries can only be edited in "
+"Advanced."
+msgstr "Multi-source-multi-destination journal entries can only be edited in "
+"Advanced."
 
 msgid "Name"
 msgstr "Name"
@@ -1411,8 +1490,8 @@ msgstr "New bank account"
 msgid "New counterparty"
 msgstr "New counterparty"
 
-msgid "New entry"
-msgstr "New entry"
+#~ msgid "New entry"
+#~ msgstr "New entry"
 
 msgid "New journal entry"
 msgstr "New journal entry"
@@ -1461,11 +1540,14 @@ msgstr "No counterparties yet."
 msgid "No counterparty bank accounts."
 msgstr "No counterparty bank accounts."
 
-msgid "No entries match the current filters."
-msgstr "No entries match the current filters."
+#~ msgid "No entries match the current filters."
+#~ msgstr "No entries match the current filters."
 
 msgid "No importer configured"
 msgstr "No importer configured"
+
+msgid "No journal entries match the current filters."
+msgstr "No journal entries match the current filters."
 
 msgid "No journal entries yet for this counterparty."
 msgstr "No journal entries yet for this counterparty."
@@ -1511,8 +1593,11 @@ msgstr "None - top level"
 #~ msgid "None — top level"
 #~ msgstr "None — top level"
 
-msgid "Nothing categorised yet."
-msgstr "Nothing categorised yet."
+#~ msgid "Nothing categorised yet."
+#~ msgstr "Nothing categorised yet."
+
+msgid "Nothing categorized yet."
+msgstr "Nothing categorized yet."
 
 msgid "Nothing dismissed."
 msgstr "Nothing dismissed."
@@ -1537,12 +1622,12 @@ msgid "Only non-postable accounts of the same type and currency can be parents."
 msgstr "Only non-postable accounts of the same type and currency can be "
 "parents."
 
-msgid "Only the selected side of each entry moves - dates, amounts and the "
-"other side stay untouched. The whole batch moves together, or not at "
-"all."
-msgstr "Only the selected side of each entry moves - dates, amounts and the "
-"other side stay untouched. The whole batch moves together, or not at "
-"all."
+#~ msgid "Only the selected side of each entry moves - dates, amounts and the "
+#~ "other side stay untouched. The whole batch moves together, or not at "
+#~ "all."
+#~ msgstr "Only the selected side of each entry moves - dates, amounts and the "
+#~ "other side stay untouched. The whole batch moves together, or not at "
+#~ "all."
 
 #~ msgid "Only the selected side of each entry moves — dates, amounts and the "
 #~ "other side stay untouched. The whole batch moves together, or not at "
@@ -1550,6 +1635,13 @@ msgstr "Only the selected side of each entry moves - dates, amounts and the "
 #~ msgstr "Only the selected side of each entry moves — dates, amounts and the "
 #~ "other side stay untouched. The whole batch moves together, or not at "
 #~ "all."
+
+msgid "Only the selected side of each journal entry moves - dates, amounts and "
+"the other side stay untouched. The whole batch moves together, or not at "
+"all."
+msgstr "Only the selected side of each journal entry moves - dates, amounts and "
+"the other side stay untouched. The whole batch moves together, or not "
+"at all."
 
 msgid "Open calendar"
 msgstr "Open calendar"
@@ -1563,8 +1655,11 @@ msgstr "Opening balance ({currencyCode})"
 msgid "Optional"
 msgstr "Optional"
 
-msgid "or scroll down to create a new JE."
-msgstr "or scroll down to create a new JE."
+#~ msgid "or scroll down to create a new JE."
+#~ msgstr "or scroll down to create a new JE."
+
+msgid "or scroll down to create a new journal entry."
+msgstr "or scroll down to create a new journal entry."
 
 msgid "Outstanding"
 msgstr "Outstanding"
@@ -1655,11 +1750,14 @@ msgid "Personal access tokens for CLI scripts, importers, and third-party "
 msgstr "Personal access tokens for CLI scripts, importers, and third-party "
 "callers."
 
-msgid "Pick a JE to attach to…"
-msgstr "Pick a JE to attach to…"
+#~ msgid "Pick a JE to attach to…"
+#~ msgstr "Pick a JE to attach to…"
 
 msgid "Pick a journal entry to attach to"
 msgstr "Pick a journal entry to attach to"
+
+msgid "Pick a journal entry to attach to…"
+msgstr "Pick a journal entry to attach to…"
 
 msgid "Pick account…"
 msgstr "Pick account…"
@@ -2066,8 +2164,11 @@ msgstr "This is the only time you'll see \"{0}\" in full. Store it somewhere "
 msgid "This row already has a journal entry."
 msgstr "This row already has a journal entry."
 
-msgid "This row is dismissed. Undismiss it first to categorise."
-msgstr "This row is dismissed. Undismiss it first to categorise."
+#~ msgid "This row is dismissed. Undismiss it first to categorise."
+#~ msgstr "This row is dismissed. Undismiss it first to categorise."
+
+msgid "This row is dismissed. Undismiss it first to categorize."
+msgstr "This row is dismissed. Undismiss it first to categorize."
 
 msgid "This screen is not built yet."
 msgstr "This screen is not built yet."
@@ -2144,8 +2245,8 @@ msgstr "Users"
 msgid "Value date"
 msgstr "Value date"
 
-msgid "View entry"
-msgstr "View entry"
+#~ msgid "View entry"
+#~ msgstr "View entry"
 
 msgid "View journal entry"
 msgstr "View journal entry"

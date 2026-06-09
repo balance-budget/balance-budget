@@ -163,14 +163,14 @@ function BankTransactionPanelHead({ bt }: { bt: BankTransactionDetail }) {
         <div className="flex items-start justify-between gap-3 mb-2">
             <SectionHead
                 title={<Trans>Bank transaction</Trans>}
-                subtitle={<Trans>Imported row this entry was categorised from.</Trans>}
+                subtitle={<Trans>Imported row this journal entry was categorized from.</Trans>}
             />
             <button
                 type="button"
                 onClick={() => void onDetachClick()}
                 disabled={detach.isPending}
                 aria-label={t`Detach bank transaction`}
-                title={t`Detach this BT - returns it to the inbox and clears the matching line back to Uncleared.`}
+                title={t`Detach this bank transaction - returns it to the inbox and clears the matching line back to Uncleared.`}
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-fg-2 border border-border-strong hover:bg-surface-2 disabled:opacity-60"
             >
                 <Icon name="unlink" size={14} strokeWidth={2} />
@@ -482,7 +482,9 @@ function EditJournalEntry({
                 <Panel key={bt.id}>
                     <SectionHead
                         title={<Trans>Bank transaction</Trans>}
-                        subtitle={<Trans>Imported row this entry was categorised from.</Trans>}
+                        subtitle={
+                            <Trans>Imported row this journal entry was categorized from.</Trans>
+                        }
                     />
                     <BankTransactionDetails bt={bt} catalog={catalog} />
                 </Panel>
@@ -490,7 +492,7 @@ function EditJournalEntry({
 
             <Panel>
                 <SectionHead
-                    title={<Trans>Edit entry</Trans>}
+                    title={<Trans>Edit journal entry</Trans>}
                     subtitle={
                         <Trans>
                             Cleared and Reconciled lines are frozen - only their description can be

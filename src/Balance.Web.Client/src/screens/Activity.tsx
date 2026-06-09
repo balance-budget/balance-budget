@@ -61,7 +61,7 @@ export function Activity({
                         className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg bg-brand-primary text-white text-sm font-medium hover:bg-brand-primary-dark"
                     >
                         <Icon name="plus" size={14} strokeWidth={2} />
-                        <Trans>New entry</Trans>
+                        <Trans>New journal entry</Trans>
                     </Link>
                 }
             />
@@ -178,7 +178,7 @@ function JournalBody({
     if (entries.data.items.length === 0 && filtered) {
         return (
             <div className="py-8 text-center text-sm text-fg-2">
-                <Trans>No entries match the current filters.</Trans>
+                <Trans>No journal entries match the current filters.</Trans>
             </div>
         );
     }

@@ -97,7 +97,7 @@ function filterLabel(filter: BankTransactionFilter): string {
 function subtitleFor(filter: BankTransactionFilter): string {
     const subtitles: Record<BankTransactionFilter, string> = {
         Inbox: t`Bank rows waiting for a journal entry. Pick Counterparty and Account inline; Save all when you’re happy.`,
-        Matched: t`Bank rows that have been categorised into a journal entry.`,
+        Matched: t`Bank rows that have been categorized into a journal entry.`,
         Dismissed: t`Bank rows you marked as not needing a journal entry.`,
         All: t`Every imported bank row, regardless of state.`,
     };
@@ -107,7 +107,7 @@ function subtitleFor(filter: BankTransactionFilter): string {
 function emptyTitleFor(filter: BankTransactionFilter): string {
     const titles: Record<BankTransactionFilter, string> = {
         Inbox: t`You're caught up.`,
-        Matched: t`Nothing categorised yet.`,
+        Matched: t`Nothing categorized yet.`,
         Dismissed: t`Nothing dismissed.`,
         All: t`No bank transactions yet.`,
     };
@@ -116,8 +116,8 @@ function emptyTitleFor(filter: BankTransactionFilter): string {
 
 function emptyHintFor(filter: BankTransactionFilter): string {
     const hints: Record<BankTransactionFilter, string> = {
-        Inbox: t`Imported rows that need categorising will appear here.`,
-        Matched: t`Categorise an inbox row to see it here.`,
+        Inbox: t`Imported rows that need categorizing will appear here.`,
+        Matched: t`Categorize an inbox row to see it here.`,
         Dismissed: t`Dismissed rows live here for audit.`,
         All: t`Import a bank statement from Bank imports to get started.`,
     };
@@ -394,7 +394,7 @@ function StateChip({ bankTransaction }: { bankTransaction: BankTransaction }) {
     if (bankTransaction.journalEntryId) {
         return (
             <span className="text-xs text-success tabular-nums">
-                <Trans>Categorised</Trans>
+                <Trans>Categorized</Trans>
             </span>
         );
     }
@@ -476,7 +476,7 @@ function ReadOnlyActions({
                     className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-brand-primary hover:bg-brand-primary-soft"
                 >
                     <Icon name="book-open" size={14} strokeWidth={2} />
-                    <Trans>View entry</Trans>
+                    <Trans>View journal entry</Trans>
                 </Link>
             </div>
         );
@@ -489,11 +489,11 @@ function ReadOnlyActions({
             <Link
                 to="/bank-transactions/$id/categorize"
                 params={{ id: bankTransaction.id }}
-                aria-label={t`Categorise`}
+                aria-label={t`Categorize`}
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-brand-primary hover:bg-brand-primary-soft"
             >
                 <Icon name="check-circle" size={14} strokeWidth={2} />
-                <Trans>Categorise</Trans>
+                <Trans>Categorize</Trans>
             </Link>
             <button
                 type="button"
@@ -1641,10 +1641,10 @@ function AttachHintBadge({ hint }: { hint: NonNullable<BankTransaction['matching
     return (
         <span
             className="text-xs text-brand-primary mt-1 truncate inline-flex items-center gap-1"
-            title={t`Auto-matched to JE on ${hint.date}`}
+            title={t`Auto-matched to journal entry on ${hint.date}`}
         >
             <Icon name="link" size={11} strokeWidth={2} />
-            <Trans>Matches JE · {hint.otherAccountName}</Trans>
+            <Trans>Matches journal entry · {hint.otherAccountName}</Trans>
         </span>
     );
 }
@@ -1813,7 +1813,7 @@ function InboxRowActions({
                     onClick={() => void onAttachClick()}
                     disabled={disabled || attach.isPending}
                     aria-label={t`Attach to ${hint.otherAccountName}`}
-                    title={t`Attach to JE on ${hint.date} (${hint.otherAccountName})`}
+                    title={t`Attach to journal entry on ${hint.date} (${hint.otherAccountName})`}
                     className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-brand-primary hover:bg-brand-primary-soft disabled:opacity-60"
                 >
                     <Icon name="link" size={14} strokeWidth={2} />
@@ -2045,5 +2045,5 @@ function BulkDismissDialog({
 }
 
 function formatSaveAllToast(summary: SaveAllSummary): string {
-    return t`${summary.categorised.toString()} categorised, ${summary.dismissed.toString()} dismissed, ${summary.failed.toString()} failed.`;
+    return t`${summary.categorised.toString()} categorized, ${summary.dismissed.toString()} dismissed, ${summary.failed.toString()} failed.`;
 }

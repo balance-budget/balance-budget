@@ -189,7 +189,7 @@ function BankAccountList({
         const hint =
             owner === 'Mine'
                 ? t`Add one to attach to a ledger account.`
-                : t`Counterparty bank accounts appear as you categorise imported transactions.`;
+                : t`Counterparty bank accounts appear as you categorize imported transactions.`;
         return (
             <div className="py-8 flex flex-col items-center gap-2 text-center">
                 <span className="text-sm text-fg-2">{title}</span>
