@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import { detectPreset, PERIOD_PRESETS, presetRange, type ReportPeriod } from '../lib/reportPeriod';
 import { DateRangePicker } from './ui/DateRangePicker';
 import { selectedKey } from './ui/selection';
@@ -15,12 +16,13 @@ type PeriodPickerProps = {
  * (or a shared URL) lights up none of them.
  */
 export function PeriodPicker({ period, onChange }: PeriodPickerProps) {
+    const { t } = useLingui();
     const active = detectPreset(period);
 
     return (
         <div className="flex flex-wrap items-center gap-2">
             <ToggleButtonGroup
-                aria-label="Period presets"
+                aria-label={t`Period presets`}
                 selectedKeys={active === 'custom' ? [] : [active]}
                 onSelectionChange={keys => {
                     const token = selectedKey(keys);
@@ -36,7 +38,7 @@ export function PeriodPicker({ period, onChange }: PeriodPickerProps) {
             </ToggleButtonGroup>
 
             <DateRangePicker
-                aria-label="Reporting period"
+                aria-label={t`Reporting period`}
                 value={{ from: period.from, to: period.to }}
                 onChange={range => {
                     if (range.from !== '' && range.to !== '') {

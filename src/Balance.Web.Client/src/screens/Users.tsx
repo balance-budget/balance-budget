@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useCurrentUser } from '../api/auth';
 import { useCreateUser, useToggleUserActive, useUsers, type User } from '../api/admin';
 import { Form } from 'react-aria-components';
@@ -10,6 +11,7 @@ import { TextField } from '../components/ui/TextField';
 import { ApiError } from '../lib/http';
 
 export function Users() {
+    const { t } = useLingui();
     const usersQuery = useUsers();
     const me = useCurrentUser();
     const createUser = useCreateUser();
@@ -47,7 +49,10 @@ export function Users() {
     return (
         <>
             <Panel>
-                <SectionHead title="Users" subtitle="Logins that have access to this ledger." />
+                <SectionHead
+                    title={<Trans>Users</Trans>}
+                    subtitle={<Trans>Logins that have access to this ledger.</Trans>}
+                />
                 {usersQuery.isPending ? (
                     <div className="flex flex-col gap-2">
                         <Skeleton className="h-12" />
@@ -75,7 +80,7 @@ export function Users() {
             </Panel>
 
             <Panel>
-                <SectionHead title="Add user" />
+                <SectionHead title={<Trans>Add user</Trans>} />
                 <Form
                     onSubmit={e => {
                         e.preventDefault();
@@ -85,7 +90,7 @@ export function Users() {
                 >
                     <FormErrorBanner message={createError} />
                     <TextField
-                        label="Email"
+                        label={t`Email`}
                         type="email"
                         isRequired
                         value={email}
@@ -93,25 +98,29 @@ export function Users() {
                         className="mb-3"
                     />
                     <TextField
-                        label="Display name"
+                        label={t`Display name`}
                         isRequired
                         value={displayName}
                         onChange={setDisplayName}
                         className="mb-3"
                     />
                     <TextField
-                        label="Password"
+                        label={t`Password`}
                         type="password"
                         isRequired
                         minLength={12}
                         value={password}
                         onChange={setPassword}
-                        description="Minimum 12 characters."
+                        description={t`Minimum 12 characters.`}
                         className="mb-4"
                     />
                     <div>
                         <Button type="submit" variant="primary" isDisabled={createUser.isPending}>
-                            {createUser.isPending ? 'Creating…' : 'Create user'}
+                            {createUser.isPending ? (
+                                <Trans>Creating…</Trans>
+                            ) : (
+                                <Trans>Create user</Trans>
+                            )}
                         </Button>
                     </div>
                 </Form>
@@ -135,7 +144,9 @@ function UserRow({
                 <div className="text-sm font-medium text-fg-1 truncate">
                     {user.displayName}
                     {isSelf ? (
-                        <span className="ml-2 text-xs text-fg-3 font-normal">(you)</span>
+                        <span className="ml-2 text-xs text-fg-3 font-normal">
+                            <Trans>(you)</Trans>
+                        </span>
                     ) : null}
                 </div>
                 <div className="text-xs text-fg-3 truncate">{user.email}</div>
@@ -148,7 +159,7 @@ function UserRow({
                             : 'px-2 py-[3px] rounded-sm text-xs font-medium bg-danger-soft text-danger'
                     }
                 >
-                    {user.isActive ? 'Active' : 'Disabled'}
+                    {user.isActive ? <Trans>Active</Trans> : <Trans>Disabled</Trans>}
                 </span>
                 {isSelf ? null : (
                     <Button
@@ -157,7 +168,7 @@ function UserRow({
                         }}
                         className="py-[5px] text-xs"
                     >
-                        {user.isActive ? 'Disable' : 'Enable'}
+                        {user.isActive ? <Trans>Disable</Trans> : <Trans>Enable</Trans>}
                     </Button>
                 )}
             </div>

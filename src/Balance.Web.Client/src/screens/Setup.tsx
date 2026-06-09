@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Form } from 'react-aria-components';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useNavigate } from '@tanstack/react-router';
 import { useSetup } from '../api/auth';
 import { FormErrorBanner } from '../components/FormErrorBanner';
@@ -9,6 +10,7 @@ import { ApiError } from '../lib/http';
 import logo from '../assets/logo.svg';
 
 export function Setup() {
+    const { t } = useLingui();
     const navigate = useNavigate();
     const setup = useSetup();
     const [email, setEmail] = useState('');
@@ -33,7 +35,7 @@ export function Setup() {
     const errorMessage =
         setup.error instanceof ApiError
             ? setup.error.status === 404
-                ? 'Setup is unavailable. Either a user already exists, or the setup token does not match.'
+                ? t`Setup is unavailable. Either a user already exists, or the setup token does not match.`
                 : setup.error.message
             : setup.error instanceof Error
               ? setup.error.message
@@ -48,9 +50,14 @@ export function Setup() {
                 </span>
             </header>
             <div className="px-5 pt-1 pb-5">
-                <h1 className="text-base font-semibold leading-snug mb-1">First-run setup</h1>
+                <h1 className="text-base font-semibold leading-snug mb-1">
+                    <Trans>First-run setup</Trans>
+                </h1>
                 <p className="text-sm text-fg-3 mb-4">
-                    Create the first account. This wizard becomes unavailable once a user exists.
+                    <Trans>
+                        Create the first account. This wizard becomes unavailable once a user
+                        exists.
+                    </Trans>
                 </p>
                 <Form
                     onSubmit={e => {
@@ -60,7 +67,7 @@ export function Setup() {
                 >
                     <FormErrorBanner message={errorMessage} />
                     <TextField
-                        label="Email"
+                        label={t`Email`}
                         type="email"
                         isRequired
                         autoFocus
@@ -69,33 +76,35 @@ export function Setup() {
                         className="mb-3"
                     />
                     <TextField
-                        label="Display name"
+                        label={t`Display name`}
                         isRequired
                         value={displayName}
                         onChange={setDisplayName}
                         className="mb-3"
                     />
                     <TextField
-                        label="Password"
+                        label={t`Password`}
                         type="password"
                         isRequired
                         minLength={12}
                         autoComplete="new-password"
                         value={password}
                         onChange={setPassword}
-                        description="Minimum 12 characters."
+                        description={t`Minimum 12 characters.`}
                         className="mb-3"
                     />
                     <div className="flex flex-col gap-1 mb-4">
                         <TextField
-                            label="Setup token"
+                            label={t`Setup token`}
                             value={setupToken}
                             onChange={setSetupToken}
                             inputClassName="font-mono"
                         />
                         <span className="text-xs text-fg-3">
-                            Required when configured at deploy time via{' '}
-                            <code className="font-mono">Auth:SetupToken</code>.
+                            <Trans>
+                                Required when configured at deploy time via{' '}
+                                <code className="font-mono">Auth:SetupToken</code>.
+                            </Trans>
                         </span>
                     </div>
                     <Button
@@ -104,7 +113,7 @@ export function Setup() {
                         isDisabled={setup.isPending}
                         className="w-full"
                     >
-                        {setup.isPending ? 'Creating…' : 'Create account'}
+                        {setup.isPending ? <Trans>Creating…</Trans> : <Trans>Create account</Trans>}
                     </Button>
                 </Form>
             </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { Link } from '@tanstack/react-router';
 import {
     useCounterpartiesPage,
@@ -30,6 +31,7 @@ export function Counterparties({
     onPageChange: (p: number) => void;
     onSearchChange: (q: string) => void;
 }) {
+    const { t } = useLingui();
     const [creating, setCreating] = useState(false);
     const [editing, setEditing] = useState<Counterparty | null>(null);
     const [deleting, setDeleting] = useState<Counterparty | null>(null);
@@ -38,8 +40,10 @@ export function Counterparties({
         <>
             <Panel>
                 <SectionHead
-                    title="Counterparties"
-                    subtitle="Real-world parties on the other side of journal entries."
+                    title={<Trans>Counterparties</Trans>}
+                    subtitle={
+                        <Trans>Real-world parties on the other side of journal entries.</Trans>
+                    }
                     action={
                         <button
                             type="button"
@@ -49,16 +53,16 @@ export function Counterparties({
                             className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg bg-brand-primary text-white text-sm font-medium hover:bg-brand-primary-dark"
                         >
                             <Icon name="plus" size={14} strokeWidth={2} />
-                            New counterparty
+                            <Trans>New counterparty</Trans>
                         </button>
                     }
                 />
                 <div className="mb-4">
                     <SearchField
-                        aria-label="Search counterparties"
+                        aria-label={t`Search counterparties`}
                         value={q}
                         onChange={onSearchChange}
-                        placeholder="Search counterparties…"
+                        placeholder={t`Search counterparties…`}
                     />
                 </div>
                 <CounterpartyList
@@ -112,6 +116,7 @@ function CounterpartyList({
     onEdit: (c: Counterparty) => void;
     onDelete: (c: Counterparty) => void;
 }) {
+    const { t } = useLingui();
     const skip = (page - 1) * PAGE_SIZE;
     const debouncedQ = useDebouncedValue(q, 200);
     const query = useCounterpartiesPage(skip, PAGE_SIZE, debouncedQ);
@@ -129,7 +134,7 @@ function CounterpartyList({
     if (query.isError) {
         return (
             <ErrorState
-                message="Couldn't load counterparties."
+                message={t`Couldn't load counterparties.`}
                 onRetry={() => void query.refetch()}
             />
         );
@@ -137,16 +142,20 @@ function CounterpartyList({
 
     if (query.data.items.length === 0 && debouncedQ !== '') {
         return (
-            <div className="py-8 text-center text-sm text-fg-2">No matches for “{debouncedQ}”.</div>
+            <div className="py-8 text-center text-sm text-fg-2">
+                <Trans>No matches for “{debouncedQ}”.</Trans>
+            </div>
         );
     }
 
     if (query.data.items.length === 0 && page === 1) {
         return (
             <div className="py-8 flex flex-col items-center gap-2 text-center">
-                <span className="text-sm text-fg-2">No counterparties yet.</span>
+                <span className="text-sm text-fg-2">
+                    <Trans>No counterparties yet.</Trans>
+                </span>
                 <span className="text-xs text-fg-3">
-                    Add the parties you receive money from or pay to.
+                    <Trans>Add the parties you receive money from or pay to.</Trans>
                 </span>
             </div>
         );
@@ -176,6 +185,7 @@ function CounterpartyRow({
     onEdit: (c: Counterparty) => void;
     onDelete: (c: Counterparty) => void;
 }) {
+    const { t } = useLingui();
     return (
         <div className="py-3 first:pt-0 last:pb-0 flex items-center gap-3 border-b border-border-soft last:border-b-0">
             <Link
@@ -191,7 +201,7 @@ function CounterpartyRow({
                 onClick={() => {
                     onEdit(counterparty);
                 }}
-                aria-label="Edit"
+                aria-label={t`Edit`}
                 className="p-2 rounded-lg text-fg-3 hover:text-fg-1 hover:bg-surface-2"
             >
                 <Icon name="pencil" size={14} strokeWidth={2} />
@@ -201,7 +211,7 @@ function CounterpartyRow({
                 onClick={() => {
                     onDelete(counterparty);
                 }}
-                aria-label="Delete"
+                aria-label={t`Delete`}
                 className="p-2 rounded-lg text-fg-3 hover:text-danger hover:bg-surface-2"
             >
                 <Icon name="trash" size={14} strokeWidth={2} />
@@ -217,6 +227,7 @@ function DeleteCounterpartyDialog({
     counterparty: Counterparty;
     onClose: () => void;
 }) {
+    const { t } = useLingui();
     const del = useDeleteCounterparty();
     const toast = useToast();
     const [error, setError] = useState<string | null>(null);
@@ -225,7 +236,7 @@ function DeleteCounterpartyDialog({
         setError(null);
         try {
             await del.mutateAsync(counterparty.id);
-            toast.success(`Deleted “${counterparty.name}”.`);
+            toast.success(t`Deleted “${counterparty.name}”.`);
             onClose();
         } catch (err) {
             handleActionError(err, { setError, toast: toast.error });
@@ -237,9 +248,9 @@ function DeleteCounterpartyDialog({
             open
             onClose={onClose}
             onConfirm={() => void onConfirm()}
-            title={`Delete “${counterparty.name}”?`}
-            message="This can't be undone."
-            confirmLabel="Delete"
+            title={t`Delete “${counterparty.name}”?`}
+            message={t`This can't be undone.`}
+            confirmLabel={t`Delete`}
             variant="destructive"
             busy={del.isPending}
             error={error}

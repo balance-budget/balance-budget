@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button, DialogTrigger, ListBox, ListBoxItem } from 'react-aria-components';
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { AccountType } from '../lib/domain';
 import { cx } from '../lib/cx';
 import { ACCOUNT_ICON_CHOICES, visualHintFor } from '../lib/visualHints';
@@ -26,6 +27,7 @@ const DEFAULT_KEY = '__default__';
  * the AccountType.
  */
 export function AccountIconPicker({ accountType, value, onChange }: AccountIconPickerProps) {
+    const { t } = useLingui();
     const [open, setOpen] = useState(false);
 
     const { accentColor, iconName: defaultIconName } = visualHintFor({
@@ -38,12 +40,12 @@ export function AccountIconPicker({ accountType, value, onChange }: AccountIconP
             <Button className="flex items-center gap-2 p-1 -m-1 rounded-lg outline-none cursor-pointer data-[hovered]:bg-surface-2 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary">
                 <AccountAvatar account={{ type: accountType, icon: value }} size="md" />
                 <span className="text-xs text-fg-3">
-                    {value === null ? 'Default' : 'Custom'} — click to change
+                    {value === null ? t`Default` : t`Custom`} <Trans>— click to change</Trans>
                 </span>
             </Button>
             <Popover placement="bottom start" className="w-[296px] p-2">
                 <ListBox
-                    aria-label="Account icon"
+                    aria-label={t`Account icon`}
                     layout="grid"
                     selectionMode="single"
                     selectedKeys={[value ?? DEFAULT_KEY]}
@@ -57,7 +59,7 @@ export function AccountIconPicker({ accountType, value, onChange }: AccountIconP
                 >
                     <ListBoxItem
                         id={DEFAULT_KEY}
-                        textValue={`Default for ${accountType}`}
+                        textValue={t`Default for ${accountType}`}
                         className={({ isSelected }) =>
                             cx(
                                 'col-span-8 flex items-center gap-2 px-2 py-[6px] mb-1 rounded-lg text-xs cursor-pointer outline-none',
@@ -69,7 +71,9 @@ export function AccountIconPicker({ accountType, value, onChange }: AccountIconP
                         }
                     >
                         <Icon name={defaultIconName} size={14} strokeWidth={1.75} />
-                        <span>Default for {accountType}</span>
+                        <span>
+                            <Trans>Default for {accountType}</Trans>
+                        </span>
                     </ListBoxItem>
                     {ACCOUNT_ICON_CHOICES.map(icon => (
                         <ListBoxItem

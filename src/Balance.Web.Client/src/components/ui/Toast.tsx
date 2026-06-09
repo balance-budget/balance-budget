@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import { X } from 'lucide-react';
 import {
     Button,
@@ -64,6 +65,7 @@ const VARIANT_ICON: Record<ToastVariant, string> = {
 
 /** Render once at the root of the app. */
 export function AppToastRegion() {
+    const { t } = useLingui();
     return (
         <ToastRegion
             queue={queue}
@@ -89,7 +91,7 @@ export function AppToastRegion() {
                     </ToastContent>
                     <Button
                         slot="close"
-                        aria-label="Close"
+                        aria-label={t`Close`}
                         className="shrink-0 p-[2px] rounded-sm outline-none opacity-70 data-[hovered]:opacity-100 data-[focus-visible]:ring-1 data-[focus-visible]:ring-current"
                     >
                         <X size={13} strokeWidth={2} aria-hidden="true" />

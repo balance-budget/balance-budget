@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Form } from 'react-aria-components';
+import { Trans, useLingui } from '@lingui/react/macro';
 import {
     useCreateCounterparty,
     useUpdateCounterparty,
@@ -18,6 +19,7 @@ type Props = { onClose: () => void } & (
 );
 
 export function CounterpartyFormModal(props: Props) {
+    const { t } = useLingui();
     const create = useCreateCounterparty();
     const update = useUpdateCounterparty();
     const toast = useToast();
@@ -52,7 +54,7 @@ export function CounterpartyFormModal(props: Props) {
         <Modal
             open
             onClose={props.onClose}
-            title={props.mode === 'create' ? 'New counterparty' : 'Edit counterparty'}
+            title={props.mode === 'create' ? t`New counterparty` : t`Edit counterparty`}
             width="sm"
         >
             <Form
@@ -64,7 +66,7 @@ export function CounterpartyFormModal(props: Props) {
             >
                 <FormErrorBanner message={topError} />
                 <TextField
-                    label="Name"
+                    label={t`Name`}
                     name="Name"
                     value={name}
                     onChange={setName}
@@ -74,10 +76,16 @@ export function CounterpartyFormModal(props: Props) {
                 />
                 <ModalFooter>
                     <Button variant="ghost" onPress={props.onClose} isDisabled={isPending}>
-                        Cancel
+                        <Trans>Cancel</Trans>
                     </Button>
                     <Button type="submit" variant="primary" isDisabled={isPending}>
-                        {isPending ? 'Saving…' : props.mode === 'create' ? 'Create' : 'Save'}
+                        {isPending ? (
+                            <Trans>Saving…</Trans>
+                        ) : props.mode === 'create' ? (
+                            <Trans>Create</Trans>
+                        ) : (
+                            <Trans>Save</Trans>
+                        )}
                     </Button>
                 </ModalFooter>
             </Form>

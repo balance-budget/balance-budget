@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { accountIdentifier, useAccounts, useDeleteAccount, type Account } from '../api/accounts';
 import { AccountAvatar } from '../components/AccountAvatar';
 import { Amount } from '../components/Amount';
@@ -14,15 +15,24 @@ import { handleActionError } from '../lib/formErrors';
 import { AccountFormModal } from './AccountForm';
 
 const TYPE_ORDER: AccountType[] = ['Asset', 'Liability', 'Equity', 'Income', 'Expense'];
-const TYPE_LABEL: Record<AccountType, string> = {
-    Asset: 'Assets',
-    Liability: 'Liabilities',
-    Equity: 'Equity',
-    Income: 'Income',
-    Expense: 'Expenses',
-};
+
+function typeLabel(type: AccountType, t: ReturnType<typeof useLingui>['t']): string {
+    switch (type) {
+        case 'Asset':
+            return t`Assets`;
+        case 'Liability':
+            return t`Liabilities`;
+        case 'Equity':
+            return t`Equity`;
+        case 'Income':
+            return t`Income`;
+        case 'Expense':
+            return t`Expenses`;
+    }
+}
 
 export function Accounts() {
+    const { t } = useLingui();
     const [creating, setCreating] = useState(false);
     const [editing, setEditing] = useState<Account | null>(null);
     const [deleting, setDeleting] = useState<Account | null>(null);
@@ -31,8 +41,8 @@ export function Accounts() {
         <>
             <Panel>
                 <SectionHead
-                    title="Accounts"
-                    subtitle="Ledger accounts in the double-entry sense — assets, liabilities, income, expenses, equity."
+                    title={t`Accounts`}
+                    subtitle={t`Ledger accounts in the double-entry sense — assets, liabilities, income, expenses, equity.`}
                     action={
                         <button
                             type="button"
@@ -42,7 +52,7 @@ export function Accounts() {
                             className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg bg-brand-primary text-white text-sm font-medium hover:bg-brand-primary-dark"
                         >
                             <Icon name="plus" size={14} strokeWidth={2} />
-                            New account
+                            <Trans>New account</Trans>
                         </button>
                     }
                 />
@@ -85,6 +95,7 @@ function AccountList({
     onEdit: (a: Account) => void;
     onDelete: (a: Account) => void;
 }) {
+    const { t } = useLingui();
     const query = useAccounts();
 
     if (query.isPending) {
@@ -99,16 +110,18 @@ function AccountList({
 
     if (query.isError) {
         return (
-            <ErrorState message="Couldn't load accounts." onRetry={() => void query.refetch()} />
+            <ErrorState message={t`Couldn't load accounts.`} onRetry={() => void query.refetch()} />
         );
     }
 
     if (query.data.length === 0) {
         return (
             <div className="py-8 flex flex-col items-center gap-2 text-center">
-                <span className="text-sm text-fg-2">No accounts yet.</span>
+                <span className="text-sm text-fg-2">
+                    <Trans>No accounts yet.</Trans>
+                </span>
                 <span className="text-xs text-fg-3">
-                    Add your first ledger account to get started.
+                    <Trans>Add your first ledger account to get started.</Trans>
                 </span>
             </div>
         );
@@ -125,7 +138,7 @@ function AccountList({
                 return (
                     <div key={type} className="flex flex-col">
                         <h3 className="text-xs font-medium text-fg-3 tracking-widest uppercase pb-1 mb-1 border-b border-border-soft">
-                            {TYPE_LABEL[type]}
+                            {typeLabel(type, t)}
                         </h3>
                         {roots.map(a => (
                             <AccountTreeRows
@@ -215,6 +228,7 @@ function AccountRow({
     onEdit: (a: Account) => void;
     onDelete: (a: Account) => void;
 }) {
+    const { t } = useLingui();
     const identifier = accountIdentifier(account);
     const isNegative = account.balance.amount < 0;
     // Nest children visually; the indent is applied to the row's leading edge.
@@ -247,7 +261,7 @@ function AccountRow({
                                 size={14}
                                 strokeWidth={1.75}
                                 className="shrink-0 text-fg-3"
-                                aria-label="Roll-up account"
+                                aria-label={t`Roll-up account`}
                             />
                         ) : null}
                         <span
@@ -274,7 +288,7 @@ function AccountRow({
                 onClick={() => {
                     onEdit(account);
                 }}
-                aria-label="Edit"
+                aria-label={t`Edit`}
                 className="p-2 rounded-lg text-fg-3 hover:text-fg-1 hover:bg-surface-2"
             >
                 <Icon name="pencil" size={14} strokeWidth={2} />
@@ -284,7 +298,7 @@ function AccountRow({
                 onClick={() => {
                     onDelete(account);
                 }}
-                aria-label="Delete"
+                aria-label={t`Delete`}
                 className="p-2 rounded-lg text-fg-3 hover:text-danger hover:bg-surface-2"
             >
                 <Icon name="trash" size={14} strokeWidth={2} />
@@ -294,6 +308,7 @@ function AccountRow({
 }
 
 function DeleteAccountDialog({ account, onClose }: { account: Account; onClose: () => void }) {
+    const { t } = useLingui();
     const del = useDeleteAccount();
     const toast = useToast();
     const [error, setError] = useState<string | null>(null);
@@ -302,7 +317,7 @@ function DeleteAccountDialog({ account, onClose }: { account: Account; onClose: 
         setError(null);
         try {
             await del.mutateAsync(account.id);
-            toast.success(`Deleted “${account.name}”.`);
+            toast.success(t`Deleted “${account.name}”.`);
             onClose();
         } catch (err) {
             handleActionError(err, { setError, toast: toast.error });
@@ -314,9 +329,9 @@ function DeleteAccountDialog({ account, onClose }: { account: Account; onClose: 
             open
             onClose={onClose}
             onConfirm={() => void onConfirm()}
-            title={`Delete “${account.name}”?`}
-            message="This can't be undone. Accounts with journal entries can't be deleted until those are removed first."
-            confirmLabel="Delete"
+            title={t`Delete “${account.name}”?`}
+            message={t`This can't be undone. Accounts with journal entries can't be deleted until those are removed first.`}
+            confirmLabel={t`Delete`}
             variant="destructive"
             busy={del.isPending}
             error={error}

@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useState } from 'react';
 import {
     Autocomplete,
@@ -29,6 +30,7 @@ type LauncherProps = {
  * filter is configured. The hint row shows until the user types 2+ characters.
  */
 export function Launcher({ open, onClose }: LauncherProps) {
+    const { t } = useLingui();
     const [query, setQuery] = useState('');
     const debounced = useDebouncedValue(query, 200);
     const navigate = useNavigate();
@@ -58,12 +60,12 @@ export function Launcher({ open, onClose }: LauncherProps) {
         >
             <AriaModal className="w-[calc(100vw-32px)] max-w-[560px]">
                 <Dialog
-                    aria-label="Search"
+                    aria-label={t`Search`}
                     className="flex flex-col bg-bg-1 border border-border-soft rounded-xl shadow-overlay outline-none text-fg-1"
                 >
                     <Autocomplete inputValue={query} onInputChange={setQuery}>
                         <SearchField
-                            aria-label="Search query"
+                            aria-label={t`Search query`}
                             autoFocus
                             className="flex items-center gap-2 px-4 py-3 border-b border-border-soft"
                         >
@@ -74,7 +76,7 @@ export function Launcher({ open, onClose }: LauncherProps) {
                                 className="text-fg-3"
                             />
                             <Input
-                                placeholder="Search…"
+                                placeholder={t`Search…`}
                                 className={
                                     'flex-1 bg-transparent outline-none text-sm text-fg-1 placeholder:text-fg-3 ' +
                                     '[&::-webkit-search-cancel-button]:appearance-none'
@@ -86,24 +88,28 @@ export function Launcher({ open, onClose }: LauncherProps) {
                         </SearchField>
                         {debounced.length < 2 ? (
                             <Hint>
-                                Type to search accounts, counterparties, bank accounts, journal
-                                entries.
+                                <Trans>
+                                    Type to search accounts, counterparties, bank accounts, journal
+                                    entries.
+                                </Trans>
                             </Hint>
                         ) : isPending || data === null ? (
-                            <Hint>Searching…</Hint>
+                            <Hint>
+                                <Trans>Searching…</Trans>
+                            </Hint>
                         ) : null}
                         {showResults && (
                             <Menu
-                                aria-label="Search results"
+                                aria-label={t`Search results`}
                                 className="max-h-[60vh] overflow-y-auto scrollbar-sleek py-2 px-2 outline-none"
                                 renderEmptyState={() => (
                                     <p className="px-4 py-6 text-center text-xs text-fg-3">
-                                        No matches for “{debounced}”.
+                                        <Trans>No matches for “{debounced}”.</Trans>
                                     </p>
                                 )}
                             >
                                 <ResultSection
-                                    title="Accounts"
+                                    title={t`Accounts`}
                                     shown={data.accounts.items.length}
                                     total={data.accounts.totalCount}
                                 >
@@ -135,7 +141,7 @@ export function Launcher({ open, onClose }: LauncherProps) {
                                     ))}
                                 </ResultSection>
                                 <ResultSection
-                                    title="Counterparties"
+                                    title={t`Counterparties`}
                                     shown={data.counterparties.items.length}
                                     total={data.counterparties.totalCount}
                                 >
@@ -158,7 +164,7 @@ export function Launcher({ open, onClose }: LauncherProps) {
                                     ))}
                                 </ResultSection>
                                 <ResultSection
-                                    title="Bank accounts"
+                                    title={t`Bank accounts`}
                                     shown={data.bankAccounts.items.length}
                                     total={data.bankAccounts.totalCount}
                                 >
@@ -168,7 +174,7 @@ export function Launcher({ open, onClose }: LauncherProps) {
                                             hit.iban ??
                                             hit.accountNumber ??
                                             hit.cardIdentifier ??
-                                            'Bank account';
+                                            t`Bank account`;
                                         return (
                                             <ResultItem
                                                 key={hit.id}
@@ -194,7 +200,7 @@ export function Launcher({ open, onClose }: LauncherProps) {
                                     })}
                                 </ResultSection>
                                 <ResultSection
-                                    title="Journal entries"
+                                    title={t`Journal entries`}
                                     shown={data.journalEntries.items.length}
                                     total={data.journalEntries.totalCount}
                                 >
@@ -202,9 +208,9 @@ export function Launcher({ open, onClose }: LauncherProps) {
                                         <ResultItem
                                             key={hit.id}
                                             id={`journal-${hit.id}`}
-                                            textValue={hit.description ?? '(no description)'}
+                                            textValue={hit.description ?? t`(no description)`}
                                             icon="book-open"
-                                            primary={hit.description ?? '(no description)'}
+                                            primary={hit.description ?? t`(no description)`}
                                             secondary={hit.date}
                                             onAction={() => {
                                                 close();
@@ -217,7 +223,7 @@ export function Launcher({ open, onClose }: LauncherProps) {
                                     ))}
                                 </ResultSection>
                                 <ResultSection
-                                    title="Pages"
+                                    title={t`Pages`}
                                     shown={data.pages.items.length}
                                     total={data.pages.totalCount}
                                 >
@@ -260,6 +266,7 @@ function ResultSection({
     total: number;
     children: React.ReactNode;
 }) {
+    const { t } = useLingui();
     if (shown === 0) return null;
     const moreCount = total - shown;
     return (
@@ -271,10 +278,12 @@ function ResultSection({
             {moreCount > 0 ? (
                 <MenuItem
                     isDisabled
-                    textValue={`${moreCount.toString()} more`}
+                    textValue={t`${moreCount.toString()} more`}
                     className="px-2 pt-1 text-xs text-fg-3"
                 >
-                    + {moreCount.toString()} more matching {title.toLowerCase()}
+                    <Trans>
+                        + {moreCount.toString()} more matching {title.toLowerCase()}
+                    </Trans>
                 </MenuItem>
             ) : null}
         </MenuSection>

@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Form } from 'react-aria-components';
+import { msg, t } from '@lingui/core/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useCounterparties } from '../api/counterparties';
 import { useCurrencyCatalog } from '../api/currencies';
 import {
@@ -32,11 +34,11 @@ import type { AccountId, CounterpartyId, LoanId, LoanPartId } from '../lib/domai
 import { handleFormError } from '../lib/formErrors';
 import { parseMoney } from '../lib/money';
 
-const REPAYMENT_TYPES: { id: RepaymentType; label: string }[] = [
-    { id: 'Annuity', label: 'Annuity' },
-    { id: 'Linear', label: 'Linear' },
-    { id: 'InterestOnly', label: 'Interest-only' },
-];
+const REPAYMENT_TYPES = [
+    { id: 'Annuity', label: msg`Annuity` },
+    { id: 'Linear', label: msg`Linear` },
+    { id: 'InterestOnly', label: msg`Interest-only` },
+] satisfies { id: RepaymentType; label: ReturnType<typeof msg> }[];
 
 type PartDraft = {
     id: string;
@@ -58,7 +60,7 @@ function emptyPart(index: number): PartDraft {
     partCounter += 1;
     return {
         id: `part-${partCounter.toString(36)}`,
-        label: `Part ${(index + 1).toString()}`,
+        label: t`Part ${(index + 1).toString()}`,
         repaymentType: 'Annuity',
         startDate: todayIso(),
         endDate: '',
@@ -77,32 +79,32 @@ type BuildPartResult =
     | { ok: false; error: string };
 
 function buildPartRequest(part: PartDraft, scale: number): BuildPartResult {
-    if (part.label.trim() === '') return { ok: false, error: 'Every part needs a label.' };
+    if (part.label.trim() === '') return { ok: false, error: t`Every part needs a label.` };
 
-    if (part.endDate === '') return { ok: false, error: 'Every part needs an end date.' };
+    if (part.endDate === '') return { ok: false, error: t`Every part needs an end date.` };
 
     const rate = Number(part.ratePercent.trim());
     if (part.ratePercent.trim() === '' || !Number.isFinite(rate) || rate < 0) {
-        return { ok: false, error: 'Enter a valid annual rate (e.g. 3.8).' };
+        return { ok: false, error: t`Enter a valid annual rate (e.g. 3.8).` };
     }
 
     let adoptAccountId: AccountId | null = null;
     let newAccount: WireCreateLoanPartRequest['newAccount'] = null;
     if (part.mode === 'adopt') {
         if (part.adoptAccountId === null) {
-            return { ok: false, error: 'Pick the liability account to adopt.' };
+            return { ok: false, error: t`Pick the liability account to adopt.` };
         }
         adoptAccountId = part.adoptAccountId;
     } else {
         if (part.newName.trim() === '' || part.newCode.trim() === '') {
-            return { ok: false, error: 'A fresh part account needs a name and a code.' };
+            return { ok: false, error: t`A fresh part account needs a name and a code.` };
         }
         const opening = parseMoney(
             part.openingBalance.trim() === '' ? '0' : part.openingBalance,
             scale,
         );
         if (!opening.ok || opening.minor < 0) {
-            return { ok: false, error: 'Enter a valid opening balance.' };
+            return { ok: false, error: t`Enter a valid opening balance.` };
         }
         newAccount = {
             name: part.newName.trim(),
@@ -170,13 +172,13 @@ function buildDeposit(d: DepositDraft): BuildDepositResult {
     if (!allSet) {
         return {
             ok: false,
-            error: 'A construction deposit needs an asset account, an income account, and a rate — set all three or none.',
+            error: t`A construction deposit needs an asset account, an income account, and a rate — set all three or none.`,
         };
     }
 
     const rate = Number(d.ratePercent.trim());
     if (!Number.isFinite(rate) || rate < 0 || rate > 100) {
-        return { ok: false, error: 'Enter a valid deposit rate (0–100).' };
+        return { ok: false, error: t`Enter a valid deposit rate (0–100).` };
     }
     return {
         ok: true,
@@ -198,20 +200,25 @@ function ConstructionDepositFields({
     currencyCode: string;
     onChange: (next: DepositDraft) => void;
 }) {
+    const { t } = useLingui();
     return (
         <div className="rounded-lg border border-border-soft p-3 flex flex-col gap-3 mt-3">
             <div className="flex flex-col gap-0.5">
                 <span className="text-sm font-medium text-fg-1">
-                    Construction deposit (optional)
+                    <Trans>Construction deposit (optional)</Trans>
                 </span>
                 <span className="text-xs text-fg-3">
-                    Undisbursed mortgage money earmarked for building. Its interest offsets the loan
-                    payment during construction.
+                    <Trans>
+                        Undisbursed mortgage money earmarked for building. Its interest offsets the
+                        loan payment during construction.
+                    </Trans>
                 </span>
             </div>
             <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-fg-2">Deposit account</span>
+                    <span className="text-xs font-medium text-fg-2">
+                        <Trans>Deposit account</Trans>
+                    </span>
                     <AccountSelect
                         value={value.accountId}
                         onChange={accountId => {
@@ -220,12 +227,14 @@ function ConstructionDepositFields({
                         postableOnly
                         type="Asset"
                         currencyCode={currencyCode}
-                        placeholder="Asset account holding the deposit…"
-                        ariaLabel="Construction deposit account"
+                        placeholder={t`Asset account holding the deposit…`}
+                        ariaLabel={t`Construction deposit account`}
                     />
                 </div>
                 <div className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-fg-2">Interest income account</span>
+                    <span className="text-xs font-medium text-fg-2">
+                        <Trans>Interest income account</Trans>
+                    </span>
                     <AccountSelect
                         value={value.incomeAccountId}
                         onChange={incomeAccountId => {
@@ -233,18 +242,18 @@ function ConstructionDepositFields({
                         }}
                         postableOnly
                         type="Income"
-                        placeholder="Income account for deposit interest…"
-                        ariaLabel="Deposit interest income account"
+                        placeholder={t`Income account for deposit interest…`}
+                        ariaLabel={t`Deposit interest income account`}
                     />
                 </div>
             </div>
             <TextField
-                label="Deposit annual rate (%)"
+                label={t`Deposit annual rate (%)`}
                 value={value.ratePercent}
                 onChange={ratePercent => {
                     onChange({ ...value, ratePercent });
                 }}
-                placeholder="e.g. 3.6"
+                placeholder={t`e.g. 3.6`}
                 inputClassName="tabular-nums"
             />
         </div>
@@ -252,6 +261,7 @@ function ConstructionDepositFields({
 }
 
 export function LoanFormModal({ onClose }: { onClose: () => void }) {
+    const { t } = useLingui();
     const create = useCreateLoan();
     const toast = useToast();
     const counterparties = useCounterparties();
@@ -287,11 +297,11 @@ export function LoanFormModal({ onClose }: { onClose: () => void }) {
         setFieldErrors(null);
 
         if (lenderId === null) {
-            setTopError('Pick the lender.');
+            setTopError(t`Pick the lender.`);
             return;
         }
         if (interestAccountId === null) {
-            setTopError('Pick the interest expense account.');
+            setTopError(t`Pick the interest expense account.`);
             return;
         }
 
@@ -322,7 +332,7 @@ export function LoanFormModal({ onClose }: { onClose: () => void }) {
                 parts: partRequests,
                 ...depositResult.value,
             });
-            toast.success('Loan created.');
+            toast.success(t`Loan created.`);
             onClose();
         } catch (err) {
             handleFormError(err, { setFieldErrors, setTopError, toast: toast.error });
@@ -330,7 +340,7 @@ export function LoanFormModal({ onClose }: { onClose: () => void }) {
     }
 
     return (
-        <Modal open onClose={onClose} title="New loan" width="lg">
+        <Modal open onClose={onClose} title={t`New loan`} width="lg">
             <Form
                 validationErrors={fieldErrors ?? undefined}
                 onSubmit={e => {
@@ -342,26 +352,28 @@ export function LoanFormModal({ onClose }: { onClose: () => void }) {
 
                 <div className="grid grid-cols-2 gap-3 mb-3">
                     <TextField
-                        label="Name"
+                        label={t`Name`}
                         name="Name"
                         value={name}
                         onChange={setName}
                         isRequired
                         maxLength={128}
                         autoFocus
-                        placeholder="e.g. Mortgage Hoofdstraat 1"
+                        placeholder={t`e.g. Mortgage Hoofdstraat 1`}
                     />
                     <div className="flex flex-col gap-1">
-                        <span className="text-xs font-medium text-fg-2">Lender</span>
+                        <span className="text-xs font-medium text-fg-2">
+                            <Trans>Lender</Trans>
+                        </span>
                         <ComboBox
                             items={lenderItems}
                             value={lenderId}
                             onChange={setLenderId}
-                            placeholder="Pick the lender…"
-                            ariaLabel="Lender"
+                            placeholder={t`Pick the lender…`}
+                            ariaLabel={t`Lender`}
                         />
                         <span className="text-xs text-fg-3">
-                            Drives the Inbox&apos;s loan-payment hint.
+                            <Trans>Drives the Inbox&apos;s loan-payment hint.</Trans>
                         </span>
                     </div>
                 </div>
@@ -369,22 +381,24 @@ export function LoanFormModal({ onClose }: { onClose: () => void }) {
                 <div className="grid grid-cols-2 gap-3 mb-3">
                     <div className="flex flex-col gap-1">
                         <span className="text-xs font-medium text-fg-2">
-                            Interest expense account
+                            <Trans>Interest expense account</Trans>
                         </span>
                         <AccountSelect
                             value={interestAccountId}
                             onChange={setInterestAccountId}
                             postableOnly
                             type="Expense"
-                            placeholder="e.g. Mortgage interest"
-                            ariaLabel="Interest expense account"
+                            placeholder={t`e.g. Mortgage interest`}
+                            ariaLabel={t`Interest expense account`}
                         />
                         <FieldError name="InterestExpenseAccountId" errors={fieldErrors} />
                     </div>
                     <div className="flex flex-col gap-1">
-                        <span className="text-xs font-medium text-fg-2">Currency</span>
+                        <span className="text-xs font-medium text-fg-2">
+                            <Trans>Currency</Trans>
+                        </span>
                         <Select
-                            aria-label="Currency"
+                            aria-label={t`Currency`}
                             value={currencyCode}
                             onChange={key => {
                                 if (key !== null) setCurrencyCode(String(key));
@@ -401,27 +415,29 @@ export function LoanFormModal({ onClose }: { onClose: () => void }) {
 
                 <div className="grid grid-cols-2 gap-3 mb-4">
                     <TextField
-                        label="Parent account name"
+                        label={t`Parent account name`}
                         name="ParentAccountName"
                         value={parentName}
                         onChange={setParentName}
                         maxLength={128}
-                        placeholder="Defaults to the loan name"
+                        placeholder={t`Defaults to the loan name`}
                     />
                     <TextField
-                        label="Parent account code"
+                        label={t`Parent account code`}
                         name="ParentAccountCode"
                         value={parentCode}
                         onChange={setParentCode}
                         isRequired
                         maxLength={32}
-                        placeholder="e.g. 2200"
+                        placeholder={t`e.g. 2200`}
                         inputClassName="tabular-nums"
                     />
                 </div>
 
                 <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-fg-1">Loan parts</span>
+                    <span className="text-sm font-medium text-fg-1">
+                        <Trans>Loan parts</Trans>
+                    </span>
                     <Button
                         variant="ghost"
                         onPress={() => {
@@ -429,7 +445,7 @@ export function LoanFormModal({ onClose }: { onClose: () => void }) {
                         }}
                     >
                         <Icon name="plus" size={14} strokeWidth={2} />
-                        Add part
+                        <Trans>Add part</Trans>
                     </Button>
                 </div>
                 <div className="flex flex-col gap-3 mb-2">
@@ -460,10 +476,10 @@ export function LoanFormModal({ onClose }: { onClose: () => void }) {
 
                 <ModalFooter>
                     <Button variant="ghost" onPress={onClose} isDisabled={create.isPending}>
-                        Cancel
+                        <Trans>Cancel</Trans>
                     </Button>
                     <Button type="submit" variant="primary" isDisabled={create.isPending}>
-                        {create.isPending ? 'Creating…' : 'Create loan'}
+                        {create.isPending ? <Trans>Creating…</Trans> : <Trans>Create loan</Trans>}
                     </Button>
                 </ModalFooter>
             </Form>
@@ -483,37 +499,40 @@ function PartFields({
     onChange: (patch: Partial<PartDraft>) => void;
     onRemove?: () => void;
 }) {
+    const { t, i18n } = useLingui();
     return (
         <div className="rounded-lg border border-border-soft p-3 flex flex-col gap-3">
             <div className="grid grid-cols-[1fr_1fr_auto] gap-3 items-end">
                 <TextField
-                    label="Label"
+                    label={t`Label`}
                     value={part.label}
                     onChange={label => {
                         onChange({ label });
                     }}
                     isRequired
                     maxLength={64}
-                    placeholder="As on the lender's statement"
+                    placeholder={t`As on the lender's statement`}
                 />
                 <div className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-fg-2">Repayment type</span>
+                    <span className="text-xs font-medium text-fg-2">
+                        <Trans>Repayment type</Trans>
+                    </span>
                     <Select
-                        aria-label="Repayment type"
+                        aria-label={t`Repayment type`}
                         value={part.repaymentType}
                         onChange={key => {
                             if (key !== null) onChange({ repaymentType: key as RepaymentType });
                         }}
                     >
-                        {REPAYMENT_TYPES.map(t => (
-                            <SelectItem key={t.id} id={t.id}>
-                                {t.label}
+                        {REPAYMENT_TYPES.map(rt => (
+                            <SelectItem key={rt.id} id={rt.id} textValue={i18n._(rt.label)}>
+                                {i18n._(rt.label)}
                             </SelectItem>
                         ))}
                     </Select>
                 </div>
                 {onRemove && (
-                    <Button variant="ghost" onPress={onRemove} aria-label="Remove part">
+                    <Button variant="ghost" onPress={onRemove} aria-label={t`Remove part`}>
                         <Icon name="trash" size={14} strokeWidth={2} />
                     </Button>
                 )}
@@ -521,14 +540,14 @@ function PartFields({
 
             <div className="grid grid-cols-2 gap-3">
                 <DatePicker
-                    label="Start date"
+                    label={t`Start date`}
                     value={part.startDate}
                     onChange={startDate => {
                         onChange({ startDate });
                     }}
                 />
                 <DatePicker
-                    label="End date"
+                    label={t`End date`}
                     value={part.endDate}
                     onChange={endDate => {
                         onChange({ endDate });
@@ -538,17 +557,17 @@ function PartFields({
 
             <div className="grid grid-cols-2 gap-3">
                 <TextField
-                    label="Annual rate (%)"
+                    label={t`Annual rate (%)`}
                     value={part.ratePercent}
                     onChange={ratePercent => {
                         onChange({ ratePercent });
                     }}
                     isRequired
-                    placeholder="e.g. 3.8"
+                    placeholder={t`e.g. 3.8`}
                     inputClassName="tabular-nums"
                 />
                 <DatePicker
-                    label="Rate fixed until (optional)"
+                    label={t`Rate fixed until (optional)`}
                     value={part.fixedUntil}
                     onChange={fixedUntil => {
                         onChange({ fixedUntil });
@@ -565,7 +584,7 @@ function PartFields({
                             onChange({ mode: 'adopt' });
                         }}
                     />
-                    Adopt an existing account
+                    <Trans>Adopt an existing account</Trans>
                 </label>
                 <label className="inline-flex items-center gap-1.5">
                     <input
@@ -575,13 +594,15 @@ function PartFields({
                             onChange({ mode: 'new' });
                         }}
                     />
-                    Create a fresh account
+                    <Trans>Create a fresh account</Trans>
                 </label>
             </div>
 
             {part.mode === 'adopt' ? (
                 <div className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-fg-2">Liability account</span>
+                    <span className="text-xs font-medium text-fg-2">
+                        <Trans>Liability account</Trans>
+                    </span>
                     <AccountSelect
                         value={part.adoptAccountId}
                         onChange={adoptAccountId => {
@@ -590,17 +611,17 @@ function PartFields({
                         postableOnly
                         type="Liability"
                         currencyCode={currencyCode}
-                        placeholder="Existing mortgage / loan account…"
-                        ariaLabel="Account to adopt"
+                        placeholder={t`Existing mortgage / loan account…`}
+                        ariaLabel={t`Account to adopt`}
                     />
                     <span className="text-xs text-fg-3">
-                        Re-parented under the loan with its posted history intact.
+                        <Trans>Re-parented under the loan with its posted history intact.</Trans>
                     </span>
                 </div>
             ) : (
                 <div className="grid grid-cols-3 gap-3">
                     <TextField
-                        label="Account name"
+                        label={t`Account name`}
                         value={part.newName}
                         onChange={newName => {
                             onChange({ newName });
@@ -608,7 +629,7 @@ function PartFields({
                         maxLength={128}
                     />
                     <TextField
-                        label="Account code"
+                        label={t`Account code`}
                         value={part.newCode}
                         onChange={newCode => {
                             onChange({ newCode });
@@ -617,12 +638,12 @@ function PartFields({
                         inputClassName="tabular-nums"
                     />
                     <TextField
-                        label={`Opening balance (${currencyCode})`}
+                        label={t`Opening balance (${currencyCode})`}
                         value={part.openingBalance}
                         onChange={openingBalance => {
                             onChange({ openingBalance });
                         }}
-                        placeholder="Outstanding principal"
+                        placeholder={t`Outstanding principal`}
                         inputClassName="tabular-nums"
                     />
                 </div>
@@ -632,6 +653,7 @@ function PartFields({
 }
 
 export function AddLoanPartModal({ loan, onClose }: { loan: LoanDetail; onClose: () => void }) {
+    const { t } = useLingui();
     const addPart = useAddLoanPart();
     const toast = useToast();
     const catalog = useCurrencyCatalog();
@@ -651,7 +673,7 @@ export function AddLoanPartModal({ loan, onClose }: { loan: LoanDetail; onClose:
         }
         try {
             await addPart.mutateAsync({ id: loan.id, request: built.request });
-            toast.success('Part added.');
+            toast.success(t`Part added.`);
             onClose();
         } catch (err) {
             handleFormError(err, { setFieldErrors, setTopError, toast: toast.error });
@@ -659,7 +681,7 @@ export function AddLoanPartModal({ loan, onClose }: { loan: LoanDetail; onClose:
     }
 
     return (
-        <Modal open onClose={onClose} title="Add loan part" width="lg">
+        <Modal open onClose={onClose} title={t`Add loan part`} width="lg">
             <Form
                 validationErrors={fieldErrors ?? undefined}
                 onSubmit={e => {
@@ -677,10 +699,10 @@ export function AddLoanPartModal({ loan, onClose }: { loan: LoanDetail; onClose:
                 />
                 <ModalFooter>
                     <Button variant="ghost" onPress={onClose} isDisabled={addPart.isPending}>
-                        Cancel
+                        <Trans>Cancel</Trans>
                     </Button>
                     <Button type="submit" variant="primary" isDisabled={addPart.isPending}>
-                        {addPart.isPending ? 'Adding…' : 'Add part'}
+                        {addPart.isPending ? <Trans>Adding…</Trans> : <Trans>Add part</Trans>}
                     </Button>
                 </ModalFooter>
             </Form>
@@ -697,6 +719,7 @@ export function AddRatePeriodModal({
     part: LoanPart;
     onClose: () => void;
 }) {
+    const { t } = useLingui();
     const addRatePeriod = useAddRatePeriod();
     const toast = useToast();
     const [effectiveDate, setEffectiveDate] = useState(todayIso());
@@ -708,7 +731,7 @@ export function AddRatePeriodModal({
         setTopError(null);
         const rate = Number(ratePercent.trim());
         if (ratePercent.trim() === '' || !Number.isFinite(rate) || rate < 0) {
-            setTopError('Enter a valid annual rate (e.g. 3.8).');
+            setTopError(t`Enter a valid annual rate (e.g. 3.8).`);
             return;
         }
         try {
@@ -721,7 +744,7 @@ export function AddRatePeriodModal({
                     fixedUntil: fixedUntil === '' ? null : fixedUntil,
                 },
             });
-            toast.success('Rate period added.');
+            toast.success(t`Rate period added.`);
             onClose();
         } catch (err) {
             handleFormError(err, {
@@ -733,7 +756,7 @@ export function AddRatePeriodModal({
     }
 
     return (
-        <Modal open onClose={onClose} title={`New rate period — ${part.label}`} width="sm">
+        <Modal open onClose={onClose} title={t`New rate period — ${part.label}`} width="sm">
             <Form
                 onSubmit={e => {
                     e.preventDefault();
@@ -743,35 +766,41 @@ export function AddRatePeriodModal({
                 <FormErrorBanner message={topError} />
                 <div className="flex flex-col gap-3">
                     <DatePicker
-                        label="Effective date"
+                        label={t`Effective date`}
                         value={effectiveDate}
                         onChange={setEffectiveDate}
                     />
                     <TextField
-                        label="Annual rate (%)"
+                        label={t`Annual rate (%)`}
                         value={ratePercent}
                         onChange={setRatePercent}
                         isRequired
                         autoFocus
-                        placeholder="e.g. 4.1"
+                        placeholder={t`e.g. 4.1`}
                         inputClassName="tabular-nums"
                     />
                     <DatePicker
-                        label="Fixed until (optional)"
+                        label={t`Fixed until (optional)`}
                         value={fixedUntil}
                         onChange={setFixedUntil}
                     />
                     <span className="text-xs text-fg-3">
-                        A future effective date records an accepted renewal offer. Existing rates
-                        can be edited or removed from the part&apos;s rate history.
+                        <Trans>
+                            A future effective date records an accepted renewal offer. Existing
+                            rates can be edited or removed from the part&apos;s rate history.
+                        </Trans>
                     </span>
                 </div>
                 <ModalFooter>
                     <Button variant="ghost" onPress={onClose} isDisabled={addRatePeriod.isPending}>
-                        Cancel
+                        <Trans>Cancel</Trans>
                     </Button>
                     <Button type="submit" variant="primary" isDisabled={addRatePeriod.isPending}>
-                        {addRatePeriod.isPending ? 'Adding…' : 'Add rate period'}
+                        {addRatePeriod.isPending ? (
+                            <Trans>Adding…</Trans>
+                        ) : (
+                            <Trans>Add rate period</Trans>
+                        )}
                     </Button>
                 </ModalFooter>
             </Form>
@@ -781,6 +810,7 @@ export function AddRatePeriodModal({
 
 /** Edit the loan-level terms: name, lender, interest account, and the Construction deposit. */
 export function EditLoanModal({ loan, onClose }: { loan: LoanDetail; onClose: () => void }) {
+    const { t } = useLingui();
     const update = useUpdateLoan();
     const toast = useToast();
     const counterparties = useCounterparties();
@@ -814,15 +844,15 @@ export function EditLoanModal({ loan, onClose }: { loan: LoanDetail; onClose: ()
         setTopError(null);
         setFieldErrors(null);
         if (name.trim() === '') {
-            setTopError('The loan needs a name.');
+            setTopError(t`The loan needs a name.`);
             return;
         }
         if (lenderId === null) {
-            setTopError('Pick the lender.');
+            setTopError(t`Pick the lender.`);
             return;
         }
         if (interestAccountId === null) {
-            setTopError('Pick the interest expense account.');
+            setTopError(t`Pick the interest expense account.`);
             return;
         }
         const depositResult = buildDeposit(deposit);
@@ -850,7 +880,7 @@ export function EditLoanModal({ loan, onClose }: { loan: LoanDetail; onClose: ()
 
         try {
             await update.mutateAsync({ id: loan.id, original, edited });
-            toast.success('Loan updated.');
+            toast.success(t`Loan updated.`);
             onClose();
         } catch (err) {
             handleFormError(err, { setFieldErrors, setTopError, toast: toast.error });
@@ -858,7 +888,7 @@ export function EditLoanModal({ loan, onClose }: { loan: LoanDetail; onClose: ()
     }
 
     return (
-        <Modal open onClose={onClose} title="Edit loan" width="lg">
+        <Modal open onClose={onClose} title={t`Edit loan`} width="lg">
             <Form
                 validationErrors={fieldErrors ?? undefined}
                 onSubmit={e => {
@@ -869,7 +899,7 @@ export function EditLoanModal({ loan, onClose }: { loan: LoanDetail; onClose: ()
                 <FormErrorBanner message={topError} />
                 <div className="grid grid-cols-2 gap-3 mb-3">
                     <TextField
-                        label="Name"
+                        label={t`Name`}
                         name="Name"
                         value={name}
                         onChange={setName}
@@ -878,25 +908,29 @@ export function EditLoanModal({ loan, onClose }: { loan: LoanDetail; onClose: ()
                         autoFocus
                     />
                     <div className="flex flex-col gap-1">
-                        <span className="text-xs font-medium text-fg-2">Lender</span>
+                        <span className="text-xs font-medium text-fg-2">
+                            <Trans>Lender</Trans>
+                        </span>
                         <ComboBox
                             items={lenderItems}
                             value={lenderId}
                             onChange={setLenderId}
-                            placeholder="Pick the lender…"
-                            ariaLabel="Lender"
+                            placeholder={t`Pick the lender…`}
+                            ariaLabel={t`Lender`}
                         />
                     </div>
                 </div>
                 <div className="flex flex-col gap-1 mb-1">
-                    <span className="text-xs font-medium text-fg-2">Interest expense account</span>
+                    <span className="text-xs font-medium text-fg-2">
+                        <Trans>Interest expense account</Trans>
+                    </span>
                     <AccountSelect
                         value={interestAccountId}
                         onChange={setInterestAccountId}
                         postableOnly
                         type="Expense"
-                        placeholder="e.g. Mortgage interest"
-                        ariaLabel="Interest expense account"
+                        placeholder={t`e.g. Mortgage interest`}
+                        ariaLabel={t`Interest expense account`}
                     />
                     <FieldError name="InterestExpenseAccountId" errors={fieldErrors} />
                 </div>
@@ -909,10 +943,10 @@ export function EditLoanModal({ loan, onClose }: { loan: LoanDetail; onClose: ()
 
                 <ModalFooter>
                     <Button variant="ghost" onPress={onClose} isDisabled={update.isPending}>
-                        Cancel
+                        <Trans>Cancel</Trans>
                     </Button>
                     <Button type="submit" variant="primary" isDisabled={update.isPending}>
-                        {update.isPending ? 'Saving…' : 'Save changes'}
+                        {update.isPending ? <Trans>Saving…</Trans> : <Trans>Save changes</Trans>}
                     </Button>
                 </ModalFooter>
             </Form>
@@ -930,6 +964,7 @@ export function EditLoanPartModal({
     part: LoanPart;
     onClose: () => void;
 }) {
+    const { t, i18n } = useLingui();
     const update = useUpdateLoanPart();
     const toast = useToast();
     const [label, setLabel] = useState(part.label);
@@ -941,11 +976,11 @@ export function EditLoanPartModal({
     async function submit() {
         setTopError(null);
         if (label.trim() === '') {
-            setTopError('A part needs a label.');
+            setTopError(t`A part needs a label.`);
             return;
         }
         if (endDate === '' || endDate <= startDate) {
-            setTopError('End date must be after the start date.');
+            setTopError(t`End date must be after the start date.`);
             return;
         }
         try {
@@ -954,7 +989,7 @@ export function EditLoanPartModal({
                 partId: part.id,
                 request: { label: label.trim(), repaymentType, startDate, endDate },
             });
-            toast.success('Part updated.');
+            toast.success(t`Part updated.`);
             onClose();
         } catch (err) {
             handleFormError(err, {
@@ -966,7 +1001,7 @@ export function EditLoanPartModal({
     }
 
     return (
-        <Modal open onClose={onClose} title={`Edit part — ${part.label}`} width="sm">
+        <Modal open onClose={onClose} title={t`Edit part — ${part.label}`} width="sm">
             <Form
                 onSubmit={e => {
                     e.preventDefault();
@@ -976,7 +1011,7 @@ export function EditLoanPartModal({
                 <FormErrorBanner message={topError} />
                 <div className="flex flex-col gap-3">
                     <TextField
-                        label="Label"
+                        label={t`Label`}
                         value={label}
                         onChange={setLabel}
                         isRequired
@@ -984,36 +1019,44 @@ export function EditLoanPartModal({
                         maxLength={64}
                     />
                     <div className="flex flex-col gap-1">
-                        <span className="text-xs font-medium text-fg-2">Repayment type</span>
+                        <span className="text-xs font-medium text-fg-2">
+                            <Trans>Repayment type</Trans>
+                        </span>
                         <Select
-                            aria-label="Repayment type"
+                            aria-label={t`Repayment type`}
                             value={repaymentType}
                             onChange={key => {
                                 if (key !== null) setRepaymentType(key as RepaymentType);
                             }}
                         >
-                            {REPAYMENT_TYPES.map(t => (
-                                <SelectItem key={t.id} id={t.id}>
-                                    {t.label}
+                            {REPAYMENT_TYPES.map(rt => (
+                                <SelectItem key={rt.id} id={rt.id} textValue={i18n._(rt.label)}>
+                                    {i18n._(rt.label)}
                                 </SelectItem>
                             ))}
                         </Select>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
-                        <DatePicker label="Start date" value={startDate} onChange={setStartDate} />
-                        <DatePicker label="End date" value={endDate} onChange={setEndDate} />
+                        <DatePicker
+                            label={t`Start date`}
+                            value={startDate}
+                            onChange={setStartDate}
+                        />
+                        <DatePicker label={t`End date`} value={endDate} onChange={setEndDate} />
                     </div>
                     <span className="text-xs text-fg-3">
-                        The part&apos;s account holds its principal and posted history, so it
-                        can&apos;t be changed here.
+                        <Trans>
+                            The part&apos;s account holds its principal and posted history, so it
+                            can&apos;t be changed here.
+                        </Trans>
                     </span>
                 </div>
                 <ModalFooter>
                     <Button variant="ghost" onPress={onClose} isDisabled={update.isPending}>
-                        Cancel
+                        <Trans>Cancel</Trans>
                     </Button>
                     <Button type="submit" variant="primary" isDisabled={update.isPending}>
-                        {update.isPending ? 'Saving…' : 'Save changes'}
+                        {update.isPending ? <Trans>Saving…</Trans> : <Trans>Save changes</Trans>}
                     </Button>
                 </ModalFooter>
             </Form>
@@ -1033,6 +1076,7 @@ export function EditRatePeriodModal({
     rate: LoanRatePeriod;
     onClose: () => void;
 }) {
+    const { t } = useLingui();
     const update = useUpdateRatePeriod();
     const toast = useToast();
     const [effectiveDate, setEffectiveDate] = useState(rate.effectiveDate);
@@ -1044,7 +1088,7 @@ export function EditRatePeriodModal({
         setTopError(null);
         const parsed = Number(ratePercent.trim());
         if (ratePercent.trim() === '' || !Number.isFinite(parsed) || parsed < 0) {
-            setTopError('Enter a valid annual rate (e.g. 3.8).');
+            setTopError(t`Enter a valid annual rate (e.g. 3.8).`);
             return;
         }
         try {
@@ -1058,7 +1102,7 @@ export function EditRatePeriodModal({
                     fixedUntil: fixedUntil === '' ? null : fixedUntil,
                 },
             });
-            toast.success('Rate period updated.');
+            toast.success(t`Rate period updated.`);
             onClose();
         } catch (err) {
             handleFormError(err, {
@@ -1070,7 +1114,7 @@ export function EditRatePeriodModal({
     }
 
     return (
-        <Modal open onClose={onClose} title="Edit rate period" width="sm">
+        <Modal open onClose={onClose} title={t`Edit rate period`} width="sm">
             <Form
                 onSubmit={e => {
                     e.preventDefault();
@@ -1080,31 +1124,31 @@ export function EditRatePeriodModal({
                 <FormErrorBanner message={topError} />
                 <div className="flex flex-col gap-3">
                     <DatePicker
-                        label="Effective date"
+                        label={t`Effective date`}
                         value={effectiveDate}
                         onChange={setEffectiveDate}
                     />
                     <TextField
-                        label="Annual rate (%)"
+                        label={t`Annual rate (%)`}
                         value={ratePercent}
                         onChange={setRatePercent}
                         isRequired
                         autoFocus
-                        placeholder="e.g. 4.1"
+                        placeholder={t`e.g. 4.1`}
                         inputClassName="tabular-nums"
                     />
                     <DatePicker
-                        label="Fixed until (optional)"
+                        label={t`Fixed until (optional)`}
                         value={fixedUntil}
                         onChange={setFixedUntil}
                     />
                 </div>
                 <ModalFooter>
                     <Button variant="ghost" onPress={onClose} isDisabled={update.isPending}>
-                        Cancel
+                        <Trans>Cancel</Trans>
                     </Button>
                     <Button type="submit" variant="primary" isDisabled={update.isPending}>
-                        {update.isPending ? 'Saving…' : 'Save changes'}
+                        {update.isPending ? <Trans>Saving…</Trans> : <Trans>Save changes</Trans>}
                     </Button>
                 </ModalFooter>
             </Form>

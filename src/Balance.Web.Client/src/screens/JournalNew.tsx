@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Form, ToggleButton, ToggleButtonGroup } from 'react-aria-components';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useAccounts, type Account } from '../api/accounts';
 import { useCounterparties, useCreateCounterparty } from '../api/counterparties';
@@ -47,6 +48,7 @@ function currencyFormat(currencyCode: string | null | undefined): Intl.NumberFor
 }
 
 export function JournalNew() {
+    const { t } = useLingui();
     const accounts = useAccounts();
     const counterparties = useCounterparties();
     const catalog = useCurrencyCatalog();
@@ -64,7 +66,7 @@ export function JournalNew() {
         return (
             <Panel>
                 <ErrorState
-                    message="Couldn't load accounts."
+                    message={t`Couldn't load accounts.`}
                     onRetry={() => void accounts.refetch()}
                 />
             </Panel>
@@ -75,7 +77,7 @@ export function JournalNew() {
         return (
             <Panel>
                 <ErrorState
-                    message="Couldn't load counterparties."
+                    message={t`Couldn't load counterparties.`}
                     onRetry={() => void counterparties.refetch()}
                 />
             </Panel>
@@ -100,6 +102,7 @@ function JournalNewForm({
     counterparties: { id: CounterpartyId; name: string }[];
     catalog: CurrencyCatalog;
 }) {
+    const { t } = useLingui();
     const create = useCreateJournalEntry();
     const createCounterparty = useCreateCounterparty();
     const toast = useToast();
@@ -132,7 +135,7 @@ function JournalNewForm({
         try {
             const created = await createCounterparty.mutateAsync({ name });
             setHeader({ counterpartyId: created.id });
-            toast.success(`Counterparty '${created.name}' created.`);
+            toast.success(t`Counterparty '${created.name}' created.`);
         } catch (err) {
             handleFormError(err, { setFieldErrors, setTopError, toast: toast.error });
         }
@@ -179,7 +182,7 @@ function JournalNewForm({
         }
         try {
             const created = await create.mutateAsync(result.request);
-            toast.success('Journal entry created.');
+            toast.success(t`Journal entry created.`);
             await navigate({ to: '/journal/$id', params: { id: created.id } });
         } catch (err) {
             handleFormError(err, { setFieldErrors, setTopError, toast: toast.error });
@@ -196,11 +199,15 @@ function JournalNewForm({
         >
             <Panel>
                 <SectionHead
-                    title="New journal entry"
+                    title={<Trans>New journal entry</Trans>}
                     subtitle={
-                        form.mode === 'simple'
-                            ? 'Money moved from one or more sources to one or more destinations.'
-                            : 'General-journal table — explicit debit / credit per line.'
+                        form.mode === 'simple' ? (
+                            <Trans>
+                                Money moved from one or more sources to one or more destinations.
+                            </Trans>
+                        ) : (
+                            <Trans>General-journal table — explicit debit / credit per line.</Trans>
+                        )
                     }
                     action={
                         <Link
@@ -208,7 +215,7 @@ function JournalNewForm({
                             search={{ page: 1, q: '', account: '', from: '', to: '' }}
                             className="text-xs text-fg-3 hover:text-fg-1"
                         >
-                            ← Cancel
+                            <Trans>← Cancel</Trans>
                         </Link>
                     }
                 />
@@ -253,10 +260,10 @@ function JournalNewForm({
                         search={{ page: 1, q: '', account: '', from: '', to: '' }}
                         className="px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1"
                     >
-                        Cancel
+                        <Trans>Cancel</Trans>
                     </Link>
                     <Button type="submit" variant="primary" isDisabled={create.isPending}>
-                        {create.isPending ? 'Creating…' : 'Create entry'}
+                        {create.isPending ? <Trans>Creating…</Trans> : <Trans>Create entry</Trans>}
                     </Button>
                 </div>
             </Panel>
@@ -275,6 +282,7 @@ function HeaderInputs({
     onPatch: (patch: Partial<FormState['header']>) => void;
     onCreateCounterparty: (name: string) => void;
 }) {
+    const { t } = useLingui();
     const counterpartyItems = useMemo<ComboBoxItem<CounterpartyId>[]>(
         () => counterparties.map(c => ({ key: c.id, label: c.name, value: c.id })),
         [counterparties],
@@ -283,7 +291,7 @@ function HeaderInputs({
     return (
         <div className="grid grid-cols-[140px_1fr_minmax(220px,300px)] gap-3 mb-4">
             <DatePicker
-                label="Date"
+                label={t`Date`}
                 name="Date"
                 value={form.header.date}
                 onChange={date => {
@@ -292,17 +300,19 @@ function HeaderInputs({
                 isRequired
             />
             <TextField
-                label="Description"
+                label={t`Description`}
                 name="Description"
                 value={form.header.description}
                 onChange={description => {
                     onPatch({ description });
                 }}
                 maxLength={500}
-                placeholder="Optional"
+                placeholder={t`Optional`}
             />
             <div className="flex flex-col gap-1">
-                <span className="text-xs font-medium text-fg-2">Counterparty</span>
+                <span className="text-xs font-medium text-fg-2">
+                    <Trans>Counterparty</Trans>
+                </span>
                 <ComboBox
                     name="CounterpartyId"
                     items={counterpartyItems}
@@ -314,9 +324,9 @@ function HeaderInputs({
                         onPatch({ counterpartyId: null });
                     }}
                     onCreate={onCreateCounterparty}
-                    noneLabel="── None"
-                    placeholder="Pick counterparty…"
-                    ariaLabel="Counterparty"
+                    noneLabel={t`── None`}
+                    placeholder={t`Pick counterparty…`}
+                    ariaLabel={t`Counterparty`}
                 />
             </div>
         </div>
@@ -334,6 +344,7 @@ function ModeToggle({
     onSwitchSimple: () => void;
     onSwitchAdvanced: () => void;
 }) {
+    const { t } = useLingui();
     const segmentClass = (selected: boolean) =>
         cx(
             'px-2 py-1 rounded-lg outline-none cursor-pointer data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary',
@@ -359,15 +370,15 @@ function ModeToggle({
                 isDisabled={!canSwitchToSimple}
                 aria-label={
                     canSwitchToSimple
-                        ? 'Switch to the personal-finance shape'
-                        : 'Multi-source-multi-destination entries can only be edited in Advanced.'
+                        ? t`Switch to the personal-finance shape`
+                        : t`Multi-source-multi-destination entries can only be edited in Advanced.`
                 }
                 className={segmentClass(mode === 'simple')}
             >
-                Simple
+                <Trans>Simple</Trans>
             </ToggleButton>
             <ToggleButton id="advanced" className={segmentClass(mode === 'advanced')}>
-                Advanced
+                <Trans>Advanced</Trans>
             </ToggleButton>
         </ToggleButtonGroup>
     );
@@ -394,6 +405,7 @@ function SimpleLines({
     anchorCurrency: string | null;
     onChange: (updater: (s: FormState['simple']) => FormState['simple']) => void;
 }) {
+    const { t } = useLingui();
     function updateLeg(side: 'from' | 'to', index: number, patch: Partial<SimpleLeg>) {
         onChange(prev => ({
             ...prev,
@@ -415,8 +427,8 @@ function SimpleLines({
     return (
         <div className="grid grid-cols-2 gap-6">
             <SimpleLegColumn
-                heading="From"
-                subheading="Money leaves these accounts (credit)."
+                heading={t`From`}
+                subheading={t`Money leaves these accounts (credit).`}
                 side="from"
                 legs={simple.from}
                 anchorCurrency={anchorCurrency}
@@ -430,8 +442,8 @@ function SimpleLines({
                 }}
             />
             <SimpleLegColumn
-                heading="To"
-                subheading="Money arrives in these accounts (debit)."
+                heading={t`To`}
+                subheading={t`Money arrives in these accounts (debit).`}
                 side="to"
                 legs={simple.to}
                 anchorCurrency={anchorCurrency}
@@ -469,6 +481,7 @@ function SimpleLegColumn({
     onAdd: () => void;
     onRemove: (index: number) => void;
 }) {
+    const { t } = useLingui();
     return (
         <div className="flex flex-col gap-3">
             <div className="flex items-baseline justify-between">
@@ -478,7 +491,7 @@ function SimpleLegColumn({
                 </div>
                 <Button variant="ghost" onPress={onAdd} className="px-2 py-1 text-xs font-normal">
                     <Icon name="plus" size={12} strokeWidth={2} />
-                    Add
+                    <Trans>Add</Trans>
                 </Button>
             </div>
             {legs.map((leg, i) => {
@@ -500,7 +513,7 @@ function SimpleLegColumn({
                             />
                         </div>
                         <NumberField
-                            aria-label="Amount"
+                            aria-label={t`Amount`}
                             name={`simple.${side}[${i.toString()}].amount`}
                             value={leg.amount === '' ? NaN : Number(leg.amount)}
                             onChange={n => {
@@ -518,7 +531,7 @@ function SimpleLegColumn({
                                 onRemove(i);
                             }}
                             isDisabled={legs.length === 1}
-                            aria-label="Remove this leg"
+                            aria-label={t`Remove this leg`}
                             className="shrink-0 mt-[2px] p-2 data-[hovered]:text-danger data-[hovered]:bg-transparent"
                         >
                             <Icon name="trash" size={14} strokeWidth={2} />
@@ -545,6 +558,7 @@ function AdvancedLines({
     scaleLookup: ScaleLookup;
     onChange: (updater: (a: AdvancedLine[]) => AdvancedLine[]) => void;
 }) {
+    const { t } = useLingui();
     function updateLine(index: number, patch: Partial<AdvancedLine>) {
         onChange(prev => prev.map((line, i) => (i === index ? { ...line, ...patch } : line)));
     }
@@ -565,10 +579,18 @@ function AdvancedLines({
     return (
         <div className="flex flex-col">
             <div className="grid grid-cols-[1fr_120px_120px_minmax(140px,1fr)_32px] gap-3 px-2 pb-2 text-xs text-fg-3 uppercase tracking-wider border-b border-border-soft">
-                <span>Account</span>
-                <span className="text-right">Debit</span>
-                <span className="text-right">Credit</span>
-                <span>Description</span>
+                <span>
+                    <Trans>Account</Trans>
+                </span>
+                <span className="text-right">
+                    <Trans>Debit</Trans>
+                </span>
+                <span className="text-right">
+                    <Trans>Credit</Trans>
+                </span>
+                <span>
+                    <Trans>Description</Trans>
+                </span>
                 <span />
             </div>
             {advanced.map((line, i) => {
@@ -591,7 +613,7 @@ function AdvancedLines({
                             }}
                         />
                         <NumberField
-                            aria-label="Debit"
+                            aria-label={t`Debit`}
                             name={`advanced[${i.toString()}].debit`}
                             value={line.debit === '' ? NaN : Number(line.debit)}
                             onChange={n => {
@@ -604,7 +626,7 @@ function AdvancedLines({
                             inputClassName="text-right font-mono"
                         />
                         <NumberField
-                            aria-label="Credit"
+                            aria-label={t`Credit`}
                             name={`advanced[${i.toString()}].credit`}
                             value={line.credit === '' ? NaN : Number(line.credit)}
                             onChange={n => {
@@ -617,20 +639,20 @@ function AdvancedLines({
                             inputClassName="text-right font-mono"
                         />
                         <TextField
-                            aria-label="Line description"
+                            aria-label={t`Line description`}
                             value={line.description}
                             onChange={description => {
                                 updateLine(i, { description });
                             }}
                             maxLength={500}
-                            placeholder="Optional"
+                            placeholder={t`Optional`}
                         />
                         <IconButton
                             onPress={() => {
                                 removeLine(i);
                             }}
                             isDisabled={advanced.length <= 2}
-                            aria-label="Remove this line"
+                            aria-label={t`Remove this line`}
                             className="self-start mt-[2px] data-[hovered]:text-danger data-[hovered]:bg-transparent"
                         >
                             <Icon name="trash" size={14} strokeWidth={2} />
@@ -641,7 +663,7 @@ function AdvancedLines({
             <div className="flex items-center justify-between mt-2">
                 <Button variant="ghost" onPress={addLine} className="px-2 py-1 text-xs font-normal">
                     <Icon name="plus" size={12} strokeWidth={2} />
-                    Add line
+                    <Trans>Add line</Trans>
                 </Button>
                 <AdvancedTotalsFooter totals={totals} currency={anchorCurrency} catalog={catalog} />
             </div>
@@ -659,7 +681,11 @@ function AdvancedTotalsFooter({
     catalog: CurrencyCatalog;
 }) {
     if (!currency) {
-        return <span className="text-xs text-fg-3">Σ Debit / Credit</span>;
+        return (
+            <span className="text-xs text-fg-3">
+                <Trans>Σ Debit / Credit</Trans>
+            </span>
+        );
     }
     const debitStr = formatMoney(totals.debitMinor, currency, catalog);
     const creditStr = formatMoney(totals.creditMinor, currency, catalog);
@@ -667,19 +693,23 @@ function AdvancedTotalsFooter({
     return (
         <div className="flex items-center gap-4 text-xs tabular-nums">
             <span className="text-fg-3">
-                Σ Debit <span className="font-mono text-fg-1">{debitStr}</span>
+                <Trans>
+                    Σ Debit <span className="font-mono text-fg-1">{debitStr}</span>
+                </Trans>
             </span>
             <span className="text-fg-3">
-                Σ Credit <span className="font-mono text-fg-1">{creditStr}</span>
+                <Trans>
+                    Σ Credit <span className="font-mono text-fg-1">{creditStr}</span>
+                </Trans>
             </span>
             {totals.balanced ? (
                 <span className="inline-flex items-center gap-1 text-success">
-                    <Icon name="check-circle" size={12} strokeWidth={2} /> Balanced
+                    <Icon name="check-circle" size={12} strokeWidth={2} /> <Trans>Balanced</Trans>
                 </span>
             ) : (
                 <span className="inline-flex items-center gap-1 text-danger">
                     <Icon name="alert-circle" size={12} strokeWidth={2} />
-                    Off by {formatMoney(Math.abs(diff), currency, catalog)}
+                    <Trans>Off by {formatMoney(Math.abs(diff), currency, catalog)}</Trans>
                 </span>
             )}
         </div>
@@ -697,6 +727,7 @@ function AccountPicker({
     filterCurrency: string | null;
     onChange: (accountId: AccountId | null) => void;
 }) {
+    const { t } = useLingui();
     // Journal lines post to leaves only; the currency is anchored to the first
     // chosen leg so every line in the entry shares one currency.
     return (
@@ -706,8 +737,8 @@ function AccountPicker({
             onChange={onChange}
             postableOnly
             currencyCode={filterCurrency ?? undefined}
-            placeholder="Select…"
-            ariaLabel="Account"
+            placeholder={t`Select…`}
+            ariaLabel={t`Account`}
         />
     );
 }

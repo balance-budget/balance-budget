@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { CalendarMonthPickerAria, CalendarYearPickerAria } from 'react-aria';
 import {
@@ -64,11 +65,12 @@ function headerSelect({ items, ...props }: CalendarMonthPickerAria | CalendarYea
 
 /** Prev/next month buttons around month + year dropdown pickers. */
 export function CalendarPickerHeader() {
+    const { t } = useLingui();
     return (
         <header className="flex items-center justify-between gap-1 pb-2">
             <Button
                 slot="previous"
-                aria-label="Previous month"
+                aria-label={t`Previous month`}
                 className="flex items-center justify-center size-7 rounded-sm text-fg-3 outline-none cursor-pointer data-[hovered]:text-fg-1 data-[hovered]:bg-surface-2 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary data-[disabled]:opacity-40"
             >
                 <ChevronLeft size={15} aria-hidden="true" />
@@ -79,7 +81,7 @@ export function CalendarPickerHeader() {
             </div>
             <Button
                 slot="next"
-                aria-label="Next month"
+                aria-label={t`Next month`}
                 className="flex items-center justify-center size-7 rounded-sm text-fg-3 outline-none cursor-pointer data-[hovered]:text-fg-1 data-[hovered]:bg-surface-2 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary data-[disabled]:opacity-40"
             >
                 <ChevronRight size={15} aria-hidden="true" />

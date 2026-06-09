@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Form } from 'react-aria-components';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useAccounts, type Account } from '../api/accounts';
 import {
@@ -50,6 +51,7 @@ import {
 } from './journalDetail.state';
 
 export function JournalDetail({ id }: { id: JournalEntryId }) {
+    const { t } = useLingui();
     const query = useJournalEntry(id);
     const accounts = useAccounts();
     const catalog = useCurrencyCatalog();
@@ -74,7 +76,7 @@ export function JournalDetail({ id }: { id: JournalEntryId }) {
         return (
             <Panel>
                 <ErrorState
-                    message="Couldn't load journal entry."
+                    message={t`Couldn't load journal entry.`}
                     onRetry={() => void query.refetch()}
                 />
             </Panel>
@@ -122,7 +124,10 @@ export function JournalDetail({ id }: { id: JournalEntryId }) {
             ))}
 
             <Panel>
-                <SectionHead title="Lines" subtitle="Double-entry detail." />
+                <SectionHead
+                    title={<Trans>Lines</Trans>}
+                    subtitle={<Trans>Double-entry detail.</Trans>}
+                />
                 <LineTable entry={entry} projection={projection} />
             </Panel>
 
@@ -139,13 +144,14 @@ export function JournalDetail({ id }: { id: JournalEntryId }) {
 }
 
 function BankTransactionPanelHead({ bt }: { bt: BankTransactionDetail }) {
+    const { t } = useLingui();
     const detach = useDetachBankTransaction();
     const toast = useToast();
 
     async function onDetachClick() {
         try {
             await detach.mutateAsync(bt.id);
-            toast.success('Detached. Bank transaction returned to the inbox.');
+            toast.success(t`Detached. Bank transaction returned to the inbox.`);
         } catch (err) {
             if (err instanceof Error) {
                 toast.error(err.message);
@@ -156,19 +162,19 @@ function BankTransactionPanelHead({ bt }: { bt: BankTransactionDetail }) {
     return (
         <div className="flex items-start justify-between gap-3 mb-2">
             <SectionHead
-                title="Bank transaction"
-                subtitle="Imported row this entry was categorised from."
+                title={<Trans>Bank transaction</Trans>}
+                subtitle={<Trans>Imported row this entry was categorised from.</Trans>}
             />
             <button
                 type="button"
                 onClick={() => void onDetachClick()}
                 disabled={detach.isPending}
-                aria-label="Detach bank transaction"
-                title="Detach this BT — returns it to the inbox and clears the matching line back to Uncleared."
+                aria-label={t`Detach bank transaction`}
+                title={t`Detach this BT — returns it to the inbox and clears the matching line back to Uncleared.`}
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-fg-2 border border-border-strong hover:bg-surface-2 disabled:opacity-60"
             >
                 <Icon name="unlink" size={14} strokeWidth={2} />
-                {detach.isPending ? 'Detaching…' : 'Detach'}
+                {detach.isPending ? <Trans>Detaching…</Trans> : <Trans>Detach</Trans>}
             </button>
         </div>
     );
@@ -185,6 +191,7 @@ function DetailHeader({
     onEdit: () => void;
     onDelete: () => void;
 }) {
+    const { t } = useLingui();
     return (
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex flex-col gap-[2px] min-w-0">
@@ -193,7 +200,7 @@ function DetailHeader({
                     search={{ page: 1, q: '', account: '', from: '', to: '' }}
                     className="text-xs text-fg-3 hover:text-fg-1 inline-flex items-center gap-1"
                 >
-                    ← Activity
+                    <Trans>← Activity</Trans>
                 </Link>
                 <div className="flex items-center gap-2 mt-1">
                     <h1 className="text-xl font-medium text-fg-1 truncate">
@@ -201,7 +208,7 @@ function DetailHeader({
                     </h1>
                     {entry.bankTransactions.length > 0 ? (
                         <span
-                            title="From bank import"
+                            title={t`From bank import`}
                             className="inline-flex items-center text-fg-3"
                         >
                             <Icon name="download" size={14} strokeWidth={2} />
@@ -223,7 +230,7 @@ function DetailHeader({
                         className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1 hover:bg-surface-2"
                     >
                         <Icon name="pencil" size={14} strokeWidth={2} />
-                        Edit
+                        <Trans>Edit</Trans>
                     </button>
                     <button
                         type="button"
@@ -231,7 +238,7 @@ function DetailHeader({
                         className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-danger hover:bg-surface-2"
                     >
                         <Icon name="trash" size={14} strokeWidth={2} />
-                        Delete
+                        <Trans>Delete</Trans>
                     </button>
                 </div>
             </div>
@@ -248,7 +255,9 @@ function FromToSummary({
 }) {
     if (!projection.isSimplifiable) {
         return (
-            <span className="text-xs text-fg-2 mt-1">Split ({formatNumber(lineCount)} lines)</span>
+            <span className="text-xs text-fg-2 mt-1">
+                <Trans>Split ({formatNumber(lineCount)} lines)</Trans>
+            </span>
         );
     }
 
@@ -269,11 +278,21 @@ function LineTable({ entry, projection }: { entry: JournalEntry; projection: Jou
     return (
         <div className="flex flex-col">
             <div className="hidden lg:grid grid-cols-[1fr_120px_120px_140px_minmax(120px,1.4fr)] gap-3 px-2 pb-2 text-xs text-fg-3 uppercase tracking-wider border-b border-border-soft">
-                <span>Account</span>
-                <span className="text-right">Debit</span>
-                <span className="text-right">Credit</span>
-                <span>Status</span>
-                <span>Description</span>
+                <span>
+                    <Trans>Account</Trans>
+                </span>
+                <span className="text-right">
+                    <Trans>Debit</Trans>
+                </span>
+                <span className="text-right">
+                    <Trans>Credit</Trans>
+                </span>
+                <span>
+                    <Trans>Status</Trans>
+                </span>
+                <span>
+                    <Trans>Description</Trans>
+                </span>
             </div>
             {entry.lines.map(line => (
                 <LineRow
@@ -316,7 +335,7 @@ function LineRow({
                 <div className="flex items-baseline justify-between gap-3">
                     <span className="text-sm text-fg-1 truncate">{line.accountName}</span>
                     <span className="font-mono text-sm tabular-nums shrink-0 text-fg-1">
-                        {isDebit ? 'Dr ' : 'Cr '}
+                        {isDebit ? <Trans>Dr </Trans> : <Trans>Cr </Trans>}
                         {moneyStr}
                     </span>
                 </div>
@@ -361,6 +380,7 @@ function EditJournalEntry({
     onCancel: () => void;
     onSaved: () => void;
 }) {
+    const { t } = useLingui();
     const replace = useReplaceJournalEntry();
     const counterparties = useCounterparties();
     const createCounterparty = useCreateCounterparty();
@@ -406,7 +426,7 @@ function EditJournalEntry({
         try {
             const created = await createCounterparty.mutateAsync({ name });
             setCounterpartyId(created.id);
-            toast.success(`Counterparty '${created.name}' created.`);
+            toast.success(t`Counterparty '${created.name}' created.`);
         } catch (err) {
             handleFormError(err, { setFieldErrors, setTopError, toast: toast.error });
         }
@@ -443,7 +463,7 @@ function EditJournalEntry({
         }
         try {
             await replace.mutateAsync({ id: entry.id, request: result.request });
-            toast.success('Journal entry saved.');
+            toast.success(t`Journal entry saved.`);
             onSaved();
         } catch (err) {
             handleFormError(err, { setFieldErrors, setTopError, toast: toast.error });
@@ -461,8 +481,8 @@ function EditJournalEntry({
             {entry.bankTransactions.map(bt => (
                 <Panel key={bt.id}>
                     <SectionHead
-                        title="Bank transaction"
-                        subtitle="Imported row this entry was categorised from."
+                        title={<Trans>Bank transaction</Trans>}
+                        subtitle={<Trans>Imported row this entry was categorised from.</Trans>}
                     />
                     <BankTransactionDetails bt={bt} catalog={catalog} />
                 </Panel>
@@ -470,28 +490,35 @@ function EditJournalEntry({
 
             <Panel>
                 <SectionHead
-                    title="Edit entry"
-                    subtitle="Cleared and Reconciled lines are frozen — only their description can be edited."
+                    title={<Trans>Edit entry</Trans>}
+                    subtitle={
+                        <Trans>
+                            Cleared and Reconciled lines are frozen — only their description can be
+                            edited.
+                        </Trans>
+                    }
                 />
                 <FormErrorBanner message={topError} />
                 <div className="grid grid-cols-1 lg:grid-cols-[140px_1fr_minmax(180px,260px)] gap-3 mb-4">
                     <DatePicker
-                        label="Date"
+                        label={t`Date`}
                         name="Date"
                         value={date}
                         onChange={setDate}
                         isRequired
                     />
                     <TextField
-                        label="Description"
+                        label={t`Description`}
                         name="Description"
                         value={description}
                         onChange={setDescription}
                         maxLength={500}
-                        placeholder="Optional"
+                        placeholder={t`Optional`}
                     />
                     <div className="flex flex-col gap-1">
-                        <span className="text-xs font-medium text-fg-2">Counterparty</span>
+                        <span className="text-xs font-medium text-fg-2">
+                            <Trans>Counterparty</Trans>
+                        </span>
                         <ComboBox
                             name="CounterpartyId"
                             items={counterpartyItems}
@@ -505,9 +532,9 @@ function EditJournalEntry({
                             onCreate={name => {
                                 void createAndSelectCounterparty(name);
                             }}
-                            noneLabel="── None"
-                            placeholder="Pick counterparty…"
-                            ariaLabel="Counterparty"
+                            noneLabel={t`── None`}
+                            placeholder={t`Pick counterparty…`}
+                            ariaLabel={t`Counterparty`}
                         />
                     </div>
                 </div>
@@ -526,14 +553,14 @@ function EditJournalEntry({
                 <BalanceFooter totals={totals} currencyCode={currencyCode} catalog={catalog} />
                 <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-border-soft">
                     <Button variant="ghost" onPress={onCancel} isDisabled={replace.isPending}>
-                        Cancel
+                        <Trans>Cancel</Trans>
                     </Button>
                     <Button
                         type="submit"
                         variant="primary"
                         isDisabled={replace.isPending || !totals.balanced}
                     >
-                        {replace.isPending ? 'Saving…' : 'Save'}
+                        {replace.isPending ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
                     </Button>
                 </div>
             </Panel>
@@ -561,11 +588,21 @@ function EditLines({
     return (
         <div className="flex flex-col">
             <div className="hidden lg:grid grid-cols-[1fr_90px_140px_140px_minmax(140px,1fr)_32px] gap-3 px-2 pb-2 text-xs text-fg-3 uppercase tracking-wider border-b border-border-soft">
-                <span>Account</span>
-                <span>Side</span>
-                <span className="text-right">Amount</span>
-                <span>Status</span>
-                <span>Description</span>
+                <span>
+                    <Trans>Account</Trans>
+                </span>
+                <span>
+                    <Trans>Side</Trans>
+                </span>
+                <span className="text-right">
+                    <Trans>Amount</Trans>
+                </span>
+                <span>
+                    <Trans>Status</Trans>
+                </span>
+                <span>
+                    <Trans>Description</Trans>
+                </span>
                 <span />
             </div>
             {lines.map((line, i) => (
@@ -587,7 +624,7 @@ function EditLines({
                     className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-fg-2 hover:text-fg-1 hover:bg-surface-2"
                 >
                     <Icon name="plus" size={12} strokeWidth={2} />
-                    Add line
+                    <Trans>Add line</Trans>
                 </button>
             </div>
         </div>
@@ -609,6 +646,7 @@ function EditLineRow({
     onUpdate: (key: string, patch: Partial<EditLine>) => void;
     onRemove: (key: string) => void;
 }) {
+    const { t } = useLingui();
     const locked = isLineLocked(line);
     // A frozen line shows the same code + path the picker would, so editable and
     // frozen rows read identically.
@@ -620,7 +658,7 @@ function EditLineRow({
                 {locked ? (
                     <span
                         className="px-3 py-2 rounded-lg bg-surface-1 border border-border-soft text-fg-2 text-sm truncate"
-                        title="Frozen — line is Cleared or Reconciled"
+                        title={t`Frozen — line is Cleared or Reconciled`}
                     >
                         {frozenLabel}
                     </span>
@@ -633,24 +671,28 @@ function EditLineRow({
                         }}
                         postableOnly
                         currencyCode={currencyCode}
-                        placeholder="Pick account…"
-                        ariaLabel="Account"
+                        placeholder={t`Pick account…`}
+                        ariaLabel={t`Account`}
                     />
                 )}
             </div>
             <Select
-                aria-label="Side"
+                aria-label={t`Side`}
                 value={line.side}
                 isDisabled={locked}
                 onChange={key => {
                     if (key !== null) onUpdate(line.key, { side: key as EditLine['side'] });
                 }}
             >
-                <SelectItem id="debit">Debit</SelectItem>
-                <SelectItem id="credit">Credit</SelectItem>
+                <SelectItem id="debit">
+                    <Trans>Debit</Trans>
+                </SelectItem>
+                <SelectItem id="credit">
+                    <Trans>Credit</Trans>
+                </SelectItem>
             </Select>
             <NumberField
-                aria-label="Amount"
+                aria-label={t`Amount`}
                 name={`lines[${index.toString()}].amount`}
                 value={line.amount === '' ? NaN : Number(line.amount)}
                 isDisabled={locked}
@@ -663,13 +705,13 @@ function EditLineRow({
             />
             <ReconciliationChip status={line.status} />
             <TextField
-                aria-label="Line description"
+                aria-label={t`Line description`}
                 value={line.description}
                 onChange={description => {
                     onUpdate(line.key, { description });
                 }}
                 maxLength={500}
-                placeholder="Optional"
+                placeholder={t`Optional`}
                 inputClassName="text-sm"
             />
             <IconButton
@@ -677,7 +719,7 @@ function EditLineRow({
                     onRemove(line.key);
                 }}
                 isDisabled={locked}
-                aria-label={locked ? 'Frozen — line cannot be removed' : 'Remove this line'}
+                aria-label={locked ? t`Frozen — line cannot be removed` : t`Remove this line`}
                 className="self-end lg:self-start mt-[6px] data-[hovered]:text-danger data-[hovered]:bg-transparent"
             >
                 <Icon name="trash" size={14} strokeWidth={2} />
@@ -702,19 +744,23 @@ function BalanceFooter({
     return (
         <div className="flex items-center justify-end gap-4 mt-3 text-xs tabular-nums">
             <span className="text-fg-3">
-                Σ Debit <span className="font-mono text-fg-1">{debitStr}</span>
+                <Trans>
+                    Σ Debit <span className="font-mono text-fg-1">{debitStr}</span>
+                </Trans>
             </span>
             <span className="text-fg-3">
-                Σ Credit <span className="font-mono text-fg-1">{creditStr}</span>
+                <Trans>
+                    Σ Credit <span className="font-mono text-fg-1">{creditStr}</span>
+                </Trans>
             </span>
             {totals.balanced ? (
                 <span className="inline-flex items-center gap-1 text-success">
-                    <Icon name="check-circle" size={12} strokeWidth={2} /> Balanced
+                    <Icon name="check-circle" size={12} strokeWidth={2} /> <Trans>Balanced</Trans>
                 </span>
             ) : (
                 <span className="inline-flex items-center gap-1 text-danger">
                     <Icon name="alert-circle" size={12} strokeWidth={2} />
-                    Off by {diffStr}
+                    <Trans>Off by {diffStr}</Trans>
                 </span>
             )}
         </div>
@@ -728,6 +774,7 @@ function DeleteJournalEntryDialog({
     entry: JournalEntry;
     onClose: () => void;
 }) {
+    const { t } = useLingui();
     const del = useDeleteJournalEntry();
     const toast = useToast();
     const navigate = useNavigate();
@@ -739,7 +786,7 @@ function DeleteJournalEntryDialog({
         setError(null);
         try {
             await del.mutateAsync(entry.id);
-            toast.success(`Deleted journal entry “${label}”.`);
+            toast.success(t`Deleted journal entry “${label}”.`);
             await navigate({
                 to: '/activity',
                 search: { page: 1, q: '', account: '', from: '', to: '' },
@@ -754,9 +801,9 @@ function DeleteJournalEntryDialog({
             open
             onClose={onClose}
             onConfirm={() => void onConfirm()}
-            title="Delete this journal entry?"
-            message="This can't be undone. The bookkeeping lines on every affected account will disappear with it."
-            confirmLabel="Delete"
+            title={t`Delete this journal entry?`}
+            message={t`This can't be undone. The bookkeeping lines on every affected account will disappear with it.`}
+            confirmLabel={t`Delete`}
             variant="destructive"
             busy={del.isPending}
             error={error}

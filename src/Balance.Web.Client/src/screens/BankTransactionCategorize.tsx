@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Form } from 'react-aria-components';
 import { Link, useNavigate } from '@tanstack/react-router';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useAccounts, type Account } from '../api/accounts';
 import { useBankAccounts, type BankAccount } from '../api/bankAccounts';
 import {
@@ -63,6 +64,7 @@ import {
 type Props = { id: BankTransactionId; loanId: LoanId | null };
 
 export function BankTransactionCategorize({ id, loanId }: Props) {
+    const { t } = useLingui();
     const bt = useBankTransaction(id);
     const accounts = useAccounts();
     const counterparties = useCounterparties();
@@ -82,7 +84,7 @@ export function BankTransactionCategorize({ id, loanId }: Props) {
         return (
             <Panel>
                 <ErrorState
-                    message="Couldn't load bank transaction."
+                    message={t`Couldn't load bank transaction.`}
                     onRetry={() => void bt.refetch()}
                 />
             </Panel>
@@ -93,7 +95,7 @@ export function BankTransactionCategorize({ id, loanId }: Props) {
         return (
             <Panel>
                 <ErrorState
-                    message="Couldn't load accounts."
+                    message={t`Couldn't load accounts.`}
                     onRetry={() => void accounts.refetch()}
                 />
             </Panel>
@@ -104,7 +106,7 @@ export function BankTransactionCategorize({ id, loanId }: Props) {
         return (
             <Panel>
                 <ErrorState
-                    message="Couldn't load counterparties."
+                    message={t`Couldn't load counterparties.`}
                     onRetry={() => void counterparties.refetch()}
                 />
             </Panel>
@@ -115,7 +117,7 @@ export function BankTransactionCategorize({ id, loanId }: Props) {
         return (
             <Panel>
                 <ErrorState
-                    message="Couldn't load bank accounts."
+                    message={t`Couldn't load bank accounts.`}
                     onRetry={() => void bankAccounts.refetch()}
                 />
             </Panel>
@@ -139,20 +141,21 @@ export function BankTransactionCategorize({ id, loanId }: Props) {
 }
 
 function NotCategorisableState({ bt }: { bt: BankTransaction }) {
+    const { t } = useLingui();
     const reason = bt.journalEntryId
-        ? 'This row already has a journal entry.'
-        : 'This row is dismissed. Undismiss it first to categorise.';
+        ? t`This row already has a journal entry.`
+        : t`This row is dismissed. Undismiss it first to categorise.`;
     return (
         <Panel>
             <SectionHead
-                title="Categorise bank transaction"
+                title={t`Categorise bank transaction`}
                 action={
                     <Link
                         to="/bank-transactions"
                         search={{ page: 1, filter: 'Inbox', q: '' }}
                         className="text-xs text-fg-3 hover:text-fg-1"
                     >
-                        ← Back to inbox
+                        ← <Trans>Back to inbox</Trans>
                     </Link>
                 }
             />
@@ -178,6 +181,7 @@ function CategorizeForm({
     bankAccounts: BankAccount[];
     catalog: CurrencyCatalog;
 }) {
+    const { t } = useLingui();
     const categorize = useCategorizeBankTransaction();
     const toast = useToast();
     const navigate = useNavigate();
@@ -314,7 +318,7 @@ function CategorizeForm({
         }
         try {
             const created = await categorize.mutateAsync({ id: bt.id, request: result.request });
-            toast.success('Categorised.');
+            toast.success(t`Categorised.`);
             await navigate({ to: '/journal/$id', params: { id: created.id } });
         } catch (err) {
             handleFormError(err, { setFieldErrors, setTopError, toast: toast.error });
@@ -331,15 +335,15 @@ function CategorizeForm({
         >
             <Panel>
                 <SectionHead
-                    title="Categorise bank transaction"
-                    subtitle="Turn this bank row into a journal entry."
+                    title={t`Categorise bank transaction`}
+                    subtitle={t`Turn this bank row into a journal entry.`}
                     action={
                         <Link
                             to="/bank-transactions"
                             search={{ page: 1, filter: 'Inbox', q: '' }}
                             className="text-xs text-fg-3 hover:text-fg-1"
                         >
-                            ← Cancel
+                            ← <Trans>Cancel</Trans>
                         </Link>
                     }
                 />
@@ -399,14 +403,14 @@ function CategorizeForm({
                         search={{ page: 1, filter: 'Inbox', q: '' }}
                         className="px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1"
                     >
-                        Cancel
+                        <Trans>Cancel</Trans>
                     </Link>
                     <button
                         type="submit"
                         disabled={categorize.isPending}
                         className="px-3 py-[7px] rounded-lg text-sm font-medium text-white bg-brand-primary hover:bg-brand-primary-dark disabled:opacity-60"
                     >
-                        {categorize.isPending ? 'Categorising…' : 'Categorise'}
+                        {categorize.isPending ? t`Categorising…` : t`Categorise`}
                     </button>
                 </div>
             </Panel>
@@ -425,10 +429,11 @@ function HeaderInputs({
     onPatch: (patch: Partial<CategorizeFormState>) => void;
     fieldErrors: FieldErrors | null;
 }) {
+    const { t } = useLingui();
     return (
         <div className="grid grid-cols-1 lg:grid-cols-[140px_1fr_minmax(220px,300px)] gap-3">
             <DatePicker
-                label="Date"
+                label={t`Date`}
                 name="Date"
                 value={form.date}
                 onChange={date => {
@@ -437,7 +442,9 @@ function HeaderInputs({
                 isRequired
             />
             <label className="flex flex-col gap-1">
-                <span className="text-xs font-medium text-fg-2">Description</span>
+                <span className="text-xs font-medium text-fg-2">
+                    <Trans>Description</Trans>
+                </span>
                 <input
                     type="text"
                     value={form.description}
@@ -445,7 +452,7 @@ function HeaderInputs({
                         onPatch({ description: e.target.value });
                     }}
                     maxLength={500}
-                    placeholder="Optional"
+                    placeholder={t`Optional`}
                     className="px-3 py-2 rounded-lg bg-surface-2 border border-border-soft text-fg-1 text-sm focus:outline-none focus:border-border-strong"
                 />
                 <FieldError name="Description" errors={fieldErrors} />
@@ -471,6 +478,7 @@ function CounterpartyInput({
     onPatch: (patch: Partial<CategorizeFormState>) => void;
     fieldErrors: FieldErrors | null;
 }) {
+    const { t } = useLingui();
     const items = useMemo<ComboBoxItem<CounterpartyId | null>[]>(
         () =>
             [...counterparties]
@@ -485,18 +493,20 @@ function CounterpartyInput({
         }
         const pending: ComboBoxItem<CounterpartyId | null> = {
             key: '__pending__',
-            label: `${form.newCounterpartyName.trim()} (new)`,
+            label: t`${form.newCounterpartyName.trim()} (new)`,
             value: null,
         };
         return [pending, ...items];
-    }, [form.counterpartyMode, form.newCounterpartyName, items]);
+    }, [form.counterpartyMode, form.newCounterpartyName, items, t]);
 
     const value: CounterpartyId | null =
         form.counterpartyMode === 'existing' ? form.counterpartyId : null;
 
     return (
         <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-fg-2">Counterparty</span>
+            <span className="text-xs font-medium text-fg-2">
+                <Trans>Counterparty</Trans>
+            </span>
             <ComboBox
                 items={effectiveItems}
                 value={value}
@@ -521,9 +531,9 @@ function CounterpartyInput({
                         newCounterpartyName: typed,
                     });
                 }}
-                noneLabel="── None (self-transfer)"
-                placeholder="Pick counterparty…"
-                ariaLabel="Counterparty"
+                noneLabel={t`── None (self-transfer)`}
+                placeholder={t`Pick counterparty…`}
+                ariaLabel={t`Counterparty`}
             />
             <FieldError
                 name={
@@ -566,9 +576,15 @@ function Lines({
     return (
         <div className="flex flex-col">
             <div className="hidden lg:grid grid-cols-[1fr_140px_minmax(140px,1fr)_32px] gap-3 px-2 pb-2 text-xs text-fg-3 uppercase tracking-wider border-b border-border-soft">
-                <span>Account</span>
-                <span className="text-right">Amount</span>
-                <span>Description</span>
+                <span>
+                    <Trans>Account</Trans>
+                </span>
+                <span className="text-right">
+                    <Trans>Amount</Trans>
+                </span>
+                <span>
+                    <Trans>Description</Trans>
+                </span>
                 <span />
             </div>
             {lines.map((line, i) => (
@@ -591,7 +607,7 @@ function Lines({
                     className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-fg-2 hover:text-fg-1 hover:bg-surface-2"
                 >
                     <Icon name="plus" size={12} strokeWidth={2} />
-                    Add line
+                    <Trans>Add line</Trans>
                 </button>
             </div>
         </div>
@@ -615,6 +631,7 @@ function LineRow({
     onUpdate: (index: number, patch: Partial<LineInput>) => void;
     onRemove: (index: number) => void;
 }) {
+    const { t } = useLingui();
     return (
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_140px_minmax(140px,1fr)_32px] gap-3 items-start px-2 py-2 border-b border-border-soft last:border-b-0">
             <AccountSelect
@@ -626,11 +643,11 @@ function LineRow({
                 postableOnly
                 currencyCode={currencyCode}
                 exclude={excludeAccountId ? [excludeAccountId] : undefined}
-                placeholder="Pick account…"
-                ariaLabel="Account"
+                placeholder={t`Pick account…`}
+                ariaLabel={t`Account`}
             />
             <NumberField
-                aria-label="Amount"
+                aria-label={t`Amount`}
                 name={`lines[${index.toString()}].amount`}
                 value={line.amount === '' ? NaN : Number(line.amount)}
                 onChange={n => {
@@ -641,13 +658,13 @@ function LineRow({
                 inputClassName="text-right font-mono"
             />
             <TextField
-                aria-label="Line description"
+                aria-label={t`Line description`}
                 value={line.description}
                 onChange={description => {
                     onUpdate(index, { description });
                 }}
                 maxLength={500}
-                placeholder="Optional"
+                placeholder={t`Optional`}
                 inputClassName="text-sm"
             />
             <IconButton
@@ -655,7 +672,7 @@ function LineRow({
                     onRemove(index);
                 }}
                 isDisabled={!canRemove}
-                aria-label="Remove this line"
+                aria-label={t`Remove this line`}
                 className="self-end lg:self-start mt-[6px] data-[hovered]:text-danger data-[hovered]:bg-transparent"
             >
                 <Icon name="trash" size={14} strokeWidth={2} />
@@ -680,19 +697,24 @@ function UnallocatedFooter({
     return (
         <div className="flex items-center justify-end gap-4 mt-3 text-xs tabular-nums">
             <span className="text-fg-3">
-                Target <span className="font-mono text-fg-1">{targetStr}</span>
+                <Trans>Target</Trans> <span className="font-mono text-fg-1">{targetStr}</span>
             </span>
             <span className="text-fg-3">
-                Allocated <span className="font-mono text-fg-1">{allocatedStr}</span>
+                <Trans>Allocated</Trans> <span className="font-mono text-fg-1">{allocatedStr}</span>
             </span>
             {totals.balanced ? (
                 <span className="inline-flex items-center gap-1 text-success">
-                    <Icon name="check-circle" size={12} strokeWidth={2} /> Balanced
+                    <Icon name="check-circle" size={12} strokeWidth={2} /> <Trans>Balanced</Trans>
                 </span>
             ) : (
                 <span className="inline-flex items-center gap-1 text-danger">
                     <Icon name="alert-circle" size={12} strokeWidth={2} />
-                    {totals.unallocatedMinor > 0 ? 'Unallocated' : 'Over by'} {unallocatedStr}
+                    {totals.unallocatedMinor > 0 ? (
+                        <Trans>Unallocated</Trans>
+                    ) : (
+                        <Trans>Over by</Trans>
+                    )}{' '}
+                    {unallocatedStr}
                 </span>
             )}
         </div>
@@ -721,14 +743,18 @@ function LoanModePanel({
             <div className="flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-1 text-brand-primary font-medium">
                     <Icon name="landmark" size={13} strokeWidth={2} />
-                    Loan payment
+                    <Trans>Loan payment</Trans>
                 </span>
                 {proposal === null ? (
-                    <span className="text-fg-3">Computing the proposal…</span>
+                    <span className="text-fg-3">
+                        <Trans>Computing the proposal…</Trans>
+                    </span>
                 ) : (
                     <span className="text-fg-3">
-                        Pre-filled from the schedule for {proposal.month.slice(0, 7)} — adjust the
-                        amounts to match the bank&apos;s charge.
+                        <Trans>
+                            Pre-filled from the schedule for {proposal.month.slice(0, 7)} — adjust
+                            the amounts to match the bank&apos;s charge.
+                        </Trans>
                     </span>
                 )}
                 <Link
@@ -737,12 +763,14 @@ function LoanModePanel({
                     search={{}}
                     className="ml-auto text-fg-3 hover:text-fg-1"
                 >
-                    Categorise normally
+                    <Trans>Categorise normally</Trans>
                 </Link>
             </div>
             {proposal !== null && proposal.lines.length > 1 && (
                 <div className="flex flex-wrap items-center gap-3 mt-2 pt-2 border-t border-border-soft">
-                    <span className="text-fg-3">Parts in this payment:</span>
+                    <span className="text-fg-3">
+                        <Trans>Parts in this payment:</Trans>
+                    </span>
                     {proposal.lines.map(line => {
                         const included =
                             includedParts === null || includedParts.has(line.loanPartId);
@@ -791,6 +819,7 @@ function AttachOptionsPanel({
     bt: BankTransactionDetail;
     catalog: CurrencyCatalog;
 }) {
+    const { t } = useLingui();
     const [pickerOpen, setPickerOpen] = useState(false);
     const attach = useAttachBankTransaction();
     const toast = useToast();
@@ -800,7 +829,7 @@ function AttachOptionsPanel({
     async function attachTo(journalEntryId: JournalEntryId) {
         try {
             const detail = await attach.mutateAsync({ id: bt.id, journalEntryId });
-            toast.success('Attached.');
+            toast.success(t`Attached.`);
             await navigate({ to: '/journal/$id', params: { id: detail.id } });
         } catch (err) {
             if (err instanceof Error) {
@@ -812,7 +841,9 @@ function AttachOptionsPanel({
     return (
         <div className="mb-4 px-3 py-2 rounded-lg bg-surface-2 border border-border-soft text-xs">
             <div className="flex flex-wrap items-center gap-2">
-                <span className="text-fg-3">Sibling-of-self-transfer?</span>
+                <span className="text-fg-3">
+                    <Trans>Sibling-of-self-transfer?</Trans>
+                </span>
                 {hint && (
                     <button
                         type="button"
@@ -821,7 +852,9 @@ function AttachOptionsPanel({
                         className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-brand-primary hover:bg-brand-primary-soft disabled:opacity-60"
                     >
                         <Icon name="link" size={13} strokeWidth={2} />
-                        Attach to JE on {hint.date} · {hint.otherAccountName}
+                        <Trans>
+                            Attach to JE on {hint.date} · {hint.otherAccountName}
+                        </Trans>
                     </button>
                 )}
                 <button
@@ -833,9 +866,11 @@ function AttachOptionsPanel({
                     className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-fg-1 border border-border-strong hover:bg-surface-1 disabled:opacity-60"
                 >
                     <Icon name="search" size={13} strokeWidth={2} />
-                    Pick a JE to attach to…
+                    <Trans>Pick a JE to attach to…</Trans>
                 </button>
-                <span className="text-fg-3">or scroll down to create a new JE.</span>
+                <span className="text-fg-3">
+                    <Trans>or scroll down to create a new JE.</Trans>
+                </span>
             </div>
 
             {pickerOpen && (
@@ -866,6 +901,7 @@ function JePickerModal({
     onClose: () => void;
     onPick: (id: JournalEntryId) => void;
 }) {
+    const { t } = useLingui();
     const [days, setDays] = useState(14);
     const candidates = useAttachCandidates(bt.id, days);
     const [query, setQuery] = useState('');
@@ -886,13 +922,13 @@ function JePickerModal({
         <Modal
             open
             onClose={onClose}
-            title="Pick a journal entry to attach to"
-            description="Structural matches with an Uncleared bank-side slot. Widen the date window to surface near-misses."
+            title={t`Pick a journal entry to attach to`}
+            description={t`Structural matches with an Uncleared bank-side slot. Widen the date window to surface near-misses.`}
             width="md"
         >
             <div className="flex flex-wrap items-center gap-3 mb-3">
                 <label className="flex items-center gap-2 text-xs text-fg-2">
-                    Date window (±days)
+                    <Trans>Date window (±days)</Trans>
                     <input
                         type="number"
                         min={0}
@@ -911,7 +947,7 @@ function JePickerModal({
                     onChange={e => {
                         setQuery(e.target.value);
                     }}
-                    placeholder="Filter…"
+                    placeholder={t`Filter…`}
                     className="flex-1 min-w-[160px] px-2 py-1 rounded-lg bg-surface-2 border border-border-soft text-fg-1 text-xs"
                 />
             </div>
@@ -919,14 +955,16 @@ function JePickerModal({
             {candidates.isPending && <Skeleton className="h-6 w-full mb-2" />}
             {candidates.isError && (
                 <ErrorState
-                    message="Couldn't load candidates."
+                    message={t`Couldn't load candidates.`}
                     onRetry={() => void candidates.refetch()}
                 />
             )}
             {candidates.data && filtered.length === 0 && (
                 <p className="text-xs text-fg-3">
-                    No structural matches in this window. Widen the date range or fall back to
-                    creating a new JE below.
+                    <Trans>
+                        No structural matches in this window. Widen the date range or fall back to
+                        creating a new JE below.
+                    </Trans>
                 </p>
             )}
 
@@ -943,7 +981,7 @@ function JePickerModal({
                             >
                                 <span className="flex flex-col leading-tight min-w-0">
                                     <span className="text-sm text-fg-1 truncate">
-                                        {candidate.description ?? '(no description)'}
+                                        {candidate.description ?? t`(no description)`}
                                     </span>
                                     <span className="text-xs text-fg-3 truncate">
                                         {candidate.date} · {candidate.otherAccountName}
@@ -966,7 +1004,7 @@ function JePickerModal({
                     onClick={onClose}
                     className="px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1"
                 >
-                    Cancel
+                    <Trans>Cancel</Trans>
                 </button>
             </ModalFooter>
         </Modal>

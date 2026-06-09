@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
+import { Trans, useLingui } from '@lingui/react/macro';
 import {
     bankAccountTypeIcon,
     formatBankAccountLabel,
@@ -21,6 +22,7 @@ type Owner = { kind: 'account'; id: AccountId } | { kind: 'counterparty'; id: Co
  * happens via the standalone /settings/bank-accounts CRUD form.
  */
 export function LinkedBankAccountsSection({ owner }: { owner: Owner }) {
+    const { t } = useLingui();
     const query = useBankAccounts();
     const [creating, setCreating] = useState(false);
     const [reassigning, setReassigning] = useState<BankAccount | null>(null);
@@ -36,7 +38,7 @@ export function LinkedBankAccountsSection({ owner }: { owner: Owner }) {
     if (query.isError) {
         return (
             <ErrorState
-                message="Couldn't load bank accounts."
+                message={t`Couldn't load bank accounts.`}
                 onRetry={() => void query.refetch()}
             />
         );
@@ -50,7 +52,9 @@ export function LinkedBankAccountsSection({ owner }: { owner: Owner }) {
         <>
             <div>
                 {linked.length === 0 ? (
-                    <div className="py-3 text-sm text-fg-3">No bank accounts linked yet.</div>
+                    <div className="py-3 text-sm text-fg-3">
+                        <Trans>No bank accounts linked yet.</Trans>
+                    </div>
                 ) : (
                     linked.map(ba => (
                         <LinkedRow
@@ -71,7 +75,7 @@ export function LinkedBankAccountsSection({ owner }: { owner: Owner }) {
                         className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-brand-primary hover:bg-brand-primary-soft"
                     >
                         <Icon name="plus" size={14} strokeWidth={2} />
-                        Add bank account
+                        <Trans>Add bank account</Trans>
                     </button>
                 </div>
             </div>
@@ -109,6 +113,7 @@ function LinkedRow({
     bankAccount: BankAccount;
     onReassign: () => void;
 }) {
+    const { t } = useLingui();
     return (
         <div className="py-3 first:pt-0 flex items-center gap-3 border-t border-border-soft first:border-t-0">
             <Link
@@ -131,8 +136,8 @@ function LinkedRow({
             <button
                 type="button"
                 onClick={onReassign}
-                aria-label="Reassign"
-                title="Reassign to a different owner"
+                aria-label={t`Reassign`}
+                title={t`Reassign to a different owner`}
                 className="shrink-0 p-2 rounded-lg text-fg-3 hover:text-fg-1 hover:bg-surface-2"
             >
                 <Icon name="arrow-left-right" size={14} strokeWidth={2} />

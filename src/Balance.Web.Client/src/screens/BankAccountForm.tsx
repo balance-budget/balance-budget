@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Form } from 'react-aria-components';
+import { Trans, useLingui } from '@lingui/react/macro';
 import {
     useBankAccountImporters,
     useCreateBankAccount,
@@ -83,6 +84,7 @@ function initialState(props: Props): FormState {
 }
 
 export function BankAccountFormModal(props: Props) {
+    const { t } = useLingui();
     const create = useCreateBankAccount();
     const update = useUpdateBankAccount();
     const toast = useToast();
@@ -172,7 +174,7 @@ export function BankAccountFormModal(props: Props) {
         <Modal
             open
             onClose={props.onClose}
-            title={props.mode === 'create' ? 'New bank account' : 'Edit bank account'}
+            title={props.mode === 'create' ? t`New bank account` : t`Edit bank account`}
             width="md"
         >
             <Form
@@ -185,7 +187,7 @@ export function BankAccountFormModal(props: Props) {
                 <FormErrorBanner message={topError} />
 
                 <RadioGroup
-                    label="Type"
+                    label={t`Type`}
                     name="Type"
                     value={form.type}
                     onChange={value => {
@@ -193,13 +195,19 @@ export function BankAccountFormModal(props: Props) {
                     }}
                     className="mb-4"
                 >
-                    <Radio value="Current">Current</Radio>
-                    <Radio value="Savings">Savings</Radio>
-                    <Radio value="Card">Card</Radio>
+                    <Radio value="Current">
+                        <Trans>Current</Trans>
+                    </Radio>
+                    <Radio value="Savings">
+                        <Trans>Savings</Trans>
+                    </Radio>
+                    <Radio value="Card">
+                        <Trans>Card</Trans>
+                    </Radio>
                 </RadioGroup>
 
                 <RadioGroup
-                    label="Owner"
+                    label={t`Owner`}
                     name="OwnerKind"
                     value={form.ownerKind}
                     onChange={value => {
@@ -208,14 +216,18 @@ export function BankAccountFormModal(props: Props) {
                     isDisabled={ownerKindLocked}
                     className="mb-2"
                 >
-                    <Radio value="account">Account</Radio>
-                    <Radio value="counterparty">Counterparty</Radio>
+                    <Radio value="account">
+                        <Trans>Account</Trans>
+                    </Radio>
+                    <Radio value="counterparty">
+                        <Trans>Counterparty</Trans>
+                    </Radio>
                 </RadioGroup>
 
                 <div className="mb-4">
                     {form.ownerKind === 'account' ? (
                         <Select
-                            aria-label="Owner account"
+                            aria-label={t`Owner account`}
                             name="AccountId"
                             value={form.accountId === '' ? null : form.accountId}
                             onChange={key => {
@@ -223,7 +235,7 @@ export function BankAccountFormModal(props: Props) {
                             }}
                             isDisabled={ownerLocked}
                             isRequired
-                            placeholder="Select an account…"
+                            placeholder={t`Select an account…`}
                         >
                             {ledgerAccounts.map(a => (
                                 <SelectItem key={a.id} id={a.id}>
@@ -233,7 +245,7 @@ export function BankAccountFormModal(props: Props) {
                         </Select>
                     ) : (
                         <Select
-                            aria-label="Owner counterparty"
+                            aria-label={t`Owner counterparty`}
                             name="CounterpartyId"
                             value={form.counterpartyId === '' ? null : form.counterpartyId}
                             onChange={key => {
@@ -241,7 +253,7 @@ export function BankAccountFormModal(props: Props) {
                             }}
                             isDisabled={ownerLocked}
                             isRequired
-                            placeholder="Select a counterparty…"
+                            placeholder={t`Select a counterparty…`}
                         >
                             {counterpartyList.map(c => (
                                 <SelectItem key={c.id} id={c.id}>
@@ -255,7 +267,7 @@ export function BankAccountFormModal(props: Props) {
                 <div className="grid grid-cols-2 gap-3">
                     {form.type !== 'Card' ? (
                         <TextField
-                            label={`IBAN${form.type === 'Current' ? ' *' : ''}`}
+                            label={`${t`IBAN`}${form.type === 'Current' ? ' *' : ''}`}
                             name="Iban"
                             value={form.iban}
                             onChange={v => {
@@ -266,7 +278,7 @@ export function BankAccountFormModal(props: Props) {
                     ) : null}
                     {form.type === 'Savings' ? (
                         <TextField
-                            label="Account number"
+                            label={t`Account number`}
                             name="AccountNumber"
                             value={form.accountNumber}
                             onChange={v => {
@@ -276,7 +288,7 @@ export function BankAccountFormModal(props: Props) {
                     ) : null}
                     {form.type === 'Card' ? (
                         <TextField
-                            label="Card identifier *"
+                            label={`${t`Card identifier`} *`}
                             name="CardIdentifier"
                             value={form.cardIdentifier}
                             onChange={v => {
@@ -286,7 +298,7 @@ export function BankAccountFormModal(props: Props) {
                         />
                     ) : null}
                     <TextField
-                        label="BIC"
+                        label={t`BIC`}
                         name="Bic"
                         value={form.bic}
                         onChange={v => {
@@ -294,7 +306,7 @@ export function BankAccountFormModal(props: Props) {
                         }}
                     />
                     <TextField
-                        label="Bank name"
+                        label={t`Bank name`}
                         name="BankName"
                         value={form.bankName}
                         onChange={v => {
@@ -302,7 +314,7 @@ export function BankAccountFormModal(props: Props) {
                         }}
                     />
                     <TextField
-                        label="Account holder name"
+                        label={t`Account holder name`}
                         name="AccountHolderName"
                         value={form.accountHolderName}
                         onChange={v => {
@@ -310,14 +322,14 @@ export function BankAccountFormModal(props: Props) {
                         }}
                     />
                     <Select
-                        label={form.ownerKind === 'account' ? 'Currency *' : 'Currency'}
+                        label={form.ownerKind === 'account' ? `${t`Currency`} *` : t`Currency`}
                         name="CurrencyCode"
                         value={form.currencyCode === '' ? null : form.currencyCode}
                         onChange={key => {
                             update_({ currencyCode: key === null ? '' : String(key) });
                         }}
                         isRequired={form.ownerKind === 'account'}
-                        placeholder={form.ownerKind === 'account' ? 'Select…' : '(none)'}
+                        placeholder={form.ownerKind === 'account' ? t`Select…` : t`(none)`}
                     >
                         {currencyList.map(c => (
                             <SelectItem key={c.code} id={c.code}>
@@ -327,13 +339,13 @@ export function BankAccountFormModal(props: Props) {
                     </Select>
                     {form.ownerKind === 'account' ? (
                         <Select
-                            label="Statement importer"
+                            label={t`Statement importer`}
                             name="ImporterKey"
                             value={form.importerKey === '' ? null : form.importerKey}
                             onChange={key => {
                                 update_({ importerKey: key === null ? '' : String(key) });
                             }}
-                            placeholder="(none)"
+                            placeholder={t`(none)`}
                         >
                             {importerOptions.map(i => (
                                 <SelectItem key={i.key} id={i.key}>
@@ -346,18 +358,18 @@ export function BankAccountFormModal(props: Props) {
 
                 <p className="mt-3 text-xs text-fg-3">
                     {form.type === 'Current'
-                        ? 'IBAN is required.'
+                        ? t`IBAN is required.`
                         : form.type === 'Savings'
-                          ? 'IBAN or Account number is required.'
-                          : 'Card identifier is required. Card accounts are owned-only.'}
+                          ? t`IBAN or Account number is required.`
+                          : t`Card identifier is required. Card accounts are owned-only.`}
                 </p>
 
                 <ModalFooter>
                     <Button variant="ghost" onPress={props.onClose} isDisabled={isPending}>
-                        Cancel
+                        <Trans>Cancel</Trans>
                     </Button>
                     <Button type="submit" variant="primary" isDisabled={isPending}>
-                        {isPending ? 'Saving…' : props.mode === 'create' ? 'Create' : 'Save'}
+                        {isPending ? t`Saving…` : props.mode === 'create' ? t`Create` : t`Save`}
                     </Button>
                 </ModalFooter>
             </Form>

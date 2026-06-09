@@ -1,3 +1,5 @@
+import { msg } from '@lingui/core/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useMemo, useState } from 'react';
 import { Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { useCurrencyCatalog } from '../api/currencies';
@@ -24,12 +26,13 @@ type DistributionChartProps = {
 
 type Crumb = { id: AccountId; name: string };
 
-const TYPES: { token: DistributionType; label: string }[] = [
-    { token: 'expense', label: 'Expenses' },
-    { token: 'income', label: 'Income' },
-];
+const TYPES = [
+    { token: 'expense', label: msg`Expenses` },
+    { token: 'income', label: msg`Income` },
+] satisfies { token: DistributionType; label: ReturnType<typeof msg> }[];
 
 export function DistributionChart({ period, currency }: DistributionChartProps) {
+    const { t, i18n } = useLingui();
     const [type, setType] = useState<DistributionType>('expense');
     const [trail, setTrail] = useState<Crumb[]>([]);
     const parentId = trail.at(-1)?.id ?? null;
@@ -67,7 +70,7 @@ export function DistributionChart({ period, currency }: DistributionChartProps) 
                             : 'text-fg-3 hover:text-fg-1',
                     )}
                 >
-                    {t.label}
+                    {i18n._(t.label)}
                 </button>
             ))}
         </div>
@@ -76,7 +79,7 @@ export function DistributionChart({ period, currency }: DistributionChartProps) 
     return (
         <Panel>
             <SectionHead
-                title="Distribution"
+                title={<Trans>Distribution</Trans>}
                 subtitle={<DrillBreadcrumbs type={type} trail={trail} onJump={jumpTo} />}
                 action={toggle}
             />
@@ -84,7 +87,7 @@ export function DistributionChart({ period, currency }: DistributionChartProps) 
                 <Skeleton className="h-[280px] w-full" />
             ) : distribution.isError ? (
                 <ErrorState
-                    message="Couldn't load the distribution."
+                    message={t`Couldn't load the distribution.`}
                     onRetry={() => void distribution.refetch()}
                 />
             ) : (
@@ -107,7 +110,8 @@ function DrillBreadcrumbs({
     trail: Crumb[];
     onJump: (index: number) => void;
 }) {
-    const rootLabel = type === 'income' ? 'All income' : 'All expenses';
+    const { t } = useLingui();
+    const rootLabel = type === 'income' ? t`All income` : t`All expenses`;
     return (
         <Breadcrumbs className="text-sm text-fg-3">
             <Breadcrumb
@@ -173,7 +177,7 @@ function DistributionBody({
     if (positive.length === 0 && negative.length === 0) {
         return (
             <div className="h-[280px] flex items-center justify-center text-sm text-fg-3">
-                No money moved in this period.
+                <Trans>No money moved in this period.</Trans>
             </div>
         );
     }
@@ -214,12 +218,14 @@ function DistributionBody({
                     </ResponsiveContainer>
                 ) : (
                     <div className="h-full flex items-center justify-center text-xs text-fg-3 text-center px-4">
-                        Net negative this period — see the breakdown.
+                        <Trans>Net negative this period — see the breakdown.</Trans>
                     </div>
                 )}
                 {pieData.length > 0 && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span className="text-xs text-fg-3">Total</span>
+                        <span className="text-xs text-fg-3">
+                            <Trans>Total</Trans>
+                        </span>
                         <span className="text-base font-semibold text-fg-1">
                             {formatMoney(data.total.amount, currency, catalog, { decimals: false })}
                         </span>
@@ -241,7 +247,7 @@ function DistributionBody({
                 {negative.length > 0 && (
                     <div className="mt-2 pt-2 border-t border-border-soft flex flex-col gap-1">
                         <span className="text-xs text-fg-3">
-                            Net negative this period (excluded from the chart)
+                            <Trans>Net negative this period (excluded from the chart)</Trans>
                         </span>
                         {negative.map(s => (
                             <SliceRow

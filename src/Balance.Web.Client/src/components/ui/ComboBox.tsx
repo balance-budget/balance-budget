@@ -7,6 +7,7 @@ import {
     Input,
     type Key,
 } from 'react-aria-components';
+import { useLingui } from '@lingui/react/macro';
 import { cx } from '../../lib/cx';
 import { FieldError } from './field';
 import { DropdownItem, DropdownListBox, DropdownSection } from './ListBox';
@@ -73,6 +74,7 @@ export function ComboBox<T>({
     name,
     listboxMinWidth,
 }: ComboBoxProps<T>) {
+    const { t } = useLingui();
     const selectedItem = useMemo(() => items.find(i => i.value === value) ?? null, [items, value]);
     const selectedLabel = selectedItem?.label ?? '';
 
@@ -101,7 +103,7 @@ export function ComboBox<T>({
         onCreate !== undefined &&
         trimmed.length > 0 &&
         !items.some(i => i.label.toLowerCase() === trimmed.toLowerCase())
-            ? (createLabel?.(trimmed) ?? `Create '${trimmed}'`)
+            ? (createLabel?.(trimmed) ?? t`Create '${trimmed}'`)
             : null;
 
     const menuRef = useRef<{ close: () => void } | null>(null);
