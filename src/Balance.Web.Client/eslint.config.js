@@ -30,29 +30,145 @@ export default defineConfig([
             '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
             // ${response.status}, ${count}, etc. read fine.
             '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
-            // No untranslated UI strings (ADR-0022). Starts as a warning while the
-            // allowlist is tuned; promoted to error once the migration lands.
+            // No untranslated UI strings (ADR-0022). Enforced as an error: every
+            // user-facing string must go through Lingui. The options below skip
+            // things that are provably not prose.
             'lingui/no-unlocalized-strings': [
-                'warn',
+                'error',
                 {
-                    // Short lowercase tokens (tailwind classes, format keys, icon
-                    // names) are never user-facing prose.
-                    ignore: ['^[a-z0-9-]+$'],
-                    ignoreFunctions: ['cx', 'cva', 'clsx', 'twMerge', 'console.*'],
+                    // Use TS types to skip string-literal unions (e.g. AccountType,
+                    // RegisterStatusFilter) used as logic values, not copy.
+                    useTsTypes: true,
+                    ignore: [
+                        // No letters at all: separators, punctuation, symbols, numbers.
+                        '^[^A-Za-z]*$',
+                        // A bare lowercase camelCase/kebab/dotted token is an
+                        // identifier or enum value, never display copy (prose is
+                        // capitalised or multi-word): 'ghost', 'check-circle',
+                        // 'balance.sidebar.expanded-accounts'.
+                        '^[a-z][a-zA-Z0-9.-]*$',
+                        // Dunder sentinel keys: '__none__', '__create__'.
+                        '^__.*__$',
+                        // ALL-CAPS / const-style tokens: 'EUR', '3M', 'USD'.
+                        '^[A-Z0-9_]+$',
+                        // Dotted identifier paths: 'newCounterparty.name', 'simple.to'.
+                        '^[A-Za-z][\\w]*(\\.[\\w]+)+$',
+                        // Template literals with interpolation are keys / ids / URLs
+                        // (real interpolated copy goes through <Trans>/t, never a raw string).
+                        '\\$\\{',
+                        // Field-path key fragments contain square brackets: 'lines[', '].amount'.
+                        '[\\[\\]]',
+                        // Keyboard keycaps.
+                        '^(⌘K|Ctrl K|Esc)$',
+                        // Product wordmark.
+                        '^Balance$',
+                        // CSS custom-property references in inline styles.
+                        'var\\(',
+                        // Tailwind / CSS utility class lists (a known utility prefix
+                        // followed by - / : / [, or a data-[...] variant).
+                        '(^|\\s)(bg|text|border|rounded|flex|grid|gap|p[xytblr]?|m[xytblr]?|w|h|min|max|size|outline|ring|shrink|grow|items|justify|self|absolute|relative|fixed|sticky|inline|block|hidden|font|opacity|cursor|select|transition|duration|ease|z|top|bottom|left|right|overflow|truncate|whitespace|leading|tracking|object|aspect|order|col|row|group|peer)[-:[]',
+                        'data-\\[',
+                    ],
+                    // Attribute / prop / property names whose string values are
+                    // identifiers, routes, class names, enums, or chart/style keys —
+                    // never copy.
+                    ignoreNames: [
+                        'className',
+                        'inputClassName',
+                        'class',
+                        'to',
+                        'name',
+                        'id',
+                        'htmlFor',
+                        'slot',
+                        'type',
+                        'role',
+                        'key',
+                        'aria-hidden',
+                        'dataKey',
+                        'nameKey',
+                        'fill',
+                        'stroke',
+                        'color',
+                        'style',
+                        'border',
+                        'background',
+                        'domain',
+                        'acceptedFileTypes',
+                        'autoComplete',
+                        'inputMode',
+                        'iconName',
+                        'icon',
+                        // Component prop enums (string unions not always resolved by useTsTypes).
+                        'variant',
+                        'size',
+                        'width',
+                        'height',
+                        'padding',
+                        'placement',
+                        'position',
+                        'anchor',
+                        'align',
+                        'side',
+                        'selectionMode',
+                        'selectionBehavior',
+                        'weekdayStyle',
+                        'stackId',
+                        'tone',
+                        'mode',
+                        'direction',
+                        'granularity',
+                        'level',
+                        'status',
+                        'value',
+                        // Intl format-option tokens ('2-digit', 'numeric', …).
+                        'month',
+                        'day',
+                        'year',
+                        'weekday',
+                    ],
+                    ignoreFunctions: [
+                        'cx',
+                        'cva',
+                        'clsx',
+                        'twMerge',
+                        'console.*',
+                        'addEventListener',
+                        'removeEventListener',
+                        // Route path is the first arg, not copy.
+                        'createFileRoute',
+                        // HTTP helpers: URL + an internal operation label, never UI copy.
+                        'getJson',
+                        'postJson',
+                        'postJsonNoContent',
+                        'putJson',
+                        'putJsonNoContent',
+                        'patchJson',
+                        'patchJsonBody',
+                        'deleteJson',
+                        'deleteRequest',
+                        'postFormData',
+                        // Developer diagnostics, never shown translated.
+                        'Error',
+                    ],
                 },
             ],
             'lingui/t-call-in-function': 'error',
-            'lingui/no-single-variables-to-translate': 'warn',
+            'lingui/no-single-variables-to-translate': 'error',
         },
     },
-    // Tests, build config, and non-rendering library/API modules carry no UI copy.
+    // Tests, build config/plugins, the Tailwind style helpers, and non-rendering
+    // library/API modules carry no UI copy.
     {
         files: [
             '**/*.test.{ts,tsx}',
             '**/*.config.{ts,js}',
+            'vite-plugin-*.ts',
             'src/test.setup.ts',
             'src/lib/**',
             'src/api/**',
+            'src/i18n/**',
+            'src/components/ui/styles.ts',
         ],
         rules: {
             'lingui/no-unlocalized-strings': 'off',
