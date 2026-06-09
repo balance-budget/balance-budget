@@ -8,7 +8,7 @@ Where things live, and where new code should go.
 balance-budget/
 ├── Balance.slnx                 Solution (XML format)
 ├── Directory.Build.props        Global MSBuild props (TFM, warnings-as-errors, nullable, …)
-├── Directory.Packages.props     Centralised NuGet versions
+├── Directory.Packages.props     Centralized NuGet versions
 ├── appsettings.json             Solution-shared config; copied into each host's output
 ├── dotnet-tools.json            Local tools (csharpier)
 ├── global.json                  SDK pin + test runner

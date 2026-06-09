@@ -141,7 +141,7 @@ Use the Quartz helpers:
 configurator.ScheduleJob<MyJob>(
     key:     new JobKey("MyJob"),
     schedule: "0 0 * * * ?",   // cron
-    start:   startJobs);       // honour the AddBalanceServices flag
+    start:   startJobs);       // honor the AddBalanceServices flag
 ```
 
 `ScheduleJob<TJob>` applies `DisallowConcurrentExecution` for you. Wire job scheduling inside `AddBalanceJobs`, not in `Program.cs`.
@@ -167,7 +167,7 @@ Refs: #42
 
 - CSharpier is the formatter. CI fails on any deviation — run `dotnet csharpier format .` before committing.
 - `TreatWarningsAsErrors=true` with `AnalysisMode=All`. Fix warnings; don't suppress unless there's a deliberate reason (and document why).
-- Centralised package versions: edit `Directory.Packages.props`, never put a `Version="…"` attribute on a `PackageReference`.
+- Centralized package versions: edit `Directory.Packages.props`, never put a `Version="…"` attribute on a `PackageReference`.
 - The repo targets `net10.0`. Don't introduce multi-targeting unless there's a clear reason.
 
 ## Testing
