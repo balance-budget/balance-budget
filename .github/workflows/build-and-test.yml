@@ -77,6 +77,13 @@ jobs:
     - name: Generate API types
       run: npm run codegen
 
+    # Re-extract Lingui catalogs and fail if they drift from what the source
+    # produces — an un-wrapped or un-extracted string can't slip through (ADR-0022).
+    - name: Check i18n catalogs are up to date
+      run: |
+        npm run extract
+        git diff --exit-code -- 'src/Balance.Web.Client/src/locales/**/*.po'
+
     - name: Frontend lint
       run: npm run lint
 

@@ -7,6 +7,10 @@
 
 import { afterEach } from 'vitest';
 
+// Activate the i18n catalog so <Trans>/`t` render their English source defaults
+// in tests (ADR-0022). Importing for its activation side effect.
+import './i18n/i18n';
+
 function cssEscape(value: string): string {
     let result = '';
     for (let i = 0; i < value.length; i++) {

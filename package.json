@@ -13,6 +13,7 @@
     "format": "npm run format --workspace=balance",
     "format:check": "npm run format:check --workspace=balance",
     "codegen": "npm run codegen --workspace=balance",
+    "extract": "npm run extract --workspace=balance",
     "sandcastle": "npx tsx .sandcastle/main.mts"
   },
   "devDependencies": {
