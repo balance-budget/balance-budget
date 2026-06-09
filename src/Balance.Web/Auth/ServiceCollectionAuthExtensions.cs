@@ -88,7 +88,7 @@ internal static class ServiceCollectionAuthExtensions
     }
 
     /// <summary>
-    /// Replace the default redirect-to-/Account/Login behaviour with bare 401/403 responses —
+    /// Replace the default redirect-to-/Account/Login behavior with bare 401/403 responses —
     /// the SPA handles the redirect through its TanStack Query global error handler.
     /// </summary>
     private static CookieAuthenticationEvents CookieAuthenticationEvents() =>

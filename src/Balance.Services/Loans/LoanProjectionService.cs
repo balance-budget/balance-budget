@@ -28,7 +28,7 @@ internal sealed class LoanProjectionService : ILoanProjectionService
             return graphResult.Error;
         var graph = graphResult.Value!;
 
-        // Categorising a row from the current (or a recent) month means its payment has not
+        // Categorizing a row from the current (or a recent) month means its payment has not
         // reduced the balance yet, so anchoring the engine at that month on today's balance is
         // exactly the proposal. For a future month, project forward from today instead.
         var requested = FirstOfMonth(month);

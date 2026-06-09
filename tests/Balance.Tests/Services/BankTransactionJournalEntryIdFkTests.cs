@@ -18,7 +18,7 @@ namespace Balance.Tests.Services;
 internal sealed class BankTransactionJournalEntryIdFkTests : EndpointsTestsBase
 {
     [Test]
-    public async Task Categorising_a_BT_sets_BankTransaction_JournalEntryId_to_new_entry(
+    public async Task Categorizing_a_BT_sets_BankTransaction_JournalEntryId_to_new_entry(
         CancellationToken cancellationToken
     )
     {
@@ -27,8 +27,8 @@ internal sealed class BankTransactionJournalEntryIdFkTests : EndpointsTestsBase
         var bankAccountService = scope.ServiceProvider.GetRequiredService<IBankAccountService>();
         var bankTransactionService =
             scope.ServiceProvider.GetRequiredService<IBankTransactionService>();
-        var categorisationService =
-            scope.ServiceProvider.GetRequiredService<IBankTransactionCategorisationService>();
+        var categorizationService =
+            scope.ServiceProvider.GetRequiredService<IBankTransactionCategorizationService>();
 
         var (expense, asset) = await CreateExpenseAndAssetAsync(accountService, cancellationToken);
         var bankAccount = await SeedBankAccountForAccountAsync(
@@ -44,7 +44,7 @@ internal sealed class BankTransactionJournalEntryIdFkTests : EndpointsTestsBase
             cancellationToken
         );
 
-        var categorised = await categorisationService.CategorizeAsync(
+        var categorized = await categorizationService.CategorizeAsync(
             btx.Id,
             new CategorizeBankTransactionInput(
                 CounterpartyId: null,
@@ -55,7 +55,7 @@ internal sealed class BankTransactionJournalEntryIdFkTests : EndpointsTestsBase
             ),
             cancellationToken
         );
-        await Assert.That(categorised.IsSuccess).IsTrue();
+        await Assert.That(categorized.IsSuccess).IsTrue();
 
         using var verifyScope = Factory.Services.CreateScope();
         var dbContext = verifyScope.ServiceProvider.GetRequiredService<BalanceDbContext>();
@@ -63,9 +63,9 @@ internal sealed class BankTransactionJournalEntryIdFkTests : EndpointsTestsBase
             b => b.Id == btx.Id,
             cancellationToken
         );
-        await Assert.That(btxRow.JournalEntryId).IsEqualTo(categorised.Value!.Id);
-        await Assert.That(categorised.Value!.BankTransactions).Count().IsEqualTo(1);
-        await Assert.That(categorised.Value!.BankTransactions[0].Id).IsEqualTo(btx.Id);
+        await Assert.That(btxRow.JournalEntryId).IsEqualTo(categorized.Value!.Id);
+        await Assert.That(categorized.Value!.BankTransactions).Count().IsEqualTo(1);
+        await Assert.That(categorized.Value!.BankTransactions[0].Id).IsEqualTo(btx.Id);
     }
 
     [Test]
@@ -78,8 +78,8 @@ internal sealed class BankTransactionJournalEntryIdFkTests : EndpointsTestsBase
         var bankAccountService = scope.ServiceProvider.GetRequiredService<IBankAccountService>();
         var bankTransactionService =
             scope.ServiceProvider.GetRequiredService<IBankTransactionService>();
-        var categorisationService =
-            scope.ServiceProvider.GetRequiredService<IBankTransactionCategorisationService>();
+        var categorizationService =
+            scope.ServiceProvider.GetRequiredService<IBankTransactionCategorizationService>();
         var journalEntryService = scope.ServiceProvider.GetRequiredService<IJournalEntryService>();
 
         var (expense, asset) = await CreateExpenseAndAssetAsync(accountService, cancellationToken);
@@ -96,7 +96,7 @@ internal sealed class BankTransactionJournalEntryIdFkTests : EndpointsTestsBase
             cancellationToken
         );
 
-        var categorised = await categorisationService.CategorizeAsync(
+        var categorized = await categorizationService.CategorizeAsync(
             btx.Id,
             new CategorizeBankTransactionInput(
                 CounterpartyId: null,
@@ -107,10 +107,10 @@ internal sealed class BankTransactionJournalEntryIdFkTests : EndpointsTestsBase
             ),
             cancellationToken
         );
-        await Assert.That(categorised.IsSuccess).IsTrue();
+        await Assert.That(categorized.IsSuccess).IsTrue();
 
         var deleteResult = await journalEntryService.DeleteAsync(
-            categorised.Value!.Id,
+            categorized.Value!.Id,
             cancellationToken
         );
         await Assert.That(deleteResult.IsSuccess).IsTrue();

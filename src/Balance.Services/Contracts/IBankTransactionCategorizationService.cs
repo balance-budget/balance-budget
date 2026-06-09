@@ -8,7 +8,7 @@ namespace Balance.Services.Contracts;
 /// <c>BankAccount</c> on the way. All side effects commit in a single DB transaction; any
 /// failure rolls the whole thing back. See ADR-0013.
 /// </summary>
-public interface IBankTransactionCategorisationService
+public interface IBankTransactionCategorizationService
 {
     Task<Result<JournalEntryDetailOutput>> CategorizeAsync(
         BankTransactionId id,
@@ -18,7 +18,7 @@ public interface IBankTransactionCategorisationService
 }
 
 /// <summary>
-/// Input for <see cref="IBankTransactionCategorisationService.CategorizeAsync"/>. Exactly one
+/// Input for <see cref="IBankTransactionCategorizationService.CategorizeAsync"/>. Exactly one
 /// of <see cref="CounterpartyId"/> or <see cref="NewCounterparty"/> must be set; the
 /// <see cref="Lines"/> are the counter-side lines only — the bank-side line is derived
 /// from the BT's <c>BankAccount</c> and must sum with the counter-side to zero.
@@ -35,7 +35,7 @@ public sealed record NewCounterpartyInput(string Name);
 
 /// <summary>
 /// <see cref="LoanPartId"/> switches the line into loan mode (ADR-0025): the attribution makes
-/// the categorisation loan-aware, allowing it to post to that part's loan-managed account
+/// the categorization loan-aware, allowing it to post to that part's loan-managed account
 /// (principal) or the loan's interest Expense account (interest, prepayment penalty). Amounts
 /// stay user-editable — the engine's proposal is a pre-fill, the bank's actual charge wins.
 /// </summary>

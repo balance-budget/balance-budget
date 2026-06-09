@@ -29,7 +29,7 @@ internal abstract class IngCreditCardStatementParser : IIngCreditCardStatementPa
         CancellationToken cancellationToken
     );
 
-    protected static string NormaliseLinkedAccount(string value) =>
+    protected static string NormalizeLinkedAccount(string value) =>
         value.Replace(" ", "", StringComparison.Ordinal).ToUpperInvariant();
 
     protected static DateOnly ParseDate(string value) =>

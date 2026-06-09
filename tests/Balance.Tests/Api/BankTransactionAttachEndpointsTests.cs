@@ -175,7 +175,7 @@ internal sealed class BankTransactionAttachEndpointsTests : EndpointsTestsBase
         var currentBank = await CreateOwnedBankAccountAsync(client, currentIban, currentAccount.Id);
         var savingsBank = await CreateOwnedBankAccountAsync(client, savingsIban, savingsAccount.Id);
 
-        // BT-A: from current account, categorise as self-transfer to savings.
+        // BT-A: from current account, categorize as self-transfer to savings.
         var btARequest = new CreateBankTransactionRequestDto(
             BankAccountId: currentBank.Id,
             BookingDate: new DateOnly(2026, 5, 17),

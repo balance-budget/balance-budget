@@ -45,10 +45,10 @@ public static class ErrorCodes
     public const string BankTransactionRequiresOwnAccount = "bank_transaction.requires_own_account";
     public const string BankTransactionAlreadyDismissed = "bank_transaction.already_dismissed";
     public const string BankTransactionNotDismissed = "bank_transaction.not_dismissed";
-    public const string BankTransactionAlreadyCategorised = "bank_transaction.already_categorised";
+    public const string BankTransactionAlreadyCategorized = "bank_transaction.already_categorized";
     public const string BankTransactionDismissed = "bank_transaction.dismissed";
     public const string BankTransactionNotAttached = "bank_transaction.not_attached";
-    public const string CategoriseCounterpartySelection = "categorise.counterparty_selection";
+    public const string CategorizeCounterpartySelection = "categorize.counterparty_selection";
 
     // BankTransaction Attach (ADR 0012)
     public const string AttachPredicateFailed = "attach.predicate_failed";

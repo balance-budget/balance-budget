@@ -534,7 +534,7 @@ internal sealed class JournalEntryService : IJournalEntryService
         }
 
         // Editability gate (ADR-0014): a non-Uncleared line's AccountId is frozen. This also
-        // protects the bank-side leg of any bank-linked entry by construction — categorise and
+        // protects the bank-side leg of any bank-linked entry by construction — categorize and
         // attach always leave that leg Cleared.
         foreach (var line in lines)
         {

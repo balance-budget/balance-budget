@@ -46,7 +46,7 @@ internal sealed class AccountSuggestionService : IAccountSuggestionService
         }
 
         // Project counter-side lines. We exclude lines whose Account is `Cleared` on the most
-        // recent JE — that line was the bank-side line auto-created by the categorisation
+        // recent JE — that line was the bank-side line auto-created by the categorization
         // flow, and re-suggesting it would round-trip noise back into the form. We do NOT
         // exclude every Account that happens to have a BankAccount linked, because a counter-
         // side line can legitimately reference an own-Account (e.g. paying down a Liability

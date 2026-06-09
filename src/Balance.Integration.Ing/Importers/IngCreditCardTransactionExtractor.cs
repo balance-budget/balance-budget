@@ -73,8 +73,8 @@ internal abstract class IngCreditCardTransactionExtractor : IBankTransactionExtr
         if (statement.Rows.Count == 0)
             return Array.Empty<BankTransaction>();
 
-        var firstCardNumber = Normalise(statement.Rows[0].CardNumber);
-        if (Normalise(bankAccount.CardIdentifier) != firstCardNumber)
+        var firstCardNumber = Normalize(statement.Rows[0].CardNumber);
+        if (Normalize(bankAccount.CardIdentifier) != firstCardNumber)
         {
             return new InvariantError(
                 ErrorCodes.ImportIbanMismatch,
@@ -85,7 +85,7 @@ internal abstract class IngCreditCardTransactionExtractor : IBankTransactionExtr
 
         foreach (var row in statement.Rows)
         {
-            if (Normalise(row.CardNumber) != firstCardNumber)
+            if (Normalize(row.CardNumber) != firstCardNumber)
             {
                 return new InvariantError(
                     ErrorCodes.ImportAccountColumnDivergence,
@@ -141,7 +141,7 @@ internal abstract class IngCreditCardTransactionExtractor : IBankTransactionExtr
             Description = description,
             CounterpartyName = counterpartyName,
             CounterpartyAccountNumber = counterpartyAccountNumber,
-            RawSource = RowHasher.Normalise(row.RawRecord),
+            RawSource = RowHasher.Normalize(row.RawRecord),
             RowHash = RowHasher.Hash(row.RawRecord),
             ForeignAmount = foreignAmountMinor,
             ForeignCurrencyCode = foreignCurrencyCode,
@@ -211,7 +211,7 @@ internal abstract class IngCreditCardTransactionExtractor : IBankTransactionExtr
     private static long? ToMinorUnits(decimal? amount) =>
         amount is null ? null : (long)decimal.Round(amount.Value * 100m);
 
-    private static string Normalise(string? value) =>
+    private static string Normalize(string? value) =>
         value is null
             ? string.Empty
             : value.Replace(" ", "", StringComparison.Ordinal).ToUpperInvariant();

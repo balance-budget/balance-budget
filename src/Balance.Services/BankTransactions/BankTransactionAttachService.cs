@@ -248,11 +248,11 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
         CancellationToken cancellationToken
     )
     {
-        // (1) BT must be uncategorised and not dismissed.
+        // (1) BT must be uncategorized and not dismissed.
         if (bankTransaction.JournalEntryId is not null)
         {
             return new ConflictError(
-                ErrorCodes.BankTransactionAlreadyCategorised,
+                ErrorCodes.BankTransactionAlreadyCategorized,
                 "BankTransaction is already attached to a JournalEntry."
             );
         }
@@ -329,7 +329,7 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
         // encodes the in/out direction for the owning Account.
         //
         // Raw amount equality is deliberate (not a missing AccountSignConvention consult): the
-        // counter-side line was created in the Categorisation flow as a verbatim copy of the first
+        // counter-side line was created in the Categorization flow as a verbatim copy of the first
         // BT's Amount, so a self-transfer matches iff the two bank statements report equal-and-
         // opposite signed amounts. This holds when both extractors emit the "money-in-positive"
         // convention; for Liability-backed own-Accounts (Card pay-downs) it relies on ING's

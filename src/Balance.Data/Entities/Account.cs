@@ -39,7 +39,7 @@ public sealed class Account : BaseEntity<AccountId>
     /// <summary>
     /// The user-chosen icon name (kebab-case, e.g. <c>piggy-bank</c>) shown wherever the account's
     /// avatar renders; <c>null</c> inherits the <see cref="AccountType"/>'s default icon. Purely
-    /// presentational — the avatar's colour always derives from the type and is not stored.
+    /// presentational — the avatar's color always derives from the type and is not stored.
     /// </summary>
     public string? IconName { get; set; }
 }

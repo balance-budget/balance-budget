@@ -76,7 +76,7 @@ public interface ILoanService
 
     /// <summary>
     /// Edits a rate period to correct a mistake. Safe because the projection is computed, never
-    /// materialised (ADR-0025): the change only affects future proposals and the projected curve,
+    /// materialized (ADR-0025): the change only affects future proposals and the projected curve,
     /// never posted Loan-payment lines. Guarded by the per-part effective-date uniqueness.
     /// </summary>
     Task<Result<LoanDetailOutput>> UpdateRatePeriodAsync(

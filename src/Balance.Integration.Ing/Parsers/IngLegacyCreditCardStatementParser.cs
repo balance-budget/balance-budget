@@ -62,7 +62,7 @@ internal sealed class IngLegacyCreditCardStatementParser : IngCreditCardStatemen
             var linkedAccountMatch = IngPatterns.CreditCardLinkedAccount().Match(line);
             if (linkedAccountMatch.Success)
             {
-                linkedAccount = NormaliseLinkedAccount(linkedAccountMatch.Value);
+                linkedAccount = NormalizeLinkedAccount(linkedAccountMatch.Value);
             }
 
             var cardNumberMatch = IngPatterns.LegacyCreditCardNumberLine().Match(line);

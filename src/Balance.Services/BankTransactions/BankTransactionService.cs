@@ -83,7 +83,7 @@ internal sealed class BankTransactionService : IBankTransactionService
             .ToListAsync(cancellationToken);
 
         // The Inbox hint is the only filter where a MatchingJournalEntry is meaningful (other
-        // filters either show already-categorised rows or dismissed rows). Compute the predicate
+        // filters either show already-categorized rows or dismissed rows). Compute the predicate
         // per row via the attach service so the 7-condition logic lives in one place.
         if (filter != BankTransactionListFilter.Inbox || rows.Count == 0)
             return new PagedOutput<BankTransactionOutput>(rows, totalCount);
@@ -102,7 +102,7 @@ internal sealed class BankTransactionService : IBankTransactionService
     /// <summary>
     /// Loan-payment hints for one Inbox page (ADR-0025): a debit whose counterparty account
     /// number belongs to a counterparty that is some Loan's lender gets pointed at that loan's
-    /// categorise mode. Resolved in one batch query; ambiguity (several loans at the same
+    /// categorize mode. Resolved in one batch query; ambiguity (several loans at the same
     /// lender) yields no hint, mirroring the Attach hint's "exactly one match" stance.
     /// </summary>
     private async Task<
@@ -294,7 +294,7 @@ internal sealed class BankTransactionService : IBankTransactionService
         if (bankTransaction.JournalEntryId is not null)
         {
             return new ConflictError(
-                ErrorCodes.BankTransactionAlreadyCategorised,
+                ErrorCodes.BankTransactionAlreadyCategorized,
                 "BankTransaction has a JournalEntry and cannot be dismissed. "
                     + "Delete the JournalEntry first."
             );

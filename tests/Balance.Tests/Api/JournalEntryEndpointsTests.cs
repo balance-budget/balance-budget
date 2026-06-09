@@ -732,7 +732,7 @@ internal sealed class JournalEntryEndpointsTests : EndpointsTestsBase
         var created = await CreateEntryAsync(
             client,
             new DateOnly(2026, 5, 10),
-            "miscategorised",
+            "miscategorized",
             lines:
             [
                 new CreateJournalLineRequestDto(grocery.Id, 4000, "AH"),

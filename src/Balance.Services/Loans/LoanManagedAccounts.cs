@@ -10,7 +10,7 @@ namespace Balance.Services.Loans;
 /// a Loan's parent) is only a valid posting target inside loan-aware flows, so the part balance
 /// always equals what the loan did. Status is derived from the Loan/LoanPart account linkage,
 /// never a flag to keep in sync. Consumed by journal-entry create/edit, reassign, and plain
-/// categorisation.
+/// categorization.
 /// </summary>
 internal static class LoanManagedAccounts
 {

@@ -31,6 +31,6 @@ public sealed record BankTransactionOutput(
 /// <summary>
 /// Inbox hint that a row looks like a Loan payment (ADR-0025): its counterparty account number
 /// belongs to a counterparty that is some Loan's lender. One click away from the loan-aware
-/// categorise mode; analogous to the Attach hint of ADR-0012.
+/// categorize mode; analogous to the Attach hint of ADR-0012.
 /// </summary>
 public sealed record LoanPaymentHintOutput(LoanId LoanId, string LoanName);
