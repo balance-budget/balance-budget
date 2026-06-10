@@ -15,7 +15,7 @@ public interface IDashboardService
         CancellationToken cancellationToken
     );
 
-    Task<Result<DashboardRecentActivityOutput>> GetRecentActivityAsync(
+    Task<Result<DashboardRegisterPreviewOutput>> GetRegisterPreviewsAsync(
         int rowsPerAccount,
         CancellationToken cancellationToken
     );

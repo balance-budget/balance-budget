@@ -7,10 +7,10 @@ import { accountIdentifier, useAccounts, type Account } from '../api/accounts';
 import { useCurrencyCatalog } from '../api/currencies';
 import {
     useAccountBalanceTrend,
-    useDashboardRecentActivity,
+    useDashboardRegisterPreviews,
     useDashboardSummary,
     TREND_RANGES,
-    type RecentActivityRow,
+    type RegisterPreviewRow,
     type TrendRange,
 } from '../api/dashboard';
 import { AccountAvatar } from '../components/AccountAvatar';
@@ -26,7 +26,7 @@ import { cx } from '../lib/cx';
 import { isLedgerAccount } from '../lib/domain';
 import { formatMoney } from '../lib/money';
 
-function RecentRow({ row }: { row: RecentActivityRow }) {
+function PreviewRow({ row }: { row: RegisterPreviewRow }) {
     const catalog = useCurrencyCatalog();
     const label = row.counterpartyName ?? row.entryDescription ?? row.lineDescription ?? '—';
     const negative = row.amount.amount < 0;
@@ -45,7 +45,7 @@ function RecentRow({ row }: { row: RecentActivityRow }) {
     );
 }
 
-function RecentActivity({ rows, isPending }: { rows: RecentActivityRow[]; isPending: boolean }) {
+function RegisterPreview({ rows, isPending }: { rows: RegisterPreviewRow[]; isPending: boolean }) {
     if (isPending) {
         return (
             <div className="pl-12 flex flex-col gap-1">
@@ -62,7 +62,7 @@ function RecentActivity({ rows, isPending }: { rows: RecentActivityRow[]; isPend
     return (
         <div className="pl-12 flex flex-col gap-1">
             {rows.map(r => (
-                <RecentRow key={r.journalLineId} row={r} />
+                <PreviewRow key={r.journalLineId} row={r} />
             ))}
         </div>
     );
@@ -70,12 +70,12 @@ function RecentActivity({ rows, isPending }: { rows: RecentActivityRow[]; isPend
 
 function AccountRow({
     account,
-    recentRows,
-    recentPending,
+    previewRows,
+    previewPending,
 }: {
     account: Account;
-    recentRows: RecentActivityRow[];
-    recentPending: boolean;
+    previewRows: RegisterPreviewRow[];
+    previewPending: boolean;
 }) {
     const identifier = accountIdentifier(account);
     const isNegative = account.balance.amount < 0;
@@ -98,7 +98,7 @@ function AccountRow({
                     className={isNegative ? 'text-danger' : ''}
                 />
             </div>
-            <RecentActivity rows={recentRows} isPending={recentPending} />
+            <RegisterPreview rows={previewRows} isPending={previewPending} />
         </div>
     );
 }
@@ -106,9 +106,9 @@ function AccountRow({
 function AccountsPanel() {
     const { t } = useLingui();
     const accounts = useAccounts();
-    // One batched request for every account card's recent rows: fanning out one
+    // One batched request for every account card's Register preview: fanning out one
     // register call per account piles up on resource-constrained hosts.
-    const recent = useDashboardRecentActivity();
+    const previews = useDashboardRegisterPreviews();
 
     if (accounts.isPending) {
         return (
@@ -150,18 +150,18 @@ function AccountsPanel() {
 
     return (
         <div>
-            {recent.isError && (
+            {previews.isError && (
                 <ErrorState
                     message={t`Couldn't load recent activity.`}
-                    onRetry={() => void recent.refetch()}
+                    onRetry={() => void previews.refetch()}
                 />
             )}
             {ledgerAccounts.map(a => (
                 <AccountRow
                     key={a.id}
                     account={a}
-                    recentRows={recent.data?.get(a.id) ?? []}
-                    recentPending={recent.isPending}
+                    previewRows={previews.data?.get(a.id) ?? []}
+                    previewPending={previews.isPending}
                 />
             ))}
         </div>

@@ -172,16 +172,16 @@ internal sealed class DashboardService : IDashboardService
         return new AccountBalanceTrendOutput(series, periodStart, today, range, currencyCode);
     }
 
-    public async Task<Result<DashboardRecentActivityOutput>> GetRecentActivityAsync(
+    public async Task<Result<DashboardRegisterPreviewOutput>> GetRegisterPreviewsAsync(
         int rowsPerAccount,
         CancellationToken cancellationToken
     )
     {
         // One correlated query for every postable account's newest lines: EF translates the
         // per-account OrderBy+Take into ROW_NUMBER() OVER (PARTITION BY AccountId), so the
-        // dashboard's per-account activity costs a single round-trip instead of one register
-        // request (and its count/page/sibling queries) per account. Ordering matches the
-        // register: Date DESC then JournalEntryId DESC (ADR-0007).
+        // dashboard's per-account Register previews cost a single round-trip instead of one
+        // register request (and its count/page/sibling queries) per account. Ordering matches
+        // the Register: Date DESC then JournalEntryId DESC (ADR-0007).
         var accounts = await _dbContext
             .Accounts.AsNoTracking()
             .Where(a => a.IsPostable)
@@ -223,10 +223,10 @@ internal sealed class DashboardService : IDashboardService
 
         var output = accounts
             .Where(a => a.Rows.Count > 0)
-            .Select(a => new DashboardAccountRecentActivity(
+            .Select(a => new AccountRegisterPreview(
                 a.Id,
                 [
-                    .. a.Rows.Select(r => new DashboardRecentActivityRow(
+                    .. a.Rows.Select(r => new RegisterPreviewRow(
                         r.EntryId,
                         r.LineId,
                         r.Date,
@@ -239,7 +239,7 @@ internal sealed class DashboardService : IDashboardService
             ))
             .ToList();
 
-        return new DashboardRecentActivityOutput(rowsPerAccount, output);
+        return new DashboardRegisterPreviewOutput(rowsPerAccount, output);
     }
 
     // Net Worth = sum(Asset balances) - sum(Liability balances), restricted to the
