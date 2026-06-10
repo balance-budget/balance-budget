@@ -573,6 +573,65 @@ namespace Balance.Data.PostgreSql.Migrations
                     b.ToTable("JournalEntries", (string)null);
                 });
 
+            modelBuilder.Entity("Balance.Data.Entities.JournalEntryTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("AnchorDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Cadence")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<Guid?>("CounterAccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CounterpartyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<long>("ExpectedAmount")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("MandateId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("SepaCreditorId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId")
+                        .HasDatabaseName("IX_JournalEntryTemplates_AccountId");
+
+                    b.HasIndex("CounterAccountId");
+
+                    b.HasIndex("CounterpartyId");
+
+                    b.ToTable("JournalEntryTemplates", (string)null);
+                });
+
             modelBuilder.Entity("Balance.Data.Entities.JournalLine", b =>
                 {
                     b.Property<Guid>("Id")
@@ -911,6 +970,25 @@ namespace Balance.Data.PostgreSql.Migrations
 
             modelBuilder.Entity("Balance.Data.Entities.JournalEntry", b =>
                 {
+                    b.HasOne("Balance.Data.Entities.Counterparty", null)
+                        .WithMany()
+                        .HasForeignKey("CounterpartyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Balance.Data.Entities.JournalEntryTemplate", b =>
+                {
+                    b.HasOne("Balance.Data.Entities.Account", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Balance.Data.Entities.Account", null)
+                        .WithMany()
+                        .HasForeignKey("CounterAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Balance.Data.Entities.Counterparty", null)
                         .WithMany()
                         .HasForeignKey("CounterpartyId")

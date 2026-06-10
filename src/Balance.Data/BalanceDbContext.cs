@@ -47,6 +47,8 @@ public sealed class BalanceDbContext
 
     public DbSet<LoanPartRatePeriod> LoanPartRatePeriods { get; set; } = null!;
 
+    public DbSet<JournalEntryTemplate> JournalEntryTemplates { get; set; } = null!;
+
     public DbSet<ApiToken> ApiTokens { get; set; } = null!;
 
     public DatabaseProvider Provider => _options.Provider;
