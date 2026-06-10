@@ -31,6 +31,7 @@ import {
     emptyAdvancedLine,
     emptyForm,
     emptySimpleLeg,
+    prefilledForm,
     simpleStateToCreateRequest,
     simpleToAdvanced,
     tryAdvancedToSimple,
@@ -47,7 +48,7 @@ function currencyFormat(currencyCode: string | null | undefined): Intl.NumberFor
     return currencyCode ? { style: 'currency', currency: currencyCode } : {};
 }
 
-export function JournalNew() {
+export function JournalNew({ prefillAccountId }: { prefillAccountId: AccountId | null }) {
     const { t } = useLingui();
     const accounts = useAccounts();
     const counterparties = useCounterparties();
@@ -89,6 +90,7 @@ export function JournalNew() {
             accounts={accounts.data}
             counterparties={counterparties.data}
             catalog={catalog}
+            prefillAccountId={prefillAccountId}
         />
     );
 }
@@ -97,10 +99,12 @@ function JournalNewForm({
     accounts,
     counterparties,
     catalog,
+    prefillAccountId,
 }: {
     accounts: Account[];
     counterparties: { id: CounterpartyId; name: string }[];
     catalog: CurrencyCatalog;
+    prefillAccountId: AccountId | null;
 }) {
     const { t } = useLingui();
     const create = useCreateJournalEntry();
@@ -108,7 +112,13 @@ function JournalNewForm({
     const toast = useToast();
     const navigate = useNavigate();
 
-    const [form, setForm] = useState<FormState>(() => emptyForm(todayIso()));
+    const [form, setForm] = useState<FormState>(() => {
+        // Prefill only resolvable postable accounts; lines can't post to placeholders.
+        const account = prefillAccountId
+            ? accounts.find(a => a.id === prefillAccountId && a.isPostable)
+            : undefined;
+        return account ? prefilledForm(todayIso(), account) : emptyForm(todayIso());
+    });
     const [topError, setTopError] = useState<string | null>(null);
     const [fieldErrors, setFieldErrors] = useState<FieldErrors | null>(null);
 
