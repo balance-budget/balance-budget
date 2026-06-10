@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Balance.Data;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Enums;
@@ -245,6 +246,141 @@ internal sealed class RegisterService : IRegisterService
             new PagedOutput<RegisterRowOutput>(output, totalCount)
         );
     }
+
+    public async Task<Result<RegisterSummaryOutput>> SummarizeAsync(
+        AccountId accountId,
+        DateOnly fromDate,
+        DateOnly toDate,
+        RegisterSummaryBucket bucket,
+        CancellationToken cancellationToken
+    )
+    {
+        var account = await _dbContext
+            .Accounts.AsNoTracking()
+            .Where(a => a.Id == accountId)
+            .Select(a => new { a.AccountType, a.CurrencyCode })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (account is null)
+        {
+            return new NotFoundError("Account", accountId.Value.ToString());
+        }
+
+        var accounts = await _dbContext
+            .Accounts.AsNoTracking()
+            .Select(a => new
+            {
+                a.Id,
+                a.ParentAccountId,
+                a.Name,
+                a.Code,
+            })
+            .ToListAsync(cancellationToken);
+        var nodes = accounts.Select(a => new AccountNode(a.Id, a.ParentAccountId)).ToList();
+
+        // Each posted line attributes to the direct child of the focal account that its posted
+        // account sits under — deeper descendants roll up into their direct-child ancestor. Lines
+        // posted on the focal account itself (the leaf case) segment as the account itself.
+        var segmentByAccount = new Dictionary<AccountId, AccountId> { [accountId] = accountId };
+        foreach (var child in accounts.Where(a => a.ParentAccountId == accountId))
+        {
+            foreach (var id in AccountTree.DescendantsAndSelf(nodes, child.Id))
+            {
+                segmentByAccount[id] = child.Id;
+            }
+        }
+
+        var focalIds = segmentByAccount.Keys.ToList();
+
+        // Pre-aggregate per (entry date, posted account) in the database; bucket boundaries are
+        // calendar logic the providers don't share, so the bucket fold happens in memory on the
+        // already-collapsed rows.
+        var dailySums = await _dbContext
+            .JournalLines.AsNoTracking()
+            .Where(l => focalIds.Contains(l.AccountId))
+            .Join(
+                _dbContext.JournalEntries.AsNoTracking(),
+                l => l.JournalEntryId,
+                e => e.Id,
+                (l, e) =>
+                    new
+                    {
+                        e.Date,
+                        l.AccountId,
+                        l.Amount,
+                    }
+            )
+            .Where(x => x.Date >= fromDate && x.Date <= toDate)
+            .GroupBy(x => new { x.Date, x.AccountId })
+            .Select(g => new
+            {
+                g.Key.Date,
+                g.Key.AccountId,
+                Sum = g.Sum(x => x.Amount),
+            })
+            .ToListAsync(cancellationToken);
+
+        // Net per (bucket, segment), normalized to the account's normal balance (ADR-0011) — the
+        // whole subtree shares the focal AccountType (ADR-0019), so one flip covers every segment.
+        var creditNormal = AccountSignConvention.IsCreditNormal(account.AccountType);
+        var sums = new Dictionary<(DateOnly Start, AccountId Segment), long>();
+        foreach (var row in dailySums)
+        {
+            var key = (BucketStart(row.Date, bucket), segmentByAccount[row.AccountId]);
+            var amount = creditNormal ? checked(-row.Sum) : row.Sum;
+            sums[key] = checked(sums.GetValueOrDefault(key) + amount);
+        }
+
+        var activeSegments = sums.Keys.Select(k => k.Segment).ToHashSet();
+        var segments = accounts
+            .Where(a => activeSegments.Contains(a.Id))
+            .OrderBy(a => a.Code, StringComparer.Ordinal)
+            .Select(a => new RegisterSummarySegment(a.Id, a.Name))
+            .ToList();
+
+        var buckets = new List<RegisterSummaryBucketOutput>();
+        for (
+            var start = BucketStart(fromDate, bucket);
+            start <= toDate;
+            start = NextBucket(start, bucket)
+        )
+        {
+            var values = segments
+                .Where(s => sums.ContainsKey((start, s.AccountId)))
+                .Select(s => new RegisterSummaryValue(s.AccountId, sums[(start, s.AccountId)]))
+                .ToList();
+            buckets.Add(new RegisterSummaryBucketOutput(start, values));
+        }
+
+        return new Result<RegisterSummaryOutput>(
+            new RegisterSummaryOutput(
+                bucket,
+                fromDate,
+                toDate,
+                account.CurrencyCode,
+                segments,
+                buckets
+            )
+        );
+    }
+
+    private static DateOnly BucketStart(DateOnly date, RegisterSummaryBucket bucket) =>
+        bucket switch
+        {
+            RegisterSummaryBucket.Day => date,
+            // ISO weeks: Monday starts the week.
+            RegisterSummaryBucket.Week => date.AddDays(-(((int)date.DayOfWeek + 6) % 7)),
+            RegisterSummaryBucket.Month => new DateOnly(date.Year, date.Month, 1),
+            _ => throw new UnreachableException($"Unknown RegisterSummaryBucket '{bucket}'."),
+        };
+
+    private static DateOnly NextBucket(DateOnly start, RegisterSummaryBucket bucket) =>
+        bucket switch
+        {
+            RegisterSummaryBucket.Day => start.AddDays(1),
+            RegisterSummaryBucket.Week => start.AddDays(7),
+            RegisterSummaryBucket.Month => start.AddMonths(1),
+            _ => throw new UnreachableException($"Unknown RegisterSummaryBucket '{bucket}'."),
+        };
 
     private sealed record FocalRow(
         JournalLineId LineId,

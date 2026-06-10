@@ -23,6 +23,10 @@ internal static class AccountEndpoints
             .WithValidation<ListAccountRegisterRequest>()
             .WithName("ListAccountRegister");
         group
+            .MapGet("/{id}/register/summary", GetRegisterSummaryAsync)
+            .WithValidation<GetRegisterSummaryRequest>()
+            .WithName("GetRegisterSummary");
+        group
             .MapPost("", CreateAsync)
             .WithValidation<CreateAccountRequest>()
             .WithName("CreateAccount");
@@ -77,6 +81,27 @@ internal static class AccountEndpoints
             request.Status
         );
         var result = await registerService.ListAsync(id, skip, take, filter, cancellationToken);
+        return result.ToOkReadOnly();
+    }
+
+    private static async Task<
+        Results<Ok<RegisterSummaryOutput>, NotFound<ProblemDetails>, ValidationProblem>
+    > GetRegisterSummaryAsync(
+        [FromRoute] AccountId id,
+        [AsParameters] GetRegisterSummaryRequest request,
+        [FromServices] IRegisterService registerService,
+        CancellationToken cancellationToken
+    )
+    {
+        // The validator guarantees all three are present; `!.Value` mirrors the validated-request
+        // pattern used across the endpoint layer.
+        var result = await registerService.SummarizeAsync(
+            id,
+            request.From!.Value,
+            request.To!.Value,
+            request.Bucket!.Value,
+            cancellationToken
+        );
         return result.ToOkReadOnly();
     }
 
