@@ -34,6 +34,7 @@ const NAV_MAIN: NavLink[] = [
     { to: '/', label: msg`Dashboard`, iconName: 'layout-dashboard' },
     { to: '/activity', label: msg`Activity`, iconName: 'book-open' },
     { to: '/reports', label: msg`Insights`, iconName: 'line-chart' },
+    { to: '/outlook', label: msg`Outlook`, iconName: 'binoculars' },
 ];
 
 const NAV_PLAN: NavLink[] = [

@@ -14,6 +14,7 @@ import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as PiggyBanksRouteImport } from './routes/piggy-banks'
+import { Route as OutlookRouteImport } from './routes/outlook'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LoansRouteImport } from './routes/loans'
 import { Route as JournalRouteImport } from './routes/journal'
@@ -65,6 +66,11 @@ const ReportsRoute = ReportsRouteImport.update({
 const PiggyBanksRoute = PiggyBanksRouteImport.update({
   id: '/piggy-banks',
   path: '/piggy-banks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OutlookRoute = OutlookRouteImport.update({
+  id: '/outlook',
+  path: '/outlook',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -216,6 +222,7 @@ export interface FileRoutesByFullPath {
   '/journal': typeof JournalRouteWithChildren
   '/loans': typeof LoansRouteWithChildren
   '/login': typeof LoginRoute
+  '/outlook': typeof OutlookRoute
   '/piggy-banks': typeof PiggyBanksRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRouteWithChildren
@@ -246,6 +253,7 @@ export interface FileRoutesByTo {
   '/budgets': typeof BudgetsRoute
   '/journal': typeof JournalRouteWithChildren
   '/login': typeof LoginRoute
+  '/outlook': typeof OutlookRoute
   '/piggy-banks': typeof PiggyBanksRoute
   '/reports': typeof ReportsRoute
   '/setup': typeof SetupRoute
@@ -279,6 +287,7 @@ export interface FileRoutesById {
   '/journal': typeof JournalRouteWithChildren
   '/loans': typeof LoansRouteWithChildren
   '/login': typeof LoginRoute
+  '/outlook': typeof OutlookRoute
   '/piggy-banks': typeof PiggyBanksRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRouteWithChildren
@@ -315,6 +324,7 @@ export interface FileRouteTypes {
     | '/journal'
     | '/loans'
     | '/login'
+    | '/outlook'
     | '/piggy-banks'
     | '/reports'
     | '/settings'
@@ -345,6 +355,7 @@ export interface FileRouteTypes {
     | '/budgets'
     | '/journal'
     | '/login'
+    | '/outlook'
     | '/piggy-banks'
     | '/reports'
     | '/setup'
@@ -377,6 +388,7 @@ export interface FileRouteTypes {
     | '/journal'
     | '/loans'
     | '/login'
+    | '/outlook'
     | '/piggy-banks'
     | '/reports'
     | '/settings'
@@ -412,6 +424,7 @@ export interface RootRouteChildren {
   JournalRoute: typeof JournalRouteWithChildren
   LoansRoute: typeof LoansRouteWithChildren
   LoginRoute: typeof LoginRoute
+  OutlookRoute: typeof OutlookRoute
   PiggyBanksRoute: typeof PiggyBanksRoute
   ReportsRoute: typeof ReportsRoute
   SettingsRoute: typeof SettingsRouteWithChildren
@@ -454,6 +467,13 @@ declare module '@tanstack/react-router' {
       path: '/piggy-banks'
       fullPath: '/piggy-banks'
       preLoaderRoute: typeof PiggyBanksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/outlook': {
+      id: '/outlook'
+      path: '/outlook'
+      fullPath: '/outlook'
+      preLoaderRoute: typeof OutlookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -758,6 +778,7 @@ const rootRouteChildren: RootRouteChildren = {
   JournalRoute: JournalRouteWithChildren,
   LoansRoute: LoansRouteWithChildren,
   LoginRoute: LoginRoute,
+  OutlookRoute: OutlookRoute,
   PiggyBanksRoute: PiggyBanksRoute,
   ReportsRoute: ReportsRoute,
   SettingsRoute: SettingsRouteWithChildren,
