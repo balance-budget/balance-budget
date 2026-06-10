@@ -172,6 +172,76 @@ internal sealed class DashboardService : IDashboardService
         return new AccountBalanceTrendOutput(series, periodStart, today, range, currencyCode);
     }
 
+    public async Task<Result<DashboardRecentActivityOutput>> GetRecentActivityAsync(
+        int rowsPerAccount,
+        CancellationToken cancellationToken
+    )
+    {
+        // One correlated query for every postable account's newest lines: EF translates the
+        // per-account OrderBy+Take into ROW_NUMBER() OVER (PARTITION BY AccountId), so the
+        // dashboard's per-account activity costs a single round-trip instead of one register
+        // request (and its count/page/sibling queries) per account. Ordering matches the
+        // register: Date DESC then JournalEntryId DESC (ADR-0007).
+        var accounts = await _dbContext
+            .Accounts.AsNoTracking()
+            .Where(a => a.IsPostable)
+            .Select(a => new
+            {
+                a.Id,
+                a.AccountType,
+                a.CurrencyCode,
+                Rows = _dbContext
+                    .JournalLines.AsNoTracking()
+                    .Where(l => l.AccountId == a.Id)
+                    .Join(
+                        _dbContext.JournalEntries.AsNoTracking(),
+                        l => l.JournalEntryId,
+                        e => e.Id,
+                        (l, e) => new { Line = l, Entry = e }
+                    )
+                    .OrderByDescending(x => x.Entry.Date)
+                    .ThenByDescending(x => x.Entry.Id)
+                    .Take(rowsPerAccount)
+                    .Select(x => new
+                    {
+                        EntryId = x.Entry.Id,
+                        LineId = x.Line.Id,
+                        x.Entry.Date,
+                        EntryDescription = x.Entry.Description,
+                        LineDescription = x.Line.Description,
+                        CounterpartyName = x.Entry.CounterpartyId == null
+                            ? null
+                            : _dbContext
+                                .Counterparties.Where(c => c.Id == x.Entry.CounterpartyId)
+                                .Select(c => c.Name)
+                                .FirstOrDefault(),
+                        x.Line.Amount,
+                    })
+                    .ToList(),
+            })
+            .ToListAsync(cancellationToken);
+
+        var output = accounts
+            .Where(a => a.Rows.Count > 0)
+            .Select(a => new DashboardAccountRecentActivity(
+                a.Id,
+                [
+                    .. a.Rows.Select(r => new DashboardRecentActivityRow(
+                        r.EntryId,
+                        r.LineId,
+                        r.Date,
+                        r.EntryDescription,
+                        r.LineDescription,
+                        r.CounterpartyName,
+                        AccountSignConvention.ToBalance(a.AccountType, r.Amount, a.CurrencyCode)
+                    )),
+                ]
+            ))
+            .ToList();
+
+        return new DashboardRecentActivityOutput(rowsPerAccount, output);
+    }
+
     // Net Worth = sum(Asset balances) - sum(Liability balances), restricted to the
     // requested currency. Asset balances are +SUM(Amount); Liability balances are
     // -SUM(Amount). Subtracting the latter collapses to a single signed sum over
