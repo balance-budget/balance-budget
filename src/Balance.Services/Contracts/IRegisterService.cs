@@ -11,4 +11,12 @@ public interface IRegisterService
         RegisterListFilter filter,
         CancellationToken cancellationToken
     );
+
+    Task<Result<RegisterSummaryOutput>> SummarizeAsync(
+        AccountId accountId,
+        DateOnly fromDate,
+        DateOnly toDate,
+        RegisterSummaryBucket bucket,
+        CancellationToken cancellationToken
+    );
 }
