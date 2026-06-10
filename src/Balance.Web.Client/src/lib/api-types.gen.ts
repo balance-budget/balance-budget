@@ -713,6 +713,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/outlook/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListJournalEntryTemplates"];
+        put?: never;
+        post: operations["CreateJournalEntryTemplate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/outlook/templates/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetJournalEntryTemplate"];
+        put: operations["UpdateJournalEntryTemplate"];
+        post?: never;
+        delete: operations["DeleteJournalEntryTemplate"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/outlook/candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["DetectTemplateCandidates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/outlook/projection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetOutlookProjection"];
+        put?: never;
+        post: operations["GetOutlookProjectionWithScenario"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/dashboard/summary": {
         parameters: {
             query?: never;
@@ -977,6 +1041,8 @@ export interface components {
             matchingJournalEntry?: null | components["schemas"]["AttachHintOutput"];
             loanPaymentHint?: null | components["schemas"]["LoanPaymentHintOutput"];
         };
+        /** @enum {unknown} */
+        Cadence: "Once" | "Weekly" | "Monthly" | "Quarterly" | "Yearly";
         CategorizeBankTransactionLineRequest: {
             accountId: components["schemas"]["AccountId"];
             /** Format: int64 */
@@ -1062,6 +1128,21 @@ export interface components {
             description: null | string;
             counterpartyId: null | components["schemas"]["CounterpartyId"];
             lines: components["schemas"]["CreateJournalLineRequest"][];
+        };
+        CreateJournalEntryTemplateRequest: {
+            name: string;
+            accountId: components["schemas"]["AccountId"];
+            counterAccountId: null | components["schemas"]["AccountId"];
+            counterpartyId: null | components["schemas"]["CounterpartyId"];
+            cadence: components["schemas"]["Cadence"];
+            /** Format: date */
+            anchorDate: string;
+            /** Format: date */
+            endDate: null | string;
+            /** Format: int64 */
+            expectedAmount: number | string;
+            mandateId: null | string;
+            sepaCreditorId: null | string;
         };
         CreateJournalLineRequest: {
             accountId: components["schemas"]["AccountId"];
@@ -1212,6 +1293,32 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
             hasBankTransactions: boolean;
+        };
+        /** Format: uuid */
+        JournalEntryTemplateId: string;
+        JournalEntryTemplateOutput: {
+            id: components["schemas"]["JournalEntryTemplateId"];
+            name: string;
+            accountId: components["schemas"]["AccountId"];
+            accountName: string;
+            counterAccountId: null | components["schemas"]["AccountId"];
+            counterAccountName: null | string;
+            counterpartyId: null | components["schemas"]["CounterpartyId"];
+            counterpartyName: null | string;
+            cadence: components["schemas"]["Cadence"];
+            /** Format: date */
+            anchorDate: string;
+            /** Format: date */
+            endDate: null | string;
+            /** Format: int64 */
+            expectedAmount: number | string;
+            /** Format: int64 */
+            monthlyEquivalent: number | string;
+            /** Format: date */
+            nextDueDate: null | string;
+            currencyCode: components["schemas"]["CurrencyCode"];
+            mandateId: null | string;
+            sepaCreditorId: null | string;
         };
         /** Format: uuid */
         JournalLineId: string;
@@ -1552,6 +1659,67 @@ export interface components {
             /** Format: date */
             openingDate: string;
         };
+        OutlookAccountProjectionOutput: {
+            accountId: components["schemas"]["AccountId"];
+            accountName: string;
+            accountType: components["schemas"]["AccountType"];
+            currencyCode: components["schemas"]["CurrencyCode"];
+            /** Format: int64 */
+            currentBalance: number | string;
+            actuals: components["schemas"]["OutlookActualPointOutput"][];
+            baseline: components["schemas"]["OutlookProjectedMonthOutput"][];
+            scenario: null | components["schemas"]["OutlookProjectedMonthOutput"][];
+        };
+        OutlookActualPointOutput: {
+            /** Format: date */
+            month: string;
+            /** Format: int64 */
+            endBalance: number | string;
+        };
+        OutlookProjectedMonthOutput: {
+            /** Format: date */
+            month: string;
+            /** Format: int64 */
+            expectedNet: number | string;
+            /** Format: int64 */
+            typicalSpendMid: number | string;
+            /** Format: int64 */
+            endBalanceLow: number | string;
+            /** Format: int64 */
+            endBalanceMid: number | string;
+            /** Format: int64 */
+            endBalanceHigh: number | string;
+        };
+        OutlookProjectionOutput: {
+            /** Format: date */
+            anchorMonth: string;
+            /** Format: int32 */
+            horizonMonths: number | string;
+            accounts: components["schemas"]["OutlookAccountProjectionOutput"][];
+        };
+        OutlookProjectionRequest: {
+            scenario: null | components["schemas"]["OutlookScenarioRequest"];
+        };
+        OutlookScenarioAmountOverrideRequest: {
+            templateId: components["schemas"]["JournalEntryTemplateId"];
+            /** Format: int64 */
+            expectedAmount: number | string;
+        };
+        OutlookScenarioRequest: {
+            disabledTemplateIds: unknown[];
+            addedTemplates: components["schemas"]["OutlookScenarioTemplateRequest"][];
+            amountOverrides: components["schemas"]["OutlookScenarioAmountOverrideRequest"][];
+        };
+        OutlookScenarioTemplateRequest: {
+            accountId: components["schemas"]["AccountId"];
+            cadence: components["schemas"]["Cadence"];
+            /** Format: date */
+            anchorDate: string;
+            /** Format: date */
+            endDate: null | string;
+            /** Format: int64 */
+            expectedAmount: number | string;
+        };
         PagedOutputOfAccountOutput: {
             items: components["schemas"]["AccountOutput"][];
             /** Format: int32 */
@@ -1704,6 +1872,27 @@ export interface components {
             /** Format: int64 */
             amount: number | string;
         };
+        TemplateCandidateOutput: {
+            accountId: components["schemas"]["AccountId"];
+            accountName: string;
+            counterAccountId: null | components["schemas"]["AccountId"];
+            counterAccountName: null | string;
+            counterpartyId: null | components["schemas"]["CounterpartyId"];
+            counterpartyName: null | string;
+            suggestedName: string;
+            cadence: components["schemas"]["Cadence"];
+            /** Format: date */
+            anchorDate: string;
+            /** Format: int64 */
+            expectedAmount: number | string;
+            /** Format: int64 */
+            monthlyEquivalent: number | string;
+            /** Format: int32 */
+            occurrenceCount: number | string;
+            currencyCode: components["schemas"]["CurrencyCode"];
+            mandateId: null | string;
+            sepaCreditorId: null | string;
+        };
         TokenResponse: {
             id: components["schemas"]["ApiTokenId"];
             userId: components["schemas"]["UserId"];
@@ -1758,6 +1947,19 @@ export interface components {
         UpdateCurrencyInput: {
             name: string;
             symbol?: null | string;
+        };
+        UpdateJournalEntryTemplateRequest: {
+            name: string;
+            accountId: components["schemas"]["AccountId"];
+            counterAccountId: null | components["schemas"]["AccountId"];
+            counterpartyId: null | components["schemas"]["CounterpartyId"];
+            cadence: components["schemas"]["Cadence"];
+            /** Format: date */
+            anchorDate: string;
+            /** Format: date */
+            endDate: null | string;
+            /** Format: int64 */
+            expectedAmount: number | string;
         };
         UpdateLoanInput: {
             name: string;
@@ -4897,6 +5099,386 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ListJournalEntryTemplates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalEntryTemplateOutput"][];
+                };
+            };
+        };
+    };
+    CreateJournalEntryTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateJournalEntryTemplateRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalEntryTemplateOutput"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetJournalEntryTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["JournalEntryTemplateId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalEntryTemplateOutput"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    UpdateJournalEntryTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["JournalEntryTemplateId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateJournalEntryTemplateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalEntryTemplateOutput"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    DeleteJournalEntryTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["JournalEntryTemplateId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    DetectTemplateCandidates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateCandidateOutput"][];
+                };
+            };
+        };
+    };
+    GetOutlookProjection: {
+        parameters: {
+            query?: {
+                currency?: components["schemas"]["CurrencyCode"];
+                horizon?: number | string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutlookProjectionOutput"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetOutlookProjectionWithScenario: {
+        parameters: {
+            query?: {
+                currency?: components["schemas"]["CurrencyCode"];
+                horizon?: number | string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OutlookProjectionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutlookProjectionOutput"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

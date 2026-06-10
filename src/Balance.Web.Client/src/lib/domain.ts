@@ -20,6 +20,7 @@ export type BankAccountId = Brand<string, 'BankAccountId'>;
 export type LoanId = Brand<string, 'LoanId'>;
 export type LoanPartId = Brand<string, 'LoanPartId'>;
 export type LoanPartRatePeriodId = Brand<string, 'LoanPartRatePeriodId'>;
+export type JournalEntryTemplateId = Brand<string, 'JournalEntryTemplateId'>;
 
 export const asAccountId = (s: string) => s as AccountId;
 export const asJournalEntryId = (s: string) => s as JournalEntryId;
@@ -30,6 +31,7 @@ export const asBankAccountId = (s: string) => s as BankAccountId;
 export const asLoanId = (s: string) => s as LoanId;
 export const asLoanPartId = (s: string) => s as LoanPartId;
 export const asLoanPartRatePeriodId = (s: string) => s as LoanPartRatePeriodId;
+export const asJournalEntryTemplateId = (s: string) => s as JournalEntryTemplateId;
 
 export type AccountType = 'Asset' | 'Liability' | 'Equity' | 'Income' | 'Expense';
 

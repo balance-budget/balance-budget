@@ -100,6 +100,10 @@ msgstr "{0} rente · {1} hoofdsom"
 msgid "{0} more"
 msgstr "{0} meer"
 
+#. placeholder {0}: candidate.occurrenceCount
+msgid "{0} seen"
+msgstr ""
+
 #. placeholder {0}: selectionCount.toString()
 msgid "{0} selected"
 msgstr "{0} geselecteerd"
@@ -124,6 +128,9 @@ msgstr "{count, plural, one {# regel geselecteerd} other {# regels "
 msgid "{from}–{to} of {totalCount}"
 msgstr "{from}–{to} van {totalCount}"
 
+msgid "{h}m"
+msgstr ""
+
 msgid "{label} - interest"
 msgstr "{label} - rente"
 
@@ -138,6 +145,9 @@ msgstr "{readyCount, plural, one {# rij opslaan} other {# rijen opslaan}}"
 
 msgid "{selectionCount, plural, one {Dismiss # row} other {Dismiss # rows}}"
 msgstr "{selectionCount, plural, one {# rij negeren} other {# rijen negeren}}"
+
+msgid "/mo"
+msgstr ""
 
 msgid "← Accounts"
 msgstr "← Rekeningen"
@@ -230,8 +240,15 @@ msgstr "Actief"
 msgid "Activity"
 msgstr "Activiteit"
 
+msgid "Actual"
+msgstr ""
+
 msgid "Add"
 msgstr "Toevoegen"
+
+msgid "Add a liquid account and a few recurring items to see where your balance "
+"is heading."
+msgstr ""
 
 msgid "Add at least one line."
 msgstr "Voeg minstens één regel toe."
@@ -265,6 +282,9 @@ msgstr "Gebruiker toevoegen"
 
 msgid "Add your first ledger account to get started."
 msgstr "Voeg je eerste grootboekrekening toe om te beginnen."
+
+msgid "Add your rent, salary, and subscriptions — or accept a detected one."
+msgstr ""
 
 msgid "Adding…"
 msgstr "Toevoegen…"
@@ -445,6 +465,9 @@ msgstr "Bulkrekening"
 msgid "Bulk counterparty"
 msgstr "Bulktegenpartij"
 
+msgid "Cadence"
+msgstr ""
+
 msgid "Can contain transactions"
 msgstr "Kan transacties bevatten"
 
@@ -589,11 +612,17 @@ msgstr "Kon leningen niet laden."
 msgid "Couldn't load recent activity."
 msgstr "Kon recente activiteit niet laden."
 
+msgid "Couldn't load recurring items."
+msgstr ""
+
 msgid "Couldn't load register summary."
 msgstr "Kon registeroverzicht niet laden."
 
 msgid "Couldn't load register."
 msgstr "Kon register niet laden."
+
+msgid "Couldn't load suggestions."
+msgstr ""
 
 msgid "Couldn't load the balance trend."
 msgstr "Kon de saldotrend niet laden."
@@ -607,11 +636,23 @@ msgstr "Kon de verdeling niet laden."
 msgid "Couldn't load the money flow."
 msgstr "Kon de geldstroom niet laden."
 
+msgid "Couldn't load the projection."
+msgstr ""
+
 msgid "Couldn't load this loan."
 msgstr "Kon deze lening niet laden."
 
+msgid "Couldn't remove the recurring item."
+msgstr ""
+
 msgid "Counter"
 msgstr "Tegen"
+
+msgid "Counter account"
+msgstr ""
+
+msgid "Counter account (optional)"
+msgstr ""
 
 msgid "Counter-account…"
 msgstr "Tegenrekening…"
@@ -806,6 +847,12 @@ msgstr "Ontkoppeld. Banktransactie teruggezet in het postvak."
 msgid "Detaching…"
 msgstr "Ontkoppelen…"
 
+msgid "Detected"
+msgstr ""
+
+msgid "Direction"
+msgstr ""
+
 msgid "Disable"
 msgstr "Uitschakelen"
 
@@ -892,6 +939,9 @@ msgstr "bijv. Hypotheek Hoofdstraat 1"
 msgid "e.g. Mortgage interest"
 msgstr "bijv. Hypotheekrente"
 
+msgid "e.g. Rent, Salary, Netflix…"
+msgstr ""
+
 msgid "e.g. settled by journal entry X"
 msgstr "bijv. afgewikkeld via journaalpost X"
 
@@ -929,6 +979,9 @@ msgstr "Deel bewerken - {0}"
 msgid "Edit rate period"
 msgstr "Renteperiode bewerken"
 
+msgid "Edit recurring item"
+msgstr ""
+
 msgid "Effective date"
 msgstr "Ingangsdatum"
 
@@ -965,6 +1018,9 @@ msgstr "Voer een geldig beginsaldo in."
 msgid "Enter an amount greater than zero"
 msgstr "Voer een bedrag groter dan nul in"
 
+msgid "Enter an expected amount."
+msgstr ""
+
 msgid "Enter Debit or Credit."
 msgstr "Voer debet of credit in."
 
@@ -995,6 +1051,12 @@ msgstr "Bestaande hypotheek- / leningrekening…"
 
 msgid "Expand"
 msgstr "Uitklappen"
+
+msgid "Expected amount"
+msgstr ""
+
+msgid "Expected payments and income that shape the projection."
+msgstr ""
 
 msgid "Expenses"
 msgstr "Uitgaven"
@@ -1034,6 +1096,9 @@ msgstr "Filteren op subrekening"
 msgid "Filter…"
 msgstr "Filteren…"
 
+msgid "First / next date"
+msgstr ""
+
 msgid "First-run setup"
 msgstr "Eerste installatie"
 
@@ -1067,6 +1132,12 @@ msgstr "Toekomst"
 
 msgid "General-journal table - explicit debit / credit per line."
 msgstr "Memoriaaltabel - expliciet debet / credit per regel."
+
+msgid "Has an end date"
+msgstr ""
+
+msgid "Horizon"
+msgstr ""
 
 msgid "How dates and numbers are displayed. The interface language is separate "
 "from formatting."
@@ -1120,11 +1191,17 @@ msgstr "Importer"
 msgid "Importing…"
 msgstr "Importeren…"
 
+msgid "In {horizon} months"
+msgstr ""
+
 msgid "In force"
 msgstr "Van kracht"
 
 msgid "Inbox"
 msgstr "Postvak"
+
+msgid "Include in what-if"
+msgstr ""
 
 msgid "Income"
 msgstr "Inkomsten"
@@ -1315,11 +1392,17 @@ msgstr "Geld komt binnen op deze rekeningen (debet)."
 msgid "Money flow"
 msgstr "Geldstroom"
 
+msgid "Money in"
+msgstr ""
+
 msgid "Money leaves these accounts (credit)."
 msgstr "Geld verlaat deze rekeningen (credit)."
 
 msgid "Money moved from one or more sources to one or more destinations."
 msgstr "Geld verplaatst van een of meer bronnen naar een of meer bestemmingen."
+
+msgid "Money out"
+msgstr ""
 
 msgid "Month · Day · Year"
 msgstr "Maand · Dag · Jaar"
@@ -1373,6 +1456,9 @@ msgstr "Netto negatief deze periode (uitgesloten van de grafiek)"
 msgid "Net worth"
 msgstr "Nettovermogen"
 
+msgid "New"
+msgstr ""
+
 msgid "New account"
 msgstr "Nieuwe rekening"
 
@@ -1394,6 +1480,13 @@ msgstr "Nieuwe rente"
 #. placeholder {0}: part.label
 msgid "New rate period - {0}"
 msgstr "Nieuwe renteperiode - {0}"
+
+msgid "New recurring item"
+msgstr ""
+
+#. placeholder {0}: formatDueDate(template.nextDueDate)
+msgid "next {0}"
+msgstr ""
 
 msgid "Next month"
 msgstr "Volgende maand"
@@ -1455,6 +1548,9 @@ msgstr "Geen resultaten voor “{search}”."
 msgid "No money moved in this period."
 msgstr "In deze periode is er geen geld verplaatst."
 
+msgid "No recurring items yet"
+msgstr ""
+
 msgid "No rows match the current filters."
 msgstr "Geen rijen komen overeen met de huidige filters."
 
@@ -1469,11 +1565,17 @@ msgstr "Geen suggesties om toe te passen."
 msgid "No tokens yet."
 msgstr "Nog geen tokens."
 
+msgid "None"
+msgstr ""
+
 msgid "None - top level"
 msgstr "Geen - hoogste niveau"
 
 msgid "Nothing categorized yet."
 msgstr "Nog niets gecategoriseerd."
+
+msgid "Nothing detected"
+msgstr ""
 
 msgid "Nothing dismissed."
 msgstr "Niets genegeerd."
@@ -1481,8 +1583,14 @@ msgstr "Niets genegeerd."
 msgid "Nothing posted or projected yet."
 msgstr "Nog niets geboekt of geprognosticeerd."
 
+msgid "Nothing to project yet"
+msgstr ""
+
 msgid "Notifications"
 msgstr "Meldingen"
+
+msgid "Now"
+msgstr ""
 
 msgid "Number format"
 msgstr "Getalnotatie"
@@ -1519,6 +1627,9 @@ msgstr "Optioneel"
 
 msgid "or scroll down to create a new journal entry."
 msgstr "of scroll omlaag om een nieuwe journaalpost aan te maken."
+
+msgid "Outlook"
+msgstr ""
 
 msgid "Outstanding"
 msgstr "Uitstaand"
@@ -1589,6 +1700,9 @@ msgid "Past rows are posted actuals; future rows are the projection (the "
 msgstr "Verleden rijen zijn geboekte werkelijke cijfers; toekomstige rijen zijn "
 "de prognose (het wat-als-scenario indien actief)."
 
+msgid "Patterns we spotted in your history."
+msgstr ""
+
 msgid "Payment change"
 msgstr "Wijziging betaling"
 
@@ -1617,6 +1731,9 @@ msgstr "Kies rekening…"
 
 msgid "Pick counterparty…"
 msgstr "Kies tegenpartij…"
+
+msgid "Pick the account this lands on."
+msgstr ""
 
 msgid "Pick the interest expense account."
 msgstr "Kies de kostenrekening voor rente."
@@ -1701,6 +1818,18 @@ msgstr "Aan een andere eigenaar toewijzen"
 msgid "Reconciled"
 msgstr "Afgestemd"
 
+msgid "Recurring item added."
+msgstr ""
+
+msgid "Recurring item removed."
+msgstr ""
+
+msgid "Recurring item updated."
+msgstr ""
+
+msgid "Recurring items"
+msgstr ""
+
 msgid "Ref: {reference}"
 msgstr "Ref: {reference}"
 
@@ -1754,6 +1883,9 @@ msgstr "Concept resetten"
 
 msgid "Reset draft to server suggestion"
 msgstr "Concept terugzetten naar serversuggestie"
+
+msgid "Reset what-if"
+msgstr ""
 
 msgid "Restored to inbox."
 msgstr "Teruggezet in het postvak."
@@ -2094,6 +2226,9 @@ msgstr "Valutadatum"
 msgid "View journal entry"
 msgstr "Journaalpost bekijken"
 
+msgid "We'll suggest recurring items as your history grows."
+msgstr ""
+
 msgid "Week of {heading}"
 msgstr "Week van {heading}"
 
@@ -2103,11 +2238,17 @@ msgstr "Gewogen rente"
 msgid "What if…"
 msgstr "Wat als…"
 
+msgid "What-if"
+msgstr ""
+
 msgid "What-if total"
 msgstr "Wat-als-totaal"
 
 msgid "Where money came in and where it went"
 msgstr "Waar geld binnenkwam en waar het naartoe ging"
+
+msgid "Where your balances are heading, from your recurring items."
+msgstr ""
 
 msgid "will dismiss"
 msgstr "wordt genegeerd"

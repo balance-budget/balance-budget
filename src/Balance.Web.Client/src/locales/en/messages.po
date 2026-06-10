@@ -108,6 +108,10 @@ msgstr "{0} interest · {1} principal"
 msgid "{0} more"
 msgstr "{0} more"
 
+#. placeholder {0}: candidate.occurrenceCount
+msgid "{0} seen"
+msgstr "{0} seen"
+
 #. placeholder {0}: selectionCount.toString()
 msgid "{0} selected"
 msgstr "{0} selected"
@@ -131,6 +135,9 @@ msgstr "{count, plural, one {# line selected} other {# lines selected}}"
 msgid "{from}–{to} of {totalCount}"
 msgstr "{from}–{to} of {totalCount}"
 
+msgid "{h}m"
+msgstr "{h}m"
+
 msgid "{label} - interest"
 msgstr "{label} - interest"
 
@@ -151,6 +158,9 @@ msgstr "{readyCount, plural, one {Save # row} other {Save # rows}}"
 
 msgid "{selectionCount, plural, one {Dismiss # row} other {Dismiss # rows}}"
 msgstr "{selectionCount, plural, one {Dismiss # row} other {Dismiss # rows}}"
+
+msgid "/mo"
+msgstr "/mo"
 
 msgid "← Accounts"
 msgstr "← Accounts"
@@ -247,8 +257,16 @@ msgstr "Active"
 msgid "Activity"
 msgstr "Activity"
 
+msgid "Actual"
+msgstr "Actual"
+
 msgid "Add"
 msgstr "Add"
+
+msgid "Add a liquid account and a few recurring items to see where your balance "
+"is heading."
+msgstr "Add a liquid account and a few recurring items to see where your "
+"balance is heading."
 
 msgid "Add at least one line."
 msgstr "Add at least one line."
@@ -282,6 +300,9 @@ msgstr "Add user"
 
 msgid "Add your first ledger account to get started."
 msgstr "Add your first ledger account to get started."
+
+msgid "Add your rent, salary, and subscriptions — or accept a detected one."
+msgstr "Add your rent, salary, and subscriptions — or accept a detected one."
 
 msgid "Adding…"
 msgstr "Adding…"
@@ -483,6 +504,9 @@ msgstr "Bulk account"
 msgid "Bulk counterparty"
 msgstr "Bulk counterparty"
 
+msgid "Cadence"
+msgstr "Cadence"
+
 msgid "Can contain transactions"
 msgstr "Can contain transactions"
 
@@ -652,11 +676,17 @@ msgstr "Couldn't load loans."
 msgid "Couldn't load recent activity."
 msgstr "Couldn't load recent activity."
 
+msgid "Couldn't load recurring items."
+msgstr "Couldn't load recurring items."
+
 msgid "Couldn't load register summary."
 msgstr "Couldn't load register summary."
 
 msgid "Couldn't load register."
 msgstr "Couldn't load register."
+
+msgid "Couldn't load suggestions."
+msgstr "Couldn't load suggestions."
 
 msgid "Couldn't load the balance trend."
 msgstr "Couldn't load the balance trend."
@@ -670,11 +700,23 @@ msgstr "Couldn't load the distribution."
 msgid "Couldn't load the money flow."
 msgstr "Couldn't load the money flow."
 
+msgid "Couldn't load the projection."
+msgstr "Couldn't load the projection."
+
 msgid "Couldn't load this loan."
 msgstr "Couldn't load this loan."
 
+msgid "Couldn't remove the recurring item."
+msgstr "Couldn't remove the recurring item."
+
 msgid "Counter"
 msgstr "Counter"
+
+msgid "Counter account"
+msgstr "Counter account"
+
+msgid "Counter account (optional)"
+msgstr "Counter account (optional)"
 
 msgid "Counter-account…"
 msgstr "Counter-account…"
@@ -889,6 +931,12 @@ msgstr "Detached. Bank transaction returned to the inbox."
 msgid "Detaching…"
 msgstr "Detaching…"
 
+msgid "Detected"
+msgstr "Detected"
+
+msgid "Direction"
+msgstr "Direction"
+
 msgid "Disable"
 msgstr "Disable"
 
@@ -975,6 +1023,9 @@ msgstr "e.g. Mortgage Hoofdstraat 1"
 msgid "e.g. Mortgage interest"
 msgstr "e.g. Mortgage interest"
 
+msgid "e.g. Rent, Salary, Netflix…"
+msgstr "e.g. Rent, Salary, Netflix…"
+
 msgid "e.g. settled by journal entry X"
 msgstr "e.g. settled by journal entry X"
 
@@ -1019,6 +1070,9 @@ msgstr "Edit part - {0}"
 msgid "Edit rate period"
 msgstr "Edit rate period"
 
+msgid "Edit recurring item"
+msgstr "Edit recurring item"
+
 msgid "Effective date"
 msgstr "Effective date"
 
@@ -1061,6 +1115,9 @@ msgstr "Enter a valid opening balance."
 msgid "Enter an amount greater than zero"
 msgstr "Enter an amount greater than zero"
 
+msgid "Enter an expected amount."
+msgstr "Enter an expected amount."
+
 msgid "Enter Debit or Credit."
 msgstr "Enter Debit or Credit."
 
@@ -1095,6 +1152,12 @@ msgstr "Existing mortgage / loan account…"
 
 msgid "Expand"
 msgstr "Expand"
+
+msgid "Expected amount"
+msgstr "Expected amount"
+
+msgid "Expected payments and income that shape the projection."
+msgstr "Expected payments and income that shape the projection."
 
 msgid "Expenses"
 msgstr "Expenses"
@@ -1133,6 +1196,9 @@ msgstr "Filter by sub-account"
 
 msgid "Filter…"
 msgstr "Filter…"
+
+msgid "First / next date"
+msgstr "First / next date"
 
 msgid "First-run setup"
 msgstr "First-run setup"
@@ -1176,6 +1242,12 @@ msgstr "General-journal table - explicit debit / credit per line."
 
 #~ msgid "General-journal table — explicit debit / credit per line."
 #~ msgstr "General-journal table — explicit debit / credit per line."
+
+msgid "Has an end date"
+msgstr "Has an end date"
+
+msgid "Horizon"
+msgstr "Horizon"
 
 msgid "How dates and numbers are displayed. The interface language is separate "
 "from formatting."
@@ -1237,11 +1309,17 @@ msgstr "Importer"
 msgid "Importing…"
 msgstr "Importing…"
 
+msgid "In {horizon} months"
+msgstr "In {horizon} months"
+
 msgid "In force"
 msgstr "In force"
 
 msgid "Inbox"
 msgstr "Inbox"
+
+msgid "Include in what-if"
+msgstr "Include in what-if"
 
 msgid "Income"
 msgstr "Income"
@@ -1443,11 +1521,17 @@ msgstr "Money arrives in these accounts (debit)."
 msgid "Money flow"
 msgstr "Money flow"
 
+msgid "Money in"
+msgstr "Money in"
+
 msgid "Money leaves these accounts (credit)."
 msgstr "Money leaves these accounts (credit)."
 
 msgid "Money moved from one or more sources to one or more destinations."
 msgstr "Money moved from one or more sources to one or more destinations."
+
+msgid "Money out"
+msgstr "Money out"
 
 msgid "Month · Day · Year"
 msgstr "Month · Day · Year"
@@ -1505,6 +1589,9 @@ msgstr "Net negative this period (excluded from the chart)"
 msgid "Net worth"
 msgstr "Net worth"
 
+msgid "New"
+msgstr "New"
+
 msgid "New account"
 msgstr "New account"
 
@@ -1533,6 +1620,13 @@ msgstr "New rate period - {0}"
 #. placeholder {0}: part.label
 #~ msgid "New rate period — {0}"
 #~ msgstr "New rate period — {0}"
+
+msgid "New recurring item"
+msgstr "New recurring item"
+
+#. placeholder {0}: formatDueDate(template.nextDueDate)
+msgid "next {0}"
+msgstr "next {0}"
 
 msgid "Next month"
 msgstr "Next month"
@@ -1597,6 +1691,9 @@ msgstr "No matches for “{search}”."
 msgid "No money moved in this period."
 msgstr "No money moved in this period."
 
+msgid "No recurring items yet"
+msgstr "No recurring items yet"
+
 msgid "No rows match the current filters."
 msgstr "No rows match the current filters."
 
@@ -1611,6 +1708,9 @@ msgstr "No suggestions to apply."
 msgid "No tokens yet."
 msgstr "No tokens yet."
 
+msgid "None"
+msgstr "None"
+
 msgid "None - top level"
 msgstr "None - top level"
 
@@ -1623,14 +1723,23 @@ msgstr "None - top level"
 msgid "Nothing categorized yet."
 msgstr "Nothing categorized yet."
 
+msgid "Nothing detected"
+msgstr "Nothing detected"
+
 msgid "Nothing dismissed."
 msgstr "Nothing dismissed."
 
 msgid "Nothing posted or projected yet."
 msgstr "Nothing posted or projected yet."
 
+msgid "Nothing to project yet"
+msgstr "Nothing to project yet"
+
 msgid "Notifications"
 msgstr "Notifications"
+
+msgid "Now"
+msgstr "Now"
 
 msgid "Number format"
 msgstr "Number format"
@@ -1684,6 +1793,9 @@ msgstr "Optional"
 
 msgid "or scroll down to create a new journal entry."
 msgstr "or scroll down to create a new journal entry."
+
+msgid "Outlook"
+msgstr "Outlook"
 
 msgid "Outstanding"
 msgstr "Outstanding"
@@ -1757,6 +1869,9 @@ msgid "Past rows are posted actuals; future rows are the projection (the "
 msgstr "Past rows are posted actuals; future rows are the projection (the "
 "what-if scenario when active)."
 
+msgid "Patterns we spotted in your history."
+msgstr "Patterns we spotted in your history."
+
 msgid "Payment change"
 msgstr "Payment change"
 
@@ -1788,6 +1903,9 @@ msgstr "Pick account…"
 
 msgid "Pick counterparty…"
 msgstr "Pick counterparty…"
+
+msgid "Pick the account this lands on."
+msgstr "Pick the account this lands on."
 
 msgid "Pick the interest expense account."
 msgstr "Pick the interest expense account."
@@ -1878,6 +1996,18 @@ msgstr "Reassign to a different owner"
 msgid "Reconciled"
 msgstr "Reconciled"
 
+msgid "Recurring item added."
+msgstr "Recurring item added."
+
+msgid "Recurring item removed."
+msgstr "Recurring item removed."
+
+msgid "Recurring item updated."
+msgstr "Recurring item updated."
+
+msgid "Recurring items"
+msgstr "Recurring items"
+
 msgid "Ref: {reference}"
 msgstr "Ref: {reference}"
 
@@ -1929,6 +2059,9 @@ msgstr "Reset draft"
 
 msgid "Reset draft to server suggestion"
 msgstr "Reset draft to server suggestion"
+
+msgid "Reset what-if"
+msgstr "Reset what-if"
 
 msgid "Restored to inbox."
 msgstr "Restored to inbox."
@@ -2287,6 +2420,9 @@ msgstr "Value date"
 msgid "View journal entry"
 msgstr "View journal entry"
 
+msgid "We'll suggest recurring items as your history grows."
+msgstr "We'll suggest recurring items as your history grows."
+
 msgid "Week of {heading}"
 msgstr "Week of {heading}"
 
@@ -2296,11 +2432,17 @@ msgstr "Weighted rate"
 msgid "What if…"
 msgstr "What if…"
 
+msgid "What-if"
+msgstr "What-if"
+
 msgid "What-if total"
 msgstr "What-if total"
 
 msgid "Where money came in and where it went"
 msgstr "Where money came in and where it went"
+
+msgid "Where your balances are heading, from your recurring items."
+msgstr "Where your balances are heading, from your recurring items."
 
 msgid "will dismiss"
 msgstr "will dismiss"

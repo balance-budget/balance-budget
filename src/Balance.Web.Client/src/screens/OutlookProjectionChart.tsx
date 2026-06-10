@@ -1,0 +1,228 @@
+import { useMemo } from 'react';
+import { useLingui } from '@lingui/react/macro';
+import {
+    Area,
+    CartesianGrid,
+    ComposedChart,
+    Line,
+    ReferenceLine,
+    ResponsiveContainer,
+    Tooltip,
+    type TooltipContentProps,
+    XAxis,
+    YAxis,
+} from 'recharts';
+import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
+import type { OutlookAccountProjection } from '../api/outlook';
+import { formatMoney, formatMoneyAxis } from '../lib/money';
+
+type ChartRow = {
+    month: string;
+    actual?: number;
+    mid?: number;
+    band?: [number, number];
+    scenario?: number;
+};
+
+function formatMonth(iso: string): string {
+    // iso is a "YYYY-MM-01" first-of-month; show a short month, with the year on January.
+    const [y, m, d] = iso.split('-').map(Number);
+    const date = new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1);
+    return date.toLocaleDateString(undefined, {
+        month: 'short',
+        year: date.getMonth() === 0 ? 'numeric' : undefined,
+    });
+}
+
+/**
+ * The liquid-balance Projection (ADR-0027): ledger actuals (solid) flowing into the
+ * projected month-end balance — a mid line inside a Typical-spend uncertainty band — with an
+ * optional what-if scenario overlaid. The actuals and baseline meet at the current balance.
+ */
+export function OutlookProjectionChart({
+    account,
+    height = 260,
+}: {
+    account: OutlookAccountProjection;
+    height?: number;
+}) {
+    const catalog = useCurrencyCatalog();
+
+    const rows = useMemo<ChartRow[]>(() => {
+        const result: ChartRow[] = account.actuals.map(a => ({
+            month: a.month,
+            actual: a.endBalance,
+        }));
+
+        // Seed the projection at the anchor (last actual) so the baseline/scenario lines
+        // and the band start from today's real balance rather than floating.
+        const anchor = account.actuals.at(-1);
+        const last = result.at(-1);
+        if (anchor && last) {
+            last.mid = anchor.endBalance;
+            last.scenario = anchor.endBalance;
+            last.band = [anchor.endBalance, anchor.endBalance];
+        }
+
+        account.baseline.forEach((b, i) => {
+            const scenarioMonth = account.scenario?.[i];
+            result.push({
+                month: b.month,
+                mid: b.endBalanceMid,
+                band: [b.endBalanceLow, b.endBalanceHigh],
+                scenario: scenarioMonth?.endBalanceMid,
+            });
+        });
+
+        return result;
+    }, [account]);
+
+    const hasScenario = account.scenario !== null;
+
+    return (
+        <ResponsiveContainer width="100%" height={height}>
+            <ComposedChart data={rows} margin={{ top: 10, right: 12, bottom: 0, left: 0 }}>
+                <CartesianGrid
+                    stroke="var(--color-border-soft)"
+                    vertical={false}
+                    strokeDasharray="2 4"
+                />
+                <XAxis
+                    dataKey="month"
+                    tickFormatter={formatMonth}
+                    tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                    minTickGap={16}
+                />
+                <YAxis
+                    domain={['auto', 'auto']}
+                    tickFormatter={(v: number) => formatMoneyAxis(v, account.currencyCode, catalog)}
+                    tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={60}
+                />
+                <ReferenceLine y={0} stroke="var(--color-danger)" strokeDasharray="3 3" />
+                <Tooltip
+                    content={
+                        <ProjectionTooltip
+                            currencyCode={account.currencyCode}
+                            catalog={catalog}
+                            hasScenario={hasScenario}
+                        />
+                    }
+                    cursor={{ stroke: 'var(--color-border-strong)', strokeDasharray: '2 2' }}
+                />
+                {/* The Typical-spend uncertainty band (projected months only). */}
+                <Area
+                    type="monotone"
+                    dataKey="band"
+                    stroke="none"
+                    fill="var(--color-brand-primary)"
+                    fillOpacity={0.12}
+                    isAnimationActive={false}
+                    connectNulls
+                />
+                {/* Ledger actuals — solid, left of today. */}
+                <Line
+                    type="monotone"
+                    dataKey="actual"
+                    name="Actual"
+                    stroke="var(--color-fg-2)"
+                    strokeWidth={2}
+                    dot={false}
+                    isAnimationActive={false}
+                    connectNulls
+                />
+                {/* Projected mid — dashed, right of today. */}
+                <Line
+                    type="monotone"
+                    dataKey="mid"
+                    name="Projected"
+                    stroke="var(--color-brand-primary)"
+                    strokeWidth={2}
+                    strokeDasharray="5 4"
+                    dot={false}
+                    isAnimationActive={false}
+                    connectNulls
+                />
+                {hasScenario && (
+                    <Line
+                        type="monotone"
+                        dataKey="scenario"
+                        name="What-if"
+                        stroke="#f59e0b"
+                        strokeWidth={2}
+                        strokeDasharray="2 3"
+                        dot={false}
+                        isAnimationActive={false}
+                        connectNulls
+                    />
+                )}
+            </ComposedChart>
+        </ResponsiveContainer>
+    );
+}
+
+type ProjectionTooltipProps = Partial<TooltipContentProps<number, string>> & {
+    currencyCode: string;
+    catalog: CurrencyCatalog;
+    hasScenario: boolean;
+};
+
+function ProjectionTooltip({
+    active,
+    payload,
+    label,
+    currencyCode,
+    catalog,
+    hasScenario,
+}: ProjectionTooltipProps) {
+    const { t } = useLingui();
+    if (!active || !payload || payload.length === 0) return null;
+
+    const find = (key: string): number | undefined => {
+        const entry = payload.find(p => p.dataKey === key);
+        return typeof entry?.value === 'number' ? entry.value : undefined;
+    };
+    const band = payload.find(p => p.dataKey === 'band')?.value as [number, number] | undefined;
+
+    const actual = find('actual');
+    const mid = find('mid');
+    const scenario = find('scenario');
+
+    return (
+        <div className="rounded-xl border border-border-soft bg-bg-1 px-3 py-2 shadow-sm text-xs">
+            <div className="text-fg-3 mb-1">
+                {typeof label === 'string' ? formatMonth(label) : ''}
+            </div>
+            <div className="flex flex-col gap-1">
+                {actual !== undefined && (
+                    <Row label={t`Actual`} value={formatMoney(actual, currencyCode, catalog)} />
+                )}
+                {mid !== undefined && (
+                    <Row label={t`Projected`} value={formatMoney(mid, currencyCode, catalog)} />
+                )}
+                {hasScenario && scenario !== undefined && (
+                    <Row label={t`What-if`} value={formatMoney(scenario, currencyCode, catalog)} />
+                )}
+                {band && (
+                    <div className="text-fg-3 pt-0.5">
+                        {formatMoney(band[0], currencyCode, catalog)} –{' '}
+                        {formatMoney(band[1], currencyCode, catalog)}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+    return (
+        <div className="flex items-center justify-between gap-x-4">
+            <span className="text-fg-2">{label}</span>
+            <span className="font-mono tabular-nums text-fg-1">{value}</span>
+        </div>
+    );
+}
