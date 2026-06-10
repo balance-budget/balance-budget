@@ -20,7 +20,7 @@
 
 import { t } from '@lingui/core/macro';
 import type { components } from '../lib/api-types.gen';
-import type { AccountId, CounterpartyId } from '../lib/domain';
+import type { AccountId, AccountType, CounterpartyId } from '../lib/domain';
 import { parseMoney, type ParseMoneyResult } from '../lib/money';
 
 type WireCreateRequest = components['schemas']['CreateJournalEntryRequest'];
@@ -80,6 +80,29 @@ export function emptyForm(today: string): FormState {
         header: { date: today, description: '', counterpartyId: null },
         simple: { from: [emptySimpleLeg()], to: [emptySimpleLeg()] },
         advanced: [emptyAdvancedLine(), emptyAdvancedLine()],
+    };
+}
+
+/** The Simple column a prefilled account lands in, by normal balance: debit-normal
+ *  types (Asset, Expense) usually receive money ("To"), credit-normal types
+ *  (Liability, Equity, Income) usually provide it ("From"). The user can move it. */
+export function prefillSide(type: AccountType): 'from' | 'to' {
+    return type === 'Asset' || type === 'Expense' ? 'to' : 'from';
+}
+
+/** An empty form with one Simple leg preselected to `account` on its normal-balance side. */
+export function prefilledForm(
+    today: string,
+    account: { id: AccountId; type: AccountType },
+): FormState {
+    const base = emptyForm(today);
+    const side = prefillSide(account.type);
+    return {
+        ...base,
+        simple: {
+            ...base.simple,
+            [side]: [{ ...emptySimpleLeg(), accountId: account.id }],
+        },
     };
 }
 

@@ -115,6 +115,16 @@ export function AccountDetail({
                             className={account.balance.amount < 0 ? 'text-danger' : ''}
                         />
                         <div className="flex items-center gap-2">
+                            {/* On a postable account the new entry preselects this account; a
+                             *  placeholder can't be posted to, so its button starts blank. */}
+                            <Link
+                                to="/journal/new"
+                                search={account.isPostable ? { accountId: account.id } : {}}
+                                className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg bg-brand-primary text-white text-sm font-medium hover:bg-brand-primary-dark"
+                            >
+                                <Icon name="plus" size={14} strokeWidth={2} />
+                                <Trans>New journal entry</Trans>
+                            </Link>
                             <button
                                 type="button"
                                 onClick={() => {
