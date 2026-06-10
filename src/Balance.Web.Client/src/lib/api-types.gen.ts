@@ -745,6 +745,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/dashboard/recent-activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetDashboardRecentActivity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/reports/distribution": {
         parameters: {
             query?: never;
@@ -1119,6 +1135,25 @@ export interface components {
             language: null | string;
             dateFormat: null | string;
             numberFormat: null | string;
+        };
+        DashboardAccountRecentActivity: {
+            accountId: components["schemas"]["AccountId"];
+            rows: components["schemas"]["DashboardRecentActivityRow"][];
+        };
+        DashboardRecentActivityOutput: {
+            /** Format: int32 */
+            rowsPerAccount: number | string;
+            accounts: components["schemas"]["DashboardAccountRecentActivity"][];
+        };
+        DashboardRecentActivityRow: {
+            journalEntryId: components["schemas"]["JournalEntryId"];
+            journalLineId: components["schemas"]["JournalLineId"];
+            /** Format: date */
+            date: string;
+            entryDescription: null | string;
+            lineDescription: null | string;
+            counterpartyName: null | string;
+            amount: components["schemas"]["Money"];
         };
         DashboardSummaryOutput: {
             netWorth: components["schemas"]["Money"];
@@ -4983,6 +5018,62 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AccountBalanceTrendOutput"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetDashboardRecentActivity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardRecentActivityOutput"];
                 };
             };
             /** @description Bad Request */

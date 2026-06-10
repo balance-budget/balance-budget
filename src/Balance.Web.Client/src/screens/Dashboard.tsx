@@ -7,11 +7,12 @@ import { accountIdentifier, useAccounts, type Account } from '../api/accounts';
 import { useCurrencyCatalog } from '../api/currencies';
 import {
     useAccountBalanceTrend,
+    useDashboardRecentActivity,
     useDashboardSummary,
     TREND_RANGES,
+    type RecentActivityRow,
     type TrendRange,
 } from '../api/dashboard';
-import { useAccountRegister, type RegisterFilters, type RegisterRow } from '../api/register';
 import { AccountAvatar } from '../components/AccountAvatar';
 import { Amount } from '../components/Amount';
 import { ErrorState } from '../components/ErrorState';
@@ -25,7 +26,7 @@ import { cx } from '../lib/cx';
 import { isLedgerAccount } from '../lib/domain';
 import { formatMoney } from '../lib/money';
 
-function RecentRow({ row }: { row: RegisterRow }) {
+function RecentRow({ row }: { row: RecentActivityRow }) {
     const catalog = useCurrencyCatalog();
     const label = row.counterpartyName ?? row.entryDescription ?? row.lineDescription ?? '—';
     const negative = row.amount.amount < 0;
@@ -44,20 +45,8 @@ function RecentRow({ row }: { row: RegisterRow }) {
     );
 }
 
-const EMPTY_REGISTER_FILTERS: RegisterFilters = {
-    q: '',
-    posted: null,
-    counter: null,
-    from: '',
-    to: '',
-    status: '',
-};
-
-function RecentActivity({ account }: { account: Account }) {
-    const { t } = useLingui();
-    const register = useAccountRegister(account.id, 0, 5, EMPTY_REGISTER_FILTERS);
-
-    if (register.isPending) {
+function RecentActivity({ rows, isPending }: { rows: RecentActivityRow[]; isPending: boolean }) {
+    if (isPending) {
         return (
             <div className="pl-12 flex flex-col gap-1">
                 <Skeleton className="h-3 w-2/3" />
@@ -66,18 +55,6 @@ function RecentActivity({ account }: { account: Account }) {
         );
     }
 
-    if (register.isError) {
-        return (
-            <div className="pl-12">
-                <ErrorState
-                    message={t`Couldn't load recent activity.`}
-                    onRetry={() => void register.refetch()}
-                />
-            </div>
-        );
-    }
-
-    const rows = register.data.items;
     if (rows.length === 0) {
         return null;
     }
@@ -91,7 +68,15 @@ function RecentActivity({ account }: { account: Account }) {
     );
 }
 
-function AccountRow({ account }: { account: Account }) {
+function AccountRow({
+    account,
+    recentRows,
+    recentPending,
+}: {
+    account: Account;
+    recentRows: RecentActivityRow[];
+    recentPending: boolean;
+}) {
     const identifier = accountIdentifier(account);
     const isNegative = account.balance.amount < 0;
     return (
@@ -113,7 +98,7 @@ function AccountRow({ account }: { account: Account }) {
                     className={isNegative ? 'text-danger' : ''}
                 />
             </div>
-            <RecentActivity account={account} />
+            <RecentActivity rows={recentRows} isPending={recentPending} />
         </div>
     );
 }
@@ -121,6 +106,9 @@ function AccountRow({ account }: { account: Account }) {
 function AccountsPanel() {
     const { t } = useLingui();
     const accounts = useAccounts();
+    // One batched request for every account card's recent rows: fanning out one
+    // register call per account piles up on resource-constrained hosts.
+    const recent = useDashboardRecentActivity();
 
     if (accounts.isPending) {
         return (
@@ -162,8 +150,19 @@ function AccountsPanel() {
 
     return (
         <div>
+            {recent.isError && (
+                <ErrorState
+                    message={t`Couldn't load recent activity.`}
+                    onRetry={() => void recent.refetch()}
+                />
+            )}
             {ledgerAccounts.map(a => (
-                <AccountRow key={a.id} account={a} />
+                <AccountRow
+                    key={a.id}
+                    account={a}
+                    recentRows={recent.data?.get(a.id) ?? []}
+                    recentPending={recent.isPending}
+                />
             ))}
         </div>
     );
