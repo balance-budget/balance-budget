@@ -652,6 +652,9 @@ msgstr "Couldn't load loans."
 msgid "Couldn't load recent activity."
 msgstr "Couldn't load recent activity."
 
+msgid "Couldn't load register summary."
+msgstr "Couldn't load register summary."
+
 msgid "Couldn't load register."
 msgstr "Couldn't load register."
 
@@ -1481,6 +1484,15 @@ msgstr "Multi-source-multi-destination journal entries can only be edited in "
 msgid "Name"
 msgstr "Name"
 
+msgid "Net"
+msgstr "Net"
+
+msgid "Net movement per period, stacked by sub-account."
+msgstr "Net movement per period, stacked by sub-account."
+
+msgid "Net movement per period."
+msgstr "Net movement per period."
+
 msgid "Net negative this period - see the breakdown."
 msgstr "Net negative this period - see the breakdown."
 
@@ -1874,6 +1886,9 @@ msgstr "Reference"
 
 msgid "Register"
 msgstr "Register"
+
+msgid "Register summary"
+msgstr "Register summary"
 
 msgid "Remove last"
 msgstr "Remove last"
@@ -2271,6 +2286,9 @@ msgstr "Value date"
 
 msgid "View journal entry"
 msgstr "View journal entry"
+
+msgid "Week of {heading}"
+msgstr "Week of {heading}"
 
 msgid "Weighted rate"
 msgstr "Weighted rate"

@@ -21,6 +21,7 @@ import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Pagination } from '../components/Pagination';
 import { Panel, SectionHead } from '../components/Panel';
+import { RegisterSummaryChart } from '../components/RegisterSummaryChart';
 import { Skeleton } from '../components/Skeleton';
 import { selectedKey } from '../components/ui/selection';
 import { Tag, TagGroup } from '../components/ui/TagGroup';
@@ -153,6 +154,26 @@ export function AccountDetail({
             <Panel>
                 <SectionHead title={<Trans>Linked bank account</Trans>} />
                 <LinkedBankAccountsSection owner={{ kind: 'account', id: account.id }} />
+            </Panel>
+
+            <Panel>
+                <SectionHead
+                    title={<Trans>Register summary</Trans>}
+                    subtitle={
+                        account.isPostable ? (
+                            <Trans>Net movement per period.</Trans>
+                        ) : (
+                            <Trans>Net movement per period, stacked by sub-account.</Trans>
+                        )
+                    }
+                />
+                {/* The chart follows the register's date filter only — the other filters
+                 *  refine the table without reshaping the period overview. */}
+                <RegisterSummaryChart
+                    account={account}
+                    filterFrom={filters.from}
+                    filterTo={filters.to}
+                />
             </Panel>
 
             <Panel>

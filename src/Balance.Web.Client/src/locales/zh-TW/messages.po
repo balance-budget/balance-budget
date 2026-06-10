@@ -581,6 +581,9 @@ msgstr "無法載入貸款。"
 msgid "Couldn't load recent activity."
 msgstr "無法載入近期活動。"
 
+msgid "Couldn't load register summary."
+msgstr "無法載入帳戶明細摘要。"
+
 msgid "Couldn't load register."
 msgstr "無法載入帳戶明細。"
 
@@ -1330,6 +1333,15 @@ msgstr "多來源對多目的地的日記帳分錄只能在「進階」中編輯
 msgid "Name"
 msgstr "名稱"
 
+msgid "Net"
+msgstr "淨額"
+
+msgid "Net movement per period, stacked by sub-account."
+msgstr "各期間的淨變動，依子帳戶堆疊。"
+
+msgid "Net movement per period."
+msgstr "各期間的淨變動。"
+
 msgid "Net negative this period - see the breakdown."
 msgstr "本期淨額為負 - 請查看明細。"
 
@@ -1667,6 +1679,9 @@ msgstr "參照"
 
 msgid "Register"
 msgstr "帳戶明細"
+
+msgid "Register summary"
+msgstr "帳戶明細摘要"
 
 msgid "Remove last"
 msgstr "移除最後一個"
@@ -2026,6 +2041,9 @@ msgstr "起息日"
 
 msgid "View journal entry"
 msgstr "檢視日記帳分錄"
+
+msgid "Week of {heading}"
+msgstr "{heading} 起的一週"
 
 msgid "Weighted rate"
 msgstr "加權利率"

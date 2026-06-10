@@ -589,6 +589,9 @@ msgstr "Kon leningen niet laden."
 msgid "Couldn't load recent activity."
 msgstr "Kon recente activiteit niet laden."
 
+msgid "Couldn't load register summary."
+msgstr "Kon registeroverzicht niet laden."
+
 msgid "Couldn't load register."
 msgstr "Kon register niet laden."
 
@@ -1352,6 +1355,15 @@ msgstr "Journaalposten met meerdere bronnen en bestemmingen kunnen alleen in "
 msgid "Name"
 msgstr "Naam"
 
+msgid "Net"
+msgstr "Netto"
+
+msgid "Net movement per period, stacked by sub-account."
+msgstr "Nettomutatie per periode, gestapeld per subrekening."
+
+msgid "Net movement per period."
+msgstr "Nettomutatie per periode."
+
 msgid "Net negative this period - see the breakdown."
 msgstr "Netto negatief deze periode - zie de uitsplitsing."
 
@@ -1697,6 +1709,9 @@ msgstr "Referentie"
 
 msgid "Register"
 msgstr "Register"
+
+msgid "Register summary"
+msgstr "Registeroverzicht"
 
 msgid "Remove last"
 msgstr "Laatste verwijderen"
@@ -2078,6 +2093,9 @@ msgstr "Valutadatum"
 
 msgid "View journal entry"
 msgstr "Journaalpost bekijken"
+
+msgid "Week of {heading}"
+msgstr "Week van {heading}"
 
 msgid "Weighted rate"
 msgstr "Gewogen rente"
