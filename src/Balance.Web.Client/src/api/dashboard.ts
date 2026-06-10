@@ -16,7 +16,7 @@ type WireSummary = components['schemas']['DashboardSummaryOutput'];
 type WireTrend = components['schemas']['AccountBalanceTrendOutput'];
 type WireTrendSeries = components['schemas']['AccountTrendSeries'];
 type WireTrendDelta = components['schemas']['TrendDelta'];
-type WireRecentActivity = components['schemas']['DashboardRecentActivityOutput'];
+type WireRegisterPreviews = components['schemas']['DashboardRegisterPreviewOutput'];
 
 export type DashboardSummary = {
     netWorth: Money;
@@ -55,9 +55,9 @@ export type AccountBalanceTrend = {
     currencyCode: string;
 };
 
-/** One register row on a dashboard account card; the amount is already
- *  normalized to the account's normal balance, like the register. */
-export type RecentActivityRow = {
+/** One row of a Register preview on a dashboard account card; the amount is
+ *  already normalized to the account's normal balance, like the Register. */
+export type RegisterPreviewRow = {
     journalLineId: JournalLineId;
     date: string;
     entryDescription: string | null;
@@ -66,15 +66,15 @@ export type RecentActivityRow = {
     amount: Money;
 };
 
-/** Recent rows per postable account; accounts without activity are absent. */
-export type RecentActivity = ReadonlyMap<AccountId, RecentActivityRow[]>;
+/** Register previews keyed by postable account; accounts without activity are absent. */
+export type RegisterPreviews = ReadonlyMap<AccountId, RegisterPreviewRow[]>;
 
 export const dashboardKeys = {
     all: ['dashboard'] as const,
     summary: () => [...dashboardKeys.all, 'summary'] as const,
     accountBalanceTrend: (range: TrendRange) =>
         [...dashboardKeys.all, 'account-balance-trend', range] as const,
-    recentActivity: () => [...dashboardKeys.all, 'recent-activity'] as const,
+    registerPreviews: () => [...dashboardKeys.all, 'register-previews'] as const,
 };
 
 function fetchSummary(signal: AbortSignal): Promise<WireSummary> {
@@ -176,7 +176,7 @@ export function useAccountBalanceTrend(range: TrendRange) {
     });
 }
 
-function toRecentActivity(wire: WireRecentActivity): RecentActivity {
+function toRegisterPreviews(wire: WireRegisterPreviews): RegisterPreviews {
     return new Map(
         wire.accounts.map(a => [
             asAccountId(a.accountId),
@@ -192,18 +192,18 @@ function toRecentActivity(wire: WireRecentActivity): RecentActivity {
     );
 }
 
-/** All account cards' recent rows in one request: the per-account fan-out the
- *  dashboard used to do (one register call per account) piles up on
+/** Every account card's Register preview in one request: the per-account fan-out
+ *  the dashboard used to do (one register call per account) piles up on
  *  resource-constrained hosts. */
-export function useDashboardRecentActivity() {
+export function useDashboardRegisterPreviews() {
     return useQuery({
-        queryKey: dashboardKeys.recentActivity(),
+        queryKey: dashboardKeys.registerPreviews(),
         queryFn: async ({ signal }) =>
-            toRecentActivity(
-                await getJson<WireRecentActivity>(
-                    '/api/dashboard/recent-activity',
+            toRegisterPreviews(
+                await getJson<WireRegisterPreviews>(
+                    '/api/dashboard/register-previews',
                     signal,
-                    'load recent activity',
+                    'load register previews',
                 ),
             ),
     });

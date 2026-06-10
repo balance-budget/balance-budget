@@ -17,7 +17,7 @@ internal static class DashboardEndpoints
 
     // Matches what one account row on the dashboard renders; not user-tunable to keep the
     // batched query bounded.
-    private const int RecentActivityRowsPerAccount = 5;
+    private const int RegisterPreviewRowsPerAccount = 5;
 
     public static void MapDashboard(this IEndpointRouteBuilder app)
     {
@@ -27,8 +27,8 @@ internal static class DashboardEndpoints
             .MapGet("/account-balance-trend", GetAccountBalanceTrendAsync)
             .WithName("GetAccountBalanceTrend");
         group
-            .MapGet("/recent-activity", GetRecentActivityAsync)
-            .WithName("GetDashboardRecentActivity");
+            .MapGet("/register-previews", GetRegisterPreviewsAsync)
+            .WithName("GetDashboardRegisterPreviews");
     }
 
     private static async Task<
@@ -77,19 +77,19 @@ internal static class DashboardEndpoints
 
     private static async Task<
         Results<
-            Ok<DashboardRecentActivityOutput>,
+            Ok<DashboardRegisterPreviewOutput>,
             NotFound<ProblemDetails>,
             Conflict<ProblemDetails>,
             UnprocessableEntity<ProblemDetails>,
             ValidationProblem
         >
-    > GetRecentActivityAsync(
+    > GetRegisterPreviewsAsync(
         [FromServices] IDashboardService dashboardService,
         CancellationToken cancellationToken
     )
     {
-        var result = await dashboardService.GetRecentActivityAsync(
-            RecentActivityRowsPerAccount,
+        var result = await dashboardService.GetRegisterPreviewsAsync(
+            RegisterPreviewRowsPerAccount,
             cancellationToken
         );
         return result.ToOk();

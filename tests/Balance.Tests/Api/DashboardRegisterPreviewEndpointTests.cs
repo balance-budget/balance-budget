@@ -4,23 +4,23 @@ using Balance.Tests.Api.Helpers;
 
 namespace Balance.Tests.Api;
 
-internal sealed class DashboardRecentActivityEndpointTests : EndpointsTestsBase
+internal sealed class DashboardRegisterPreviewEndpointTests : EndpointsTestsBase
 {
     [Test]
-    public async Task GetRecentActivity_returns_the_five_newest_rows_per_account()
+    public async Task GetRegisterPreviews_returns_the_five_newest_rows_per_account()
     {
         using var client = Factory.CreateClient();
         var currency = await CreateIsolatedCurrencyAsync(client);
 
         var checking = await CreateAccountAsync(
             client,
-            $"RA-Checking-{Guid.NewGuid():N}",
+            $"RP-Checking-{Guid.NewGuid():N}",
             "Asset",
             currency
         );
         var equity = await CreateAccountAsync(
             client,
-            $"RA-Equity-{Guid.NewGuid():N}",
+            $"RP-Equity-{Guid.NewGuid():N}",
             "Equity",
             currency
         );
@@ -38,10 +38,10 @@ internal sealed class DashboardRecentActivityEndpointTests : EndpointsTestsBase
             );
         }
 
-        var activity = await GetRecentActivityAsync(client);
-        await Assert.That(activity.RowsPerAccount).IsEqualTo(5);
+        var previews = await GetRegisterPreviewsAsync(client);
+        await Assert.That(previews.RowsPerAccount).IsEqualTo(5);
 
-        var rows = activity.Accounts.Single(a => a.AccountId == checking.Id).Rows;
+        var rows = previews.Accounts.Single(a => a.AccountId == checking.Id).Rows;
         await Assert.That(rows.Count).IsEqualTo(5);
         await Assert
             .That(rows.Select(r => r.Date).ToList())
@@ -55,20 +55,20 @@ internal sealed class DashboardRecentActivityEndpointTests : EndpointsTestsBase
     }
 
     [Test]
-    public async Task GetRecentActivity_applies_the_normal_balance_sign_convention()
+    public async Task GetRegisterPreviews_applies_the_normal_balance_sign_convention()
     {
         using var client = Factory.CreateClient();
         var currency = await CreateIsolatedCurrencyAsync(client);
 
         var asset = await CreateAccountAsync(
             client,
-            $"RA-Asset-{Guid.NewGuid():N}",
+            $"RP-Asset-{Guid.NewGuid():N}",
             "Asset",
             currency
         );
         var liability = await CreateAccountAsync(
             client,
-            $"RA-Liability-{Guid.NewGuid():N}",
+            $"RP-Liability-{Guid.NewGuid():N}",
             "Liability",
             currency
         );
@@ -82,47 +82,47 @@ internal sealed class DashboardRecentActivityEndpointTests : EndpointsTestsBase
             ]
         );
 
-        var activity = await GetRecentActivityAsync(client);
+        var previews = await GetRegisterPreviewsAsync(client);
 
         // Debit-normal keeps the raw sign; credit-normal flips it (ADR-0011), matching the
-        // register the dashboard rows link to.
-        var assetRow = activity.Accounts.Single(a => a.AccountId == asset.Id).Rows.Single();
+        // Register the dashboard rows preview.
+        var assetRow = previews.Accounts.Single(a => a.AccountId == asset.Id).Rows.Single();
         await Assert.That(assetRow.Amount!.Amount).IsEqualTo(250_000L);
         await Assert.That(assetRow.Amount.CurrencyCode).IsEqualTo(currency);
 
-        var liabilityRow = activity.Accounts.Single(a => a.AccountId == liability.Id).Rows.Single();
+        var liabilityRow = previews.Accounts.Single(a => a.AccountId == liability.Id).Rows.Single();
         await Assert.That(liabilityRow.Amount!.Amount).IsEqualTo(250_000L);
     }
 
     [Test]
-    public async Task GetRecentActivity_omits_branch_accounts_and_accounts_without_activity()
+    public async Task GetRegisterPreviews_omits_branch_accounts_and_accounts_without_activity()
     {
         using var client = Factory.CreateClient();
         var currency = await CreateIsolatedCurrencyAsync(client);
 
         var branch = await CreateAccountAsync(
             client,
-            $"RA-Branch-{Guid.NewGuid():N}",
+            $"RP-Branch-{Guid.NewGuid():N}",
             "Expense",
             currency,
             isPostable: false
         );
         var leaf = await CreateAccountAsync(
             client,
-            $"RA-Leaf-{Guid.NewGuid():N}",
+            $"RP-Leaf-{Guid.NewGuid():N}",
             "Expense",
             currency,
             parentAccountId: branch.Id
         );
         var idle = await CreateAccountAsync(
             client,
-            $"RA-Idle-{Guid.NewGuid():N}",
+            $"RP-Idle-{Guid.NewGuid():N}",
             "Asset",
             currency
         );
         var checking = await CreateAccountAsync(
             client,
-            $"RA-Checking-{Guid.NewGuid():N}",
+            $"RP-Checking-{Guid.NewGuid():N}",
             "Asset",
             currency
         );
@@ -136,22 +136,24 @@ internal sealed class DashboardRecentActivityEndpointTests : EndpointsTestsBase
             ]
         );
 
-        var activity = await GetRecentActivityAsync(client);
-        var accountIds = activity.Accounts.Select(a => a.AccountId).ToList();
+        var previews = await GetRegisterPreviewsAsync(client);
+        var accountIds = previews.Accounts.Select(a => a.AccountId).ToList();
 
         await Assert.That(accountIds).Contains(leaf.Id);
         await Assert.That(accountIds).DoesNotContain(branch.Id);
         await Assert.That(accountIds).DoesNotContain(idle.Id);
     }
 
-    private static async Task<DashboardRecentActivityDto> GetRecentActivityAsync(HttpClient client)
+    private static async Task<DashboardRegisterPreviewDto> GetRegisterPreviewsAsync(
+        HttpClient client
+    )
     {
         using var response = await client.GetAsync(
-            new Uri("/api/dashboard/recent-activity", UriKind.Relative)
+            new Uri("/api/dashboard/register-previews", UriKind.Relative)
         );
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-        var activity = await response.Content.ReadFromJsonAsync<DashboardRecentActivityDto>();
-        return activity!;
+        var previews = await response.Content.ReadFromJsonAsync<DashboardRegisterPreviewDto>();
+        return previews!;
     }
 
     private static async Task<string> CreateIsolatedCurrencyAsync(HttpClient client)
@@ -209,17 +211,17 @@ internal sealed class DashboardRecentActivityEndpointTests : EndpointsTestsBase
     }
 }
 
-internal sealed record DashboardRecentActivityDto(
+internal sealed record DashboardRegisterPreviewDto(
     int RowsPerAccount,
-    IReadOnlyList<DashboardAccountRecentActivityDto> Accounts
+    IReadOnlyList<AccountRegisterPreviewDto> Accounts
 );
 
-internal sealed record DashboardAccountRecentActivityDto(
+internal sealed record AccountRegisterPreviewDto(
     Guid AccountId,
-    IReadOnlyList<DashboardRecentActivityRowDto> Rows
+    IReadOnlyList<RegisterPreviewRowDto> Rows
 );
 
-internal sealed record DashboardRecentActivityRowDto(
+internal sealed record RegisterPreviewRowDto(
     Guid JournalEntryId,
     Guid JournalLineId,
     DateOnly Date,

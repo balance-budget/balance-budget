@@ -745,14 +745,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/dashboard/recent-activity": {
+    "/api/dashboard/register-previews": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["GetDashboardRecentActivity"];
+        get: operations["GetDashboardRegisterPreviews"];
         put?: never;
         post?: never;
         delete?: never;
@@ -845,6 +845,10 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        AccountRegisterPreview: {
+            accountId: components["schemas"]["AccountId"];
+            rows: components["schemas"]["RegisterPreviewRow"][];
         };
         AccountTrendSeries: {
             accountId: components["schemas"]["AccountId"];
@@ -1136,24 +1140,10 @@ export interface components {
             dateFormat: null | string;
             numberFormat: null | string;
         };
-        DashboardAccountRecentActivity: {
-            accountId: components["schemas"]["AccountId"];
-            rows: components["schemas"]["DashboardRecentActivityRow"][];
-        };
-        DashboardRecentActivityOutput: {
+        DashboardRegisterPreviewOutput: {
             /** Format: int32 */
             rowsPerAccount: number | string;
-            accounts: components["schemas"]["DashboardAccountRecentActivity"][];
-        };
-        DashboardRecentActivityRow: {
-            journalEntryId: components["schemas"]["JournalEntryId"];
-            journalLineId: components["schemas"]["JournalLineId"];
-            /** Format: date */
-            date: string;
-            entryDescription: null | string;
-            lineDescription: null | string;
-            counterpartyName: null | string;
-            amount: components["schemas"]["Money"];
+            accounts: components["schemas"]["AccountRegisterPreview"][];
         };
         DashboardSummaryOutput: {
             netWorth: components["schemas"]["Money"];
@@ -1635,6 +1625,16 @@ export interface components {
         };
         /** @enum {unknown} */
         ReconciliationStatus: "Uncleared" | "Cleared" | "Reconciled";
+        RegisterPreviewRow: {
+            journalEntryId: components["schemas"]["JournalEntryId"];
+            journalLineId: components["schemas"]["JournalLineId"];
+            /** Format: date */
+            date: string;
+            entryDescription: null | string;
+            lineDescription: null | string;
+            counterpartyName: null | string;
+            amount: components["schemas"]["Money"];
+        };
         RegisterRowCounterLeg: {
             accountId: components["schemas"]["AccountId"];
             accountName: string;
@@ -5058,7 +5058,7 @@ export interface operations {
             };
         };
     };
-    GetDashboardRecentActivity: {
+    GetDashboardRegisterPreviews: {
         parameters: {
             query?: never;
             header?: never;
@@ -5073,7 +5073,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DashboardRecentActivityOutput"];
+                    "application/json": components["schemas"]["DashboardRegisterPreviewOutput"];
                 };
             };
             /** @description Bad Request */
