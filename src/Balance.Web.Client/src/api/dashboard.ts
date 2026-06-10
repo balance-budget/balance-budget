@@ -1,6 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import type { components } from '../lib/api-types.gen';
-import { asAccountId, type AccountTrend, type TrendPoint } from '../lib/domain';
+import {
+    asAccountId,
+    asJournalLineId,
+    type AccountId,
+    type AccountTrend,
+    type JournalLineId,
+    type TrendPoint,
+} from '../lib/domain';
 import { getJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
 import { chartColorFor } from '../lib/visualHints';
@@ -9,6 +16,7 @@ type WireSummary = components['schemas']['DashboardSummaryOutput'];
 type WireTrend = components['schemas']['AccountBalanceTrendOutput'];
 type WireTrendSeries = components['schemas']['AccountTrendSeries'];
 type WireTrendDelta = components['schemas']['TrendDelta'];
+type WireRecentActivity = components['schemas']['DashboardRecentActivityOutput'];
 
 export type DashboardSummary = {
     netWorth: Money;
@@ -47,11 +55,26 @@ export type AccountBalanceTrend = {
     currencyCode: string;
 };
 
+/** One register row on a dashboard account card; the amount is already
+ *  normalized to the account's normal balance, like the register. */
+export type RecentActivityRow = {
+    journalLineId: JournalLineId;
+    date: string;
+    entryDescription: string | null;
+    lineDescription: string | null;
+    counterpartyName: string | null;
+    amount: Money;
+};
+
+/** Recent rows per postable account; accounts without activity are absent. */
+export type RecentActivity = ReadonlyMap<AccountId, RecentActivityRow[]>;
+
 export const dashboardKeys = {
     all: ['dashboard'] as const,
     summary: () => [...dashboardKeys.all, 'summary'] as const,
     accountBalanceTrend: (range: TrendRange) =>
         [...dashboardKeys.all, 'account-balance-trend', range] as const,
+    recentActivity: () => [...dashboardKeys.all, 'recent-activity'] as const,
 };
 
 function fetchSummary(signal: AbortSignal): Promise<WireSummary> {
@@ -150,5 +173,38 @@ export function useAccountBalanceTrend(range: TrendRange) {
     return useQuery({
         queryKey: dashboardKeys.accountBalanceTrend(range),
         queryFn: async ({ signal }) => toTrend(await fetchTrend(range, signal)),
+    });
+}
+
+function toRecentActivity(wire: WireRecentActivity): RecentActivity {
+    return new Map(
+        wire.accounts.map(a => [
+            asAccountId(a.accountId),
+            a.rows.map(r => ({
+                journalLineId: asJournalLineId(r.journalLineId),
+                date: r.date,
+                entryDescription: r.entryDescription,
+                lineDescription: r.lineDescription,
+                counterpartyName: r.counterpartyName,
+                amount: toMoney(r.amount),
+            })),
+        ]),
+    );
+}
+
+/** All account cards' recent rows in one request: the per-account fan-out the
+ *  dashboard used to do (one register call per account) piles up on
+ *  resource-constrained hosts. */
+export function useDashboardRecentActivity() {
+    return useQuery({
+        queryKey: dashboardKeys.recentActivity(),
+        queryFn: async ({ signal }) =>
+            toRecentActivity(
+                await getJson<WireRecentActivity>(
+                    '/api/dashboard/recent-activity',
+                    signal,
+                    'load recent activity',
+                ),
+            ),
     });
 }
