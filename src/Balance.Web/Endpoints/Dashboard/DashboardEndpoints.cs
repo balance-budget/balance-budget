@@ -15,6 +15,10 @@ internal static class DashboardEndpoints
 
     private const TrendRange DefaultTrendRange = TrendRange.ThreeMonths;
 
+    // Matches what one account row on the dashboard renders; not user-tunable to keep the
+    // batched query bounded.
+    private const int RecentActivityRowsPerAccount = 5;
+
     public static void MapDashboard(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup(PathPrefix).WithTags("Dashboard");
@@ -22,6 +26,9 @@ internal static class DashboardEndpoints
         group
             .MapGet("/account-balance-trend", GetAccountBalanceTrendAsync)
             .WithName("GetAccountBalanceTrend");
+        group
+            .MapGet("/recent-activity", GetRecentActivityAsync)
+            .WithName("GetDashboardRecentActivity");
     }
 
     private static async Task<
@@ -63,6 +70,26 @@ internal static class DashboardEndpoints
         var result = await dashboardService.GetAccountBalanceTrendAsync(
             currency ?? DefaultCurrency,
             range ?? DefaultTrendRange,
+            cancellationToken
+        );
+        return result.ToOk();
+    }
+
+    private static async Task<
+        Results<
+            Ok<DashboardRecentActivityOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > GetRecentActivityAsync(
+        [FromServices] IDashboardService dashboardService,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await dashboardService.GetRecentActivityAsync(
+            RecentActivityRowsPerAccount,
             cancellationToken
         );
         return result.ToOk();

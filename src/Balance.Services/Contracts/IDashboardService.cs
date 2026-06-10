@@ -14,4 +14,9 @@ public interface IDashboardService
         TrendRange range,
         CancellationToken cancellationToken
     );
+
+    Task<Result<DashboardRecentActivityOutput>> GetRecentActivityAsync(
+        int rowsPerAccount,
+        CancellationToken cancellationToken
+    );
 }
