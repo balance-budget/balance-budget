@@ -13,11 +13,13 @@ import {
 import { getJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
 import type { Page } from '../lib/paging';
+import type { RegisterSummaryBucketSize, RegisterSummaryRange } from '../lib/registerSummary';
 import { accountsKeys } from './accounts';
 
 type WireRegisterRow = components['schemas']['RegisterRowOutput'];
 type WirePagedRegisterRows = components['schemas']['PagedOutputOfRegisterRowOutput'];
 type WireCounterLeg = components['schemas']['RegisterRowCounterLeg'];
+type WireRegisterSummary = components['schemas']['RegisterSummaryOutput'];
 
 export type ReconciliationStatus = 'Uncleared' | 'Cleared' | 'Reconciled';
 
@@ -62,6 +64,11 @@ export const registerKeys = {
     all: [...accountsKeys.all, 'register'] as const,
     list: (accountId: AccountId, skip: number, take: number, filters: RegisterFilters) =>
         [...registerKeys.all, accountId, { skip, take, ...filters }] as const,
+    summary: (
+        accountId: AccountId,
+        range: RegisterSummaryRange,
+        bucket: RegisterSummaryBucketSize,
+    ) => [...registerKeys.all, accountId, 'summary', { ...range, bucket }] as const,
 };
 
 function fetchRegister(
@@ -137,6 +144,72 @@ export function useAccountRegister(
                 items: wire.items.map(toRegisterRow),
                 totalCount: Number(wire.totalCount),
             };
+        },
+    });
+}
+
+/** One stack segment of a Register summary — a direct child of the focal
+ *  account, or the account itself on a postable leaf. */
+export type RegisterSummarySegment = {
+    accountId: AccountId;
+    accountName: string;
+};
+
+/** One time bucket; `values` only carries segments with a non-zero net amount.
+ *  Amounts are minor units, normalized to the account's normal balance. */
+export type RegisterSummaryBucket = {
+    start: string;
+    values: { accountId: AccountId; amount: number }[];
+};
+
+export type RegisterSummary = {
+    bucket: RegisterSummaryBucketSize;
+    from: string;
+    to: string;
+    currencyCode: string;
+    segments: RegisterSummarySegment[];
+    buckets: RegisterSummaryBucket[];
+};
+
+function toRegisterSummary(wire: WireRegisterSummary): RegisterSummary {
+    return {
+        bucket: wire.bucket,
+        from: wire.from,
+        to: wire.to,
+        currencyCode: wire.currencyCode,
+        segments: wire.segments.map(s => ({
+            accountId: asAccountId(s.accountId),
+            accountName: s.accountName,
+        })),
+        buckets: wire.buckets.map(b => ({
+            start: b.start,
+            values: b.values.map(v => ({
+                accountId: asAccountId(v.accountId),
+                amount: Number(v.amount),
+            })),
+        })),
+    };
+}
+
+export function useRegisterSummary(
+    accountId: AccountId,
+    range: RegisterSummaryRange,
+    bucket: RegisterSummaryBucketSize,
+) {
+    return useQuery({
+        queryKey: registerKeys.summary(accountId, range, bucket),
+        queryFn: async ({ signal }): Promise<RegisterSummary> => {
+            const params = new URLSearchParams({
+                from: range.from,
+                to: range.to,
+                bucket,
+            });
+            const wire = await getJson<WireRegisterSummary>(
+                `/api/accounts/${accountId}/register/summary?${params.toString()}`,
+                signal,
+                'load register summary',
+            );
+            return toRegisterSummary(wire);
         },
     });
 }

@@ -278,6 +278,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/accounts/{id}/register/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetRegisterSummary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/counterparties": {
         parameters: {
             query?: never;
@@ -1604,6 +1620,32 @@ export interface components {
             amount: components["schemas"]["Money"];
             counter: components["schemas"]["RegisterRowCounterLeg"][];
         };
+        /** @enum {unknown} */
+        RegisterSummaryBucket: "Day" | "Week" | "Month";
+        RegisterSummaryBucketOutput: {
+            /** Format: date */
+            start: string;
+            values: components["schemas"]["RegisterSummaryValue"][];
+        };
+        RegisterSummaryOutput: {
+            bucket: components["schemas"]["RegisterSummaryBucket"];
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            currencyCode: components["schemas"]["CurrencyCode"];
+            segments: components["schemas"]["RegisterSummarySegment"][];
+            buckets: components["schemas"]["RegisterSummaryBucketOutput"][];
+        };
+        RegisterSummarySegment: {
+            accountId: components["schemas"]["AccountId"];
+            accountName: string;
+        };
+        RegisterSummaryValue: {
+            accountId: components["schemas"]["AccountId"];
+            /** Format: int64 */
+            amount: number | string;
+        };
         ReplaceJournalEntryRequest: {
             /** Format: date */
             date: string;
@@ -2653,6 +2695,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PagedOutputOfRegisterRowOutput"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetRegisterSummary: {
+        parameters: {
+            query?: {
+                From?: string;
+                To?: string;
+                Bucket?: components["schemas"]["RegisterSummaryBucket"];
+            };
+            header?: never;
+            path: {
+                id: components["schemas"]["AccountId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisterSummaryOutput"];
                 };
             };
             /** @description Bad Request */

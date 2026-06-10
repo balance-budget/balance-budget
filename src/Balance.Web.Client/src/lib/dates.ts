@@ -9,6 +9,7 @@
 import { getLocalTimeZone, today } from '@internationalized/date';
 import type { TrendRange } from '../api/dashboard';
 import { formatDate, parseIsoDate } from '../i18n/format';
+import type { RegisterSummaryBucketSize } from './registerSummary';
 
 /** Today's date as a local `YYYY-MM-DD` string (for date-input defaults). */
 export function todayIso(): string {
@@ -29,6 +30,28 @@ export function formatTrendAxisDate(date: string, range: TrendRange): string {
         return formatDate(date, { month: 'short', year: '2-digit' });
     }
     return formatDate(date, { month: 'short' });
+}
+
+/**
+ * Bucket-aware x-axis tick for the Register summary chart: monthly buckets
+ * read as month names (year suffix on January to mark the boundary), daily
+ * and weekly buckets keep the day-of-month.
+ */
+export function formatBucketAxisDate(date: string, bucket: RegisterSummaryBucketSize): string {
+    if (bucket === 'Month') {
+        return parseIsoDate(date).getMonth() === 0
+            ? formatDate(date, { month: 'short', year: '2-digit' })
+            : formatDate(date, { month: 'short' });
+    }
+    return formatDate(date, { month: 'short', day: 'numeric' });
+}
+
+/** Bucket-aware tooltip heading: "May 2026" for a month, a full date otherwise. */
+export function formatBucketTooltipDate(date: string, bucket: RegisterSummaryBucketSize): string {
+    if (bucket === 'Month') {
+        return formatDate(date, { month: 'long', year: 'numeric' });
+    }
+    return formatDate(date, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
 }
 
 /** Full tooltip date, e.g. "Tue, May 14, 2026". */
