@@ -109,6 +109,20 @@ internal static class OutlookProjectionEngine
     }
 
     /// <summary>
+    /// The occurrence dates of a template still due in the current (partial) month — those on or
+    /// after <paramref name="fromDate"/>. Used to itemize "what's still expected this month".
+    /// </summary>
+    public static IReadOnlyList<DateOnly> RemainingOccurrences(
+        OutlookTemplateSpec template,
+        DateOnly fromDate
+    )
+    {
+        var month = FirstOfMonth(fromDate);
+        var monthEnd = LastOfMonth(month);
+        return [.. OccurrenceDates(template, month, monthEnd).Where(d => d >= fromDate)];
+    }
+
+    /// <summary>
     /// The dates a template's charge lands on inside one calendar month. Recurring cadences that
     /// align to a month yield their nominal day; <see cref="Cadence.Weekly"/> yields every 7-day
     /// step that falls inside the month. Respects the optional end date and the anchor month.

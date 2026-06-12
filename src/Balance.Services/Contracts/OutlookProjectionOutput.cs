@@ -40,11 +40,26 @@ public sealed record OutlookThisMonthOutput(
     DateOnly Month,
     long ExpectedIn,
     long ExpectedOut,
+    IReadOnlyList<OutlookExpectedItemOutput> Items,
     long EverydaySpendLow,
     long EverydaySpendHigh,
     long EndBalanceLow,
     long EndBalanceMid,
     long EndBalanceHigh
+);
+
+/// <summary>
+/// One recurring item still due before month-end (ADR-0028): its template name, optional
+/// counterparty, the balance-normalized signed amount expected (inflow positive), and the earliest
+/// remaining due date this month. Items sum to <see cref="OutlookThisMonthOutput.ExpectedIn"/> /
+/// <see cref="OutlookThisMonthOutput.ExpectedOut"/> by sign.
+/// </summary>
+public sealed record OutlookExpectedItemOutput(
+    string Name,
+    CounterpartyId? CounterpartyId,
+    string? CounterpartyName,
+    long Amount,
+    DateOnly DueDate
 );
 
 /// <summary>
