@@ -167,6 +167,9 @@ msgstr "── 無"
 msgid "── None (self-transfer)"
 msgstr "── 無（自我轉帳）"
 
+msgid "31 Dec {year}"
+msgstr ""
+
 msgid "A construction deposit needs an asset account, an income account, and a "
 "rate - set all three or none."
 msgstr "建築存款需要資產帳戶、收入帳戶和利率 - 三者全設或全不設。"
@@ -400,6 +403,9 @@ msgstr "餘額"
 
 msgid "Balance & payments"
 msgstr "餘額與付款"
+
+msgid "Balance now"
+msgstr ""
 
 msgid "Balance over time · Last 3 months"
 msgstr "餘額變化 · 過去 3 個月"
@@ -986,6 +992,9 @@ msgstr "結束日期"
 msgid "End date must be after the start date."
 msgstr "結束日期必須晚於開始日期。"
 
+msgid "End of month"
+msgstr ""
+
 msgid "Ended"
 msgstr "已結束"
 
@@ -1029,6 +1038,9 @@ msgstr "每個部分都需要一個標籤。"
 msgid "Every part needs an end date."
 msgstr "每個部分都需要一個結束日期。"
 
+msgid "Everyday spending"
+msgstr ""
+
 msgid "Exchange rate"
 msgstr "匯率"
 
@@ -1039,6 +1051,12 @@ msgid "Expand"
 msgstr "展開"
 
 msgid "Expected amount"
+msgstr ""
+
+msgid "Expected in"
+msgstr ""
+
+msgid "Expected out"
 msgstr ""
 
 msgid "Expected payments and income that shape the projection."
@@ -1174,8 +1192,8 @@ msgstr "匯入器"
 msgid "Importing…"
 msgstr "匯入中…"
 
-msgid "In {horizon} months"
-msgstr ""
+#~ msgid "In {horizon} months"
+#~ msgstr ""
 
 msgid "In force"
 msgstr "生效中"
@@ -1566,8 +1584,8 @@ msgstr ""
 msgid "Notifications"
 msgstr "通知"
 
-msgid "Now"
-msgstr ""
+#~ msgid "Now"
+#~ msgstr ""
 
 msgid "Number format"
 msgstr "數字格式"
@@ -2031,6 +2049,12 @@ msgstr "狀態"
 msgid "Status filter"
 msgstr "狀態篩選"
 
+msgid "Still expected in"
+msgstr ""
+
+msgid "Still expected out"
+msgstr ""
+
 msgid "Structural matches with an Uncleared bank-side slot. Widen the date "
 "window to surface near-misses."
 msgstr "與未結清的銀行端項目的結構性相符。放寬日期區間以顯示近似項目。"
@@ -2203,6 +2227,9 @@ msgstr "將忽略"
 
 msgid "Working…"
 msgstr "處理中…"
+
+msgid "Year-end"
+msgstr ""
 
 msgid "You have {dirtyCount, plural, one {# unsaved draft} other {# unsaved "
 "drafts}}. Leaving will discard them."

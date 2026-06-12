@@ -169,6 +169,9 @@ msgstr "── Geen"
 msgid "── None (self-transfer)"
 msgstr "── Geen (eigen overboeking)"
 
+msgid "31 Dec {year}"
+msgstr ""
+
 msgid "A construction deposit needs an asset account, an income account, and a "
 "rate - set all three or none."
 msgstr "Een bouwdepot vereist een activarekening, een opbrengstenrekening en "
@@ -405,6 +408,9 @@ msgstr "Saldo"
 
 msgid "Balance & payments"
 msgstr "Saldo & betalingen"
+
+msgid "Balance now"
+msgstr ""
 
 msgid "Balance over time · Last 3 months"
 msgstr "Saldo in de tijd · Afgelopen 3 maanden"
@@ -1000,6 +1006,9 @@ msgstr "Einddatum"
 msgid "End date must be after the start date."
 msgstr "Einddatum moet na de begindatum liggen."
 
+msgid "End of month"
+msgstr ""
+
 msgid "Ended"
 msgstr "Beëindigd"
 
@@ -1043,6 +1052,9 @@ msgstr "Elk deel heeft een label nodig."
 msgid "Every part needs an end date."
 msgstr "Elk deel heeft een einddatum nodig."
 
+msgid "Everyday spending"
+msgstr ""
+
 msgid "Exchange rate"
 msgstr "Wisselkoers"
 
@@ -1053,6 +1065,12 @@ msgid "Expand"
 msgstr "Uitklappen"
 
 msgid "Expected amount"
+msgstr ""
+
+msgid "Expected in"
+msgstr ""
+
+msgid "Expected out"
 msgstr ""
 
 msgid "Expected payments and income that shape the projection."
@@ -1191,8 +1209,8 @@ msgstr "Importer"
 msgid "Importing…"
 msgstr "Importeren…"
 
-msgid "In {horizon} months"
-msgstr ""
+#~ msgid "In {horizon} months"
+#~ msgstr ""
 
 msgid "In force"
 msgstr "Van kracht"
@@ -1589,8 +1607,8 @@ msgstr ""
 msgid "Notifications"
 msgstr "Meldingen"
 
-msgid "Now"
-msgstr ""
+#~ msgid "Now"
+#~ msgstr ""
 
 msgid "Number format"
 msgstr "Getalnotatie"
@@ -2067,6 +2085,12 @@ msgstr "Status"
 msgid "Status filter"
 msgstr "Statusfilter"
 
+msgid "Still expected in"
+msgstr ""
+
+msgid "Still expected out"
+msgstr ""
+
 msgid "Structural matches with an Uncleared bank-side slot. Widen the date "
 "window to surface near-misses."
 msgstr "Structurele overeenkomsten met een niet-verwerkte plek aan de "
@@ -2255,6 +2279,9 @@ msgstr "wordt genegeerd"
 
 msgid "Working…"
 msgstr "Bezig…"
+
+msgid "Year-end"
+msgstr ""
 
 msgid "You have {dirtyCount, plural, one {# unsaved draft} other {# unsaved "
 "drafts}}. Leaving will discard them."

@@ -22,6 +22,8 @@ type ChartRow = {
     mid?: number;
     band?: [number, number];
     scenario?: number;
+    expectedIn?: number;
+    expectedOut?: number;
 };
 
 function formatMonth(iso: string): string {
@@ -46,6 +48,7 @@ export function OutlookProjectionChart({
     account: OutlookAccountProjection;
     height?: number;
 }) {
+    const { t } = useLingui();
     const catalog = useCurrencyCatalog();
 
     const rows = useMemo<ChartRow[]>(() => {
@@ -71,6 +74,8 @@ export function OutlookProjectionChart({
                 mid: b.endBalanceMid,
                 band: [b.endBalanceLow, b.endBalanceHigh],
                 scenario: scenarioMonth?.endBalanceMid,
+                expectedIn: b.expectedIn,
+                expectedOut: b.expectedOut,
             });
         });
 
@@ -78,6 +83,9 @@ export function OutlookProjectionChart({
     }, [account]);
 
     const hasScenario = account.scenario !== null;
+    // The December row's category key, so the year-end marker lands on the right tick (absent when
+    // the horizon stops before December).
+    const yearEndMonth = `${account.yearEnd.date.slice(0, 7)}-01`;
 
     return (
         <ResponsiveContainer width="100%" height={height}>
@@ -104,6 +112,17 @@ export function OutlookProjectionChart({
                     width={60}
                 />
                 <ReferenceLine y={0} stroke="var(--color-danger)" strokeDasharray="3 3" />
+                <ReferenceLine
+                    x={yearEndMonth}
+                    stroke="var(--color-border-strong)"
+                    strokeDasharray="3 3"
+                    label={{
+                        value: t`Year-end`,
+                        position: 'insideTopRight',
+                        fill: 'var(--color-fg-3)',
+                        fontSize: 10,
+                    }}
+                />
                 <Tooltip
                     content={
                         <ProjectionTooltip
@@ -187,6 +206,8 @@ function ProjectionTooltip({
         return typeof entry?.value === 'number' ? entry.value : undefined;
     };
     const band = payload.find(p => p.dataKey === 'band')?.value as [number, number] | undefined;
+    // expectedIn/expectedOut aren't rendered series, so read them off the row the tooltip carries.
+    const row = payload[0]?.payload as ChartRow | undefined;
 
     const actual = find('actual');
     const mid = find('mid');
@@ -204,6 +225,18 @@ function ProjectionTooltip({
                 {mid !== undefined && (
                     <Row label={t`Projected`} value={formatMoney(mid, currencyCode, catalog)} />
                 )}
+                {row?.expectedIn ? (
+                    <Row
+                        label={t`Expected in`}
+                        value={formatMoney(row.expectedIn, currencyCode, catalog)}
+                    />
+                ) : null}
+                {row?.expectedOut ? (
+                    <Row
+                        label={t`Expected out`}
+                        value={formatMoney(row.expectedOut, currencyCode, catalog)}
+                    />
+                ) : null}
                 {hasScenario && scenario !== undefined && (
                     <Row label={t`What-if`} value={formatMoney(scenario, currencyCode, catalog)} />
                 )}

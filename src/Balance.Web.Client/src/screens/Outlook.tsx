@@ -10,6 +10,7 @@ import {
     type TemplateCandidate,
     type WireScenarioRequest,
 } from '../api/outlook';
+import { useAccounts } from '../api/accounts';
 import { Amount } from '../components/Amount';
 import { Empty } from '../components/Empty';
 import { ErrorState } from '../components/ErrorState';
@@ -20,8 +21,9 @@ import { Button } from '../components/ui/Button';
 import { Checkbox } from '../components/ui/Checkbox';
 import { ToggleButton, ToggleButtonGroup } from '../components/ui/ToggleButtonGroup';
 import { useToast } from '../components/ui/Toast';
+import { accountPathSegments, ACCOUNT_PATH_SEPARATOR } from '../lib/accountTree';
 import { cx } from '../lib/cx';
-import { type JournalEntryTemplateId } from '../lib/domain';
+import { type AccountId, type JournalEntryTemplateId } from '../lib/domain';
 import { JournalEntryTemplateForm } from './JournalEntryTemplateForm';
 import { OutlookProjectionChart } from './OutlookProjectionChart';
 
@@ -33,6 +35,14 @@ function formatDueDate(iso: string): string {
     return new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1).toLocaleDateString(undefined, {
         day: 'numeric',
         month: 'short',
+        year: 'numeric',
+    });
+}
+
+function formatMonthName(iso: string): string {
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1).toLocaleDateString(undefined, {
+        month: 'long',
         year: 'numeric',
     });
 }
@@ -134,6 +144,16 @@ function ProjectionPanel({
     const { t } = useLingui();
     const [selectedId, setSelectedId] = useState<string | null>(null);
 
+    const allAccounts = useAccounts();
+    const byId = useMemo(
+        () => new Map((allAccounts.data ?? []).map(a => [a.id, a])),
+        [allAccounts.data],
+    );
+    const pathLabel = (id: AccountId, fallback: string) => {
+        const segments = accountPathSegments(byId, id);
+        return segments.length > 0 ? segments.join(ACCOUNT_PATH_SEPARATOR) : fallback;
+    };
+
     const accounts = projection.data?.accounts ?? [];
     const selected = accounts.find(a => a.accountId === selectedId) ?? accounts[0] ?? null;
 
@@ -199,69 +219,24 @@ function ProjectionPanel({
                                         : 'text-fg-2 hover:bg-surface-2',
                                 )}
                             >
-                                {a.accountName}
+                                {pathLabel(a.accountId, a.accountName)}
                             </button>
                         ))}
                     </div>
 
-                    {selected && <ProjectionDetail account={selected} horizon={horizon} />}
+                    {selected && <ProjectionDetail account={selected} />}
                 </div>
             )}
         </Panel>
     );
 }
 
-function ProjectionDetail({
-    account,
-    horizon,
-}: {
-    account: OutlookAccountProjection;
-    horizon: number;
-}) {
-    const endMid = account.baseline.at(-1)?.endBalanceMid ?? account.currentBalance;
-    const endLow = account.baseline.at(-1)?.endBalanceLow ?? account.currentBalance;
-    const endHigh = account.baseline.at(-1)?.endBalanceHigh ?? account.currentBalance;
-    const scenarioEnd = account.scenario?.at(-1)?.endBalanceMid ?? null;
-
+function ProjectionDetail({ account }: { account: OutlookAccountProjection }) {
     return (
         <>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <Kpi label={<Trans>Now</Trans>}>
-                    <Amount
-                        minor={account.currentBalance}
-                        currencyCode={account.currencyCode}
-                        size="medium"
-                    />
-                </Kpi>
-                <Kpi label={<Trans>In {horizon} months</Trans>}>
-                    <Amount minor={endMid} currencyCode={account.currencyCode} size="medium" />
-                    <span className="text-xs text-fg-3 mt-0.5">
-                        <Amount
-                            minor={endLow}
-                            currencyCode={account.currencyCode}
-                            size="inline"
-                            decimals={false}
-                        />
-                        {' – '}
-                        <Amount
-                            minor={endHigh}
-                            currencyCode={account.currencyCode}
-                            size="inline"
-                            decimals={false}
-                        />
-                    </span>
-                </Kpi>
-                {scenarioEnd !== null && (
-                    <Kpi label={<Trans>What-if</Trans>}>
-                        <span className="text-[#f59e0b]">
-                            <Amount
-                                minor={scenarioEnd}
-                                currencyCode={account.currencyCode}
-                                size="medium"
-                            />
-                        </span>
-                    </Kpi>
-                )}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                <ThisMonthCard account={account} />
+                <YearEndCard account={account} />
             </div>
 
             <OutlookProjectionChart account={account} />
@@ -269,12 +244,143 @@ function ProjectionDetail({
     );
 }
 
-function Kpi({ label, children }: { label: React.ReactNode; children: React.ReactNode }) {
+function ThisMonthCard({ account }: { account: OutlookAccountProjection }) {
+    const m = account.thisMonth;
     return (
-        <div className="flex flex-col gap-1 p-3 rounded-xl bg-surface-2">
-            <span className="text-xs font-medium text-fg-3 uppercase tracking-wide">{label}</span>
-            <span className="flex flex-col">{children}</span>
+        <div className="flex flex-col gap-2 p-4 rounded-xl bg-surface-2">
+            <div className="flex items-baseline justify-between">
+                <span className="text-xs font-medium text-fg-3 uppercase tracking-wide">
+                    <Trans>This month</Trans>
+                </span>
+                <span className="text-xs text-fg-3">{formatMonthName(m.month)}</span>
+            </div>
+
+            <CardRow label={<Trans>Still expected in</Trans>}>
+                <Amount
+                    minor={m.expectedIn}
+                    currencyCode={account.currencyCode}
+                    size="inline"
+                    sign
+                />
+            </CardRow>
+            <CardRow label={<Trans>Still expected out</Trans>}>
+                <Amount
+                    minor={m.expectedOut}
+                    currencyCode={account.currencyCode}
+                    size="inline"
+                    sign
+                />
+            </CardRow>
+            <CardRow label={<Trans>Everyday spending</Trans>}>
+                <RangeAmount
+                    low={m.everydaySpendLow}
+                    high={m.everydaySpendHigh}
+                    currencyCode={account.currencyCode}
+                />
+            </CardRow>
+
+            <div className="border-t border-border-soft my-1" />
+
+            <CardRow label={<Trans>Balance now</Trans>}>
+                <Amount
+                    minor={account.currentBalance}
+                    currencyCode={account.currencyCode}
+                    size="inline"
+                />
+            </CardRow>
+            <CardRow label={<Trans>End of month</Trans>} emphasis>
+                <Amount minor={m.endBalanceMid} currencyCode={account.currencyCode} size="medium" />
+            </CardRow>
+            <div className="text-right text-xs text-fg-3">
+                <RangeAmount
+                    low={m.endBalanceLow}
+                    high={m.endBalanceHigh}
+                    currencyCode={account.currencyCode}
+                />
+            </div>
         </div>
+    );
+}
+
+function YearEndCard({ account }: { account: OutlookAccountProjection }) {
+    const y = account.yearEnd;
+    const scenarioEnd =
+        account.scenario?.find(month => month.month.slice(0, 7) === y.date.slice(0, 7))
+            ?.endBalanceMid ?? null;
+    const year = y.date.slice(0, 4);
+
+    return (
+        <div className="flex flex-col gap-2 p-4 rounded-xl bg-surface-2">
+            <div className="flex items-baseline justify-between">
+                <span className="text-xs font-medium text-fg-3 uppercase tracking-wide">
+                    <Trans>Year-end</Trans>
+                </span>
+                <span className="text-xs text-fg-3">
+                    <Trans>31 Dec {year}</Trans>
+                </span>
+            </div>
+
+            <Amount minor={y.endBalanceMid} currencyCode={account.currencyCode} size="big" />
+            <div className="text-xs text-fg-3">
+                <RangeAmount
+                    low={y.endBalanceLow}
+                    high={y.endBalanceHigh}
+                    currencyCode={account.currencyCode}
+                />
+            </div>
+
+            {scenarioEnd !== null && (
+                <div className="flex items-baseline justify-between mt-auto pt-2">
+                    <span className="text-xs text-fg-3">
+                        <Trans>What-if</Trans>
+                    </span>
+                    <span className="text-[#f59e0b]">
+                        <Amount
+                            minor={scenarioEnd}
+                            currencyCode={account.currencyCode}
+                            size="inline"
+                        />
+                    </span>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function CardRow({
+    label,
+    emphasis,
+    children,
+}: {
+    label: React.ReactNode;
+    emphasis?: boolean;
+    children: React.ReactNode;
+}) {
+    return (
+        <div className="flex items-baseline justify-between gap-x-4">
+            <span className={cx('text-sm', emphasis ? 'text-fg-1 font-medium' : 'text-fg-2')}>
+                {label}
+            </span>
+            <span className="flex flex-col items-end">{children}</span>
+        </div>
+    );
+}
+
+function RangeAmount({
+    low,
+    high,
+    currencyCode,
+}: {
+    low: number;
+    high: number;
+    currencyCode: string;
+}) {
+    return (
+        <span className="font-mono tabular-nums">
+            <Amount minor={low} currencyCode={currencyCode} size="inline" decimals={false} />
+            {' – '}
+            <Amount minor={high} currencyCode={currencyCode} size="inline" decimals={false} />
+        </span>
     );
 }
 
