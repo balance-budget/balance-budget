@@ -50,12 +50,6 @@ export function TopBar({ title, period, onMenuClick, onSearchClick }: TopBarProp
                 >
                     <Icon name="search" size={18} strokeWidth={1.75} />
                 </TopBarButton>
-                <TopBarButton
-                    aria-label={t`Notifications`}
-                    className="w-9 h-9 rounded-lg bg-surface-2 border border-border-soft flex items-center justify-center text-fg-2 transition-colors duration-120 data-[hovered]:bg-surface-3 data-[hovered]:text-fg-1"
-                >
-                    <Icon name="bell" size={18} strokeWidth={1.75} />
-                </TopBarButton>
             </div>
         </header>
     );

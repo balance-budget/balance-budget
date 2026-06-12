@@ -37,12 +37,11 @@ const NAV_MAIN: NavLink[] = [
     { to: '/outlook', label: msg`Outlook`, iconName: 'binoculars' },
 ];
 
-const NAV_PLAN: NavLink[] = [
-    { to: '/budgets', label: msg`Budgets`, iconName: 'line-chart' },
-    { to: '/loans', label: msg`Loans`, iconName: 'landmark' },
-    { to: '/subscriptions', label: msg`Subscriptions`, iconName: 'repeat' },
-    { to: '/piggy-banks', label: msg`Piggy banks`, iconName: 'piggy-bank' },
-];
+// Budgets / Subscriptions / Piggy banks are deliberately omitted: they're
+// unbuilt, and their framing (budget/envelope, "piggy bank", a "subscriptions"
+// tab) is language the domain avoids — recurring items live inside Outlook.
+// Re-add here under glossary-safe names once they actually ship.
+const NAV_PLAN: NavLink[] = [{ to: '/loans', label: msg`Loans`, iconName: 'landmark' }];
 
 const NAV_OTHER: NavLink[] = [
     { to: '/accounts', label: msg`Accounts`, iconName: 'wallet' },
