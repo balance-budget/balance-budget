@@ -35,6 +35,7 @@ import { useToast } from '../components/ui/Toast';
 import { formatNumber } from '../i18n/format';
 import { accountPathLabel } from '../lib/accountTree';
 import { cx } from '../lib/cx';
+import { formatTableDate } from '../lib/dates';
 import { type AccountId, type CounterpartyId, type JournalEntryId } from '../lib/domain';
 import { handleActionError, handleFormError } from '../lib/formErrors';
 import { formatLegLabel, projectEntry, type JournalProjection } from '../lib/journalProjection';
@@ -216,7 +217,7 @@ function DetailHeader({
                     ) : null}
                 </div>
                 <span className="text-xs text-fg-3 tabular-nums">
-                    {entry.date}
+                    {formatTableDate(entry.date)}
                     {entry.counterpartyName && entry.description ? ` · ${entry.description}` : ''}
                 </span>
                 <FromToSummary projection={projection} lineCount={entry.lines.length} />
