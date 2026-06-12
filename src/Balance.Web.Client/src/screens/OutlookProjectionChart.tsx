@@ -14,6 +14,8 @@ import {
 } from 'recharts';
 import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import type { OutlookAccountProjection } from '../api/outlook';
+import { formatMonthAxisDate } from '../lib/dates';
+import { formatDate } from '../i18n/format';
 import { formatMoney, formatMoneyAxis } from '../lib/money';
 
 type ChartRow = {
@@ -25,16 +27,6 @@ type ChartRow = {
     expectedIn?: number;
     expectedOut?: number;
 };
-
-function formatMonth(iso: string): string {
-    // iso is a "YYYY-MM-01" first-of-month; show a short month, with the year on January.
-    const [y, m, d] = iso.split('-').map(Number);
-    const date = new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1);
-    return date.toLocaleDateString(undefined, {
-        month: 'short',
-        year: date.getMonth() === 0 ? 'numeric' : undefined,
-    });
-}
 
 /**
  * The liquid-balance Projection (ADR-0027): ledger actuals (solid) flowing into the
@@ -97,7 +89,7 @@ export function OutlookProjectionChart({
                 />
                 <XAxis
                     dataKey="month"
-                    tickFormatter={formatMonth}
+                    tickFormatter={formatMonthAxisDate}
                     tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
                     axisLine={false}
                     tickLine={false}
@@ -216,7 +208,9 @@ function ProjectionTooltip({
     return (
         <div className="rounded-xl border border-border-soft bg-bg-1 px-3 py-2 shadow-sm text-xs">
             <div className="text-fg-3 mb-1">
-                {typeof label === 'string' ? formatMonth(label) : ''}
+                {typeof label === 'string'
+                    ? formatDate(label, { month: 'long', year: 'numeric' })
+                    : ''}
             </div>
             <div className="flex flex-col gap-1">
                 {actual !== undefined && (

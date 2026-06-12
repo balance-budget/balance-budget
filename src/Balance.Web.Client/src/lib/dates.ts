@@ -26,10 +26,22 @@ export function formatTrendAxisDate(date: string, range: TrendRange): string {
     if (range === '1M') {
         return formatDate(date, { month: 'short', day: 'numeric' });
     }
-    if (range === '1Y' && parseIsoDate(date).getMonth() === 0) {
-        return formatDate(date, { month: 'short', year: '2-digit' });
+    if (range === '1Y') {
+        return formatMonthAxisDate(date);
     }
     return formatDate(date, { month: 'short' });
+}
+
+/**
+ * Shared month-bucketed x-axis tick: a short month name, with the full
+ * (4-digit) year on January to mark the boundary. One formatter so every
+ * monthly axis — the trend chart, the register summary, and the Outlook
+ * projection — reads identically (and stays region-aware via `formatDate`).
+ */
+export function formatMonthAxisDate(date: string): string {
+    return parseIsoDate(date).getMonth() === 0
+        ? formatDate(date, { month: 'short', year: 'numeric' })
+        : formatDate(date, { month: 'short' });
 }
 
 /**
@@ -39,9 +51,7 @@ export function formatTrendAxisDate(date: string, range: TrendRange): string {
  */
 export function formatBucketAxisDate(date: string, bucket: RegisterSummaryBucketSize): string {
     if (bucket === 'Month') {
-        return parseIsoDate(date).getMonth() === 0
-            ? formatDate(date, { month: 'short', year: '2-digit' })
-            : formatDate(date, { month: 'short' });
+        return formatMonthAxisDate(date);
     }
     return formatDate(date, { month: 'short', day: 'numeric' });
 }
@@ -62,4 +72,12 @@ export function formatTrendTooltipDate(date: string): string {
         month: 'short',
         day: 'numeric',
     });
+}
+
+/** A calendar date for list/table rows and detail headers, e.g. "12 Jun 2026"
+ *  in region order. The single place a `YYYY-MM-DD` becomes a human date in a
+ *  table, so every list reads the same and follows the region (ADR-0022)
+ *  instead of showing a raw ISO string. */
+export function formatTableDate(date: string): string {
+    return formatDate(date, { year: 'numeric', month: 'short', day: 'numeric' });
 }

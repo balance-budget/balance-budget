@@ -40,6 +40,7 @@ import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/ui/Toast';
 import { cx } from '../lib/cx';
+import { formatTableDate } from '../lib/dates';
 import {
     asAccountId,
     asCounterpartyId,
@@ -358,7 +359,7 @@ function ReadOnlyRow({
         <div className="border-b border-border-soft last:border-b-0">
             <div className="hidden lg:grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px_minmax(180px,200px)] gap-3 items-center px-2 py-2">
                 <span className="text-xs text-fg-3 tabular-nums">
-                    {bankTransaction.bookingDate}
+                    {formatTableDate(bankTransaction.bookingDate)}
                 </span>
                 <div className="min-w-0 flex flex-col leading-tight">
                     <span className="text-sm text-fg-1 truncate">
@@ -1546,7 +1547,7 @@ function InboxRow({
             </div>
             <div className="flex flex-col leading-tight pt-2">
                 <span className="text-xs text-fg-3 tabular-nums">
-                    {bankTransaction.bookingDate}
+                    {formatTableDate(bankTransaction.bookingDate)}
                 </span>
                 {willDismiss ? <WillDismissIndicator /> : <StatusIndicator status={status} />}
             </div>
