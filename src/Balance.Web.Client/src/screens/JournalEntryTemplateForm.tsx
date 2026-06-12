@@ -49,10 +49,13 @@ function fromRawAmount(
 export function JournalEntryTemplateForm({
     template,
     candidate,
+    defaultAccountId,
     onClose,
 }: {
     template?: JournalEntryTemplate;
     candidate?: TemplateCandidate;
+    /** Pre-selects the pinned account for a fresh "New" (the account being viewed in Outlook). */
+    defaultAccountId?: AccountId;
     onClose: () => void;
 }) {
     const { t } = useLingui();
@@ -65,7 +68,9 @@ export function JournalEntryTemplateForm({
 
     const seed = template ?? candidate;
     const [name, setName] = useState(template?.name ?? candidate?.suggestedName ?? '');
-    const [accountId, setAccountId] = useState<AccountId | null>(seed?.accountId ?? null);
+    const [accountId, setAccountId] = useState<AccountId | null>(
+        seed?.accountId ?? defaultAccountId ?? null,
+    );
     const [counterAccountId, setCounterAccountId] = useState<AccountId | null>(
         seed?.counterAccountId ?? null,
     );

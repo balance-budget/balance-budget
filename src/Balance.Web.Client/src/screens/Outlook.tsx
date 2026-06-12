@@ -127,6 +127,7 @@ export function Outlook() {
 
             {creating && (
                 <JournalEntryTemplateForm
+                    defaultAccountId={selectedAccount?.accountId}
                     onClose={() => {
                         setCreating(false);
                     }}
