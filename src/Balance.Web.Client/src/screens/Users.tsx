@@ -50,7 +50,6 @@ export function Users() {
         <>
             <Panel>
                 <SectionHead
-                    title={<Trans>Users</Trans>}
                     subtitle={<Trans>Logins that have access to this ledger.</Trans>}
                 />
                 {usersQuery.isPending ? (

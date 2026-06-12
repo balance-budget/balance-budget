@@ -30,18 +30,19 @@ type NavLink = {
     iconName: string;
 };
 
+// Loans is the only built "Plan" surface, so it sits in the main nav after
+// Outlook rather than alone under a one-item group. Budgets / Subscriptions /
+// Piggy banks are deliberately omitted: they're unbuilt, and their framing
+// (budget/envelope, "piggy bank", a "subscriptions" tab) is language the domain
+// avoids — recurring items live inside Outlook. Add them under glossary-safe
+// names once they actually ship.
 const NAV_MAIN: NavLink[] = [
     { to: '/', label: msg`Dashboard`, iconName: 'layout-dashboard' },
     { to: '/activity', label: msg`Activity`, iconName: 'book-open' },
     { to: '/reports', label: msg`Insights`, iconName: 'line-chart' },
     { to: '/outlook', label: msg`Outlook`, iconName: 'binoculars' },
+    { to: '/loans', label: msg`Loans`, iconName: 'landmark' },
 ];
-
-// Budgets / Subscriptions / Piggy banks are deliberately omitted: they're
-// unbuilt, and their framing (budget/envelope, "piggy bank", a "subscriptions"
-// tab) is language the domain avoids — recurring items live inside Outlook.
-// Re-add here under glossary-safe names once they actually ship.
-const NAV_PLAN: NavLink[] = [{ to: '/loans', label: msg`Loans`, iconName: 'landmark' }];
 
 const NAV_OTHER: NavLink[] = [
     { to: '/accounts', label: msg`Accounts`, iconName: 'wallet' },
@@ -472,7 +473,6 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
                 <nav className="flex flex-col gap-1 overflow-y-auto scrollbar-sleek -mr-4 pr-4">
                     <NavGroup items={NAV_MAIN} currentPath={pathname} />
                     <AccountsGroup />
-                    <NavGroup title={<Trans>Plan</Trans>} items={NAV_PLAN} currentPath={pathname} />
                     <NavGroup
                         title={<Trans>Manage</Trans>}
                         items={NAV_OTHER}

@@ -20,6 +20,7 @@ import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { LoanChart } from '../components/LoanChart';
 import { Panel, SectionHead } from '../components/Panel';
+import { usePageHeader } from '../components/PageHeader';
 import { Skeleton } from '../components/Skeleton';
 import { Button } from '../components/ui/Button';
 import { ComboBox } from '../components/ui/ComboBox';
@@ -51,6 +52,12 @@ import {
 export function LoanDetail({ id }: { id: LoanId }) {
     const { t } = useLingui();
     const loan = useLoan(id);
+    // TopBar owns the title (the loan name) under a "Loans" breadcrumb; the
+    // panel header keeps the lender/interest subtitle and the loan actions.
+    usePageHeader({
+        title: loan.data?.name,
+        breadcrumb: [{ label: t`Loans`, to: '/loans' }],
+    });
 
     if (loan.isPending) {
         return (
@@ -107,7 +114,6 @@ function LoanDetailLoaded({ loan }: { loan: LoanDetailModel }) {
         <div className="flex flex-col gap-4">
             <Panel>
                 <SectionHead
-                    title={loan.name}
                     subtitle={t`${loan.lenderName} · interest on ${loan.interestExpenseAccountName}`}
                     action={
                         <div className="flex items-center gap-2">

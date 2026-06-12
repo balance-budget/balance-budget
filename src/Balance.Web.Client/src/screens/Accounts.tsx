@@ -41,7 +41,6 @@ export function Accounts() {
         <>
             <Panel>
                 <SectionHead
-                    title={t`Accounts`}
                     subtitle={t`Ledger accounts in the double-entry sense - assets, liabilities, income, expenses, equity.`}
                     action={
                         <button

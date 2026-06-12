@@ -20,6 +20,7 @@ import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Pagination } from '../components/Pagination';
 import { Panel, SectionHead } from '../components/Panel';
+import { usePageHeader } from '../components/PageHeader';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/ui/Toast';
 import { SearchField } from '../components/ui/SearchField';
@@ -59,7 +60,6 @@ export function BankAccounts({
         <>
             <Panel>
                 <SectionHead
-                    title={t`Bank accounts`}
                     subtitle={t`The real-world bank accounts behind your ledger accounts and counterparties.`}
                     action={
                         <button
@@ -276,6 +276,13 @@ export function BankAccountDetail({ id }: { id: BankAccountId }) {
     const [editing, setEditing] = useState(false);
     const [deleting, setDeleting] = useState(false);
 
+    // TopBar owns the title (the bank account label) under a "Bank accounts"
+    // breadcrumb; this panel keeps the actions and the detail fields.
+    usePageHeader({
+        title: query.data ? formatBankAccountLabel(query.data) : undefined,
+        breadcrumb: [{ label: t`Bank accounts`, to: '/settings/bank-accounts' }],
+    });
+
     if (query.isPending) {
         return (
             <Panel>
@@ -301,42 +308,34 @@ export function BankAccountDetail({ id }: { id: BankAccountId }) {
     return (
         <>
             <Panel>
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between mb-4">
-                    <div className="flex flex-col gap-[2px] min-w-0">
-                        <Link
-                            to="/settings/bank-accounts"
-                            search={{ owner: 'Mine', page: 1, q: '' }}
-                            className="text-xs text-fg-3 hover:text-fg-1"
-                        >
-                            ← <Trans>Bank accounts</Trans>
-                        </Link>
-                        <h1 className="text-xl font-medium text-fg-1 truncate">
-                            {formatBankAccountLabel(ba)}
-                        </h1>
-                    </div>
-                    <div className="flex items-center gap-2 lg:shrink-0">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setEditing(true);
-                            }}
-                            className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1 hover:bg-surface-2"
-                        >
-                            <Icon name="pencil" size={14} strokeWidth={2} />
-                            <Trans>Edit</Trans>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setDeleting(true);
-                            }}
-                            className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-danger hover:bg-surface-2"
-                        >
-                            <Icon name="trash" size={14} strokeWidth={2} />
-                            <Trans>Delete</Trans>
-                        </button>
-                    </div>
-                </div>
+                {/* Name + back navigation live in the TopBar (breadcrumb +
+                 *  label); this header carries just the entity actions. */}
+                <SectionHead
+                    action={
+                        <div className="flex items-center gap-2 shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setEditing(true);
+                                }}
+                                className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1 hover:bg-surface-2"
+                            >
+                                <Icon name="pencil" size={14} strokeWidth={2} />
+                                <Trans>Edit</Trans>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setDeleting(true);
+                                }}
+                                className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-danger hover:bg-surface-2"
+                            >
+                                <Icon name="trash" size={14} strokeWidth={2} />
+                                <Trans>Delete</Trans>
+                            </button>
+                        </div>
+                    }
+                />
                 <BankAccountDetails bankAccount={ba} />
             </Panel>
 
