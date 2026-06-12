@@ -17,8 +17,8 @@ msgstr ""
 msgid " · expires {0}"
 msgstr " · {0}到期"
 
-#. placeholder {0}: current.fixedUntil
-#. placeholder {0}: rate.fixedUntil
+#. placeholder {0}: formatTableDate(current.fixedUntil)
+#. placeholder {0}: formatTableDate(rate.fixedUntil)
 msgid " · fixed until {0}"
 msgstr " · 固定至 {0}"
 
@@ -101,7 +101,7 @@ msgstr "還有 {0} 筆"
 
 #. placeholder {0}: candidate.occurrenceCount
 msgid "{0} seen"
-msgstr ""
+msgstr "已出現 {0} 次"
 
 #. placeholder {0}: selectionCount.toString()
 msgid "{0} selected"
@@ -127,7 +127,7 @@ msgid "{from}–{to} of {totalCount}"
 msgstr "{from}–{to}，共 {totalCount}"
 
 msgid "{h}m"
-msgstr ""
+msgstr "{h}m"
 
 msgid "{label} - interest"
 msgstr "{label} - 利息"
@@ -145,16 +145,10 @@ msgid "{selectionCount, plural, one {Dismiss # row} other {Dismiss # rows}}"
 msgstr "{selectionCount, plural, other {忽略 # 列}}"
 
 msgid "/mo"
-msgstr ""
-
-msgid "← Accounts"
-msgstr "← 帳戶"
+msgstr "/月"
 
 msgid "← Activity"
 msgstr "← 活動"
-
-msgid "← Cancel"
-msgstr "← 取消"
 
 #. placeholder {0}: moreCount.toString()
 #. placeholder {1}: title.toLowerCase()
@@ -168,7 +162,7 @@ msgid "── None (self-transfer)"
 msgstr "── 無（自我轉帳）"
 
 msgid "31 Dec {year}"
-msgstr ""
+msgstr "{year} 年 12 月 31 日"
 
 msgid "A construction deposit needs an asset account, an income account, and a "
 "rate - set all three or none."
@@ -239,14 +233,14 @@ msgid "Activity"
 msgstr "活動"
 
 msgid "Actual"
-msgstr ""
+msgstr "實際"
 
 msgid "Add"
 msgstr "新增"
 
 msgid "Add a liquid account and a few recurring items to see where your balance "
 "is heading."
-msgstr ""
+msgstr "新增一個流動帳戶和幾個定期項目，即可看出餘額的走向。"
 
 msgid "Add at least one line."
 msgstr "請至少新增一列。"
@@ -282,7 +276,7 @@ msgid "Add your first ledger account to get started."
 msgstr "新增你的第一個分類帳帳戶以開始使用。"
 
 msgid "Add your rent, salary, and subscriptions — or accept a detected one."
-msgstr ""
+msgstr "新增你的房租、薪資和訂閱項目 — 或採用偵測到的項目。"
 
 msgid "Adding…"
 msgstr "新增中…"
@@ -405,7 +399,7 @@ msgid "Balance & payments"
 msgstr "餘額與付款"
 
 msgid "Balance now"
-msgstr ""
+msgstr "目前餘額"
 
 msgid "Balance over time · Last 3 months"
 msgstr "餘額變化 · 過去 3 個月"
@@ -466,7 +460,7 @@ msgid "Bulk counterparty"
 msgstr "批次交易對象"
 
 msgid "Cadence"
-msgstr ""
+msgstr "週期"
 
 msgid "Can contain transactions"
 msgstr "可包含交易"
@@ -611,7 +605,7 @@ msgid "Couldn't load recent activity."
 msgstr "無法載入近期活動。"
 
 msgid "Couldn't load recurring items."
-msgstr ""
+msgstr "無法載入定期項目。"
 
 msgid "Couldn't load register summary."
 msgstr "無法載入帳戶明細摘要。"
@@ -620,7 +614,7 @@ msgid "Couldn't load register."
 msgstr "無法載入帳戶明細。"
 
 msgid "Couldn't load suggestions."
-msgstr ""
+msgstr "無法載入建議。"
 
 msgid "Couldn't load the balance trend."
 msgstr "無法載入餘額趨勢。"
@@ -635,22 +629,22 @@ msgid "Couldn't load the money flow."
 msgstr "無法載入資金流。"
 
 msgid "Couldn't load the projection."
-msgstr ""
+msgstr "無法載入預測。"
 
 msgid "Couldn't load this loan."
 msgstr "無法載入此貸款。"
 
 msgid "Couldn't remove the recurring item."
-msgstr ""
+msgstr "無法移除定期項目。"
 
 msgid "Counter"
 msgstr "對方"
 
 msgid "Counter account"
-msgstr ""
+msgstr "對方帳戶"
 
 msgid "Counter account (optional)"
-msgstr ""
+msgstr "對方帳戶（選填）"
 
 msgid "Counter-account…"
 msgstr "對方帳戶…"
@@ -841,10 +835,10 @@ msgid "Detaching…"
 msgstr "卸除中…"
 
 msgid "Detected"
-msgstr ""
+msgstr "偵測到的"
 
 msgid "Direction"
-msgstr ""
+msgstr "方向"
 
 msgid "Disable"
 msgstr "停用"
@@ -932,7 +926,7 @@ msgid "e.g. Mortgage interest"
 msgstr "例如房貸利息"
 
 msgid "e.g. Rent, Salary, Netflix…"
-msgstr ""
+msgstr "例如：房租、薪資、Netflix…"
 
 msgid "e.g. settled by journal entry X"
 msgstr "例如由日記帳分錄 X 結清"
@@ -972,7 +966,7 @@ msgid "Edit rate period"
 msgstr "編輯利率期間"
 
 msgid "Edit recurring item"
-msgstr ""
+msgstr "編輯定期項目"
 
 msgid "Effective date"
 msgstr "生效日期"
@@ -993,7 +987,7 @@ msgid "End date must be after the start date."
 msgstr "結束日期必須晚於開始日期。"
 
 msgid "End of month"
-msgstr ""
+msgstr "月底"
 
 msgid "Ended"
 msgstr "已結束"
@@ -1014,7 +1008,7 @@ msgid "Enter an amount greater than zero"
 msgstr "請輸入大於零的金額"
 
 msgid "Enter an expected amount."
-msgstr ""
+msgstr "請輸入預期金額。"
 
 msgid "Enter Debit or Credit."
 msgstr "請輸入借方或貸方。"
@@ -1023,7 +1017,7 @@ msgid "Enter your email and password to continue."
 msgstr "請輸入你的電子郵件與密碼以繼續。"
 
 msgid "Estimated"
-msgstr ""
+msgstr "估計"
 
 msgid "Every bookkeeping event, newest first."
 msgstr "每一筆記帳事件，最新優先。"
@@ -1042,7 +1036,7 @@ msgid "Every part needs an end date."
 msgstr "每個部分都需要一個結束日期。"
 
 msgid "Everyday spending"
-msgstr ""
+msgstr "日常支出"
 
 msgid "Exchange rate"
 msgstr "匯率"
@@ -1054,19 +1048,19 @@ msgid "Expand"
 msgstr "展開"
 
 msgid "Expected amount"
-msgstr ""
+msgstr "預期金額"
 
 msgid "Expected in"
-msgstr ""
+msgstr "預期流入"
 
 msgid "Expected out"
-msgstr ""
+msgstr "預期流出"
 
 msgid "Expected payments and income for {accountName}."
-msgstr ""
+msgstr "{accountName} 的預期付款與收入。"
 
 msgid "Expected payments and income that shape the projection."
-msgstr ""
+msgstr "形成預測的預期付款與收入。"
 
 msgid "Expenses"
 msgstr "支出"
@@ -1106,7 +1100,7 @@ msgid "Filter…"
 msgstr "篩選…"
 
 msgid "First / next date"
-msgstr ""
+msgstr "首次／下次日期"
 
 msgid "First-run setup"
 msgstr "首次執行設定"
@@ -1120,7 +1114,7 @@ msgstr "外幣金額"
 msgid "From"
 msgstr "從"
 
-#. placeholder {0}: rate.effectiveDate
+#. placeholder {0}: formatTableDate(rate.effectiveDate)
 msgid "from {0}"
 msgstr "自 {0}"
 
@@ -1143,10 +1137,10 @@ msgid "General-journal table - explicit debit / credit per line."
 msgstr "普通日記帳表格 - 每列明確標示借方／貸方。"
 
 msgid "Has an end date"
-msgstr ""
+msgstr "有結束日期"
 
 msgid "Horizon"
-msgstr ""
+msgstr "預測範圍"
 
 msgid "How dates and numbers are displayed. The interface language is separate "
 "from formatting."
@@ -1198,9 +1192,6 @@ msgstr "匯入器"
 msgid "Importing…"
 msgstr "匯入中…"
 
-#~ msgid "In {horizon} months"
-#~ msgstr ""
-
 msgid "In force"
 msgstr "生效中"
 
@@ -1208,7 +1199,7 @@ msgid "Inbox"
 msgstr "收件匣"
 
 msgid "Include in what-if"
-msgstr ""
+msgstr "納入假設情境"
 
 msgid "Income"
 msgstr "收入"
@@ -1398,7 +1389,7 @@ msgid "Money flow"
 msgstr "資金流"
 
 msgid "Money in"
-msgstr ""
+msgstr "流入"
 
 msgid "Money leaves these accounts (credit)."
 msgstr "資金流出這些帳戶（貸方）。"
@@ -1407,7 +1398,7 @@ msgid "Money moved from one or more sources to one or more destinations."
 msgstr "資金從一個或多個來源移動至一個或多個目的地。"
 
 msgid "Money out"
-msgstr ""
+msgstr "流出"
 
 msgid "Month · Day · Year"
 msgstr "月 · 日 · 年"
@@ -1459,7 +1450,7 @@ msgid "Net worth"
 msgstr "淨值"
 
 msgid "New"
-msgstr ""
+msgstr "新增"
 
 msgid "New account"
 msgstr "新帳戶"
@@ -1484,11 +1475,14 @@ msgid "New rate period - {0}"
 msgstr "新利率期間 - {0}"
 
 msgid "New recurring item"
-msgstr ""
+msgstr "新增定期項目"
+
+msgid "New this month"
+msgstr "本月新增"
 
 #. placeholder {0}: formatDueDate(template.nextDueDate)
 msgid "next {0}"
-msgstr ""
+msgstr "下次 {0}"
 
 msgid "Next month"
 msgstr "下個月"
@@ -1551,7 +1545,7 @@ msgid "No money moved in this period."
 msgstr "本期沒有資金移動。"
 
 msgid "No recurring items yet"
-msgstr ""
+msgstr "尚無定期項目"
 
 msgid "No rows match the current filters."
 msgstr "沒有列符合目前的篩選條件。"
@@ -1567,7 +1561,7 @@ msgid "No tokens yet."
 msgstr "尚無權杖。"
 
 msgid "None"
-msgstr ""
+msgstr "無"
 
 msgid "None - top level"
 msgstr "無 - 最上層"
@@ -1576,7 +1570,7 @@ msgid "Nothing categorized yet."
 msgstr "尚未分類任何項目。"
 
 msgid "Nothing detected"
-msgstr ""
+msgstr "未偵測到任何項目"
 
 msgid "Nothing dismissed."
 msgstr "沒有忽略任何項目。"
@@ -1585,13 +1579,7 @@ msgid "Nothing posted or projected yet."
 msgstr "尚無已過帳或預估的項目。"
 
 msgid "Nothing to project yet"
-msgstr ""
-
-msgid "Notifications"
-msgstr "通知"
-
-#~ msgid "Now"
-#~ msgstr ""
+msgstr "尚無可預測的內容"
 
 msgid "Number format"
 msgstr "數字格式"
@@ -1627,7 +1615,7 @@ msgid "or scroll down to create a new journal entry."
 msgstr "或向下捲動以建立新的日記帳分錄。"
 
 msgid "Outlook"
-msgstr ""
+msgstr "展望"
 
 msgid "Outstanding"
 msgstr "未償還"
@@ -1698,10 +1686,10 @@ msgid "Past rows are posted actuals; future rows are the projection (the "
 msgstr "過去的列是已過帳的實際值；未來的列是預估值（啟用時為假設情境）。"
 
 msgid "Patterns we spotted for {accountName}."
-msgstr ""
+msgstr "我們為 {accountName} 發現的模式。"
 
 msgid "Patterns we spotted in your history."
-msgstr ""
+msgstr "我們在你的歷史紀錄中發現的模式。"
 
 msgid "Payment change"
 msgstr "付款變動"
@@ -1732,7 +1720,7 @@ msgid "Pick counterparty…"
 msgstr "挑選交易對象…"
 
 msgid "Pick the account this lands on."
-msgstr ""
+msgstr "選擇此項目所屬的帳戶。"
 
 msgid "Pick the interest expense account."
 msgstr "挑選利息費用帳戶。"
@@ -1748,9 +1736,6 @@ msgstr "挑選要採用的負債帳戶。"
 
 msgid "Piggy banks"
 msgstr "存錢筒"
-
-msgid "Plan"
-msgstr "方案"
 
 msgid "Posted actuals to the left of today, the engine's projection to the "
 "right."
@@ -1816,16 +1801,16 @@ msgid "Reconciled"
 msgstr "已對帳"
 
 msgid "Recurring item added."
-msgstr ""
+msgstr "已新增定期項目。"
 
 msgid "Recurring item removed."
-msgstr ""
+msgstr "已移除定期項目。"
 
 msgid "Recurring item updated."
-msgstr ""
+msgstr "已更新定期項目。"
 
 msgid "Recurring items"
-msgstr ""
+msgstr "定期項目"
 
 msgid "Ref: {reference}"
 msgstr "參照：{reference}"
@@ -1880,7 +1865,7 @@ msgid "Reset draft to server suggestion"
 msgstr "將草稿重設為伺服器建議"
 
 msgid "Reset what-if"
-msgstr ""
+msgstr "重設假設情境"
 
 msgid "Restored to inbox."
 msgstr "已還原至收件匣。"
@@ -2059,10 +2044,10 @@ msgid "Status filter"
 msgstr "狀態篩選"
 
 msgid "Still expected in"
-msgstr ""
+msgstr "仍預期流入"
 
 msgid "Still expected out"
-msgstr ""
+msgstr "仍預期流出"
 
 msgid "Structural matches with an Uncleared bank-side slot. Widen the date "
 "window to surface near-misses."
@@ -2081,7 +2066,7 @@ msgid "Target"
 msgstr "目標"
 
 #. placeholder {0}: deletingRate.rate.annualRatePercent.toFixed(2)
-#. placeholder {1}: deletingRate.rate.effectiveDate
+#. placeholder {1}: formatTableDate(deletingRate.rate.effectiveDate)
 #. placeholder {2}: deletingRate.part.label
 msgid "The {0}% rate effective {1} is removed from {2}. Projections recompute; "
 "posted entries are untouched."
@@ -2207,8 +2192,11 @@ msgstr "起息日"
 msgid "View journal entry"
 msgstr "檢視日記帳分錄"
 
+msgid "vs last month"
+msgstr "與上月相比"
+
 msgid "We'll suggest recurring items as your history grows."
-msgstr ""
+msgstr "隨著你的歷史紀錄增加，我們會建議定期項目。"
 
 msgid "Week of {heading}"
 msgstr "{heading} 起的一週"
@@ -2220,7 +2208,7 @@ msgid "What if…"
 msgstr "假設情境…"
 
 msgid "What-if"
-msgstr ""
+msgstr "假設情境"
 
 msgid "What-if total"
 msgstr "假設情境合計"
@@ -2229,7 +2217,7 @@ msgid "Where money came in and where it went"
 msgstr "資金的流入與流出去向"
 
 msgid "Where your balances are heading, from your recurring items."
-msgstr ""
+msgstr "根據你的定期項目，看出餘額的走向。"
 
 msgid "will dismiss"
 msgstr "將忽略"
@@ -2238,7 +2226,7 @@ msgid "Working…"
 msgstr "處理中…"
 
 msgid "Year-end"
-msgstr ""
+msgstr "年底"
 
 msgid "You have {dirtyCount, plural, one {# unsaved draft} other {# unsaved "
 "drafts}}. Leaving will discard them."
