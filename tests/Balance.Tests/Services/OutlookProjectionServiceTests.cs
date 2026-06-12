@@ -184,6 +184,42 @@ internal sealed class OutlookProjectionServiceTests : EndpointsTestsBase
     }
 
     [Test]
+    public async Task DetectCandidates_finds_recurring_liquid_transfer(
+        CancellationToken cancellationToken
+    )
+    {
+        await using var fx = await CreateFixtureAsync(cancellationToken);
+        var checking = await fx.AccountAsync("Checking", AccountType.Asset, cancellationToken);
+        var savings = await fx.AccountAsync("Savings", AccountType.Asset, cancellationToken);
+
+        // A standing monthly checking→savings transfer (no P&L leg). It must still be detectable so
+        // it can be templated, or checking projects ever upward (ADR-0028).
+        for (var back = 1; back <= 3; back++)
+        {
+            await fx.EntryAsync(
+                PriorMonthDay(back, 10),
+                counterparty: null,
+                cancellationToken,
+                (savings, 1000),
+                (checking, -1000)
+            );
+        }
+
+        var candidates = await fx.Templates.DetectCandidatesAsync(cancellationToken);
+
+        var outOfChecking = candidates.Single(c =>
+            c.AccountId == checking && c.CounterAccountId == savings
+        );
+        await Assert.That(outOfChecking.Cadence).IsEqualTo(Cadence.Monthly);
+        await Assert.That(outOfChecking.ExpectedAmount).IsEqualTo(-1000L);
+        await Assert.That(outOfChecking.CounterpartyId).IsNull();
+        // The reverse leg is detected too, so the savings side sees the matching inflow.
+        await Assert
+            .That(candidates.Any(c => c.AccountId == savings && c.CounterAccountId == checking))
+            .IsTrue();
+    }
+
+    [Test]
     public async Task DetectCandidates_skips_patterns_already_covered_by_a_template(
         CancellationToken cancellationToken
     )

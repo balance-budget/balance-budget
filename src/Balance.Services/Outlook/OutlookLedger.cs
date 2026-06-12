@@ -9,8 +9,10 @@ namespace Balance.Services.Outlook;
 /// Shared ledger reads for the Outlook feature: pulls the <em>profit-and-loss-touching</em>
 /// activity on a set of liquid accounts over a window — the raw material for both <c>Typical
 /// spend</c> (the trailing baseline) and <c>Occurrence matching</c> / detection. Entries with no
-/// Income or Expense leg (self-transfers) are excluded: they are not spend, and recurring ones are
-/// modeled as their own templates (ADR-0027). All reads are batched, never per-account fan-out.
+/// Income or Expense leg (self-transfers) are excluded from Typical spend: they are not spend. They
+/// are <em>recurring commitments</em> all the same (the standing checking→savings move), so
+/// <paramref name="includeTransfers"/> lets detection surface them as transfer templates keyed on
+/// the counter liquid account (ADR-0028). All reads are batched, never per-account fan-out.
 /// </summary>
 internal static class OutlookLedger
 {
@@ -19,7 +21,8 @@ internal static class OutlookLedger
         IReadOnlyCollection<AccountId> liquidAccountIds,
         DateOnly from,
         DateOnly to,
-        CancellationToken cancellationToken
+        CancellationToken cancellationToken,
+        bool includeTransfers = false
     )
     {
         if (liquidAccountIds.Count == 0)
@@ -83,6 +86,11 @@ internal static class OutlookLedger
             .Where(l => l.AccountType is AccountType.Income or AccountType.Expense)
             .GroupBy(l => l.JournalEntryId)
             .ToDictionary(g => g.Key, g => g.First().AccountId);
+        // The in-scope liquid legs of each entry — the other side of a self-transfer.
+        var liquidLegsByEntry = counterLegs
+            .Where(l => liquidAccountIds.Contains(l.AccountId))
+            .GroupBy(l => l.JournalEntryId)
+            .ToDictionary(g => g.Key, g => g.Select(x => x.AccountId).ToList());
         var sepaLookup = sepaByEntry
             .GroupBy(s => s.EntryId)
             .ToDictionary(g => g.Key, g => g.First());
@@ -90,8 +98,22 @@ internal static class OutlookLedger
         var occurrences = new List<LedgerOccurrence>(liquidLines.Count);
         foreach (var line in liquidLines)
         {
-            // No P&L leg ⇒ self-transfer ⇒ not Typical spend, not a detectable bill.
-            if (!pnlLegByEntry.TryGetValue(line.Id, out var counterAccountId))
+            AccountId? counterAccountId = null;
+            if (pnlLegByEntry.TryGetValue(line.Id, out var pnlLeg))
+            {
+                counterAccountId = pnlLeg;
+            }
+            else if (includeTransfers && liquidLegsByEntry.TryGetValue(line.Id, out var legs))
+            {
+                // No P&L leg, but it moves between two in-scope liquid accounts: a self-transfer,
+                // keyed on the counter account so detection can propose it as a transfer template.
+                counterAccountId = legs.Where(a => a != line.AccountId)
+                    .Select(a => (AccountId?)a)
+                    .FirstOrDefault();
+            }
+
+            // No P&L leg and no liquid counter ⇒ not spend, not a detectable commitment.
+            if (counterAccountId is null)
                 continue;
 
             sepaLookup.TryGetValue(line.Id, out var sepa);

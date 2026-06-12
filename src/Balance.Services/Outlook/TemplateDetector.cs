@@ -83,7 +83,8 @@ internal static class TemplateDetector
             accounts.Keys,
             from,
             today,
-            cancellationToken
+            cancellationToken,
+            includeTransfers: true
         );
 
         var candidates = new List<TemplateCandidateOutput>();
