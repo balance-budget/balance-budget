@@ -81,3 +81,9 @@ export function formatTrendTooltipDate(date: string): string {
 export function formatTableDate(date: string): string {
     return formatDate(date, { year: 'numeric', month: 'short', day: 'numeric' });
 }
+
+/** A month-and-year label for schedule/amortization rows, e.g. "Jan 2026",
+ *  region-aware. Takes any `YYYY-MM…` period string. */
+export function formatScheduleMonth(period: string): string {
+    return formatDate(`${period.slice(0, 7)}-01`, { month: 'short', year: 'numeric' });
+}

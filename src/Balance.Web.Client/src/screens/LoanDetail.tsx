@@ -29,7 +29,7 @@ import { NumberField } from '../components/ui/NumberField';
 import { Select, SelectItem } from '../components/ui/Select';
 import { TextField } from '../components/ui/TextField';
 import { useToast } from '../components/ui/Toast';
-import { todayIso } from '../lib/dates';
+import { formatScheduleMonth, formatTableDate, todayIso } from '../lib/dates';
 import type { LoanId, LoanPartId } from '../lib/domain';
 import { formatMoney } from '../lib/money';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
@@ -347,7 +347,7 @@ function LoanDetailLoaded({ loan }: { loan: LoanDetailModel }) {
                 <ConfirmDialog
                     open
                     title={t`Delete this rate period?`}
-                    message={t`The ${deletingRate.rate.annualRatePercent.toFixed(2)}% rate effective ${deletingRate.rate.effectiveDate} is removed from ${deletingRate.part.label}. Projections recompute; posted entries are untouched.`}
+                    message={t`The ${deletingRate.rate.annualRatePercent.toFixed(2)}% rate effective ${formatTableDate(deletingRate.rate.effectiveDate)} is removed from ${deletingRate.part.label}. Projections recompute; posted entries are untouched.`}
                     confirmLabel={t`Delete rate`}
                     variant="destructive"
                     busy={deleteRate.isPending}
@@ -484,7 +484,7 @@ function PartsTable({
                                         : `${part.currentAnnualRatePercent.toFixed(2)}%${fixedUntilSuffix(part)}`
                                 }
                             />
-                            <PartStat label={t`Runs until`} value={part.endDate} />
+                            <PartStat label={t`Runs until`} value={formatTableDate(part.endDate)} />
                             <div className="flex items-center gap-1">
                                 <Button
                                     variant="ghost"
@@ -562,8 +562,10 @@ function RateTimeline({
                                 {rate.annualRatePercent.toFixed(2)}%
                             </span>
                             <span className="text-fg-3 truncate">
-                                <Trans>from {rate.effectiveDate}</Trans>
-                                {rate.fixedUntil ? t` · fixed until ${rate.fixedUntil}` : ''}
+                                <Trans>from {formatTableDate(rate.effectiveDate)}</Trans>
+                                {rate.fixedUntil
+                                    ? t` · fixed until ${formatTableDate(rate.fixedUntil)}`
+                                    : ''}
                             </span>
                             {inForce && (
                                 <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-brand-primary/15 text-brand-primary">
@@ -621,7 +623,7 @@ function fixedUntilSuffix(part: LoanPart): string {
     const current = [...part.ratePeriods]
         .filter(r => r.effectiveDate <= todayIso())
         .sort((a, b) => b.effectiveDate.localeCompare(a.effectiveDate))[0];
-    return current?.fixedUntil ? coreT` · fixed until ${current.fixedUntil}` : '';
+    return current?.fixedUntil ? coreT` · fixed until ${formatTableDate(current.fixedUntil)}` : '';
 }
 
 function partTypeLabel(type: LoanPart['repaymentType']): string {
@@ -959,7 +961,7 @@ function YearRows({
                         key={month.period}
                         className={`border-t border-border-soft/60 ${month.projected ? 'text-fg-2' : ''}`}
                     >
-                        <td className="py-1.5 pl-5 pr-3">{month.period.slice(0, 7)}</td>
+                        <td className="py-1.5 pl-5 pr-3">{formatScheduleMonth(month.period)}</td>
                         {parts.map(p => {
                             const cell = month.cells[p.id];
                             return cell ? (
