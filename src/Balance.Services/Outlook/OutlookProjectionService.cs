@@ -68,6 +68,8 @@ internal sealed class OutlookProjectionService : IOutlookService
             .GroupBy(t => t.AccountId)
             .ToDictionary(g => g.Key, g => (IReadOnlyList<JournalEntryTemplate>)[.. g]);
 
+        var counterpartyNames = await LoadCounterpartyNamesAsync(templates, cancellationToken);
+
         var typicalSpend = await ComputeTypicalSpendAsync(
             accounts,
             templatesByAccount,
@@ -114,7 +116,10 @@ internal sealed class OutlookProjectionService : IOutlookService
                     account.AccountType,
                     account.CurrencyCode,
                     currentBalance,
-                    ToThisMonth(rows[0]),
+                    ToThisMonth(
+                        rows[0],
+                        BuildExpectedItems(account, accountTemplates, today, counterpartyNames)
+                    ),
                     ToYearEnd(rows[monthsToYearEnd - 1], today.Year),
                     actuals.GetValueOrDefault(account.Id, []),
                     [.. rows.Take(horizon).Select(ToMonthOutput)],
@@ -366,17 +371,82 @@ internal sealed class OutlookProjectionService : IOutlookService
             row.EndHigh
         );
 
-    private static OutlookThisMonthOutput ToThisMonth(OutlookMonthRow row) =>
+    private static OutlookThisMonthOutput ToThisMonth(
+        OutlookMonthRow row,
+        IReadOnlyList<OutlookExpectedItemOutput> items
+    ) =>
         new(
             row.Month,
             row.ExpectedIn,
             row.ExpectedOut,
+            items,
             row.SpendLow,
             row.SpendHigh,
             row.EndLow,
             row.EndMid,
             row.EndHigh
         );
+
+    /// <summary>
+    /// The recurring items still due before month-end, one line per template that has a remaining
+    /// occurrence — amount is its per-occurrence delta times the remaining count, due date the
+    /// earliest still ahead. Ordered by due date.
+    /// </summary>
+    private static IReadOnlyList<OutlookExpectedItemOutput> BuildExpectedItems(
+        LiquidAccount account,
+        IReadOnlyList<JournalEntryTemplate> templates,
+        DateOnly today,
+        IReadOnlyDictionary<CounterpartyId, string> counterpartyNames
+    )
+    {
+        var items = new List<OutlookExpectedItemOutput>();
+        foreach (var template in templates)
+        {
+            var spec = ToSpec(
+                account,
+                template.Cadence,
+                template.AnchorDate,
+                template.EndDate,
+                template.ExpectedAmount
+            );
+            var dates = OutlookProjectionEngine.RemainingOccurrences(spec, today);
+            if (dates.Count == 0)
+                continue;
+
+            items.Add(
+                new OutlookExpectedItemOutput(
+                    template.Name,
+                    template.CounterpartyId,
+                    template.CounterpartyId is { } cp
+                        ? counterpartyNames.GetValueOrDefault(cp)
+                        : null,
+                    spec.Delta * dates.Count,
+                    dates.Min()
+                )
+            );
+        }
+
+        return [.. items.OrderBy(i => i.DueDate)];
+    }
+
+    private async Task<IReadOnlyDictionary<CounterpartyId, string>> LoadCounterpartyNamesAsync(
+        IReadOnlyList<JournalEntryTemplate> templates,
+        CancellationToken cancellationToken
+    )
+    {
+        var ids = templates
+            .Where(t => t.CounterpartyId is not null)
+            .Select(t => t.CounterpartyId!.Value)
+            .Distinct()
+            .ToList();
+        if (ids.Count == 0)
+            return new Dictionary<CounterpartyId, string>();
+
+        return await _dbContext
+            .Counterparties.AsNoTracking()
+            .Where(c => ids.Contains(c.Id))
+            .ToDictionaryAsync(c => c.Id, c => c.Name, cancellationToken);
+    }
 
     private static OutlookYearEndOutput ToYearEnd(OutlookMonthRow row, int year) =>
         new(new DateOnly(year, 12, 31), row.EndLow, row.EndMid, row.EndHigh);

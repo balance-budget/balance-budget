@@ -7,6 +7,7 @@ import {
     useTemplateCandidates,
     type JournalEntryTemplate,
     type OutlookAccountProjection,
+    type OutlookExpectedItem,
     type TemplateCandidate,
     type WireScenarioRequest,
 } from '../api/outlook';
@@ -46,6 +47,14 @@ function formatMonthName(iso: string): string {
     return new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1).toLocaleDateString(undefined, {
         month: 'long',
         year: 'numeric',
+    });
+}
+
+function formatDayMonth(iso: string): string {
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1).toLocaleDateString(undefined, {
+        day: 'numeric',
+        month: 'short',
     });
 }
 
@@ -257,12 +266,18 @@ function ThisMonthCard({ account }: { account: OutlookAccountProjection }) {
                 <span className="text-xs text-fg-3">{formatMonthName(m.month)}</span>
             </div>
 
-            <CardRow label={<Trans>Still expected in</Trans>}>
-                <SignedAmount minor={m.expectedIn} currencyCode={account.currencyCode} />
-            </CardRow>
-            <CardRow label={<Trans>Still expected out</Trans>}>
-                <SignedAmount minor={m.expectedOut} currencyCode={account.currencyCode} />
-            </CardRow>
+            <ExpectedGroup
+                label={<Trans>Still expected in</Trans>}
+                total={m.expectedIn}
+                items={m.items.filter(i => i.amount > 0)}
+                currencyCode={account.currencyCode}
+            />
+            <ExpectedGroup
+                label={<Trans>Still expected out</Trans>}
+                total={m.expectedOut}
+                items={m.items.filter(i => i.amount < 0)}
+                currencyCode={account.currencyCode}
+            />
             <CardRow label={<Trans>Everyday spending</Trans>}>
                 <RangeAmount
                     low={m.everydaySpendLow}
@@ -377,17 +392,59 @@ function RangeAmount({
  * A signed money figure colored by sign the same way the Activity feed does (green in, red out) —
  * a flat formatted string, not the tri-color {@link Amount}, so the whole number takes the color.
  */
-function SignedAmount({ minor, currencyCode }: { minor: number; currencyCode: string }) {
+function SignedAmount({
+    minor,
+    currencyCode,
+    small,
+}: {
+    minor: number;
+    currencyCode: string;
+    small?: boolean;
+}) {
     const catalog = useCurrencyCatalog();
+    // Zero is neither in nor out — keep it neutral rather than reading as a gain.
+    const color = minor === 0 ? 'text-fg-3' : minor < 0 ? 'text-danger' : 'text-success';
     return (
-        <span
-            className={cx(
-                'font-mono text-sm tabular-nums',
-                minor < 0 ? 'text-danger' : 'text-success',
-            )}
-        >
+        <span className={cx('font-mono tabular-nums', small ? 'text-xs' : 'text-sm', color)}>
             {formatMoney(minor, currencyCode, catalog, { sign: true })}
         </span>
+    );
+}
+
+/** A still-expected direction (in or out): the colored total, with its per-item breakdown beneath. */
+function ExpectedGroup({
+    label,
+    total,
+    items,
+    currencyCode,
+}: {
+    label: React.ReactNode;
+    total: number;
+    items: OutlookExpectedItem[];
+    currencyCode: string;
+}) {
+    return (
+        <div className="flex flex-col gap-1">
+            <CardRow label={label} emphasis>
+                <SignedAmount minor={total} currencyCode={currencyCode} />
+            </CardRow>
+            {items.length > 0 && (
+                <div className="flex flex-col gap-0.5 pl-3">
+                    {items.map((item, i) => (
+                        <div
+                            key={i}
+                            className="flex items-baseline justify-between gap-x-4 text-xs"
+                        >
+                            <span className="text-fg-3 truncate">
+                                {item.name}
+                                <span className="text-fg-3"> · {formatDayMonth(item.dueDate)}</span>
+                            </span>
+                            <SignedAmount minor={item.amount} currencyCode={currencyCode} small />
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
     );
 }
 

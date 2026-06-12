@@ -1703,6 +1703,15 @@ export interface components {
             /** Format: int64 */
             endBalance: number | string;
         };
+        OutlookExpectedItemOutput: {
+            name: string;
+            counterpartyId: null | components["schemas"]["CounterpartyId"];
+            counterpartyName: null | string;
+            /** Format: int64 */
+            amount: number | string;
+            /** Format: date */
+            dueDate: string;
+        };
         OutlookProjectedMonthOutput: {
             /** Format: date */
             month: string;
@@ -1758,6 +1767,7 @@ export interface components {
             expectedIn: number | string;
             /** Format: int64 */
             expectedOut: number | string;
+            items: components["schemas"]["OutlookExpectedItemOutput"][];
             /** Format: int64 */
             everydaySpendLow: number | string;
             /** Format: int64 */
