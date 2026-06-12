@@ -40,7 +40,6 @@ export function Counterparties({
         <>
             <Panel>
                 <SectionHead
-                    title={<Trans>Counterparties</Trans>}
                     subtitle={
                         <Trans>Real-world parties on the other side of journal entries.</Trans>
                     }

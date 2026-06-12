@@ -25,6 +25,7 @@ export function PageHeaderProvider({ children }: { children: ReactNode }) {
 }
 
 /** Read the active contextual header (used by the shell to render the TopBar). */
+// eslint-disable-next-line react-refresh/only-export-components -- the hooks live alongside their provider; splitting would just trade a refresh hint for an extra file.
 export function usePageHeaderValue(): PageHeader | null {
     return useContext(PageHeaderContext)?.header ?? null;
 }
@@ -33,6 +34,7 @@ export function usePageHeaderValue(): PageHeader | null {
  *  resets when the screen unmounts (route change) so a stale title never lingers
  *  behind the next page. Keyed on the serialized header, so passing a fresh
  *  object literal each render is fine as long as its contents are stable. */
+// eslint-disable-next-line react-refresh/only-export-components -- the hooks live alongside their provider; splitting would just trade a refresh hint for an extra file.
 export function usePageHeader(header: PageHeader): void {
     const ctx = useContext(PageHeaderContext);
     const setHeader = ctx?.setHeader;

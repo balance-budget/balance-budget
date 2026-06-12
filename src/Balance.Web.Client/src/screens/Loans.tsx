@@ -22,7 +22,6 @@ export function Loans() {
         <>
             <Panel>
                 <SectionHead
-                    title={<Trans>Loans</Trans>}
                     subtitle={
                         <Trans>
                             Mortgages and other loans, tracked part by part over the ledger.

@@ -9,6 +9,7 @@ import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Pagination } from '../components/Pagination';
 import { Panel, SectionHead } from '../components/Panel';
+import { usePageHeader } from '../components/PageHeader';
 import { ProjectionAmount } from '../components/ProjectionAmount';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/ui/Toast';
@@ -31,6 +32,13 @@ export function CounterpartyDetail({ id, page, onPageChange }: Props) {
     const query = useCounterparty(id);
     const [editing, setEditing] = useState(false);
     const [deleting, setDeleting] = useState(false);
+
+    // TopBar owns the title (the counterparty name) under a "Counterparties"
+    // breadcrumb; the entity actions ride on the first content section below.
+    usePageHeader({
+        title: query.data?.name,
+        breadcrumb: [{ label: t`Counterparties`, to: '/counterparties' }],
+    });
 
     if (query.isPending) {
         return (
@@ -57,44 +65,33 @@ export function CounterpartyDetail({ id, page, onPageChange }: Props) {
     return (
         <>
             <Panel>
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between mb-4">
-                    <div className="flex flex-col gap-[2px] min-w-0">
-                        <Link
-                            to="/counterparties"
-                            search={{ page: 1, q: '' }}
-                            className="text-xs text-fg-3 hover:text-fg-1 inline-flex items-center gap-1"
-                        >
-                            ← <Trans>Counterparties</Trans>
-                        </Link>
-                        <h1 className="text-xl font-medium text-fg-1 truncate">{cp.name}</h1>
-                    </div>
-                    <div className="flex items-center gap-2 lg:shrink-0">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setEditing(true);
-                            }}
-                            className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1 hover:bg-surface-2"
-                        >
-                            <Icon name="pencil" size={14} strokeWidth={2} />
-                            <Trans>Edit</Trans>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setDeleting(true);
-                            }}
-                            className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-danger hover:bg-surface-2"
-                        >
-                            <Icon name="trash" size={14} strokeWidth={2} />
-                            <Trans>Delete</Trans>
-                        </button>
-                    </div>
-                </div>
-            </Panel>
-
-            <Panel>
-                <SectionHead title={<Trans>Linked bank accounts</Trans>} />
+                <SectionHead
+                    title={<Trans>Linked bank accounts</Trans>}
+                    action={
+                        <div className="flex items-center gap-2 shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setEditing(true);
+                                }}
+                                className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-fg-1 hover:bg-surface-2"
+                            >
+                                <Icon name="pencil" size={14} strokeWidth={2} />
+                                <Trans>Edit</Trans>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setDeleting(true);
+                                }}
+                                className="inline-flex items-center gap-2 px-3 py-[7px] rounded-lg text-sm font-medium text-fg-2 hover:text-danger hover:bg-surface-2"
+                            >
+                                <Icon name="trash" size={14} strokeWidth={2} />
+                                <Trans>Delete</Trans>
+                            </button>
+                        </div>
+                    }
+                />
                 <LinkedBankAccountsSection owner={{ kind: 'counterparty', id: cp.id }} />
             </Panel>
 

@@ -82,7 +82,6 @@ export function Tokens() {
 
             <Panel>
                 <SectionHead
-                    title={<Trans>API tokens</Trans>}
                     subtitle={
                         <Trans>
                             Personal access tokens for CLI scripts, importers, and third-party
