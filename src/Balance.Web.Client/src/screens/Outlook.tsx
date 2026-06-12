@@ -60,6 +60,7 @@ function formatDayMonth(iso: string): string {
 
 export function Outlook() {
     const [horizon, setHorizon] = useState<number>(12);
+    const [selectedId, setSelectedId] = useState<AccountId | null>(null);
     const [disabledIds, setDisabledIds] = useState<Set<JournalEntryTemplateId>>(new Set());
     const [creating, setCreating] = useState(false);
     const [editing, setEditing] = useState<JournalEntryTemplate | null>(null);
@@ -79,6 +80,10 @@ export function Outlook() {
 
     const projection = useOutlookProjection(CURRENCY, horizon, scenario);
 
+    // The selected account drives the whole page — chart, cards, and the lists below.
+    const accounts = projection.data?.accounts ?? [];
+    const selectedAccount = accounts.find(a => a.accountId === selectedId) ?? accounts[0] ?? null;
+
     const toggleDisabled = (id: JournalEntryTemplateId) => {
         setDisabledIds(prev => {
             const next = new Set(prev);
@@ -92,6 +97,8 @@ export function Outlook() {
         <>
             <ProjectionPanel
                 projection={projection}
+                selected={selectedAccount}
+                onSelect={setSelectedId}
                 horizon={horizon}
                 onHorizon={setHorizon}
                 hasScenario={scenario !== null}
@@ -102,6 +109,8 @@ export function Outlook() {
 
             <section className="grid gap-[18px] grid-cols-1 lg:grid-cols-[1.4fr_1fr] mt-[18px]">
                 <RecurringPanel
+                    accountId={selectedAccount?.accountId ?? null}
+                    accountName={selectedAccount?.accountName ?? null}
                     disabledIds={disabledIds}
                     onToggleDisabled={toggleDisabled}
                     onAdd={() => {
@@ -109,7 +118,11 @@ export function Outlook() {
                     }}
                     onEdit={setEditing}
                 />
-                <CandidatesPanel onAccept={setAccepting} />
+                <CandidatesPanel
+                    accountId={selectedAccount?.accountId ?? null}
+                    accountName={selectedAccount?.accountName ?? null}
+                    onAccept={setAccepting}
+                />
             </section>
 
             {creating && (
@@ -141,19 +154,22 @@ export function Outlook() {
 
 function ProjectionPanel({
     projection,
+    selected,
+    onSelect,
     horizon,
     onHorizon,
     hasScenario,
     onResetScenario,
 }: {
     projection: ReturnType<typeof useOutlookProjection>;
+    selected: OutlookAccountProjection | null;
+    onSelect: (id: AccountId) => void;
     horizon: number;
     onHorizon: (h: number) => void;
     hasScenario: boolean;
     onResetScenario: () => void;
 }) {
     const { t } = useLingui();
-    const [selectedId, setSelectedId] = useState<string | null>(null);
 
     const allAccounts = useAccounts();
     const byId = useMemo(
@@ -166,7 +182,6 @@ function ProjectionPanel({
     };
 
     const accounts = projection.data?.accounts ?? [];
-    const selected = accounts.find(a => a.accountId === selectedId) ?? accounts[0] ?? null;
 
     return (
         <Panel>
@@ -221,7 +236,7 @@ function ProjectionPanel({
                                 key={a.accountId}
                                 type="button"
                                 onClick={() => {
-                                    setSelectedId(a.accountId);
+                                    onSelect(a.accountId);
                                 }}
                                 className={cx(
                                     'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
@@ -473,11 +488,15 @@ function EstimatedRange({
 }
 
 function RecurringPanel({
+    accountId,
+    accountName,
     disabledIds,
     onToggleDisabled,
     onAdd,
     onEdit,
 }: {
+    accountId: AccountId | null;
+    accountName: string | null;
     disabledIds: Set<JournalEntryTemplateId>;
     onToggleDisabled: (id: JournalEntryTemplateId) => void;
     onAdd: () => void;
@@ -487,6 +506,8 @@ function RecurringPanel({
     const templates = useOutlookTemplates();
     const remove = useDeleteTemplate();
     const toast = useToast();
+
+    const visible = (templates.data ?? []).filter(tpl => tpl.accountId === accountId);
 
     async function onDelete(template: JournalEntryTemplate) {
         try {
@@ -501,7 +522,13 @@ function RecurringPanel({
         <Panel>
             <SectionHead
                 title={<Trans>Recurring items</Trans>}
-                subtitle={<Trans>Expected payments and income that shape the projection.</Trans>}
+                subtitle={
+                    accountName ? (
+                        <Trans>Expected payments and income for {accountName}.</Trans>
+                    ) : (
+                        <Trans>Expected payments and income that shape the projection.</Trans>
+                    )
+                }
                 action={
                     <Button variant="secondary" onPress={onAdd}>
                         <Icon name="plus" size={14} />
@@ -517,14 +544,14 @@ function RecurringPanel({
                     message={t`Couldn't load recurring items.`}
                     onRetry={() => void templates.refetch()}
                 />
-            ) : templates.data.length === 0 ? (
+            ) : visible.length === 0 ? (
                 <Empty
                     title={t`No recurring items yet`}
                     hint={t`Add your rent, salary, and subscriptions — or accept a detected one.`}
                 />
             ) : (
                 <div className="flex flex-col divide-y divide-border-soft">
-                    {templates.data.map(template => (
+                    {visible.map(template => (
                         <TemplateRow
                             key={template.id}
                             template={template}
@@ -603,15 +630,31 @@ function TemplateRow({
     );
 }
 
-function CandidatesPanel({ onAccept }: { onAccept: (candidate: TemplateCandidate) => void }) {
+function CandidatesPanel({
+    accountId,
+    accountName,
+    onAccept,
+}: {
+    accountId: AccountId | null;
+    accountName: string | null;
+    onAccept: (candidate: TemplateCandidate) => void;
+}) {
     const { t } = useLingui();
     const candidates = useTemplateCandidates();
+
+    const visible = (candidates.data ?? []).filter(c => c.accountId === accountId);
 
     return (
         <Panel>
             <SectionHead
                 title={<Trans>Detected</Trans>}
-                subtitle={<Trans>Patterns we spotted in your history.</Trans>}
+                subtitle={
+                    accountName ? (
+                        <Trans>Patterns we spotted for {accountName}.</Trans>
+                    ) : (
+                        <Trans>Patterns we spotted in your history.</Trans>
+                    )
+                }
             />
 
             {candidates.isPending ? (
@@ -621,14 +664,14 @@ function CandidatesPanel({ onAccept }: { onAccept: (candidate: TemplateCandidate
                     message={t`Couldn't load suggestions.`}
                     onRetry={() => void candidates.refetch()}
                 />
-            ) : candidates.data.length === 0 ? (
+            ) : visible.length === 0 ? (
                 <Empty
                     title={t`Nothing detected`}
                     hint={t`We'll suggest recurring items as your history grows.`}
                 />
             ) : (
                 <div className="flex flex-col divide-y divide-border-soft">
-                    {candidates.data.map((candidate, i) => (
+                    {visible.map((candidate, i) => (
                         <div key={i} className="flex items-center gap-3 py-3">
                             <div className="flex-1 min-w-0">
                                 <div className="text-sm font-medium text-fg-1 truncate">
