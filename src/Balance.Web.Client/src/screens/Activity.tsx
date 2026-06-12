@@ -53,7 +53,6 @@ export function Activity({
     return (
         <Panel>
             <SectionHead
-                title={<Trans>Activity</Trans>}
                 subtitle={<Trans>Every bookkeeping event, newest first.</Trans>}
                 action={
                     <Link

@@ -187,7 +187,6 @@ function ProjectionPanel({
     return (
         <Panel>
             <SectionHead
-                title={<Trans>Outlook</Trans>}
                 subtitle={
                     <Trans>Where your balances are heading, from your recurring items.</Trans>
                 }

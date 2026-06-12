@@ -21,6 +21,7 @@ import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Pagination } from '../components/Pagination';
 import { Panel, SectionHead } from '../components/Panel';
+import { usePageHeader } from '../components/PageHeader';
 import { RegisterSummaryChart } from '../components/RegisterSummaryChart';
 import { Skeleton } from '../components/Skeleton';
 import { selectedKey } from '../components/ui/selection';
@@ -68,6 +69,14 @@ export function AccountDetail({
     const [editing, setEditing] = useState(false);
     const [deleting, setDeleting] = useState(false);
 
+    // The TopBar owns the page title: the account name, under an "Accounts"
+    // breadcrumb. Until the account loads, it falls back to the route's static
+    // "Account" title.
+    usePageHeader({
+        title: query.data?.name,
+        breadcrumb: [{ label: t`Accounts`, to: '/accounts' }],
+    });
+
     if (query.isPending) {
         return (
             <Panel>
@@ -94,15 +103,15 @@ export function AccountDetail({
         <>
             <Panel>
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    {/* The account name + "Accounts" breadcrumb live in the TopBar
+                     *  (see usePageHeader above); this card carries the identity
+                     *  avatar, classification, balance, and actions. */}
                     <div className="flex items-center gap-3 min-w-0">
                         <AccountAvatar account={account} size="md" />
                         <div className="flex flex-col gap-[2px] min-w-0">
-                            <Link to="/accounts" className="text-xs text-fg-3 hover:text-fg-1">
-                                <Trans>← Accounts</Trans>
-                            </Link>
-                            <h1 className="text-xl font-medium text-fg-1 truncate">
-                                {account.name}
-                            </h1>
+                            <span className="text-sm text-fg-2 truncate">
+                                {account.code}
+                            </span>
                             <span className="text-xs text-fg-3">
                                 {account.type} · {account.currencyCode}
                             </span>
