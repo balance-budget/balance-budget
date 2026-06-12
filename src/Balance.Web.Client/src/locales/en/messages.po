@@ -17,8 +17,8 @@ msgstr ""
 msgid " · expires {0}"
 msgstr " · expires {0}"
 
-#. placeholder {0}: current.fixedUntil
-#. placeholder {0}: rate.fixedUntil
+#. placeholder {0}: formatTableDate(current.fixedUntil)
+#. placeholder {0}: formatTableDate(rate.fixedUntil)
 msgid " · fixed until {0}"
 msgstr " · fixed until {0}"
 
@@ -28,9 +28,6 @@ msgstr " · last used {0}"
 
 msgid " · never used"
 msgstr " · never used"
-
-#~ msgid "— click to change"
-#~ msgstr "— click to change"
 
 msgid "· click to change"
 msgstr "· click to change"
@@ -70,12 +67,6 @@ msgstr "{0} · interest on {1}"
 #. placeholder {0}: form.newCounterpartyName.trim()
 msgid "{0} (new)"
 msgstr "{0} (new)"
-
-#. placeholder {0}: summary.categorised.toString()
-#. placeholder {1}: summary.dismissed.toString()
-#. placeholder {2}: summary.failed.toString()
-#~ msgid "{0} categorised, {1} dismissed, {2} failed."
-#~ msgstr "{0} categorised, {1} dismissed, {2} failed."
 
 #. placeholder {0}: summary.categorized.toString()
 #. placeholder {1}: summary.dismissed.toString()
@@ -144,12 +135,6 @@ msgstr "{label} - interest"
 msgid "{label} - repayment"
 msgstr "{label} - repayment"
 
-#~ msgid "{label} — interest"
-#~ msgstr "{label} — interest"
-
-#~ msgid "{label} — repayment"
-#~ msgstr "{label} — repayment"
-
 msgid "{label} (projected)"
 msgstr "{label} (projected)"
 
@@ -162,14 +147,8 @@ msgstr "{selectionCount, plural, one {Dismiss # row} other {Dismiss # rows}}"
 msgid "/mo"
 msgstr "/mo"
 
-msgid "← Accounts"
-msgstr "← Accounts"
-
 msgid "← Activity"
 msgstr "← Activity"
-
-msgid "← Cancel"
-msgstr "← Cancel"
 
 #. placeholder {0}: moreCount.toString()
 #. placeholder {1}: title.toLowerCase()
@@ -189,11 +168,6 @@ msgid "A construction deposit needs an asset account, an income account, and a "
 "rate - set all three or none."
 msgstr "A construction deposit needs an asset account, an income account, and a "
 "rate - set all three or none."
-
-#~ msgid "A construction deposit needs an asset account, an income account, and a "
-#~ "rate — set all three or none."
-#~ msgstr "A construction deposit needs an asset account, an income account, and a "
-#~ "rate — set all three or none."
 
 msgid "A fresh part account needs a name and a code."
 msgstr "A fresh part account needs a name and a code."
@@ -384,10 +358,6 @@ msgstr "Assumed rate after fixation (%)"
 msgid "at {0}% - interest offsets the payment until it drains."
 msgstr "at {0}% - interest offsets the payment until it drains."
 
-#. placeholder {0}: loan.constructionDeposit.annualRatePercent.toFixed(2)
-#~ msgid "at {0}% — interest offsets the payment until it drains."
-#~ msgstr "at {0}% — interest offsets the payment until it drains."
-
 msgid "At least two lines are required."
 msgstr "At least two lines are required."
 
@@ -400,16 +370,6 @@ msgstr "Attach"
 #. placeholder {0}: hint.otherAccountName
 msgid "Attach to {0}"
 msgstr "Attach to {0}"
-
-#. placeholder {0}: hint.date
-#. placeholder {1}: hint.otherAccountName
-#~ msgid "Attach to JE on {0} · {1}"
-#~ msgstr "Attach to JE on {0} · {1}"
-
-#. placeholder {0}: hint.date
-#. placeholder {1}: hint.otherAccountName
-#~ msgid "Attach to JE on {0} ({1})"
-#~ msgstr "Attach to JE on {0} ({1})"
 
 #. placeholder {0}: hint.date
 #. placeholder {1}: hint.otherAccountName
@@ -427,10 +387,6 @@ msgstr "Attached to {0}."
 
 msgid "Attached."
 msgstr "Attached."
-
-#. placeholder {0}: hint.date
-#~ msgid "Auto-matched to JE on {0}"
-#~ msgstr "Auto-matched to JE on {0}"
 
 #. placeholder {0}: hint.date
 msgid "Auto-matched to journal entry on {0}"
@@ -477,9 +433,6 @@ msgstr "Bank imports"
 
 msgid "Bank name"
 msgstr "Bank name"
-
-#~ msgid "Bank rows that have been categorised into a journal entry."
-#~ msgstr "Bank rows that have been categorised into a journal entry."
 
 msgid "Bank rows that have been categorized into a journal entry."
 msgstr "Bank rows that have been categorized into a journal entry."
@@ -528,27 +481,6 @@ msgstr "Card identifier"
 msgid "Card identifier is required. Card accounts are owned-only."
 msgstr "Card identifier is required. Card accounts are owned-only."
 
-#~ msgid "Categorise"
-#~ msgstr "Categorise"
-
-#~ msgid "Categorise an inbox row to see it here."
-#~ msgstr "Categorise an inbox row to see it here."
-
-#~ msgid "Categorise bank transaction"
-#~ msgstr "Categorise bank transaction"
-
-#~ msgid "Categorise normally"
-#~ msgstr "Categorise normally"
-
-#~ msgid "Categorised"
-#~ msgstr "Categorised"
-
-#~ msgid "Categorised."
-#~ msgstr "Categorised."
-
-#~ msgid "Categorising…"
-#~ msgstr "Categorising…"
-
 msgid "Categorize"
 msgstr "Categorize"
 
@@ -586,11 +518,6 @@ msgid "Cleared and Reconciled lines are frozen - only their description can be "
 "edited."
 msgstr "Cleared and Reconciled lines are frozen - only their description can be "
 "edited."
-
-#~ msgid "Cleared and Reconciled lines are frozen — only their description can be "
-#~ "edited."
-#~ msgstr "Cleared and Reconciled lines are frozen — only their description can be "
-#~ "edited."
 
 msgid "Cleared and reconciled lines can’t be moved."
 msgstr "Cleared and reconciled lines can’t be moved."
@@ -737,11 +664,6 @@ msgstr "Counterparty"
 msgid "Counterparty '{0}' created."
 msgstr "Counterparty '{0}' created."
 
-#~ msgid "Counterparty bank accounts appear as you categorise imported "
-#~ "transactions."
-#~ msgstr "Counterparty bank accounts appear as you categorise imported "
-#~ "transactions."
-
 msgid "Counterparty bank accounts appear as you categorize imported "
 "transactions."
 msgstr "Counterparty bank accounts appear as you categorize imported "
@@ -756,9 +678,6 @@ msgstr "Cr "
 msgid "Create"
 msgstr "Create"
 
-#~ msgid "Create '{trimmed}'"
-#~ msgstr "Create '{trimmed}'"
-
 msgid "Create {quotedQuery}"
 msgstr "Create {quotedQuery}"
 
@@ -767,9 +686,6 @@ msgstr "Create a fresh account"
 
 msgid "Create account"
 msgstr "Create account"
-
-#~ msgid "Create entry"
-#~ msgstr "Create entry"
 
 msgid "Create journal entry"
 msgstr "Create journal entry"
@@ -921,16 +837,6 @@ msgid "Detach this bank transaction - returns it to the inbox and clears the "
 msgstr "Detach this bank transaction - returns it to the inbox and clears the "
 "matching line back to Uncleared."
 
-#~ msgid "Detach this BT - returns it to the inbox and clears the matching line "
-#~ "back to Uncleared."
-#~ msgstr "Detach this BT - returns it to the inbox and clears the matching line "
-#~ "back to Uncleared."
-
-#~ msgid "Detach this BT — returns it to the inbox and clears the matching line "
-#~ "back to Uncleared."
-#~ msgstr "Detach this BT — returns it to the inbox and clears the matching line "
-#~ "back to Uncleared."
-
 msgid "Detached. Bank transaction returned to the inbox."
 msgstr "Detached. Bank transaction returned to the inbox."
 
@@ -1053,9 +959,6 @@ msgstr "Edit details"
 msgid "Edit details (splits, custom date)"
 msgstr "Edit details (splits, custom date)"
 
-#~ msgid "Edit entry"
-#~ msgstr "Edit entry"
-
 msgid "Edit journal entry"
 msgstr "Edit journal entry"
 
@@ -1068,10 +971,6 @@ msgstr "Edit part"
 #. placeholder {0}: part.label
 msgid "Edit part - {0}"
 msgstr "Edit part - {0}"
-
-#. placeholder {0}: part.label
-#~ msgid "Edit part — {0}"
-#~ msgstr "Edit part — {0}"
 
 msgid "Edit rate period"
 msgstr "Edit rate period"
@@ -1103,12 +1002,6 @@ msgstr "End of month"
 msgid "Ended"
 msgstr "Ended"
 
-#~ msgid "English"
-#~ msgstr "English"
-
-#~ msgid "English is the only language for now."
-#~ msgstr "English is the only language for now."
-
 msgid "Enter a positive amount"
 msgstr "Enter a positive amount"
 
@@ -1138,10 +1031,6 @@ msgstr "Estimated"
 
 msgid "Every bookkeeping event, newest first."
 msgstr "Every bookkeeping event, newest first."
-
-#. placeholder {0}: cp.name
-#~ msgid "Every entry referencing {0}."
-#~ msgstr "Every entry referencing {0}."
 
 msgid "Every imported bank row, regardless of state."
 msgstr "Every imported bank row, regardless of state."
@@ -1236,7 +1125,7 @@ msgstr "Foreign amount"
 msgid "From"
 msgstr "From"
 
-#. placeholder {0}: rate.effectiveDate
+#. placeholder {0}: formatTableDate(rate.effectiveDate)
 msgid "from {0}"
 msgstr "from {0}"
 
@@ -1252,20 +1141,11 @@ msgstr "Frozen - line cannot be removed"
 msgid "Frozen - line is Cleared or Reconciled"
 msgstr "Frozen - line is Cleared or Reconciled"
 
-#~ msgid "Frozen — line cannot be removed"
-#~ msgstr "Frozen — line cannot be removed"
-
-#~ msgid "Frozen — line is Cleared or Reconciled"
-#~ msgstr "Frozen — line is Cleared or Reconciled"
-
 msgid "Future"
 msgstr "Future"
 
 msgid "General-journal table - explicit debit / credit per line."
 msgstr "General-journal table - explicit debit / credit per line."
-
-#~ msgid "General-journal table — explicit debit / credit per line."
-#~ msgstr "General-journal table — explicit debit / credit per line."
 
 msgid "Has an end date"
 msgstr "Has an end date"
@@ -1280,9 +1160,6 @@ msgstr "How dates and numbers are displayed. The interface language is separate 
 
 msgid "Hypothetical extra repayments - nothing is saved."
 msgstr "Hypothetical extra repayments - nothing is saved."
-
-#~ msgid "Hypothetical extra repayments — nothing is saved."
-#~ msgstr "Hypothetical extra repayments — nothing is saved."
 
 msgid "I've copied it"
 msgstr "I've copied it"
@@ -1315,14 +1192,8 @@ msgstr "Import statements"
 msgid "Imported {0}"
 msgstr "Imported {0}"
 
-#~ msgid "Imported row this entry was categorised from."
-#~ msgstr "Imported row this entry was categorised from."
-
 msgid "Imported row this journal entry was categorized from."
 msgstr "Imported row this journal entry was categorized from."
-
-#~ msgid "Imported rows that need categorising will appear here."
-#~ msgstr "Imported rows that need categorising will appear here."
 
 msgid "Imported rows that need categorizing will appear here."
 msgstr "Imported rows that need categorizing will appear here."
@@ -1332,9 +1203,6 @@ msgstr "Importer"
 
 msgid "Importing…"
 msgstr "Importing…"
-
-#~ msgid "In {horizon} months"
-#~ msgstr "In {horizon} months"
 
 msgid "In force"
 msgstr "In force"
@@ -1428,11 +1296,6 @@ msgid "Ledger accounts in the double-entry sense - assets, liabilities, income, 
 msgstr "Ledger accounts in the double-entry sense - assets, liabilities, "
 "income, expenses, equity."
 
-#~ msgid "Ledger accounts in the double-entry sense — assets, liabilities, income, "
-#~ "expenses, equity."
-#~ msgstr "Ledger accounts in the double-entry sense — assets, liabilities, "
-#~ "income, expenses, equity."
-
 msgid "Lender"
 msgstr "Lender"
 
@@ -1465,9 +1328,6 @@ msgstr "Linked bank accounts"
 
 msgid "Liquid - counts toward liquid net worth"
 msgstr "Liquid - counts toward liquid net worth"
-
-#~ msgid "Liquid — counts toward liquid net worth"
-#~ msgstr "Liquid — counts toward liquid net worth"
 
 msgid "Liquid net worth"
 msgstr "Liquid net worth"
@@ -1529,10 +1389,6 @@ msgid "Matched"
 msgstr "Matched"
 
 #. placeholder {0}: hint.otherAccountName
-#~ msgid "Matches JE · {0}"
-#~ msgstr "Matches JE · {0}"
-
-#. placeholder {0}: hint.otherAccountName
 msgid "Matches journal entry · {0}"
 msgstr "Matches journal entry · {0}"
 
@@ -1581,9 +1437,6 @@ msgstr "Move to account…"
 msgid "Moved {count, plural, one {# line} other {# lines}} to “{targetName}”."
 msgstr "Moved {count, plural, one {# line} other {# lines}} to “{targetName}”."
 
-#~ msgid "Multi-source-multi-destination entries can only be edited in Advanced."
-#~ msgstr "Multi-source-multi-destination entries can only be edited in Advanced."
-
 msgid "Multi-source-multi-destination journal entries can only be edited in "
 "Advanced."
 msgstr "Multi-source-multi-destination journal entries can only be edited in "
@@ -1604,9 +1457,6 @@ msgstr "Net movement per period."
 msgid "Net negative this period - see the breakdown."
 msgstr "Net negative this period - see the breakdown."
 
-#~ msgid "Net negative this period — see the breakdown."
-#~ msgstr "Net negative this period — see the breakdown."
-
 msgid "Net negative this period (excluded from the chart)"
 msgstr "Net negative this period (excluded from the chart)"
 
@@ -1625,9 +1475,6 @@ msgstr "New bank account"
 msgid "New counterparty"
 msgstr "New counterparty"
 
-#~ msgid "New entry"
-#~ msgstr "New entry"
-
 msgid "New journal entry"
 msgstr "New journal entry"
 
@@ -1641,12 +1488,11 @@ msgstr "New rate"
 msgid "New rate period - {0}"
 msgstr "New rate period - {0}"
 
-#. placeholder {0}: part.label
-#~ msgid "New rate period — {0}"
-#~ msgstr "New rate period — {0}"
-
 msgid "New recurring item"
 msgstr "New recurring item"
+
+msgid "New this month"
+msgstr "New this month"
 
 #. placeholder {0}: formatDueDate(template.nextDueDate)
 msgid "next {0}"
@@ -1681,9 +1527,6 @@ msgstr "No counterparties yet."
 
 msgid "No counterparty bank accounts."
 msgstr "No counterparty bank accounts."
-
-#~ msgid "No entries match the current filters."
-#~ msgstr "No entries match the current filters."
 
 msgid "No importer configured"
 msgstr "No importer configured"
@@ -1738,12 +1581,6 @@ msgstr "None"
 msgid "None - top level"
 msgstr "None - top level"
 
-#~ msgid "None — top level"
-#~ msgstr "None — top level"
-
-#~ msgid "Nothing categorised yet."
-#~ msgstr "Nothing categorised yet."
-
 msgid "Nothing categorized yet."
 msgstr "Nothing categorized yet."
 
@@ -1759,12 +1596,6 @@ msgstr "Nothing posted or projected yet."
 msgid "Nothing to project yet"
 msgstr "Nothing to project yet"
 
-msgid "Notifications"
-msgstr "Notifications"
-
-#~ msgid "Now"
-#~ msgstr "Now"
-
 msgid "Number format"
 msgstr "Number format"
 
@@ -1778,20 +1609,6 @@ msgstr "Off by {diffStr}"
 msgid "Only non-postable accounts of the same type and currency can be parents."
 msgstr "Only non-postable accounts of the same type and currency can be "
 "parents."
-
-#~ msgid "Only the selected side of each entry moves - dates, amounts and the "
-#~ "other side stay untouched. The whole batch moves together, or not at "
-#~ "all."
-#~ msgstr "Only the selected side of each entry moves - dates, amounts and the "
-#~ "other side stay untouched. The whole batch moves together, or not at "
-#~ "all."
-
-#~ msgid "Only the selected side of each entry moves — dates, amounts and the "
-#~ "other side stay untouched. The whole batch moves together, or not at "
-#~ "all."
-#~ msgstr "Only the selected side of each entry moves — dates, amounts and the "
-#~ "other side stay untouched. The whole batch moves together, or not at "
-#~ "all."
 
 msgid "Only the selected side of each journal entry moves - dates, amounts and "
 "the other side stay untouched. The whole batch moves together, or not at "
@@ -1811,9 +1628,6 @@ msgstr "Opening balance ({currencyCode})"
 
 msgid "Optional"
 msgstr "Optional"
-
-#~ msgid "or scroll down to create a new JE."
-#~ msgstr "or scroll down to create a new JE."
 
 msgid "or scroll down to create a new journal entry."
 msgstr "or scroll down to create a new journal entry."
@@ -1879,9 +1693,6 @@ msgstr "Parts"
 msgid "Parts - each with its own terms and rate history."
 msgstr "Parts - each with its own terms and rate history."
 
-#~ msgid "Parts — each with its own terms and rate history."
-#~ msgstr "Parts — each with its own terms and rate history."
-
 msgid "Parts in this payment:"
 msgstr "Parts in this payment:"
 
@@ -1916,9 +1727,6 @@ msgid "Personal access tokens for CLI scripts, importers, and third-party "
 msgstr "Personal access tokens for CLI scripts, importers, and third-party "
 "callers."
 
-#~ msgid "Pick a JE to attach to…"
-#~ msgstr "Pick a JE to attach to…"
-
 msgid "Pick a journal entry to attach to"
 msgstr "Pick a journal entry to attach to"
 
@@ -1949,9 +1757,6 @@ msgstr "Pick the liability account to adopt."
 msgid "Piggy banks"
 msgstr "Piggy banks"
 
-msgid "Plan"
-msgstr "Plan"
-
 msgid "Posted actuals to the left of today, the engine's projection to the "
 "right."
 msgstr "Posted actuals to the left of today, the engine's projection to the "
@@ -1962,12 +1767,6 @@ msgid "Pre-filled from the schedule for {0} - adjust the amounts to match the "
 "bank's charge."
 msgstr "Pre-filled from the schedule for {0} - adjust the amounts to match the "
 "bank's charge."
-
-#. placeholder {0}: proposal.month.slice(0, 7)
-#~ msgid "Pre-filled from the schedule for {0} — adjust the amounts to match the "
-#~ "bank's charge."
-#~ msgstr "Pre-filled from the schedule for {0} — adjust the amounts to match the "
-#~ "bank's charge."
 
 msgid "Preferences"
 msgstr "Preferences"
@@ -2200,10 +1999,6 @@ msgstr "Select…"
 msgid "Selected rows span {0} - Account can't be bulk-applied."
 msgstr "Selected rows span {0} - Account can't be bulk-applied."
 
-#. placeholder {0}: selectedCurrencies.join(' + ')
-#~ msgid "Selected rows span {0} — Account can't be bulk-applied."
-#~ msgstr "Selected rows span {0} — Account can't be bulk-applied."
-
 msgid "SEPA creditor ID"
 msgstr "SEPA creditor ID"
 
@@ -2296,7 +2091,7 @@ msgid "Target"
 msgstr "Target"
 
 #. placeholder {0}: deletingRate.rate.annualRatePercent.toFixed(2)
-#. placeholder {1}: deletingRate.rate.effectiveDate
+#. placeholder {1}: formatTableDate(deletingRate.rate.effectiveDate)
 #. placeholder {2}: deletingRate.part.label
 msgid "The {0}% rate effective {1} is removed from {2}. Projections recompute; "
 "posted entries are untouched."
@@ -2320,13 +2115,6 @@ msgid "The part definition and its rate history are removed. Its account and "
 msgstr "The part definition and its rate history are removed. Its account and "
 "every posted entry stay untouched - it becomes an ordinary account "
 "again."
-
-#~ msgid "The part definition and its rate history are removed. Its account and "
-#~ "every posted entry stay untouched — it becomes an ordinary account "
-#~ "again."
-#~ msgstr "The part definition and its rate history are removed. Its account and "
-#~ "every posted entry stay untouched — it becomes an ordinary account "
-#~ "again."
 
 msgid "The part's account holds its principal and posted history, so it can't "
 "be changed here."
@@ -2362,9 +2150,6 @@ msgstr "This month"
 
 msgid "This row already has a journal entry."
 msgstr "This row already has a journal entry."
-
-#~ msgid "This row is dismissed. Undismiss it first to categorise."
-#~ msgstr "This row is dismissed. Undismiss it first to categorise."
 
 msgid "This row is dismissed. Undismiss it first to categorize."
 msgstr "This row is dismissed. Undismiss it first to categorize."
@@ -2433,11 +2218,6 @@ msgid "Upload an ING current-account CSV against the matching bank account. "
 msgstr "Upload an ING current-account CSV against the matching bank account. "
 "Re-uploads are safe - duplicate rows are skipped."
 
-#~ msgid "Upload an ING current-account CSV against the matching bank account. "
-#~ "Re-uploads are safe — duplicate rows are skipped."
-#~ msgstr "Upload an ING current-account CSV against the matching bank account. "
-#~ "Re-uploads are safe — duplicate rows are skipped."
-
 msgid "Use Debit or Credit, not both."
 msgstr "Use Debit or Credit, not both."
 
@@ -2447,11 +2227,11 @@ msgstr "Users"
 msgid "Value date"
 msgstr "Value date"
 
-#~ msgid "View entry"
-#~ msgstr "View entry"
-
 msgid "View journal entry"
 msgstr "View journal entry"
+
+msgid "vs last month"
+msgstr "vs last month"
 
 msgid "We'll suggest recurring items as your history grows."
 msgstr "We'll suggest recurring items as your history grows."
