@@ -1076,6 +1076,9 @@ msgstr ""
 msgid "Expected out"
 msgstr ""
 
+msgid "Expected payments and income for {accountName}."
+msgstr ""
+
 msgid "Expected payments and income that shape the projection."
 msgstr ""
 
@@ -1720,6 +1723,9 @@ msgid "Past rows are posted actuals; future rows are the projection (the "
 "what-if scenario when active)."
 msgstr "Verleden rijen zijn geboekte werkelijke cijfers; toekomstige rijen zijn "
 "de prognose (het wat-als-scenario indien actief)."
+
+msgid "Patterns we spotted for {accountName}."
+msgstr ""
 
 msgid "Patterns we spotted in your history."
 msgstr ""

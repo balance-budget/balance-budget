@@ -1062,6 +1062,9 @@ msgstr ""
 msgid "Expected out"
 msgstr ""
 
+msgid "Expected payments and income for {accountName}."
+msgstr ""
+
 msgid "Expected payments and income that shape the projection."
 msgstr ""
 
@@ -1693,6 +1696,9 @@ msgstr "密碼"
 msgid "Past rows are posted actuals; future rows are the projection (the "
 "what-if scenario when active)."
 msgstr "過去的列是已過帳的實際值；未來的列是預估值（啟用時為假設情境）。"
+
+msgid "Patterns we spotted for {accountName}."
+msgstr ""
 
 msgid "Patterns we spotted in your history."
 msgstr ""
