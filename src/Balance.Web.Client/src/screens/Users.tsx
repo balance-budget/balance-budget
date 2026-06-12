@@ -49,9 +49,7 @@ export function Users() {
     return (
         <>
             <Panel>
-                <SectionHead
-                    subtitle={<Trans>Logins that have access to this ledger.</Trans>}
-                />
+                <SectionHead subtitle={<Trans>Logins that have access to this ledger.</Trans>} />
                 {usersQuery.isPending ? (
                     <div className="flex flex-col gap-2">
                         <Skeleton className="h-12" />

@@ -24,8 +24,7 @@ const PILL =
 
 export function MtdDeltaChip({ current, prior, polarity }: Props) {
     const noBaseline = prior.amount === 0;
-    const signFlip =
-        current.amount !== 0 && Math.sign(current.amount) !== Math.sign(prior.amount);
+    const signFlip = current.amount !== 0 && Math.sign(current.amount) !== Math.sign(prior.amount);
 
     if (noBaseline || signFlip) {
         return (
