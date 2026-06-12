@@ -182,6 +182,9 @@ msgstr "── None"
 msgid "── None (self-transfer)"
 msgstr "── None (self-transfer)"
 
+msgid "31 Dec {year}"
+msgstr "31 Dec {year}"
+
 msgid "A construction deposit needs an asset account, an income account, and a "
 "rate - set all three or none."
 msgstr "A construction deposit needs an asset account, an income account, and a "
@@ -441,6 +444,9 @@ msgstr "Balance"
 
 msgid "Balance & payments"
 msgstr "Balance & payments"
+
+msgid "Balance now"
+msgstr "Balance now"
 
 msgid "Balance over time · Last 3 months"
 msgstr "Balance over time · Last 3 months"
@@ -1091,6 +1097,9 @@ msgstr "End date"
 msgid "End date must be after the start date."
 msgstr "End date must be after the start date."
 
+msgid "End of month"
+msgstr "End of month"
+
 msgid "Ended"
 msgstr "Ended"
 
@@ -1144,6 +1153,9 @@ msgstr "Every part needs a label."
 msgid "Every part needs an end date."
 msgstr "Every part needs an end date."
 
+msgid "Everyday spending"
+msgstr "Everyday spending"
+
 msgid "Exchange rate"
 msgstr "Exchange rate"
 
@@ -1155,6 +1167,12 @@ msgstr "Expand"
 
 msgid "Expected amount"
 msgstr "Expected amount"
+
+msgid "Expected in"
+msgstr "Expected in"
+
+msgid "Expected out"
+msgstr "Expected out"
 
 msgid "Expected payments and income that shape the projection."
 msgstr "Expected payments and income that shape the projection."
@@ -1309,8 +1327,8 @@ msgstr "Importer"
 msgid "Importing…"
 msgstr "Importing…"
 
-msgid "In {horizon} months"
-msgstr "In {horizon} months"
+#~ msgid "In {horizon} months"
+#~ msgstr "In {horizon} months"
 
 msgid "In force"
 msgstr "In force"
@@ -1738,8 +1756,8 @@ msgstr "Nothing to project yet"
 msgid "Notifications"
 msgstr "Notifications"
 
-msgid "Now"
-msgstr "Now"
+#~ msgid "Now"
+#~ msgstr "Now"
 
 msgid "Number format"
 msgstr "Number format"
@@ -2245,6 +2263,12 @@ msgstr "Status"
 msgid "Status filter"
 msgstr "Status filter"
 
+msgid "Still expected in"
+msgstr "Still expected in"
+
+msgid "Still expected out"
+msgstr "Still expected out"
+
 msgid "Structural matches with an Uncleared bank-side slot. Widen the date "
 "window to surface near-misses."
 msgstr "Structural matches with an Uncleared bank-side slot. Widen the date "
@@ -2449,6 +2473,9 @@ msgstr "will dismiss"
 
 msgid "Working…"
 msgstr "Working…"
+
+msgid "Year-end"
+msgstr "Year-end"
 
 msgid "You have {dirtyCount, plural, one {# unsaved draft} other {# unsaved "
 "drafts}}. Leaving will discard them."
