@@ -107,7 +107,9 @@ export function Outlook() {
                 }}
             />
 
-            <section className="grid gap-[18px] grid-cols-1 lg:grid-cols-[1.4fr_1fr] mt-[18px]">
+            {/* Recurring items over detected patterns, stacked full-width — an
+                empty/short panel beside a long list left a large empty quadrant. */}
+            <section className="grid gap-[18px] grid-cols-1 mt-[18px]">
                 <RecurringPanel
                     accountId={selectedAccount?.accountId ?? null}
                     accountName={selectedAccount?.accountName ?? null}

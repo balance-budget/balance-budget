@@ -369,8 +369,9 @@ export function Dashboard() {
         <>
             <KpiStrip />
 
-            {/* Trend + accounts */}
-            <section className="grid gap-[18px] grid-cols-1 lg:grid-cols-[1.4fr_1fr]">
+            {/* Trend over accounts, stacked full-width — a short chart beside a
+                long accounts list left a large empty quadrant. */}
+            <section className="grid gap-[18px] grid-cols-1">
                 <AccountBalanceTrendPanel />
 
                 <Panel>
