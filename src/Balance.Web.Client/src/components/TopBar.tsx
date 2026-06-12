@@ -1,10 +1,13 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Button } from 'react-aria-components';
+import { Link } from '@tanstack/react-router';
 import { Icon } from './Icon';
+import type { Crumb } from './PageHeader';
 import { composeTailwindRenderProps } from './ui/compose';
 
 type TopBarProps = {
     title: string;
+    breadcrumb?: Crumb[];
     period?: string;
     onMenuClick: () => void;
     onSearchClick: () => void;
@@ -12,7 +15,7 @@ type TopBarProps = {
 
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);
 
-export function TopBar({ title, period, onMenuClick, onSearchClick }: TopBarProps) {
+export function TopBar({ title, breadcrumb, period, onMenuClick, onSearchClick }: TopBarProps) {
     const { t } = useLingui();
     return (
         <header className="min-h-[56px] px-4 py-3 md:min-h-[72px] md:px-8 md:py-4 flex items-center gap-3 md:gap-4 border-b border-border-soft">
@@ -24,6 +27,21 @@ export function TopBar({ title, period, onMenuClick, onSearchClick }: TopBarProp
                 <Icon name="menu" size={20} strokeWidth={2} />
             </TopBarButton>
             <div className="flex flex-col gap-[2px] min-w-0">
+                {breadcrumb && breadcrumb.length > 0 ? (
+                    <nav className="flex items-center gap-1 text-xs text-fg-3 min-w-0">
+                        {breadcrumb.map(crumb => (
+                            <span key={crumb.to} className="flex items-center gap-1 min-w-0">
+                                <Link
+                                    to={crumb.to}
+                                    className="truncate rounded-sm outline-none data-[hovered]:text-fg-1 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary"
+                                >
+                                    {crumb.label}
+                                </Link>
+                                <Icon name="chevron-right" size={12} className="shrink-0" />
+                            </span>
+                        ))}
+                    </nav>
+                ) : null}
                 <h1 className="text-lg md:text-xl font-semibold truncate">{title}</h1>
                 {period ? (
                     <span className="text-sm text-fg-3 whitespace-nowrap">{period}</span>

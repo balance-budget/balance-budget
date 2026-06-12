@@ -31,7 +31,10 @@ export function Panel({ children, padding = 'md', className }: PanelProps) {
 }
 
 type SectionHeadProps = {
-    title: ReactNode;
+    /** Optional. Sub-panel headers set it; a page's top-of-content header omits
+     *  it — the page title already lives in the TopBar, so repeating it here is
+     *  redundant. Without a title the row carries just the description + action. */
+    title?: ReactNode;
     subtitle?: ReactNode;
     action?: ReactNode;
 };
@@ -40,7 +43,7 @@ export function SectionHead({ title, subtitle, action }: SectionHeadProps) {
     return (
         <div className="flex items-baseline justify-between gap-4 mb-[14px]">
             <div className="flex flex-col gap-[2px] min-w-0">
-                <h2 className="text-base font-semibold leading-snug">{title}</h2>
+                {title ? <h2 className="text-base font-semibold leading-snug">{title}</h2> : null}
                 {subtitle ? <span className="text-sm text-fg-3">{subtitle}</span> : null}
             </div>
             {action}

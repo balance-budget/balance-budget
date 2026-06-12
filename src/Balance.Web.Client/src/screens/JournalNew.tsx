@@ -13,6 +13,7 @@ import { ErrorState } from '../components/ErrorState';
 import { FormErrorBanner } from '../components/FormErrorBanner';
 import { Icon } from '../components/Icon';
 import { Panel, SectionHead } from '../components/Panel';
+import { usePageHeader } from '../components/PageHeader';
 import { Skeleton } from '../components/Skeleton';
 import { Button, IconButton } from '../components/ui/Button';
 import { DatePicker } from '../components/ui/DatePicker';
@@ -50,6 +51,7 @@ function currencyFormat(currencyCode: string | null | undefined): Intl.NumberFor
 
 export function JournalNew({ prefillAccountId }: { prefillAccountId: AccountId | null }) {
     const { t } = useLingui();
+    usePageHeader({ breadcrumb: [{ label: t`Activity`, to: '/activity' }] });
     const accounts = useAccounts();
     const counterparties = useCounterparties();
     const catalog = useCurrencyCatalog();
@@ -208,8 +210,10 @@ function JournalNewForm({
             }}
         >
             <Panel>
+                {/* Title + back navigation live in the TopBar (breadcrumb +
+                 *  "New journal entry"); the lone Cancel action is the button
+                 *  beside Create below, so this header is just the description. */}
                 <SectionHead
-                    title={<Trans>New journal entry</Trans>}
                     subtitle={
                         form.mode === 'simple' ? (
                             <Trans>
@@ -218,15 +222,6 @@ function JournalNewForm({
                         ) : (
                             <Trans>General-journal table - explicit debit / credit per line.</Trans>
                         )
-                    }
-                    action={
-                        <Link
-                            to="/activity"
-                            search={{ page: 1, q: '', account: '', from: '', to: '' }}
-                            className="text-xs text-fg-3 hover:text-fg-1"
-                        >
-                            <Trans>← Cancel</Trans>
-                        </Link>
                     }
                 />
                 <FormErrorBanner message={topError} />
