@@ -21,6 +21,8 @@ public sealed record OutlookAccountProjectionOutput(
     AccountType AccountType,
     CurrencyCode CurrencyCode,
     long CurrentBalance,
+    OutlookThisMonthOutput ThisMonth,
+    OutlookYearEndOutput YearEnd,
     IReadOnlyList<OutlookActualPointOutput> Actuals,
     IReadOnlyList<OutlookProjectedMonthOutput> Baseline,
     IReadOnlyList<OutlookProjectedMonthOutput>? Scenario
@@ -29,12 +31,43 @@ public sealed record OutlookAccountProjectionOutput(
 public sealed record OutlookActualPointOutput(DateOnly Month, long EndBalance);
 
 /// <summary>
-/// One projected month. <see cref="ExpectedNet"/> is the templates' net effect; <see
-/// cref="TypicalSpendMid"/> the median everyday-spend applied; the <c>EndBalance*</c> trio is the
-/// month-end balance band (Low pessimistic, High optimistic).
+/// The "rest of this month" summary (ADR-0028): recurring money still expected to come in / go out
+/// before month-end (shown exactly), the everyday-spend range still ahead, and the resulting
+/// end-of-month balance band. <see cref="ExpectedIn"/> is ≥ 0, <see cref="ExpectedOut"/> ≤ 0, and
+/// the <c>EverydaySpend*</c> bounds are ≤ 0 and prorated to the remaining days.
+/// </summary>
+public sealed record OutlookThisMonthOutput(
+    DateOnly Month,
+    long ExpectedIn,
+    long ExpectedOut,
+    long EverydaySpendLow,
+    long EverydaySpendHigh,
+    long EndBalanceLow,
+    long EndBalanceMid,
+    long EndBalanceHigh
+);
+
+/// <summary>
+/// The projected balance band on 31 December of the current year (ADR-0028) for the account,
+/// computed by projecting through December regardless of the requested horizon.
+/// </summary>
+public sealed record OutlookYearEndOutput(
+    DateOnly Date,
+    long EndBalanceLow,
+    long EndBalanceMid,
+    long EndBalanceHigh
+);
+
+/// <summary>
+/// One projected month. <see cref="ExpectedIn"/> / <see cref="ExpectedOut"/> split the templates'
+/// effect by direction (<see cref="ExpectedNet"/> is their sum); <see cref="TypicalSpendMid"/> the
+/// median everyday-spend applied; the <c>EndBalance*</c> trio is the month-end balance band (Low
+/// pessimistic, High optimistic).
 /// </summary>
 public sealed record OutlookProjectedMonthOutput(
     DateOnly Month,
+    long ExpectedIn,
+    long ExpectedOut,
     long ExpectedNet,
     long TypicalSpendMid,
     long EndBalanceLow,

@@ -32,7 +32,11 @@ internal sealed class OutlookProjectionService : IOutlookService
         var horizon = Math.Clamp(horizonMonths, 1, 120);
         var today = DateOnly.FromDateTime(_timeProvider.GetUtcNow().UtcDateTime);
         var anchorMonth = FirstOfMonth(today);
-        var fromMonth = anchorMonth.AddMonths(1);
+
+        // Project from the current (partial) month; always reach December so the year-end card has a
+        // figure even when the horizon toggle is shorter than the rest of the year (ADR-0028).
+        var monthsToYearEnd = 12 - today.Month + 1;
+        var projectMonths = Math.Max(horizon, monthsToYearEnd);
 
         var accounts = await _dbContext
             .Accounts.AsNoTracking()
@@ -82,12 +86,12 @@ internal sealed class OutlookProjectionService : IOutlookService
             var baselineSpecs = accountTemplates
                 .Select(t => ToSpec(account, t.Cadence, t.AnchorDate, t.EndDate, t.ExpectedAmount))
                 .ToList();
-            var baseline = OutlookProjectionEngine.Project(
+            var rows = OutlookProjectionEngine.Project(
                 currentBalance,
                 baselineSpecs,
                 band,
-                fromMonth,
-                horizon
+                today,
+                projectMonths
             );
 
             IReadOnlyList<OutlookProjectedMonthOutput>? scenarioRows = null;
@@ -97,7 +101,8 @@ internal sealed class OutlookProjectionService : IOutlookService
                 scenarioRows =
                 [
                     .. OutlookProjectionEngine
-                        .Project(currentBalance, scenarioSpecs, band, fromMonth, horizon)
+                        .Project(currentBalance, scenarioSpecs, band, today, projectMonths)
+                        .Take(horizon)
                         .Select(ToMonthOutput),
                 ];
             }
@@ -109,8 +114,10 @@ internal sealed class OutlookProjectionService : IOutlookService
                     account.AccountType,
                     account.CurrencyCode,
                     currentBalance,
+                    ToThisMonth(rows[0]),
+                    ToYearEnd(rows[monthsToYearEnd - 1], today.Year),
                     actuals.GetValueOrDefault(account.Id, []),
-                    [.. baseline.Select(ToMonthOutput)],
+                    [.. rows.Take(horizon).Select(ToMonthOutput)],
                     scenarioRows
                 )
             );
@@ -223,7 +230,12 @@ internal sealed class OutlookProjectionService : IOutlookService
     )
     {
         var accountIds = accounts.Select(a => a.Id).ToList();
-        var windowStart = anchorMonth.AddMonths(-(ActualsMonths - 1));
+
+        // Actuals are completed months ending at the previous month; the current (partial) month is
+        // owned by the projection now (ADR-0028). Reach back one extra month so the current month's
+        // movement can be peeled off the live balance to land on the previous month-end.
+        var lastActual = anchorMonth.AddMonths(-1);
+        var windowStart = anchorMonth.AddMonths(-ActualsMonths);
 
         // One batched query: per (account, month) net raw movement within the actuals window.
         var deltaRows = await _dbContext
@@ -270,11 +282,15 @@ internal sealed class OutlookProjectionService : IOutlookService
         {
             var deltas = deltasByAccount.GetValueOrDefault(account.Id, []);
 
-            // Walk backward from the current balance, peeling off each month's movement, so the
-            // last point lands exactly on today's balance and the projection picks up from there.
-            var points = new List<OutlookActualPointOutput>(ActualsMonths);
+            // Peel the current (partial) month off the live balance to reach the previous month-end,
+            // then walk backward, peeling each completed month, so actuals end where the projection
+            // begins and the two curves meet.
             var balance = ToBalance(account, account.CurrentBalanceRaw);
-            for (var month = anchorMonth; month >= windowStart; month = month.AddMonths(-1))
+            deltas.TryGetValue(anchorMonth, out var currentMonthDelta);
+            balance -= ToBalance(account, currentMonthDelta);
+
+            var points = new List<OutlookActualPointOutput>(ActualsMonths);
+            for (var month = lastActual; month >= windowStart; month = month.AddMonths(-1))
             {
                 points.Add(new OutlookActualPointOutput(month, balance));
                 deltas.TryGetValue(month, out var rawDelta);
@@ -339,7 +355,31 @@ internal sealed class OutlookProjectionService : IOutlookService
     ) => new(cadence, anchorDate, endDate, ToBalance(account, rawExpectedAmount));
 
     private static OutlookProjectedMonthOutput ToMonthOutput(OutlookMonthRow row) =>
-        new(row.Month, row.ExpectedNet, row.SpendMid, row.EndLow, row.EndMid, row.EndHigh);
+        new(
+            row.Month,
+            row.ExpectedIn,
+            row.ExpectedOut,
+            row.ExpectedNet,
+            row.SpendMid,
+            row.EndLow,
+            row.EndMid,
+            row.EndHigh
+        );
+
+    private static OutlookThisMonthOutput ToThisMonth(OutlookMonthRow row) =>
+        new(
+            row.Month,
+            row.ExpectedIn,
+            row.ExpectedOut,
+            row.SpendLow,
+            row.SpendHigh,
+            row.EndLow,
+            row.EndMid,
+            row.EndHigh
+        );
+
+    private static OutlookYearEndOutput ToYearEnd(OutlookMonthRow row, int year) =>
+        new(new DateOnly(year, 12, 31), row.EndLow, row.EndMid, row.EndHigh);
 
     private static long ToBalance(LiquidAccount account, long raw) =>
         AccountSignConvention.ToBalance(account.AccountType, raw, account.CurrencyCode).Amount;

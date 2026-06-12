@@ -62,15 +62,26 @@ internal sealed class OutlookProjectionServiceTests : EndpointsTestsBase
 
         var checkingProjection = result.Value!.Accounts.Single(a => a.AccountId == checking);
         await Assert.That(checkingProjection.Baseline.Count).IsEqualTo(3);
-        // Median across the three months is the groceries spend alone — the transfer is excluded,
-        // or every month would read −1300 and the median with it.
-        foreach (var month in checkingProjection.Baseline)
-            await Assert.That(month.TypicalSpendMid).IsEqualTo(-300L);
+        // Full months carry the whole-month median — the groceries spend alone (the transfer is
+        // excluded, or every month would read −1300 and the median with it).
+        await Assert.That(checkingProjection.Baseline[1].TypicalSpendMid).IsEqualTo(-300L);
+        await Assert.That(checkingProjection.Baseline[2].TypicalSpendMid).IsEqualTo(-300L);
+        // Each whole month subtracts that median from the running balance.
+        await Assert
+            .That(checkingProjection.Baseline[2].EndBalanceMid)
+            .IsEqualTo(checkingProjection.Baseline[1].EndBalanceMid - 300L);
 
-        // The curve picks up from today's balance: first month-end = current + typical spend.
+        // The current month is partial (ADR-0028): its everyday spend is prorated into (−300, 0],
+        // and the curve picks up from today's balance.
+        await Assert
+            .That(checkingProjection.Baseline[0].TypicalSpendMid)
+            .IsGreaterThanOrEqualTo(-300L);
+        await Assert.That(checkingProjection.Baseline[0].TypicalSpendMid).IsLessThanOrEqualTo(0L);
         await Assert
             .That(checkingProjection.Baseline[0].EndBalanceMid)
-            .IsEqualTo(checkingProjection.CurrentBalance - 300L);
+            .IsEqualTo(
+                checkingProjection.CurrentBalance + checkingProjection.Baseline[0].TypicalSpendMid
+            );
     }
 
     [Test]
@@ -126,7 +137,8 @@ internal sealed class OutlookProjectionServiceTests : EndpointsTestsBase
         await Assert.That(result.IsSuccess).IsTrue();
 
         var checkingProjection = result.Value!.Accounts.Single(a => a.AccountId == checking);
-        foreach (var month in checkingProjection.Baseline)
+        // Assert on the whole months; the current month is partial and clock-dependent (ADR-0028).
+        foreach (var month in checkingProjection.Baseline.Skip(1))
         {
             // The template applies forward every month…
             await Assert.That(month.ExpectedNet).IsEqualTo(-6100L);

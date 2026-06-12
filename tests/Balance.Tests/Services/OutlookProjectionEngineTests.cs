@@ -162,6 +162,38 @@ internal sealed class OutlookProjectionEngineTests
         );
 
         await Assert.That(rows[0].ExpectedNet).IsEqualTo(250_000L);
+        await Assert.That(rows[0].ExpectedIn).IsEqualTo(400_000L);
+        await Assert.That(rows[0].ExpectedOut).IsEqualTo(-150_000L);
         await Assert.That(rows[0].EndMid).IsEqualTo(Opening + 250_000L);
+    }
+
+    [Test]
+    public async Task Current_month_is_partial_counting_only_future_due_occurrences_and_prorated_spend()
+    {
+        // From the 15th of a 31-day month: 17 days remain (inclusive), so spend scales 17/31.
+        var rows = OutlookProjectionEngine.Project(
+            Opening,
+            [
+                // Nominal day 10 — already past on the 15th, so it does not count this month.
+                Template(Cadence.Monthly, new DateOnly(2026, 1, 10), -5_000L),
+                // Nominal day 20 — still ahead, so it counts.
+                Template(Cadence.Monthly, new DateOnly(2026, 1, 20), 9_000L),
+            ],
+            new OutlookSpendBand(-3_100L, -3_100L, -3_100L),
+            new DateOnly(2026, 7, 15),
+            2
+        );
+
+        // Current month (partial): only the day-20 inflow is still due; spend is prorated 17/31.
+        await Assert.That(rows[0].ExpectedIn).IsEqualTo(9_000L);
+        await Assert.That(rows[0].ExpectedOut).IsEqualTo(0L);
+        await Assert.That(rows[0].SpendMid).IsEqualTo(-1_700L); // round(-3100 * 17 / 31)
+        await Assert.That(rows[0].EndMid).IsEqualTo(Opening + 9_000L - 1_700L);
+
+        // Next month is whole: both templates apply and the full band lands.
+        await Assert.That(rows[1].ExpectedIn).IsEqualTo(9_000L);
+        await Assert.That(rows[1].ExpectedOut).IsEqualTo(-5_000L);
+        await Assert.That(rows[1].SpendMid).IsEqualTo(-3_100L);
+        await Assert.That(rows[1].EndMid).IsEqualTo(rows[0].EndMid + 4_000L - 3_100L);
     }
 }
