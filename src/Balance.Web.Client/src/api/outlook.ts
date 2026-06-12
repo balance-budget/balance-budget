@@ -19,6 +19,8 @@ type WireProjection = components['schemas']['OutlookProjectionOutput'];
 type WireAccountProjection = components['schemas']['OutlookAccountProjectionOutput'];
 type WireActualPoint = components['schemas']['OutlookActualPointOutput'];
 type WireProjectedMonth = components['schemas']['OutlookProjectedMonthOutput'];
+type WireThisMonth = components['schemas']['OutlookThisMonthOutput'];
+type WireYearEnd = components['schemas']['OutlookYearEndOutput'];
 
 export type WireCreateTemplateRequest = components['schemas']['CreateJournalEntryTemplateRequest'];
 export type WireUpdateTemplateRequest = components['schemas']['UpdateJournalEntryTemplateRequest'];
@@ -68,8 +70,28 @@ export type OutlookActualPoint = { month: string; endBalance: number };
 
 export type OutlookProjectedMonth = {
     month: string;
+    expectedIn: number;
+    expectedOut: number;
     expectedNet: number;
     typicalSpendMid: number;
+    endBalanceLow: number;
+    endBalanceMid: number;
+    endBalanceHigh: number;
+};
+
+export type OutlookThisMonth = {
+    month: string;
+    expectedIn: number;
+    expectedOut: number;
+    everydaySpendLow: number;
+    everydaySpendHigh: number;
+    endBalanceLow: number;
+    endBalanceMid: number;
+    endBalanceHigh: number;
+};
+
+export type OutlookYearEnd = {
+    date: string;
     endBalanceLow: number;
     endBalanceMid: number;
     endBalanceHigh: number;
@@ -81,6 +103,8 @@ export type OutlookAccountProjection = {
     accountType: AccountType;
     currencyCode: string;
     currentBalance: number;
+    thisMonth: OutlookThisMonth;
+    yearEnd: OutlookYearEnd;
     actuals: OutlookActualPoint[];
     baseline: OutlookProjectedMonth[];
     scenario: OutlookProjectedMonth[] | null;
@@ -147,8 +171,32 @@ function toCandidate(wire: WireCandidate): TemplateCandidate {
 function toProjectedMonth(wire: WireProjectedMonth): OutlookProjectedMonth {
     return {
         month: wire.month,
+        expectedIn: toNumber(wire.expectedIn),
+        expectedOut: toNumber(wire.expectedOut),
         expectedNet: toNumber(wire.expectedNet),
         typicalSpendMid: toNumber(wire.typicalSpendMid),
+        endBalanceLow: toNumber(wire.endBalanceLow),
+        endBalanceMid: toNumber(wire.endBalanceMid),
+        endBalanceHigh: toNumber(wire.endBalanceHigh),
+    };
+}
+
+function toThisMonth(wire: WireThisMonth): OutlookThisMonth {
+    return {
+        month: wire.month,
+        expectedIn: toNumber(wire.expectedIn),
+        expectedOut: toNumber(wire.expectedOut),
+        everydaySpendLow: toNumber(wire.everydaySpendLow),
+        everydaySpendHigh: toNumber(wire.everydaySpendHigh),
+        endBalanceLow: toNumber(wire.endBalanceLow),
+        endBalanceMid: toNumber(wire.endBalanceMid),
+        endBalanceHigh: toNumber(wire.endBalanceHigh),
+    };
+}
+
+function toYearEnd(wire: WireYearEnd): OutlookYearEnd {
+    return {
+        date: wire.date,
         endBalanceLow: toNumber(wire.endBalanceLow),
         endBalanceMid: toNumber(wire.endBalanceMid),
         endBalanceHigh: toNumber(wire.endBalanceHigh),
@@ -166,6 +214,8 @@ function toAccountProjection(wire: WireAccountProjection): OutlookAccountProject
         accountType: wire.accountType,
         currencyCode: wire.currencyCode,
         currentBalance: toNumber(wire.currentBalance),
+        thisMonth: toThisMonth(wire.thisMonth),
+        yearEnd: toYearEnd(wire.yearEnd),
         actuals: wire.actuals.map(toActualPoint),
         baseline: wire.baseline.map(toProjectedMonth),
         scenario: wire.scenario === null ? null : wire.scenario.map(toProjectedMonth),
