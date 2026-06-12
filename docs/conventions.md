@@ -133,6 +133,25 @@ The SPA lives at `src/Balance.Web.Client` (React 19 + TypeScript + Vite 8). Page
 
 During development, run the .NET host (`dotnet run --project src/Balance.Web`) and the Vite dev server (`npm run dev` from the repo root) in two terminals and browse the Vite URL (default `http://localhost:5173`) for HMR; Vite proxies `/api` to `http://localhost:5248` per `vite.config.ts`, so the browser only sees one origin.
 
+## Page chrome (title, breadcrumb, actions)
+
+The **TopBar is the single authority for a page's title** — a page title is never printed twice. Section pages set it via the route's `staticData.title`; entity-detail pages set a *specific* title plus a breadcrumb at runtime with `usePageHeader({ title, breadcrumb })` (the register shows `Accounts › Checking`, not a generic `Account`). The `AppShell` reads that context and falls back to the static title when a screen sets none.
+
+Consequences for a screen's own markup:
+
+- A screen's top-of-content panel **does not repeat the page title**. `SectionHead`'s `title` is optional; the page's first header carries just its description (`subtitle`) and primary action. Sub-panel headers (e.g. "Linked bank account", "Register summary") keep their titles — those are section headings, not the page title.
+- **Back navigation is the TopBar breadcrumb**, not an in-panel `← Back` link. Detail screens drop the in-panel entity name/back-link; their entity actions (Edit/Delete) ride on the first content panel's header.
+- **Forms have exactly one Cancel** — the button beside Submit. No second cancel/back affordance in the panel header.
+- **Don't ship dead affordances**: a nav item or header button that leads nowhere (an unbuilt route, a handler-less icon) is removed until the feature exists, not shown disabled.
+
+## Chart and entity colors
+
+Color encodes **AccountType**, not an ad-hoc per-chart palette. `ACCENT_BY_TYPE` in `lib/visualHints.ts` is the single source mapping each `AccountType` to a hue; avatars, the distribution donut's base, and the money-flow nodes all read from it (a chart that needs its own type colors imports it — it never re-declares the mapping). Within one type, slices/series are pulled apart by **shade** (`shadeOf`). When several accounts of the *same* type must read as distinct series (two asset trend lines), use the deterministic `chartColorFor(id)` hash palette instead.
+
+The underlying CSS custom properties are named by **hue** (`--color-chart-amber`, `--color-chart-blue`, …), never by spending category — "category" is a term the domain deliberately avoids (see [Language and spelling](#language-and-spelling) and `CONTEXT.md`).
+
+Dates are formatted through the region-aware helpers in `lib/dates.ts` (built on the `i18n/format` layer, ADR-0022) — `formatTableDate` for list/detail rows and `formatMonthAxisDate` for every month-bucketed chart axis — never `toLocaleDateString` directly or a raw ISO string in the UI.
+
 ## Background jobs
 
 Use the Quartz helpers:
