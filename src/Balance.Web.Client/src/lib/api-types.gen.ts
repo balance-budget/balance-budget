@@ -1691,6 +1691,8 @@ export interface components {
             currencyCode: components["schemas"]["CurrencyCode"];
             /** Format: int64 */
             currentBalance: number | string;
+            thisMonth: components["schemas"]["OutlookThisMonthOutput"];
+            yearEnd: components["schemas"]["OutlookYearEndOutput"];
             actuals: components["schemas"]["OutlookActualPointOutput"][];
             baseline: components["schemas"]["OutlookProjectedMonthOutput"][];
             scenario: null | components["schemas"]["OutlookProjectedMonthOutput"][];
@@ -1704,6 +1706,10 @@ export interface components {
         OutlookProjectedMonthOutput: {
             /** Format: date */
             month: string;
+            /** Format: int64 */
+            expectedIn: number | string;
+            /** Format: int64 */
+            expectedOut: number | string;
             /** Format: int64 */
             expectedNet: number | string;
             /** Format: int64 */
@@ -1744,6 +1750,34 @@ export interface components {
             endDate: null | string;
             /** Format: int64 */
             expectedAmount: number | string;
+        };
+        OutlookThisMonthOutput: {
+            /** Format: date */
+            month: string;
+            /** Format: int64 */
+            expectedIn: number | string;
+            /** Format: int64 */
+            expectedOut: number | string;
+            /** Format: int64 */
+            everydaySpendLow: number | string;
+            /** Format: int64 */
+            everydaySpendHigh: number | string;
+            /** Format: int64 */
+            endBalanceLow: number | string;
+            /** Format: int64 */
+            endBalanceMid: number | string;
+            /** Format: int64 */
+            endBalanceHigh: number | string;
+        };
+        OutlookYearEndOutput: {
+            /** Format: date */
+            date: string;
+            /** Format: int64 */
+            endBalanceLow: number | string;
+            /** Format: int64 */
+            endBalanceMid: number | string;
+            /** Format: int64 */
+            endBalanceHigh: number | string;
         };
         PagedOutputOfAccountOutput: {
             items: components["schemas"]["AccountOutput"][];
