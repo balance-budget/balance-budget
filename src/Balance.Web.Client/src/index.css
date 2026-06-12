@@ -43,21 +43,24 @@
     --color-info: #5aa9ff;
     --color-info-soft: rgba(90, 169, 255, 0.14);
 
-    /* Category hues (charts / per-account accents) */
-    --color-cat-food: #fe8923;
-    --color-cat-transport: #5aa9ff;
-    --color-cat-housing: #a07cff;
-    --color-cat-shopping: #ff6fa8;
-    --color-cat-entertain: #34c87a;
-    --color-cat-bills: #f5b942;
-    --color-cat-savings: #2dd4bf;
-    --color-cat-food-soft: rgba(254, 137, 35, 0.12);
-    --color-cat-transport-soft: rgba(90, 169, 255, 0.12);
-    --color-cat-housing-soft: rgba(160, 124, 255, 0.12);
-    --color-cat-shopping-soft: rgba(255, 111, 168, 0.12);
-    --color-cat-entertain-soft: rgba(52, 200, 122, 0.12);
-    --color-cat-bills-soft: rgba(245, 185, 66, 0.12);
-    --color-cat-savings-soft: rgba(45, 212, 191, 0.12);
+    /* Chart hues — a neutral, distinguishable palette used as per-AccountType
+       accents (see ACCENT_BY_TYPE) and as the generic same-type series palette
+       (see CHART_PALETTE). Named by hue, not by spending category: these are not
+       "categories" (a term the domain deliberately avoids). */
+    --color-chart-amber: #fe8923;
+    --color-chart-blue: #5aa9ff;
+    --color-chart-violet: #a07cff;
+    --color-chart-pink: #ff6fa8;
+    --color-chart-green: #34c87a;
+    --color-chart-gold: #f5b942;
+    --color-chart-teal: #2dd4bf;
+    --color-chart-amber-soft: rgba(254, 137, 35, 0.12);
+    --color-chart-blue-soft: rgba(90, 169, 255, 0.12);
+    --color-chart-violet-soft: rgba(160, 124, 255, 0.12);
+    --color-chart-pink-soft: rgba(255, 111, 168, 0.12);
+    --color-chart-green-soft: rgba(52, 200, 122, 0.12);
+    --color-chart-gold-soft: rgba(245, 185, 66, 0.12);
+    --color-chart-teal-soft: rgba(45, 212, 191, 0.12);
 
     /* Type families */
     --font-sans: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;

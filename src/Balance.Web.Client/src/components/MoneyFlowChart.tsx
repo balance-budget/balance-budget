@@ -4,6 +4,7 @@ import { Rectangle, ResponsiveContainer, Sankey, Tooltip } from 'recharts';
 import { useCurrencyCatalog } from '../api/currencies';
 import { useMoneyFlow, type MoneyFlowNode, type MoneyFlowNodeKind } from '../api/reports';
 import { formatMoney } from '../lib/money';
+import { ACCENT_BY_TYPE } from '../lib/visualHints';
 import type { ReportPeriod } from '../lib/reportPeriod';
 import { ErrorState } from './ErrorState';
 import { Panel, SectionHead } from './Panel';
@@ -14,16 +15,12 @@ type MoneyFlowChartProps = {
     currency: string;
 };
 
-// One color per node kind. The hub is neutral; income/expense and the three
-// balance-sheet types reuse the category palette so the diagram reads the same
-// way as the rest of the app.
+// One color per node kind. The hub is neutral; the five AccountType kinds reuse
+// the single ACCENT_BY_TYPE source so the diagram reads the same way as avatars
+// and the distribution donut (and the two can never drift apart).
 const KIND_COLOR: Record<MoneyFlowNodeKind, string> = {
     Hub: 'var(--color-fg-2)',
-    Income: 'var(--color-cat-entertain)',
-    Expense: 'var(--color-cat-food)',
-    Asset: 'var(--color-cat-transport)',
-    Liability: 'var(--color-cat-shopping)',
-    Equity: 'var(--color-cat-housing)',
+    ...ACCENT_BY_TYPE,
 };
 
 type SankeyNode = { id: string; name: string; kind: MoneyFlowNodeKind; hasChildren: boolean };
