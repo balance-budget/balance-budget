@@ -1036,6 +1036,9 @@ msgstr "Voer debet of credit in."
 msgid "Enter your email and password to continue."
 msgstr "Voer je e-mail en wachtwoord in om door te gaan."
 
+msgid "Estimated"
+msgstr ""
+
 msgid "Every bookkeeping event, newest first."
 msgstr "Elke boekhoudgebeurtenis, nieuwste eerst."
 

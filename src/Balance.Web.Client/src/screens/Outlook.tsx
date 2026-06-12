@@ -11,6 +11,7 @@ import {
     type WireScenarioRequest,
 } from '../api/outlook';
 import { useAccounts } from '../api/accounts';
+import { useCurrencyCatalog } from '../api/currencies';
 import { Amount } from '../components/Amount';
 import { Empty } from '../components/Empty';
 import { ErrorState } from '../components/ErrorState';
@@ -24,6 +25,7 @@ import { useToast } from '../components/ui/Toast';
 import { accountPathSegments, ACCOUNT_PATH_SEPARATOR } from '../lib/accountTree';
 import { cx } from '../lib/cx';
 import { type AccountId, type JournalEntryTemplateId } from '../lib/domain';
+import { formatMoney } from '../lib/money';
 import { JournalEntryTemplateForm } from './JournalEntryTemplateForm';
 import { OutlookProjectionChart } from './OutlookProjectionChart';
 
@@ -256,20 +258,10 @@ function ThisMonthCard({ account }: { account: OutlookAccountProjection }) {
             </div>
 
             <CardRow label={<Trans>Still expected in</Trans>}>
-                <Amount
-                    minor={m.expectedIn}
-                    currencyCode={account.currencyCode}
-                    size="inline"
-                    sign
-                />
+                <SignedAmount minor={m.expectedIn} currencyCode={account.currencyCode} />
             </CardRow>
             <CardRow label={<Trans>Still expected out</Trans>}>
-                <Amount
-                    minor={m.expectedOut}
-                    currencyCode={account.currencyCode}
-                    size="inline"
-                    sign
-                />
+                <SignedAmount minor={m.expectedOut} currencyCode={account.currencyCode} />
             </CardRow>
             <CardRow label={<Trans>Everyday spending</Trans>}>
                 <RangeAmount
@@ -289,15 +281,12 @@ function ThisMonthCard({ account }: { account: OutlookAccountProjection }) {
                 />
             </CardRow>
             <CardRow label={<Trans>End of month</Trans>} emphasis>
-                <Amount minor={m.endBalanceMid} currencyCode={account.currencyCode} size="medium" />
-            </CardRow>
-            <div className="text-right text-xs text-fg-3">
-                <RangeAmount
+                <EstimatedRange
                     low={m.endBalanceLow}
                     high={m.endBalanceHigh}
                     currencyCode={account.currencyCode}
                 />
-            </div>
+            </CardRow>
         </div>
     );
 }
@@ -320,14 +309,12 @@ function YearEndCard({ account }: { account: OutlookAccountProjection }) {
                 </span>
             </div>
 
-            <Amount minor={y.endBalanceMid} currencyCode={account.currencyCode} size="big" />
-            <div className="text-xs text-fg-3">
-                <RangeAmount
-                    low={y.endBalanceLow}
-                    high={y.endBalanceHigh}
-                    currencyCode={account.currencyCode}
-                />
-            </div>
+            <EstimatedRange
+                low={y.endBalanceLow}
+                high={y.endBalanceHigh}
+                currencyCode={account.currencyCode}
+                align="start"
+            />
 
             {scenarioEnd !== null && (
                 <div className="flex items-baseline justify-between mt-auto pt-2">
@@ -370,16 +357,60 @@ function RangeAmount({
     low,
     high,
     currencyCode,
+    size = 'inline',
 }: {
     low: number;
     high: number;
     currencyCode: string;
+    size?: 'inline' | 'medium';
 }) {
     return (
-        <span className="font-mono tabular-nums">
-            <Amount minor={low} currencyCode={currencyCode} size="inline" decimals={false} />
-            {' – '}
-            <Amount minor={high} currencyCode={currencyCode} size="inline" decimals={false} />
+        <span className="inline-flex items-baseline gap-1 tabular-nums">
+            <Amount minor={low} currencyCode={currencyCode} size={size} decimals={false} />
+            <span className="text-fg-3">–</span>
+            <Amount minor={high} currencyCode={currencyCode} size={size} decimals={false} />
+        </span>
+    );
+}
+
+/**
+ * A signed money figure colored by sign the same way the Activity feed does (green in, red out) —
+ * a flat formatted string, not the tri-color {@link Amount}, so the whole number takes the color.
+ */
+function SignedAmount({ minor, currencyCode }: { minor: number; currencyCode: string }) {
+    const catalog = useCurrencyCatalog();
+    return (
+        <span
+            className={cx(
+                'font-mono text-sm tabular-nums',
+                minor < 0 ? 'text-danger' : 'text-success',
+            )}
+        >
+            {formatMoney(minor, currencyCode, catalog, { sign: true })}
+        </span>
+    );
+}
+
+/** A low–high range with an explicit "Estimated" caption, so it never reads as a known figure. */
+function EstimatedRange({
+    low,
+    high,
+    currencyCode,
+    align = 'end',
+}: {
+    low: number;
+    high: number;
+    currencyCode: string;
+    align?: 'start' | 'end';
+}) {
+    return (
+        <span
+            className={cx('flex flex-col gap-0.5', align === 'end' ? 'items-end' : 'items-start')}
+        >
+            <RangeAmount low={low} high={high} currencyCode={currencyCode} size="medium" />
+            <span className="text-[10px] font-medium text-fg-3 uppercase tracking-wide">
+                <Trans>Estimated</Trans>
+            </span>
         </span>
     );
 }

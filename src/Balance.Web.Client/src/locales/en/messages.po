@@ -1133,6 +1133,9 @@ msgstr "Enter Debit or Credit."
 msgid "Enter your email and password to continue."
 msgstr "Enter your email and password to continue."
 
+msgid "Estimated"
+msgstr "Estimated"
+
 msgid "Every bookkeeping event, newest first."
 msgstr "Every bookkeeping event, newest first."
 
