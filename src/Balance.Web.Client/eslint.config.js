@@ -43,7 +43,7 @@ export default defineConfig([
                         'Construct Intl formatters only in src/i18n/format.ts. Use formatCalendarDate / formatInstant / formatNumber so the user date/number preference is honored (ADR-0029).',
                 },
                 {
-                    selector: "CallExpression[callee.property.name=/^toLocale(Date|Time)?String$/]",
+                    selector: 'CallExpression[callee.property.name=/^toLocale(Date|Time)?String$/]',
                     message:
                         'Do not use toLocale*String — it bypasses the user date/number preference (ADR-0029). Use the helpers in src/i18n/format.ts.',
                 },
