@@ -42,6 +42,7 @@ internal static class DevelopmentSeedData
         private readonly List<Loan> _loans = [];
         private readonly List<LoanPart> _loanParts = [];
         private readonly List<LoanPartRatePeriod> _loanPartRatePeriods = [];
+        private readonly List<JournalEntryTemplate> _journalEntryTemplates = [];
 
         // Disambiguates RawSource so the (BankAccountId, RowHash) unique index never collides,
         // even for two grocery runs of the same amount in the same month.
@@ -277,6 +278,21 @@ internal static class DevelopmentSeedData
                 (month => month == 5, 13, taxReturn, taxOffice, 60_000, "Tax refund"),
             ];
 
+            // The fixed shape of the seeded monthly mortgage payment (a simplification — a real
+            // annuity shifts principal and interest over time). Gross interest drives the deposit
+            // offset cap; gross total is what the bank would collect with no deposit.
+            const long part1Principal = 42_000;
+            const long part1Interest = 71_500;
+            const long part2Interest = 14_500;
+            const long grossInterest = part1Interest + part2Interest;
+            const long grossTotal = part1Principal + grossInterest;
+
+            // The Construction deposit balance, tracked alongside the ledger so each month's
+            // deposit-interest offset reflects the balance at that month's start (ADR-0026). It opens
+            // at €40,000 and tapers as draws fund the build, so the offset visibly shrinks over the year.
+            var depositBalance = 4_000_000L;
+            const decimal depositRate = 3.6m;
+
             // Trailing 12 months of recurring activity. The current month (m == 0) is naturally
             // truncated to <= today by OnDay, so month-to-date views are always partially filled.
             for (var m = 11; m >= 0; m--)
@@ -284,10 +300,16 @@ internal static class DevelopmentSeedData
                 var monthStart = FirstOfMonth(_today).AddMonths(-m);
                 var reconciled = m >= 10; // oldest months demonstrate the frozen Reconciled state.
 
+                // The deposit-interest offset for this month, off the balance at month start
+                // (the draw below lands later in the month, so it only affects later months).
+                var depositOffset = DepositOffset(depositBalance, depositRate, grossInterest);
+
                 // The monthly loan payment in its loan-aware shape (ADR-0025): bank line
                 // Cleared, principal on the annuity part, one interest line per part, each
-                // counter-line attributed to its Loan Part. The current month's debit stays
-                // in the Inbox so the loan-payment hint has something to point at.
+                // counter-line attributed to its Loan Part, plus the construction-deposit
+                // interest offset (ADR-0026) netting the gross down to the bank's single debit.
+                // The current month's debit stays in the Inbox so the loan-payment hint has
+                // something to point at — at its net amount, the figure the bank actually charges.
                 if (m > 0)
                 {
                     OnDay(
@@ -300,9 +322,11 @@ internal static class DevelopmentSeedData
                                 lender,
                                 lenderIban,
                                 d,
-                                new LoanLineSpec(part1, mortgagePart1.Id, 42_000),
-                                new LoanLineSpec(part1, mortgageInterest.Id, 71_500),
-                                new LoanLineSpec(part2, mortgageInterest.Id, 14_500)
+                                depositInterest,
+                                depositOffset,
+                                new LoanLineSpec(part1, mortgagePart1.Id, part1Principal),
+                                new LoanLineSpec(part1, mortgageInterest.Id, part1Interest),
+                                new LoanLineSpec(part2, mortgageInterest.Id, part2Interest)
                             )
                     );
                 }
@@ -315,7 +339,7 @@ internal static class DevelopmentSeedData
                             Inbox(
                                 checkingBank,
                                 d,
-                                -128_000,
+                                -(grossTotal - depositOffset),
                                 "Mortgage payment",
                                 lender.Name,
                                 lenderIban
@@ -441,6 +465,28 @@ internal static class DevelopmentSeedData
                         20,
                         d => Cash(home, unrealizedGains, null, 1_200_000, "WOZ revaluation", d)
                     );
+
+                // Construction deposit draws (ADR-0026): the lender pays a contractor directly as
+                // the build progresses, so the deposit (an Illiquid Asset) shrinks and the Home
+                // value rises — a balanced hand entry, no bank import. Three €9,000 draws taper the
+                // deposit from €40,000 to €13,000, so the deposit-interest offset shrinks with it.
+                if (m is 9 or 6 or 3)
+                {
+                    OnDay(
+                        monthStart,
+                        9,
+                        d =>
+                            Cash(
+                                home,
+                                constructionDeposit,
+                                null,
+                                900_000,
+                                "Construction deposit draw",
+                                d
+                            )
+                    );
+                    depositBalance -= 900_000;
+                }
             }
 
             // Current-month Inbox: un-actioned bank rows (no JournalEntry) plus one Dismissed row.
@@ -454,6 +500,142 @@ internal static class DevelopmentSeedData
                 "Test transaction"
             );
 
+            // Outlook templates (ADR-0027): user-confirmed recurring patterns the forward-looking
+            // Projection runs on. Pinned to the Liquid checking/savings accounts and keyed on the
+            // same counterparty / counter-account as the postings above, so Occurrence matching
+            // recognizes the seeded actuals and excludes them from the Typical-spend band (rather
+            // than double-counting). ExpectedAmount is raw ledger-signed on the pinned leg: outflow
+            // negative, inflow positive. Anchors sit on a real past occurrence so cadence stepping
+            // lines up with the ledger. Groceries, dining and ad-hoc spend stay untemplated — they
+            // are exactly the everyday residual the Typical-spend band is meant to capture.
+            Template("Salary", checking, salary, employer, Cadence.Monthly, 25, 260_000);
+            Template(
+                "Internet & phone",
+                checking,
+                internetAndPhone,
+                telecom,
+                Cadence.Monthly,
+                3,
+                -4_500
+            );
+            Template("Energy", checking, energy, utilityCo, Cadence.Monthly, 4, -8_000);
+            Template(
+                "Health insurance",
+                checking,
+                healthInsurance,
+                healthInsurer,
+                Cadence.Monthly,
+                5,
+                -13_500
+            );
+            Template("Gym membership", checking, sports, gym, Cadence.Monthly, 8, -2_500);
+            Template(
+                "Subscriptions",
+                checking,
+                subscriptions,
+                streaming,
+                Cadence.Monthly,
+                13,
+                -2_580
+            );
+            Template(
+                "Investment contribution",
+                checking,
+                investments,
+                broker,
+                Cadence.Monthly,
+                26,
+                -25_000
+            );
+
+            // The standing checking → savings transfer: a recurring commitment with no P&L leg, so
+            // it is keyed on its counter liquid account. Mirrored on each side of the move.
+            Template("Transfer to savings", checking, savings, null, Cadence.Monthly, 28, -100_000);
+            Template(
+                "Transfer from checking",
+                savings,
+                checking,
+                null,
+                Cadence.Monthly,
+                28,
+                100_000
+            );
+
+            // Quarterly and annual commitments — these shape the year-end figure (the big summer
+            // holiday outflow, the spring tax refund inflow, the annual insurance and taxes).
+            Template(
+                "Water",
+                checking,
+                water,
+                waterCo,
+                Cadence.Quarterly,
+                m => m % 3 == 1,
+                20,
+                -3_000
+            );
+            Template(
+                "Car service",
+                checking,
+                car,
+                garage,
+                Cadence.Quarterly,
+                m => m % 3 == 2,
+                16,
+                -9_000
+            );
+            Template(
+                "Municipal taxes",
+                checking,
+                taxes,
+                taxOffice,
+                Cadence.Yearly,
+                m => m == 3,
+                9,
+                -45_000
+            );
+            Template(
+                "Home insurance",
+                checking,
+                housingInsurance,
+                housingInsurer,
+                Cadence.Yearly,
+                m => m == 1,
+                15,
+                -28_000
+            );
+            Template(
+                "Summer holiday",
+                checking,
+                holidays,
+                travelCo,
+                Cadence.Yearly,
+                m => m == 7,
+                5,
+                -180_000
+            );
+            Template(
+                "Tax refund",
+                checking,
+                taxReturn,
+                taxOffice,
+                Cadence.Yearly,
+                m => m == 5,
+                13,
+                60_000
+            );
+
+            // A planned one-off (Cadence.Once): a purchase scheduled for next month, with no
+            // matching posting yet — it shows purely as an upcoming expected item in the Outlook.
+            Template(
+                "New laptop",
+                checking,
+                shopping,
+                onlineStore,
+                Cadence.Once,
+                FirstOfMonth(_today).AddMonths(1).AddDays(11),
+                -150_000
+            );
+
             return new DevelopmentSeedGraph
             {
                 Accounts = _accounts,
@@ -464,6 +646,7 @@ internal static class DevelopmentSeedData
                 Loans = _loans,
                 LoanParts = _loanParts,
                 LoanPartRatePeriods = _loanPartRatePeriods,
+                JournalEntryTemplates = _journalEntryTemplates,
             };
         }
 
@@ -569,40 +752,158 @@ internal static class DevelopmentSeedData
         }
 
         // A loan payment in its loan-aware posted shape (ADR-0025): the single bank debit
-        // covering every part, with each counter-line attributed to its Loan Part. The bank-tx
-        // carries the lender's IBAN so re-categorizing it later resolves the hint again.
+        // covering every part, with each counter-line attributed to its Loan Part. When a
+        // construction-deposit offset is present (ADR-0026), a loan-level Income credit (no Loan
+        // Part attribution) nets the gross interest down to the single debit the bank collects.
+        // The bank-tx carries the lender's IBAN so re-categorizing it later resolves the hint again.
         private void LoanPayment(
             BankAccount bank,
             Account bankSide,
             Counterparty lender,
             string lenderIban,
             DateOnly date,
+            Account depositInterest,
+            long depositOffset,
             params LoanLineSpec[] parts
         )
         {
-            var total = parts.Sum(p => p.Amount);
-            var specs = new LineSpec[parts.Length + 1];
-            specs[0] = new LineSpec(bankSide.Id, -total, ReconciliationStatus.Cleared);
-            for (var i = 0; i < parts.Length; i++)
+            var gross = parts.Sum(p => p.Amount);
+            var net = gross - depositOffset;
+            var specs = new List<LineSpec>(parts.Length + 2)
             {
-                specs[i + 1] = new LineSpec(
-                    parts[i].Account,
-                    parts[i].Amount,
-                    ReconciliationStatus.Uncleared,
-                    parts[i].Part.Id
+                new(bankSide.Id, -net, ReconciliationStatus.Cleared),
+            };
+            foreach (var part in parts)
+                specs.Add(
+                    new LineSpec(
+                        part.Account,
+                        part.Amount,
+                        ReconciliationStatus.Uncleared,
+                        part.Part.Id
+                    )
                 );
-            }
+            if (depositOffset > 0)
+                specs.Add(
+                    new LineSpec(depositInterest.Id, -depositOffset, ReconciliationStatus.Uncleared)
+                );
 
-            var entry = AddEntry(date, "Mortgage payment", lender.Id, specs);
+            var entry = AddEntry(date, "Mortgage payment", lender.Id, [.. specs]);
             AddBankTransaction(
                 bank.Id,
                 date,
-                -total,
+                -net,
                 "Mortgage payment",
                 lender.Name,
                 entry.Id,
                 counterpartyAccountNumber: lenderIban
             );
+        }
+
+        // The deposit-interest offset for a month (ADR-0026): the deposit balance at month start
+        // times the monthly rate, capped at the entry's gross interest so the payment never flips
+        // sign. Mirrors LoanProjectionService so the seeded actuals match the live proposal.
+        private static long DepositOffset(
+            long depositBalance,
+            decimal annualRatePercent,
+            long grossInterest
+        )
+        {
+            if (depositBalance <= 0 || annualRatePercent <= 0m)
+                return 0;
+            var monthly = (long)
+                Math.Round(
+                    depositBalance * annualRatePercent / 100m / 12m,
+                    0,
+                    MidpointRounding.AwayFromZero
+                );
+            return Math.Min(Math.Max(0L, monthly), grossInterest);
+        }
+
+        // An Outlook recurring-item template (ADR-0027) pinned to a Liquid account, keyed on its
+        // counter account and (when known) its counterparty. ExpectedAmount is raw ledger-signed on
+        // the pinned leg. No SEPA ids are seeded, so matching falls to the counterparty / counter
+        // account — exactly the signals the seeded postings carry.
+        private JournalEntryTemplate Template(
+            string name,
+            Account account,
+            Account counter,
+            Counterparty? counterparty,
+            Cadence cadence,
+            DateOnly anchorDate,
+            long expectedAmount
+        )
+        {
+            var template = new JournalEntryTemplate
+            {
+                Id = new JournalEntryTemplateId(Guid.CreateVersion7()),
+                Name = name,
+                AccountId = account.Id,
+                CounterAccountId = counter.Id,
+                CounterpartyId = counterparty?.Id,
+                Cadence = cadence,
+                AnchorDate = anchorDate,
+                ExpectedAmount = expectedAmount,
+                CreatedAt = _structuralCreatedAt,
+                UpdatedAt = _structuralCreatedAt,
+            };
+            _journalEntryTemplates.Add(template);
+            return template;
+        }
+
+        // Monthly template anchored to the given day-of-month in the oldest seeded month, so the
+        // anchor coincides with the first posted occurrence.
+        private JournalEntryTemplate Template(
+            string name,
+            Account account,
+            Account counter,
+            Counterparty? counterparty,
+            Cadence cadence,
+            int day,
+            long expectedAmount
+        ) =>
+            Template(
+                name,
+                account,
+                counter,
+                counterparty,
+                cadence,
+                FirstOfMonth(_today).AddMonths(-11).AddDays(day - 1),
+                expectedAmount
+            );
+
+        // Quarterly / yearly template anchored to the first month in the trailing window whose
+        // calendar month matches the predicate, so cadence stepping lands on the same months as the
+        // seeded periodic postings (and matches them for Typical-spend exclusion).
+        private JournalEntryTemplate Template(
+            string name,
+            Account account,
+            Account counter,
+            Counterparty? counterparty,
+            Cadence cadence,
+            Func<int, bool> when,
+            int day,
+            long expectedAmount
+        ) =>
+            Template(
+                name,
+                account,
+                counter,
+                counterparty,
+                cadence,
+                FirstMatchingMonth(when, day),
+                expectedAmount
+            );
+
+        private DateOnly FirstMatchingMonth(Func<int, bool> when, int day)
+        {
+            for (var m = 11; m >= 0; m--)
+            {
+                var monthStart = FirstOfMonth(_today).AddMonths(-m);
+                if (when(monthStart.Month))
+                    return monthStart.AddDays(day - 1);
+            }
+
+            return FirstOfMonth(_today).AddMonths(-11).AddDays(day - 1);
         }
 
         private void Inbox(
