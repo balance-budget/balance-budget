@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 import { useLingui } from '@lingui/react/macro';
 import {
     Area,
@@ -17,6 +17,8 @@ import type { OutlookAccountProjection } from '../api/outlook';
 import { formatMonthAxisDate } from '../lib/dates';
 import { formatCalendarDate } from '../i18n/format';
 import { formatMoney, formatMoneyAxis } from '../lib/money';
+import { moneyAxis } from '../lib/chartAxis';
+import { AxisBreakMark } from '../components/AxisBreakMark';
 
 type ChartRow = {
     month: string;
@@ -74,7 +76,31 @@ export function OutlookProjectionChart({
         return result;
     }, [account]);
 
+    // Scale to the plotted lines only — actuals and the projected mid/scenario.
+    // The Typical-spend band is deliberately excluded: a wide uncertainty cone
+    // (e.g. a one-off purchase blowing out the low edge) would otherwise compress
+    // the whole chart into an unreadable strip. Instead we let the band run off the
+    // frame and fade out near the edges (see the band gradient below).
+    const axis = useMemo(
+        () =>
+            moneyAxis(
+                rows.flatMap(r =>
+                    [r.actual, r.mid, r.scenario].filter((v): v is number => v !== undefined),
+                ),
+            ),
+        [rows],
+    );
+
     const hasScenario = account.scenario !== null;
+    // Vertical fade for the band: a soft cue that the uncertainty cone runs off the
+    // frame rather than the balance flatlining at the axis edge. A vertical gradient
+    // only needs y-bounds, which we derive from the chart height and the fixed top
+    // margin / default X-axis band — no plot-width probing, so no friction with the
+    // ResponsiveContainer. The mid 88% stays full opacity, so a normal-width band is
+    // untouched; only a cone that reaches the top/bottom edge fades.
+    const bandGradientId = useId();
+    const plotTop = 10; // matches the chart's top margin
+    const plotBottom = height - 30; // height minus Recharts' default X-axis band
     // The December row's category key, so the year-end marker lands on the right tick (absent when
     // the horizon stops before December).
     const yearEndMonth = `${account.yearEnd.date.slice(0, 7)}-01`;
@@ -82,6 +108,33 @@ export function OutlookProjectionChart({
     return (
         <ResponsiveContainer width="100%" height={height}>
             <ComposedChart data={rows} margin={{ top: 10, right: 12, bottom: 0, left: 0 }}>
+                <defs>
+                    <linearGradient
+                        id={bandGradientId}
+                        gradientUnits="userSpaceOnUse"
+                        x1="0"
+                        y1={plotTop}
+                        x2="0"
+                        y2={plotBottom}
+                    >
+                        <stop offset="0%" stopColor="var(--color-brand-primary)" stopOpacity={0} />
+                        <stop
+                            offset="12%"
+                            stopColor="var(--color-brand-primary)"
+                            stopOpacity={0.12}
+                        />
+                        <stop
+                            offset="88%"
+                            stopColor="var(--color-brand-primary)"
+                            stopOpacity={0.12}
+                        />
+                        <stop
+                            offset="100%"
+                            stopColor="var(--color-brand-primary)"
+                            stopOpacity={0}
+                        />
+                    </linearGradient>
+                </defs>
                 <CartesianGrid
                     stroke="var(--color-border-soft)"
                     vertical={false}
@@ -96,7 +149,8 @@ export function OutlookProjectionChart({
                     minTickGap={16}
                 />
                 <YAxis
-                    domain={['auto', 'auto']}
+                    domain={axis?.domain ?? ['auto', 'auto']}
+                    ticks={axis?.ticks}
                     tickFormatter={(v: number) => formatMoneyAxis(v, account.currencyCode, catalog)}
                     tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
                     axisLine={false}
@@ -125,13 +179,14 @@ export function OutlookProjectionChart({
                     }
                     cursor={{ stroke: 'var(--color-border-strong)', strokeDasharray: '2 2' }}
                 />
+                {axis?.truncated && <AxisBreakMark />}
                 {/* The Typical-spend uncertainty band (projected months only). */}
                 <Area
                     type="monotone"
                     dataKey="band"
                     stroke="none"
-                    fill="var(--color-brand-primary)"
-                    fillOpacity={0.12}
+                    fill={`url(#${bandGradientId})`}
+                    fillOpacity={1}
                     isAnimationActive={false}
                     connectNulls
                 />
