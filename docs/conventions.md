@@ -150,7 +150,22 @@ Color encodes **AccountType**, not an ad-hoc per-chart palette. `ACCENT_BY_TYPE`
 
 The underlying CSS custom properties are named by **hue** (`--color-chart-amber`, `--color-chart-blue`, …), never by spending category — "category" is a term the domain deliberately avoids (see [Language and spelling](#language-and-spelling) and `CONTEXT.md`).
 
-Dates are formatted through the region-aware helpers in `lib/dates.ts` (built on the `i18n/format` layer, ADR-0022) — `formatTableDate` for list/detail rows and `formatMonthAxisDate` for every month-bucketed chart axis — never `toLocaleDateString` directly or a raw ISO string in the UI.
+## Date and number display
+
+Every user-facing date and number flows through `i18n/format` (dates via the helpers in `lib/dates.ts`; money via `lib/money.ts`) — never `toLocaleDateString`/`toLocaleString`, a raw `Intl.DateTimeFormat`/`Intl.NumberFormat`, or a bare ISO string in the UI. This is lint-enforced (`no-restricted-syntax`): `Intl` formatter construction and `toLocale*String` live only in `i18n/format.ts`. The `dateFormat` and `numberFormat` preferences are symmetric `locale | iso` toggles, both defaulting to ISO (ADR-0029): in **locale** mode the active `language` decides date order, month names, and number grouping/decimal; **iso** mode forces bare numeric dates `YYYY[-MM[-DD]]` (ignoring style/weekday) and ISO 80000 numbers `1 234.56` (U+202F group, dot decimal). Callers pass *intent* (a date granularity + a `short`/`long` style), never raw `Intl` option bags.
+
+Pick the flavor by surface — keep it consistent:
+
+| Surface | Flavor | Example (`en`, locale mode) |
+|---|---|---|
+| Body date — list rows, table cells, detail fields | `year-month-day`, short | `13 Jun 2026` |
+| Period / month heading (no day) | `year-month`, long | `June 2026` |
+| Schedule / amortization row | `year-month`, short | `Jun 2026` |
+| Chart axis tick | compact: month short, ±day, year on boundary | `Jun`, `13 Jun` |
+| Chart tooltip | `year-month-day` short **+ weekday** | `Tue, 13 Jun 2026` |
+| Audit instant (token, `CreatedAt`/`UpdatedAt`) | `year-month-day` short **+ time** | `13 Jun 2026, 14:30` |
+
+The single rule: **day present → short month (`Jun`); day absent (month+year) → long month (`June`)**. Long month *with* a day (`13 June 2026`) is never used. **Weekday** appears only in chart tooltips (where day-of-week is informative), never in tables or headings. In iso mode all of these collapse to numeric ISO.
 
 ## Background jobs
 
