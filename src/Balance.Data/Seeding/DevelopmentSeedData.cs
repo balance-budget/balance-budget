@@ -215,8 +215,10 @@ internal static class DevelopmentSeedData
             // a year back so every running balance starts from a realistic position. Entered by hand,
             // so both legs are Reconciled and there is no bank import.
             var openingDate = FirstOfMonth(_today).AddMonths(-12);
-            Opening(checking, 1_000_000, openingDate); // €10,000.00
-            Opening(savings, 2_500_000, openingDate); // €25,000.00
+            // Checking is kept deliberately lean — the buffer lives in Savings, which funds the
+            // occasional big outflow (the summer holiday, a planned purchase) via a top-up transfer.
+            Opening(checking, 200_000, openingDate); // €2,000.00
+            Opening(savings, 3_300_000, openingDate); // €33,000.00
             Opening(investments, 1_500_000, openingDate); // €15,000.00
             Opening(home, 38_000_000, openingDate); // €380,000.00
             Opening(mortgagePart1, -24_000_000, openingDate); // €240,000.00 outstanding
@@ -409,10 +411,10 @@ internal static class DevelopmentSeedData
                     d => Cash(checking, publicTransport, transitCo, -1_990, "Train ticket", d)
                 );
 
-                // Income, attached on import (debit-positive on the asset side). Sized to cover
-                // checking's committed outflows — mortgage, the savings transfer, investing and the
-                // recurring bills — so checking stays roughly stable while savings and investments
-                // grow, rather than draining month over month.
+                // Income, attached on import (debit-positive on the asset side). Sized to roughly
+                // cover checking's committed monthly outflows — mortgage, the savings sweep,
+                // investing and the recurring bills — so the lean checking balance holds steady
+                // month to month; the lumpy annual costs are funded from Savings instead.
                 OnDay(
                     monthStart,
                     25,
@@ -422,7 +424,7 @@ internal static class DevelopmentSeedData
                             checking,
                             salary,
                             employer,
-                            335_000,
+                            315_000,
                             "Monthly salary",
                             d,
                             reconciled
@@ -435,6 +437,25 @@ internal static class DevelopmentSeedData
                     28,
                     d => SelfTransfer(checkingBank, checking, savingsBank, savings, 100_000, d)
                 );
+
+                // Each July a top-up the other way — Savings → Checking — funds the summer holiday,
+                // so the lean checking balance does not crater the month the holiday lands.
+                if (monthStart.Month == 7)
+                    OnDay(
+                        monthStart,
+                        1,
+                        d =>
+                            SelfTransfer(
+                                savingsBank,
+                                savings,
+                                checkingBank,
+                                checking,
+                                180_000,
+                                d,
+                                "Transfer to checking",
+                                "Holiday fund"
+                            )
+                    );
 
                 // Quarterly savings interest — a cash posting on the savings side.
                 if (monthStart.Month % 3 == 0)
@@ -511,7 +532,7 @@ internal static class DevelopmentSeedData
             // negative, inflow positive. Anchors sit on a real past occurrence so cadence stepping
             // lines up with the ledger. Groceries, dining and ad-hoc spend stay untemplated — they
             // are exactly the everyday residual the Typical-spend band is meant to capture.
-            Template("Salary", checking, salary, employer, Cadence.Monthly, 25, 335_000);
+            Template("Salary", checking, salary, employer, Cadence.Monthly, 25, 315_000);
 
             // The mortgage payment is the single biggest recurring outflow — keyed on the lender
             // counterparty so it matches the loan-aware payments above (whose net drifts with the
@@ -630,6 +651,30 @@ internal static class DevelopmentSeedData
                 5,
                 -180_000
             );
+
+            // The Savings → Checking top-up that funds the holiday, mirrored on both accounts, so
+            // the projection shows checking topped up (and savings drawn down) the month it lands —
+            // not a lean checking account cratering every July.
+            Template(
+                "Holiday fund transfer",
+                checking,
+                savings,
+                null,
+                Cadence.Yearly,
+                m => m == 7,
+                1,
+                180_000
+            );
+            Template(
+                "Holiday fund transfer",
+                savings,
+                checking,
+                null,
+                Cadence.Yearly,
+                m => m == 7,
+                1,
+                -180_000
+            );
             Template(
                 "Tax refund",
                 checking,
@@ -643,13 +688,35 @@ internal static class DevelopmentSeedData
 
             // A planned one-off (Cadence.Once): a purchase scheduled for next month, with no
             // matching posting yet — it shows purely as an upcoming expected item in the Outlook.
+            var laptopDate = FirstOfMonth(_today).AddMonths(1).AddDays(11);
             Template(
                 "New laptop",
                 checking,
                 shopping,
                 onlineStore,
                 Cadence.Once,
-                FirstOfMonth(_today).AddMonths(1).AddDays(11),
+                laptopDate,
+                -150_000
+            );
+
+            // …funded by a one-off Savings → Checking top-up the same month, mirrored on both
+            // accounts so neither side dips when the planned purchase lands.
+            Template(
+                "Laptop fund transfer",
+                checking,
+                savings,
+                null,
+                Cadence.Once,
+                laptopDate,
+                150_000
+            );
+            Template(
+                "Laptop fund transfer",
+                savings,
+                checking,
+                null,
+                Cadence.Once,
+                laptopDate,
                 -150_000
             );
 
@@ -734,18 +801,22 @@ internal static class DevelopmentSeedData
             );
 
         // A self-transfer between two own accounts, with both statement rows imported and attached.
+        // Descriptions default to the monthly savings sweep; a top-up the other way (Savings →
+        // Checking, to fund a big outflow) passes its own labels.
         private void SelfTransfer(
             BankAccount fromBank,
             Account from,
             BankAccount toBank,
             Account to,
             long amount,
-            DateOnly date
+            DateOnly date,
+            string fromDescription = "Transfer to savings",
+            string toDescription = "Transfer from checking"
         )
         {
             var entry = AddEntry(
                 date,
-                "Transfer to savings",
+                fromDescription,
                 counterpartyId: null,
                 new LineSpec(from.Id, -amount, ReconciliationStatus.Cleared),
                 new LineSpec(to.Id, amount, ReconciliationStatus.Cleared)
@@ -754,7 +825,7 @@ internal static class DevelopmentSeedData
                 fromBank.Id,
                 date,
                 -amount,
-                "Transfer to savings",
+                fromDescription,
                 counterpartyName: null,
                 entry.Id
             );
@@ -762,7 +833,7 @@ internal static class DevelopmentSeedData
                 toBank.Id,
                 date,
                 amount,
-                "Transfer from checking",
+                toDescription,
                 counterpartyName: null,
                 entry.Id
             );
