@@ -1,11 +1,10 @@
 using System.Net;
 using Balance.Tests.Api.Helpers;
-using TUnit.AspNetCore;
 
 namespace Balance.Tests.Api;
 
 internal sealed class HealthCheckBrokenReadinessTests
-    : WebApplicationTest<BrokenReadinessWebApplicationFactory, Program>
+    : IsolatedDatabaseTest<BrokenReadinessWebApplicationFactory>
 {
     [Test]
     public async Task Liveness_probe_stays_200_even_when_readiness_checks_fail()
