@@ -641,6 +641,11 @@ function PartStat({ label, value }: { label: string; value: React.ReactNode }) {
 
 // ---- simulator --------------------------------------------------------------------------------
 
+/** A nullable payoff date as a region-aware calendar date, or an em dash when open-ended. */
+function formatEndDate(date: string | null): string {
+    return date ? formatTableDate(date) : '—';
+}
+
 function Simulator({
     loan,
     simulator,
@@ -801,8 +806,8 @@ function Simulator({
                         label={t`End date`}
                         value={
                             totals.scenarioEndDate === totals.baselineEndDate
-                                ? (totals.baselineEndDate ?? '—')
-                                : `${totals.baselineEndDate ?? '—'} → ${totals.scenarioEndDate ?? '—'}`
+                                ? formatEndDate(totals.baselineEndDate)
+                                : `${formatEndDate(totals.baselineEndDate)} → ${formatEndDate(totals.scenarioEndDate)}`
                         }
                     />
                 </div>

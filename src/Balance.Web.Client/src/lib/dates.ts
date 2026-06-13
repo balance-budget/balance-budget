@@ -82,8 +82,11 @@ export function formatTableDate(date: string): string {
     return formatDate(date, { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-/** A month-and-year label for schedule/amortization rows, e.g. "Jan 2026",
- *  region-aware. Takes any `YYYY-MM…` period string. */
+/** A month-and-year label for schedule/amortization rows, e.g. "2026-01" (ISO),
+ *  "01/2026" (day-first / month-first). Numeric on purpose: a *named* month
+ *  ("Jan") renders identically across the en-CA/en-GB/en-US locales we map the
+ *  date preference to, so it would silently ignore that preference — only the
+ *  numeric form actually follows it. Takes any `YYYY-MM…` period string. */
 export function formatScheduleMonth(period: string): string {
-    return formatDate(`${period.slice(0, 7)}-01`, { month: 'short', year: 'numeric' });
+    return formatDate(`${period.slice(0, 7)}-01`, { year: 'numeric', month: '2-digit' });
 }
