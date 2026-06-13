@@ -14,7 +14,7 @@ import { messages as enMessages } from '../locales/en/messages.po';
 import { messages as nlMessages } from '../locales/nl-NL/messages.po';
 import { messages as zhTwMessages } from '../locales/zh-TW/messages.po';
 
-export const SUPPORTED_LANGUAGES = ['en', 'nl-NL', 'zh-TW'] as const;
+export const SUPPORTED_LANGUAGES = ['en', 'en-GB', 'nl-NL', 'zh-TW'] as const;
 export type Language = (typeof SUPPORTED_LANGUAGES)[number];
 export const DEFAULT_LANGUAGE: Language = 'en';
 
@@ -22,12 +22,18 @@ export const DEFAULT_LANGUAGE: Language = 'en';
 // own. Keep in sync with SUPPORTED_LANGUAGES.
 export const LANGUAGE_NAMES: Record<Language, string> = {
     en: 'English',
+    'en-GB': 'English (UK)',
     'nl-NL': 'Nederlands',
     'zh-TW': '繁體中文',
 };
 
+// `en-GB` is a formatting variant, not a separate translation (ADR-0029): it
+// reuses the `en` catalog so British readers get English copy with day-first
+// dates. It is intentionally absent from lingui.config.ts — there is no `en-GB`
+// PO file to extract or translate.
 const CATALOGS: Record<Language, typeof enMessages> = {
     en: enMessages,
+    'en-GB': enMessages,
     'nl-NL': nlMessages,
     'zh-TW': zhTwMessages,
 };

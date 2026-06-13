@@ -22,7 +22,7 @@ import {
     type Language,
 } from './i18n';
 import { backingTag, DEFAULT_REGION, resolveRegion, type RegionSettings } from './region';
-import { setActiveRegion } from './format';
+import { setActiveLanguage, setActiveRegion } from './format';
 
 type LocaleContextValue = {
     language: Language;
@@ -46,9 +46,10 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
         : DEFAULT_LANGUAGE;
     const region = resolveRegion(user?.dateFormat, user?.numberFormat);
 
-    // Sync the singleton + Lingui catalog before children render so the pure
+    // Sync the singletons + Lingui catalog before children render so the pure
     // formatters in lib/ read fresh values on this pass.
     setActiveRegion(region);
+    setActiveLanguage(language);
     if (i18n.locale !== language) {
         activateLanguage(language);
     }
@@ -60,7 +61,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 
     return (
         <LocaleContext value={{ language, region }}>
-            <AriaI18nProvider locale={backingTag(region)}>
+            <AriaI18nProvider locale={backingTag(language, region)}>
                 <LinguiProvider i18n={i18n}>
                     <div key={localeKey} className="contents">
                         {children}
