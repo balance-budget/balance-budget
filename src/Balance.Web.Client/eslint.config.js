@@ -30,6 +30,24 @@ export default defineConfig([
             '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
             // ${response.status}, ${count}, etc. read fine.
             '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
+            // Every user-facing date/number must flow through src/i18n/format.ts so
+            // it honors the per-user date/number preference (ADR-0029). Constructing
+            // Intl formatters or calling toLocale*String anywhere else silently
+            // bypasses that preference. format.ts and tests are exempt below.
+            'no-restricted-syntax': [
+                'error',
+                {
+                    selector:
+                        "NewExpression[callee.object.name='Intl'][callee.property.name=/^(DateTimeFormat|NumberFormat)$/]",
+                    message:
+                        'Construct Intl formatters only in src/i18n/format.ts. Use formatCalendarDate / formatInstant / formatNumber so the user date/number preference is honored (ADR-0029).',
+                },
+                {
+                    selector: "CallExpression[callee.property.name=/^toLocale(Date|Time)?String$/]",
+                    message:
+                        'Do not use toLocale*String — it bypasses the user date/number preference (ADR-0029). Use the helpers in src/i18n/format.ts.',
+                },
+            ],
             // No untranslated UI strings (ADR-0022). Enforced as an error: every
             // user-facing string must go through Lingui. The options below skip
             // things that are provably not prose.
@@ -172,6 +190,15 @@ export default defineConfig([
         ],
         rules: {
             'lingui/no-unlocalized-strings': 'off',
+        },
+    },
+    // The one module allowed to construct Intl formatters / call toLocale* — it
+    // IS the formatting layer (ADR-0029). Tests may also format directly to build
+    // expected values.
+    {
+        files: ['src/i18n/format.ts', '**/*.test.{ts,tsx}'],
+        rules: {
+            'no-restricted-syntax': 'off',
         },
     },
 ]);
