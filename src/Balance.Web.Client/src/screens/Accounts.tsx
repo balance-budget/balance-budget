@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Trans, useLingui } from '@lingui/react/macro';
+import { msg } from '@lingui/core/macro';
+import type { MessageDescriptor } from '@lingui/core';
 import { accountIdentifier, useAccounts, useDeleteAccount, type Account } from '../api/accounts';
 import { AccountAvatar } from '../components/AccountAvatar';
 import { Amount } from '../components/Amount';
@@ -16,20 +18,13 @@ import { AccountFormModal } from './AccountForm';
 
 const TYPE_ORDER: AccountType[] = ['Asset', 'Liability', 'Equity', 'Income', 'Expense'];
 
-function typeLabel(type: AccountType, t: ReturnType<typeof useLingui>['t']): string {
-    switch (type) {
-        case 'Asset':
-            return t`Assets`;
-        case 'Liability':
-            return t`Liabilities`;
-        case 'Equity':
-            return t`Equity`;
-        case 'Income':
-            return t`Income`;
-        case 'Expense':
-            return t`Expenses`;
-    }
-}
+const TYPE_LABELS: Record<AccountType, MessageDescriptor> = {
+    Asset: msg`Assets`,
+    Liability: msg`Liabilities`,
+    Equity: msg`Equity`,
+    Income: msg`Income`,
+    Expense: msg`Expenses`,
+};
 
 export function Accounts() {
     const { t } = useLingui();
@@ -94,7 +89,7 @@ function AccountList({
     onEdit: (a: Account) => void;
     onDelete: (a: Account) => void;
 }) {
-    const { t } = useLingui();
+    const { i18n, t } = useLingui();
     const query = useAccounts();
 
     if (query.isPending) {
@@ -137,7 +132,7 @@ function AccountList({
                 return (
                     <div key={type} className="flex flex-col">
                         <h3 className="text-xs font-medium text-fg-3 tracking-widest uppercase pb-1 mb-1 border-b border-border-soft">
-                            {typeLabel(type, t)}
+                            {i18n._(TYPE_LABELS[type])}
                         </h3>
                         {roots.map(a => (
                             <AccountTreeRows

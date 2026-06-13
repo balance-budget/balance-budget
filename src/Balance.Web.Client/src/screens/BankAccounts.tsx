@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { t } from '@lingui/core/macro';
+import { msg, t } from '@lingui/core/macro';
+import type { MessageDescriptor } from '@lingui/core';
 import {
     BANK_ACCOUNT_OWNER_FILTERS,
     bankAccountTypeIcon,
@@ -32,9 +33,10 @@ import { BankAccountFormModal } from './BankAccountForm';
 
 const PAGE_SIZE = 50;
 
-function ownerFilterLabel(o: BankAccountOwnerFilter, t: ReturnType<typeof useLingui>['t']): string {
-    return o === 'Mine' ? t`Mine` : t`Others`;
-}
+const OWNER_FILTER_LABELS: Record<BankAccountOwnerFilter, MessageDescriptor> = {
+    Mine: msg`Mine`,
+    Others: msg`Others`,
+};
 
 type Props = {
     owner: BankAccountOwnerFilter;
@@ -105,7 +107,7 @@ function OwnerFilterChips({
     value: BankAccountOwnerFilter;
     onChange: (owner: BankAccountOwnerFilter) => void;
 }) {
-    const { t } = useLingui();
+    const { i18n, t } = useLingui();
     return (
         <div className="flex items-center gap-2 mb-4" role="tablist" aria-label={t`Owner filter`}>
             {BANK_ACCOUNT_OWNER_FILTERS.map(o => {
@@ -126,7 +128,7 @@ function OwnerFilterChips({
                                 : 'text-fg-2 hover:bg-surface-2 hover:text-fg-1',
                         )}
                     >
-                        {ownerFilterLabel(o, t)}
+                        {i18n._(OWNER_FILTER_LABELS[o])}
                     </button>
                 );
             })}
