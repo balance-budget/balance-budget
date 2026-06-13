@@ -1016,6 +1016,9 @@ msgstr "請輸入借方或貸方。"
 msgid "Enter your email and password to continue."
 msgstr "請輸入你的電子郵件與密碼以繼續。"
 
+msgid "Equity"
+msgstr "權益"
+
 msgid "Estimated"
 msgstr "估計"
 
@@ -1379,6 +1382,9 @@ msgstr "已比對"
 msgid "Matches journal entry · {0}"
 msgstr "符合日記帳分錄 · {0}"
 
+msgid "Mine"
+msgstr "我的"
+
 msgid "Minimum 12 characters."
 msgstr "至少 12 個字元。"
 
@@ -1613,6 +1619,9 @@ msgstr "選填"
 
 msgid "or scroll down to create a new journal entry."
 msgstr "或向下捲動以建立新的日記帳分錄。"
+
+msgid "Others"
+msgstr "其他"
 
 msgid "Outlook"
 msgstr "展望"

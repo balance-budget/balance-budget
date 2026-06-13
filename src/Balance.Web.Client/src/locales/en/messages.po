@@ -1026,6 +1026,9 @@ msgstr "Enter Debit or Credit."
 msgid "Enter your email and password to continue."
 msgstr "Enter your email and password to continue."
 
+msgid "Equity"
+msgstr "Equity"
+
 msgid "Estimated"
 msgstr "Estimated"
 
@@ -1392,6 +1395,9 @@ msgstr "Matched"
 msgid "Matches journal entry · {0}"
 msgstr "Matches journal entry · {0}"
 
+msgid "Mine"
+msgstr "Mine"
+
 msgid "Minimum 12 characters."
 msgstr "Minimum 12 characters."
 
@@ -1631,6 +1637,9 @@ msgstr "Optional"
 
 msgid "or scroll down to create a new journal entry."
 msgstr "or scroll down to create a new journal entry."
+
+msgid "Others"
+msgstr "Others"
 
 msgid "Outlook"
 msgstr "Outlook"

@@ -1032,6 +1032,9 @@ msgstr "Voer debet of credit in."
 msgid "Enter your email and password to continue."
 msgstr "Voer je e-mail en wachtwoord in om door te gaan."
 
+msgid "Equity"
+msgstr "Eigen vermogen"
+
 msgid "Estimated"
 msgstr "Geschat"
 
@@ -1400,6 +1403,9 @@ msgstr "Gematcht"
 msgid "Matches journal entry · {0}"
 msgstr "Komt overeen met journaalpost · {0}"
 
+msgid "Mine"
+msgstr "Van mij"
+
 msgid "Minimum 12 characters."
 msgstr "Minimaal 12 tekens."
 
@@ -1641,6 +1647,9 @@ msgstr "Optioneel"
 
 msgid "or scroll down to create a new journal entry."
 msgstr "of scroll omlaag om een nieuwe journaalpost aan te maken."
+
+msgid "Others"
+msgstr "Anderen"
 
 msgid "Outlook"
 msgstr "Vooruitblik"
