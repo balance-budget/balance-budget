@@ -409,7 +409,10 @@ internal static class DevelopmentSeedData
                     d => Cash(checking, publicTransport, transitCo, -1_990, "Train ticket", d)
                 );
 
-                // Income, attached on import (debit-positive on the asset side).
+                // Income, attached on import (debit-positive on the asset side). Sized to cover
+                // checking's committed outflows — mortgage, the savings transfer, investing and the
+                // recurring bills — so checking stays roughly stable while savings and investments
+                // grow, rather than draining month over month.
                 OnDay(
                     monthStart,
                     25,
@@ -419,7 +422,7 @@ internal static class DevelopmentSeedData
                             checking,
                             salary,
                             employer,
-                            260_000,
+                            335_000,
                             "Monthly salary",
                             d,
                             reconciled
@@ -508,7 +511,21 @@ internal static class DevelopmentSeedData
             // negative, inflow positive. Anchors sit on a real past occurrence so cadence stepping
             // lines up with the ledger. Groceries, dining and ad-hoc spend stay untemplated — they
             // are exactly the everyday residual the Typical-spend band is meant to capture.
-            Template("Salary", checking, salary, employer, Cadence.Monthly, 25, 260_000);
+            Template("Salary", checking, salary, employer, Cadence.Monthly, 25, 335_000);
+
+            // The mortgage payment is the single biggest recurring outflow — keyed on the lender
+            // counterparty so it matches the loan-aware payments above (whose net drifts with the
+            // deposit offset, comfortably inside the amount band) and lands in the expected
+            // recurring line instead of polluting the everyday Typical-spend band.
+            Template(
+                "Mortgage payment",
+                checking,
+                mortgageInterest,
+                lender,
+                Cadence.Monthly,
+                1,
+                -124_000
+            );
             Template(
                 "Internet & phone",
                 checking,
