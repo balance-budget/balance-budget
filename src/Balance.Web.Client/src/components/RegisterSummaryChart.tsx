@@ -17,6 +17,7 @@ import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import { useRegisterSummary, type RegisterSummary } from '../api/register';
 import { formatBucketAxisDate, formatBucketTooltipDate } from '../lib/dates';
 import { formatMoney, formatMoneyAxis } from '../lib/money';
+import { moneyAxis } from '../lib/chartAxis';
 import {
     effectiveSummaryRange,
     summaryBucketFor,
@@ -69,6 +70,23 @@ export function RegisterSummaryChart({
     const bucket = summaryBucketFor(range);
     const query = useRegisterSummary(account.id, range, bucket);
     const rows = useMemo(() => (query.data ? buildRows(query.data) : []), [query.data]);
+    // Sign-stacked: positive segments stack up from zero, negatives down. Scale
+    // to each bucket's positive and negative totals; zero-based, so the only
+    // effect is a little headroom above and below the tallest bars.
+    const axis = useMemo(() => {
+        const bounds: number[] = [];
+        for (const row of rows) {
+            let positive = 0;
+            let negative = 0;
+            for (const [key, value] of Object.entries(row)) {
+                if (key === 'start' || typeof value !== 'number') continue;
+                if (value > 0) positive += value;
+                else negative += value;
+            }
+            bounds.push(positive, negative);
+        }
+        return moneyAxis(bounds, { includeZero: true });
+    }, [rows]);
 
     if (query.isPending) {
         return <Skeleton className="w-full h-[240px]" />;
@@ -118,7 +136,8 @@ export function RegisterSummaryChart({
                     tickLine={false}
                 />
                 <YAxis
-                    domain={['auto', 'auto']}
+                    domain={axis?.domain ?? ['auto', 'auto']}
+                    ticks={axis?.ticks}
                     tickFormatter={(v: number) => formatMoneyAxis(v, summary.currencyCode, catalog)}
                     tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
                     axisLine={false}

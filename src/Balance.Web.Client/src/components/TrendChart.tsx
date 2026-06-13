@@ -15,6 +15,8 @@ import type { TrendRange } from '../api/dashboard';
 import { formatTrendAxisDate, formatTrendTooltipDate } from '../lib/dates';
 import { asAccountId, type AccountId, type AccountTrend } from '../lib/domain';
 import { formatMoney, formatMoneyAxis } from '../lib/money';
+import { moneyAxis } from '../lib/chartAxis';
+import { AxisBreakMark } from './AxisBreakMark';
 
 type TrendChartProps = {
     series: AccountTrend[];
@@ -82,6 +84,17 @@ export function TrendChart({
     const rows = useMemo(() => buildRows(series), [series]);
     const ticks = useMemo(() => computeTicks(rows, range), [rows, range]);
     const seriesByKey = useMemo(() => new Map(series.map(s => [s.accountId, s])), [series]);
+    // Scale to the visible series only, so toggling a line off via the legend
+    // rescales the axis the way recharts' auto-domain used to.
+    const axis = useMemo(
+        () =>
+            moneyAxis(
+                series
+                    .filter(s => !hiddenAccountIds.has(s.accountId))
+                    .flatMap(s => s.points.map(p => p.balanceMinor)),
+            ),
+        [series, hiddenAccountIds],
+    );
 
     return (
         <ResponsiveContainer width="100%" height={height}>
@@ -101,7 +114,8 @@ export function TrendChart({
                     tickLine={false}
                 />
                 <YAxis
-                    domain={['auto', 'auto']}
+                    domain={axis?.domain ?? ['auto', 'auto']}
+                    ticks={axis?.ticks}
                     tickFormatter={(v: number) => formatMoneyAxis(v, currencyCode, catalog)}
                     tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
                     axisLine={false}
@@ -145,6 +159,7 @@ export function TrendChart({
                         );
                     }}
                 />
+                {axis?.truncated && <AxisBreakMark />}
                 {series.map(s => (
                     <Line
                         key={s.accountId}
