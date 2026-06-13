@@ -13,7 +13,7 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#. placeholder {0}: formatInstant(token.expiresAt, TOKEN_DATE)
+#. placeholder {0}: formatInstant(token.expiresAt)
 msgid " · expires {0}"
 msgstr " · {0}到期"
 
@@ -22,7 +22,7 @@ msgstr " · {0}到期"
 msgid " · fixed until {0}"
 msgstr " · 固定至 {0}"
 
-#. placeholder {0}: formatInstant(token.lastUsedAt, TOKEN_DATE)
+#. placeholder {0}: formatInstant(token.lastUsedAt)
 msgid " · last used {0}"
 msgstr " · 上次使用 {0}"
 
@@ -700,7 +700,7 @@ msgstr "建立權杖"
 msgid "Create user"
 msgstr "建立使用者"
 
-#. placeholder {0}: formatInstant(token.createdAt, TOKEN_DATE)
+#. placeholder {0}: formatInstant(token.createdAt)
 msgid "Created {0}"
 msgstr "建立於 {0}"
 
@@ -734,8 +734,8 @@ msgstr "日期範圍"
 msgid "Date window (±days)"
 msgstr "日期區間（±天）"
 
-msgid "Day · Month · Year"
-msgstr "日 · 月 · 年"
+#~ msgid "Day · Month · Year"
+#~ msgstr "日 · 月 · 年"
 
 msgid "Debit"
 msgstr "借方"
@@ -1234,6 +1234,9 @@ msgstr "僅付利息"
 msgid "invalid"
 msgstr "無效"
 
+msgid "ISO"
+msgstr "ISO"
+
 msgid "ISO 8601"
 msgstr "ISO 8601"
 
@@ -1375,6 +1378,9 @@ msgstr "授權 ID"
 msgid "Mark this row as not needing a journal entry. You can undismiss later."
 msgstr "將此列標記為不需要日記帳分錄。你之後可以取消忽略。"
 
+msgid "Match language"
+msgstr "依語言"
+
 msgid "Matched"
 msgstr "已比對"
 
@@ -1406,8 +1412,8 @@ msgstr "資金從一個或多個來源移動至一個或多個目的地。"
 msgid "Money out"
 msgstr "流出"
 
-msgid "Month · Day · Year"
-msgstr "月 · 日 · 年"
+#~ msgid "Month · Day · Year"
+#~ msgstr "月 · 日 · 年"
 
 msgid "Monthly payment"
 msgstr "每月付款"

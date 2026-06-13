@@ -14,7 +14,7 @@ import { t } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 import type { LoanProjection } from '../api/loans';
 import { useCurrencyCatalog } from '../api/currencies';
-import { formatDate } from '../i18n/format';
+import { formatCalendarDate } from '../i18n/format';
 import { cx } from '../lib/cx';
 import { formatMoney, formatMoneyAxis } from '../lib/money';
 import { chartColorFor } from '../lib/visualHints';
@@ -119,9 +119,8 @@ export function LoanChart({ projection, height = 280 }: LoanChartProps) {
                             color: 'var(--color-fg-1)',
                         }}
                         labelFormatter={label =>
-                            formatDate(`${String(label).slice(0, 7)}-01`, {
-                                month: 'long',
-                                year: 'numeric',
+                            formatCalendarDate(String(label).slice(0, 7), 'year-month', {
+                                style: 'long',
                             })
                         }
                         formatter={(value, name) => [

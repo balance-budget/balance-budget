@@ -13,31 +13,14 @@ import {
     isSupportedLanguage,
     type Language,
 } from '../i18n/i18n';
+import { previewDate, previewNumber } from '../i18n/format';
 import {
     DATE_FORMATS,
     NUMBER_FORMATS,
-    dateLocale,
-    numberLocale,
     resolveRegion,
     type DateFormatPref,
     type NumberFormatPref,
 } from '../i18n/region';
-
-// A fixed sample so each option previews exactly what it produces.
-const SAMPLE_DATE = new Date(2026, 2, 9); // 9 March 2026
-const SAMPLE_NUMBER = 1234567.89;
-
-function dateSample(pref: DateFormatPref): string {
-    return new Intl.DateTimeFormat(dateLocale(pref), {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-    }).format(SAMPLE_DATE);
-}
-
-function numberSample(pref: NumberFormatPref): string {
-    return new Intl.NumberFormat(numberLocale(pref)).format(SAMPLE_NUMBER);
-}
 
 export function Preferences() {
     const { t } = useLingui();
@@ -59,9 +42,12 @@ export function Preferences() {
         numberFormat !== current.numberFormat;
 
     const dateLabel: Record<DateFormatPref, string> = {
+        locale: t`Match language`,
         iso: t`ISO 8601`,
-        dmy: t`Day · Month · Year`,
-        mdy: t`Month · Day · Year`,
+    };
+    const numberLabel: Record<NumberFormatPref, string> = {
+        locale: t`Match language`,
+        iso: t`ISO`,
     };
 
     async function persist() {
@@ -116,7 +102,7 @@ export function Preferences() {
                 >
                     {DATE_FORMATS.map(pref => (
                         <SelectItem key={pref} id={pref}>
-                            {dateLabel[pref]} · {dateSample(pref)}
+                            {dateLabel[pref]} · {previewDate(language, pref)}
                         </SelectItem>
                     ))}
                 </Select>
@@ -130,7 +116,7 @@ export function Preferences() {
                 >
                     {NUMBER_FORMATS.map(pref => (
                         <SelectItem key={pref} id={pref}>
-                            {numberSample(pref)}
+                            {numberLabel[pref]} · {previewNumber(language, pref)}
                         </SelectItem>
                     ))}
                 </Select>

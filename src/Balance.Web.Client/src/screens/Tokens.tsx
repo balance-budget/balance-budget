@@ -16,10 +16,6 @@ import { formatInstant } from '../i18n/format';
 import { ApiError } from '../lib/http';
 import { Trans, useLingui } from '@lingui/react/macro';
 
-// Token timestamps are instants — formatted in the browser's local timezone,
-// field order following the date preference (ADR-0022).
-const TOKEN_DATE: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
-
 export function Tokens() {
     const { t } = useLingui();
     const tokensQuery = useTokens();
@@ -164,14 +160,14 @@ function TokenRow({ token, onRevoke }: { token: Token; onRevoke: () => void }) {
                     {token.prefix}…{token.last4}
                 </div>
                 <div className="text-xs text-fg-3">
-                    <Trans>Created {formatInstant(token.createdAt, TOKEN_DATE)}</Trans>
+                    <Trans>Created {formatInstant(token.createdAt)}</Trans>
                     {token.lastUsedAt ? (
-                        <Trans> · last used {formatInstant(token.lastUsedAt, TOKEN_DATE)}</Trans>
+                        <Trans> · last used {formatInstant(token.lastUsedAt)}</Trans>
                     ) : (
                         <Trans> · never used</Trans>
                     )}
                     {token.expiresAt ? (
-                        <Trans> · expires {formatInstant(token.expiresAt, TOKEN_DATE)}</Trans>
+                        <Trans> · expires {formatInstant(token.expiresAt)}</Trans>
                     ) : null}
                 </div>
             </div>

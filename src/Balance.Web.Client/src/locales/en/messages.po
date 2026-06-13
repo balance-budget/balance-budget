@@ -13,7 +13,7 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#. placeholder {0}: formatInstant(token.expiresAt, TOKEN_DATE)
+#. placeholder {0}: formatInstant(token.expiresAt)
 msgid " · expires {0}"
 msgstr " · expires {0}"
 
@@ -22,7 +22,7 @@ msgstr " · expires {0}"
 msgid " · fixed until {0}"
 msgstr " · fixed until {0}"
 
-#. placeholder {0}: formatInstant(token.lastUsedAt, TOKEN_DATE)
+#. placeholder {0}: formatInstant(token.lastUsedAt)
 msgid " · last used {0}"
 msgstr " · last used {0}"
 
@@ -707,7 +707,7 @@ msgstr "Create token"
 msgid "Create user"
 msgstr "Create user"
 
-#. placeholder {0}: formatInstant(token.createdAt, TOKEN_DATE)
+#. placeholder {0}: formatInstant(token.createdAt)
 msgid "Created {0}"
 msgstr "Created {0}"
 
@@ -741,8 +741,8 @@ msgstr "Date range"
 msgid "Date window (±days)"
 msgstr "Date window (±days)"
 
-msgid "Day · Month · Year"
-msgstr "Day · Month · Year"
+#~ msgid "Day · Month · Year"
+#~ msgstr "Day · Month · Year"
 
 msgid "Debit"
 msgstr "Debit"
@@ -1246,6 +1246,9 @@ msgstr "Interest-only"
 msgid "invalid"
 msgstr "invalid"
 
+msgid "ISO"
+msgstr "ISO"
+
 msgid "ISO 8601"
 msgstr "ISO 8601"
 
@@ -1388,6 +1391,9 @@ msgstr "Mandate ID"
 msgid "Mark this row as not needing a journal entry. You can undismiss later."
 msgstr "Mark this row as not needing a journal entry. You can undismiss later."
 
+msgid "Match language"
+msgstr "Match language"
+
 msgid "Matched"
 msgstr "Matched"
 
@@ -1419,8 +1425,8 @@ msgstr "Money moved from one or more sources to one or more destinations."
 msgid "Money out"
 msgstr "Money out"
 
-msgid "Month · Day · Year"
-msgstr "Month · Day · Year"
+#~ msgid "Month · Day · Year"
+#~ msgstr "Month · Day · Year"
 
 msgid "Monthly payment"
 msgstr "Monthly payment"
