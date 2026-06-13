@@ -164,15 +164,13 @@ msgstr "── 無（自我轉帳）"
 msgid "31 Dec {year}"
 msgstr "{year} 年 12 月 31 日"
 
-msgid "A construction deposit needs an asset account, an income account, and a "
-"rate - set all three or none."
+msgid "A construction deposit needs an asset account, an income account, and a rate - set all three or none."
 msgstr "建築存款需要資產帳戶、收入帳戶和利率 - 三者全設或全不設。"
 
 msgid "A fresh part account needs a name and a code."
 msgstr "新的部分帳戶需要名稱與代碼。"
 
-msgid "A future effective date records an accepted renewal offer. Existing "
-"rates can be edited or removed from the part's rate history."
+msgid "A future effective date records an accepted renewal offer. Existing rates can be edited or removed from the part's rate history."
 msgstr "未來的生效日期會記錄已接受的續約方案。現有利率可在該部分的利率歷史中編輯或移除。"
 
 msgid "A loan must keep at least one part"
@@ -238,8 +236,7 @@ msgstr "實際"
 msgid "Add"
 msgstr "新增"
 
-msgid "Add a liquid account and a few recurring items to see where your balance "
-"is heading."
+msgid "Add a liquid account and a few recurring items to see where your balance is heading."
 msgstr "新增一個流動帳戶和幾個定期項目，即可看出餘額的走向。"
 
 msgid "Add at least one line."
@@ -434,8 +431,7 @@ msgstr "銀行名稱"
 msgid "Bank rows that have been categorized into a journal entry."
 msgstr "已分類為日記帳分錄的銀行列。"
 
-msgid "Bank rows waiting for a journal entry. Pick Counterparty and Account "
-"inline; Save all when you’re happy."
+msgid "Bank rows waiting for a journal entry. Pick Counterparty and Account inline; Save all when you’re happy."
 msgstr "等待建立日記帳分錄的銀行列。直接挑選交易對象與帳戶；滿意後即可全部儲存。"
 
 msgid "Bank rows you marked as not needing a journal entry."
@@ -510,8 +506,7 @@ msgstr "清除選取"
 msgid "Cleared"
 msgstr "已結清"
 
-msgid "Cleared and Reconciled lines are frozen - only their description can be "
-"edited."
+msgid "Cleared and Reconciled lines are frozen - only their description can be edited."
 msgstr "已結清與已對帳的列已凍結 - 僅可編輯其說明。"
 
 msgid "Cleared and reconciled lines can’t be moved."
@@ -659,8 +654,7 @@ msgstr "交易對象"
 msgid "Counterparty '{0}' created."
 msgstr "已建立交易對象「{0}」。"
 
-msgid "Counterparty bank accounts appear as you categorize imported "
-"transactions."
+msgid "Counterparty bank accounts appear as you categorize imported transactions."
 msgstr "當你分類匯入的交易時，交易對象的銀行帳戶會出現。"
 
 msgid "Counterparty…"
@@ -690,8 +684,7 @@ msgstr "建立貸款"
 msgid "Create one manually or import a bank statement."
 msgstr "手動建立或匯入銀行對帳單。"
 
-msgid "Create the first account. This wizard becomes unavailable once a user "
-"exists."
+msgid "Create the first account. This wizard becomes unavailable once a user exists."
 msgstr "建立第一個帳號。一旦有使用者存在，此精靈將無法使用。"
 
 msgid "Create token"
@@ -752,8 +745,7 @@ msgstr "{accountType} 的預設值"
 msgid "Defaults to the loan name"
 msgstr "預設為貸款名稱"
 
-msgid "Define your mortgage or another loan to split monthly payments into "
-"interest and principal, and to see where the debt is heading."
+msgid "Define your mortgage or another loan to split monthly payments into interest and principal, and to see where the debt is heading."
 msgstr "定義你的房貸或其他貸款，將每月付款拆分為利息與本金，並掌握債務走向。"
 
 msgid "Delete"
@@ -824,8 +816,7 @@ msgstr "卸除"
 msgid "Detach bank transaction"
 msgstr "卸除銀行交易"
 
-msgid "Detach this bank transaction - returns it to the inbox and clears the "
-"matching line back to Uncleared."
+msgid "Detach this bank transaction - returns it to the inbox and clears the matching line back to Uncleared."
 msgstr "卸除此銀行交易 - 將其退回收件匣，並把對應的列還原為未結清。"
 
 msgid "Detached. Bank transaction returned to the inbox."
@@ -855,8 +846,7 @@ msgstr "捨棄未儲存的草稿？"
 msgid "Dismiss"
 msgstr "忽略"
 
-msgid "Dismiss {selectionCount, plural, one {# bank transaction} other {# bank "
-"transactions}}"
+msgid "Dismiss {selectionCount, plural, one {# bank transaction} other {# bank transactions}}"
 msgstr "忽略 {selectionCount, plural, other {# 筆銀行交易}}"
 
 msgid "Dismiss bank transaction"
@@ -1083,8 +1073,7 @@ msgstr "額外還款金額"
 msgid "Failed"
 msgstr "失敗"
 
-msgid "Fill the selected rows with the IBAN-matched counterparty and the "
-"last-used account for that counterparty."
+msgid "Fill the selected rows with the IBAN-matched counterparty and the last-used account for that counterparty."
 msgstr "以 IBAN 比對到的交易對象，及該交易對象上次使用的帳戶，填入選取的列。"
 
 msgid "Filter"
@@ -1145,8 +1134,7 @@ msgstr "有結束日期"
 msgid "Horizon"
 msgstr "預測範圍"
 
-msgid "How dates and numbers are displayed. The interface language is separate "
-"from formatting."
+msgid "How dates and numbers are displayed. The interface language is separate from formatting."
 msgstr "日期與數字的顯示方式。介面語言與格式設定各自獨立。"
 
 msgid "Hypothetical extra repayments - nothing is saved."
@@ -1285,8 +1273,7 @@ msgstr "離開"
 msgid "Leave with unsaved drafts?"
 msgstr "要在有未儲存草稿的情況下離開嗎？"
 
-msgid "Ledger accounts in the double-entry sense - assets, liabilities, income, "
-"expenses, equity."
+msgid "Ledger accounts in the double-entry sense - assets, liabilities, income, expenses, equity."
 msgstr "複式記帳意義上的分類帳帳戶 - 資產、負債、收入、費用、權益。"
 
 msgid "Lender"
@@ -1436,8 +1423,7 @@ msgstr "移動至帳戶…"
 msgid "Moved {count, plural, one {# line} other {# lines}} to “{targetName}”."
 msgstr "已將 {count, plural, other {# 列}} 移動至「{targetName}」。"
 
-msgid "Multi-source-multi-destination journal entries can only be edited in "
-"Advanced."
+msgid "Multi-source-multi-destination journal entries can only be edited in Advanced."
 msgstr "多來源對多目的地的日記帳分錄只能在「進階」中編輯。"
 
 msgid "Name"
@@ -1562,8 +1548,7 @@ msgstr "尚無定期項目"
 msgid "No rows match the current filters."
 msgstr "沒有列符合目前的篩選條件。"
 
-msgid "No structural matches in this window. Widen the date range or fall back "
-"to creating a new JE below."
+msgid "No structural matches in this window. Widen the date range or fall back to creating a new JE below."
 msgstr "此區間沒有結構性相符項目。請放寬日期範圍，或改為在下方建立新的日記帳分錄。"
 
 msgid "No suggestions to apply."
@@ -1606,9 +1591,7 @@ msgstr "差 {diffStr}"
 msgid "Only non-postable accounts of the same type and currency can be parents."
 msgstr "只有相同類型與貨幣的不可過帳帳戶才能作為上層帳戶。"
 
-msgid "Only the selected side of each journal entry moves - dates, amounts and "
-"the other side stay untouched. The whole batch moves together, or not at "
-"all."
+msgid "Only the selected side of each journal entry moves - dates, amounts and the other side stay untouched. The whole batch moves together, or not at all."
 msgstr "每筆日記帳分錄只有選取的一方會移動 - 日期、金額與另一方保持不變。整批一起移動，否則完全不移動。"
 
 msgid "Open calendar"
@@ -1696,8 +1679,7 @@ msgstr "此付款中的部分："
 msgid "Password"
 msgstr "密碼"
 
-msgid "Past rows are posted actuals; future rows are the projection (the "
-"what-if scenario when active)."
+msgid "Past rows are posted actuals; future rows are the projection (the what-if scenario when active)."
 msgstr "過去的列是已過帳的實際值；未來的列是預估值（啟用時為假設情境）。"
 
 msgid "Patterns we spotted for {accountName}."
@@ -1718,8 +1700,7 @@ msgstr "期間"
 msgid "Period presets"
 msgstr "期間預設值"
 
-msgid "Personal access tokens for CLI scripts, importers, and third-party "
-"callers."
+msgid "Personal access tokens for CLI scripts, importers, and third-party callers."
 msgstr "供 CLI 指令碼、匯入器與第三方呼叫端使用的個人存取權杖。"
 
 msgid "Pick a journal entry to attach to"
@@ -1752,13 +1733,11 @@ msgstr "挑選要採用的負債帳戶。"
 msgid "Piggy banks"
 msgstr "存錢筒"
 
-msgid "Posted actuals to the left of today, the engine's projection to the "
-"right."
+msgid "Posted actuals to the left of today, the engine's projection to the right."
 msgstr "今天左側為已過帳的實際值，右側為引擎的預估值。"
 
 #. placeholder {0}: proposal.month.slice(0, 7)
-msgid "Pre-filled from the schedule for {0} - adjust the amounts to match the "
-"bank's charge."
+msgid "Pre-filled from the schedule for {0} - adjust the amounts to match the bank's charge."
 msgstr "已依 {0} 的排程預先填入 - 請調整金額以符合銀行的扣款。"
 
 msgid "Preferences"
@@ -2001,8 +1980,7 @@ msgstr "在此銀行帳戶設定匯入器以啟用對帳單匯入。"
 msgid "Settings"
 msgstr "設定"
 
-msgid "Setup is unavailable. Either a user already exists, or the setup token "
-"does not match."
+msgid "Setup is unavailable. Either a user already exists, or the setup token does not match."
 msgstr "無法進行設定。可能已有使用者存在，或設定權杖不符。"
 
 msgid "Setup token"
@@ -2042,8 +2020,7 @@ msgstr "拆分（{0} 列）"
 msgid "Split ({lineCount, plural, one {# line} other {# lines}})"
 msgstr "拆分（{lineCount, plural, other {# 列}}）"
 
-msgid "Stage these rows for dismissal. Save-all to commit; until then you can "
-"review or reset per row."
+msgid "Stage these rows for dismissal. Save-all to commit; until then you can review or reset per row."
 msgstr "將這些列暫存以待忽略。全部儲存即可確認；在此之前可逐列檢視或重設。"
 
 msgid "Start date"
@@ -2064,8 +2041,7 @@ msgstr "仍預期流入"
 msgid "Still expected out"
 msgstr "仍預期流出"
 
-msgid "Structural matches with an Uncleared bank-side slot. Widen the date "
-"window to surface near-misses."
+msgid "Structural matches with an Uncleared bank-side slot. Widen the date window to surface near-misses."
 msgstr "與未結清的銀行端項目的結構性相符。放寬日期區間以顯示近似項目。"
 
 msgid "Sub-account…"
@@ -2083,47 +2059,38 @@ msgstr "目標"
 #. placeholder {0}: deletingRate.rate.annualRatePercent.toFixed(2)
 #. placeholder {1}: formatTableDate(deletingRate.rate.effectiveDate)
 #. placeholder {2}: deletingRate.part.label
-msgid "The {0}% rate effective {1} is removed from {2}. Projections recompute; "
-"posted entries are untouched."
+msgid "The {0}% rate effective {1} is removed from {2}. Projections recompute; posted entries are untouched."
 msgstr "自 {1} 生效的 {0}% 利率將從 {2} 移除。預估值會重新計算；已過帳的分錄不受影響。"
 
 msgid "The interface language. Formatting below is set separately."
 msgstr "介面語言。下方的格式設定為獨立設定。"
 
-msgid "The loan definition, its parts, and rate history are removed. The "
-"accounts and every posted entry stay untouched."
+msgid "The loan definition, its parts, and rate history are removed. The accounts and every posted entry stay untouched."
 msgstr "貸款定義、其部分與利率歷史將被移除。帳戶與所有已過帳的分錄保持不變。"
 
 msgid "The loan needs a name."
 msgstr "貸款需要一個名稱。"
 
-msgid "The part definition and its rate history are removed. Its account and "
-"every posted entry stay untouched - it becomes an ordinary account "
-"again."
+msgid "The part definition and its rate history are removed. Its account and every posted entry stay untouched - it becomes an ordinary account again."
 msgstr "部分定義與其利率歷史將被移除。其帳戶與所有已過帳的分錄保持不變 - 它會再次成為一般帳戶。"
 
-msgid "The part's account holds its principal and posted history, so it can't "
-"be changed here."
+msgid "The part's account holds its principal and posted history, so it can't be changed here."
 msgstr "此部分的帳戶持有其本金與已過帳歷史，因此無法在此變更。"
 
-msgid "The real-world bank accounts behind your ledger accounts and "
-"counterparties."
+msgid "The real-world bank accounts behind your ledger accounts and counterparties."
 msgstr "你的分類帳帳戶與交易對象背後的真實銀行帳戶。"
 
 msgid "This can't be undone."
 msgstr "此動作無法復原。"
 
-msgid "This can't be undone. Accounts with journal entries can't be deleted "
-"until those are removed first."
+msgid "This can't be undone. Accounts with journal entries can't be deleted until those are removed first."
 msgstr "此動作無法復原。含有日記帳分錄的帳戶必須先移除這些分錄才能刪除。"
 
-msgid "This can't be undone. The bookkeeping lines on every affected account "
-"will disappear with it."
+msgid "This can't be undone. The bookkeeping lines on every affected account will disappear with it."
 msgstr "此動作無法復原。每個受影響帳戶上的記帳列也會隨之消失。"
 
 #. placeholder {0}: justCreated.metadata.name
-msgid "This is the only time you'll see \"{0}\" in full. Store it somewhere "
-"safe - it can't be retrieved again."
+msgid "This is the only time you'll see \"{0}\" in full. Store it somewhere safe - it can't be retrieved again."
 msgstr "這是你唯一一次能看到完整的「{0}」。請妥善保存 - 之後無法再次取得。"
 
 msgid "This month"
@@ -2168,8 +2135,7 @@ msgstr "輸入以搜尋帳戶、交易對象、銀行帳戶、日記帳分錄。
 msgid "Unallocated"
 msgstr "未分配"
 
-msgid "Uncheck for long-term holdings such as a house, mortgage, or investment "
-"portfolio."
+msgid "Uncheck for long-term holdings such as a house, mortgage, or investment portfolio."
 msgstr "對於房屋、房貸或投資組合等長期持有資產請取消勾選。"
 
 msgid "Uncheck to make this a roll-up account that only totals its children."
@@ -2178,8 +2144,7 @@ msgstr "取消勾選可讓此帳戶成為僅彙總其子帳戶的彙總帳戶。
 msgid "Uncleared"
 msgstr "未結清"
 
-msgid "Undisbursed mortgage money earmarked for building. Its interest offsets "
-"the loan payment during construction."
+msgid "Undisbursed mortgage money earmarked for building. Its interest offsets the loan payment during construction."
 msgstr "尚未撥付、預留作為建築用途的房貸資金。其利息在建造期間抵銷貸款付款。"
 
 msgid "Undismiss"
@@ -2191,8 +2156,7 @@ msgstr "未知帳戶"
 msgid "Unknown counterparty"
 msgstr "未知交易對象"
 
-msgid "Upload an ING current-account CSV against the matching bank account. "
-"Re-uploads are safe - duplicate rows are skipped."
+msgid "Upload an ING current-account CSV against the matching bank account. Re-uploads are safe - duplicate rows are skipped."
 msgstr "針對對應的銀行帳戶上傳 ING 活期帳戶 CSV。重複上傳是安全的 - 重複的列會被略過。"
 
 msgid "Use Debit or Credit, not both."
@@ -2243,8 +2207,7 @@ msgstr "處理中…"
 msgid "Year-end"
 msgstr "年底"
 
-msgid "You have {dirtyCount, plural, one {# unsaved draft} other {# unsaved "
-"drafts}}. Leaving will discard them."
+msgid "You have {dirtyCount, plural, one {# unsaved draft} other {# unsaved drafts}}. Leaving will discard them."
 msgstr "你有 {dirtyCount, plural, other {# 筆未儲存的草稿}}。離開將會捨棄它們。"
 
 msgid "You're caught up."
