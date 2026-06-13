@@ -14,7 +14,7 @@ namespace Balance.Tests.Api.Helpers;
 internal abstract class IsolatedDatabaseTest<TFactory> : WebApplicationTest<TFactory, Program>
     where TFactory : TestWebApplicationFactory<Program>, new()
 {
-    private TestSqliteDatabase _database = null!;
+    private TestSqliteDatabase? _database;
 
     protected override void ConfigureTestConfiguration(IConfigurationBuilder config)
     {
@@ -34,5 +34,5 @@ internal abstract class IsolatedDatabaseTest<TFactory> : WebApplicationTest<TFac
     protected virtual void ConfigureAdditionalSettings(IDictionary<string, string?> settings) { }
 
     [After(Test)]
-    public void CleanupDatabase() => _database.Dispose();
+    public void CleanupDatabase() => _database?.Dispose();
 }
