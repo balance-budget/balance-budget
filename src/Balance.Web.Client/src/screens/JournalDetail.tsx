@@ -274,8 +274,25 @@ function FromToSummary({
     );
 }
 
+/**
+ * Orders lines for the read view as a classic journal: debits (positive amounts)
+ * before credits (negative), each by descending magnitude, then by account name
+ * for a stable order. The wire order is insertion order, which reads arbitrarily.
+ */
+function orderLinesForDisplay(lines: readonly JournalLine[]): JournalLine[] {
+    return [...lines].sort((a, b) => {
+        const aDebit = a.amount > 0;
+        const bDebit = b.amount > 0;
+        if (aDebit !== bDebit) return aDebit ? -1 : 1;
+        const byMagnitude = Math.abs(b.amount) - Math.abs(a.amount);
+        if (byMagnitude !== 0) return byMagnitude;
+        return a.accountName.localeCompare(b.accountName);
+    });
+}
+
 function LineTable({ entry, projection }: { entry: JournalEntry; projection: JournalProjection }) {
     const catalog = useCurrencyCatalog();
+    const orderedLines = useMemo(() => orderLinesForDisplay(entry.lines), [entry.lines]);
     return (
         <div className="flex flex-col">
             <div className="hidden lg:grid grid-cols-[1fr_120px_120px_140px_minmax(120px,1.4fr)] gap-3 px-2 pb-2 text-xs text-fg-3 uppercase tracking-wider border-b border-border-soft">
@@ -295,7 +312,7 @@ function LineTable({ entry, projection }: { entry: JournalEntry; projection: Jou
                     <Trans>Description</Trans>
                 </span>
             </div>
-            {entry.lines.map(line => (
+            {orderedLines.map(line => (
                 <LineRow
                     key={line.id}
                     line={line}
