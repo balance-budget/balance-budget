@@ -1,76 +1,53 @@
 /*
- * Region formatting model (ADR-0022). Independent of language: the user picks a
- * date order and a number-grouping style, and these drive *formatting* only —
- * the UI text stays in whatever `language` is active.
+ * Region formatting model (ADR-0029, superseding the date/number stance of
+ * ADR-0022). Two symmetric per-user preferences, each a simple `locale | iso`
+ * toggle:
  *
- * Display formatters (format.ts) honor the date and number preferences
- * independently. React Aria's editable widgets take a single locale, so
- * `backingTag` collapses the pair to the best-fit BCP-47 tag; exotic
- * combinations not expressible by one tag fall back to the date order.
+ *   - dateFormat   — `locale` defers date order, month names, and separators to
+ *                    the user's `language`; `iso` forces numeric `YYYY-MM-DD`.
+ *   - numberFormat — `locale` defers grouping + decimal mark to `language`;
+ *                    `iso` forces ISO 80000 style `1 234.56` (narrow no-break
+ *                    space groups, dot decimal).
+ *
+ * Display formatting lives in `format.ts`. React Aria's editable widgets take a
+ * single backing locale (`backingTag`); per the user's call, those widgets just
+ * follow the culture — the backing tag honors the date order (the focus of this
+ * work) and lets number separators fall out of that one locale.
  */
 
-export type DateFormatPref = 'iso' | 'dmy' | 'mdy';
-export type NumberFormatPref = 'comma-dot' | 'dot-comma' | 'space-comma';
+export type DateFormatPref = 'locale' | 'iso';
+export type NumberFormatPref = 'locale' | 'iso';
 
 export type RegionSettings = {
     dateFormat: DateFormatPref;
     numberFormat: NumberFormatPref;
 };
 
-export const DATE_FORMATS = ['iso', 'dmy', 'mdy'] as const satisfies readonly DateFormatPref[];
-export const NUMBER_FORMATS = [
-    'comma-dot',
-    'dot-comma',
-    'space-comma',
-] as const satisfies readonly NumberFormatPref[];
+export const DATE_FORMATS = ['locale', 'iso'] as const satisfies readonly DateFormatPref[];
+export const NUMBER_FORMATS = ['locale', 'iso'] as const satisfies readonly NumberFormatPref[];
 
-export const DEFAULT_REGION: RegionSettings = { dateFormat: 'iso', numberFormat: 'comma-dot' };
+// ISO is the default — unambiguous, and the escape hatch for anyone unhappy with
+// their locale's native order (ADR-0029).
+export const DEFAULT_REGION: RegionSettings = { dateFormat: 'iso', numberFormat: 'iso' };
 
-// Date-display locales — all English (month names stay English); only the field
-// order differs. ISO → en-CA renders yyyy-mm-dd numerically.
-const DATE_LOCALE: Record<DateFormatPref, string> = {
-    iso: 'en-CA', // 2026-03-09
-    dmy: 'en-GB', // 09/03/2026
-    mdy: 'en-US', // 3/9/2026
+// Coerce persisted tokens, including the retired ADR-0022 vocabulary, to the
+// current pair. The old order choices (`dmy`/`mdy`) and number styles map to
+// `locale` so users who picked a non-ISO format keep "follow my language"
+// rather than silently flipping to the ISO default.
+const LEGACY_DATE: Record<string, DateFormatPref> = {
+    iso: 'iso',
+    locale: 'locale',
+    dmy: 'locale',
+    mdy: 'locale',
 };
 
-// Number-display locales, picked for their grouping + decimal separators.
-const NUMBER_LOCALE: Record<NumberFormatPref, string> = {
-    'comma-dot': 'en-US', // 1,234.56
-    'dot-comma': 'nl-NL', // 1.234,56
-    'space-comma': 'en-SE', // 1 234,56
+const LEGACY_NUMBER: Record<string, NumberFormatPref> = {
+    iso: 'iso',
+    locale: 'locale',
+    'comma-dot': 'locale',
+    'dot-comma': 'locale',
+    'space-comma': 'locale',
 };
-
-const DECIMAL_SEPARATOR: Record<NumberFormatPref, '.' | ','> = {
-    'comma-dot': '.',
-    'dot-comma': ',',
-    'space-comma': ',',
-};
-
-export function dateLocale(pref: DateFormatPref): string {
-    return DATE_LOCALE[pref];
-}
-
-export function numberLocale(pref: NumberFormatPref): string {
-    return NUMBER_LOCALE[pref];
-}
-
-export function decimalSeparator(pref: NumberFormatPref): '.' | ',' {
-    return DECIMAL_SEPARATOR[pref];
-}
-
-/**
- * The single BCP-47 tag fed to React Aria's I18nProvider. Its editable widgets
- * derive date order *and* separators from one locale, so we honor the date order
- * first and match the number style only where a clean tag exists.
- */
-export function backingTag(region: RegionSettings): string {
-    const exact: Record<string, string> = {
-        'iso/space-comma': 'en-SE',
-        'dmy/dot-comma': 'en-NL',
-    };
-    return exact[`${region.dateFormat}/${region.numberFormat}`] ?? DATE_LOCALE[region.dateFormat];
-}
 
 export function isDateFormat(value: unknown): value is DateFormatPref {
     return typeof value === 'string' && (DATE_FORMATS as readonly string[]).includes(value);
@@ -80,13 +57,28 @@ export function isNumberFormat(value: unknown): value is NumberFormatPref {
     return typeof value === 'string' && (NUMBER_FORMATS as readonly string[]).includes(value);
 }
 
-/** Coerce persisted (possibly null/unknown) preference tokens to a valid region. */
+/**
+ * The single BCP-47 tag fed to React Aria's I18nProvider for editable widgets.
+ * ISO dates need `en-CA`'s numeric `yyyy-mm-dd` segments; otherwise the user's
+ * language drives both date-segment order and RAC's own labels. Number
+ * separators in editable fields follow whatever that one tag implies.
+ */
+export function backingTag(language: string, region: RegionSettings): string {
+    return region.dateFormat === 'iso' ? 'en-CA' : language;
+}
+
+function mapToken<T>(value: string | null | undefined, table: Record<string, T>, fallback: T): T {
+    if (value == null) return fallback;
+    return table[value] ?? fallback;
+}
+
+/** Coerce persisted (possibly null/unknown/legacy) preference tokens to a valid region. */
 export function resolveRegion(
     dateFormat: string | null | undefined,
     numberFormat: string | null | undefined,
 ): RegionSettings {
     return {
-        dateFormat: isDateFormat(dateFormat) ? dateFormat : DEFAULT_REGION.dateFormat,
-        numberFormat: isNumberFormat(numberFormat) ? numberFormat : DEFAULT_REGION.numberFormat,
+        dateFormat: mapToken(dateFormat, LEGACY_DATE, DEFAULT_REGION.dateFormat),
+        numberFormat: mapToken(numberFormat, LEGACY_NUMBER, DEFAULT_REGION.numberFormat),
     };
 }
