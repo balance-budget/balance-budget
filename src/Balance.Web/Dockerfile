@@ -7,7 +7,7 @@ ENV DOTNET_RUNNING_IN_CONTAINER_FAST_MODE=true
 ENV ASPNETCORE_HTTP_PORTS=5248
 EXPOSE 5248
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0.300-alpine3.23 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
 RUN apk add --no-cache nodejs npm
 ARG BUILD_CONFIGURATION=Release
 ARG BUILD_VERSION=v1.0.0
