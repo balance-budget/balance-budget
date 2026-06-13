@@ -129,7 +129,13 @@ export function formatCalendarDate(
     granularity: DateGranularity,
     options: CalendarDateOptions = {},
 ): string {
-    return formatCalendarDateWith(activeLanguage, activeRegion.dateFormat, iso, granularity, options);
+    return formatCalendarDateWith(
+        activeLanguage,
+        activeRegion.dateFormat,
+        iso,
+        granularity,
+        options,
+    );
 }
 
 /**
