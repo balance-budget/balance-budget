@@ -5,28 +5,20 @@ namespace Balance.Tests.Api.Helpers;
 
 internal abstract class EndpointsTestsBase : WebApplicationTest<WebApplicationFactory, Program>
 {
-    private string _dbPath = null!;
+    private TestSqliteDatabase _database = null!;
 
     protected override void ConfigureTestConfiguration(IConfigurationBuilder config)
     {
-        _dbPath = Path.Combine(Path.GetTempPath(), $"{GetIsolatedName("balance")}.db");
-        Console.WriteLine(_dbPath);
+        _database ??= TestSqliteDatabase.Create(GetIsolatedName("balance"));
         config.AddInMemoryCollection(
             new Dictionary<string, string?>
             {
                 ["Database:Provider"] = "Sqlite",
-                ["Database:ConnectionString"] = $"Data Source={_dbPath}",
+                ["Database:ConnectionString"] = _database.ConnectionString,
             }
         );
     }
 
     [After(Test)]
-    public void CleanupDatabase()
-    {
-        foreach (var path in new[] { _dbPath, $"{_dbPath}-shm", $"{_dbPath}-wal" })
-        {
-            if (File.Exists(path))
-                File.Delete(path);
-        }
-    }
+    public void CleanupDatabase() => _database.Dispose();
 }
