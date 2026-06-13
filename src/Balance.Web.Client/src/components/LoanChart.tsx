@@ -17,6 +17,7 @@ import { useCurrencyCatalog } from '../api/currencies';
 import { formatCalendarDate } from '../i18n/format';
 import { cx } from '../lib/cx';
 import { formatMoney, formatMoneyAxis } from '../lib/money';
+import { moneyAxis } from '../lib/chartAxis';
 import { chartColorFor } from '../lib/visualHints';
 import { buildChartRows, buildPaymentRows } from '../screens/loanDetail.state';
 
@@ -65,6 +66,29 @@ export function LoanChart({ projection, height = 280 }: LoanChartProps) {
 
     const rows = mode === 'balance' ? balanceRows : paymentRows;
 
+    // Scale to the tallest stack per period (actuals and projection stack
+    // separately on either side of today; payments share one stack), plus the
+    // scenario line. Zero-based, so this only adds headroom above the peak.
+    const axis = useMemo(() => {
+        const totals: number[] = [];
+        for (const row of rows) {
+            let actual = 0;
+            let proj = 0;
+            let pay = 0;
+            for (const [key, value] of Object.entries(row)) {
+                if (typeof value !== 'number') continue;
+                const colon = key.indexOf(':');
+                const prefix = colon === -1 ? key : key.slice(0, colon);
+                if (prefix === 'a') actual += value;
+                else if (prefix === 'p') proj += value;
+                else if (prefix === 'pr' || prefix === 'pi') pay += value;
+                else if (key === 'scenarioTotal') totals.push(value);
+            }
+            totals.push(actual, proj, pay);
+        }
+        return moneyAxis(totals, { includeZero: true });
+    }, [rows]);
+
     const ticks = useMemo(() => {
         // January of every nth year, thinned so long mortgages stay readable.
         const januaries = rows.map(r => r.period).filter(p => p.slice(5, 7) === '01');
@@ -96,7 +120,8 @@ export function LoanChart({ projection, height = 280 }: LoanChartProps) {
                         tickLine={false}
                     />
                     <YAxis
-                        domain={[0, 'auto']}
+                        domain={axis?.domain ?? [0, 'auto']}
+                        ticks={axis?.ticks}
                         tickFormatter={(v: number) =>
                             formatMoneyAxis(v, projection.currencyCode, catalog)
                         }
