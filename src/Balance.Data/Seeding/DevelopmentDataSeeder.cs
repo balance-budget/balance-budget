@@ -46,6 +46,7 @@ internal static class DevelopmentDataSeeder
         context.Loans.AddRange(graph.Loans);
         context.LoanParts.AddRange(graph.LoanParts);
         context.LoanPartRatePeriods.AddRange(graph.LoanPartRatePeriods);
+        context.JournalEntryTemplates.AddRange(graph.JournalEntryTemplates);
 
         await EnsureDeveloperUserAsync(context, cancellationToken);
 
@@ -67,6 +68,7 @@ internal static class DevelopmentDataSeeder
         CancellationToken cancellationToken
     )
     {
+        await context.JournalEntryTemplates.ExecuteDeleteAsync(cancellationToken);
         await context.BankTransactionMetadataValues.ExecuteDeleteAsync(cancellationToken);
         await context.JournalLines.ExecuteDeleteAsync(cancellationToken);
         await context.BankTransactions.ExecuteDeleteAsync(cancellationToken);
@@ -133,4 +135,5 @@ internal sealed class DevelopmentSeedGraph
     public required IReadOnlyList<Loan> Loans { get; init; }
     public required IReadOnlyList<LoanPart> LoanParts { get; init; }
     public required IReadOnlyList<LoanPartRatePeriod> LoanPartRatePeriods { get; init; }
+    public required IReadOnlyList<JournalEntryTemplate> JournalEntryTemplates { get; init; }
 }
