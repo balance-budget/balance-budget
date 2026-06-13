@@ -13,7 +13,7 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#. placeholder {0}: formatInstant(token.expiresAt, TOKEN_DATE)
+#. placeholder {0}: formatInstant(token.expiresAt)
 msgid " · expires {0}"
 msgstr " · verloopt {0}"
 
@@ -22,7 +22,7 @@ msgstr " · verloopt {0}"
 msgid " · fixed until {0}"
 msgstr " · vast tot {0}"
 
-#. placeholder {0}: formatInstant(token.lastUsedAt, TOKEN_DATE)
+#. placeholder {0}: formatInstant(token.lastUsedAt)
 msgid " · last used {0}"
 msgstr " · laatst gebruikt {0}"
 
@@ -712,7 +712,7 @@ msgstr "Token aanmaken"
 msgid "Create user"
 msgstr "Gebruiker aanmaken"
 
-#. placeholder {0}: formatInstant(token.createdAt, TOKEN_DATE)
+#. placeholder {0}: formatInstant(token.createdAt)
 msgid "Created {0}"
 msgstr "Aangemaakt {0}"
 
@@ -746,8 +746,8 @@ msgstr "Datumbereik"
 msgid "Date window (±days)"
 msgstr "Datumvenster (±dagen)"
 
-msgid "Day · Month · Year"
-msgstr "Dag · Maand · Jaar"
+#~ msgid "Day · Month · Year"
+#~ msgstr "Dag · Maand · Jaar"
 
 msgid "Debit"
 msgstr "Debet"
@@ -1253,6 +1253,9 @@ msgstr "Aflossingsvrij"
 msgid "invalid"
 msgstr "ongeldig"
 
+msgid "ISO"
+msgstr "ISO"
+
 msgid "ISO 8601"
 msgstr "ISO 8601"
 
@@ -1396,6 +1399,9 @@ msgid "Mark this row as not needing a journal entry. You can undismiss later."
 msgstr "Markeer deze rij als zonder journaalpost. Je kunt dit later ongedaan "
 "maken."
 
+msgid "Match language"
+msgstr "Taal volgen"
+
 msgid "Matched"
 msgstr "Gematcht"
 
@@ -1427,8 +1433,8 @@ msgstr "Geld verplaatst van een of meer bronnen naar een of meer bestemmingen."
 msgid "Money out"
 msgstr "Geld uit"
 
-msgid "Month · Day · Year"
-msgstr "Maand · Dag · Jaar"
+#~ msgid "Month · Day · Year"
+#~ msgstr "Maand · Dag · Jaar"
 
 msgid "Monthly payment"
 msgstr "Maandbetaling"

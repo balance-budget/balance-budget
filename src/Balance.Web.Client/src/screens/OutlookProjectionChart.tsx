@@ -15,7 +15,7 @@ import {
 import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import type { OutlookAccountProjection } from '../api/outlook';
 import { formatMonthAxisDate } from '../lib/dates';
-import { formatDate } from '../i18n/format';
+import { formatCalendarDate } from '../i18n/format';
 import { formatMoney, formatMoneyAxis } from '../lib/money';
 
 type ChartRow = {
@@ -209,7 +209,7 @@ function ProjectionTooltip({
         <div className="rounded-xl border border-border-soft bg-bg-1 px-3 py-2 shadow-sm text-xs">
             <div className="text-fg-3 mb-1">
                 {typeof label === 'string'
-                    ? formatDate(label, { month: 'long', year: 'numeric' })
+                    ? formatCalendarDate(label, 'year-month', { style: 'long' })
                     : ''}
             </div>
             <div className="flex flex-col gap-1">

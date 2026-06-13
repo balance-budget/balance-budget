@@ -26,6 +26,7 @@ import { useToast } from '../components/ui/Toast';
 import { accountPathSegments, ACCOUNT_PATH_SEPARATOR } from '../lib/accountTree';
 import { cx } from '../lib/cx';
 import { type AccountId, type JournalEntryTemplateId } from '../lib/domain';
+import { formatCalendarDate } from '../i18n/format';
 import { formatMoney } from '../lib/money';
 import { JournalEntryTemplateForm } from './JournalEntryTemplateForm';
 import { OutlookProjectionChart } from './OutlookProjectionChart';
@@ -34,28 +35,15 @@ const CURRENCY = 'EUR';
 const HORIZONS = [6, 12, 24] as const;
 
 function formatDueDate(iso: string): string {
-    const [y, m, d] = iso.split('-').map(Number);
-    return new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1).toLocaleDateString(undefined, {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-    });
+    return formatCalendarDate(iso, 'year-month-day');
 }
 
 function formatMonthName(iso: string): string {
-    const [y, m, d] = iso.split('-').map(Number);
-    return new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1).toLocaleDateString(undefined, {
-        month: 'long',
-        year: 'numeric',
-    });
+    return formatCalendarDate(iso, 'year-month', { style: 'long' });
 }
 
 function formatDayMonth(iso: string): string {
-    const [y, m, d] = iso.split('-').map(Number);
-    return new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1).toLocaleDateString(undefined, {
-        day: 'numeric',
-        month: 'short',
-    });
+    return formatCalendarDate(iso, 'month-day');
 }
 
 export function Outlook() {
