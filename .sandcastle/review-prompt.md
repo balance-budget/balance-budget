@@ -47,8 +47,10 @@ Review the code changes on branch `{{BRANCH}}` and improve code clarity, consist
 If you find improvements to make:
 
 1. Make the changes directly on this branch
-2. Run tests and type checking to ensure nothing is broken
-3. Commit describing the refinements
+2. Verify nothing is broken by running the checks for the layers you touched:
+   - Backend (`.cs`): `dotnet csharpier check . --ignore-path .csharpierignore`, `dotnet build --no-restore -v:minimal`, `dotnet test --no-build -v:minimal`
+   - Frontend (`src/Balance.Web.Client`): `npm run typecheck`, `npm run lint`, `npm run test`
+3. Commit the refinements using Conventional Commits (e.g. `refactor(reports): simplify outlook scaling`)
 
 If the code is already clean and well-structured, do nothing.
 
