@@ -32,10 +32,23 @@ import { docker } from "@ai-hero/sandcastle/sandboxes/docker";
 // Raise this if your backlog is large; lower it for a quick smoke-test run.
 const MAX_ITERATIONS = 10;
 
+// The branch new work is based on and that PRs target. This repo is
+// rebase-merge only (no merge commits, no squash), so the integration phase
+// opens PRs against this branch rather than merging locally.
+const SOURCE_BRANCH = "main";
+
 // Hooks run inside the sandbox before the agent starts each iteration.
-// npm install ensures the sandbox always has fresh dependencies.
+// The project is a .NET host plus an npm-managed SPA, so restore both
+// toolchains: npm for the frontend, the dotnet CLI tool manifest (CSharpier)
+// and NuGet packages for the backend.
 const hooks = {
-  sandbox: { onSandboxReady: [{ command: "npm install" }] },
+  sandbox: {
+    onSandboxReady: [
+      { command: "npm install" },
+      { command: "dotnet tool restore" },
+      { command: "dotnet restore" },
+    ],
+  },
 };
 
 // Copy node_modules from the host into the worktree before each sandbox
@@ -67,7 +80,7 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
     // not write code.
     maxIterations: 1,
     // Opus for planning: dependency analysis benefits from deeper reasoning.
-    agent: sandcastle.claudeCode("claude-opus-4-7"),
+    agent: sandcastle.claudeCode("claude-opus-4-8"),
     promptFile: "./.sandcastle/plan-prompt.md",
   });
 
@@ -121,7 +134,7 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
         const implement = await sandbox.run({
           name: "implementer",
           maxIterations: 100,
-          agent: sandcastle.claudeCode("claude-opus-4-7"),
+          agent: sandcastle.claudeCode("claude-opus-4-8"),
           promptFile: "./.sandcastle/implement-prompt.md",
           promptArgs: {
             TASK_ID: issue.id,
@@ -135,10 +148,11 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
           const review = await sandbox.run({
             name: "reviewer",
             maxIterations: 1,
-            agent: sandcastle.claudeCode("claude-opus-4-7"),
+            agent: sandcastle.claudeCode("claude-opus-4-8"),
             promptFile: "./.sandcastle/review-prompt.md",
             promptArgs: {
               BRANCH: issue.branch,
+              SOURCE_BRANCH,
             },
           });
 
@@ -193,22 +207,26 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
   }
 
   // -------------------------------------------------------------------------
-  // Phase 3: Merge
+  // Phase 3: Integrate (open PRs)
   //
-  // One agent merges all completed branches into the current branch,
-  // resolving any conflicts and running tests to confirm everything works.
+  // This repo is rebase-merge only and requires changes to land via PR, so the
+  // integration agent pushes each completed branch and opens a PR targeting
+  // SOURCE_BRANCH rather than merging locally. The issues are closed by the PR
+  // merge (via a `Closes #NN` footer), not by this phase.
   //
   // The {{BRANCHES}} and {{ISSUES}} prompt arguments are lists that the agent
-  // uses to know which branches to merge and which issues to close.
+  // uses to know which branches to push and which issues each PR closes.
   // -------------------------------------------------------------------------
   await sandcastle.run({
     hooks,
     sandbox: docker(),
-    name: "merger",
+    name: "integrator",
     maxIterations: 1,
-    agent: sandcastle.claudeCode("claude-opus-4-7"),
+    agent: sandcastle.claudeCode("claude-opus-4-8"),
     promptFile: "./.sandcastle/merge-prompt.md",
     promptArgs: {
+      // The branch each PR targets.
+      BASE_BRANCH: SOURCE_BRANCH,
       // A markdown list of branch names, one per line.
       BRANCHES: completedBranches.map((b) => `- ${b}`).join("\n"),
       // A markdown list of issue IDs and titles, one per line.
@@ -218,7 +236,7 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
     },
   });
 
-  console.log("\nBranches merged.");
+  console.log("\nPull requests opened.");
 }
 
 console.log("\nAll done.");
