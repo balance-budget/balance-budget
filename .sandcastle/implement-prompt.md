@@ -26,7 +26,8 @@ Pay extra attention to test files that touch the relevant parts of the code.
 
 # EXECUTION
 
-If applicable, use RGR to complete the task.
+Follow the repo conventions in `CLAUDE.md` and `docs/conventions.md`. If applicable,
+use red-green-refactor to complete the task (the backend suite is TUnit):
 
 1. RED: write one test
 2. GREEN: write the implementation to pass that test
@@ -35,19 +36,31 @@ If applicable, use RGR to complete the task.
 
 # FEEDBACK LOOPS
 
-Before committing, run `npm run typecheck` and `npm run test` to ensure the tests pass.
+Before committing, run the checks for the layers you touched and make sure they pass.
+
+Backend (C#) — if you changed any `.cs`:
+
+- `dotnet csharpier check . --ignore-path .csharpierignore` (CI fails on any deviation; run `dotnet csharpier format .` to fix)
+- `dotnet build --no-restore -v:minimal` (`TreatWarningsAsErrors=true`, so warnings fail the build)
+- `dotnet test --no-build -v:minimal`
+
+Frontend (SPA) — if you changed anything under `src/Balance.Web.Client`:
+
+- `npm run typecheck`
+- `npm run lint`
+- `npm run test`
+
+If you changed the backend API surface, also run `npm run codegen` and commit the
+regenerated client — CI gates on `.gen.ts` drift.
 
 # COMMIT
 
-Make a git commit. The commit message must:
-
-1. Start with `RALPH:` prefix
-2. Include task completed + PRD reference
-3. Key decisions made
-4. Files changed
-5. Blockers or notes for next iteration
-
-Keep it concise.
+Make a git commit following Conventional Commits (`type(scope): summary` in the
+imperative mood) as required by `CLAUDE.md` — e.g. `feat(reports): add monthly outlook`.
+Valid types: `feat`, `fix`, `docs`, `chore`, `refactor`, `style`, `test`, `ci`,
+`build`, `perf`, `revert`. Reference the issue in a footer (`Refs: #NN`), not the
+subject. Keep the subject concise; use the body for key decisions and any notes for
+the next iteration.
 
 # THE ISSUE
 
