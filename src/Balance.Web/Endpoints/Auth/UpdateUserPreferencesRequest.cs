@@ -8,7 +8,8 @@ namespace Balance.Web.Endpoints.Auth;
 internal sealed record UpdateUserPreferencesRequest(
     string? Language,
     string? DateFormat,
-    string? NumberFormat
+    string? NumberFormat,
+    string? Theme
 );
 
 internal sealed class UpdateUserPreferencesRequestValidator
@@ -19,5 +20,6 @@ internal sealed class UpdateUserPreferencesRequestValidator
         RuleFor(x => x.Language).MaximumLength(16);
         RuleFor(x => x.DateFormat).MaximumLength(16);
         RuleFor(x => x.NumberFormat).MaximumLength(16);
+        RuleFor(x => x.Theme).MaximumLength(16);
     }
 }
