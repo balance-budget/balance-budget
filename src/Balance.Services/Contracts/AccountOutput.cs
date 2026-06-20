@@ -12,6 +12,7 @@ public sealed record AccountOutput(
     CurrencyCode CurrencyCode,
     bool IsPostable,
     bool IsLiquid,
+    Horizon Horizon,
     AccountId? ParentAccountId,
     string? IconName,
     Money Balance,

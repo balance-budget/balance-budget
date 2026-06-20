@@ -637,6 +637,8 @@ internal sealed class LoanService : ILoanService
 
         account.ParentAccountId = parent.Id;
         account.IsLiquid = false;
+        // A loan part is illiquid debt held for the long haul (ADR-0030).
+        account.Horizon = Horizon.LongTerm;
         account.UpdatedAt = now;
         return Result.Success;
     }

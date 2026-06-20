@@ -41,6 +41,12 @@ public sealed record CreateAccountInput
     /// Liability accounts; accepted and ignored on other types.
     /// </summary>
     public bool IsLiquid { get; init; } = true;
+
+    /// <summary>
+    /// When the holder expects to draw on this money (ADR-0030). A plain user choice on the account
+    /// form. Meaningful only on Asset and Liability accounts; accepted and ignored on other types.
+    /// </summary>
+    public Horizon Horizon { get; init; } = Horizon.ShortTerm;
     public AccountId? ParentAccountId { get; init; }
     public string? IconName { get; init; }
 }
@@ -53,6 +59,7 @@ public sealed record UpdateAccountInput
     public required CurrencyCode CurrencyCode { get; set; }
     public required bool IsPostable { get; set; }
     public required bool IsLiquid { get; set; }
+    public required Horizon Horizon { get; set; }
     public AccountId? ParentAccountId { get; set; }
     public string? IconName { get; set; }
 }
