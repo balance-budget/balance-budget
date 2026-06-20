@@ -223,7 +223,7 @@ function AccountTreeNode({
                 // deep and the sidebar is narrow. Instead, each expanded group sits
                 // on a translucent shade that compounds with depth, so nested
                 // subtrees read progressively brighter without eating width.
-                <div className="flex flex-col gap-[2px] rounded-xl bg-white/[0.03] py-[2px]">
+                <div className="flex flex-col gap-[2px] rounded-xl bg-surface-2 py-[2px]">
                     {children.map(child => (
                         <AccountTreeNode
                             key={child.id}
