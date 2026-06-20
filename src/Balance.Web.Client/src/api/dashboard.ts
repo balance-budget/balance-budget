@@ -18,6 +18,7 @@ type WireTrendSeries = components['schemas']['AccountTrendSeries'];
 type WireTrendDelta = components['schemas']['TrendDelta'];
 type WireRegisterPreviews = components['schemas']['DashboardRegisterPreviewOutput'];
 type WireNetWorthTrend = components['schemas']['NetWorthTrendOutput'];
+type WireSpending = components['schemas']['SpendingByCategoryOutput'];
 
 export type DashboardSummary = {
     netWorth: Money;
@@ -77,6 +78,18 @@ export type NetWorthTrend = {
     currencyCode: string;
 };
 
+/** This-month spend for one leaf Expense category; amount is a positive magnitude in minor units. */
+export type SpendingCategory = { accountId: AccountId; name: string; amountMinor: number };
+
+export type SpendingByCategory = {
+    slices: SpendingCategory[];
+    otherMinor: number;
+    totalMinor: number;
+    periodStart: string;
+    periodEnd: string;
+    currencyCode: string;
+};
+
 /** One row of a Register preview on a dashboard account card; the amount is
  *  already normalized to the account's normal balance, like the Register. */
 export type RegisterPreviewRow = {
@@ -98,6 +111,7 @@ export const dashboardKeys = {
         [...dashboardKeys.all, 'account-balance-trend', range] as const,
     netWorthTrend: (range: NetWorthRange) =>
         [...dashboardKeys.all, 'net-worth-trend', range] as const,
+    spendingByCategory: () => [...dashboardKeys.all, 'spending-by-category'] as const,
     registerPreviews: () => [...dashboardKeys.all, 'register-previews'] as const,
 };
 
@@ -222,6 +236,35 @@ export function useNetWorthTrend(range: NetWorthRange) {
                     `/api/dashboard/net-worth-trend?range=${NET_WORTH_WIRE_BY_TOKEN[range]}`,
                     signal,
                     'load net worth trend',
+                ),
+            ),
+    });
+}
+
+function toSpendingByCategory(wire: WireSpending): SpendingByCategory {
+    return {
+        slices: wire.slices.map(s => ({
+            accountId: asAccountId(s.accountId),
+            name: s.accountName,
+            amountMinor: toMinor(s.amount),
+        })),
+        otherMinor: toMinor(wire.otherAmount),
+        totalMinor: toMinor(wire.totalAmount),
+        periodStart: wire.periodStart,
+        periodEnd: wire.periodEnd,
+        currencyCode: wire.currencyCode,
+    };
+}
+
+export function useSpendingByCategory() {
+    return useQuery({
+        queryKey: dashboardKeys.spendingByCategory(),
+        queryFn: async ({ signal }) =>
+            toSpendingByCategory(
+                await getJson<WireSpending>(
+                    '/api/dashboard/spending-by-category',
+                    signal,
+                    'load spending by category',
                 ),
             ),
     });

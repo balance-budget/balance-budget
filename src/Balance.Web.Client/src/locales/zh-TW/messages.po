@@ -188,8 +188,8 @@ msgstr "帳戶"
 msgid "Account (mixed currencies)"
 msgstr "帳戶（多幣別）"
 
-msgid "Account balances"
-msgstr "帳戶餘額"
+#~ msgid "Account balances"
+#~ msgstr "帳戶餘額"
 
 msgid "Account code"
 msgstr "帳戶代碼"
@@ -298,6 +298,9 @@ msgstr "所有支出"
 
 msgid "All income"
 msgstr "所有收入"
+
+msgid "All settled for this month."
+msgstr "本月已全部結清。"
 
 msgid "Allocated"
 msgstr "已分配"
@@ -455,6 +458,9 @@ msgstr "批次帳戶"
 msgid "Bulk counterparty"
 msgstr "批次交易對方"
 
+msgid "By category · This month"
+msgstr "依類別 · 本月"
+
 msgid "Cadence"
 msgstr "週期"
 
@@ -596,8 +602,8 @@ msgstr "無法載入日記帳分錄。"
 msgid "Couldn't load loans."
 msgstr "無法載入貸款。"
 
-msgid "Couldn't load recent activity."
-msgstr "無法載入近期明細。"
+#~ msgid "Couldn't load recent activity."
+#~ msgstr "無法載入近期明細。"
 
 msgid "Couldn't load recurring items."
 msgstr "無法載入經常性支出項目。"
@@ -607,6 +613,9 @@ msgstr "無法載入帳戶明細摘要。"
 
 msgid "Couldn't load register."
 msgstr "無法載入帳戶明細。"
+
+msgid "Couldn't load spending."
+msgstr "無法載入支出。"
 
 msgid "Couldn't load suggestions."
 msgstr "無法載入建議。"
@@ -623,11 +632,17 @@ msgstr "無法載入分佈。"
 msgid "Couldn't load the money flow."
 msgstr "無法載入現金流。"
 
+msgid "Couldn't load the net worth trend."
+msgstr "無法載入淨值趨勢。"
+
 msgid "Couldn't load the projection."
 msgstr "無法載入預測。"
 
 msgid "Couldn't load this loan."
 msgstr "無法載入此貸款。"
+
+msgid "Couldn't load upcoming items."
+msgstr "無法載入即將到來的項目。"
 
 msgid "Couldn't remove the recurring item."
 msgstr "無法移除定期項目。"
@@ -1158,6 +1173,9 @@ msgstr "IBAN 或帳號為必填。"
 msgid "Icon"
 msgstr "圖示"
 
+msgid "Illiquid"
+msgstr "非流動"
+
 msgid "Import a bank statement from Bank imports to get started."
 msgstr "從「銀行匯入」匯入銀行對帳單以開始使用。"
 
@@ -1309,6 +1327,9 @@ msgstr "已連結的銀行帳戶"
 msgid "Linked bank accounts"
 msgstr "已連結的銀行帳戶"
 
+msgid "Liquid"
+msgstr "流動"
+
 msgid "Liquid - counts toward liquid net worth"
 msgstr "流動 - 計入流動淨值"
 
@@ -1380,6 +1401,9 @@ msgstr "已比對"
 #. placeholder {0}: hint.otherAccountName
 msgid "Matches journal entry · {0}"
 msgstr "符合日記帳分錄 · {0}"
+
+msgid "Medium-term · Reserves"
+msgstr "中期 · 儲備"
 
 msgid "Medium-term reserves"
 msgstr "中期儲備"
@@ -1456,6 +1480,18 @@ msgstr "本期淨額為負（已排除於圖表外）"
 msgid "Net worth"
 msgstr "淨值"
 
+msgid "Net worth and liquid · All time"
+msgstr "淨值與流動 · 全部時間"
+
+msgid "Net worth and liquid · Last 3 years"
+msgstr "淨值與流動 · 最近 3 年"
+
+msgid "Net worth and liquid · Last year"
+msgstr "淨值與流動 · 最近一年"
+
+msgid "Net worth range"
+msgstr "淨值範圍"
+
 msgid "New"
 msgstr "新增"
 
@@ -1500,8 +1536,8 @@ msgstr "下一頁"
 msgid "No accounts yet."
 msgstr "尚無帳戶。"
 
-msgid "No balance history yet."
-msgstr "尚無餘額歷史。"
+#~ msgid "No balance history yet."
+#~ msgstr "尚無餘額歷史。"
 
 msgid "No bank accounts linked to one of your own accounts yet."
 msgstr "尚未有銀行帳戶連結到你自己的帳戶。"
@@ -1548,14 +1584,26 @@ msgstr "找不到「{query}」的相符項目。"
 msgid "No matches for “{search}”."
 msgstr "找不到「{search}」的相符項目。"
 
+msgid "No medium-term accounts yet."
+msgstr "尚無中期帳戶。"
+
 msgid "No money moved in this period."
 msgstr "本期沒有現金移動。"
+
+msgid "No net worth history yet."
+msgstr "尚無淨值歷史。"
 
 msgid "No recurring items yet"
 msgstr "尚無經常性支出項目"
 
 msgid "No rows match the current filters."
 msgstr "沒有列符合目前的篩選條件。"
+
+msgid "No short-term accounts yet."
+msgstr "尚無短期帳戶。"
+
+msgid "No spending yet this month."
+msgstr "本月尚無支出。"
 
 msgid "No structural matches in this window. Widen the date range or fall back to creating a new JE below."
 msgstr "此區間沒有結構性相符項目。請放寬日期範圍，或改為在下方建立新的日記帳分錄。"
@@ -1618,11 +1666,17 @@ msgstr "選填"
 msgid "or scroll down to create a new journal entry."
 msgstr "或向下捲動以建立新的日記帳分錄。"
 
+msgid "Other"
+msgstr "其他"
+
 msgid "Others"
 msgstr "其他"
 
 msgid "Outlook"
 msgstr "展望"
+
+msgid "Outlook →"
+msgstr "展望 →"
 
 msgid "Outstanding"
 msgstr "未償金額"
@@ -1764,6 +1818,9 @@ msgstr "本金"
 msgid "Projected"
 msgstr "預估"
 
+msgid "Projected month-end liquid"
+msgstr "預估月底流動資金"
+
 msgid "Rate"
 msgstr "利率"
 
@@ -1869,6 +1926,9 @@ msgstr "將草稿重設為伺服器建議"
 
 msgid "Reset what-if"
 msgstr "重設假設情境"
+
+msgid "Rest of this month"
+msgstr "本月剩餘時間"
 
 msgid "Restored to inbox."
 msgstr "已還原至收件匣。"
@@ -1995,6 +2055,9 @@ msgstr "無法進行設定。可能已有使用者存在，或所設定存取權
 msgid "Setup token"
 msgstr "設定存取權杖"
 
+msgid "Short-term · Spending"
+msgstr "短期 · 支出"
+
 msgid "Short-term spending"
 msgstr "短期支出"
 
@@ -2024,6 +2087,9 @@ msgstr "發生錯誤"
 
 msgid "Something went wrong."
 msgstr "發生錯誤。"
+
+msgid "Spending"
+msgstr "支出"
 
 #. placeholder {0}: formatNumber(lineCount)
 msgid "Split ({0} lines)"
@@ -2167,6 +2233,9 @@ msgstr "未知帳戶"
 
 msgid "Unknown counterparty"
 msgstr "未知交易對方"
+
+msgid "Upcoming"
+msgstr "即將到來"
 
 msgid "Upload an ING current-account CSV against the matching bank account. Re-uploads are safe - duplicate rows are skipped."
 msgstr "針對對應的銀行帳戶上傳 ING 活期帳戶 CSV。重複上傳是安全的 - 重複的項目會被略過。"
