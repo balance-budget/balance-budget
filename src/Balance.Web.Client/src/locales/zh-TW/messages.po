@@ -1333,6 +1333,15 @@ msgstr "流動"
 msgid "Liquid - counts toward liquid net worth"
 msgstr "流動 - 計入流動淨值"
 
+msgid "Liquid and illiquid · All time"
+msgstr "流動與非流動 · 全部時間"
+
+msgid "Liquid and illiquid · Last 3 years"
+msgstr "流動與非流動 · 最近 3 年"
+
+msgid "Liquid and illiquid · Last year"
+msgstr "流動與非流動 · 最近一年"
+
 msgid "Liquid net worth"
 msgstr "流動淨值"
 
@@ -1480,14 +1489,14 @@ msgstr "本期淨額為負（已排除於圖表外）"
 msgid "Net worth"
 msgstr "淨值"
 
-msgid "Net worth and liquid · All time"
-msgstr "淨值與流動 · 全部時間"
+#~ msgid "Net worth and liquid · All time"
+#~ msgstr "淨值與流動 · 全部時間"
 
-msgid "Net worth and liquid · Last 3 years"
-msgstr "淨值與流動 · 最近 3 年"
+#~ msgid "Net worth and liquid · Last 3 years"
+#~ msgstr "淨值與流動 · 最近 3 年"
 
-msgid "Net worth and liquid · Last year"
-msgstr "淨值與流動 · 最近一年"
+#~ msgid "Net worth and liquid · Last year"
+#~ msgstr "淨值與流動 · 最近一年"
 
 msgid "Net worth range"
 msgstr "淨值範圍"
