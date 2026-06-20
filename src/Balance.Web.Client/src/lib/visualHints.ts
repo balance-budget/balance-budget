@@ -116,14 +116,16 @@ export function chartBaseColorForType(accountType: AccountType): string {
     return ACCENT_BY_TYPE[accountType];
 }
 
-// Fan successive same-hue slices toward white so a monochrome donut stays
-// legible. The first (largest) slice keeps the pure accent; later slices step
-// progressively lighter. oklab keeps the steps perceptually even, and color-mix
-// anchors each shade to the CSS custom property instead of baking hex into JS.
+// Fan successive same-hue slices toward the theme's shade-mix target so a
+// monochrome donut stays legible. The first (largest) slice keeps the pure
+// accent; later slices step progressively toward that target — white on dark,
+// black on light, read from --chart-shade-mix so the steps keep contrast in
+// either theme. oklab keeps the steps perceptually even, and color-mix anchors
+// each shade to CSS custom properties instead of baking hex into JS.
 export function shadeOf(baseColor: string, index: number, count: number): string {
     if (count <= 1 || index <= 0) return baseColor;
     const pct = Math.round((index / (count - 1)) * 52);
-    return `color-mix(in oklab, ${baseColor}, white ${pct}%)`;
+    return `color-mix(in oklab, ${baseColor}, var(--chart-shade-mix) ${pct}%)`;
 }
 
 // Charts need lines that read as distinct even when all accounts share an

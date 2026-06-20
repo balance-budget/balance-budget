@@ -2,65 +2,86 @@
 @plugin 'tailwindcss-react-aria-components';
 
 /*
+ * Theme toggling rides Tailwind's standard `dark` variant, driven by a `.dark`
+ * class on <html> (written by the inline boot script + ThemeProvider with the
+ * *resolved* theme, never the `auto` preference). Light is the base palette
+ * (below in @theme); the .dark block overrides only the values that flip.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
  * Design tokens — Balance Design System.
  * Exposed both as CSS variables (use in arbitrary CSS) and as Tailwind v4
  * theme tokens (use as utilities, e.g. bg-surface-1, text-fg-2). Everything
  * not listed here (type scale, spacing, radii, tracking, blur, …) is stock
  * Tailwind — prefer default utilities over adding new tokens.
+ *
+ * Values below are the LIGHT palette (Tailwind's base). The `.dark` block
+ * further down restates the tokens that change for dark. Theme-derived tokens
+ * (the `*-soft` tints) are defined once via color-mix against their own hue, so
+ * they re-derive automatically when the hue flips between themes.
  */
 @theme {
-    /* Brand */
+    /* Brand — constant across themes. */
     --color-brand-primary: #fe8923;
     --color-brand-primary-dark: #c25a0a;
-    --color-brand-primary-soft: rgba(254, 137, 35, 0.12);
+    --color-brand-primary-soft: color-mix(in oklab, var(--color-brand-primary) 12%, transparent);
 
-    /* Surfaces (dark, default) */
-    --color-bg-0: #1b1b1b;
-    --color-bg-1: #373737;
-    --color-surface-1: rgba(0, 0, 0, 0.3);
-    --color-surface-2: rgba(255, 255, 255, 0.04);
-    --color-surface-3: rgba(255, 255, 255, 0.08);
-    --color-surface-overlay: rgba(0, 0, 0, 0.6);
+    /* Surfaces (light, default) — warm off-whites. Panels are translucent white
+       over the page gradient; surface-2/3 are subtle black-alpha lifts (hover). */
+    --color-bg-0: #faf8f5;
+    --color-bg-1: #efeae3;
+    --color-surface-1: rgba(255, 255, 255, 0.72);
+    --color-surface-2: rgba(0, 0, 0, 0.04);
+    --color-surface-3: rgba(0, 0, 0, 0.08);
+    --color-surface-overlay: rgba(0, 0, 0, 0.4);
 
-    /* Borders */
-    --color-border-soft: rgba(255, 255, 255, 0.08);
-    --color-border-strong: rgba(255, 255, 255, 0.18);
+    /* Borders — black alpha on light. */
+    --color-border-soft: rgba(0, 0, 0, 0.1);
+    --color-border-strong: rgba(0, 0, 0, 0.22);
 
-    /* Foreground */
-    --color-fg-1: #ffffff;
-    --color-fg-2: #c8c8c8;
-    --color-fg-3: #777777;
-    --color-fg-4: #4a4a4a;
+    /* Foreground — near-black ramp; fg-3 holds AA (4.5:1) on bg-0. */
+    --color-fg-1: #1b1b1b;
+    --color-fg-2: #444444;
+    --color-fg-3: #6b6b6b;
+    --color-fg-4: #aeaeae;
 
-    /* Semantic */
-    --color-success: #34c87a;
-    --color-success-soft: rgba(52, 200, 122, 0.14);
-    --color-danger: #ff5d5d;
-    --color-danger-strong: #ff2d2d;
-    --color-danger-soft: rgba(255, 93, 93, 0.14);
-    --color-warning: #f5b942;
-    --color-warning-soft: rgba(245, 185, 66, 0.14);
-    --color-info: #5aa9ff;
-    --color-info-soft: rgba(90, 169, 255, 0.14);
+    /* Semantic — light-tuned hues that hold AA as text on white and read as
+       fills. The .dark block restores the brighter dark-bg variants. */
+    --color-success: #0e8a4e;
+    --color-success-soft: color-mix(in oklab, var(--color-success) 14%, transparent);
+    --color-danger: #d22d2d;
+    --color-danger-strong: #b81f1f;
+    --color-danger-soft: color-mix(in oklab, var(--color-danger) 14%, transparent);
+    --color-warning: #b8730a;
+    --color-warning-soft: color-mix(in oklab, var(--color-warning) 14%, transparent);
+    --color-info: #1f6fd6;
+    --color-info-soft: color-mix(in oklab, var(--color-info) 14%, transparent);
 
     /* Chart hues — a neutral, distinguishable palette used as per-AccountType
        accents (see ACCENT_BY_TYPE) and as the generic same-type series palette
        (see CHART_PALETTE). Named by hue, not by spending category: these are not
-       "categories" (a term the domain deliberately avoids). */
-    --color-chart-amber: #fe8923;
-    --color-chart-blue: #5aa9ff;
-    --color-chart-violet: #a07cff;
-    --color-chart-pink: #ff6fa8;
-    --color-chart-green: #34c87a;
-    --color-chart-gold: #f5b942;
-    --color-chart-teal: #2dd4bf;
-    --color-chart-amber-soft: rgba(254, 137, 35, 0.12);
-    --color-chart-blue-soft: rgba(90, 169, 255, 0.12);
-    --color-chart-violet-soft: rgba(160, 124, 255, 0.12);
-    --color-chart-pink-soft: rgba(255, 111, 168, 0.12);
-    --color-chart-green-soft: rgba(52, 200, 122, 0.12);
-    --color-chart-gold-soft: rgba(245, 185, 66, 0.12);
-    --color-chart-teal-soft: rgba(45, 212, 191, 0.12);
+       "categories" (a term the domain deliberately avoids). Light values are
+       darkened to clear ~3:1 graphic contrast on white; .dark restores the
+       brighter variants. Soft tints derive from the hue. */
+    --color-chart-amber: #d9710f;
+    --color-chart-blue: #2f7fd6;
+    --color-chart-violet: #7c54e8;
+    --color-chart-pink: #d83d83;
+    --color-chart-green: #0e8a4e;
+    --color-chart-gold: #b8730a;
+    --color-chart-teal: #119488;
+    --color-chart-amber-soft: color-mix(in oklab, var(--color-chart-amber) 12%, transparent);
+    --color-chart-blue-soft: color-mix(in oklab, var(--color-chart-blue) 12%, transparent);
+    --color-chart-violet-soft: color-mix(in oklab, var(--color-chart-violet) 12%, transparent);
+    --color-chart-pink-soft: color-mix(in oklab, var(--color-chart-pink) 12%, transparent);
+    --color-chart-green-soft: color-mix(in oklab, var(--color-chart-green) 12%, transparent);
+    --color-chart-gold-soft: color-mix(in oklab, var(--color-chart-gold) 12%, transparent);
+    --color-chart-teal-soft: color-mix(in oklab, var(--color-chart-teal) 12%, transparent);
+
+    /* Direction the chart shade-separation mixes toward (see visualHints.ts):
+       darker on light backgrounds, lighter on dark. */
+    --chart-shade-mix: black;
 
     /* Type families */
     --font-sans: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -68,8 +89,9 @@
 
     /* Type scale, tracking, spacing, radii, blur: Tailwind defaults — no overrides. */
 
-    /* Shadows — Balance avoids drop shadows except for floating overlays. */
-    --shadow-overlay: 0 12px 40px rgba(0, 0, 0, 0.45);
+    /* Shadows — Balance avoids drop shadows except for floating overlays.
+       Lighter/softer on light; the .dark block restores the heavier dark one. */
+    --shadow-overlay: 0 12px 40px rgba(0, 0, 0, 0.16);
 
     /* Motion — Tailwind's supported global-default knobs, tuned for Balance. */
     --default-transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
@@ -81,8 +103,53 @@
  * body margin and applies --font-sans via --default-font-family; font
  * size/weight ride the browser defaults.
  */
+/*
+ * Dark palette — overrides only the tokens that flip. Brand, type, motion and
+ * the color-mix-derived `*-soft` tints inherit from @theme and re-derive from
+ * the restored hues. Restated as plain custom properties so the Tailwind
+ * utilities (which compile to var(--color-*)) pick them up at runtime.
+ */
+:where(html.dark) {
+    --color-bg-0: #1b1b1b;
+    --color-bg-1: #373737;
+    --color-surface-1: rgba(0, 0, 0, 0.3);
+    --color-surface-2: rgba(255, 255, 255, 0.04);
+    --color-surface-3: rgba(255, 255, 255, 0.08);
+    --color-surface-overlay: rgba(0, 0, 0, 0.6);
+
+    --color-border-soft: rgba(255, 255, 255, 0.08);
+    --color-border-strong: rgba(255, 255, 255, 0.18);
+
+    --color-fg-1: #ffffff;
+    --color-fg-2: #c8c8c8;
+    --color-fg-3: #777777;
+    --color-fg-4: #4a4a4a;
+
+    --color-success: #34c87a;
+    --color-danger: #ff5d5d;
+    --color-danger-strong: #ff2d2d;
+    --color-warning: #f5b942;
+    --color-info: #5aa9ff;
+
+    --color-chart-amber: #fe8923;
+    --color-chart-blue: #5aa9ff;
+    --color-chart-violet: #a07cff;
+    --color-chart-pink: #ff6fa8;
+    --color-chart-green: #34c87a;
+    --color-chart-gold: #f5b942;
+    --color-chart-teal: #2dd4bf;
+
+    --chart-shade-mix: white;
+
+    --shadow-overlay: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
 @layer base {
     html {
+        color-scheme: light;
+    }
+
+    html.dark {
         color-scheme: dark;
     }
 
