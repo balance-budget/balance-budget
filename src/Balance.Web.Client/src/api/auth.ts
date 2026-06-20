@@ -16,6 +16,7 @@ export type CurrentUser = {
     language: string | null;
     dateFormat: string | null;
     numberFormat: string | null;
+    theme: string | null;
 };
 
 export const authKeys = {
@@ -31,6 +32,7 @@ function toCurrentUser(wire: WireCurrentUser): CurrentUser {
         language: wire.language,
         dateFormat: wire.dateFormat,
         numberFormat: wire.numberFormat,
+        theme: wire.theme,
     };
 }
 

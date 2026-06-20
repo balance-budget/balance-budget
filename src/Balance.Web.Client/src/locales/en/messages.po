@@ -332,6 +332,9 @@ msgstr "Any sub-account"
 msgid "API tokens"
 msgstr "API tokens"
 
+msgid "Appearance"
+msgstr "Appearance"
+
 msgid "Apply suggestions"
 msgstr "Apply suggestions"
 
@@ -384,6 +387,9 @@ msgstr "Attached to {0}."
 
 msgid "Attached."
 msgstr "Attached."
+
+msgid "Auto (match system)"
+msgstr "Auto (match system)"
 
 #. placeholder {0}: hint.date
 msgid "Auto-matched to journal entry on {0}"
@@ -499,6 +505,9 @@ msgstr "Categorized."
 
 msgid "Categorizing…"
 msgstr "Categorizing…"
+
+msgid "Choose a light or dark theme, or follow your system setting. Applies immediately."
+msgstr "Choose a light or dark theme, or follow your system setting. Applies immediately."
 
 msgid "Chronological activity on this account."
 msgstr "Chronological activity on this account."
@@ -726,6 +735,9 @@ msgstr "Current"
 
 msgid "Custom"
 msgstr "Custom"
+
+msgid "Dark"
+msgstr "Dark"
 
 msgid "Dashboard"
 msgstr "Dashboard"
@@ -1305,6 +1317,9 @@ msgstr "Liabilities"
 
 msgid "Liability account"
 msgstr "Liability account"
+
+msgid "Light"
+msgstr "Light"
 
 msgid "Line description"
 msgstr "Line description"
@@ -2137,6 +2152,12 @@ msgstr "Sub-account…"
 msgid "Subscriptions"
 msgstr "Subscriptions"
 
+msgid "Switch to dark theme"
+msgstr "Switch to dark theme"
+
+msgid "Switch to light theme"
+msgstr "Switch to light theme"
+
 msgid "Switch to the personal-finance shape"
 msgstr "Switch to the personal-finance shape"
 
@@ -2166,6 +2187,9 @@ msgstr "The part's account holds its principal and posted history, so it can't b
 
 msgid "The real-world bank accounts behind your ledger accounts and counterparties."
 msgstr "The real-world bank accounts behind your ledger accounts and counterparties."
+
+msgid "Theme"
+msgstr "Theme"
 
 msgid "This can't be undone."
 msgstr "This can't be undone."

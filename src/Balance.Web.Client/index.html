@@ -1,10 +1,30 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Balance</title>
         <link rel="icon" href="/favicon.ico" sizes="any" />
+        <!--
+          Apply the saved theme before first paint to avoid a flash of the wrong
+          theme (ADR-0031). Mirrors src/lib/theme.ts: the 'balance-theme' key holds
+          auto|light|dark, and `auto` follows the OS. Keep the two in sync.
+        -->
+        <script>
+            (function () {
+                try {
+                    var pref = localStorage.getItem('balance-theme');
+                    if (pref !== 'light' && pref !== 'dark' && pref !== 'auto') pref = 'auto';
+                    var dark =
+                        pref === 'dark' ||
+                        (pref === 'auto' &&
+                            window.matchMedia('(prefers-color-scheme: dark)').matches);
+                    document.documentElement.classList.toggle('dark', dark);
+                } catch (e) {
+                    /* storage blocked: fall back to the light base palette */
+                }
+            })();
+        </script>
     </head>
     <body>
         <div id="root" class="min-h-dvh"></div>

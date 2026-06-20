@@ -332,6 +332,9 @@ msgstr "Elke subrekening"
 msgid "API tokens"
 msgstr "API-tokens"
 
+msgid "Appearance"
+msgstr "Weergave"
+
 msgid "Apply suggestions"
 msgstr "Suggesties toepassen"
 
@@ -384,6 +387,9 @@ msgstr "Gekoppeld aan {0}."
 
 msgid "Attached."
 msgstr "Gekoppeld."
+
+msgid "Auto (match system)"
+msgstr "Automatisch (systeem volgen)"
 
 #. placeholder {0}: hint.date
 msgid "Auto-matched to journal entry on {0}"
@@ -499,6 +505,9 @@ msgstr "Gecategoriseerd."
 
 msgid "Categorizing…"
 msgstr "Categoriseren…"
+
+msgid "Choose a light or dark theme, or follow your system setting. Applies immediately."
+msgstr "Kies een licht of donker thema, of volg je systeeminstelling. Wordt direct toegepast."
 
 msgid "Chronological activity on this account."
 msgstr "Chronologische activiteit op deze rekening."
@@ -726,6 +735,9 @@ msgstr "Huidig"
 
 msgid "Custom"
 msgstr "Aangepast"
+
+msgid "Dark"
+msgstr "Donker"
 
 msgid "Dashboard"
 msgstr "Dashboard"
@@ -1305,6 +1317,9 @@ msgstr "Passiva"
 
 msgid "Liability account"
 msgstr "Passivarekening"
+
+msgid "Light"
+msgstr "Licht"
 
 msgid "Line description"
 msgstr "Regelomschrijving"
@@ -2137,6 +2152,12 @@ msgstr "Subrekening…"
 msgid "Subscriptions"
 msgstr "Abonnementen"
 
+msgid "Switch to dark theme"
+msgstr "Schakel naar donker thema"
+
+msgid "Switch to light theme"
+msgstr "Schakel naar licht thema"
+
 msgid "Switch to the personal-finance shape"
 msgstr "Schakel over naar de privéfinanciënweergave"
 
@@ -2166,6 +2187,9 @@ msgstr "De rekening van het deel bevat de hoofdsom en geboekte historie en kan h
 
 msgid "The real-world bank accounts behind your ledger accounts and counterparties."
 msgstr "De echte bankrekeningen achter je grootboekrekeningen en tegenpartijen."
+
+msgid "Theme"
+msgstr "Thema"
 
 msgid "This can't be undone."
 msgstr "Dit kan niet ongedaan worden gemaakt."
