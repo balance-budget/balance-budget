@@ -75,6 +75,7 @@ export type TrendPoint = { date: string; balanceMinor: number };
 export type AccountTrend = {
     accountId: AccountId;
     name: string;
+    horizon: Horizon;
     accentColor: string;
     points: TrendPoint[];
 };
