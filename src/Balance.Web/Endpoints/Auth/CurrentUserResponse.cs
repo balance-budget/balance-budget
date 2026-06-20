@@ -9,5 +9,6 @@ internal sealed record CurrentUserResponse(
     string AuthScheme,
     string? Language,
     string? DateFormat,
-    string? NumberFormat
+    string? NumberFormat,
+    string? Theme
 );

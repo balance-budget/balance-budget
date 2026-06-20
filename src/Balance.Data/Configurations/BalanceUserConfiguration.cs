@@ -16,5 +16,6 @@ internal sealed class BalanceUserConfiguration : IEntityTypeConfiguration<Balanc
         builder.Property(u => u.Language).HasMaxLength(16);
         builder.Property(u => u.DateFormat).HasMaxLength(16);
         builder.Property(u => u.NumberFormat).HasMaxLength(16);
+        builder.Property(u => u.Theme).HasMaxLength(16);
     }
 }

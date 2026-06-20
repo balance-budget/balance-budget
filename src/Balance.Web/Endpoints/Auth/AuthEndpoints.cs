@@ -203,7 +203,8 @@ internal static class AuthEndpoints
                 identity.AuthenticationType ?? string.Empty,
                 user.Language,
                 user.DateFormat,
-                user.NumberFormat
+                user.NumberFormat,
+                user.Theme
             )
         );
     }
@@ -235,6 +236,7 @@ internal static class AuthEndpoints
         user.Language = request.Language;
         user.DateFormat = request.DateFormat;
         user.NumberFormat = request.NumberFormat;
+        user.Theme = request.Theme;
         await userManager.UpdateAsync(user);
 
         return TypedResults.NoContent();
