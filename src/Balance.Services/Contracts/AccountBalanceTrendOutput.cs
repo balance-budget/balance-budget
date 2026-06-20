@@ -1,3 +1,4 @@
+using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
 
 namespace Balance.Services.Contracts;
@@ -19,6 +20,7 @@ public sealed record AccountBalanceTrendOutput(
 public sealed record AccountTrendSeries(
     AccountId AccountId,
     string AccountName,
+    Horizon Horizon,
     long OpeningBalance,
     IReadOnlyList<TrendDelta> Deltas
 );
