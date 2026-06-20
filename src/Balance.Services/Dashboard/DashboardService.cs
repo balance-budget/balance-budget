@@ -181,6 +181,104 @@ internal sealed class DashboardService : IDashboardService
         return new AccountBalanceTrendOutput(series, periodStart, today, range, currencyCode);
     }
 
+    public async Task<Result<NetWorthTrendOutput>> GetNetWorthTrendAsync(
+        CurrencyCode currencyCode,
+        NetWorthRange range,
+        CancellationToken cancellationToken
+    )
+    {
+        var today = DateOnly.FromDateTime(_timeProvider.GetUtcNow().UtcDateTime);
+        var currentMonthStart = today.GetMonthStart();
+
+        // Asset + liability lines in this currency, dated via their entry. Net worth is the
+        // single signed sum over both types' raw amounts (see ComputeNetWorthAsync): liability
+        // credit balances are already negative, so summing collapses assets − liabilities.
+        var lines = _dbContext
+            .JournalLines.AsNoTracking()
+            .Join(
+                _dbContext.JournalEntries.AsNoTracking(),
+                l => l.JournalEntryId,
+                e => e.Id,
+                (l, e) =>
+                    new
+                    {
+                        l.Amount,
+                        l.AccountId,
+                        e.Date,
+                    }
+            )
+            .Join(
+                _dbContext.Accounts.AsNoTracking(),
+                x => x.AccountId,
+                a => a.Id,
+                (x, a) =>
+                    new
+                    {
+                        x.Amount,
+                        x.Date,
+                        a.CurrencyCode,
+                        a.AccountType,
+                        a.IsLiquid,
+                    }
+            )
+            .Where(x =>
+                x.CurrencyCode == currencyCode
+                && (x.AccountType == AccountType.Asset || x.AccountType == AccountType.Liability)
+            );
+
+        var startMonth = range switch
+        {
+            NetWorthRange.OneYear => currentMonthStart.AddYears(-1),
+            NetWorthRange.ThreeYears => currentMonthStart.AddYears(-3),
+            NetWorthRange.All => (
+                await lines.Select(x => (DateOnly?)x.Date).MinAsync(cancellationToken) ?? today
+            ).GetMonthStart(),
+            _ => throw new UnreachableException($"Unknown NetWorthRange '{range}'."),
+        };
+
+        // Opening net worth before the window, split by liquidity so we can seed both lines.
+        var openingRows = await lines
+            .Where(x => x.Date < startMonth)
+            .GroupBy(x => x.IsLiquid)
+            .Select(g => new { IsLiquid = g.Key, Sum = g.Sum(x => (long?)x.Amount) ?? 0L })
+            .ToListAsync(cancellationToken);
+        var cumLiquid = openingRows.FirstOrDefault(r => r.IsLiquid)?.Sum ?? 0L;
+        var cumIlliquid = openingRows.FirstOrDefault(r => !r.IsLiquid)?.Sum ?? 0L;
+        var cumAll = checked(cumLiquid + cumIlliquid);
+
+        // In-window daily movement, split by liquidity; aggregated in SQL, walked in memory.
+        var deltas = await lines
+            .Where(x => x.Date >= startMonth && x.Date <= today)
+            .GroupBy(x => new { x.Date, x.IsLiquid })
+            .Select(g => new
+            {
+                g.Key.Date,
+                g.Key.IsLiquid,
+                Sum = g.Sum(x => (long?)x.Amount) ?? 0L,
+            })
+            .OrderBy(r => r.Date)
+            .ToListAsync(cancellationToken);
+
+        var points = new List<NetWorthPoint>();
+        var idx = 0;
+        for (var month = startMonth; month <= currentMonthStart; month = month.AddMonths(1))
+        {
+            // Sample each past month at its end; the current (partial) month as of today.
+            var asOf = month == currentMonthStart ? today : month.GetMonthEnd();
+            while (idx < deltas.Count && deltas[idx].Date <= asOf)
+            {
+                cumAll = checked(cumAll + deltas[idx].Sum);
+                if (deltas[idx].IsLiquid)
+                    cumLiquid = checked(cumLiquid + deltas[idx].Sum);
+                idx++;
+            }
+
+            points.Add(new NetWorthPoint(asOf, cumAll, cumLiquid));
+        }
+
+        return new NetWorthTrendOutput(points, range, currencyCode);
+    }
+
     public async Task<Result<DashboardRegisterPreviewOutput>> GetRegisterPreviewsAsync(
         int rowsPerAccount,
         CancellationToken cancellationToken
