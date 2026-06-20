@@ -2,103 +2,52 @@ import { msg } from '@lingui/core/macro';
 import { type MessageDescriptor } from '@lingui/core';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { Link } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { accountIdentifier, useAccounts, type Account } from '../api/accounts';
-import { useCurrencyCatalog } from '../api/currencies';
 import {
     useAccountBalanceTrend,
-    useDashboardRegisterPreviews,
     useDashboardSummary,
+    useNetWorthTrend,
+    NET_WORTH_RANGES,
     TREND_RANGES,
-    type RegisterPreviewRow,
+    type AccountBalanceTrend,
+    type NetWorthRange,
     type TrendRange,
 } from '../api/dashboard';
 import { AccountAvatar } from '../components/AccountAvatar';
 import { Amount } from '../components/Amount';
 import { ErrorState } from '../components/ErrorState';
 import { MtdDeltaChip } from '../components/MtdDeltaChip';
+import { NetWorthChart } from '../components/NetWorthChart';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
+import { SpendingByCategoryPanel } from '../components/SpendingByCategoryPanel';
 import { TrendChart } from '../components/TrendChart';
+import { UpcomingPanel } from '../components/UpcomingPanel';
 import { selectedKey } from '../components/ui/selection';
 import { ToggleButton, ToggleButtonGroup } from '../components/ui/ToggleButtonGroup';
-import { cx } from '../lib/cx';
-import { isLedgerAccount } from '../lib/domain';
-import { formatMoney } from '../lib/money';
+import { isLedgerAccount, type Horizon } from '../lib/domain';
 
-function PreviewRow({ row }: { row: RegisterPreviewRow }) {
-    const catalog = useCurrencyCatalog();
-    const label = row.counterpartyName ?? row.entryDescription ?? row.lineDescription ?? '—';
-    const negative = row.amount.amount < 0;
-    return (
-        <div className="flex items-center justify-between gap-2">
-            <span className="text-xs text-fg-2 truncate">{label}</span>
-            <span
-                className={cx(
-                    'font-mono text-xs tabular-nums',
-                    negative ? 'text-fg-2' : 'text-success',
-                )}
-            >
-                {formatMoney(row.amount.amount, row.amount.currencyCode, catalog, { sign: true })}
-            </span>
-        </div>
-    );
-}
-
-function RegisterPreview({ rows, isPending }: { rows: RegisterPreviewRow[]; isPending: boolean }) {
-    if (isPending) {
-        return (
-            <div className="pl-12 flex flex-col gap-1">
-                <Skeleton className="h-3 w-2/3" />
-                <Skeleton className="h-3 w-1/2" />
-            </div>
-        );
-    }
-
-    if (rows.length === 0) {
-        return null;
-    }
-
-    return (
-        <div className="pl-12 flex flex-col gap-1">
-            {rows.map(r => (
-                <PreviewRow key={r.journalLineId} row={r} />
-            ))}
-        </div>
-    );
-}
-
-function AccountRow({
-    account,
-    previewRows,
-    previewPending,
-}: {
-    account: Account;
-    previewRows: RegisterPreviewRow[];
-    previewPending: boolean;
-}) {
+function AccountRow({ account }: { account: Account }) {
     const identifier = accountIdentifier(account);
     const isNegative = account.balance.amount < 0;
     return (
-        <div className="py-3 first:pt-0 last:pb-0 flex flex-col gap-2 border-b border-border-soft last:border-b-0">
-            <div className="flex items-center gap-3">
-                <AccountAvatar account={account} size="md" />
-                <div className="flex flex-col gap-[2px] flex-1 min-w-0">
-                    <span className="text-sm font-medium text-fg-1 truncate">{account.name}</span>
-                    <span className="text-xs text-fg-3 truncate">
-                        {account.type}
-                        {identifier ? ` · ${identifier}` : ''}
-                    </span>
-                </div>
-                <Amount
-                    minor={account.balance.amount}
-                    currencyCode={account.balance.currencyCode}
-                    size="inline"
-                    decimals={false}
-                    className={isNegative ? 'text-danger' : ''}
-                />
+        <div className="py-3 first:pt-0 last:pb-0 flex items-center gap-3 border-b border-border-soft last:border-b-0">
+            <AccountAvatar account={account} size="md" />
+            <div className="flex flex-col gap-[2px] flex-1 min-w-0">
+                <span className="text-sm font-medium text-fg-1 truncate">{account.name}</span>
+                <span className="text-xs text-fg-3 truncate">
+                    {account.type}
+                    {identifier ? ` · ${identifier}` : ''}
+                </span>
             </div>
-            <RegisterPreview rows={previewRows} isPending={previewPending} />
+            <Amount
+                minor={account.balance.amount}
+                currencyCode={account.balance.currencyCode}
+                size="inline"
+                decimals={false}
+                className={isNegative ? 'text-danger' : ''}
+            />
         </div>
     );
 }
@@ -106,9 +55,6 @@ function AccountRow({
 function AccountsPanel() {
     const { t } = useLingui();
     const accounts = useAccounts();
-    // One batched request for every account card's Register preview: fanning out one
-    // register call per account piles up on resource-constrained hosts.
-    const previews = useDashboardRegisterPreviews();
 
     if (accounts.isPending) {
         return (
@@ -129,9 +75,8 @@ function AccountsPanel() {
         );
     }
 
-    // Postable leaves only — branch accounts have no register of their own, their
-    // balance is just the roll-up of their descendants (ADR-0019).
-    // Sorted by code then name (numeric-aware), matching the sidebar's ordering.
+    // Postable leaves only — branch accounts have no balance of their own, just the roll-up
+    // of their descendants (ADR-0019). Sorted by code then name, matching the sidebar.
     const ledgerAccounts = accounts.data
         .filter(a => isLedgerAccount(a) && a.isPostable)
         .sort(
@@ -150,19 +95,8 @@ function AccountsPanel() {
 
     return (
         <div>
-            {previews.isError && (
-                <ErrorState
-                    message={t`Couldn't load recent activity.`}
-                    onRetry={() => void previews.refetch()}
-                />
-            )}
             {ledgerAccounts.map(a => (
-                <AccountRow
-                    key={a.id}
-                    account={a}
-                    previewRows={previews.data?.get(a.id) ?? []}
-                    previewPending={previews.isPending}
-                />
+                <AccountRow key={a.id} account={a} />
             ))}
         </div>
     );
@@ -297,13 +231,66 @@ const RANGE_SUBTITLE: Record<TrendRange, MessageDescriptor> = {
     '1Y': msg`Balance over time · Last year`,
 };
 
-function AccountBalanceTrendPanel() {
+/** One Horizon tier rendered as a signed-stacked area chart (ADR-0030). */
+function BalanceTierPanel({
+    title,
+    horizon,
+    trend,
+    range,
+    hiddenAccountIds,
+    onToggleSeries,
+    emptyMessage,
+    action,
+}: {
+    title: ReactNode;
+    horizon: Horizon;
+    trend: ReturnType<typeof useAccountBalanceTrend>;
+    range: TrendRange;
+    hiddenAccountIds: Set<string>;
+    onToggleSeries: (accountId: string) => void;
+    emptyMessage: string;
+    action?: ReactNode;
+}) {
     const { t, i18n } = useLingui();
+    const series = trend.data?.series.filter(
+        (s: AccountBalanceTrend['series'][number]) => s.horizon === horizon,
+    );
+
+    return (
+        <Panel>
+            <SectionHead title={title} subtitle={i18n._(RANGE_SUBTITLE[range])} action={action} />
+            {trend.isPending ? (
+                <Skeleton className="h-[220px] w-full" />
+            ) : trend.isError ? (
+                <ErrorState
+                    message={t`Couldn't load the balance trend.`}
+                    onRetry={() => void trend.refetch()}
+                />
+            ) : !series || series.length === 0 ? (
+                <div className="h-[220px] flex items-center justify-center text-sm text-fg-3">
+                    {emptyMessage}
+                </div>
+            ) : (
+                <TrendChart
+                    series={series}
+                    range={range}
+                    currencyCode={trend.data.currencyCode}
+                    height={220}
+                    variant="stacked"
+                    hiddenAccountIds={hiddenAccountIds}
+                    onToggleSeries={onToggleSeries}
+                />
+            )}
+        </Panel>
+    );
+}
+
+function BalanceTierPanels() {
+    const { t } = useLingui();
     const [range, setRange] = useState<TrendRange>('3M');
     const trend = useAccountBalanceTrend(range);
-    // Lives here (not in TrendChart) so toggles survive a range switch, during
-    // which TrendChart briefly unmounts behind the loading skeleton. Keyed by
-    // account id, so the same line stays hidden across ranges.
+    // Lives here so toggles survive a range switch (TrendChart briefly unmounts behind the
+    // skeleton). Account ids are unique across tiers, so one shared set covers both charts.
     const [hiddenAccountIds, setHiddenAccountIds] = useState<Set<string>>(() => new Set());
     const toggleSeries = (accountId: string) => {
         setHiddenAccountIds(prev => {
@@ -333,31 +320,82 @@ function AccountBalanceTrendPanel() {
     );
 
     return (
+        <>
+            <BalanceTierPanel
+                title={<Trans>Short-term · Spending</Trans>}
+                horizon="ShortTerm"
+                trend={trend}
+                range={range}
+                hiddenAccountIds={hiddenAccountIds}
+                onToggleSeries={toggleSeries}
+                emptyMessage={t`No short-term accounts yet.`}
+                action={pills}
+            />
+            <BalanceTierPanel
+                title={<Trans>Medium-term · Reserves</Trans>}
+                horizon="MediumTerm"
+                trend={trend}
+                range={range}
+                hiddenAccountIds={hiddenAccountIds}
+                onToggleSeries={toggleSeries}
+                emptyMessage={t`No medium-term accounts yet.`}
+            />
+        </>
+    );
+}
+
+const NET_WORTH_SUBTITLE: Record<NetWorthRange, MessageDescriptor> = {
+    '1Y': msg`Net worth and liquid · Last year`,
+    '3Y': msg`Net worth and liquid · Last 3 years`,
+    All: msg`Net worth and liquid · All time`,
+};
+
+function NetWorthTrendPanel() {
+    const { t, i18n } = useLingui();
+    const [range, setRange] = useState<NetWorthRange>('1Y');
+    const trend = useNetWorthTrend(range);
+
+    const pills = (
+        <ToggleButtonGroup
+            aria-label={t`Net worth range`}
+            disallowEmptySelection
+            selectedKeys={[range]}
+            onSelectionChange={keys => {
+                const next = selectedKey(keys);
+                if (next !== undefined) setRange(next as NetWorthRange);
+            }}
+        >
+            {NET_WORTH_RANGES.map(p => (
+                <ToggleButton key={p} id={p}>
+                    {p}
+                </ToggleButton>
+            ))}
+        </ToggleButtonGroup>
+    );
+
+    return (
         <Panel>
             <SectionHead
-                title={<Trans>Account balances</Trans>}
-                subtitle={i18n._(RANGE_SUBTITLE[range])}
+                title={<Trans>Net worth</Trans>}
+                subtitle={i18n._(NET_WORTH_SUBTITLE[range])}
                 action={pills}
             />
             {trend.isPending ? (
                 <Skeleton className="h-[240px] w-full" />
             ) : trend.isError ? (
                 <ErrorState
-                    message={t`Couldn't load the balance trend.`}
+                    message={t`Couldn't load the net worth trend.`}
                     onRetry={() => void trend.refetch()}
                 />
-            ) : trend.data.series.length === 0 ? (
+            ) : trend.data.points.length === 0 ? (
                 <div className="h-[240px] flex items-center justify-center text-sm text-fg-3">
-                    <Trans>No balance history yet.</Trans>
+                    <Trans>No net worth history yet.</Trans>
                 </div>
             ) : (
-                <TrendChart
-                    series={trend.data.series}
-                    range={range}
+                <NetWorthChart
+                    points={trend.data.points}
                     currencyCode={trend.data.currencyCode}
                     height={240}
-                    hiddenAccountIds={hiddenAccountIds}
-                    onToggleSeries={toggleSeries}
                 />
             )}
         </Panel>
@@ -369,10 +407,16 @@ export function Dashboard() {
         <>
             <KpiStrip />
 
-            {/* Trend over accounts, stacked full-width — a short chart beside a
-                long accounts list left a large empty quadrant. */}
+            {/* Vertical stack (ADR-0030): the two short/medium tier charts, the long-horizon
+                net-worth chart, the flow widgets, then the account balances. */}
             <section className="grid gap-[18px] grid-cols-1">
-                <AccountBalanceTrendPanel />
+                <BalanceTierPanels />
+                <NetWorthTrendPanel />
+
+                <div className="grid gap-[18px] grid-cols-1 lg:grid-cols-2">
+                    <SpendingByCategoryPanel />
+                    <UpcomingPanel />
+                </div>
 
                 <Panel>
                     <SectionHead

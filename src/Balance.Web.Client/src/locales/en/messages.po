@@ -188,8 +188,8 @@ msgstr "Account"
 msgid "Account (mixed currencies)"
 msgstr "Account (mixed currencies)"
 
-msgid "Account balances"
-msgstr "Account balances"
+#~ msgid "Account balances"
+#~ msgstr "Account balances"
 
 msgid "Account code"
 msgstr "Account code"
@@ -298,6 +298,9 @@ msgstr "All expenses"
 
 msgid "All income"
 msgstr "All income"
+
+msgid "All settled for this month."
+msgstr "All settled for this month."
 
 msgid "Allocated"
 msgstr "Allocated"
@@ -455,6 +458,9 @@ msgstr "Bulk account"
 msgid "Bulk counterparty"
 msgstr "Bulk counterparty"
 
+msgid "By category · This month"
+msgstr "By category · This month"
+
 msgid "Cadence"
 msgstr "Cadence"
 
@@ -596,8 +602,8 @@ msgstr "Couldn't load journal entry."
 msgid "Couldn't load loans."
 msgstr "Couldn't load loans."
 
-msgid "Couldn't load recent activity."
-msgstr "Couldn't load recent activity."
+#~ msgid "Couldn't load recent activity."
+#~ msgstr "Couldn't load recent activity."
 
 msgid "Couldn't load recurring items."
 msgstr "Couldn't load recurring items."
@@ -607,6 +613,9 @@ msgstr "Couldn't load register summary."
 
 msgid "Couldn't load register."
 msgstr "Couldn't load register."
+
+msgid "Couldn't load spending."
+msgstr "Couldn't load spending."
 
 msgid "Couldn't load suggestions."
 msgstr "Couldn't load suggestions."
@@ -623,11 +632,17 @@ msgstr "Couldn't load the distribution."
 msgid "Couldn't load the money flow."
 msgstr "Couldn't load the money flow."
 
+msgid "Couldn't load the net worth trend."
+msgstr "Couldn't load the net worth trend."
+
 msgid "Couldn't load the projection."
 msgstr "Couldn't load the projection."
 
 msgid "Couldn't load this loan."
 msgstr "Couldn't load this loan."
+
+msgid "Couldn't load upcoming items."
+msgstr "Couldn't load upcoming items."
 
 msgid "Couldn't remove the recurring item."
 msgstr "Couldn't remove the recurring item."
@@ -1158,6 +1173,9 @@ msgstr "IBAN or Account number is required."
 msgid "Icon"
 msgstr "Icon"
 
+msgid "Illiquid"
+msgstr "Illiquid"
+
 msgid "Import a bank statement from Bank imports to get started."
 msgstr "Import a bank statement from Bank imports to get started."
 
@@ -1309,6 +1327,9 @@ msgstr "Linked bank account"
 msgid "Linked bank accounts"
 msgstr "Linked bank accounts"
 
+msgid "Liquid"
+msgstr "Liquid"
+
 msgid "Liquid - counts toward liquid net worth"
 msgstr "Liquid - counts toward liquid net worth"
 
@@ -1380,6 +1401,9 @@ msgstr "Matched"
 #. placeholder {0}: hint.otherAccountName
 msgid "Matches journal entry · {0}"
 msgstr "Matches journal entry · {0}"
+
+msgid "Medium-term · Reserves"
+msgstr "Medium-term · Reserves"
 
 msgid "Medium-term reserves"
 msgstr "Medium-term reserves"
@@ -1456,6 +1480,18 @@ msgstr "Net negative this period (excluded from the chart)"
 msgid "Net worth"
 msgstr "Net worth"
 
+msgid "Net worth and liquid · All time"
+msgstr "Net worth and liquid · All time"
+
+msgid "Net worth and liquid · Last 3 years"
+msgstr "Net worth and liquid · Last 3 years"
+
+msgid "Net worth and liquid · Last year"
+msgstr "Net worth and liquid · Last year"
+
+msgid "Net worth range"
+msgstr "Net worth range"
+
 msgid "New"
 msgstr "New"
 
@@ -1500,8 +1536,8 @@ msgstr "Next page"
 msgid "No accounts yet."
 msgstr "No accounts yet."
 
-msgid "No balance history yet."
-msgstr "No balance history yet."
+#~ msgid "No balance history yet."
+#~ msgstr "No balance history yet."
 
 msgid "No bank accounts linked to one of your own accounts yet."
 msgstr "No bank accounts linked to one of your own accounts yet."
@@ -1548,14 +1584,26 @@ msgstr "No matches for “{query}”."
 msgid "No matches for “{search}”."
 msgstr "No matches for “{search}”."
 
+msgid "No medium-term accounts yet."
+msgstr "No medium-term accounts yet."
+
 msgid "No money moved in this period."
 msgstr "No money moved in this period."
+
+msgid "No net worth history yet."
+msgstr "No net worth history yet."
 
 msgid "No recurring items yet"
 msgstr "No recurring items yet"
 
 msgid "No rows match the current filters."
 msgstr "No rows match the current filters."
+
+msgid "No short-term accounts yet."
+msgstr "No short-term accounts yet."
+
+msgid "No spending yet this month."
+msgstr "No spending yet this month."
 
 msgid "No structural matches in this window. Widen the date range or fall back to creating a new JE below."
 msgstr "No structural matches in this window. Widen the date range or fall back to creating a new JE below."
@@ -1618,11 +1666,17 @@ msgstr "Optional"
 msgid "or scroll down to create a new journal entry."
 msgstr "or scroll down to create a new journal entry."
 
+msgid "Other"
+msgstr "Other"
+
 msgid "Others"
 msgstr "Others"
 
 msgid "Outlook"
 msgstr "Outlook"
+
+msgid "Outlook →"
+msgstr "Outlook →"
 
 msgid "Outstanding"
 msgstr "Outstanding"
@@ -1764,6 +1818,9 @@ msgstr "Principal"
 msgid "Projected"
 msgstr "Projected"
 
+msgid "Projected month-end liquid"
+msgstr "Projected month-end liquid"
+
 msgid "Rate"
 msgstr "Rate"
 
@@ -1869,6 +1926,9 @@ msgstr "Reset draft to server suggestion"
 
 msgid "Reset what-if"
 msgstr "Reset what-if"
+
+msgid "Rest of this month"
+msgstr "Rest of this month"
 
 msgid "Restored to inbox."
 msgstr "Restored to inbox."
@@ -1995,6 +2055,9 @@ msgstr "Setup is unavailable. Either a user already exists, or the setup token d
 msgid "Setup token"
 msgstr "Setup token"
 
+msgid "Short-term · Spending"
+msgstr "Short-term · Spending"
+
 msgid "Short-term spending"
 msgstr "Short-term spending"
 
@@ -2024,6 +2087,9 @@ msgstr "Something went wrong"
 
 msgid "Something went wrong."
 msgstr "Something went wrong."
+
+msgid "Spending"
+msgstr "Spending"
 
 #. placeholder {0}: formatNumber(lineCount)
 msgid "Split ({0} lines)"
@@ -2167,6 +2233,9 @@ msgstr "Unknown account"
 
 msgid "Unknown counterparty"
 msgstr "Unknown counterparty"
+
+msgid "Upcoming"
+msgstr "Upcoming"
 
 msgid "Upload an ING current-account CSV against the matching bank account. Re-uploads are safe - duplicate rows are skipped."
 msgstr "Upload an ING current-account CSV against the matching bank account. Re-uploads are safe - duplicate rows are skipped."

@@ -188,8 +188,8 @@ msgstr "Rekening"
 msgid "Account (mixed currencies)"
 msgstr "Rekening (gemengde valuta)"
 
-msgid "Account balances"
-msgstr "Rekeningsaldi"
+#~ msgid "Account balances"
+#~ msgstr "Rekeningsaldi"
 
 msgid "Account code"
 msgstr "Rekeningcode"
@@ -298,6 +298,9 @@ msgstr "Alle uitgaven"
 
 msgid "All income"
 msgstr "Alle inkomsten"
+
+msgid "All settled for this month."
+msgstr "Alles afgehandeld voor deze maand."
 
 msgid "Allocated"
 msgstr "Toegewezen"
@@ -455,6 +458,9 @@ msgstr "Bulkrekening"
 msgid "Bulk counterparty"
 msgstr "Bulktegenpartij"
 
+msgid "By category · This month"
+msgstr "Per categorie · Deze maand"
+
 msgid "Cadence"
 msgstr "Frequentie"
 
@@ -596,8 +602,8 @@ msgstr "Kon journaalpost niet laden."
 msgid "Couldn't load loans."
 msgstr "Kon leningen niet laden."
 
-msgid "Couldn't load recent activity."
-msgstr "Kon recente activiteit niet laden."
+#~ msgid "Couldn't load recent activity."
+#~ msgstr "Kon recente activiteit niet laden."
 
 msgid "Couldn't load recurring items."
 msgstr "Kan terugkerende posten niet laden."
@@ -607,6 +613,9 @@ msgstr "Kon registeroverzicht niet laden."
 
 msgid "Couldn't load register."
 msgstr "Kon register niet laden."
+
+msgid "Couldn't load spending."
+msgstr "Kan uitgaven niet laden."
 
 msgid "Couldn't load suggestions."
 msgstr "Kan suggesties niet laden."
@@ -623,11 +632,17 @@ msgstr "Kon de verdeling niet laden."
 msgid "Couldn't load the money flow."
 msgstr "Kon de geldstroom niet laden."
 
+msgid "Couldn't load the net worth trend."
+msgstr "Kan de vermogenstrend niet laden."
+
 msgid "Couldn't load the projection."
 msgstr "Kan de prognose niet laden."
 
 msgid "Couldn't load this loan."
 msgstr "Kon deze lening niet laden."
+
+msgid "Couldn't load upcoming items."
+msgstr "Kan aankomende posten niet laden."
 
 msgid "Couldn't remove the recurring item."
 msgstr "Kan de terugkerende post niet verwijderen."
@@ -1158,6 +1173,9 @@ msgstr "IBAN of rekeningnummer is vereist."
 msgid "Icon"
 msgstr "Pictogram"
 
+msgid "Illiquid"
+msgstr "Niet-liquide"
+
 msgid "Import a bank statement from Bank imports to get started."
 msgstr "Importeer een bankafschrift via Bankimports om te beginnen."
 
@@ -1309,6 +1327,9 @@ msgstr "Gekoppelde bankrekening"
 msgid "Linked bank accounts"
 msgstr "Gekoppelde bankrekeningen"
 
+msgid "Liquid"
+msgstr "Liquide"
+
 msgid "Liquid - counts toward liquid net worth"
 msgstr "Liquide - telt mee voor het liquide vermogen"
 
@@ -1380,6 +1401,9 @@ msgstr "Gematcht"
 #. placeholder {0}: hint.otherAccountName
 msgid "Matches journal entry · {0}"
 msgstr "Komt overeen met journaalpost · {0}"
+
+msgid "Medium-term · Reserves"
+msgstr "Middellange termijn · Reserves"
 
 msgid "Medium-term reserves"
 msgstr "Reserves op middellange termijn"
@@ -1456,6 +1480,18 @@ msgstr "Netto negatief deze periode (uitgesloten van de grafiek)"
 msgid "Net worth"
 msgstr "Nettovermogen"
 
+msgid "Net worth and liquid · All time"
+msgstr "Vermogen en liquide · Alle tijd"
+
+msgid "Net worth and liquid · Last 3 years"
+msgstr "Vermogen en liquide · Afgelopen 3 jaar"
+
+msgid "Net worth and liquid · Last year"
+msgstr "Vermogen en liquide · Afgelopen jaar"
+
+msgid "Net worth range"
+msgstr "Vermogensbereik"
+
 msgid "New"
 msgstr "Nieuw"
 
@@ -1500,8 +1536,8 @@ msgstr "Volgende pagina"
 msgid "No accounts yet."
 msgstr "Nog geen rekeningen."
 
-msgid "No balance history yet."
-msgstr "Nog geen saldohistorie."
+#~ msgid "No balance history yet."
+#~ msgstr "Nog geen saldohistorie."
 
 msgid "No bank accounts linked to one of your own accounts yet."
 msgstr "Nog geen bankrekeningen gekoppeld aan een van je eigen rekeningen."
@@ -1548,14 +1584,26 @@ msgstr "Geen resultaten voor “{query}”."
 msgid "No matches for “{search}”."
 msgstr "Geen resultaten voor “{search}”."
 
+msgid "No medium-term accounts yet."
+msgstr "Nog geen rekeningen op middellange termijn."
+
 msgid "No money moved in this period."
 msgstr "In deze periode is er geen geld verplaatst."
+
+msgid "No net worth history yet."
+msgstr "Nog geen vermogensgeschiedenis."
 
 msgid "No recurring items yet"
 msgstr "Nog geen terugkerende posten"
 
 msgid "No rows match the current filters."
 msgstr "Geen rijen komen overeen met de huidige filters."
+
+msgid "No short-term accounts yet."
+msgstr "Nog geen rekeningen op korte termijn."
+
+msgid "No spending yet this month."
+msgstr "Nog geen uitgaven deze maand."
 
 msgid "No structural matches in this window. Widen the date range or fall back to creating a new JE below."
 msgstr "Geen structurele overeenkomsten in dit venster. Verbreed het datumbereik of maak hieronder een nieuwe journaalpost aan."
@@ -1618,11 +1666,17 @@ msgstr "Optioneel"
 msgid "or scroll down to create a new journal entry."
 msgstr "of scroll omlaag om een nieuwe journaalpost aan te maken."
 
+msgid "Other"
+msgstr "Overig"
+
 msgid "Others"
 msgstr "Anderen"
 
 msgid "Outlook"
 msgstr "Vooruitblik"
+
+msgid "Outlook →"
+msgstr "Vooruitblik →"
 
 msgid "Outstanding"
 msgstr "Uitstaand"
@@ -1764,6 +1818,9 @@ msgstr "Hoofdsom"
 msgid "Projected"
 msgstr "Verwacht"
 
+msgid "Projected month-end liquid"
+msgstr "Verwacht liquide einde maand"
+
 msgid "Rate"
 msgstr "Rente"
 
@@ -1869,6 +1926,9 @@ msgstr "Concept terugzetten naar serversuggestie"
 
 msgid "Reset what-if"
 msgstr "Wat-als opnieuw instellen"
+
+msgid "Rest of this month"
+msgstr "Rest van deze maand"
 
 msgid "Restored to inbox."
 msgstr "Teruggezet in het postvak."
@@ -1995,6 +2055,9 @@ msgstr "Installatie is niet beschikbaar. Er bestaat al een gebruiker, of het ins
 msgid "Setup token"
 msgstr "Installatietoken"
 
+msgid "Short-term · Spending"
+msgstr "Korte termijn · Uitgaven"
+
 msgid "Short-term spending"
 msgstr "Uitgaven op korte termijn"
 
@@ -2024,6 +2087,9 @@ msgstr "Er ging iets mis"
 
 msgid "Something went wrong."
 msgstr "Er ging iets mis."
+
+msgid "Spending"
+msgstr "Uitgaven"
 
 #. placeholder {0}: formatNumber(lineCount)
 msgid "Split ({0} lines)"
@@ -2167,6 +2233,9 @@ msgstr "Onbekende rekening"
 
 msgid "Unknown counterparty"
 msgstr "Onbekende tegenpartij"
+
+msgid "Upcoming"
+msgstr "Aankomend"
 
 msgid "Upload an ING current-account CSV against the matching bank account. Re-uploads are safe - duplicate rows are skipped."
 msgstr "Upload een CSV van een ING-betaalrekening tegen de bijbehorende bankrekening. Opnieuw uploaden is veilig - dubbele rijen worden overgeslagen."

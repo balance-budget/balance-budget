@@ -54,7 +54,11 @@ export function NetWorthChart({ points, currencyCode, height = 240 }: NetWorthCh
     }, [rows]);
 
     const axis = useMemo(
-        () => moneyAxis(rows.flatMap(r => [r.netWorth, r.liquid]), { includeZero: true }),
+        () =>
+            moneyAxis(
+                rows.flatMap(r => [r.netWorth, r.liquid]),
+                { includeZero: true },
+            ),
         [rows],
     );
 
