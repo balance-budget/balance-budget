@@ -73,6 +73,7 @@ internal sealed class AccountService : IAccountService
                 CurrencyCode = a.CurrencyCode,
                 IsPostable = a.IsPostable,
                 IsLiquid = a.IsLiquid,
+                Horizon = a.Horizon,
                 ParentAccountId = a.ParentAccountId,
                 IconName = a.IconName,
             })
@@ -129,6 +130,7 @@ internal sealed class AccountService : IAccountService
             CurrencyCode = input.CurrencyCode,
             IsPostable = input.IsPostable,
             IsLiquid = input.IsLiquid,
+            Horizon = input.Horizon,
             ParentAccountId = input.ParentAccountId,
             IconName = NormalizeIconName(input.IconName),
             CreatedAt = now,
@@ -148,6 +150,7 @@ internal sealed class AccountService : IAccountService
             account.CurrencyCode,
             account.IsPostable,
             account.IsLiquid,
+            account.Horizon,
             account.ParentAccountId,
             account.IconName,
             Money.Zero(account.CurrencyCode),
@@ -292,6 +295,7 @@ internal sealed class AccountService : IAccountService
         account.CurrencyCode = input.CurrencyCode;
         account.IsPostable = input.IsPostable;
         account.IsLiquid = input.IsLiquid;
+        account.Horizon = input.Horizon;
         account.ParentAccountId = input.ParentAccountId;
         account.IconName = NormalizeIconName(input.IconName);
         account.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
@@ -322,6 +326,7 @@ internal sealed class AccountService : IAccountService
             a.CurrencyCode,
             a.IsPostable,
             a.IsLiquid,
+            a.Horizon,
             a.ParentAccountId,
             a.IconName,
             _dbContext.JournalLines.Where(l => l.AccountId == a.Id).Sum(l => (long?)l.Amount) ?? 0L,
@@ -347,6 +352,7 @@ internal sealed class AccountService : IAccountService
             row.CurrencyCode,
             row.IsPostable,
             row.IsLiquid,
+            row.Horizon,
             row.ParentAccountId,
             row.IconName,
             AccountSignConvention.ToBalance(row.AccountType, rawSum, row.CurrencyCode),
@@ -459,6 +465,7 @@ internal sealed class AccountService : IAccountService
         CurrencyCode CurrencyCode,
         bool IsPostable,
         bool IsLiquid,
+        Horizon Horizon,
         AccountId? ParentAccountId,
         string? IconName,
         long OwnRawSum,

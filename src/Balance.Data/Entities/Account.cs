@@ -32,6 +32,15 @@ public sealed class Account : BaseEntity<AccountId>
     public bool IsLiquid { get; set; } = true;
 
     /// <summary>
+    /// When the holder expects to draw on this account's money — a budgeting judgment orthogonal to
+    /// <see cref="AccountType"/> and <see cref="IsLiquid"/>, meaningful only on Asset and Liability
+    /// accounts; other types carry the default and ignore it. Drives the dashboard's tiered balance
+    /// charts (ADR-0030). Exempt from the subtree homogeneity rule (ADR-0019), so children in one
+    /// subtree may differ. Defaulted on creation by derivation, then freely editable.
+    /// </summary>
+    public Horizon Horizon { get; set; } = Horizon.ShortTerm;
+
+    /// <summary>
     /// Self-reference forming the chart-of-accounts tree; <c>null</c> for a root account.
     /// </summary>
     public AccountId? ParentAccountId { get; set; }

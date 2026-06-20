@@ -14,6 +14,7 @@ internal sealed record CreateAccountRequest(
     CurrencyCode CurrencyCode,
     bool IsPostable = true,
     bool IsLiquid = true,
+    Horizon Horizon = Horizon.ShortTerm,
     AccountId? ParentAccountId = null,
     string? IconName = null
 );
@@ -27,6 +28,7 @@ internal sealed partial class CreateAccountRequestValidator
         RuleFor(x => x.Code).NotEmpty().MaximumLength(32);
         RuleFor(x => x.AccountType).IsInEnum();
         RuleFor(x => x.CurrencyCode.Value).IsCurrencyCode();
+        RuleFor(x => x.Horizon).IsInEnum();
         RuleFor(x => x.IconName!)
             .MaximumLength(64)
             .Matches(IconNameRegex())
@@ -50,6 +52,7 @@ internal sealed class UpdateAccountInputValidator : AbstractValidator<UpdateAcco
         RuleFor(x => x.Code).NotEmpty().MaximumLength(32);
         RuleFor(x => x.AccountType).IsInEnum();
         RuleFor(x => x.CurrencyCode.Value).IsCurrencyCode();
+        RuleFor(x => x.Horizon).IsInEnum();
         RuleFor(x => x.IconName!)
             .MaximumLength(64)
             .Matches(CreateAccountRequestValidator.IconNameRegex())

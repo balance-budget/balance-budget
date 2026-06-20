@@ -140,6 +140,7 @@ internal static class AccountEndpoints
                 CurrencyCode = request.CurrencyCode,
                 IsPostable = request.IsPostable,
                 IsLiquid = request.IsLiquid,
+                Horizon = request.Horizon,
                 ParentAccountId = request.ParentAccountId,
                 IconName = request.IconName,
             },

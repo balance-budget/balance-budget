@@ -58,7 +58,7 @@ internal static class DevelopmentSeedData
         {
             // Chart of accounts: non-postable parents (ADR-0019) with postable leaves, all EUR.
             var checking = Leaf("1100", "Checking", AccountType.Asset);
-            var savings = Leaf("1200", "Savings", AccountType.Asset);
+            var savings = Leaf("1200", "Savings", AccountType.Asset, horizon: Horizon.MediumTerm);
 
             // Illiquid world: not day-to-day money, so excluded from liquid net worth — together
             // with the mortgage these keep the dev dashboard's two net-worth figures visibly apart.
@@ -1130,8 +1130,9 @@ internal static class DevelopmentSeedData
             string name,
             AccountType type,
             Account? parent = null,
-            bool liquid = true
-        ) => AddAccount(code, name, type, postable: true, liquid, parent?.Id);
+            bool liquid = true,
+            Horizon? horizon = null
+        ) => AddAccount(code, name, type, postable: true, liquid, parent?.Id, horizon);
 
         private Account AddAccount(
             string code,
@@ -1139,7 +1140,8 @@ internal static class DevelopmentSeedData
             AccountType type,
             bool postable,
             bool liquid,
-            AccountId? parent
+            AccountId? parent,
+            Horizon? horizon = null
         )
         {
             var account = new Account
@@ -1151,6 +1153,9 @@ internal static class DevelopmentSeedData
                 CurrencyCode = Eur,
                 IsPostable = postable,
                 IsLiquid = liquid,
+                // Mirror the create-time default (ADR-0030): illiquid money is Long-term, liquid is
+                // Short-term unless a caller pins it (e.g. the Savings account → Medium-term).
+                Horizon = horizon ?? (liquid ? Horizon.ShortTerm : Horizon.LongTerm),
                 ParentAccountId = parent,
                 CreatedAt = _structuralCreatedAt,
                 UpdatedAt = _structuralCreatedAt,

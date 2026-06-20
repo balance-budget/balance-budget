@@ -16,7 +16,7 @@ namespace Balance.Data.Sqlite.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.8");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
 
             modelBuilder.Entity("Balance.Data.Entities.Account", b =>
                 {
@@ -39,6 +39,11 @@ namespace Balance.Data.Sqlite.Migrations
                     b.Property<string>("CurrencyCode")
                         .IsRequired()
                         .HasMaxLength(8)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Horizon")
+                        .IsRequired()
+                        .HasMaxLength(16)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("IconName")
@@ -84,6 +89,7 @@ namespace Balance.Data.Sqlite.Migrations
                             Code = "3900",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CurrencyCode = "EUR",
+                            Horizon = "ShortTerm",
                             IsLiquid = true,
                             IsPostable = true,
                             Name = "Opening Balances",
