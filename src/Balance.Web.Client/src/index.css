@@ -61,16 +61,17 @@
     /* Chart hues — a neutral, distinguishable palette used as per-AccountType
        accents (see ACCENT_BY_TYPE) and as the generic same-type series palette
        (see CHART_PALETTE). Named by hue, not by spending category: these are not
-       "categories" (a term the domain deliberately avoids). Light values are
-       darkened to clear ~3:1 graphic contrast on white; .dark restores the
-       brighter variants. Soft tints derive from the hue. */
-    --color-chart-amber: #d9710f;
-    --color-chart-blue: #2f7fd6;
-    --color-chart-violet: #7c54e8;
-    --color-chart-pink: #d83d83;
-    --color-chart-green: #0e8a4e;
-    --color-chart-gold: #b8730a;
-    --color-chart-teal: #119488;
+       "categories" (a term the domain deliberately avoids). Derived from
+       Tailwind's built-in palette: the 600 shades clear ~3:1 graphic contrast on
+       white here, and .dark restores the brighter 400 shades for near-black.
+       Soft tints derive from the hue. */
+    --color-chart-amber: var(--color-orange-600);
+    --color-chart-blue: var(--color-blue-600);
+    --color-chart-violet: var(--color-violet-600);
+    --color-chart-pink: var(--color-pink-600);
+    --color-chart-green: var(--color-emerald-600);
+    --color-chart-gold: var(--color-amber-600);
+    --color-chart-teal: var(--color-teal-600);
     --color-chart-amber-soft: color-mix(in oklab, var(--color-chart-amber) 12%, transparent);
     --color-chart-blue-soft: color-mix(in oklab, var(--color-chart-blue) 12%, transparent);
     --color-chart-violet-soft: color-mix(in oklab, var(--color-chart-violet) 12%, transparent);
@@ -78,10 +79,6 @@
     --color-chart-green-soft: color-mix(in oklab, var(--color-chart-green) 12%, transparent);
     --color-chart-gold-soft: color-mix(in oklab, var(--color-chart-gold) 12%, transparent);
     --color-chart-teal-soft: color-mix(in oklab, var(--color-chart-teal) 12%, transparent);
-
-    /* Direction the chart shade-separation mixes toward (see visualHints.ts):
-       darker on light backgrounds, lighter on dark. */
-    --chart-shade-mix: black;
 
     /* Type families */
     --font-sans: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -131,15 +128,13 @@
     --color-warning: #f5b942;
     --color-info: #5aa9ff;
 
-    --color-chart-amber: #fe8923;
-    --color-chart-blue: #5aa9ff;
-    --color-chart-violet: #a07cff;
-    --color-chart-pink: #ff6fa8;
-    --color-chart-green: #34c87a;
-    --color-chart-gold: #f5b942;
-    --color-chart-teal: #2dd4bf;
-
-    --chart-shade-mix: white;
+    --color-chart-amber: var(--color-orange-400);
+    --color-chart-blue: var(--color-blue-400);
+    --color-chart-violet: var(--color-violet-400);
+    --color-chart-pink: var(--color-pink-400);
+    --color-chart-green: var(--color-emerald-400);
+    --color-chart-gold: var(--color-amber-400);
+    --color-chart-teal: var(--color-teal-400);
 
     --shadow-overlay: 0 12px 40px rgba(0, 0, 0, 0.45);
 }

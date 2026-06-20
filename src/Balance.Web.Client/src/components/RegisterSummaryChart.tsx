@@ -23,7 +23,7 @@ import {
     summaryBucketFor,
     type RegisterSummaryBucketSize,
 } from '../lib/registerSummary';
-import { chartBaseColorForType, shadeOf } from '../lib/visualHints';
+import { chartColorByIndex } from '../lib/visualHints';
 import { ErrorState } from './ErrorState';
 import { Skeleton } from './Skeleton';
 
@@ -111,11 +111,6 @@ export function RegisterSummaryChart({
         );
     }
 
-    // Same-hue shade ramp as the distribution donut: every segment shares the
-    // subtree's AccountType, so the type accent with per-segment shading reads
-    // better than a grab-bag palette.
-    const baseColor = chartBaseColorForType(account.type);
-
     return (
         <ResponsiveContainer width="100%" height={height}>
             <BarChart
@@ -168,7 +163,7 @@ export function RegisterSummaryChart({
                         dataKey={segment.accountId}
                         name={segment.accountName}
                         stackId="period"
-                        fill={shadeOf(baseColor, i, summary.segments.length)}
+                        fill={chartColorByIndex(i)}
                         isAnimationActive={false}
                     />
                 ))}

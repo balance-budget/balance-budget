@@ -155,7 +155,9 @@ function SankeyDiagram({
                 iterations={64}
                 align="left"
                 margin={{ top: 20, right: 120, bottom: 20, left: 120 }}
-                link={{ stroke: '#2b2b2b', strokeOpacity: 1 }}
+                // Theme-aware ribbon: a faint neutral that reads on both the
+                // light and dark page background (was a hardcoded near-black).
+                link={{ stroke: 'var(--color-fg-4)', strokeOpacity: 0.6 }}
                 node={<FlowNode expanded={expanded} onToggle={onToggle} />}
             >
                 <Tooltip
