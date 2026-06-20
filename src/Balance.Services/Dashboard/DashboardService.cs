@@ -82,14 +82,22 @@ internal sealed class DashboardService : IDashboardService
             _ => throw new UnreachableException($"Unknown TrendRange '{range}'."),
         };
 
-        // Liquid assets only: the trend chart is the day-to-day companion to the liquid
-        // net worth KPI, and one illiquid line (a house) would flatten every other series.
+        // Short- and Medium-term asset accounts only (ADR-0030): these feed the two stacked
+        // dashboard charts, split by Horizon. Long-term holdings (a house) would flatten every
+        // other series, so they live in the net-worth chart instead, never a per-account stack.
         var assets = await _dbContext
             .Accounts.AsNoTracking()
             .Where(a =>
-                a.AccountType == AccountType.Asset && a.CurrencyCode == currencyCode && a.IsLiquid
+                a.AccountType == AccountType.Asset
+                && a.CurrencyCode == currencyCode
+                && (a.Horizon == Horizon.ShortTerm || a.Horizon == Horizon.MediumTerm)
             )
-            .Select(a => new { a.Id, a.Name })
+            .Select(a => new
+            {
+                a.Id,
+                a.Name,
+                a.Horizon,
+            })
             .ToListAsync(cancellationToken);
 
         if (assets.Count == 0)
@@ -162,11 +170,12 @@ internal sealed class DashboardService : IDashboardService
             {
                 a.Id,
                 a.Name,
+                a.Horizon,
                 Opening = openings.GetValueOrDefault(a.Id),
                 Deltas = deltasByAccount.GetValueOrDefault(a.Id, []),
             })
             .Where(a => a.Opening != 0L || a.Deltas.Count > 0)
-            .Select(a => new AccountTrendSeries(a.Id, a.Name, a.Opening, a.Deltas))
+            .Select(a => new AccountTrendSeries(a.Id, a.Name, a.Horizon, a.Opening, a.Deltas))
             .ToList();
 
         return new AccountBalanceTrendOutput(series, periodStart, today, range, currencyCode);

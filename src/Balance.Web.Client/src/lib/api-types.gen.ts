@@ -918,6 +918,7 @@ export interface components {
         AccountTrendSeries: {
             accountId: components["schemas"]["AccountId"];
             accountName: string;
+            horizon: components["schemas"]["Horizon"];
             /** Format: int64 */
             openingBalance: number | string;
             deltas: components["schemas"]["TrendDelta"][];
