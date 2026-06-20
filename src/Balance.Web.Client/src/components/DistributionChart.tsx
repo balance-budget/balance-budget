@@ -197,7 +197,11 @@ function DistributionBody({
                                 nameKey="name"
                                 innerRadius={64}
                                 outerRadius={104}
-                                paddingAngle={2}
+                                // A bit of breathing room between slices, with
+                                // softly rounded ends, for a modern segmented look.
+                                paddingAngle={3}
+                                cornerRadius={3}
+                                minAngle={2}
                                 // Soften the fill to the same muted intensity as
                                 // the translucent line/area fills, with a thin
                                 // full-opacity border (per-slice stroke above) so
