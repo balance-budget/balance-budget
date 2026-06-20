@@ -194,6 +194,10 @@ function DistributionBody({
                                 outerRadius={104}
                                 paddingAngle={2}
                                 stroke="none"
+                                // Soften the slices to the same muted intensity as
+                                // the translucent line/area fills and the account
+                                // accents elsewhere, so the donut doesn't shout.
+                                fillOpacity={0.7}
                                 isAnimationActive={false}
                             />
                             <Tooltip
