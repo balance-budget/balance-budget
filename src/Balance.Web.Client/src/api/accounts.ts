@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { components } from '../lib/api-types.gen';
-import { type AccountId, type AccountType, asAccountId } from '../lib/domain';
+import { type AccountId, type AccountType, type Horizon, asAccountId } from '../lib/domain';
 import { getJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
 import { createResourceCrud } from '../lib/resourceApi';
@@ -31,6 +31,9 @@ export type Account = {
     /** Counts toward liquid net worth — false for the illiquid world (house, mortgage, pension).
      *  Only meaningful on Asset/Liability accounts; other types carry the default true. */
     isLiquid: boolean;
+    /** When the holder expects to draw on this money — drives the dashboard's tiered balance
+     *  charts (ADR-0030). Only meaningful on Asset/Liability accounts. */
+    horizon: Horizon;
     /** Parent in the chart-of-accounts tree, or null for a root account (ADR-0019). */
     parentId: AccountId | null;
     /** User-chosen avatar icon name, or null to inherit the AccountType default. */
@@ -71,6 +74,7 @@ function toAccount(wire: WireAccount): Account {
         currencyCode: wire.currencyCode,
         isPostable: wire.isPostable,
         isLiquid: wire.isLiquid,
+        horizon: wire.horizon,
         parentId: wire.parentAccountId === null ? null : asAccountId(wire.parentAccountId),
         icon: wire.iconName,
         balance: toMoney(wire.balance, wire.currencyCode),
