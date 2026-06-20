@@ -825,6 +825,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/dashboard/spending-by-category": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetDashboardSpendingByCategory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/dashboard/register-previews": {
         parameters: {
             query?: never;
@@ -1981,6 +1997,24 @@ export interface components {
             password: string;
             displayName: string;
             setupToken: null | string;
+        };
+        SpendingByCategoryOutput: {
+            slices: components["schemas"]["SpendingCategorySlice"][];
+            /** Format: int64 */
+            otherAmount: number | string;
+            /** Format: int64 */
+            totalAmount: number | string;
+            /** Format: date */
+            periodStart: string;
+            /** Format: date */
+            periodEnd: string;
+            currencyCode: components["schemas"]["CurrencyCode"];
+        };
+        SpendingCategorySlice: {
+            accountId: components["schemas"]["AccountId"];
+            accountName: string;
+            /** Format: int64 */
+            amount: number | string;
         };
         SuggestedCounterAccountOutput: {
             accountId: components["schemas"]["AccountId"];
@@ -5741,6 +5775,64 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NetWorthTrendOutput"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetDashboardSpendingByCategory: {
+        parameters: {
+            query?: {
+                currency?: components["schemas"]["CurrencyCode"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpendingByCategoryOutput"];
                 };
             };
             /** @description Bad Request */

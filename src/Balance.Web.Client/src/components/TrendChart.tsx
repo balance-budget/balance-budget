@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 import {
+    Area,
+    AreaChart,
     CartesianGrid,
     Legend,
     Line,
@@ -27,6 +29,9 @@ type TrendChartProps = {
     hiddenAccountIds: Set<string>;
     /** Toggle a single series on/off; called with the clicked legend's account id. */
     onToggleSeries: (accountId: string) => void;
+    /** `'line'` overlays each account; `'stacked'` stacks them as signed areas so the
+     *  top edge is the tier total and overdrafts dip below zero (ADR-0030). */
+    variant?: 'line' | 'stacked';
 };
 
 type ChartRow = { date: string } & Record<string, number | string>;
@@ -79,102 +84,146 @@ export function TrendChart({
     height = 240,
     hiddenAccountIds,
     onToggleSeries,
+    variant = 'line',
 }: TrendChartProps) {
     const catalog = useCurrencyCatalog();
     const rows = useMemo(() => buildRows(series), [series]);
     const ticks = useMemo(() => computeTicks(rows, range), [rows, range]);
     const seriesByKey = useMemo(() => new Map(series.map(s => [s.accountId, s])), [series]);
-    // Scale to the visible series only, so toggling a line off via the legend
-    // rescales the axis the way recharts' auto-domain used to.
-    const axis = useMemo(
-        () =>
-            moneyAxis(
-                series
-                    .filter(s => !hiddenAccountIds.has(s.accountId))
-                    .flatMap(s => s.points.map(p => p.balanceMinor)),
-            ),
-        [series, hiddenAccountIds],
-    );
+    // Scale to the visible series only, so toggling one off via the legend rescales the axis.
+    // A stacked chart must scale to the stacked totals (positives and negatives summed per day),
+    // not individual balances, or the bands overflow the axis.
+    const axis = useMemo(() => {
+        const visible = series.filter(s => !hiddenAccountIds.has(s.accountId));
+        if (variant === 'stacked') {
+            const sums = rows.flatMap(row => {
+                let pos = 0;
+                let neg = 0;
+                for (const s of visible) {
+                    const v = Number(row[s.accountId] ?? 0);
+                    if (v >= 0) pos += v;
+                    else neg += v;
+                }
+                return [pos, neg];
+            });
+            return moneyAxis(sums);
+        }
+        return moneyAxis(visible.flatMap(s => s.points.map(p => p.balanceMinor)));
+    }, [series, rows, hiddenAccountIds, variant]);
+
+    // Grid, axes, tooltip and legend are identical for both variants. Recharts traverses an
+    // array of children, so share them as one keyed array rather than duplicating the JSX.
+    const sharedChildren = [
+        <CartesianGrid
+            key="grid"
+            stroke="var(--color-border-soft)"
+            vertical={false}
+            strokeDasharray="2 4"
+        />,
+        <XAxis
+            key="x"
+            dataKey="date"
+            ticks={ticks}
+            interval={0}
+            tickFormatter={(d: string) => formatTrendAxisDate(d, range)}
+            tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
+            axisLine={false}
+            tickLine={false}
+        />,
+        <YAxis
+            key="y"
+            domain={axis?.domain ?? ['auto', 'auto']}
+            ticks={axis?.ticks}
+            tickFormatter={(v: number) => formatMoneyAxis(v, currencyCode, catalog)}
+            tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
+            axisLine={false}
+            tickLine={false}
+            width={60}
+        />,
+        <Tooltip
+            key="tip"
+            content={
+                <TrendTooltip
+                    seriesByKey={seriesByKey}
+                    currencyCode={currencyCode}
+                    catalog={catalog}
+                />
+            }
+            cursor={{
+                stroke: 'var(--color-border-strong)',
+                strokeWidth: 1,
+                strokeDasharray: '2 2',
+            }}
+        />,
+        <Legend
+            key="legend"
+            iconType="circle"
+            iconSize={8}
+            wrapperStyle={{ fontSize: 13, paddingTop: 8, cursor: 'pointer' }}
+            onClick={(entry: LegendEntry) => {
+                const id = legendAccountId(entry);
+                if (id !== null) onToggleSeries(id);
+            }}
+            formatter={(value: string, entry: LegendEntry) => {
+                const id = legendAccountId(entry);
+                const off = id !== null && hiddenAccountIds.has(id);
+                return (
+                    <span
+                        style={{
+                            color: off ? 'var(--color-fg-3)' : undefined,
+                            textDecoration: off ? 'line-through' : undefined,
+                        }}
+                    >
+                        {value}
+                    </span>
+                );
+            }}
+        />,
+        axis?.truncated ? <AxisBreakMark key="break" /> : null,
+    ];
+
+    const margin = { top: 10, right: 12, bottom: 0, left: 0 };
 
     return (
         <ResponsiveContainer width="100%" height={height}>
-            <LineChart data={rows} margin={{ top: 10, right: 12, bottom: 0, left: 0 }}>
-                <CartesianGrid
-                    stroke="var(--color-border-soft)"
-                    vertical={false}
-                    strokeDasharray="2 4"
-                />
-                <XAxis
-                    dataKey="date"
-                    ticks={ticks}
-                    interval={0}
-                    tickFormatter={(d: string) => formatTrendAxisDate(d, range)}
-                    tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                />
-                <YAxis
-                    domain={axis?.domain ?? ['auto', 'auto']}
-                    ticks={axis?.ticks}
-                    tickFormatter={(v: number) => formatMoneyAxis(v, currencyCode, catalog)}
-                    tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                    width={60}
-                />
-                <Tooltip
-                    content={
-                        <TrendTooltip
-                            seriesByKey={seriesByKey}
-                            currencyCode={currencyCode}
-                            catalog={catalog}
+            {variant === 'stacked' ? (
+                <AreaChart data={rows} margin={margin} stackOffset="sign">
+                    {sharedChildren}
+                    {series.map(s => (
+                        <Area
+                            key={s.accountId}
+                            type="monotone"
+                            dataKey={s.accountId}
+                            name={s.name}
+                            stackId="balance"
+                            stroke={s.accentColor}
+                            strokeWidth={1.25}
+                            fill={s.accentColor}
+                            fillOpacity={0.55}
+                            isAnimationActive={false}
+                            hide={hiddenAccountIds.has(s.accountId)}
                         />
-                    }
-                    cursor={{
-                        stroke: 'var(--color-border-strong)',
-                        strokeWidth: 1,
-                        strokeDasharray: '2 2',
-                    }}
-                />
-                <Legend
-                    iconType="circle"
-                    iconSize={8}
-                    wrapperStyle={{ fontSize: 13, paddingTop: 8, cursor: 'pointer' }}
-                    onClick={(entry: LegendEntry) => {
-                        const id = legendAccountId(entry);
-                        if (id !== null) onToggleSeries(id);
-                    }}
-                    formatter={(value: string, entry: LegendEntry) => {
-                        const id = legendAccountId(entry);
-                        const off = id !== null && hiddenAccountIds.has(id);
-                        return (
-                            <span
-                                style={{
-                                    color: off ? 'var(--color-fg-3)' : undefined,
-                                    textDecoration: off ? 'line-through' : undefined,
-                                }}
-                            >
-                                {value}
-                            </span>
-                        );
-                    }}
-                />
-                {axis?.truncated && <AxisBreakMark />}
-                {series.map(s => (
-                    <Line
-                        key={s.accountId}
-                        type="monotone"
-                        dataKey={s.accountId}
-                        name={s.name}
-                        stroke={s.accentColor}
-                        strokeWidth={1.75}
-                        dot={false}
-                        activeDot={{ r: 3, strokeWidth: 0 }}
-                        isAnimationActive={false}
-                        hide={hiddenAccountIds.has(s.accountId)}
-                    />
-                ))}
-            </LineChart>
+                    ))}
+                </AreaChart>
+            ) : (
+                <LineChart data={rows} margin={margin}>
+                    {sharedChildren}
+                    {series.map(s => (
+                        <Line
+                            key={s.accountId}
+                            type="monotone"
+                            dataKey={s.accountId}
+                            name={s.name}
+                            stroke={s.accentColor}
+                            strokeWidth={1.75}
+                            dot={false}
+                            activeDot={{ r: 3, strokeWidth: 0 }}
+                            isAnimationActive={false}
+                            hide={hiddenAccountIds.has(s.accountId)}
+                        />
+                    ))}
+                </LineChart>
+            )}
         </ResponsiveContainer>
     );
 }
