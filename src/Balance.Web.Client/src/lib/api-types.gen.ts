@@ -1235,6 +1235,7 @@ export interface components {
             language: null | string;
             dateFormat: null | string;
             numberFormat: null | string;
+            theme: null | string;
         };
         DashboardSummaryOutput: {
             netWorth: components["schemas"]["Money"];
@@ -2100,6 +2101,7 @@ export interface components {
             language: null | string;
             dateFormat: null | string;
             numberFormat: null | string;
+            theme: null | string;
         };
         /** Format: uuid */
         UserId: string;

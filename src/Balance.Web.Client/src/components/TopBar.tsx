@@ -3,6 +3,7 @@ import { Button } from 'react-aria-components';
 import { Link } from '@tanstack/react-router';
 import { Icon } from './Icon';
 import type { Crumb } from './PageHeader';
+import { useTheme } from './ThemeProvider';
 import { composeTailwindRenderProps } from './ui/compose';
 
 type TopBarProps = {
@@ -68,8 +69,24 @@ export function TopBar({ title, breadcrumb, period, onMenuClick, onSearchClick }
                 >
                     <Icon name="search" size={18} strokeWidth={1.75} />
                 </TopBarButton>
+                <ThemeToggle />
             </div>
         </header>
+    );
+}
+
+function ThemeToggle() {
+    const { t } = useLingui();
+    const { resolved, toggle } = useTheme();
+    const goingDark = resolved === 'light';
+    return (
+        <TopBarButton
+            onPress={toggle}
+            aria-label={goingDark ? t`Switch to dark theme` : t`Switch to light theme`}
+            className="w-9 h-9 rounded-lg bg-surface-2 border border-border-soft flex items-center justify-center text-fg-2 data-[hovered]:bg-surface-3 data-[hovered]:text-fg-1"
+        >
+            <Icon name={goingDark ? 'moon' : 'sun'} size={18} strokeWidth={1.75} />
+        </TopBarButton>
     );
 }
 

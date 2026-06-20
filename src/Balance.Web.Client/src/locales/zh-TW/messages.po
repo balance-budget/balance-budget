@@ -332,6 +332,9 @@ msgstr "任何子帳戶"
 msgid "API tokens"
 msgstr "API 存取權杖"
 
+msgid "Appearance"
+msgstr "外觀"
+
 msgid "Apply suggestions"
 msgstr "套用建議"
 
@@ -384,6 +387,9 @@ msgstr "已附加至 {0}。"
 
 msgid "Attached."
 msgstr "已附加。"
+
+msgid "Auto (match system)"
+msgstr "自動（跟隨系統）"
 
 #. placeholder {0}: hint.date
 msgid "Auto-matched to journal entry on {0}"
@@ -499,6 +505,9 @@ msgstr "已分類。"
 
 msgid "Categorizing…"
 msgstr "分類中…"
+
+msgid "Choose a light or dark theme, or follow your system setting. Applies immediately."
+msgstr "選擇淺色或深色主題，或跟隨系統設定。立即套用。"
 
 msgid "Chronological activity on this account."
 msgstr "此帳戶的時序明細"
@@ -726,6 +735,9 @@ msgstr "目前"
 
 msgid "Custom"
 msgstr "自訂"
+
+msgid "Dark"
+msgstr "深色"
 
 msgid "Dashboard"
 msgstr "儀表板"
@@ -1305,6 +1317,9 @@ msgstr "負債"
 
 msgid "Liability account"
 msgstr "負債帳戶"
+
+msgid "Light"
+msgstr "淺色"
 
 msgid "Line description"
 msgstr "列描述"
@@ -2137,6 +2152,12 @@ msgstr "子帳戶…"
 msgid "Subscriptions"
 msgstr "訂閱"
 
+msgid "Switch to dark theme"
+msgstr "切換至深色主題"
+
+msgid "Switch to light theme"
+msgstr "切換至淺色主題"
+
 msgid "Switch to the personal-finance shape"
 msgstr "切換為個人理財版面"
 
@@ -2166,6 +2187,9 @@ msgstr "此部分的帳戶持有其本金與已過帳歷史，因此無法在此
 
 msgid "The real-world bank accounts behind your ledger accounts and counterparties."
 msgstr "你的分類帳帳戶與交易對方背後的真實銀行帳戶。"
+
+msgid "Theme"
+msgstr "主題"
 
 msgid "This can't be undone."
 msgstr "此動作無法復原。"

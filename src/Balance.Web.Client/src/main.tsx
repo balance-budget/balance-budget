@@ -15,6 +15,7 @@ import '@fontsource/jetbrains-mono/500.css';
 import './index.css';
 import { authKeys } from './api/auth';
 import { RouteError } from './components/RouteError';
+import { ThemeProvider } from './components/ThemeProvider';
 import { AppToastRegion } from './components/ui/Toast';
 import { LocaleProvider } from './i18n/LocaleProvider';
 import { ApiError } from './lib/http';
@@ -89,10 +90,12 @@ if (!rootElement) throw new Error('Missing #root element in index.html');
 createRoot(rootElement).render(
     <StrictMode>
         <QueryClientProvider client={queryClient}>
-            <LocaleProvider>
-                <RouterProvider router={router} />
-                <AppToastRegion />
-            </LocaleProvider>
+            <ThemeProvider>
+                <LocaleProvider>
+                    <RouterProvider router={router} />
+                    <AppToastRegion />
+                </LocaleProvider>
+            </ThemeProvider>
         </QueryClientProvider>
     </StrictMode>,
 );
