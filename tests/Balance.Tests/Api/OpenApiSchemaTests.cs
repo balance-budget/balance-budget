@@ -75,6 +75,7 @@ internal sealed class OpenApiSchemaTests : EndpointsTestsBase
                 "/currencyCode",
                 "/isPostable",
                 "/isLiquid",
+                "/horizon",
                 "/parentAccountId",
                 "/iconName",
             ]);
@@ -101,6 +102,7 @@ internal sealed class OpenApiSchemaTests : EndpointsTestsBase
                 "currencyCode",
                 "isPostable",
                 "isLiquid",
+                "horizon",
                 "parentAccountId",
                 "iconName",
             ]);

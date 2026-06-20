@@ -841,22 +841,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/dashboard/register-previews": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["GetDashboardRegisterPreviews"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/reports/distribution": {
         parameters: {
             query?: never;
@@ -942,10 +926,6 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
-        };
-        AccountRegisterPreview: {
-            accountId: components["schemas"]["AccountId"];
-            rows: components["schemas"]["RegisterPreviewRow"][];
         };
         AccountTrendSeries: {
             accountId: components["schemas"]["AccountId"];
@@ -1255,11 +1235,6 @@ export interface components {
             language: null | string;
             dateFormat: null | string;
             numberFormat: null | string;
-        };
-        DashboardRegisterPreviewOutput: {
-            /** Format: int32 */
-            rowsPerAccount: number | string;
-            accounts: components["schemas"]["AccountRegisterPreview"][];
         };
         DashboardSummaryOutput: {
             netWorth: components["schemas"]["Money"];
@@ -1889,16 +1864,6 @@ export interface components {
         };
         /** @enum {unknown} */
         ReconciliationStatus: "Uncleared" | "Cleared" | "Reconciled";
-        RegisterPreviewRow: {
-            journalEntryId: components["schemas"]["JournalEntryId"];
-            journalLineId: components["schemas"]["JournalLineId"];
-            /** Format: date */
-            date: string;
-            entryDescription: null | string;
-            lineDescription: null | string;
-            counterpartyName: null | string;
-            amount: components["schemas"]["Money"];
-        };
         RegisterRowCounterLeg: {
             accountId: components["schemas"]["AccountId"];
             accountName: string;
@@ -5833,62 +5798,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SpendingByCategoryOutput"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    GetDashboardRegisterPreviews: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DashboardRegisterPreviewOutput"];
                 };
             };
             /** @description Bad Request */

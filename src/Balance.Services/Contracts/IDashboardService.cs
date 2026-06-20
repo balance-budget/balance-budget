@@ -26,9 +26,4 @@ public interface IDashboardService
         int topN,
         CancellationToken cancellationToken
     );
-
-    Task<Result<DashboardRegisterPreviewOutput>> GetRegisterPreviewsAsync(
-        int rowsPerAccount,
-        CancellationToken cancellationToken
-    );
 }

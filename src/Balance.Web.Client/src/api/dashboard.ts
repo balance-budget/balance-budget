@@ -1,13 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { components } from '../lib/api-types.gen';
-import {
-    asAccountId,
-    asJournalLineId,
-    type AccountId,
-    type AccountTrend,
-    type JournalLineId,
-    type TrendPoint,
-} from '../lib/domain';
+import { asAccountId, type AccountId, type AccountTrend, type TrendPoint } from '../lib/domain';
 import { getJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
 import { chartColorFor } from '../lib/visualHints';
@@ -16,7 +9,6 @@ type WireSummary = components['schemas']['DashboardSummaryOutput'];
 type WireTrend = components['schemas']['AccountBalanceTrendOutput'];
 type WireTrendSeries = components['schemas']['AccountTrendSeries'];
 type WireTrendDelta = components['schemas']['TrendDelta'];
-type WireRegisterPreviews = components['schemas']['DashboardRegisterPreviewOutput'];
 type WireNetWorthTrend = components['schemas']['NetWorthTrendOutput'];
 type WireSpending = components['schemas']['SpendingByCategoryOutput'];
 
@@ -90,20 +82,6 @@ export type SpendingByCategory = {
     currencyCode: string;
 };
 
-/** One row of a Register preview on a dashboard account card; the amount is
- *  already normalized to the account's normal balance, like the Register. */
-export type RegisterPreviewRow = {
-    journalLineId: JournalLineId;
-    date: string;
-    entryDescription: string | null;
-    lineDescription: string | null;
-    counterpartyName: string | null;
-    amount: Money;
-};
-
-/** Register previews keyed by postable account; accounts without activity are absent. */
-export type RegisterPreviews = ReadonlyMap<AccountId, RegisterPreviewRow[]>;
-
 export const dashboardKeys = {
     all: ['dashboard'] as const,
     summary: () => [...dashboardKeys.all, 'summary'] as const,
@@ -112,7 +90,6 @@ export const dashboardKeys = {
     netWorthTrend: (range: NetWorthRange) =>
         [...dashboardKeys.all, 'net-worth-trend', range] as const,
     spendingByCategory: () => [...dashboardKeys.all, 'spending-by-category'] as const,
-    registerPreviews: () => [...dashboardKeys.all, 'register-previews'] as const,
 };
 
 function fetchSummary(signal: AbortSignal): Promise<WireSummary> {
@@ -270,35 +247,3 @@ export function useSpendingByCategory() {
     });
 }
 
-function toRegisterPreviews(wire: WireRegisterPreviews): RegisterPreviews {
-    return new Map(
-        wire.accounts.map(a => [
-            asAccountId(a.accountId),
-            a.rows.map(r => ({
-                journalLineId: asJournalLineId(r.journalLineId),
-                date: r.date,
-                entryDescription: r.entryDescription,
-                lineDescription: r.lineDescription,
-                counterpartyName: r.counterpartyName,
-                amount: toMoney(r.amount),
-            })),
-        ]),
-    );
-}
-
-/** Every account card's Register preview in one request: the per-account fan-out
- *  the dashboard used to do (one register call per account) piles up on
- *  resource-constrained hosts. */
-export function useDashboardRegisterPreviews() {
-    return useQuery({
-        queryKey: dashboardKeys.registerPreviews(),
-        queryFn: async ({ signal }) =>
-            toRegisterPreviews(
-                await getJson<WireRegisterPreviews>(
-                    '/api/dashboard/register-previews',
-                    signal,
-                    'load register previews',
-                ),
-            ),
-    });
-}
