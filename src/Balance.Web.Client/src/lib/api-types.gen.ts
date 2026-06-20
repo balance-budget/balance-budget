@@ -809,6 +809,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/dashboard/net-worth-trend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetNetWorthTrend"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/dashboard/register-previews": {
         parameters: {
             query?: never;
@@ -1677,6 +1693,21 @@ export interface components {
             currencyCode: components["schemas"]["CurrencyCode"];
             nodes: components["schemas"]["MoneyFlowNode"][];
             links: components["schemas"]["MoneyFlowLink"][];
+        };
+        NetWorthPoint: {
+            /** Format: date */
+            asOf: string;
+            /** Format: int64 */
+            netWorth: number | string;
+            /** Format: int64 */
+            liquidNetWorth: number | string;
+        };
+        /** @enum {unknown} */
+        NetWorthRange: "OneYear" | "ThreeYears" | "All";
+        NetWorthTrendOutput: {
+            points: components["schemas"]["NetWorthPoint"][];
+            range: components["schemas"]["NetWorthRange"];
+            currencyCode: components["schemas"]["CurrencyCode"];
         };
         NewCounterpartyRequest: {
             name: string;
@@ -5651,6 +5682,65 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AccountBalanceTrendOutput"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetNetWorthTrend: {
+        parameters: {
+            query?: {
+                range?: components["schemas"]["NetWorthRange"];
+                currency?: components["schemas"]["CurrencyCode"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetWorthTrendOutput"];
                 };
             };
             /** @description Bad Request */

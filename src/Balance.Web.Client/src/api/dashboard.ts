@@ -17,6 +17,7 @@ type WireTrend = components['schemas']['AccountBalanceTrendOutput'];
 type WireTrendSeries = components['schemas']['AccountTrendSeries'];
 type WireTrendDelta = components['schemas']['TrendDelta'];
 type WireRegisterPreviews = components['schemas']['DashboardRegisterPreviewOutput'];
+type WireNetWorthTrend = components['schemas']['NetWorthTrendOutput'];
 
 export type DashboardSummary = {
     netWorth: Money;
@@ -55,6 +56,27 @@ export type AccountBalanceTrend = {
     currencyCode: string;
 };
 
+// Long-horizon net-worth chart (ADR-0030). UI tokens map to the wire enum, same
+// pattern as the balance-trend ranges above.
+export const NET_WORTH_RANGES = ['1Y', '3Y', 'All'] as const;
+export type NetWorthRange = (typeof NET_WORTH_RANGES)[number];
+
+const NET_WORTH_WIRE_BY_TOKEN = {
+    '1Y': 'OneYear',
+    '3Y': 'ThreeYears',
+    All: 'All',
+} as const satisfies Record<NetWorthRange, WireNetWorthTrend['range']>;
+
+/** One month's net worth: total plus the liquid subset. The gap between them is
+ *  illiquid net worth (e.g. a house amortizing against its mortgage). */
+export type NetWorthPoint = { date: string; netWorthMinor: number; liquidMinor: number };
+
+export type NetWorthTrend = {
+    points: NetWorthPoint[];
+    range: NetWorthRange;
+    currencyCode: string;
+};
+
 /** One row of a Register preview on a dashboard account card; the amount is
  *  already normalized to the account's normal balance, like the Register. */
 export type RegisterPreviewRow = {
@@ -74,6 +96,8 @@ export const dashboardKeys = {
     summary: () => [...dashboardKeys.all, 'summary'] as const,
     accountBalanceTrend: (range: TrendRange) =>
         [...dashboardKeys.all, 'account-balance-trend', range] as const,
+    netWorthTrend: (range: NetWorthRange) =>
+        [...dashboardKeys.all, 'net-worth-trend', range] as const,
     registerPreviews: () => [...dashboardKeys.all, 'register-previews'] as const,
 };
 
@@ -142,6 +166,7 @@ function toAccountTrend(
     return {
         accountId,
         name: series.accountName,
+        horizon: series.horizon,
         accentColor: chartColorFor(accountId),
         points: expandToDailyPoints(
             toMinor(series.openingBalance),
@@ -173,6 +198,32 @@ export function useAccountBalanceTrend(range: TrendRange) {
     return useQuery({
         queryKey: dashboardKeys.accountBalanceTrend(range),
         queryFn: async ({ signal }) => toTrend(await fetchTrend(range, signal)),
+    });
+}
+
+function toNetWorthTrend(wire: WireNetWorthTrend): NetWorthTrend {
+    return {
+        points: wire.points.map(p => ({
+            date: p.asOf,
+            netWorthMinor: toMinor(p.netWorth),
+            liquidMinor: toMinor(p.liquidNetWorth),
+        })),
+        range: NET_WORTH_RANGES.find(t => NET_WORTH_WIRE_BY_TOKEN[t] === wire.range) ?? '1Y',
+        currencyCode: wire.currencyCode,
+    };
+}
+
+export function useNetWorthTrend(range: NetWorthRange) {
+    return useQuery({
+        queryKey: dashboardKeys.netWorthTrend(range),
+        queryFn: async ({ signal }) =>
+            toNetWorthTrend(
+                await getJson<WireNetWorthTrend>(
+                    `/api/dashboard/net-worth-trend?range=${NET_WORTH_WIRE_BY_TOKEN[range]}`,
+                    signal,
+                    'load net worth trend',
+                ),
+            ),
     });
 }
 
