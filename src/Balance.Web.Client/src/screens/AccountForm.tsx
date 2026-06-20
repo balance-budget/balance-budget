@@ -13,7 +13,7 @@ import { Modal, ModalFooter } from '../components/ui/Modal';
 import { Select, SelectItem } from '../components/ui/Select';
 import { TextField } from '../components/ui/TextField';
 import { useToast } from '../components/ui/Toast';
-import type { AccountType } from '../lib/domain';
+import { type AccountType, type Horizon, HORIZON_ORDER } from '../lib/domain';
 import { handleFormError } from '../lib/formErrors';
 
 const ACCOUNT_TYPES: AccountType[] = ['Asset', 'Liability', 'Equity', 'Income', 'Expense'];
@@ -22,6 +22,11 @@ type Props = { onClose: () => void } & ({ mode: 'create' } | { mode: 'edit'; acc
 
 export function AccountFormModal(props: Props) {
     const { t } = useLingui();
+    const HORIZON_LABELS: Record<Horizon, string> = {
+        ShortTerm: t`Short-term spending`,
+        MediumTerm: t`Medium-term reserves`,
+        LongTerm: t`Long-term holdings`,
+    };
     const create = useCreateAccount();
     const update = useUpdateAccount();
     const toast = useToast();
@@ -36,6 +41,7 @@ export function AccountFormModal(props: Props) {
                   currencyCode: props.account.currencyCode,
                   isPostable: props.account.isPostable,
                   isLiquid: props.account.isLiquid,
+                  horizon: props.account.horizon,
                   parentId: props.account.parentId,
                   icon: props.account.icon,
               }
@@ -46,6 +52,7 @@ export function AccountFormModal(props: Props) {
                   currencyCode: '',
                   isPostable: true,
                   isLiquid: true,
+                  horizon: 'ShortTerm' as Horizon,
                   parentId: null as Account['parentId'],
                   icon: null as Account['icon'],
               };
@@ -56,6 +63,7 @@ export function AccountFormModal(props: Props) {
     const [currencyCode, setCurrencyCode] = useState(initial.currencyCode);
     const [isPostable, setIsPostable] = useState(initial.isPostable);
     const [isLiquid, setIsLiquid] = useState(initial.isLiquid);
+    const [horizon, setHorizon] = useState<Horizon>(initial.horizon);
     const [parentId, setParentId] = useState<Account['parentId']>(initial.parentId);
     const [icon, setIcon] = useState<Account['icon']>(initial.icon);
     const [topError, setTopError] = useState<string | null>(null);
@@ -76,6 +84,7 @@ export function AccountFormModal(props: Props) {
                     currencyCode,
                     isPostable,
                     isLiquid,
+                    horizon,
                     parentAccountId: parentId,
                     iconName: icon,
                 });
@@ -89,6 +98,7 @@ export function AccountFormModal(props: Props) {
                         currencyCode: props.account.currencyCode,
                         isPostable: props.account.isPostable,
                         isLiquid: props.account.isLiquid,
+                        horizon: props.account.horizon,
                         parentAccountId: props.account.parentId,
                         iconName: props.account.icon,
                     },
@@ -99,6 +109,7 @@ export function AccountFormModal(props: Props) {
                         currencyCode,
                         isPostable,
                         isLiquid,
+                        horizon,
                         parentAccountId: parentId,
                         iconName: icon,
                     },
@@ -239,24 +250,45 @@ export function AccountFormModal(props: Props) {
                     </span>
                 </Checkbox>
 
-                {/* Liquidity only means something on the balance sheet — Income/Expense/Equity
-                 *  accounts carry the default and the server ignores it. */}
+                {/* Liquidity and Horizon only mean something on the balance sheet —
+                 *  Income/Expense/Equity accounts carry the defaults and the server ignores them. */}
                 {(accountType === 'Asset' || accountType === 'Liability') && (
-                    <div className="mt-3">
-                        <Checkbox isSelected={isLiquid} onChange={setIsLiquid}>
-                            <span className="flex flex-col">
-                                <span className="text-xs font-medium text-fg-2">
-                                    <Trans>Liquid - counts toward liquid net worth</Trans>
+                    <>
+                        <div className="mt-3">
+                            <Checkbox isSelected={isLiquid} onChange={setIsLiquid}>
+                                <span className="flex flex-col">
+                                    <span className="text-xs font-medium text-fg-2">
+                                        <Trans>Liquid - counts toward liquid net worth</Trans>
+                                    </span>
+                                    <span className="text-xs text-fg-3">
+                                        <Trans>
+                                            Uncheck for long-term holdings such as a house,
+                                            mortgage, or investment portfolio.
+                                        </Trans>
+                                    </span>
                                 </span>
-                                <span className="text-xs text-fg-3">
-                                    <Trans>
-                                        Uncheck for long-term holdings such as a house, mortgage, or
-                                        investment portfolio.
-                                    </Trans>
-                                </span>
-                            </span>
-                        </Checkbox>
-                    </div>
+                            </Checkbox>
+                        </div>
+
+                        {/* Horizon groups balance trends by magnitude on the dashboard (ADR-0030):
+                         *  Short-term spending, Medium-term reserves, Long-term holdings. */}
+                        <Select
+                            label={t`Horizon`}
+                            name="Horizon"
+                            value={horizon}
+                            onChange={key => {
+                                setHorizon(key as Horizon);
+                            }}
+                            description={t`Groups this account into a dashboard balance chart by how soon you'll draw on it.`}
+                            className="mt-3"
+                        >
+                            {HORIZON_ORDER.map(h => (
+                                <SelectItem key={h} id={h}>
+                                    {HORIZON_LABELS[h]}
+                                </SelectItem>
+                            ))}
+                        </Select>
+                    </>
                 )}
 
                 <ModalFooter>

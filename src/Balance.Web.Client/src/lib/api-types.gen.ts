@@ -901,6 +901,7 @@ export interface components {
             currencyCode: components["schemas"]["CurrencyCode"];
             isPostable: boolean;
             isLiquid: boolean;
+            horizon: components["schemas"]["Horizon"];
             parentAccountId: null | components["schemas"]["AccountId"];
             iconName: null | string;
             balance: components["schemas"]["Money"];
@@ -1101,6 +1102,7 @@ export interface components {
             isPostable: boolean;
             /** @default true */
             isLiquid: boolean;
+            horizon?: components["schemas"]["Horizon"];
             parentAccountId?: unknown;
             iconName?: null | string;
         };
@@ -1264,6 +1266,8 @@ export interface components {
         DistributionType: "Income" | "Expense";
         /** @enum {unknown} */
         ExtraRepaymentPolicy: "LowerPayment" | "KeepPayment";
+        /** @enum {unknown} */
+        Horizon: "ShortTerm" | "MediumTerm" | "LongTerm";
         HttpValidationProblemDetails: {
             type?: null | string;
             title?: null | string;
@@ -1375,19 +1379,19 @@ export interface components {
             /** @enum {string} */
             op: "add" | "replace" | "test";
             /** @enum {string} */
-            path: "/name" | "/code" | "/accountType" | "/currencyCode" | "/isPostable" | "/isLiquid" | "/parentAccountId" | "/iconName";
+            path: "/name" | "/code" | "/accountType" | "/currencyCode" | "/isPostable" | "/isLiquid" | "/horizon" | "/parentAccountId" | "/iconName";
             value: unknown;
         } | {
             /** @enum {string} */
             op: "move" | "copy";
             /** @enum {string} */
-            path: "/name" | "/code" | "/accountType" | "/currencyCode" | "/isPostable" | "/isLiquid" | "/parentAccountId" | "/iconName";
+            path: "/name" | "/code" | "/accountType" | "/currencyCode" | "/isPostable" | "/isLiquid" | "/horizon" | "/parentAccountId" | "/iconName";
             from: string;
         } | {
             /** @enum {string} */
             op: "remove";
             /** @enum {string} */
-            path: "/name" | "/code" | "/accountType" | "/currencyCode" | "/isPostable" | "/isLiquid" | "/parentAccountId" | "/iconName";
+            path: "/name" | "/code" | "/accountType" | "/currencyCode" | "/isPostable" | "/isLiquid" | "/horizon" | "/parentAccountId" | "/iconName";
         })[];
         JsonPatchDocumentOfUpdateBankAccountInput: ({
             /** @enum {string} */
@@ -2003,6 +2007,8 @@ export interface components {
             currencyCode: string;
             isPostable: boolean;
             isLiquid: boolean;
+            /** @enum {unknown} */
+            horizon: "ShortTerm" | "MediumTerm" | "LongTerm";
             parentAccountId?: unknown;
             iconName?: null | string;
         };

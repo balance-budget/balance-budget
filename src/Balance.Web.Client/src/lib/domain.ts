@@ -63,6 +63,13 @@ export const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
     Equity: 'Equity',
 };
 
+/** When the holder expects to draw on an account's money — drives the dashboard's tiered balance
+ *  charts (ADR-0030). Orthogonal to liquidity; meaningful only on Asset/Liability accounts. */
+export type Horizon = 'ShortTerm' | 'MediumTerm' | 'LongTerm';
+
+/** Short → long ordering for the Horizon select and chart tiers. */
+export const HORIZON_ORDER: Horizon[] = ['ShortTerm', 'MediumTerm', 'LongTerm'];
+
 export type TrendPoint = { date: string; balanceMinor: number };
 
 export type AccountTrend = {

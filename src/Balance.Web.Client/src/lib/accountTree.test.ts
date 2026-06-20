@@ -12,6 +12,7 @@ function account(id: string, name: string, code: string, parentId: string | null
         currencyCode: 'EUR',
         isPostable: parentId !== null,
         isLiquid: true,
+        horizon: 'ShortTerm',
         parentId: parentId === null ? null : asAccountId(parentId),
         icon: null,
         balance: { amount: 0, currencyCode: 'EUR' },

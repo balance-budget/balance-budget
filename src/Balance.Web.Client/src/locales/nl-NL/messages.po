@@ -1128,6 +1128,9 @@ msgstr "Toekomst"
 msgid "General-journal table - explicit debit / credit per line."
 msgstr "Memoriaaltabel - expliciet debet / credit per regel."
 
+msgid "Groups this account into a dashboard balance chart by how soon you'll draw on it."
+msgstr "Groepeert dit account in een saldografiek op het dashboard op basis van hoe snel je het geld nodig hebt."
+
 msgid "Has an end date"
 msgstr "Heeft een einddatum"
 
@@ -1349,6 +1352,9 @@ msgstr "Leningen"
 msgid "Logins that have access to this ledger."
 msgstr "Logins met toegang tot dit grootboek."
 
+msgid "Long-term holdings"
+msgstr "Bezit op lange termijn"
+
 #. placeholder {0}: hint.loanName
 msgid "Looks like a payment on {0}"
 msgstr "Lijkt op een betaling op {0}"
@@ -1374,6 +1380,9 @@ msgstr "Gematcht"
 #. placeholder {0}: hint.otherAccountName
 msgid "Matches journal entry · {0}"
 msgstr "Komt overeen met journaalpost · {0}"
+
+msgid "Medium-term reserves"
+msgstr "Reserves op middellange termijn"
 
 msgid "Mine"
 msgstr "Van mij"
@@ -1985,6 +1994,9 @@ msgstr "Installatie is niet beschikbaar. Er bestaat al een gebruiker, of het ins
 
 msgid "Setup token"
 msgstr "Installatietoken"
+
+msgid "Short-term spending"
+msgstr "Uitgaven op korte termijn"
 
 msgid "Show rate history"
 msgstr "Rentehistorie tonen"

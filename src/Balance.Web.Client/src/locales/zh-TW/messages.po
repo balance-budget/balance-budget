@@ -1128,6 +1128,9 @@ msgstr "未來"
 msgid "General-journal table - explicit debit / credit per line."
 msgstr "普通日記帳表格 - 每列明確標示借方／貸方。"
 
+msgid "Groups this account into a dashboard balance chart by how soon you'll draw on it."
+msgstr "根據你多快會動用這筆錢，將此帳戶歸入儀表板的餘額圖表。"
+
 msgid "Has an end date"
 msgstr "有結束日期"
 
@@ -1349,6 +1352,9 @@ msgstr "貸款"
 msgid "Logins that have access to this ledger."
 msgstr "可存取此分類帳的登入帳號。"
 
+msgid "Long-term holdings"
+msgstr "長期持有"
+
 #. placeholder {0}: hint.loanName
 msgid "Looks like a payment on {0}"
 msgstr "看起來像是 {0} 的支付"
@@ -1374,6 +1380,9 @@ msgstr "已比對"
 #. placeholder {0}: hint.otherAccountName
 msgid "Matches journal entry · {0}"
 msgstr "符合日記帳分錄 · {0}"
+
+msgid "Medium-term reserves"
+msgstr "中期儲備"
 
 msgid "Mine"
 msgstr "我的"
@@ -1985,6 +1994,9 @@ msgstr "無法進行設定。可能已有使用者存在，或所設定存取權
 
 msgid "Setup token"
 msgstr "設定存取權杖"
+
+msgid "Short-term spending"
+msgstr "短期支出"
 
 msgid "Show rate history"
 msgstr "顯示利率歷史"

@@ -1128,6 +1128,9 @@ msgstr "Future"
 msgid "General-journal table - explicit debit / credit per line."
 msgstr "General-journal table - explicit debit / credit per line."
 
+msgid "Groups this account into a dashboard balance chart by how soon you'll draw on it."
+msgstr "Groups this account into a dashboard balance chart by how soon you'll draw on it."
+
 msgid "Has an end date"
 msgstr "Has an end date"
 
@@ -1349,6 +1352,9 @@ msgstr "Loans"
 msgid "Logins that have access to this ledger."
 msgstr "Logins that have access to this ledger."
 
+msgid "Long-term holdings"
+msgstr "Long-term holdings"
+
 #. placeholder {0}: hint.loanName
 msgid "Looks like a payment on {0}"
 msgstr "Looks like a payment on {0}"
@@ -1374,6 +1380,9 @@ msgstr "Matched"
 #. placeholder {0}: hint.otherAccountName
 msgid "Matches journal entry · {0}"
 msgstr "Matches journal entry · {0}"
+
+msgid "Medium-term reserves"
+msgstr "Medium-term reserves"
 
 msgid "Mine"
 msgstr "Mine"
@@ -1985,6 +1994,9 @@ msgstr "Setup is unavailable. Either a user already exists, or the setup token d
 
 msgid "Setup token"
 msgstr "Setup token"
+
+msgid "Short-term spending"
+msgstr "Short-term spending"
 
 msgid "Show rate history"
 msgstr "Show rate history"

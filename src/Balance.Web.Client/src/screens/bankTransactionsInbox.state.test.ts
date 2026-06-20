@@ -83,6 +83,7 @@ function account(id: AccountId, overrides: Partial<Account> = {}): Account {
         currencyCode: 'EUR',
         isPostable: true,
         isLiquid: true,
+        horizon: 'ShortTerm',
         parentId: null,
         icon: null,
         balance: { amount: 0, currencyCode: 'EUR' },
