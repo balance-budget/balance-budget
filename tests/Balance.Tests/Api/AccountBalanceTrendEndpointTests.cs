@@ -301,10 +301,11 @@ internal sealed class AccountBalanceTrendEndpointTests : EndpointsTestsBase
     }
 
     [Test]
-    public async Task GetTrend_excludes_illiquid_assets()
+    public async Task GetTrend_excludes_long_term_holdings()
     {
-        // The trend chart is the day-to-day companion to the liquid net worth KPI — an
-        // illiquid asset (a house) would flatten every other series into the baseline.
+        // The stacked trend charts cover the Short- and Medium-term tiers only (ADR-0030); a
+        // Long-term holding (a house) would flatten every other series and belongs to the
+        // net-worth chart instead.
         using var client = Factory.CreateClient();
         var currency = await CreateIsolatedCurrencyAsync(client);
 
@@ -313,7 +314,8 @@ internal sealed class AccountBalanceTrendEndpointTests : EndpointsTestsBase
             $"Trend-Home-{Guid.NewGuid():N}",
             "Asset",
             currency,
-            isLiquid: false
+            isLiquid: false,
+            horizon: "LongTerm"
         );
         var checking = await CreateAccountAsync(
             client,
@@ -369,6 +371,107 @@ internal sealed class AccountBalanceTrendEndpointTests : EndpointsTestsBase
         await Assert.That(SeriesFor(trend, silentAsset.Id)).IsNull();
     }
 
+    [Test]
+    public async Task GetNetWorth_defaults_to_one_year_with_monthly_points()
+    {
+        using var client = Factory.CreateClient();
+
+        using var response = await client.GetAsync(
+            new Uri("/api/dashboard/net-worth-trend", UriKind.Relative)
+        );
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        var trend = await response.Content.ReadFromJsonAsync<NetWorthTrendDto>();
+        await Assert.That(trend).IsNotNull();
+        await Assert.That(trend!.Range).IsEqualTo("OneYear");
+        await Assert.That(trend.CurrencyCode).IsEqualTo("EUR");
+        // One point per month across the trailing year, inclusive of both ends.
+        await Assert.That(trend.Points.Count).IsEqualTo(13);
+        await Assert.That(trend.Points[^1].AsOf).IsEqualTo(DateOnly.FromDateTime(DateTime.UtcNow));
+    }
+
+    [Test]
+    public async Task GetNetWorth_separates_liquid_from_total_and_includes_illiquid()
+    {
+        using var client = Factory.CreateClient();
+        var currency = await CreateIsolatedCurrencyAsync(client);
+
+        var checking = await CreateAccountAsync(
+            client,
+            $"NW-Checking-{Guid.NewGuid():N}",
+            "Asset",
+            currency
+        );
+        var home = await CreateAccountAsync(
+            client,
+            $"NW-Home-{Guid.NewGuid():N}",
+            "Asset",
+            currency,
+            isLiquid: false,
+            horizon: "LongTerm"
+        );
+        var equity = await CreateAccountAsync(
+            client,
+            $"NW-Equity-{Guid.NewGuid():N}",
+            "Equity",
+            currency
+        );
+
+        // Both opened within the trailing year so they land in the window.
+        var openDate = DateOnly.FromDateTime(DateTime.UtcNow).AddMonths(-2);
+        await PostJournalEntryAsync(
+            client,
+            openDate,
+            [
+                new CreateJournalLineRequestDto(checking.Id, 100_000L, null),
+                new CreateJournalLineRequestDto(equity.Id, -100_000L, null),
+            ]
+        );
+        await PostJournalEntryAsync(
+            client,
+            openDate,
+            [
+                new CreateJournalLineRequestDto(home.Id, 38_000_000L, null),
+                new CreateJournalLineRequestDto(equity.Id, -38_000_000L, null),
+            ]
+        );
+
+        var trend = await GetNetWorthAsync(client, currency: currency);
+        var latest = trend.Points[^1];
+
+        // Total net worth counts the illiquid house; liquid net worth does not.
+        await Assert.That(latest.NetWorth).IsEqualTo(38_100_000L);
+        await Assert.That(latest.LiquidNetWorth).IsEqualTo(100_000L);
+    }
+
+    private static async Task<NetWorthTrendDto> GetNetWorthAsync(
+        HttpClient client,
+        string? range = null,
+        string? currency = null
+    )
+    {
+        var query = new List<string>();
+        if (range is not null)
+        {
+            query.Add($"range={range}");
+        }
+
+        if (currency is not null)
+        {
+            query.Add($"currency={currency}");
+        }
+
+        var path =
+            query.Count == 0
+                ? "/api/dashboard/net-worth-trend"
+                : $"/api/dashboard/net-worth-trend?{string.Join("&", query)}";
+
+        using var response = await client.GetAsync(new Uri(path, UriKind.Relative));
+        response.EnsureSuccessStatusCode();
+        var trend = await response.Content.ReadFromJsonAsync<NetWorthTrendDto>();
+        return trend!;
+    }
+
     private static AccountTrendSeriesDto? SeriesFor(AccountBalanceTrendDto trend, Guid accountId) =>
         trend.Series.FirstOrDefault(s => s.AccountId == accountId);
 
@@ -417,12 +520,14 @@ internal sealed class AccountBalanceTrendEndpointTests : EndpointsTestsBase
         string name,
         string accountType,
         string currencyCode = "EUR",
-        bool isLiquid = true
+        bool isLiquid = true,
+        string horizon = "ShortTerm"
     )
     {
         var req = new CreateAccountRequestDto(name, accountType, currencyCode)
         {
             IsLiquid = isLiquid,
+            Horizon = horizon,
         };
         using var response = await client.PostAsJsonAsync(
             new Uri("/api/accounts", UriKind.Relative),
@@ -464,8 +569,17 @@ internal sealed record AccountBalanceTrendDto(
 internal sealed record AccountTrendSeriesDto(
     Guid AccountId,
     string AccountName,
+    string Horizon,
     long OpeningBalance,
     IReadOnlyList<TrendDeltaDto> Deltas
 );
 
 internal sealed record TrendDeltaDto(DateOnly Date, long Amount);
+
+internal sealed record NetWorthTrendDto(
+    IReadOnlyList<NetWorthPointDto> Points,
+    string Range,
+    string CurrencyCode
+);
+
+internal sealed record NetWorthPointDto(DateOnly AsOf, long NetWorth, long LiquidNetWorth);

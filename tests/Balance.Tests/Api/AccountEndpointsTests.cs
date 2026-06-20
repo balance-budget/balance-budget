@@ -595,6 +595,7 @@ internal sealed record AccountDto(
     string? Code = null,
     bool IsPostable = true,
     bool IsLiquid = true,
+    string Horizon = "ShortTerm",
     Guid? ParentAccountId = null,
     MoneyDto? Balance = null,
     BankAccountSummaryDto? BankAccount = null,
@@ -617,6 +618,7 @@ internal sealed record CreateAccountRequestDto(string Name, string AccountType, 
     public string Code { get; init; } = $"AC{Guid.NewGuid():N}"[..16];
     public bool IsPostable { get; init; } = true;
     public bool IsLiquid { get; init; } = true;
+    public string Horizon { get; init; } = "ShortTerm";
     public Guid? ParentAccountId { get; init; }
     public string? IconName { get; init; }
 }

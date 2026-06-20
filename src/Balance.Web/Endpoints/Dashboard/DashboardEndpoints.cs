@@ -15,6 +15,8 @@ internal static class DashboardEndpoints
 
     private const TrendRange DefaultTrendRange = TrendRange.ThreeMonths;
 
+    private const NetWorthRange DefaultNetWorthRange = NetWorthRange.OneYear;
+
     // Matches what one account row on the dashboard renders; not user-tunable to keep the
     // batched query bounded.
     private const int RegisterPreviewRowsPerAccount = 5;
@@ -26,6 +28,7 @@ internal static class DashboardEndpoints
         group
             .MapGet("/account-balance-trend", GetAccountBalanceTrendAsync)
             .WithName("GetAccountBalanceTrend");
+        group.MapGet("/net-worth-trend", GetNetWorthTrendAsync).WithName("GetNetWorthTrend");
         group
             .MapGet("/register-previews", GetRegisterPreviewsAsync)
             .WithName("GetDashboardRegisterPreviews");
@@ -70,6 +73,29 @@ internal static class DashboardEndpoints
         var result = await dashboardService.GetAccountBalanceTrendAsync(
             currency ?? DefaultCurrency,
             range ?? DefaultTrendRange,
+            cancellationToken
+        );
+        return result.ToOk();
+    }
+
+    private static async Task<
+        Results<
+            Ok<NetWorthTrendOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > GetNetWorthTrendAsync(
+        [FromQuery] NetWorthRange? range,
+        [FromQuery] CurrencyCode? currency,
+        [FromServices] IDashboardService dashboardService,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await dashboardService.GetNetWorthTrendAsync(
+            currency ?? DefaultCurrency,
+            range ?? DefaultNetWorthRange,
             cancellationToken
         );
         return result.ToOk();

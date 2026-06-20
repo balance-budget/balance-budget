@@ -15,6 +15,12 @@ public interface IDashboardService
         CancellationToken cancellationToken
     );
 
+    Task<Result<NetWorthTrendOutput>> GetNetWorthTrendAsync(
+        CurrencyCode currencyCode,
+        NetWorthRange range,
+        CancellationToken cancellationToken
+    );
+
     Task<Result<DashboardRegisterPreviewOutput>> GetRegisterPreviewsAsync(
         int rowsPerAccount,
         CancellationToken cancellationToken
