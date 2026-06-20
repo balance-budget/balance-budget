@@ -17,7 +17,7 @@
     "sandcastle": "npx tsx .sandcastle/main.mts"
   },
   "devDependencies": {
-    "@ai-hero/sandcastle": "^0.8.0"
+    "@ai-hero/sandcastle": "^0.10.0"
   },
   "overrides": {
     "openapi-typescript": {
