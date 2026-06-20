@@ -279,6 +279,65 @@ internal sealed class DashboardService : IDashboardService
         return new NetWorthTrendOutput(points, range, currencyCode);
     }
 
+    public async Task<Result<SpendingByCategoryOutput>> GetSpendingByCategoryAsync(
+        CurrencyCode currencyCode,
+        int topN,
+        CancellationToken cancellationToken
+    )
+    {
+        var today = DateOnly.FromDateTime(_timeProvider.GetUtcNow().UtcDateTime);
+        var periodStart = today.GetMonthStart();
+
+        // Per leaf (postable) Expense account, this month's net spend. Expense is debit-normal, so
+        // the raw line sum is already the positive spend magnitude; a net-refunded category is
+        // negative and dropped below.
+        var rows = await _dbContext
+            .JournalLines.AsNoTracking()
+            .Join(
+                _dbContext.JournalEntries.AsNoTracking(),
+                l => l.JournalEntryId,
+                e => e.Id,
+                (l, e) =>
+                    new
+                    {
+                        l.Amount,
+                        l.AccountId,
+                        e.Date,
+                    }
+            )
+            .Where(x => x.Date >= periodStart && x.Date <= today)
+            .Join(
+                _dbContext.Accounts.AsNoTracking(),
+                x => x.AccountId,
+                a => a.Id,
+                (x, a) => new { x.Amount, Account = a }
+            )
+            .Where(x =>
+                x.Account.AccountType == AccountType.Expense
+                && x.Account.CurrencyCode == currencyCode
+                && x.Account.IsPostable
+            )
+            .GroupBy(x => new { x.Account.Id, x.Account.Name })
+            .Select(g => new
+            {
+                g.Key.Id,
+                g.Key.Name,
+                Amount = g.Sum(x => (long?)x.Amount) ?? 0L,
+            })
+            .ToListAsync(cancellationToken);
+
+        var spent = rows.Where(r => r.Amount > 0L).OrderByDescending(r => r.Amount).ToList();
+
+        var slices = spent
+            .Take(topN)
+            .Select(r => new SpendingCategorySlice(r.Id, r.Name, r.Amount))
+            .ToList();
+        var other = spent.Skip(topN).Sum(r => r.Amount);
+        var total = spent.Sum(r => r.Amount);
+
+        return new SpendingByCategoryOutput(slices, other, total, periodStart, today, currencyCode);
+    }
+
     public async Task<Result<DashboardRegisterPreviewOutput>> GetRegisterPreviewsAsync(
         int rowsPerAccount,
         CancellationToken cancellationToken

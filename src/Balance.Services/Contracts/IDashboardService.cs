@@ -21,6 +21,12 @@ public interface IDashboardService
         CancellationToken cancellationToken
     );
 
+    Task<Result<SpendingByCategoryOutput>> GetSpendingByCategoryAsync(
+        CurrencyCode currencyCode,
+        int topN,
+        CancellationToken cancellationToken
+    );
+
     Task<Result<DashboardRegisterPreviewOutput>> GetRegisterPreviewsAsync(
         int rowsPerAccount,
         CancellationToken cancellationToken

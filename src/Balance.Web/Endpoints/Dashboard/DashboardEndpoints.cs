@@ -21,6 +21,9 @@ internal static class DashboardEndpoints
     // batched query bounded.
     private const int RegisterPreviewRowsPerAccount = 5;
 
+    // Top categories shown on the spending widget; the rest fold into an "Other" bucket.
+    private const int SpendingCategoryCount = 6;
+
     public static void MapDashboard(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup(PathPrefix).WithTags("Dashboard");
@@ -29,6 +32,9 @@ internal static class DashboardEndpoints
             .MapGet("/account-balance-trend", GetAccountBalanceTrendAsync)
             .WithName("GetAccountBalanceTrend");
         group.MapGet("/net-worth-trend", GetNetWorthTrendAsync).WithName("GetNetWorthTrend");
+        group
+            .MapGet("/spending-by-category", GetSpendingByCategoryAsync)
+            .WithName("GetDashboardSpendingByCategory");
         group
             .MapGet("/register-previews", GetRegisterPreviewsAsync)
             .WithName("GetDashboardRegisterPreviews");
@@ -96,6 +102,28 @@ internal static class DashboardEndpoints
         var result = await dashboardService.GetNetWorthTrendAsync(
             currency ?? DefaultCurrency,
             range ?? DefaultNetWorthRange,
+            cancellationToken
+        );
+        return result.ToOk();
+    }
+
+    private static async Task<
+        Results<
+            Ok<SpendingByCategoryOutput>,
+            NotFound<ProblemDetails>,
+            Conflict<ProblemDetails>,
+            UnprocessableEntity<ProblemDetails>,
+            ValidationProblem
+        >
+    > GetSpendingByCategoryAsync(
+        [FromQuery] CurrencyCode? currency,
+        [FromServices] IDashboardService dashboardService,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await dashboardService.GetSpendingByCategoryAsync(
+            currency ?? DefaultCurrency,
+            SpendingCategoryCount,
             cancellationToken
         );
         return result.ToOk();
