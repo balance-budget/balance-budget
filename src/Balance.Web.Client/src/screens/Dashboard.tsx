@@ -345,9 +345,9 @@ function BalanceTierPanels() {
 }
 
 const NET_WORTH_SUBTITLE: Record<NetWorthRange, MessageDescriptor> = {
-    '1Y': msg`Liquid and illiquid · Last year`,
-    '3Y': msg`Liquid and illiquid · Last 3 years`,
-    All: msg`Liquid and illiquid · All time`,
+    '1Y': msg`Net worth and liquid · Last year`,
+    '3Y': msg`Net worth and liquid · Last 3 years`,
+    All: msg`Net worth and liquid · All time`,
 };
 
 function NetWorthTrendPanel() {

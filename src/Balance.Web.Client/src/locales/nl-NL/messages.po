@@ -1333,15 +1333,6 @@ msgstr "Liquide"
 msgid "Liquid - counts toward liquid net worth"
 msgstr "Liquide - telt mee voor het liquide vermogen"
 
-msgid "Liquid and illiquid · All time"
-msgstr "Liquide en niet-liquide · Alle tijd"
-
-msgid "Liquid and illiquid · Last 3 years"
-msgstr "Liquide en niet-liquide · Afgelopen 3 jaar"
-
-msgid "Liquid and illiquid · Last year"
-msgstr "Liquide en niet-liquide · Afgelopen jaar"
-
 msgid "Liquid net worth"
 msgstr "Liquide vermogen"
 
@@ -1489,14 +1480,14 @@ msgstr "Netto negatief deze periode (uitgesloten van de grafiek)"
 msgid "Net worth"
 msgstr "Nettovermogen"
 
-#~ msgid "Net worth and liquid · All time"
-#~ msgstr "Vermogen en liquide · Alle tijd"
+msgid "Net worth and liquid · All time"
+msgstr "Vermogen en liquide · Alle tijd"
 
-#~ msgid "Net worth and liquid · Last 3 years"
-#~ msgstr "Vermogen en liquide · Afgelopen 3 jaar"
+msgid "Net worth and liquid · Last 3 years"
+msgstr "Vermogen en liquide · Afgelopen 3 jaar"
 
-#~ msgid "Net worth and liquid · Last year"
-#~ msgstr "Vermogen en liquide · Afgelopen jaar"
+msgid "Net worth and liquid · Last year"
+msgstr "Vermogen en liquide · Afgelopen jaar"
 
 msgid "Net worth range"
 msgstr "Vermogensbereik"

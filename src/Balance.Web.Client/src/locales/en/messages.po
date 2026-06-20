@@ -1333,15 +1333,6 @@ msgstr "Liquid"
 msgid "Liquid - counts toward liquid net worth"
 msgstr "Liquid - counts toward liquid net worth"
 
-msgid "Liquid and illiquid · All time"
-msgstr "Liquid and illiquid · All time"
-
-msgid "Liquid and illiquid · Last 3 years"
-msgstr "Liquid and illiquid · Last 3 years"
-
-msgid "Liquid and illiquid · Last year"
-msgstr "Liquid and illiquid · Last year"
-
 msgid "Liquid net worth"
 msgstr "Liquid net worth"
 
@@ -1489,14 +1480,14 @@ msgstr "Net negative this period (excluded from the chart)"
 msgid "Net worth"
 msgstr "Net worth"
 
-#~ msgid "Net worth and liquid · All time"
-#~ msgstr "Net worth and liquid · All time"
+msgid "Net worth and liquid · All time"
+msgstr "Net worth and liquid · All time"
 
-#~ msgid "Net worth and liquid · Last 3 years"
-#~ msgstr "Net worth and liquid · Last 3 years"
+msgid "Net worth and liquid · Last 3 years"
+msgstr "Net worth and liquid · Last 3 years"
 
-#~ msgid "Net worth and liquid · Last year"
-#~ msgstr "Net worth and liquid · Last year"
+msgid "Net worth and liquid · Last year"
+msgstr "Net worth and liquid · Last year"
 
 msgid "Net worth range"
 msgstr "Net worth range"

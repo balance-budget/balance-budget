@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import {
-    Area,
-    AreaChart,
     CartesianGrid,
+    Line,
+    LineChart,
     ResponsiveContainer,
     Tooltip,
     type TooltipContentProps,
@@ -22,16 +22,15 @@ type NetWorthChartProps = {
     height?: number;
 };
 
+const NET_WORTH_COLOR = 'var(--color-chart-blue)';
 const LIQUID_COLOR = 'var(--color-chart-teal)';
-const ILLIQUID_COLOR = 'var(--color-chart-blue)';
 
-type Row = { date: string; liquid: number; illiquid: number };
+type Row = { date: string; netWorth: number; liquid: number };
 
 /**
- * The long-horizon dashboard chart (ADR-0030): net worth as a signed stack of its two components,
- * liquid (bottom) and illiquid (top), so the top edge is total net worth. The illiquid band is a
- * house amortizing against its mortgage; watching it grow over the years is the wealth-building
- * story. Signed stacking (stackOffset="sign") keeps a net-debt component honestly below zero.
+ * The long-horizon dashboard chart (ADR-0030): total net worth and the liquid subset as two
+ * monthly lines. The gap between them is illiquid net worth — a house amortizing against its
+ * mortgage — so the two lines diverging over the years is the wealth-building story.
  */
 export function NetWorthChart({ points, currencyCode, height = 240 }: NetWorthChartProps) {
     const { t } = useLingui();
@@ -41,8 +40,8 @@ export function NetWorthChart({ points, currencyCode, height = 240 }: NetWorthCh
         () =>
             points.map(p => ({
                 date: p.date,
+                netWorth: p.netWorthMinor,
                 liquid: p.liquidMinor,
-                illiquid: p.netWorthMinor - p.liquidMinor,
             })),
         [points],
     );
@@ -54,24 +53,18 @@ export function NetWorthChart({ points, currencyCode, height = 240 }: NetWorthCh
         return rows.filter((_, i) => i % step === 0).map(r => r.date);
     }, [rows]);
 
-    // Scale to the stacked totals (positives and negatives summed per month), not the individual
-    // components, so the bands never overflow the axis.
-    const axis = useMemo(() => {
-        const sums = rows.flatMap(r => {
-            const pos = Math.max(r.liquid, 0) + Math.max(r.illiquid, 0);
-            const neg = Math.min(r.liquid, 0) + Math.min(r.illiquid, 0);
-            return [pos, neg];
-        });
-        return moneyAxis(sums, { includeZero: true });
-    }, [rows]);
+    const axis = useMemo(
+        () =>
+            moneyAxis(
+                rows.flatMap(r => [r.netWorth, r.liquid]),
+                { includeZero: true },
+            ),
+        [rows],
+    );
 
     return (
         <ResponsiveContainer width="100%" height={height}>
-            <AreaChart
-                data={rows}
-                margin={{ top: 10, right: 12, bottom: 0, left: 0 }}
-                stackOffset="sign"
-            >
+            <LineChart data={rows} margin={{ top: 10, right: 12, bottom: 0, left: 0 }}>
                 <CartesianGrid
                     stroke="var(--color-border-soft)"
                     vertical={false}
@@ -111,29 +104,27 @@ export function NetWorthChart({ points, currencyCode, height = 240 }: NetWorthCh
                         strokeDasharray: '2 2',
                     }}
                 />
-                <Area
+                <Line
+                    type="monotone"
+                    dataKey="netWorth"
+                    name={t`Net worth`}
+                    stroke={NET_WORTH_COLOR}
+                    strokeWidth={1.75}
+                    dot={false}
+                    activeDot={{ r: 3, strokeWidth: 0 }}
+                    isAnimationActive={false}
+                />
+                <Line
                     type="monotone"
                     dataKey="liquid"
                     name={t`Liquid`}
-                    stackId="netWorth"
                     stroke={LIQUID_COLOR}
-                    strokeWidth={1.25}
-                    fill={LIQUID_COLOR}
-                    fillOpacity={0.55}
+                    strokeWidth={1.75}
+                    dot={false}
+                    activeDot={{ r: 3, strokeWidth: 0 }}
                     isAnimationActive={false}
                 />
-                <Area
-                    type="monotone"
-                    dataKey="illiquid"
-                    name={t`Illiquid`}
-                    stackId="netWorth"
-                    stroke={ILLIQUID_COLOR}
-                    strokeWidth={1.25}
-                    fill={ILLIQUID_COLOR}
-                    fillOpacity={0.55}
-                    isAnimationActive={false}
-                />
-            </AreaChart>
+            </LineChart>
         </ResponsiveContainer>
     );
 }
@@ -160,19 +151,12 @@ function NetWorthTooltip({
 
     const row = payload[0]?.payload as Row | undefined;
     if (!row) return null;
-    const netWorth = row.liquid + row.illiquid;
+    const illiquid = row.netWorth - row.liquid;
 
-    // Components first, then the total they sum to.
-    const lines: { key: string; name: string; value: number; color: string; strong?: boolean }[] = [
+    const lines: { key: string; name: string; value: number; color: string }[] = [
+        { key: 'net', name: netWorthLabel, value: row.netWorth, color: NET_WORTH_COLOR },
         { key: 'liquid', name: liquidLabel, value: row.liquid, color: LIQUID_COLOR },
-        { key: 'illiquid', name: illiquidLabel, value: row.illiquid, color: ILLIQUID_COLOR },
-        {
-            key: 'net',
-            name: netWorthLabel,
-            value: netWorth,
-            color: 'var(--color-fg-3)',
-            strong: true,
-        },
+        { key: 'illiquid', name: illiquidLabel, value: illiquid, color: 'var(--color-fg-3)' },
     ];
 
     return (
@@ -182,23 +166,12 @@ function NetWorthTooltip({
             </div>
             <div className="flex flex-col gap-1">
                 {lines.map(l => (
-                    <div
-                        key={l.key}
-                        className={
-                            l.strong
-                                ? 'flex items-center justify-between gap-x-4 mt-1 pt-1 border-t border-border-soft'
-                                : 'flex items-center justify-between gap-x-4'
-                        }
-                    >
+                    <div key={l.key} className="flex items-center justify-between gap-x-4">
                         <span className="flex items-center gap-1.5">
-                            {l.strong ? (
-                                <span className="w-2 h-2" />
-                            ) : (
-                                <span
-                                    className="w-2 h-2 rounded-full inline-block"
-                                    style={{ background: l.color }}
-                                />
-                            )}
+                            <span
+                                className="w-2 h-2 rounded-full inline-block"
+                                style={{ background: l.color }}
+                            />
                             <span className="text-fg-2">{l.name}</span>
                         </span>
                         <span className="font-mono tabular-nums text-fg-1">
