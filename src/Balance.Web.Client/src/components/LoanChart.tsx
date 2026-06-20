@@ -18,7 +18,7 @@ import { formatCalendarDate } from '../i18n/format';
 import { cx } from '../lib/cx';
 import { formatMoney, formatMoneyAxis } from '../lib/money';
 import { moneyAxis } from '../lib/chartAxis';
-import { chartColorFor } from '../lib/visualHints';
+import { buildChartColorMap, chartColorByIndex } from '../lib/visualHints';
 import { buildChartRows, buildPaymentRows } from '../screens/loanDetail.state';
 
 type LoanChartProps = {
@@ -97,6 +97,10 @@ export function LoanChart({ projection, height = 280 }: LoanChartProps) {
     }, [rows]);
 
     const labelByPart = new Map(projection.parts.map(p => [p.id as string, p.label]));
+    // One stable hue per loan account, assigned by the parts' order so a part
+    // always keeps its color across renders and modes.
+    const colorByAccount = buildChartColorMap(projection.parts.map(p => p.accountId));
+    const colorOf = (accountId: string) => colorByAccount.get(accountId) ?? chartColorByIndex(0);
 
     return (
         <div className="flex flex-col gap-2">
@@ -173,7 +177,7 @@ export function LoanChart({ projection, height = 280 }: LoanChartProps) {
                             <ReferenceLine
                                 key={`fix-${p.id}`}
                                 x={firstOfMonth(p.fixedUntil)}
-                                stroke={chartColorFor(p.accountId)}
+                                stroke={colorOf(p.accountId)}
                                 strokeDasharray="2 4"
                                 label={{
                                     value: t`${p.label} fixed until`,
@@ -193,8 +197,8 @@ export function LoanChart({ projection, height = 280 }: LoanChartProps) {
                                     dataKey={`a:${p.id}`}
                                     stackId="actual"
                                     name={`a:${p.id}`}
-                                    stroke={chartColorFor(p.accountId)}
-                                    fill={chartColorFor(p.accountId)}
+                                    stroke={colorOf(p.accountId)}
+                                    fill={colorOf(p.accountId)}
                                     fillOpacity={0.45}
                                     strokeWidth={1.5}
                                     isAnimationActive={false}
@@ -206,9 +210,9 @@ export function LoanChart({ projection, height = 280 }: LoanChartProps) {
                                     dataKey={`p:${p.id}`}
                                     stackId="proj"
                                     name={`p:${p.id}`}
-                                    stroke={chartColorFor(p.accountId)}
+                                    stroke={colorOf(p.accountId)}
                                     strokeDasharray="4 3"
-                                    fill={chartColorFor(p.accountId)}
+                                    fill={colorOf(p.accountId)}
                                     fillOpacity={0.16}
                                     strokeWidth={1.25}
                                     isAnimationActive={false}
@@ -239,8 +243,8 @@ export function LoanChart({ projection, height = 280 }: LoanChartProps) {
                                     dataKey={`pr:${p.id}`}
                                     stackId="pay"
                                     name={`pr:${p.id}`}
-                                    stroke={chartColorFor(p.accountId)}
-                                    fill={chartColorFor(p.accountId)}
+                                    stroke={colorOf(p.accountId)}
+                                    fill={colorOf(p.accountId)}
                                     fillOpacity={0.8}
                                     strokeWidth={0.5}
                                     isAnimationActive={false}
@@ -250,8 +254,8 @@ export function LoanChart({ projection, height = 280 }: LoanChartProps) {
                                     dataKey={`pi:${p.id}`}
                                     stackId="pay"
                                     name={`pi:${p.id}`}
-                                    stroke={chartColorFor(p.accountId)}
-                                    fill={chartColorFor(p.accountId)}
+                                    stroke={colorOf(p.accountId)}
+                                    fill={colorOf(p.accountId)}
                                     fillOpacity={0.32}
                                     strokeWidth={0.5}
                                     isAnimationActive={false}

@@ -13,7 +13,7 @@ import { cx } from '../lib/cx';
 import type { AccountId } from '../lib/domain';
 import { formatMoney } from '../lib/money';
 import type { ReportPeriod } from '../lib/reportPeriod';
-import { chartBaseColorForType, shadeOf } from '../lib/visualHints';
+import { chartColorByIndex } from '../lib/visualHints';
 import { ErrorState } from './ErrorState';
 import { Panel, SectionHead } from './Panel';
 import { Breadcrumb, Breadcrumbs } from './ui/Breadcrumbs';
@@ -152,26 +152,24 @@ function DistributionBody({
     const negative = useMemo(() => data.slices.filter(s => s.amount.amount < 0), [data.slices]);
     const positiveTotal = positive.reduce((sum, s) => sum + s.amount.amount, 0);
 
-    // Every slice in this view shares the account type, so paint them all in
-    // that type's accent and tell them apart by shade. The donut and the legend
-    // read from one map so a row's dot always matches its sector; positives
-    // lead (they form the donut), negatives continue the ramp in the legend.
-    const baseColor = chartBaseColorForType(data.type === 'income' ? 'Income' : 'Expense');
+    // Give each slice a distinct palette hue by position, so the donut reads as
+    // separate accounts rather than shades of one color. The donut and the
+    // legend read from one map so a row's dot always matches its sector;
+    // positives lead (they form the donut), negatives continue the order.
     const colorByAccount = useMemo(() => {
-        const ordered = [...positive, ...negative];
         const map = new Map<AccountId, string>();
-        ordered.forEach((s, i) => {
-            map.set(s.accountId, shadeOf(baseColor, i, ordered.length));
+        [...positive, ...negative].forEach((s, i) => {
+            map.set(s.accountId, chartColorByIndex(i));
         });
         return map;
-    }, [positive, negative, baseColor]);
+    }, [positive, negative]);
 
     const pieData = positive.map(s => ({
         name: s.name,
         value: s.amount.amount,
         // recharts spreads each datum onto its sector, so a per-entry `fill`
         // colors the slice — no deprecated <Cell> needed.
-        fill: colorByAccount.get(s.accountId) ?? baseColor,
+        fill: colorByAccount.get(s.accountId) ?? chartColorByIndex(0),
     }));
 
     if (positive.length === 0 && negative.length === 0) {
@@ -238,7 +236,7 @@ function DistributionBody({
                     <SliceRow
                         key={s.accountId}
                         slice={s}
-                        color={colorByAccount.get(s.accountId) ?? baseColor}
+                        color={colorByAccount.get(s.accountId) ?? chartColorByIndex(0)}
                         share={positiveTotal > 0 ? s.amount.amount / positiveTotal : 0}
                         currency={currency}
                         onDrill={onDrill}
@@ -253,7 +251,7 @@ function DistributionBody({
                             <SliceRow
                                 key={s.accountId}
                                 slice={s}
-                                color={colorByAccount.get(s.accountId) ?? baseColor}
+                                color={colorByAccount.get(s.accountId) ?? chartColorByIndex(0)}
                                 share={null}
                                 currency={currency}
                                 onDrill={onDrill}

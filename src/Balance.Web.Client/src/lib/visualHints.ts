@@ -1,4 +1,4 @@
-import type { AccountId, AccountType } from './domain';
+import type { AccountType } from './domain';
 
 export type VisualHint = {
     accentColor: string;
@@ -109,51 +109,34 @@ export function visualHintFor(account: AccountVisual): VisualHint {
     };
 }
 
-// A distribution donut only ever shows one AccountType at a time, so its
-// slices read best as one hue — the type accent — rather than a grab-bag of
-// palette colors. Same-hue slices are then pulled apart by shade (below).
-export function chartBaseColorForType(accountType: AccountType): string {
-    return ACCENT_BY_TYPE[accountType];
-}
-
-// Fan successive same-hue slices toward the theme's shade-mix target so a
-// monochrome donut stays legible. The first (largest) slice keeps the pure
-// accent; later slices step progressively toward that target — white on dark,
-// black on light, read from --chart-shade-mix so the steps keep contrast in
-// either theme. oklab keeps the steps perceptually even, and color-mix anchors
-// each shade to CSS custom properties instead of baking hex into JS.
-export function shadeOf(baseColor: string, index: number, count: number): string {
-    if (count <= 1 || index <= 0) return baseColor;
-    const pct = Math.round((index / (count - 1)) * 52);
-    return `color-mix(in oklab, ${baseColor}, var(--chart-shade-mix) ${pct}%)`;
-}
-
-// Charts need lines that read as distinct even when all accounts share an
-// AccountType. Pick deterministically from a wider category palette by hashing
-// the account id, independent of the type-level avatar accent.
+// A wide palette of distinct hues for charts that show several series or slices
+// at once. Colors are assigned by *position*, never by a hash, so a chart's
+// colors are deterministic and stable across renders (same data → same colors),
+// and adjacent series always differ. The order here is the order they appear.
 const CHART_PALETTE: readonly string[] = [
     'var(--color-chart-blue)',
-    'var(--color-chart-teal)',
+    'var(--color-chart-amber)',
     'var(--color-chart-violet)',
     'var(--color-chart-green)',
-    'var(--color-chart-amber)',
-    'var(--color-chart-gold)',
     'var(--color-chart-pink)',
+    'var(--color-chart-teal)',
+    'var(--color-chart-gold)',
 ];
 
-// FNV-1a 32-bit. Deterministic and dependency-free; collisions are harmless
-// beyond two trend lines sharing a color.
-function hashId(id: string): number {
-    let hash = 2166136261;
-    for (let i = 0; i < id.length; i++) {
-        hash ^= id.charCodeAt(i);
-        hash = Math.imul(hash, 16777619) >>> 0;
-    }
-    return hash;
-}
-
-export function chartColorFor(id: AccountId): string {
+// The i-th series/slice gets the i-th palette hue, wrapping once exhausted.
+export function chartColorByIndex(index: number): string {
     // Palette is non-empty by construction, so the modulo lookup always hits;
     // the fallback only exists to keep noUncheckedIndexedAccess honest.
-    return CHART_PALETTE[hashId(id) % CHART_PALETTE.length] ?? 'var(--color-fg-3)';
+    return CHART_PALETTE[index % CHART_PALETTE.length] ?? 'var(--color-fg-3)';
+}
+
+// Stable, ordered color assignment keyed by id: each distinct id takes the next
+// palette hue in first-seen order, and repeated ids reuse their hue. Pass the
+// ids in the series' natural (API) order so colors stay put between renders.
+export function buildChartColorMap(ids: readonly string[]): Map<string, string> {
+    const map = new Map<string, string>();
+    for (const id of ids) {
+        if (!map.has(id)) map.set(id, chartColorByIndex(map.size));
+    }
+    return map;
 }
