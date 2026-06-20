@@ -164,13 +164,18 @@ function DistributionBody({
         return map;
     }, [positive, negative]);
 
-    const pieData = positive.map(s => ({
-        name: s.name,
-        value: s.amount.amount,
-        // recharts spreads each datum onto its sector, so a per-entry `fill`
-        // colors the slice — no deprecated <Cell> needed.
-        fill: colorByAccount.get(s.accountId) ?? chartColorByIndex(0),
-    }));
+    const pieData = positive.map(s => {
+        const color = colorByAccount.get(s.accountId) ?? chartColorByIndex(0);
+        return {
+            name: s.name,
+            value: s.amount.amount,
+            // recharts spreads each datum onto its sector, so per-entry `fill` /
+            // `stroke` style the slice — no deprecated <Cell> needed. Like the
+            // line charts: a crisp full-opacity edge over a translucent fill.
+            fill: color,
+            stroke: color,
+        };
+    });
 
     if (positive.length === 0 && negative.length === 0) {
         return (
@@ -193,11 +198,12 @@ function DistributionBody({
                                 innerRadius={64}
                                 outerRadius={104}
                                 paddingAngle={2}
-                                stroke="none"
-                                // Soften the slices to the same muted intensity as
-                                // the translucent line/area fills and the account
-                                // accents elsewhere, so the donut doesn't shout.
+                                // Soften the fill to the same muted intensity as
+                                // the translucent line/area fills, with a thin
+                                // full-opacity border (per-slice stroke above) so
+                                // the donut reads like the line charts.
                                 fillOpacity={0.7}
+                                strokeWidth={1.5}
                                 isAnimationActive={false}
                             />
                             <Tooltip
