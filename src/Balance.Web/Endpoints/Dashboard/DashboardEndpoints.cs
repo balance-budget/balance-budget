@@ -17,10 +17,6 @@ internal static class DashboardEndpoints
 
     private const NetWorthRange DefaultNetWorthRange = NetWorthRange.OneYear;
 
-    // Matches what one account row on the dashboard renders; not user-tunable to keep the
-    // batched query bounded.
-    private const int RegisterPreviewRowsPerAccount = 5;
-
     // Top categories shown on the spending widget; the rest fold into an "Other" bucket.
     private const int SpendingCategoryCount = 6;
 
@@ -35,9 +31,6 @@ internal static class DashboardEndpoints
         group
             .MapGet("/spending-by-category", GetSpendingByCategoryAsync)
             .WithName("GetDashboardSpendingByCategory");
-        group
-            .MapGet("/register-previews", GetRegisterPreviewsAsync)
-            .WithName("GetDashboardRegisterPreviews");
     }
 
     private static async Task<
@@ -124,26 +117,6 @@ internal static class DashboardEndpoints
         var result = await dashboardService.GetSpendingByCategoryAsync(
             currency ?? DefaultCurrency,
             SpendingCategoryCount,
-            cancellationToken
-        );
-        return result.ToOk();
-    }
-
-    private static async Task<
-        Results<
-            Ok<DashboardRegisterPreviewOutput>,
-            NotFound<ProblemDetails>,
-            Conflict<ProblemDetails>,
-            UnprocessableEntity<ProblemDetails>,
-            ValidationProblem
-        >
-    > GetRegisterPreviewsAsync(
-        [FromServices] IDashboardService dashboardService,
-        CancellationToken cancellationToken
-    )
-    {
-        var result = await dashboardService.GetRegisterPreviewsAsync(
-            RegisterPreviewRowsPerAccount,
             cancellationToken
         );
         return result.ToOk();
