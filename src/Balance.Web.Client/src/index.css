@@ -156,6 +156,12 @@
 @layer base {
     html {
         color-scheme: light;
+        /* Sleek, thin scrollbars app-wide. scrollbar-width/color are inherited
+         * properties, so setting them on the root cascades to every scroll
+         * container — no per-element class needed. (Firefox + Chromium 121+;
+         * Safari keeps its default scrollbar.) */
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-surface-3) transparent;
     }
 
     html.dark {
@@ -179,24 +185,3 @@
     }
 }
 
-/* Sleek, thin scrollbar — a quieter alternative to the chunky browser default.
- * Track is transparent; the thumb is a subtle pill that brightens on hover. */
-@utility scrollbar-sleek {
-    scrollbar-width: thin;
-    scrollbar-color: var(--color-surface-3) transparent;
-
-    &::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-    }
-    &::-webkit-scrollbar-track {
-        background: transparent;
-    }
-    &::-webkit-scrollbar-thumb {
-        background-color: var(--color-surface-3);
-        border-radius: 9999px;
-    }
-    &::-webkit-scrollbar-thumb:hover {
-        background-color: var(--color-border-strong);
-    }
-}
