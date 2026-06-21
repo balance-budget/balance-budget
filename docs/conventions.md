@@ -199,7 +199,8 @@ Refs: #42
 
 ## Formatting & build hygiene
 
-- CSharpier is the formatter. CI fails on any deviation — run `dotnet csharpier format .` before committing.
+- CSharpier is the C# formatter. CI fails on any deviation — run `dotnet csharpier format .` before committing.
+- Prettier is the frontend formatter. CI runs `npm run format:check` (read-only) — run `npm run format` after editing anything under `src/Balance.Web.Client` before committing.
 - `TreatWarningsAsErrors=true` with `AnalysisMode=All`. Fix warnings; don't suppress unless there's a deliberate reason (and document why).
 - Centralized package versions: edit `Directory.Packages.props`, never put a `Version="…"` attribute on a `PackageReference`.
 - The repo targets `net10.0`. Don't introduce multi-targeting unless there's a clear reason.
