@@ -33,6 +33,7 @@ import { Route as AccountsIndexRouteImport } from './routes/accounts.index'
 import { Route as SettingsUsersRouteImport } from './routes/settings.users'
 import { Route as SettingsTokensRouteImport } from './routes/settings.tokens'
 import { Route as SettingsPreferencesRouteImport } from './routes/settings.preferences'
+import { Route as SettingsCurrenciesRouteImport } from './routes/settings.currencies'
 import { Route as SettingsBankAccountsRouteImport } from './routes/settings.bank-accounts'
 import { Route as LoansIdRouteImport } from './routes/loans.$id'
 import { Route as JournalNewRouteImport } from './routes/journal.new'
@@ -163,6 +164,11 @@ const SettingsPreferencesRoute = SettingsPreferencesRouteImport.update({
   path: '/preferences',
   getParentRoute: () => SettingsRoute,
 } as any)
+const SettingsCurrenciesRoute = SettingsCurrenciesRouteImport.update({
+  id: '/currencies',
+  path: '/currencies',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const SettingsBankAccountsRoute = SettingsBankAccountsRouteImport.update({
   id: '/bank-accounts',
   path: '/bank-accounts',
@@ -234,6 +240,7 @@ export interface FileRoutesByFullPath {
   '/journal/new': typeof JournalNewRoute
   '/loans/$id': typeof LoansIdRoute
   '/settings/bank-accounts': typeof SettingsBankAccountsRouteWithChildren
+  '/settings/currencies': typeof SettingsCurrenciesRoute
   '/settings/preferences': typeof SettingsPreferencesRoute
   '/settings/tokens': typeof SettingsTokensRoute
   '/settings/users': typeof SettingsUsersRoute
@@ -263,6 +270,7 @@ export interface FileRoutesByTo {
   '/journal/$id': typeof JournalIdRoute
   '/journal/new': typeof JournalNewRoute
   '/loans/$id': typeof LoansIdRoute
+  '/settings/currencies': typeof SettingsCurrenciesRoute
   '/settings/preferences': typeof SettingsPreferencesRoute
   '/settings/tokens': typeof SettingsTokensRoute
   '/settings/users': typeof SettingsUsersRoute
@@ -299,6 +307,7 @@ export interface FileRoutesById {
   '/journal/new': typeof JournalNewRoute
   '/loans/$id': typeof LoansIdRoute
   '/settings/bank-accounts': typeof SettingsBankAccountsRouteWithChildren
+  '/settings/currencies': typeof SettingsCurrenciesRoute
   '/settings/preferences': typeof SettingsPreferencesRoute
   '/settings/tokens': typeof SettingsTokensRoute
   '/settings/users': typeof SettingsUsersRoute
@@ -336,6 +345,7 @@ export interface FileRouteTypes {
     | '/journal/new'
     | '/loans/$id'
     | '/settings/bank-accounts'
+    | '/settings/currencies'
     | '/settings/preferences'
     | '/settings/tokens'
     | '/settings/users'
@@ -365,6 +375,7 @@ export interface FileRouteTypes {
     | '/journal/$id'
     | '/journal/new'
     | '/loans/$id'
+    | '/settings/currencies'
     | '/settings/preferences'
     | '/settings/tokens'
     | '/settings/users'
@@ -400,6 +411,7 @@ export interface FileRouteTypes {
     | '/journal/new'
     | '/loans/$id'
     | '/settings/bank-accounts'
+    | '/settings/currencies'
     | '/settings/preferences'
     | '/settings/tokens'
     | '/settings/users'
@@ -602,6 +614,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsPreferencesRouteImport
       parentRoute: typeof SettingsRoute
     }
+    '/settings/currencies': {
+      id: '/settings/currencies'
+      path: '/currencies'
+      fullPath: '/settings/currencies'
+      preLoaderRoute: typeof SettingsCurrenciesRouteImport
+      parentRoute: typeof SettingsRoute
+    }
     '/settings/bank-accounts': {
       id: '/settings/bank-accounts'
       path: '/bank-accounts'
@@ -749,6 +768,7 @@ const SettingsBankAccountsRouteWithChildren =
 
 interface SettingsRouteChildren {
   SettingsBankAccountsRoute: typeof SettingsBankAccountsRouteWithChildren
+  SettingsCurrenciesRoute: typeof SettingsCurrenciesRoute
   SettingsPreferencesRoute: typeof SettingsPreferencesRoute
   SettingsTokensRoute: typeof SettingsTokensRoute
   SettingsUsersRoute: typeof SettingsUsersRoute
@@ -757,6 +777,7 @@ interface SettingsRouteChildren {
 
 const SettingsRouteChildren: SettingsRouteChildren = {
   SettingsBankAccountsRoute: SettingsBankAccountsRouteWithChildren,
+  SettingsCurrenciesRoute: SettingsCurrenciesRoute,
   SettingsPreferencesRoute: SettingsPreferencesRoute,
   SettingsTokensRoute: SettingsTokensRoute,
   SettingsUsersRoute: SettingsUsersRoute,

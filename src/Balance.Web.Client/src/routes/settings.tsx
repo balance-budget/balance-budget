@@ -12,12 +12,14 @@ export const Route = createFileRoute('/settings')({
 const SUB_NAV: {
     to:
         | '/settings/bank-accounts'
+        | '/settings/currencies'
         | '/settings/users'
         | '/settings/tokens'
         | '/settings/preferences';
     label: MessageDescriptor;
 }[] = [
     { to: '/settings/bank-accounts', label: msg`Bank accounts` },
+    { to: '/settings/currencies', label: msg`Currencies` },
     { to: '/settings/users', label: msg`Users` },
     { to: '/settings/tokens', label: msg`API tokens` },
     { to: '/settings/preferences', label: msg`Preferences` },
