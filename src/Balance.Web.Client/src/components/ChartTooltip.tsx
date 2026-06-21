@@ -40,10 +40,7 @@ export function ChartTooltipRow({
     return (
         <div className="flex items-center justify-between gap-x-4">
             <span className="flex items-center gap-1.5">
-                <span
-                    className="w-2 h-2 rounded-full inline-block"
-                    style={{ background: color }}
-                />
+                <span className="w-2 h-2 rounded-full inline-block" style={{ background: color }} />
                 <span className="text-fg-2">{name}</span>
             </span>
             <span className="font-mono tabular-nums text-fg-1">{value}</span>
