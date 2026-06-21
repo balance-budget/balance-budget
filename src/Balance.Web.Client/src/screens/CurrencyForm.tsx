@@ -82,7 +82,7 @@ export function CurrencyFormModal(props: Props) {
                         setCode(value.toUpperCase());
                     }}
                     isRequired={props.mode === 'create'}
-                    isReadOnly={props.mode === 'edit'}
+                    isDisabled={props.mode === 'edit'}
                     minLength={2}
                     maxLength={8}
                     pattern="[A-Z][A-Z0-9]*"
@@ -108,7 +108,7 @@ export function CurrencyFormModal(props: Props) {
                     name="MinorUnitScale"
                     value={minorUnitScale}
                     onChange={setMinorUnitScale}
-                    isReadOnly={props.mode === 'edit'}
+                    isDisabled={props.mode === 'edit'}
                     minValue={0}
                     maxValue={30}
                     description={
