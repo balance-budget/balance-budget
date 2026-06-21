@@ -77,16 +77,18 @@ export function OutlookProjectionChart({
         return result;
     }, [account]);
 
-    // Scale to the plotted lines only — actuals and the projected mid/scenario.
-    // The Typical-spend band is deliberately excluded: a wide uncertainty cone
-    // (e.g. a one-off purchase blowing out the low edge) would otherwise compress
-    // the whole chart into an unreadable strip. Instead we let the band run off the
-    // frame and fade out near the edges (see the band gradient below).
+    // Scale natively to everything plotted, the Typical-spend band included: the
+    // random-walk cone (ADR-0033) is tame enough that the y-axis can cover it and
+    // keep its tick labels meaningful across the whole frame. The band gradient
+    // below is then a purely cosmetic fade layered on top, never a reason to clip
+    // the cone out of the axis.
     const axis = useMemo(
         () =>
             moneyAxis(
                 rows.flatMap(r =>
-                    [r.actual, r.mid, r.scenario].filter((v): v is number => v !== undefined),
+                    [r.actual, r.mid, r.scenario, r.band?.[0], r.band?.[1]].filter(
+                        (v): v is number => v !== undefined,
+                    ),
                 ),
             ),
         [rows],

@@ -44,6 +44,8 @@ export type AccountSelectProps = {
     postableOnly?: boolean;
     /** Offer only non-postable placeholders — the parent picker. */
     placeholdersOnly?: boolean;
+    /** Offer only liquid Asset/Liability accounts — the cash-flow pickers (e.g. Outlook). */
+    liquidOnly?: boolean;
     /** Restrict to one currency. The current value stays visible regardless. */
     currencyCode?: string;
     /** Pin a single AccountType — the parent picker shares the child's type. */
@@ -96,6 +98,7 @@ export function AccountSelect({
     onClear,
     postableOnly,
     placeholdersOnly,
+    liquidOnly,
     currencyCode,
     type,
     exclude,
@@ -124,6 +127,8 @@ export function AccountSelect({
         const selectable = all.filter(a => {
             if (postableOnly && !a.isPostable) return false;
             if (placeholdersOnly && a.isPostable) return false;
+            if (liquidOnly && !(a.isLiquid && (a.type === 'Asset' || a.type === 'Liability')))
+                return false;
             if (type && a.type !== type) return false;
             if (currencyCode && a.currencyCode !== currencyCode) return false;
             if (excludeSet.has(a.id)) return false;
@@ -149,6 +154,7 @@ export function AccountSelect({
         value,
         postableOnly,
         placeholdersOnly,
+        liquidOnly,
         type,
         currencyCode,
         excludeKey,
