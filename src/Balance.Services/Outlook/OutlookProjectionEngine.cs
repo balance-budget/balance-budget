@@ -4,26 +4,30 @@ namespace Balance.Services.Outlook;
 
 /// <summary>
 /// The pure forward half of the liquid-balance <c>Projection</c> (ADR-0027, anchored on the current
-/// month per ADR-0028): from an opening balance, a set of <see cref="JournalEntryTemplate"/> specs,
-/// and a <c>Typical spend</c> band, it produces one month-end balance band per future month. The
-/// first month is the <em>current, partial</em> month: it counts only occurrences still due on or
-/// after <c>fromDate</c> (earlier ones are already in the opening balance) and prorates the everyday
-/// <c>Typical spend</c> band by the fraction of the month still remaining. All amounts are minor
-/// units, <em>balance-normalized</em> to the account's own perspective (inflow positive, outflow
-/// negative) — the service applies the Sign convention before calling in.
+/// month per ADR-0028, cone model per ADR-0033): from an opening balance, a set of
+/// <see cref="JournalEntryTemplate"/> specs, and a <c>Typical spend</c> model (a median monthly
+/// everyday spend plus a robust spread), it produces one month-end balance band per future month.
+/// The first month is the <em>current, partial</em> month: it counts only occurrences still due on
+/// or after <c>fromDate</c> (earlier ones are already in the opening balance) and prorates the
+/// everyday spend by the fraction of the month still remaining. The uncertainty band widens as a
+/// <em>random walk</em> — its half-width at month <c>n</c> is <c>spread × √(elapsed months)</c>, not
+/// linearly — so good and bad months partly cancel rather than the worst month recurring forever.
+/// All amounts are minor units, <em>balance-normalized</em> to the account's own perspective (inflow
+/// positive, outflow negative) — the service applies the Sign convention before calling in.
 /// </summary>
 internal static class OutlookProjectionEngine
 {
     /// <summary>
     /// Projects <paramref name="horizonMonths"/> whole months starting at the month of
     /// <paramref name="fromDate"/>. The first month is partial (from <paramref name="fromDate"/> to
-    /// month-end); every later month is whole. Each month accumulates the expected template
-    /// occurrences landing in it plus the <c>Typical spend</c> band onto the running balance.
+    /// month-end); every later month is whole. Each month adds its expected template occurrences and
+    /// the median everyday spend to the running center balance; the band around it is
+    /// <c>± spread × √(cumulative elapsed months)</c>.
     /// </summary>
     public static IReadOnlyList<OutlookMonthRow> Project(
         long openingBalance,
         IReadOnlyList<OutlookTemplateSpec> templates,
-        OutlookSpendBand typicalSpend,
+        OutlookSpendModel typicalSpend,
         DateOnly fromDate,
         int horizonMonths
     )
@@ -33,9 +37,10 @@ internal static class OutlookProjectionEngine
         var start = FirstOfMonth(fromDate);
         var rows = new List<OutlookMonthRow>(horizonMonths);
 
-        var balanceLow = openingBalance;
-        var balanceMid = openingBalance;
-        var balanceHigh = openingBalance;
+        // The center balance carries templates plus cumulative median everyday spend; the cone
+        // half-width is driven by the cumulative count of elapsed month-equivalents (√n growth).
+        var centerBalance = openingBalance;
+        var elapsedMonths = 0.0;
 
         for (var i = 0; i < horizonMonths; i++)
         {
@@ -59,12 +64,18 @@ internal static class OutlookProjectionEngine
             var expectedNet = expectedIn + expectedOut;
 
             // The current month only sees the everyday spend of the days still ahead.
-            var band = isCurrent ? Prorate(typicalSpend, fromDate, monthEnd) : typicalSpend;
+            var fraction = isCurrent ? RemainingFraction(fromDate, monthEnd) : 1.0;
+            elapsedMonths += fraction;
 
-            // Low spend is the pessimistic (most negative) bound, so it drives the low balance.
-            balanceLow += expectedNet + band.Low;
-            balanceMid += expectedNet + band.Mid;
-            balanceHigh += expectedNet + band.High;
+            // This month's standalone everyday-spend band (drives the "rest of this month" card).
+            var spendMid = Scale(typicalSpend.Median, fraction);
+            var spendHalf = HalfWidth(typicalSpend.Spread, fraction);
+            var spendLow = spendMid - spendHalf;
+            var spendHigh = spendMid + spendHalf;
+
+            // The running center and the random-walk cone around it.
+            centerBalance += expectedNet + spendMid;
+            var coneHalf = HalfWidth(typicalSpend.Spread, elapsedMonths);
 
             rows.Add(
                 new OutlookMonthRow(
@@ -72,12 +83,12 @@ internal static class OutlookProjectionEngine
                     expectedIn,
                     expectedOut,
                     expectedNet,
-                    band.Low,
-                    band.Mid,
-                    band.High,
-                    balanceLow,
-                    balanceMid,
-                    balanceHigh
+                    spendLow,
+                    spendMid,
+                    spendHigh,
+                    centerBalance - coneHalf,
+                    centerBalance,
+                    centerBalance + coneHalf
                 )
             );
         }
@@ -86,27 +97,28 @@ internal static class OutlookProjectionEngine
     }
 
     /// <summary>
-    /// Scales a whole-month <c>Typical spend</c> band down to the portion of the month from
-    /// <paramref name="fromDate"/> through month-end (inclusive of the current day), so the current
-    /// month's everyday spend reflects only the days still to come.
+    /// The fraction of the month from <paramref name="fromDate"/> through month-end (inclusive of
+    /// the current day), capped at a whole month, so the current month's everyday spend reflects
+    /// only the days still to come.
     /// </summary>
-    private static OutlookSpendBand Prorate(
-        OutlookSpendBand band,
-        DateOnly fromDate,
-        DateOnly monthEnd
-    )
+    private static double RemainingFraction(DateOnly fromDate, DateOnly monthEnd)
     {
         var daysInMonth = monthEnd.Day;
         var remaining = daysInMonth - fromDate.Day + 1;
-        if (remaining >= daysInMonth)
-            return band;
-
-        long Scale(long value) =>
-            (long)
-                Math.Round((decimal)value * remaining / daysInMonth, MidpointRounding.AwayFromZero);
-
-        return new OutlookSpendBand(Scale(band.Low), Scale(band.Mid), Scale(band.High));
+        return remaining >= daysInMonth ? 1.0 : (double)remaining / daysInMonth;
     }
+
+    private static long Scale(long value, double fraction) =>
+        fraction >= 1.0 ? value : (long)Math.Round(value * fraction, MidpointRounding.AwayFromZero);
+
+    /// <summary>
+    /// The random-walk half-width: <c>spread × √months</c>. Variance of independent monthly draws
+    /// adds linearly, so the standard deviation — and thus the band's half-width — grows with √n.
+    /// </summary>
+    private static long HalfWidth(long spread, double months) =>
+        spread <= 0 || months <= 0
+            ? 0L
+            : (long)Math.Round(spread * Math.Sqrt(months), MidpointRounding.AwayFromZero);
 
     /// <summary>
     /// The occurrence dates of a template still due in the current (partial) month — those on or
@@ -231,20 +243,21 @@ internal sealed record OutlookTemplateSpec(
 );
 
 /// <summary>
-/// The monthly <c>Typical spend</c> band as balance-normalized deltas (typically ≤ 0). <see
-/// cref="Low"/> is the pessimistic bound (most negative), <see cref="High"/> the optimistic one;
-/// <see cref="Mid"/> is the trailing median.
+/// The <c>Typical spend</c> model for one account (ADR-0033), balance-normalized: <see
+/// cref="Median"/> is the trailing-window median monthly everyday spend (typically ≤ 0), and <see
+/// cref="Spread"/> is a non-negative robust dispersion (a scaled median-absolute-deviation,
+/// i.e. a robust standard-deviation estimate) that sizes the random-walk uncertainty cone.
 /// </summary>
-internal sealed record OutlookSpendBand(long Low, long Mid, long High)
+internal sealed record OutlookSpendModel(long Median, long Spread)
 {
-    public static OutlookSpendBand Zero { get; } = new(0L, 0L, 0L);
+    public static OutlookSpendModel Zero { get; } = new(0L, 0L);
 }
 
 /// <summary>
 /// One projected month. <see cref="ExpectedIn"/> / <see cref="ExpectedOut"/> split the templates'
 /// signed effect by direction (<see cref="ExpectedNet"/> is their sum); the <c>Spend*</c> fields
-/// are the band applied that month (prorated for the current month); the <c>End*</c> fields are the
-/// running month-end balance band.
+/// are this month's standalone everyday-spend band (prorated for the current month); the
+/// <c>End*</c> fields are the running month-end balance with the random-walk cone around it.
 /// </summary>
 internal sealed record OutlookMonthRow(
     DateOnly Month,
