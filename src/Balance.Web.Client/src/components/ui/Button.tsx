@@ -13,7 +13,7 @@ const VARIANT: Record<ButtonVariant, string> = {
     secondary:
         'text-fg-2 bg-surface-2 border border-border-soft data-[hovered]:text-fg-1 data-[hovered]:bg-surface-3 data-[pressed]:bg-surface-3',
     ghost: 'text-fg-2 data-[hovered]:text-fg-1 data-[hovered]:bg-surface-2 data-[pressed]:bg-surface-2',
-    danger: 'text-white bg-danger data-[hovered]:bg-danger-strong data-[pressed]:bg-danger-strong',
+    danger: 'text-white bg-danger data-[hovered]:bg-danger data-[pressed]:bg-danger-strong',
 };
 
 export type ButtonProps = AriaButtonProps & {

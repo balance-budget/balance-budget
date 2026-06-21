@@ -81,13 +81,15 @@ const ACCOUNT_ICON_SET: ReadonlySet<string> = new Set(ACCOUNT_ICON_CHOICES);
 // One accent per AccountType — accounts no longer get per-instance tints, so
 // the list / sidebar / dashboard read as type-grouped at a glance. This is the
 // single source of truth for the AccountType→hue mapping; chart components
-// reuse it (e.g. MoneyFlowChart) rather than re-declaring their own.
+// reuse it (e.g. MoneyFlowChart) rather than re-declaring their own. These use
+// the dedicated --color-type-* tokens (not the --color-chart-* palette) so the
+// per-type "theme" colors stay stable even when the chart hues are retuned.
 export const ACCENT_BY_TYPE: Record<AccountType, string> = {
-    Asset: 'var(--color-chart-blue)',
-    Liability: 'var(--color-chart-pink)',
-    Equity: 'var(--color-chart-violet)',
-    Income: 'var(--color-chart-green)',
-    Expense: 'var(--color-chart-amber)',
+    Asset: 'var(--color-type-asset)',
+    Liability: 'var(--color-type-liability)',
+    Equity: 'var(--color-type-equity)',
+    Income: 'var(--color-type-income)',
+    Expense: 'var(--color-type-expense)',
 };
 
 type AccountVisual = {
@@ -114,13 +116,14 @@ export function visualHintFor(account: AccountVisual): VisualHint {
 // colors are deterministic and stable across renders (same data → same colors),
 // and adjacent series always differ. The order here is the order they appear.
 const CHART_PALETTE: readonly string[] = [
-    'var(--color-chart-blue)',
-    'var(--color-chart-amber)',
-    'var(--color-chart-violet)',
-    'var(--color-chart-green)',
-    'var(--color-chart-pink)',
-    'var(--color-chart-teal)',
-    'var(--color-chart-gold)',
+    'var(--color-chart-1)',
+    'var(--color-chart-2)',
+    'var(--color-chart-3)',
+    'var(--color-chart-4)',
+    'var(--color-chart-5)',
+    'var(--color-chart-6)',
+    'var(--color-chart-7)',
+    'var(--color-chart-8)',
 ];
 
 // The i-th series/slice gets the i-th palette hue, wrapping once exhausted.

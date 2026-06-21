@@ -48,37 +48,45 @@
 
     /* Semantic — light-tuned hues that hold AA as text on white and read as
        fills. The .dark block restores the brighter dark-bg variants. */
-    --color-success: #0e8a4e;
+    --color-success: var(--color-green-600);
     --color-success-soft: color-mix(in oklab, var(--color-success) 14%, transparent);
-    --color-danger: #d22d2d;
-    --color-danger-strong: #b81f1f;
+    --color-danger: var(--color-red-600);
     --color-danger-soft: color-mix(in oklab, var(--color-danger) 14%, transparent);
-    --color-warning: #b8730a;
+    --color-warning: var(--color-amber-600);
     --color-warning-soft: color-mix(in oklab, var(--color-warning) 14%, transparent);
-    --color-info: #1f6fd6;
+    --color-info: var(--color-blue-600);
     --color-info-soft: color-mix(in oklab, var(--color-info) 14%, transparent);
 
-    /* Chart hues — a neutral, distinguishable palette used as per-AccountType
-       accents (see ACCENT_BY_TYPE) and as the generic same-type series palette
-       (see CHART_PALETTE). Named by hue, not by spending category: these are not
-       "categories" (a term the domain deliberately avoids). Derived from
-       Tailwind's built-in palette: the 600 shades clear ~3:1 graphic contrast on
-       white here, and .dark restores the brighter 400 shades for near-black.
-       Soft tints derive from the hue. */
-    --color-chart-amber: var(--color-orange-600);
-    --color-chart-blue: var(--color-blue-600);
-    --color-chart-violet: var(--color-violet-600);
-    --color-chart-pink: var(--color-pink-600);
-    --color-chart-green: var(--color-emerald-600);
-    --color-chart-gold: var(--color-amber-600);
-    --color-chart-teal: var(--color-teal-600);
-    --color-chart-amber-soft: color-mix(in oklab, var(--color-chart-amber) 12%, transparent);
-    --color-chart-blue-soft: color-mix(in oklab, var(--color-chart-blue) 12%, transparent);
-    --color-chart-violet-soft: color-mix(in oklab, var(--color-chart-violet) 12%, transparent);
-    --color-chart-pink-soft: color-mix(in oklab, var(--color-chart-pink) 12%, transparent);
-    --color-chart-green-soft: color-mix(in oklab, var(--color-chart-green) 12%, transparent);
-    --color-chart-gold-soft: color-mix(in oklab, var(--color-chart-gold) 12%, transparent);
-    --color-chart-teal-soft: color-mix(in oklab, var(--color-chart-teal) 12%, transparent);
+    /* Chart hues — a neutral, distinguishable palette used as the generic same-type
+       series palette (see CHART_PALETTE). Derived from Tailwind's built-in palette:
+       the 600 shades clear ~3:1 graphic contrast on white here, and .dark restores
+       the brighter 400 shades for near-black. Soft tints derive from the hue. */
+    --color-chart-1: var(--color-blue-600);
+    --color-chart-2: var(--color-amber-600);
+    --color-chart-3: var(--color-emerald-600);
+    --color-chart-4: var(--color-violet-600);
+    --color-chart-5: var(--color-pink-600);
+    --color-chart-6: var(--color-cyan-600);
+    --color-chart-7: var(--color-orange-600);
+    --color-chart-8: var(--color-indigo-600);
+    --color-chart-1-soft: color-mix(in oklab, var(--color-chart-1) 12%, transparent);
+    --color-chart-2-soft: color-mix(in oklab, var(--color-chart-2) 12%, transparent);
+    --color-chart-3-soft: color-mix(in oklab, var(--color-chart-3) 12%, transparent);
+    --color-chart-4-soft: color-mix(in oklab, var(--color-chart-4) 12%, transparent);
+    --color-chart-5-soft: color-mix(in oklab, var(--color-chart-5) 12%, transparent);
+    --color-chart-6-soft: color-mix(in oklab, var(--color-chart-6) 12%, transparent);
+    --color-chart-7-soft: color-mix(in oklab, var(--color-chart-7) 12%, transparent);
+    --color-chart-8-soft: color-mix(in oklab, var(--color-chart-8) 12%, transparent);
+
+    /* AccountType accents — the stable per-type "theme" colors used by
+       ACCENT_BY_TYPE for lists/sidebar/dashboard. Deliberately decoupled from
+       the --color-chart-* palette so tweaking chart hues never shifts how an
+       AccountType reads. The .dark block restores the brighter shades. */
+    --color-type-asset: var(--color-blue-600);
+    --color-type-liability: var(--color-pink-600);
+    --color-type-equity: var(--color-violet-600);
+    --color-type-income: var(--color-green-600);
+    --color-type-expense: var(--color-orange-600);
 
     /* Type families */
     --font-sans: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -122,19 +130,25 @@
     --color-fg-3: #777777;
     --color-fg-4: #4a4a4a;
 
-    --color-success: #34c87a;
-    --color-danger: #ff5d5d;
-    --color-danger-strong: #ff2d2d;
-    --color-warning: #f5b942;
-    --color-info: #5aa9ff;
+    --color-success: var(--color-green-400);
+    --color-danger: var(--color-red-400);
+    --color-warning: var(--color-amber-400);
+    --color-info: var(--color-blue-400);
 
-    --color-chart-amber: var(--color-orange-400);
-    --color-chart-blue: var(--color-blue-400);
-    --color-chart-violet: var(--color-violet-400);
-    --color-chart-pink: var(--color-pink-400);
-    --color-chart-green: var(--color-emerald-400);
-    --color-chart-gold: var(--color-amber-400);
-    --color-chart-teal: var(--color-teal-400);
+    --color-chart-1: var(--color-blue-400);
+    --color-chart-2: var(--color-amber-400);
+    --color-chart-3: var(--color-emerald-400);
+    --color-chart-4: var(--color-violet-400);
+    --color-chart-5: var(--color-pink-400);
+    --color-chart-6: var(--color-cyan-400);
+    --color-chart-7: var(--color-orange-400);
+    --color-chart-8: var(--color-indigo-400);
+
+    --color-type-asset: var(--color-blue-400);
+    --color-type-liability: var(--color-pink-400);
+    --color-type-equity: var(--color-violet-400);
+    --color-type-income: var(--color-green-400);
+    --color-type-expense: var(--color-orange-400);
 
     --shadow-overlay: 0 12px 40px rgba(0, 0, 0, 0.45);
 }
