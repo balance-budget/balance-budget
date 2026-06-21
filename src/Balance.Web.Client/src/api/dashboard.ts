@@ -3,7 +3,6 @@ import type { components } from '../lib/api-types.gen';
 import { asAccountId, type AccountId, type AccountTrend, type TrendPoint } from '../lib/domain';
 import { getJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
-import { chartColorByIndex } from '../lib/visualHints';
 
 type WireSummary = components['schemas']['DashboardSummaryOutput'];
 type WireTrend = components['schemas']['AccountBalanceTrendOutput'];
@@ -150,7 +149,6 @@ function expandToDailyPoints(
 
 function toAccountTrend(
     series: WireTrendSeries,
-    index: number,
     periodStart: string,
     periodEnd: string,
 ): AccountTrend {
@@ -159,8 +157,6 @@ function toAccountTrend(
         accountId,
         name: series.accountName,
         horizon: series.horizon,
-        // Colored by series order so the assignment is stable across renders.
-        accentColor: chartColorByIndex(index),
         points: expandToDailyPoints(
             toMinor(series.openingBalance),
             series.deltas,
@@ -172,7 +168,7 @@ function toAccountTrend(
 
 function toTrend(wire: WireTrend): AccountBalanceTrend {
     return {
-        series: wire.series.map((s, i) => toAccountTrend(s, i, wire.periodStart, wire.periodEnd)),
+        series: wire.series.map(s => toAccountTrend(s, wire.periodStart, wire.periodEnd)),
         periodStart: wire.periodStart,
         periodEnd: wire.periodEnd,
         range: TOKEN_BY_WIRE[wire.range],

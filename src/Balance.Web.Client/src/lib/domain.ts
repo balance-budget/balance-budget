@@ -76,6 +76,5 @@ export type AccountTrend = {
     accountId: AccountId;
     name: string;
     horizon: Horizon;
-    accentColor: string;
     points: TrendPoint[];
 };

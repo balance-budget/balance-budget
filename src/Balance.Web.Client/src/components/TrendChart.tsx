@@ -19,6 +19,7 @@ import { asAccountId, type AccountId, type AccountTrend } from '../lib/domain';
 import { formatMoney, formatMoneyAxis } from '../lib/money';
 import { moneyAxis } from '../lib/chartAxis';
 import { AxisBreakMark } from './AxisBreakMark';
+import { buildChartColorMap, chartColorByIndex } from '../lib/visualHints';
 import { ChartTooltipShell, ChartTooltipRow, ChartTooltipTotalRow } from './ChartTooltip';
 import { Trans } from '@lingui/react/macro';
 
@@ -92,6 +93,14 @@ export function TrendChart({
     const rows = useMemo(() => buildRows(series), [series]);
     const ticks = useMemo(() => computeTicks(rows, range), [rows, range]);
     const seriesByKey = useMemo(() => new Map(series.map(s => [s.accountId, s])), [series]);
+    // This chart owns its colors: one stable hue per account by the series'
+    // (API) order, so each TrendChart is self-contained and always starts at the
+    // first palette slot regardless of what other charts show.
+    const colorByAccount = useMemo(
+        () => buildChartColorMap(series.map(s => s.accountId)),
+        [series],
+    );
+    const colorOf = (accountId: AccountId) => colorByAccount.get(accountId) ?? chartColorByIndex(0);
     // Scale to the visible series only, so toggling one off via the legend rescales the axis.
     // A stacked chart must scale to the stacked totals (positives and negatives summed per day),
     // not individual balances, or the bands overflow the axis.
@@ -199,9 +208,9 @@ export function TrendChart({
                             dataKey={s.accountId}
                             name={s.name}
                             stackId="balance"
-                            stroke={s.accentColor}
+                            stroke={colorOf(s.accountId)}
                             strokeWidth={1.25}
-                            fill={s.accentColor}
+                            fill={colorOf(s.accountId)}
                             fillOpacity={0.55}
                             isAnimationActive={false}
                             hide={hiddenAccountIds.has(s.accountId)}
@@ -217,7 +226,7 @@ export function TrendChart({
                             type="monotone"
                             dataKey={s.accountId}
                             name={s.name}
-                            stroke={s.accentColor}
+                            stroke={colorOf(s.accountId)}
                             strokeWidth={1.75}
                             dot={false}
                             activeDot={{ r: 3, strokeWidth: 0 }}
