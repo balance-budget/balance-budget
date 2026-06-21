@@ -41,6 +41,14 @@ msgstr "(none)"
 msgid "(you)"
 msgstr "(you)"
 
+#. placeholder {0}: currency.accountCount
+msgid "{0, plural, one {# account} other {# accounts}}"
+msgstr "{0, plural, one {# account} other {# accounts}}"
+
+#. placeholder {0}: currency.bankAccountCount
+msgid "{0, plural, one {# bank account} other {# bank accounts}}"
+msgstr "{0, plural, one {# bank account} other {# bank accounts}}"
+
 #. placeholder {0}: loan.partCount
 msgid "{0, plural, one {# part} other {# parts}}"
 msgstr "{0, plural, one {# part} other {# parts}}"
@@ -160,6 +168,9 @@ msgstr "── None"
 
 msgid "── None (self-transfer)"
 msgstr "── None (self-transfer)"
+
+msgid "2–8 uppercase letters or digits, e.g. EUR, USD, BTC."
+msgstr "2–8 uppercase letters or digits, e.g. EUR, USD, BTC."
 
 msgid "31 Dec {year}"
 msgstr "31 Dec {year}"
@@ -602,6 +613,9 @@ msgstr "Couldn't load counterparties."
 msgid "Couldn't load counterparty."
 msgstr "Couldn't load counterparty."
 
+msgid "Couldn't load currencies."
+msgstr "Couldn't load currencies."
+
 msgid "Couldn't load journal entries."
 msgstr "Couldn't load journal entries."
 
@@ -727,8 +741,14 @@ msgstr "Creating…"
 msgid "Credit"
 msgstr "Credit"
 
+msgid "Currencies"
+msgstr "Currencies"
+
 msgid "Currency"
 msgstr "Currency"
+
+msgid "Currency deleted."
+msgstr "Currency deleted."
 
 msgid "Current"
 msgstr "Current"
@@ -763,6 +783,9 @@ msgstr "Debit"
 msgid "Debit and Credit totals must balance to zero."
 msgstr "Debit and Credit totals must balance to zero."
 
+msgid "Decimal places: 2 for EUR/USD, 0 for JPY, 8 for BTC. Set carefully — to change it later you delete and recreate the currency."
+msgstr "Decimal places: 2 for EUR/USD, 0 for JPY, 8 for BTC. Set carefully — to change it later you delete and recreate the currency."
+
 msgid "Default"
 msgstr "Default"
 
@@ -786,6 +809,7 @@ msgstr "Delete “{0}”?"
 msgid "Delete “{name}”?"
 msgstr "Delete “{name}”?"
 
+#. placeholder {0}: currency.code
 #. placeholder {0}: deletingPart.label
 msgid "Delete {0}?"
 msgstr "Delete {0}?"
@@ -915,6 +939,9 @@ msgstr "Dr "
 msgid "Drives the Inbox's loan-payment hint."
 msgstr "Drives the Inbox's loan-payment hint."
 
+msgid "e.g. € or $"
+msgstr "e.g. € or $"
+
 msgid "e.g. 2200"
 msgstr "e.g. 2200"
 
@@ -950,6 +977,9 @@ msgstr "e.g. settled by journal entry X"
 
 msgid "Edit"
 msgstr "Edit"
+
+msgid "Edit {code}"
+msgstr "Edit {code}"
 
 msgid "Edit account"
 msgstr "Edit account"
@@ -1219,6 +1249,9 @@ msgstr "Importing…"
 msgid "In force"
 msgstr "In force"
 
+msgid "In use — can't be deleted while referenced"
+msgstr "In use — can't be deleted while referenced"
+
 msgid "Inbox"
 msgstr "Inbox"
 
@@ -1438,6 +1471,9 @@ msgstr "Mine"
 msgid "Minimum 12 characters."
 msgstr "Minimum 12 characters."
 
+msgid "Minor-unit scale"
+msgstr "Minor-unit scale"
+
 msgid "Money arrives in these accounts (debit)."
 msgstr "Money arrives in these accounts (debit)."
 
@@ -1528,6 +1564,9 @@ msgstr "New bank account"
 msgid "New counterparty"
 msgstr "New counterparty"
 
+msgid "New currency"
+msgstr "New currency"
+
 msgid "New journal entry"
 msgstr "New journal entry"
 
@@ -1581,6 +1620,9 @@ msgstr "No counterparties yet."
 msgid "No counterparty bank accounts."
 msgstr "No counterparty bank accounts."
 
+msgid "No currencies yet."
+msgstr "No currencies yet."
+
 msgid "No importer configured"
 msgstr "No importer configured"
 
@@ -1601,6 +1643,9 @@ msgstr "No matches for “{debounced}”."
 
 msgid "No matches for “{debouncedQ}”."
 msgstr "No matches for “{debouncedQ}”."
+
+msgid "No matches for “{q}”."
+msgstr "No matches for “{q}”."
 
 msgid "No matches for “{query}”."
 msgstr "No matches for “{query}”."
@@ -1992,6 +2037,9 @@ msgstr "Saving…"
 msgid "Savings"
 msgstr "Savings"
 
+msgid "Scale"
+msgstr "Scale"
+
 msgid "Schedule"
 msgstr "Schedule"
 
@@ -2010,11 +2058,17 @@ msgstr "Search bank accounts…"
 msgid "Search bank transactions"
 msgstr "Search bank transactions"
 
+msgid "Search by code or name…"
+msgstr "Search by code or name…"
+
 msgid "Search counterparties"
 msgstr "Search counterparties"
 
 msgid "Search counterparties…"
 msgstr "Search counterparties…"
+
+msgid "Search currencies"
+msgstr "Search currencies"
 
 msgid "Search description or counterparty…"
 msgstr "Search description or counterparty…"
@@ -2161,6 +2215,12 @@ msgstr "Switch to light theme"
 msgid "Switch to the personal-finance shape"
 msgstr "Switch to the personal-finance shape"
 
+msgid "Symbol"
+msgstr "Symbol"
+
+msgid "Symbol (optional)"
+msgstr "Symbol (optional)"
+
 msgid "Target"
 msgstr "Target"
 
@@ -2169,6 +2229,12 @@ msgstr "Target"
 #. placeholder {2}: deletingRate.part.label
 msgid "The {0}% rate effective {1} is removed from {2}. Projections recompute; posted entries are untouched."
 msgstr "The {0}% rate effective {1} is removed from {2}. Projections recompute; posted entries are untouched."
+
+msgid "The code can't be changed after creation."
+msgstr "The code can't be changed after creation."
+
+msgid "The currencies your accounts and amounts are denominated in."
+msgstr "The currencies your accounts and amounts are denominated in."
 
 msgid "The interface language. Formatting below is set separately."
 msgstr "The interface language. Formatting below is set separately."
@@ -2187,6 +2253,9 @@ msgstr "The part's account holds its principal and posted history, so it can't b
 
 msgid "The real-world bank accounts behind your ledger accounts and counterparties."
 msgstr "The real-world bank accounts behind your ledger accounts and counterparties."
+
+msgid "The scale can't be changed after creation."
+msgstr "The scale can't be changed after creation."
 
 msgid "Theme"
 msgstr "Theme"
@@ -2267,11 +2336,17 @@ msgstr "Unknown account"
 msgid "Unknown counterparty"
 msgstr "Unknown counterparty"
 
+msgid "Unused"
+msgstr "Unused"
+
 msgid "Upcoming"
 msgstr "Upcoming"
 
 msgid "Upload an ING current-account CSV against the matching bank account. Re-uploads are safe - duplicate rows are skipped."
 msgstr "Upload an ING current-account CSV against the matching bank account. Re-uploads are safe - duplicate rows are skipped."
+
+msgid "Usage"
+msgstr "Usage"
 
 msgid "Use Debit or Credit, not both."
 msgstr "Use Debit or Credit, not both."
@@ -2320,6 +2395,9 @@ msgstr "Working…"
 
 msgid "Year-end"
 msgstr "Year-end"
+
+msgid "You can re-add it later."
+msgstr "You can re-add it later."
 
 msgid "You have {dirtyCount, plural, one {# unsaved draft} other {# unsaved drafts}}. Leaving will discard them."
 msgstr "You have {dirtyCount, plural, one {# unsaved draft} other {# unsaved drafts}}. Leaving will discard them."

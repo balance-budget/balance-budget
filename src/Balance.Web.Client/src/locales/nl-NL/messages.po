@@ -41,6 +41,14 @@ msgstr "(geen)"
 msgid "(you)"
 msgstr "(jij)"
 
+#. placeholder {0}: currency.accountCount
+msgid "{0, plural, one {# account} other {# accounts}}"
+msgstr "{0, plural, one {# rekening} other {# rekeningen}}"
+
+#. placeholder {0}: currency.bankAccountCount
+msgid "{0, plural, one {# bank account} other {# bank accounts}}"
+msgstr "{0, plural, one {# bankrekening} other {# bankrekeningen}}"
+
 #. placeholder {0}: loan.partCount
 msgid "{0, plural, one {# part} other {# parts}}"
 msgstr "{0, plural, one {# deel} other {# delen}}"
@@ -160,6 +168,9 @@ msgstr "── Geen"
 
 msgid "── None (self-transfer)"
 msgstr "── Geen (eigen overboeking)"
+
+msgid "2–8 uppercase letters or digits, e.g. EUR, USD, BTC."
+msgstr "2–8 hoofdletters of cijfers, bijv. EUR, USD, BTC."
 
 msgid "31 Dec {year}"
 msgstr "31 dec {year}"
@@ -602,6 +613,9 @@ msgstr "Kon tegenpartijen niet laden."
 msgid "Couldn't load counterparty."
 msgstr "Kon tegenpartij niet laden."
 
+msgid "Couldn't load currencies."
+msgstr "Kon valuta's niet laden."
+
 msgid "Couldn't load journal entries."
 msgstr "Kon journaalposten niet laden."
 
@@ -727,8 +741,14 @@ msgstr "Aanmaken…"
 msgid "Credit"
 msgstr "Credit"
 
+msgid "Currencies"
+msgstr "Valuta's"
+
 msgid "Currency"
 msgstr "Valuta"
+
+msgid "Currency deleted."
+msgstr "Valuta verwijderd."
 
 msgid "Current"
 msgstr "Huidig"
@@ -763,6 +783,9 @@ msgstr "Debet"
 msgid "Debit and Credit totals must balance to zero."
 msgstr "Debet- en credittotalen moeten op nul sluiten."
 
+msgid "Decimal places: 2 for EUR/USD, 0 for JPY, 8 for BTC. Set carefully — to change it later you delete and recreate the currency."
+msgstr "Decimalen: 2 voor EUR/USD, 0 voor JPY, 8 voor BTC. Stel dit zorgvuldig in — om het later te wijzigen verwijder en hermaak je de valuta."
+
 msgid "Default"
 msgstr "Standaard"
 
@@ -786,6 +809,7 @@ msgstr "“{0}” verwijderen?"
 msgid "Delete “{name}”?"
 msgstr "“{name}” verwijderen?"
 
+#. placeholder {0}: currency.code
 #. placeholder {0}: deletingPart.label
 msgid "Delete {0}?"
 msgstr "{0} verwijderen?"
@@ -915,6 +939,9 @@ msgstr "Dr "
 msgid "Drives the Inbox's loan-payment hint."
 msgstr "Stuurt de hint voor leningbetalingen in het postvak aan."
 
+msgid "e.g. € or $"
+msgstr "bijv. € of $"
+
 msgid "e.g. 2200"
 msgstr "bijv. 2200"
 
@@ -950,6 +977,9 @@ msgstr "bijv. afgewikkeld via journaalpost X"
 
 msgid "Edit"
 msgstr "Bewerken"
+
+msgid "Edit {code}"
+msgstr "{code} bewerken"
 
 msgid "Edit account"
 msgstr "Rekening bewerken"
@@ -1219,6 +1249,9 @@ msgstr "Importeren…"
 msgid "In force"
 msgstr "Van kracht"
 
+msgid "In use — can't be deleted while referenced"
+msgstr "In gebruik — kan niet worden verwijderd zolang er verwijzingen zijn"
+
 msgid "Inbox"
 msgstr "Postvak"
 
@@ -1438,6 +1471,9 @@ msgstr "Van mij"
 msgid "Minimum 12 characters."
 msgstr "Minimaal 12 tekens."
 
+msgid "Minor-unit scale"
+msgstr "Schaal van de kleinste eenheid"
+
 msgid "Money arrives in these accounts (debit)."
 msgstr "Geld komt binnen op deze rekeningen (debet)."
 
@@ -1528,6 +1564,9 @@ msgstr "Nieuwe bankrekening"
 msgid "New counterparty"
 msgstr "Nieuwe tegenpartij"
 
+msgid "New currency"
+msgstr "Nieuwe valuta"
+
 msgid "New journal entry"
 msgstr "Nieuwe journaalpost"
 
@@ -1581,6 +1620,9 @@ msgstr "Nog geen tegenpartijen."
 msgid "No counterparty bank accounts."
 msgstr "Geen bankrekeningen van tegenpartijen."
 
+msgid "No currencies yet."
+msgstr "Nog geen valuta's."
+
 msgid "No importer configured"
 msgstr "Geen importer geconfigureerd"
 
@@ -1601,6 +1643,9 @@ msgstr "Geen resultaten voor “{debounced}”."
 
 msgid "No matches for “{debouncedQ}”."
 msgstr "Geen resultaten voor “{debouncedQ}”."
+
+msgid "No matches for “{q}”."
+msgstr "Geen resultaten voor “{q}”."
 
 msgid "No matches for “{query}”."
 msgstr "Geen resultaten voor “{query}”."
@@ -1992,6 +2037,9 @@ msgstr "Opslaan…"
 msgid "Savings"
 msgstr "Sparen"
 
+msgid "Scale"
+msgstr "Schaal"
+
 msgid "Schedule"
 msgstr "Schema"
 
@@ -2010,11 +2058,17 @@ msgstr "Bankrekeningen zoeken…"
 msgid "Search bank transactions"
 msgstr "Banktransacties zoeken"
 
+msgid "Search by code or name…"
+msgstr "Zoeken op code of naam…"
+
 msgid "Search counterparties"
 msgstr "Tegenpartijen zoeken"
 
 msgid "Search counterparties…"
 msgstr "Tegenpartijen zoeken…"
+
+msgid "Search currencies"
+msgstr "Valuta's zoeken"
 
 msgid "Search description or counterparty…"
 msgstr "Omschrijving of tegenpartij zoeken…"
@@ -2161,6 +2215,12 @@ msgstr "Schakel naar licht thema"
 msgid "Switch to the personal-finance shape"
 msgstr "Schakel over naar de privéfinanciënweergave"
 
+msgid "Symbol"
+msgstr "Symbool"
+
+msgid "Symbol (optional)"
+msgstr "Symbool (optioneel)"
+
 msgid "Target"
 msgstr "Doel"
 
@@ -2169,6 +2229,12 @@ msgstr "Doel"
 #. placeholder {2}: deletingRate.part.label
 msgid "The {0}% rate effective {1} is removed from {2}. Projections recompute; posted entries are untouched."
 msgstr "De rente van {0}%, ingaand {1}, wordt verwijderd uit {2}. Prognoses worden herberekend; geboekte posten blijven ongewijzigd."
+
+msgid "The code can't be changed after creation."
+msgstr "De code kan na het aanmaken niet meer worden gewijzigd."
+
+msgid "The currencies your accounts and amounts are denominated in."
+msgstr "De valuta's waarin je rekeningen en bedragen luiden."
 
 msgid "The interface language. Formatting below is set separately."
 msgstr "De interfacetaal. De opmaak hieronder stel je apart in."
@@ -2187,6 +2253,9 @@ msgstr "De rekening van het deel bevat de hoofdsom en geboekte historie en kan h
 
 msgid "The real-world bank accounts behind your ledger accounts and counterparties."
 msgstr "De echte bankrekeningen achter je grootboekrekeningen en tegenpartijen."
+
+msgid "The scale can't be changed after creation."
+msgstr "De schaal kan na het aanmaken niet meer worden gewijzigd."
 
 msgid "Theme"
 msgstr "Thema"
@@ -2267,11 +2336,17 @@ msgstr "Onbekende rekening"
 msgid "Unknown counterparty"
 msgstr "Onbekende tegenpartij"
 
+msgid "Unused"
+msgstr "Ongebruikt"
+
 msgid "Upcoming"
 msgstr "Aankomend"
 
 msgid "Upload an ING current-account CSV against the matching bank account. Re-uploads are safe - duplicate rows are skipped."
 msgstr "Upload een CSV van een ING-betaalrekening tegen de bijbehorende bankrekening. Opnieuw uploaden is veilig - dubbele rijen worden overgeslagen."
+
+msgid "Usage"
+msgstr "Gebruik"
 
 msgid "Use Debit or Credit, not both."
 msgstr "Gebruik debet of credit, niet beide."
@@ -2320,6 +2395,9 @@ msgstr "Bezig…"
 
 msgid "Year-end"
 msgstr "Jaareinde"
+
+msgid "You can re-add it later."
+msgstr "Je kunt het later opnieuw toevoegen."
 
 msgid "You have {dirtyCount, plural, one {# unsaved draft} other {# unsaved drafts}}. Leaving will discard them."
 msgstr "Je hebt {dirtyCount, plural, one {# niet-opgeslagen concept} other {# niet-opgeslagen concepten}}. Bij vertrek worden ze verworpen."

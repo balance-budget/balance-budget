@@ -41,6 +41,14 @@ msgstr "（無）"
 msgid "(you)"
 msgstr "（你）"
 
+#. placeholder {0}: currency.accountCount
+msgid "{0, plural, one {# account} other {# accounts}}"
+msgstr "{0, plural, other {# 個帳戶}}"
+
+#. placeholder {0}: currency.bankAccountCount
+msgid "{0, plural, one {# bank account} other {# bank accounts}}"
+msgstr "{0, plural, other {# 個銀行帳戶}}"
+
 #. placeholder {0}: loan.partCount
 msgid "{0, plural, one {# part} other {# parts}}"
 msgstr "{0, plural, other {# 個部分}}"
@@ -160,6 +168,9 @@ msgstr "── 無"
 
 msgid "── None (self-transfer)"
 msgstr "── 無（本人帳戶轉帳）"
+
+msgid "2–8 uppercase letters or digits, e.g. EUR, USD, BTC."
+msgstr "2–8 個大寫字母或數字，例如 EUR、USD、BTC。"
 
 msgid "31 Dec {year}"
 msgstr "{year} 年 12 月 31 日"
@@ -602,6 +613,9 @@ msgstr "無法載入交易對方。"
 msgid "Couldn't load counterparty."
 msgstr "無法載入交易對方。"
 
+msgid "Couldn't load currencies."
+msgstr "無法載入貨幣。"
+
 msgid "Couldn't load journal entries."
 msgstr "無法載入日記帳分錄。"
 
@@ -727,8 +741,14 @@ msgstr "建立中…"
 msgid "Credit"
 msgstr "貸方"
 
+msgid "Currencies"
+msgstr "貨幣"
+
 msgid "Currency"
 msgstr "貨幣"
+
+msgid "Currency deleted."
+msgstr "已刪除貨幣。"
 
 msgid "Current"
 msgstr "目前"
@@ -763,6 +783,9 @@ msgstr "借方"
 msgid "Debit and Credit totals must balance to zero."
 msgstr "借方與貸方合計必須均衡為零。"
 
+msgid "Decimal places: 2 for EUR/USD, 0 for JPY, 8 for BTC. Set carefully — to change it later you delete and recreate the currency."
+msgstr "小數位數：EUR/USD 為 2，JPY 為 0，BTC 為 8。請謹慎設定——日後若要變更，須刪除並重新建立此貨幣。"
+
 msgid "Default"
 msgstr "預設"
 
@@ -786,6 +809,7 @@ msgstr "刪除「{0}」？"
 msgid "Delete “{name}”?"
 msgstr "刪除「{name}」？"
 
+#. placeholder {0}: currency.code
 #. placeholder {0}: deletingPart.label
 msgid "Delete {0}?"
 msgstr "刪除 {0}？"
@@ -915,6 +939,9 @@ msgstr "借 "
 msgid "Drives the Inbox's loan-payment hint."
 msgstr "驅動收件匣的貸款支付提示。"
 
+msgid "e.g. € or $"
+msgstr "例如 € 或 $"
+
 msgid "e.g. 2200"
 msgstr "例如 2200"
 
@@ -950,6 +977,9 @@ msgstr "例如由日記帳分錄 X 結清"
 
 msgid "Edit"
 msgstr "編輯"
+
+msgid "Edit {code}"
+msgstr "編輯 {code}"
 
 msgid "Edit account"
 msgstr "編輯帳戶"
@@ -1219,6 +1249,9 @@ msgstr "匯入中…"
 msgid "In force"
 msgstr "生效中"
 
+msgid "In use — can't be deleted while referenced"
+msgstr "使用中——有參照時無法刪除"
+
 msgid "Inbox"
 msgstr "收件匣"
 
@@ -1438,6 +1471,9 @@ msgstr "我的"
 msgid "Minimum 12 characters."
 msgstr "至少 12 個字元。"
 
+msgid "Minor-unit scale"
+msgstr "最小單位小數位數"
+
 msgid "Money arrives in these accounts (debit)."
 msgstr "現金流向這些帳戶（借方）。"
 
@@ -1528,6 +1564,9 @@ msgstr "新銀行帳戶"
 msgid "New counterparty"
 msgstr "新交易對方"
 
+msgid "New currency"
+msgstr "新增貨幣"
+
 msgid "New journal entry"
 msgstr "新日記帳分錄"
 
@@ -1581,6 +1620,9 @@ msgstr "尚無交易對方。"
 msgid "No counterparty bank accounts."
 msgstr "沒有交易對方的銀行帳戶。"
 
+msgid "No currencies yet."
+msgstr "尚無貨幣。"
+
 msgid "No importer configured"
 msgstr "未設定匯入器"
 
@@ -1601,6 +1643,9 @@ msgstr "找不到「{debounced}」的相符項目。"
 
 msgid "No matches for “{debouncedQ}”."
 msgstr "找不到「{debouncedQ}」的相符項目。"
+
+msgid "No matches for “{q}”."
+msgstr "沒有符合「{q}」的結果。"
 
 msgid "No matches for “{query}”."
 msgstr "找不到「{query}」的相符項目。"
@@ -1992,6 +2037,9 @@ msgstr "儲存中…"
 msgid "Savings"
 msgstr "儲蓄"
 
+msgid "Scale"
+msgstr "小數位數"
+
 msgid "Schedule"
 msgstr "排程"
 
@@ -2010,11 +2058,17 @@ msgstr "搜尋銀行帳戶…"
 msgid "Search bank transactions"
 msgstr "搜尋銀行交易"
 
+msgid "Search by code or name…"
+msgstr "依代碼或名稱搜尋…"
+
 msgid "Search counterparties"
 msgstr "搜尋交易對方"
 
 msgid "Search counterparties…"
 msgstr "搜尋交易對方…"
+
+msgid "Search currencies"
+msgstr "搜尋貨幣"
 
 msgid "Search description or counterparty…"
 msgstr "搜尋描述或交易對方…"
@@ -2161,6 +2215,12 @@ msgstr "切換至淺色主題"
 msgid "Switch to the personal-finance shape"
 msgstr "切換為個人理財版面"
 
+msgid "Symbol"
+msgstr "符號"
+
+msgid "Symbol (optional)"
+msgstr "符號（選填）"
+
 msgid "Target"
 msgstr "目標"
 
@@ -2169,6 +2229,12 @@ msgstr "目標"
 #. placeholder {2}: deletingRate.part.label
 msgid "The {0}% rate effective {1} is removed from {2}. Projections recompute; posted entries are untouched."
 msgstr "自 {1} 生效的 {0}% 利率將從 {2} 移除。預估值會重新計算；已過帳的分錄不受影響。"
+
+msgid "The code can't be changed after creation."
+msgstr "建立後無法變更代碼。"
+
+msgid "The currencies your accounts and amounts are denominated in."
+msgstr "你的帳戶與金額所使用的貨幣。"
 
 msgid "The interface language. Formatting below is set separately."
 msgstr "介面語言。下方的格式設定為獨立設定。"
@@ -2187,6 +2253,9 @@ msgstr "此部分的帳戶持有其本金與已過帳歷史，因此無法在此
 
 msgid "The real-world bank accounts behind your ledger accounts and counterparties."
 msgstr "你的分類帳帳戶與交易對方背後的真實銀行帳戶。"
+
+msgid "The scale can't be changed after creation."
+msgstr "建立後無法變更小數位數。"
 
 msgid "Theme"
 msgstr "主題"
@@ -2267,11 +2336,17 @@ msgstr "未知帳戶"
 msgid "Unknown counterparty"
 msgstr "未知交易對方"
 
+msgid "Unused"
+msgstr "未使用"
+
 msgid "Upcoming"
 msgstr "即將到來"
 
 msgid "Upload an ING current-account CSV against the matching bank account. Re-uploads are safe - duplicate rows are skipped."
 msgstr "針對對應的銀行帳戶上傳 ING 活期帳戶 CSV。重複上傳是安全的 - 重複的項目會被略過。"
+
+msgid "Usage"
+msgstr "使用情形"
 
 msgid "Use Debit or Credit, not both."
 msgstr "請使用借方或貸方，不可兩者皆填。"
@@ -2320,6 +2395,9 @@ msgstr "處理中…"
 
 msgid "Year-end"
 msgstr "年底"
+
+msgid "You can re-add it later."
+msgstr "你之後可以重新新增。"
 
 msgid "You have {dirtyCount, plural, one {# unsaved draft} other {# unsaved drafts}}. Leaving will discard them."
 msgstr "你有 {dirtyCount, plural, other {# 筆未儲存的草稿}}。離開將會捨棄它們。"
