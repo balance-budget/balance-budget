@@ -16,6 +16,7 @@ import { moneyAxis } from '../lib/chartAxis';
 import { formatMonthAxisDate, formatTrendTooltipDate } from '../lib/dates';
 import { formatMoney, formatMoneyAxis } from '../lib/money';
 import { chartColorByIndex } from '../lib/visualHints';
+import { ChartTooltipShell, ChartTooltipRow, ChartTooltipTotalRow } from './ChartTooltip';
 
 type NetWorthChartProps = {
     points: NetWorthPoint[];
@@ -25,8 +26,6 @@ type NetWorthChartProps = {
 
 // The two stacked bands are a fixed, ordered pair (liquid below, illiquid
 // above), so they take the first two palette slots by position.
-const LIQUID_COLOR = chartColorByIndex(0);
-const ILLIQUID_COLOR = chartColorByIndex(1);
 
 type Row = { date: string; liquid: number; illiquid: number };
 
@@ -119,9 +118,9 @@ export function NetWorthChart({ points, currencyCode, height = 240 }: NetWorthCh
                     dataKey="liquid"
                     name={t`Liquid`}
                     stackId="netWorth"
-                    stroke={LIQUID_COLOR}
+                    stroke={chartColorByIndex(0)}
                     strokeWidth={1.25}
-                    fill={LIQUID_COLOR}
+                    fill={chartColorByIndex(0)}
                     fillOpacity={0.55}
                     isAnimationActive={false}
                 />
@@ -130,9 +129,9 @@ export function NetWorthChart({ points, currencyCode, height = 240 }: NetWorthCh
                     dataKey="illiquid"
                     name={t`Illiquid`}
                     stackId="netWorth"
-                    stroke={ILLIQUID_COLOR}
+                    stroke={chartColorByIndex(1)}
                     strokeWidth={1.25}
-                    fill={ILLIQUID_COLOR}
+                    fill={chartColorByIndex(1)}
                     fillOpacity={0.55}
                     isAnimationActive={false}
                 />
@@ -165,51 +164,22 @@ function NetWorthTooltip({
     if (!row) return null;
     const netWorth = row.liquid + row.illiquid;
 
-    // Components first, then the total they sum to.
-    const lines: { key: string; name: string; value: number; color: string; strong?: boolean }[] = [
-        { key: 'liquid', name: liquidLabel, value: row.liquid, color: LIQUID_COLOR },
-        { key: 'illiquid', name: illiquidLabel, value: row.illiquid, color: ILLIQUID_COLOR },
-        {
-            key: 'net',
-            name: netWorthLabel,
-            value: netWorth,
-            color: 'var(--color-fg-3)',
-            strong: true,
-        },
-    ];
-
     return (
-        <div className="rounded-xl border border-border-soft bg-bg-1 px-3 py-2 shadow-sm text-xs">
-            <div className="text-fg-3 mb-1">
-                {typeof label === 'string' ? formatTrendTooltipDate(label) : ''}
-            </div>
-            <div className="flex flex-col gap-1">
-                {lines.map(l => (
-                    <div
-                        key={l.key}
-                        className={
-                            l.strong
-                                ? 'flex items-center justify-between gap-x-4 mt-1 pt-1 border-t border-border-soft'
-                                : 'flex items-center justify-between gap-x-4'
-                        }
-                    >
-                        <span className="flex items-center gap-1.5">
-                            {l.strong ? (
-                                <span className="w-2 h-2" />
-                            ) : (
-                                <span
-                                    className="w-2 h-2 rounded-full inline-block"
-                                    style={{ background: l.color }}
-                                />
-                            )}
-                            <span className="text-fg-2">{l.name}</span>
-                        </span>
-                        <span className="font-mono tabular-nums text-fg-1">
-                            {formatMoney(l.value, currencyCode, catalog)}
-                        </span>
-                    </div>
-                ))}
-            </div>
-        </div>
+        <ChartTooltipShell heading={typeof label === 'string' ? formatTrendTooltipDate(label) : ''}>
+            <ChartTooltipRow
+                color={chartColorByIndex(0)}
+                name={liquidLabel}
+                value={formatMoney(row.liquid, currencyCode, catalog)}
+            />
+            <ChartTooltipRow
+                color={chartColorByIndex(1)}
+                name={illiquidLabel}
+                value={formatMoney(row.illiquid, currencyCode, catalog)}
+            />
+            <ChartTooltipTotalRow
+                name={netWorthLabel}
+                value={formatMoney(netWorth, currencyCode, catalog)}
+            />
+        </ChartTooltipShell>
     );
 }

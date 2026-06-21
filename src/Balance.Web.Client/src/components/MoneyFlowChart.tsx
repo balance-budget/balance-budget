@@ -1,11 +1,18 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useCallback, useMemo, useState } from 'react';
-import { Rectangle, ResponsiveContainer, Sankey, Tooltip } from 'recharts';
-import { useCurrencyCatalog } from '../api/currencies';
+import {
+    Rectangle,
+    ResponsiveContainer,
+    Sankey,
+    Tooltip,
+    type TooltipContentProps,
+} from 'recharts';
+import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import { useMoneyFlow, type MoneyFlowNode, type MoneyFlowNodeKind } from '../api/reports';
 import { formatMoney } from '../lib/money';
 import { ACCENT_BY_TYPE } from '../lib/visualHints';
 import type { ReportPeriod } from '../lib/reportPeriod';
+import { ChartTooltipShell, ChartTooltipRow } from './ChartTooltip';
 import { ErrorState } from './ErrorState';
 import { Panel, SectionHead } from './Panel';
 import { Skeleton } from './Skeleton';
@@ -160,17 +167,7 @@ function SankeyDiagram({
                 link={{ stroke: 'var(--color-fg-4)', strokeOpacity: 0.6 }}
                 node={<FlowNode expanded={expanded} onToggle={onToggle} />}
             >
-                <Tooltip
-                    formatter={value => formatMoney(Number(value), currency, catalog)}
-                    contentStyle={{
-                        background: 'var(--color-bg-1)',
-                        border: '1px solid var(--color-border-soft)',
-                        borderRadius: 6,
-                        fontSize: 12,
-                        color: 'var(--color-fg-1)',
-                    }}
-                    itemStyle={{ color: 'var(--color-fg-1)' }}
-                />
+                <Tooltip content={<MoneyFlowTooltip currency={currency} catalog={catalog} />} />
             </Sankey>
         </ResponsiveContainer>
     );
@@ -194,6 +191,31 @@ type FlowNodeProps = {
     expanded?: Set<string>;
     onToggle?: (id: string) => void;
 };
+
+type MoneyFlowTooltipProps = Partial<TooltipContentProps<number, string>> & {
+    currency: string;
+    catalog: CurrencyCatalog;
+};
+
+// Sankey tooltips fire for both links and nodes; either way we just show each
+// payload entry's label and flow amount through the shared tooltip chrome so it
+// reads like every other chart. Links carry no per-series color, so rows render
+// without a dot (the shell keeps them aligned).
+function MoneyFlowTooltip({ active, payload, currency, catalog }: MoneyFlowTooltipProps) {
+    if (!active || !payload || payload.length === 0) return null;
+    return (
+        <ChartTooltipShell>
+            {payload.map((item, i) => (
+                <ChartTooltipRow
+                    key={`${String(item.name ?? '')}:${i}`}
+                    color={item.color}
+                    name={String(item.name ?? '')}
+                    value={formatMoney(Number(item.value) || 0, currency, catalog)}
+                />
+            ))}
+        </ChartTooltipShell>
+    );
+}
 
 // Custom Sankey node: a colored bar with its account name placed on the
 // outward side — pure sources (income, drawdowns) on the left, everything from

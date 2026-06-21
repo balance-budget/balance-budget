@@ -1,8 +1,8 @@
 import { msg } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useMemo, useState } from 'react';
-import { Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
-import { useCurrencyCatalog } from '../api/currencies';
+import { Pie, PieChart, ResponsiveContainer, Tooltip, type TooltipContentProps } from 'recharts';
+import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import {
     useDistribution,
     type Distribution,
@@ -14,6 +14,7 @@ import type { AccountId } from '../lib/domain';
 import { formatMoney } from '../lib/money';
 import type { ReportPeriod } from '../lib/reportPeriod';
 import { chartColorByIndex } from '../lib/visualHints';
+import { ChartTooltipShell, ChartTooltipRow } from './ChartTooltip';
 import { ErrorState } from './ErrorState';
 import { Panel, SectionHead } from './Panel';
 import { Breadcrumb, Breadcrumbs } from './ui/Breadcrumbs';
@@ -211,20 +212,9 @@ function DistributionBody({
                                 isAnimationActive={false}
                             />
                             <Tooltip
-                                formatter={(value, name) =>
-                                    [
-                                        formatMoney(Number(value), currency, catalog),
-                                        String(name),
-                                    ] as [string, string]
+                                content={
+                                    <DistributionTooltip currency={currency} catalog={catalog} />
                                 }
-                                contentStyle={{
-                                    background: 'var(--color-bg-1)',
-                                    border: '1px solid var(--color-border-soft)',
-                                    borderRadius: 6,
-                                    fontSize: 12,
-                                    color: 'var(--color-fg-1)',
-                                }}
-                                itemStyle={{ color: 'var(--color-fg-1)' }}
                             />
                         </PieChart>
                     </ResponsiveContainer>
@@ -275,6 +265,30 @@ function DistributionBody({
                 )}
             </div>
         </div>
+    );
+}
+
+type DistributionTooltipProps = Partial<TooltipContentProps<number, string>> & {
+    currency: string;
+    catalog: CurrencyCatalog;
+};
+
+function DistributionTooltip({ active, payload, currency, catalog }: DistributionTooltipProps) {
+    if (!active || !payload || payload.length === 0) return null;
+    return (
+        <ChartTooltipShell>
+            {payload.map((item, i) => {
+                const datum = item.payload as { fill?: string } | undefined;
+                return (
+                    <ChartTooltipRow
+                        key={`${String(item.name ?? '')}:${i}`}
+                        color={datum?.fill ?? item.color}
+                        name={String(item.name ?? '')}
+                        value={formatMoney(Number(item.value) || 0, currency, catalog)}
+                    />
+                );
+            })}
+        </ChartTooltipShell>
     );
 }
 

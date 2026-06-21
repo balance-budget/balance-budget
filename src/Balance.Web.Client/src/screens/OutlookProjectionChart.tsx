@@ -19,6 +19,7 @@ import { formatCalendarDate } from '../i18n/format';
 import { formatMoney, formatMoneyAxis } from '../lib/money';
 import { moneyAxis } from '../lib/chartAxis';
 import { AxisBreakMark } from '../components/AxisBreakMark';
+import { ChartTooltipShell, ChartTooltipRow } from '../components/ChartTooltip';
 
 type ChartRow = {
     month: string;
@@ -261,50 +262,49 @@ function ProjectionTooltip({
     const scenario = find('scenario');
 
     return (
-        <div className="rounded-xl border border-border-soft bg-bg-1 px-3 py-2 shadow-sm text-xs">
-            <div className="text-fg-3 mb-1">
-                {typeof label === 'string'
+        <ChartTooltipShell
+            heading={
+                typeof label === 'string'
                     ? formatCalendarDate(label, 'year-month', { style: 'long' })
-                    : ''}
-            </div>
-            <div className="flex flex-col gap-1">
-                {actual !== undefined && (
-                    <Row label={t`Actual`} value={formatMoney(actual, currencyCode, catalog)} />
-                )}
-                {mid !== undefined && (
-                    <Row label={t`Projected`} value={formatMoney(mid, currencyCode, catalog)} />
-                )}
-                {row?.expectedIn ? (
-                    <Row
-                        label={t`Expected in`}
-                        value={formatMoney(row.expectedIn, currencyCode, catalog)}
-                    />
-                ) : null}
-                {row?.expectedOut ? (
-                    <Row
-                        label={t`Expected out`}
-                        value={formatMoney(row.expectedOut, currencyCode, catalog)}
-                    />
-                ) : null}
-                {hasScenario && scenario !== undefined && (
-                    <Row label={t`What-if`} value={formatMoney(scenario, currencyCode, catalog)} />
-                )}
-                {band && (
-                    <div className="text-fg-3 pt-0.5">
-                        {formatMoney(band[0], currencyCode, catalog)} –{' '}
-                        {formatMoney(band[1], currencyCode, catalog)}
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-    return (
-        <div className="flex items-center justify-between gap-x-4">
-            <span className="text-fg-2">{label}</span>
-            <span className="font-mono tabular-nums text-fg-1">{value}</span>
-        </div>
+                    : ''
+            }
+        >
+            {actual !== undefined && (
+                <ChartTooltipRow
+                    name={t`Actual`}
+                    value={formatMoney(actual, currencyCode, catalog)}
+                />
+            )}
+            {mid !== undefined && (
+                <ChartTooltipRow
+                    name={t`Projected`}
+                    value={formatMoney(mid, currencyCode, catalog)}
+                />
+            )}
+            {row?.expectedIn ? (
+                <ChartTooltipRow
+                    name={t`Expected in`}
+                    value={formatMoney(row.expectedIn, currencyCode, catalog)}
+                />
+            ) : null}
+            {row?.expectedOut ? (
+                <ChartTooltipRow
+                    name={t`Expected out`}
+                    value={formatMoney(row.expectedOut, currencyCode, catalog)}
+                />
+            ) : null}
+            {hasScenario && scenario !== undefined && (
+                <ChartTooltipRow
+                    name={t`What-if`}
+                    value={formatMoney(scenario, currencyCode, catalog)}
+                />
+            )}
+            {band && (
+                <div className="text-fg-3 pt-0.5">
+                    {formatMoney(band[0], currencyCode, catalog)} –{' '}
+                    {formatMoney(band[1], currencyCode, catalog)}
+                </div>
+            )}
+        </ChartTooltipShell>
     );
 }
