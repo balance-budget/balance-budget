@@ -32,10 +32,14 @@ dotnet ef migrations add <name> --no-build --project src/Balance.Data.PostgreSql
 dotnet ef migrations add <name> --no-build --project src/Balance.Data.Sqlite/Balance.Data.Sqlite.csproj --startup-project src/Balance.Web/Balance.Web.csproj -- --Database:Provider=Sqlite
 
 # Format
-# CI check
+# C# — CI check
 dotnet csharpier check . --ignore-path .csharpierignore
-# Auto-format
+# C# — auto-format
 dotnet csharpier format . --ignore-path .csharpierignore
+# Frontend (Prettier) — CI check
+npm run format:check
+# Frontend (Prettier) — auto-format
+npm run format
 
 # Test (without build)
 # TUnit suite, runs with coverage in CI
@@ -117,7 +121,7 @@ These are conventions to follow when adding new code. See [docs/conventions.md](
 - **Background jobs.** Use the Quartz helpers in `Balance.Services/Jobs` (`ScheduleJobAt<TJob>(cron)`). The scheduler name is `"Balance Scheduler"`. Wire jobs inside `AddBalanceJobs`.
 - **Visibility.** Default to `internal`; expose `public` only where another project legitimately needs the type. `Balance.Web` and `Balance.Services` use `InternalsVisibleTo` to share internals with `Balance.Tests`.
 - **Language & spelling.** US English everywhere — identifiers, comments, UI copy, error codes, docs (`categorize`, `color`, `behavior`). Frontend copy goes through Lingui (no untranslated strings, lint-enforced — ADR-0022); use "journal entry", not "BT"/"JE", and avoid gratuitous em-dashes. **When you add or change a Lingui string, run `npm run extract` and supply the translation in every locale (`en`, `nl-NL`, `zh-TW`) in the same change — the `src/locales/` catalogs are drift-gated and must not contain empty `msgstr`s.** See [docs/conventions.md](docs/conventions.md#language-and-spelling).
-- **Formatting.** CSharpier is the source of truth — CI fails on any deviation. Always run `dotnet csharpier format .` before committing.
+- **Formatting.** CSharpier is the source of truth for C# and Prettier for the frontend — CI fails on any deviation. Always run `dotnet csharpier format .` (C#) and `npm run format` (frontend) before committing.
 - **Commits.** Use [Conventional Commits](https://www.conventionalcommits.org/): `type(scope): summary` in the imperative mood. Types: `feat`, `fix`, `docs`, `chore`, `refactor`, `style`, `test`, `ci`, `build`, `perf`, `revert`. Scope (optional, lowercase) names the area (`reports`, `ing`, `client`/`spa`, `data`, `web`, `accounts`, `bank-accounts`, `bank-transactions`, `dashboard`, `sidebar`, `auth`, `settings`, …). Reference issues/PRs in a footer (`Refs: #NN`, `Closes #NN`), not the subject. Breaking changes use `type(scope)!:`. See [docs/conventions.md](docs/conventions.md#commit-messages).
 - **Build hygiene.** `Directory.Build.props` enforces `TreatWarningsAsErrors=true`, nullable enabled, `AnalysisMode=All`, `LangVersion=latest`, and `UseArtifactsOutput=true`. Package versions are centralized in `Directory.Packages.props` — never pin a version inside a `.csproj`.
 
@@ -140,6 +144,7 @@ The web host startup follows this order:
 ## Notes for AI agents
 
 - **Always run CSharpier** (`dotnet csharpier format .`) after writing C# — CI fails otherwise and `TreatWarningsAsErrors=true` will catch a lot too.
+- **Always run `npm run format`** (Prettier) after editing frontend code (`src/Balance.Web.Client`) — CI runs `format:check` (read-only) and fails on any deviation.
 - **Match the existing DI pattern** when adding a new layer or feature module: a single `AddBalance*` extension that internally composes its dependencies.
 - **Don't pin package versions in `.csproj`** — add or update the `PackageVersion` entry in `Directory.Packages.props`.
 - **EF Core migrations** must be generated against the provider-specific assembly: The migrations assembly is wired up in `DbContextOptionsBuilderExtensions.UseProvider`.
