@@ -25,23 +25,52 @@ internal sealed class CurrencyService : ICurrencyService
 
     public async Task<IReadOnlyList<CurrencyOutput>> ListAsync(CancellationToken cancellationToken)
     {
-        var cached = await _cache.GetOrCreateAsync(
-            ListCacheKey,
-            async entry =>
-            {
-                entry.AbsoluteExpirationRelativeToNow = CacheTtl;
-                var currencies = await _dbContext
-                    .Currencies.AsNoTracking()
-                    .OrderBy(c => c.Code)
-                    .ToListAsync(cancellationToken);
-                IReadOnlyList<CurrencyOutput> outputs =
-                [
-                    .. currencies.Select(CurrencyOutput.FromEntity),
-                ];
-                return outputs;
-            }
-        );
-        return cached ?? [];
+        // Cache only the rarely-changing base rows (code/name/scale/symbol). Usage counts depend on
+        // Accounts/BankAccounts, which mutate far more often than the currency catalog, so they are
+        // computed fresh on every call and overlaid — never cached, to keep the delete guard honest.
+        var cached =
+            await _cache.GetOrCreateAsync(
+                ListCacheKey,
+                async entry =>
+                {
+                    entry.AbsoluteExpirationRelativeToNow = CacheTtl;
+                    var currencies = await _dbContext
+                        .Currencies.AsNoTracking()
+                        .OrderBy(c => c.Code)
+                        .ToListAsync(cancellationToken);
+                    IReadOnlyList<CurrencyOutput> outputs =
+                    [
+                        .. currencies.Select(CurrencyOutput.FromEntity),
+                    ];
+                    return outputs;
+                }
+            ) ?? [];
+
+        var accountCounts = await _dbContext
+            .Accounts.AsNoTracking()
+            .GroupBy(a => a.CurrencyCode)
+            .Select(g => new { Code = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+        var bankAccountCounts = await _dbContext
+            .BankAccounts.AsNoTracking()
+            .Where(b => b.CurrencyCode != null)
+            .GroupBy(b => b.CurrencyCode)
+            .Select(g => new { Code = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+
+        var accountByCode = accountCounts.ToDictionary(x => x.Code, x => x.Count);
+        var bankAccountByCode = bankAccountCounts.ToDictionary(x => x.Code!.Value, x => x.Count);
+
+        return
+        [
+            .. cached.Select(c =>
+                c with
+                {
+                    AccountCount = accountByCode.GetValueOrDefault(c.Code),
+                    BankAccountCount = bankAccountByCode.GetValueOrDefault(c.Code),
+                }
+            ),
+        ];
     }
 
     public async Task<Result<CurrencyOutput>> GetAsync(

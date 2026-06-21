@@ -134,6 +134,55 @@ internal sealed class CurrencyServiceTests : EndpointsTestsBase
         await Assert.That(listAfter.Any(c => c.Code == code)).IsTrue();
     }
 
+    [Test]
+    public async Task ListAsync_reports_account_and_bank_account_usage_counts(
+        CancellationToken cancellationToken
+    )
+    {
+        var code = UniqueCode("U");
+
+        using (var scope = Factory.Services.CreateScope())
+        {
+            var service = scope.ServiceProvider.GetRequiredService<ICurrencyService>();
+            await service.CreateAsync(
+                new CreateCurrencyInput(code, "Used", 2, null),
+                cancellationToken
+            );
+
+            var dbContext = scope.ServiceProvider.GetRequiredService<BalanceDbContext>();
+            var account = new Balance.Data.Entities.Account
+            {
+                Name = "Usage Account",
+                Code = "ACC-" + Guid.NewGuid().ToString("N")[..8],
+                AccountType = Balance.Data.Entities.Enums.AccountType.Asset,
+                CurrencyCode = code,
+                IsPostable = true,
+            };
+            dbContext.Accounts.Add(account);
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            dbContext.BankAccounts.Add(
+                new Balance.Data.Entities.BankAccount
+                {
+                    Type = Balance.Data.Entities.Enums.BankAccountType.Current,
+                    Iban = "NL00BANK" + Guid.NewGuid().ToString("N")[..10].ToUpperInvariant(),
+                    CurrencyCode = code,
+                    AccountId = account.Id,
+                }
+            );
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        using (var readScope = Factory.Services.CreateScope())
+        {
+            var service = readScope.ServiceProvider.GetRequiredService<ICurrencyService>();
+            var list = await service.ListAsync(cancellationToken);
+            var entry = list.Single(c => c.Code == code);
+            await Assert.That(entry.AccountCount).IsEqualTo(1);
+            await Assert.That(entry.BankAccountCount).IsEqualTo(1);
+        }
+    }
+
     private static CurrencyCode UniqueCode(string prefix) =>
         new(prefix + Guid.NewGuid().ToString("N").AsSpan(0, 6).ToString().ToUpperInvariant());
 }

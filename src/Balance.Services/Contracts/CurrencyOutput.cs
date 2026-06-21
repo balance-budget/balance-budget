@@ -10,6 +10,21 @@ public sealed record CurrencyOutput(
     string? Symbol
 )
 {
+    /// <summary>
+    /// Number of <see cref="Account" />s referencing this currency. Together with
+    /// <see cref="BankAccountCount" /> this is the delete guard: a currency is deletable only when
+    /// both are zero, in lockstep with the FK <c>RESTRICT</c> the database enforces. Populated by
+    /// <c>ListAsync</c>; defaults to 0 on the single-row outputs (create/update), which the client
+    /// refetches rather than trusting these fields.
+    /// </summary>
+    public int AccountCount { get; init; }
+
+    /// <summary>
+    /// Number of <see cref="BankAccount" />s referencing this currency. See
+    /// <see cref="AccountCount" />.
+    /// </summary>
+    public int BankAccountCount { get; init; }
+
     public static CurrencyOutput FromEntity(Currency currency)
     {
         ArgumentNullException.ThrowIfNull(currency);
