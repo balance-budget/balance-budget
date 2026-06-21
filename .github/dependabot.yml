@@ -35,6 +35,16 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    # Pinned to the React 19.1 backport line until facebook/react#35126 is
+    # fixed: React 19.2's dev-mode performance instrumentation reads every
+    # enumerable prop (including getters), and React Aria's collection
+    # childNodes getter throws by design, crashing ComboBox selection in the
+    # dev server. See package.json overrides and commit 51dc68a.
+    ignore:
+      - dependency-name: "react"
+        versions: [">=19.2.0"]
+      - dependency-name: "react-dom"
+        versions: [">=19.2.0"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
