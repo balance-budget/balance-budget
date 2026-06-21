@@ -15,6 +15,7 @@ import type { NetWorthPoint } from '../api/dashboard';
 import { moneyAxis } from '../lib/chartAxis';
 import { formatMonthAxisDate, formatTrendTooltipDate } from '../lib/dates';
 import { formatMoney, formatMoneyAxis } from '../lib/money';
+import { chartColorByIndex } from '../lib/visualHints';
 
 type NetWorthChartProps = {
     points: NetWorthPoint[];
@@ -22,8 +23,10 @@ type NetWorthChartProps = {
     height?: number;
 };
 
-const LIQUID_COLOR = 'var(--color-chart-teal)';
-const ILLIQUID_COLOR = 'var(--color-chart-blue)';
+// The two stacked bands are a fixed, ordered pair (liquid below, illiquid
+// above), so they take the first two palette slots by position.
+const LIQUID_COLOR = chartColorByIndex(0);
+const ILLIQUID_COLOR = chartColorByIndex(1);
 
 type Row = { date: string; liquid: number; illiquid: number };
 
