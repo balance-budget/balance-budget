@@ -6,6 +6,7 @@ A self-hostable **personal-finance tool backed by a rigorous double-entry ledger
 
 ![Dashboard](img/screenshot-dashboard.png)
 ![Insights — money flow](img/screenshot-insights.png)
+![Loan detail](img/screenshot-loan.png)
 
 ## Features
 
