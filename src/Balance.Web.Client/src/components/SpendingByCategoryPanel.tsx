@@ -7,7 +7,9 @@ import { Panel, SectionHead } from './Panel';
 import { Skeleton } from './Skeleton';
 import { formatMoney } from '../lib/money';
 
-const BAR_COLOR = 'var(--color-chart-amber)';
+// Spending is an Expense view, so the bar reuses the stable Expense account-type
+// accent rather than a positional chart hue.
+const BAR_COLOR = 'var(--color-type-expense)';
 
 /**
  * This-month spending by leaf Expense category (ADR-0030): the flow companion to the dashboard's

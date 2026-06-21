@@ -196,7 +196,7 @@ export function OutlookProjectionChart({
                     dataKey="actual"
                     name="Actual"
                     stroke="var(--color-fg-2)"
-                    strokeWidth={2}
+                    strokeWidth={1.25}
                     dot={false}
                     isAnimationActive={false}
                     connectNulls
@@ -207,7 +207,7 @@ export function OutlookProjectionChart({
                     dataKey="mid"
                     name="Projected"
                     stroke="var(--color-brand-primary)"
-                    strokeWidth={2}
+                    strokeWidth={1.25}
                     strokeDasharray="5 4"
                     dot={false}
                     isAnimationActive={false}
@@ -218,8 +218,8 @@ export function OutlookProjectionChart({
                         type="monotone"
                         dataKey="scenario"
                         name="What-if"
-                        stroke="#f59e0b"
-                        strokeWidth={2}
+                        stroke="var(--color-warning)"
+                        strokeWidth={1.25}
                         strokeDasharray="2 3"
                         dot={false}
                         isAnimationActive={false}

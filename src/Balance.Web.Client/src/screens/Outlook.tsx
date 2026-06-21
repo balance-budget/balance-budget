@@ -341,7 +341,7 @@ function YearEndCard({ account }: { account: OutlookAccountProjection }) {
                     <span className="text-xs text-fg-3">
                         <Trans>What-if</Trans>
                     </span>
-                    <span className="text-[#f59e0b]">
+                    <span className="text-warning">
                         <Amount
                             minor={scenarioEnd}
                             currencyCode={account.currencyCode}

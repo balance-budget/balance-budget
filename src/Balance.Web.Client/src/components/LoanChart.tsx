@@ -163,7 +163,7 @@ export function LoanChart({ projection, height = 280 }: LoanChartProps) {
                     <ReferenceLine
                         x={projection.anchorMonth}
                         stroke="var(--color-border-strong)"
-                        strokeDasharray="4 3"
+                        strokeDasharray="3 3"
                         label={{
                             value: t`today`,
                             position: 'insideTopLeft',
@@ -200,7 +200,7 @@ export function LoanChart({ projection, height = 280 }: LoanChartProps) {
                                     stroke={colorOf(p.accountId)}
                                     fill={colorOf(p.accountId)}
                                     fillOpacity={0.45}
-                                    strokeWidth={1.5}
+                                    strokeWidth={1.25}
                                     isAnimationActive={false}
                                 />
                             ))}
