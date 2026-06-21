@@ -27,9 +27,9 @@
         "@tanstack/react-router": "^1.170.16",
         "fast-json-patch": "^3.1.1",
         "lucide-react": "^1.21.0",
-        "react": "^19.2.7",
+        "react": "19.2.7",
         "react-aria-components": "^1.19.0",
-        "react-dom": "^19.2.7",
+        "react-dom": "19.2.7",
         "recharts": "^3.8.1",
         "tailwindcss": "^4.3.0",
         "tailwindcss-react-aria-components": "^2.2.0"

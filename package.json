@@ -23,7 +23,7 @@
     "openapi-typescript": {
       "typescript": "$typescript"
     },
-    "react": "19.1.8",
-    "react-dom": "19.1.8"
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
   }
 }
