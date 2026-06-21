@@ -101,7 +101,7 @@ export function Launcher({ open, onClose }: LauncherProps) {
                         {showResults && (
                             <Menu
                                 aria-label={t`Search results`}
-                                className="max-h-[60vh] overflow-y-auto scrollbar-sleek py-2 px-2 outline-none"
+                                className="max-h-[60vh] overflow-y-auto py-2 px-2 outline-none"
                                 renderEmptyState={() => (
                                     <p className="px-4 py-6 text-center text-xs text-fg-3">
                                         <Trans>No matches for “{debounced}”.</Trans>

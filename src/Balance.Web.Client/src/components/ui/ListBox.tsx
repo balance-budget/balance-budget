@@ -17,7 +17,7 @@ export function DropdownListBox<T extends object>(props: ListBoxProps<T>) {
             {...props}
             className={composeTailwindRenderProps(
                 props.className,
-                'outline-none max-h-64 overflow-y-auto scrollbar-sleek',
+                'outline-none max-h-64 overflow-y-auto',
             )}
         />
     );
