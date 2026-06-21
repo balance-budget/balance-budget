@@ -19,6 +19,8 @@ import { asAccountId, type AccountId, type AccountTrend } from '../lib/domain';
 import { formatMoney, formatMoneyAxis } from '../lib/money';
 import { moneyAxis } from '../lib/chartAxis';
 import { AxisBreakMark } from './AxisBreakMark';
+import { ChartTooltipShell, ChartTooltipRow, ChartTooltipTotalRow } from './ChartTooltip';
+import { Trans } from '@lingui/react/macro';
 
 type TrendChartProps = {
     series: AccountTrend[];
@@ -147,6 +149,7 @@ export function TrendChart({
                     seriesByKey={seriesByKey}
                     currencyCode={currencyCode}
                     catalog={catalog}
+                    showTotal={variant === 'stacked'}
                 />
             }
             cursor={{
@@ -232,6 +235,8 @@ type TrendTooltipProps = Partial<TooltipContentProps<number, string>> & {
     seriesByKey: Map<AccountId, AccountTrend>;
     currencyCode: string;
     catalog: CurrencyCatalog;
+    /** Stacked variant only: the top edge is the tier total, so show it. */
+    showTotal: boolean;
 };
 
 function TrendTooltip({
@@ -241,41 +246,32 @@ function TrendTooltip({
     seriesByKey,
     currencyCode,
     catalog,
+    showTotal,
 }: TrendTooltipProps) {
     if (!active || !payload || payload.length === 0) return null;
 
     const sorted = [...payload].sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0));
+    const total = sorted.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
 
     return (
-        <div className="rounded-xl border border-border-soft bg-bg-1 px-3 py-2 shadow-sm text-xs">
-            <div className="text-fg-3 mb-1">
-                {typeof label === 'string' ? formatTrendTooltipDate(label) : ''}
-            </div>
-            <div className="flex flex-col gap-1">
-                {sorted.map(item => {
-                    const series = seriesByKey.get(asAccountId(String(item.dataKey)));
-                    const value = Number(item.value) || 0;
-                    return (
-                        <div
-                            key={String(item.dataKey)}
-                            className="flex items-center justify-between gap-x-4"
-                        >
-                            <span className="flex items-center gap-1.5">
-                                <span
-                                    className="w-2 h-2 rounded-full inline-block"
-                                    style={{ background: item.color }}
-                                />
-                                <span className="text-fg-2">
-                                    {series?.name ?? String(item.name ?? '')}
-                                </span>
-                            </span>
-                            <span className="font-mono tabular-nums text-fg-1">
-                                {formatMoney(value, currencyCode, catalog)}
-                            </span>
-                        </div>
-                    );
-                })}
-            </div>
-        </div>
+        <ChartTooltipShell heading={typeof label === 'string' ? formatTrendTooltipDate(label) : ''}>
+            {sorted.map(item => {
+                const series = seriesByKey.get(asAccountId(String(item.dataKey)));
+                return (
+                    <ChartTooltipRow
+                        key={String(item.dataKey)}
+                        color={item.color}
+                        name={series?.name ?? String(item.name ?? '')}
+                        value={formatMoney(Number(item.value) || 0, currencyCode, catalog)}
+                    />
+                );
+            })}
+            {showTotal && sorted.length > 1 && (
+                <ChartTooltipTotalRow
+                    name={<Trans>Total</Trans>}
+                    value={formatMoney(total, currencyCode, catalog)}
+                />
+            )}
+        </ChartTooltipShell>
     );
 }

@@ -7,17 +7,19 @@ import {
     ReferenceLine,
     ResponsiveContainer,
     Tooltip,
+    type TooltipContentProps,
     XAxis,
     YAxis,
 } from 'recharts';
 import { t } from '@lingui/core/macro';
-import { useLingui } from '@lingui/react/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { LoanProjection } from '../api/loans';
-import { useCurrencyCatalog } from '../api/currencies';
+import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import { formatCalendarDate } from '../i18n/format';
 import { cx } from '../lib/cx';
 import { formatMoney, formatMoneyAxis } from '../lib/money';
 import { moneyAxis } from '../lib/chartAxis';
+import { ChartTooltipShell, ChartTooltipRow, ChartTooltipTotalRow } from './ChartTooltip';
 import { buildChartColorMap, chartColorByIndex } from '../lib/visualHints';
 import { buildChartRows, buildPaymentRows } from '../screens/loanDetail.state';
 
@@ -140,24 +142,13 @@ export function LoanChart({ projection, height = 280 }: LoanChartProps) {
                             strokeWidth: 1,
                             strokeDasharray: '2 2',
                         }}
-                        contentStyle={{
-                            background: 'var(--color-bg-1)',
-                            border: '1px solid var(--color-border-soft)',
-                            borderRadius: 8,
-                            fontSize: 12,
-                            color: 'var(--color-fg-1)',
-                        }}
-                        labelFormatter={label =>
-                            formatCalendarDate(String(label).slice(0, 7), 'year-month', {
-                                style: 'long',
-                            })
+                        content={
+                            <LoanTooltip
+                                currencyCode={projection.currencyCode}
+                                catalog={catalog}
+                                labelByPart={labelByPart}
+                            />
                         }
-                        formatter={(value, name) => [
-                            typeof value === 'number'
-                                ? formatMoney(value, projection.currencyCode, catalog)
-                                : String(value ?? ''),
-                            chartSeriesLabel(String(name), labelByPart),
-                        ]}
                     />
                     {/* Today: actuals to the left, projection to the right. */}
                     <ReferenceLine
@@ -297,6 +288,62 @@ function SegmentedToggle({
             {item('balance', t`Balance`)}
             {item('payments', t`Payments`)}
         </div>
+    );
+}
+
+type LoanTooltipProps = Partial<TooltipContentProps<number, string>> & {
+    currencyCode: string;
+    catalog: CurrencyCatalog;
+    labelByPart: Map<string, string>;
+};
+
+// Stacked balances/payments per loan part, plus the total they stack to. The
+// "What-if total" line is an alternative total (not a stack component), so it
+// renders as its own row and stays out of the sum.
+function LoanTooltip({
+    active,
+    payload,
+    label,
+    currencyCode,
+    catalog,
+    labelByPart,
+}: LoanTooltipProps) {
+    if (!active || !payload || payload.length === 0) return null;
+
+    const moved = payload.filter(item => (Number(item.value) || 0) !== 0);
+    if (moved.length === 0) return null;
+    const components = moved.filter(item => item.dataKey !== 'scenarioTotal');
+    const scenario = moved.find(item => item.dataKey === 'scenarioTotal');
+    const total = components.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
+    const heading =
+        typeof label === 'string'
+            ? formatCalendarDate(label.slice(0, 7), 'year-month', { style: 'long' })
+            : '';
+
+    return (
+        <ChartTooltipShell heading={heading}>
+            {components.map(item => (
+                <ChartTooltipRow
+                    key={String(item.dataKey)}
+                    color={item.color}
+                    name={chartSeriesLabel(String(item.name ?? item.dataKey), labelByPart)}
+                    value={formatMoney(Number(item.value) || 0, currencyCode, catalog)}
+                />
+            ))}
+            {components.length > 1 && (
+                <ChartTooltipTotalRow
+                    name={<Trans>Total</Trans>}
+                    value={formatMoney(total, currencyCode, catalog)}
+                />
+            )}
+            {scenario && (
+                <ChartTooltipRow
+                    color={scenario.color}
+                    name={chartSeriesLabel('scenarioTotal', labelByPart)}
+                    value={formatMoney(Number(scenario.value) || 0, currencyCode, catalog)}
+                />
+            )}
+        </ChartTooltipShell>
     );
 }
 

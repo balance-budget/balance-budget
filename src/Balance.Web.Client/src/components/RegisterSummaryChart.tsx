@@ -24,6 +24,7 @@ import {
     type RegisterSummaryBucketSize,
 } from '../lib/registerSummary';
 import { chartColorByIndex } from '../lib/visualHints';
+import { ChartTooltipShell, ChartTooltipRow, ChartTooltipTotalRow } from './ChartTooltip';
 import { ErrorState } from './ErrorState';
 import { Skeleton } from './Skeleton';
 
@@ -196,41 +197,23 @@ function SummaryTooltip({
     const heading = typeof label === 'string' ? formatBucketTooltipDate(label, bucket) : '';
 
     return (
-        <div className="rounded-xl border border-border-soft bg-bg-1 px-3 py-2 shadow-sm text-xs">
-            <div className="text-fg-3 mb-1">
-                {bucket === 'Week' ? <Trans>Week of {heading}</Trans> : heading}
-            </div>
-            <div className="flex flex-col gap-1">
-                {moved.map(item => (
-                    <div
-                        key={String(item.dataKey)}
-                        className="flex items-center justify-between gap-x-4"
-                    >
-                        <span className="flex items-center gap-1.5">
-                            <span
-                                className="w-2 h-2 rounded-full inline-block"
-                                style={{ background: item.color }}
-                            />
-                            <span className="text-fg-2">{String(item.name ?? '')}</span>
-                        </span>
-                        <span className="font-mono tabular-nums text-fg-1">
-                            {formatMoney(Number(item.value) || 0, currencyCode, catalog, {
-                                sign: true,
-                            })}
-                        </span>
-                    </div>
-                ))}
-                {moved.length > 1 && (
-                    <div className="flex items-center justify-between gap-x-4 mt-1 pt-1 border-t border-border-soft">
-                        <span className="text-fg-2">
-                            <Trans>Net</Trans>
-                        </span>
-                        <span className="font-mono tabular-nums text-fg-1">
-                            {formatMoney(total, currencyCode, catalog, { sign: true })}
-                        </span>
-                    </div>
-                )}
-            </div>
-        </div>
+        <ChartTooltipShell heading={bucket === 'Week' ? <Trans>Week of {heading}</Trans> : heading}>
+            {moved.map(item => (
+                <ChartTooltipRow
+                    key={String(item.dataKey)}
+                    color={item.color}
+                    name={String(item.name ?? '')}
+                    value={formatMoney(Number(item.value) || 0, currencyCode, catalog, {
+                        sign: true,
+                    })}
+                />
+            ))}
+            {moved.length > 1 && (
+                <ChartTooltipTotalRow
+                    name={<Trans>Net</Trans>}
+                    value={formatMoney(total, currencyCode, catalog, { sign: true })}
+                />
+            )}
+        </ChartTooltipShell>
     );
 }
