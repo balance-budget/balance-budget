@@ -11,7 +11,12 @@ namespace Balance.Services.Outlook;
 internal sealed class OutlookProjectionService : IOutlookService
 {
     private const int ActualsMonths = 6;
-    private const int TypicalSpendMonths = 3;
+    private const int TypicalSpendMonths = 6;
+
+    // Consistency factor turning a median-absolute-deviation into a robust standard-deviation
+    // estimate for roughly normal data (σ ≈ 1.4826 · MAD), so the ±1-sigma cone of ADR-0033 is a
+    // genuine sigma rather than a raw MAD.
+    private const double MadToSigma = 1.4826;
 
     private readonly BalanceDbContext _dbContext;
     private readonly TimeProvider _timeProvider;
@@ -83,7 +88,7 @@ internal sealed class OutlookProjectionService : IOutlookService
         {
             var currentBalance = ToBalance(account, account.CurrentBalanceRaw);
             var accountTemplates = templatesByAccount.GetValueOrDefault(account.Id, []);
-            var band = typicalSpend.GetValueOrDefault(account.Id, OutlookSpendBand.Zero);
+            var band = typicalSpend.GetValueOrDefault(account.Id, OutlookSpendModel.Zero);
 
             var baselineSpecs = accountTemplates
                 .Select(t => ToSpec(account, t.Cadence, t.AnchorDate, t.EndDate, t.ExpectedAmount))
@@ -133,14 +138,14 @@ internal sealed class OutlookProjectionService : IOutlookService
 
     // ---- Typical spend --------------------------------------------------------------------------
 
-    private async Task<IReadOnlyDictionary<AccountId, OutlookSpendBand>> ComputeTypicalSpendAsync(
+    private async Task<IReadOnlyDictionary<AccountId, OutlookSpendModel>> ComputeTypicalSpendAsync(
         IReadOnlyList<LiquidAccount> accounts,
         IReadOnlyDictionary<AccountId, IReadOnlyList<JournalEntryTemplate>> templatesByAccount,
         DateOnly anchorMonth,
         CancellationToken cancellationToken
     )
     {
-        // The three whole months before the current one.
+        // The whole months before the current one (ADR-0033: a six-month window).
         var windowStart = anchorMonth.AddMonths(-TypicalSpendMonths);
         var windowEnd = anchorMonth.AddDays(-1);
         var monthStarts = Enumerable
@@ -156,10 +161,13 @@ internal sealed class OutlookProjectionService : IOutlookService
             cancellationToken
         );
         var byAccount = occurrences
+            // Typical spend is one-sided everyday *spend* (ADR-0033): only Expense-leg movement.
+            // Non-recurring income (windfalls) and self-transfers never count.
+            .Where(o => o.PnlAccountType == AccountType.Expense)
             .GroupBy(o => o.AccountId)
             .ToDictionary(g => g.Key, g => g.ToList());
 
-        var result = new Dictionary<AccountId, OutlookSpendBand>(accounts.Count);
+        var result = new Dictionary<AccountId, OutlookSpendModel>(accounts.Count);
         foreach (var account in accounts)
         {
             if (!byAccount.TryGetValue(account.Id, out var accountOccurrences))
@@ -176,15 +184,37 @@ internal sealed class OutlookProjectionService : IOutlookService
                         .Sum(o => o.Amount);
                     return ToBalance(account, raw);
                 })
-                .OrderBy(net => net)
                 .ToList();
 
-            // Low = pessimistic (most negative), High = optimistic, Mid = median across the months.
-            result[account.Id] = new OutlookSpendBand(
-                monthlyNets[0],
-                Median(monthlyNets),
-                monthlyNets[^1]
-            );
+            // Drop the leading empty months before this account had any everyday spend, so a
+            // recently-opened account isn't dragged toward zero by months it did not yet exist for.
+            var firstActive = monthlyNets.FindIndex(net => net != 0L);
+            if (firstActive < 0)
+                continue;
+            var sample = monthlyNets.Skip(firstActive).ToList();
+
+            var sorted = sample.OrderBy(net => net).ToList();
+            var median = Median(sorted);
+
+            // Robust spread (ADR-0033): a scaled median-absolute-deviation, so a single one-off
+            // month barely moves it. With too thin a history to estimate dispersion, fall back to
+            // the median's own magnitude so the cone is honestly wide rather than fake-tight.
+            long spread;
+            if (sample.Count < 2)
+            {
+                spread = Math.Abs(median);
+            }
+            else
+            {
+                var deviations = sorted
+                    .Select(net => Math.Abs(net - median))
+                    .OrderBy(d => d)
+                    .ToList();
+                var mad = Median(deviations);
+                spread = (long)Math.Round(mad * MadToSigma, MidpointRounding.AwayFromZero);
+            }
+
+            result[account.Id] = new OutlookSpendModel(median, spread);
         }
 
         return result;

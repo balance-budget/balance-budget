@@ -85,6 +85,93 @@ internal sealed class OutlookProjectionServiceTests : EndpointsTestsBase
     }
 
     [Test]
+    public async Task TypicalSpend_excludes_non_recurring_income(
+        CancellationToken cancellationToken
+    )
+    {
+        await using var fx = await CreateFixtureAsync(cancellationToken);
+        var checking = await fx.AccountAsync("Checking", AccountType.Asset, cancellationToken);
+        var groceries = await fx.AccountAsync("Groceries", AccountType.Expense, cancellationToken);
+        var bonus = await fx.AccountAsync("Bonus", AccountType.Income, cancellationToken);
+
+        // Every trailing whole month: €3.00 everyday groceries. One month also has a €1,000.00
+        // one-off bonus landing in checking — a windfall that must NOT inflate Typical spend
+        // (ADR-0033), or the projected balance would read wildly high.
+        for (var back = 1; back <= 6; back++)
+        {
+            await fx.EntryAsync(
+                PriorMonthDay(back, 15),
+                counterparty: null,
+                cancellationToken,
+                (groceries, 300),
+                (checking, -300)
+            );
+        }
+        await fx.EntryAsync(
+            PriorMonthDay(3, 20),
+            counterparty: null,
+            cancellationToken,
+            (checking, 100_000),
+            (bonus, -100_000)
+        );
+
+        var result = await fx.Outlook.GetProjectionAsync(fx.Currency, 6, null, cancellationToken);
+        await Assert.That(result.IsSuccess).IsTrue();
+
+        var checkingProjection = result.Value!.Accounts.Single(a => a.AccountId == checking);
+        foreach (var month in checkingProjection.Baseline.Skip(1))
+        {
+            // Only the groceries expense drives the median; the income windfall is gone.
+            await Assert.That(month.TypicalSpendMid).IsEqualTo(-300L);
+            // And it never widens the cone upward into windfall territory.
+            await Assert.That(month.EndBalanceHigh - month.EndBalanceMid).IsLessThan(100_000L);
+        }
+    }
+
+    [Test]
+    public async Task TypicalSpend_is_robust_to_a_single_one_off_purchase(
+        CancellationToken cancellationToken
+    )
+    {
+        await using var fx = await CreateFixtureAsync(cancellationToken);
+        var checking = await fx.AccountAsync("Checking", AccountType.Asset, cancellationToken);
+        var groceries = await fx.AccountAsync("Groceries", AccountType.Expense, cancellationToken);
+        var furniture = await fx.AccountAsync("Furniture", AccountType.Expense, cancellationToken);
+
+        // Six steady months of €3.00 groceries, plus one month with a €100.00 one-off purchase.
+        // The median (ADR-0033) ignores the outlier, so neither the center nor the cone veers off.
+        for (var back = 1; back <= 6; back++)
+        {
+            await fx.EntryAsync(
+                PriorMonthDay(back, 15),
+                counterparty: null,
+                cancellationToken,
+                (groceries, 300),
+                (checking, -300)
+            );
+        }
+        await fx.EntryAsync(
+            PriorMonthDay(3, 16),
+            counterparty: null,
+            cancellationToken,
+            (furniture, 10_000),
+            (checking, -10_000)
+        );
+
+        var result = await fx.Outlook.GetProjectionAsync(fx.Currency, 6, null, cancellationToken);
+        await Assert.That(result.IsSuccess).IsTrue();
+
+        var checkingProjection = result.Value!.Accounts.Single(a => a.AccountId == checking);
+        foreach (var month in checkingProjection.Baseline.Skip(1))
+        {
+            // The median is unmoved by the lone €100 month — still the steady €3 groceries.
+            await Assert.That(month.TypicalSpendMid).IsEqualTo(-300L);
+            // And the robust spread (MAD over a steady majority) keeps the cone from blowing out.
+            await Assert.That(month.EndBalanceHigh - month.EndBalanceMid).IsLessThan(10_000L);
+        }
+    }
+
+    [Test]
     public async Task Template_projects_forward_and_is_excluded_from_typical_spend(
         CancellationToken cancellationToken
     )

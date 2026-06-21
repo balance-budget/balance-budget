@@ -85,7 +85,7 @@ internal static class OutlookLedger
         var pnlLegByEntry = counterLegs
             .Where(l => l.AccountType is AccountType.Income or AccountType.Expense)
             .GroupBy(l => l.JournalEntryId)
-            .ToDictionary(g => g.Key, g => g.First().AccountId);
+            .ToDictionary(g => g.Key, g => (g.First().AccountId, g.First().AccountType));
         // The in-scope liquid legs of each entry — the other side of a self-transfer.
         var liquidLegsByEntry = counterLegs
             .Where(l => liquidAccountIds.Contains(l.AccountId))
@@ -99,9 +99,11 @@ internal static class OutlookLedger
         foreach (var line in liquidLines)
         {
             AccountId? counterAccountId = null;
+            AccountType? pnlAccountType = null;
             if (pnlLegByEntry.TryGetValue(line.Id, out var pnlLeg))
             {
-                counterAccountId = pnlLeg;
+                counterAccountId = pnlLeg.AccountId;
+                pnlAccountType = pnlLeg.AccountType;
             }
             else if (includeTransfers && liquidLegsByEntry.TryGetValue(line.Id, out var legs))
             {
@@ -124,6 +126,7 @@ internal static class OutlookLedger
                     line.Date,
                     line.CounterpartyId,
                     counterAccountId,
+                    pnlAccountType,
                     sepa?.MandateId,
                     sepa?.SepaCreditorId
                 )
@@ -137,7 +140,9 @@ internal static class OutlookLedger
 /// <summary>
 /// One P&L-touching line on a liquid account, with the signals the layered matching key uses
 /// (ADR-0027): the SEPA mandate/creditor when present, else the counterparty and the P&L
-/// counter-account. <see cref="Amount"/> is the raw ledger amount on the liquid account.
+/// counter-account. <see cref="PnlAccountType"/> is the type of that P&L leg (Income or Expense),
+/// or null for a self-transfer surfaced via <c>includeTransfers</c>; the Typical-spend path keeps
+/// only Expense legs (ADR-0033). <see cref="Amount"/> is the raw ledger amount on the liquid account.
 /// </summary>
 internal sealed record LedgerOccurrence(
     AccountId AccountId,
@@ -145,6 +150,7 @@ internal sealed record LedgerOccurrence(
     DateOnly Date,
     CounterpartyId? CounterpartyId,
     AccountId? CounterAccountId,
+    AccountType? PnlAccountType,
     string? MandateId,
     string? SepaCreditorId
 );

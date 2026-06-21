@@ -1,6 +1,8 @@
 # Forward-looking finance is a computed Projection over templates, not posted future entries
 
 > Amended by [ADR-0028](0028-outlook-anchors-on-the-current-month.md): the liquid Projection anchors on the current (partial) month and Outlook leads with concrete this-month / year-end figures; uncertainty attaches only to the everyday-spend residual. The substance below (computed-never-stored, templates, Occurrence matching, Typical spend) is unchanged.
+>
+> Amended by [ADR-0033](0033-typical-spend-is-a-robust-random-walk-cone.md): Typical spend is sharpened to one-sided everyday *spend* (non-recurring Income excluded), estimated as a robust median/MAD over a six-month window, with a √n random-walk cone replacing the min/max-every-month band.
 
 The forward-looking feature (the **Outlook** section — expected recurring payments, "savings after a year", "what's left in checking each month") is a thin derived layer *over* the ledger, never a parallel set of speculative postings. It reuses the loan **Projection** model (ADR-0025), generalized: a **Projection** is *computed, never stored*, anchored to *(balances now, horizon)*, with past periods coming from ledger actuals and future periods from the computation. The loan amortization curve and the liquid-balance curve are two flavors of one concept.
 

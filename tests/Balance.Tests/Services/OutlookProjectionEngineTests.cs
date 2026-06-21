@@ -21,7 +21,7 @@ internal sealed class OutlookProjectionEngineTests
         var rows = OutlookProjectionEngine.Project(
             Opening,
             [Template(Cadence.Monthly, new DateOnly(2026, 1, 1), -5_000L)],
-            OutlookSpendBand.Zero,
+            OutlookSpendModel.Zero,
             From,
             12
         );
@@ -38,7 +38,7 @@ internal sealed class OutlookProjectionEngineTests
         var rows = OutlookProjectionEngine.Project(
             Opening,
             [Template(Cadence.Once, new DateOnly(2026, 9, 1), -20_000L)],
-            OutlookSpendBand.Zero,
+            OutlookSpendModel.Zero,
             From,
             12
         );
@@ -57,7 +57,7 @@ internal sealed class OutlookProjectionEngineTests
         var rows = OutlookProjectionEngine.Project(
             Opening,
             [Template(Cadence.Quarterly, new DateOnly(2026, 7, 1), -3_000L)],
-            OutlookSpendBand.Zero,
+            OutlookSpendModel.Zero,
             From,
             12
         );
@@ -74,7 +74,7 @@ internal sealed class OutlookProjectionEngineTests
         var rows = OutlookProjectionEngine.Project(
             Opening,
             [Template(Cadence.Yearly, new DateOnly(2026, 7, 1), -120_000L)],
-            OutlookSpendBand.Zero,
+            OutlookSpendModel.Zero,
             From,
             18
         );
@@ -91,7 +91,7 @@ internal sealed class OutlookProjectionEngineTests
         var rows = OutlookProjectionEngine.Project(
             Opening,
             [Template(Cadence.Weekly, new DateOnly(2026, 7, 6), -1_000L)],
-            OutlookSpendBand.Zero,
+            OutlookSpendModel.Zero,
             From,
             12
         );
@@ -113,7 +113,7 @@ internal sealed class OutlookProjectionEngineTests
                     new DateOnly(2026, 8, 15)
                 ),
             ],
-            OutlookSpendBand.Zero,
+            OutlookSpendModel.Zero,
             From,
             12
         );
@@ -124,21 +124,45 @@ internal sealed class OutlookProjectionEngineTests
     }
 
     [Test]
-    public async Task Typical_spend_band_spreads_the_balance_low_mid_high()
+    public async Task Typical_spend_center_marches_by_the_median_each_month()
     {
         var rows = OutlookProjectionEngine.Project(
             Opening,
             [],
-            new OutlookSpendBand(-9_000L, -6_000L, -3_000L),
+            new OutlookSpendModel(-6_000L, 0L), // zero spread ⇒ no cone, just the center line
             From,
             12
         );
 
-        await Assert.That(rows[0].EndLow).IsEqualTo(91_000L);
-        await Assert.That(rows[0].EndMid).IsEqualTo(94_000L);
-        await Assert.That(rows[0].EndHigh).IsEqualTo(97_000L);
-        await Assert.That(rows[1].EndLow).IsEqualTo(82_000L);
-        await Assert.That(rows[1].EndHigh).IsEqualTo(94_000L);
+        await Assert.That(rows[0].EndMid).IsEqualTo(Opening - 6_000L);
+        await Assert.That(rows[3].EndMid).IsEqualTo(Opening - (4 * 6_000L));
+        // Zero spread keeps the band collapsed onto the center.
+        await Assert.That(rows[5].EndLow).IsEqualTo(rows[5].EndMid);
+        await Assert.That(rows[5].EndHigh).IsEqualTo(rows[5].EndMid);
+    }
+
+    [Test]
+    public async Task Typical_spend_cone_widens_with_the_square_root_of_elapsed_months()
+    {
+        // From day 1, every projected month is a whole month, so elapsed months = 1, 2, 3, …
+        var rows = OutlookProjectionEngine.Project(
+            Opening,
+            [],
+            new OutlookSpendModel(-6_000L, 3_000L),
+            From,
+            12
+        );
+
+        // Half-width = spread × √(elapsed months): √1 = 1, √4 = 2, √9 = 3.
+        await Assert.That(rows[0].EndHigh - rows[0].EndMid).IsEqualTo(3_000L); // √1
+        await Assert.That(rows[3].EndHigh - rows[3].EndMid).IsEqualTo(6_000L); // √4
+        await Assert.That(rows[8].EndHigh - rows[8].EndMid).IsEqualTo(9_000L); // √9
+
+        // The cone is symmetric about the center, and grows sub-linearly: the spread quadruples the
+        // half-width only after the horizon quadruples, never the linear "worst month every month".
+        await Assert.That(rows[0].EndMid - rows[0].EndLow).IsEqualTo(3_000L);
+        await Assert.That(rows[11].EndHigh - rows[11].EndMid).IsLessThan(12 * 3_000L); // far below a linear fan
+
         // The band must never invert: Low ≤ Mid ≤ High every month.
         foreach (var row in rows)
         {
@@ -156,7 +180,7 @@ internal sealed class OutlookProjectionEngineTests
                 Template(Cadence.Monthly, new DateOnly(2026, 1, 1), 400_000L), // salary in
                 Template(Cadence.Monthly, new DateOnly(2026, 1, 1), -150_000L), // rent out
             ],
-            OutlookSpendBand.Zero,
+            OutlookSpendModel.Zero,
             From,
             12
         );
@@ -179,7 +203,7 @@ internal sealed class OutlookProjectionEngineTests
                 // Nominal day 20 — still ahead, so it counts.
                 Template(Cadence.Monthly, new DateOnly(2026, 1, 20), 9_000L),
             ],
-            new OutlookSpendBand(-3_100L, -3_100L, -3_100L),
+            new OutlookSpendModel(-3_100L, 0L),
             new DateOnly(2026, 7, 15),
             2
         );
