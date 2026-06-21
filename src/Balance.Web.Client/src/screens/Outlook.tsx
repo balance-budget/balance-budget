@@ -23,7 +23,7 @@ import { Button } from '../components/ui/Button';
 import { Checkbox } from '../components/ui/Checkbox';
 import { ToggleButton, ToggleButtonGroup } from '../components/ui/ToggleButtonGroup';
 import { useToast } from '../components/ui/Toast';
-import { accountPathSegments, ACCOUNT_PATH_SEPARATOR } from '../lib/accountTree';
+import { accountPathLabel, accountPathSegments, ACCOUNT_PATH_SEPARATOR } from '../lib/accountTree';
 import { cx } from '../lib/cx';
 import { type AccountId, type JournalEntryTemplateId } from '../lib/domain';
 import { formatCalendarDate } from '../i18n/format';
@@ -496,6 +496,11 @@ function RecurringPanel({
     const templates = useOutlookTemplates();
     const remove = useDeleteTemplate();
     const toast = useToast();
+    const allAccounts = useAccounts();
+    const byId = useMemo(
+        () => new Map((allAccounts.data ?? []).map(a => [a.id, a])),
+        [allAccounts.data],
+    );
 
     const visible = (templates.data ?? []).filter(tpl => tpl.accountId === accountId);
 
@@ -545,6 +550,9 @@ function RecurringPanel({
                         <TemplateRow
                             key={template.id}
                             template={template}
+                            accountLabel={
+                                accountPathLabel(byId, template.accountId) ?? template.accountName
+                            }
                             disabled={disabledIds.has(template.id)}
                             onToggleDisabled={() => {
                                 onToggleDisabled(template.id);
@@ -563,12 +571,14 @@ function RecurringPanel({
 
 function TemplateRow({
     template,
+    accountLabel,
     disabled,
     onToggleDisabled,
     onEdit,
     onDelete,
 }: {
     template: JournalEntryTemplate;
+    accountLabel: string;
     disabled: boolean;
     onToggleDisabled: () => void;
     onEdit: () => void;
@@ -588,7 +598,7 @@ function TemplateRow({
                     <span className="text-xs text-fg-3 shrink-0">{template.cadence}</span>
                 </div>
                 <div className="text-xs text-fg-3 truncate">
-                    {template.accountName}
+                    {accountLabel}
                     {template.nextDueDate && (
                         <>
                             {' · '}

@@ -89,13 +89,6 @@ export function JournalEntryTemplateForm({
     const [topError, setTopError] = useState<string | null>(null);
     const [fieldErrors, setFieldErrors] = useState<Record<string, string[]> | null>(null);
 
-    const liquidAccounts = useMemo(
-        () =>
-            (accounts.data ?? []).filter(
-                a => a.isLiquid && (a.type === 'Asset' || a.type === 'Liability'),
-            ),
-        [accounts.data],
-    );
     const selectedAccount = useMemo(
         () => (accounts.data ?? []).find(a => a.id === accountId) ?? null,
         [accounts.data, accountId],
@@ -201,19 +194,13 @@ export function JournalEntryTemplateForm({
                         <label className="text-sm font-medium text-fg-2">
                             <Trans>Account</Trans>
                         </label>
-                        <Select
-                            aria-label={t`Account`}
+                        <AccountSelect
                             value={accountId}
-                            onChange={key => {
-                                setAccountId(key === null ? null : (String(key) as AccountId));
-                            }}
-                        >
-                            {liquidAccounts.map(a => (
-                                <SelectItem key={a.id} id={a.id}>
-                                    {a.name}
-                                </SelectItem>
-                            ))}
-                        </Select>
+                            onChange={setAccountId}
+                            postableOnly
+                            liquidOnly
+                            ariaLabel={t`Account`}
+                        />
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
