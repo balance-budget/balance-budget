@@ -1226,6 +1226,10 @@ export interface components {
             /** Format: int32 */
             minorUnitScale: number | string;
             symbol: null | string;
+            /** Format: int32 */
+            accountCount?: number | string;
+            /** Format: int32 */
+            bankAccountCount?: number | string;
         };
         CurrentUserResponse: {
             id: components["schemas"]["UserId"];
