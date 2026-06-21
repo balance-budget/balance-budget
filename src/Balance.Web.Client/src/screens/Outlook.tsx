@@ -641,6 +641,11 @@ function CandidatesPanel({
 }) {
     const { t } = useLingui();
     const candidates = useTemplateCandidates();
+    const allAccounts = useAccounts();
+    const byId = useMemo(
+        () => new Map((allAccounts.data ?? []).map(a => [a.id, a])),
+        [allAccounts.data],
+    );
 
     const visible = (candidates.data ?? []).filter(c => c.accountId === accountId);
 
@@ -678,7 +683,9 @@ function CandidatesPanel({
                                     {candidate.suggestedName}
                                 </div>
                                 <div className="text-xs text-fg-3 truncate">
-                                    {candidate.accountName} · {candidate.cadence} ·{' '}
+                                    {accountPathLabel(byId, candidate.accountId) ??
+                                        candidate.accountName}{' '}
+                                    · {candidate.cadence} ·{' '}
                                     <Trans>{candidate.occurrenceCount} seen</Trans>
                                 </div>
                             </div>
