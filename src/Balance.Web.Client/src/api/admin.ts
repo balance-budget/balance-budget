@@ -28,8 +28,7 @@ export function useCreateUser() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (request: WireCreateUser) => {
-            const ctrl = new AbortController();
-            return postJson<WireUser>('/api/admin/users', request, ctrl.signal, 'create user');
+            return postJson<WireUser>('/api/admin/users', request, 'create user');
         },
         onSuccess: () => queryClient.invalidateQueries({ queryKey: adminKeys.users }),
     });
@@ -39,14 +38,8 @@ export function useToggleUserActive() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
-            const ctrl = new AbortController();
             const action = active ? 'enable' : 'disable';
-            await postJsonNoContent(
-                `/api/admin/users/${id}/${action}`,
-                {},
-                ctrl.signal,
-                `${action} user`,
-            );
+            await postJsonNoContent(`/api/admin/users/${id}/${action}`, {}, `${action} user`);
         },
         onSuccess: () => queryClient.invalidateQueries({ queryKey: adminKeys.users }),
     });
@@ -63,13 +56,7 @@ export function useCreateToken() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (request: WireCreateToken) => {
-            const ctrl = new AbortController();
-            return postJson<WireCreatedToken>(
-                '/api/admin/tokens',
-                request,
-                ctrl.signal,
-                'create token',
-            );
+            return postJson<WireCreatedToken>('/api/admin/tokens', request, 'create token');
         },
         onSuccess: () => queryClient.invalidateQueries({ queryKey: adminKeys.tokens }),
     });
@@ -79,13 +66,7 @@ export function useRevokeToken() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (id: string) => {
-            const ctrl = new AbortController();
-            await postJsonNoContent(
-                `/api/admin/tokens/${id}/revoke`,
-                {},
-                ctrl.signal,
-                'revoke token',
-            );
+            await postJsonNoContent(`/api/admin/tokens/${id}/revoke`, {}, 'revoke token');
         },
         onSuccess: () => queryClient.invalidateQueries({ queryKey: adminKeys.tokens }),
     });

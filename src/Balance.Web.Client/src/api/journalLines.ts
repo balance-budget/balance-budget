@@ -19,7 +19,6 @@ export function useReassignJournalLines() {
             await postJsonNoContent(
                 '/api/journal-lines/reassign',
                 { lineIds: args.lineIds, targetAccountId: args.targetAccountId },
-                new AbortController().signal,
                 'reassign journal lines',
             );
         },

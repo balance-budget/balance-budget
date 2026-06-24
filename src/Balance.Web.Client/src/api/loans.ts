@@ -352,8 +352,8 @@ export function useLoanProjection(id: LoanId, scenario: WireLoanScenarioRequest 
             const wire = await postJson<WireProjection>(
                 `/api/loans/${id}/projection`,
                 { scenario },
-                signal,
                 'load loan projection',
+                signal,
             );
             return toProjection(wire);
         },
@@ -365,12 +365,7 @@ export function useCreateLoan() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (request: WireCreateLoanRequest) => {
-            const wire = await postJson<WireLoanDetail>(
-                '/api/loans',
-                request,
-                new AbortController().signal,
-                'create loan',
-            );
+            const wire = await postJson<WireLoanDetail>('/api/loans', request, 'create loan');
             return toLoanDetail(wire);
         },
         onSuccess: async () => {
@@ -384,7 +379,7 @@ export function useDeleteLoan() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (id: LoanId) => {
-            await deleteRequest(`/api/loans/${id}`, new AbortController().signal, 'delete loan');
+            await deleteRequest(`/api/loans/${id}`, 'delete loan');
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: loansKeys.all });
@@ -400,7 +395,6 @@ export function useAddLoanPart() {
             const wire = await postJson<WireLoanDetail>(
                 `/api/loans/${args.id}/parts`,
                 args.request,
-                new AbortController().signal,
                 'add loan part',
             );
             return toLoanDetail(wire);
@@ -423,7 +417,6 @@ export function useAddRatePeriod() {
             const wire = await postJson<WireLoanDetail>(
                 `/api/loans/${args.id}/parts/${args.partId}/rate-periods`,
                 args.request,
-                new AbortController().signal,
                 'add rate period',
             );
             return toLoanDetail(wire);
@@ -446,7 +439,6 @@ export function useUpdateLoan() {
             const wire = await patchJson<WireLoanDetail>(
                 `/api/loans/${args.id}`,
                 patch,
-                new AbortController().signal,
                 'update loan',
             );
             return toLoanDetail(wire);
@@ -469,7 +461,6 @@ export function useUpdateLoanPart() {
             const wire = await patchJsonBody<WireLoanDetail>(
                 `/api/loans/${args.id}/parts/${args.partId}`,
                 args.request,
-                new AbortController().signal,
                 'update loan part',
             );
             return toLoanDetail(wire);
@@ -486,7 +477,6 @@ export function useDeleteLoanPart() {
         mutationFn: async (args: { id: LoanId; partId: LoanPartId }) => {
             const wire = await deleteJson<WireLoanDetail>(
                 `/api/loans/${args.id}/parts/${args.partId}`,
-                new AbortController().signal,
                 'delete loan part',
             );
             return toLoanDetail(wire);
@@ -510,7 +500,6 @@ export function useUpdateRatePeriod() {
             const wire = await patchJsonBody<WireLoanDetail>(
                 `/api/loans/${args.id}/parts/${args.partId}/rate-periods/${args.ratePeriodId}`,
                 args.request,
-                new AbortController().signal,
                 'update rate period',
             );
             return toLoanDetail(wire);
@@ -531,7 +520,6 @@ export function useDeleteRatePeriod() {
         }) => {
             const wire = await deleteJson<WireLoanDetail>(
                 `/api/loans/${args.id}/parts/${args.partId}/rate-periods/${args.ratePeriodId}`,
-                new AbortController().signal,
                 'delete rate period',
             );
             return toLoanDetail(wire);

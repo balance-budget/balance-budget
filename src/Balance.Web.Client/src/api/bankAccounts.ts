@@ -224,7 +224,6 @@ export function useImportStatement() {
             const wire = await postFormData<WireImportResult>(
                 `/api/bank-accounts/${args.bankAccountId}/imports`,
                 formData,
-                new AbortController().signal,
                 'import statement',
             );
             return toImportResult(wire);

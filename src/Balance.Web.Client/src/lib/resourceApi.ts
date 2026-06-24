@@ -50,12 +50,7 @@ export function createResourceCrud<
         const queryClient = useQueryClient();
         return useMutation({
             mutationFn: async (input: TCreate) => {
-                const wire = await postJson<TWire>(
-                    basePath,
-                    input,
-                    new AbortController().signal,
-                    `create ${label}`,
-                );
+                const wire = await postJson<TWire>(basePath, input, `create ${label}`);
                 return toView(wire);
             },
             onSuccess: async () => {
@@ -72,7 +67,6 @@ export function createResourceCrud<
                 const wire = await patchJson<TWire>(
                     `${basePath}/${args.id}`,
                     patch,
-                    new AbortController().signal,
                     `update ${label}`,
                 );
                 return toView(wire);
@@ -88,11 +82,7 @@ export function createResourceCrud<
         const queryClient = useQueryClient();
         return useMutation({
             mutationFn: async (id: TId) => {
-                await deleteRequest(
-                    `${basePath}/${id}`,
-                    new AbortController().signal,
-                    `delete ${label}`,
-                );
+                await deleteRequest(`${basePath}/${id}`, `delete ${label}`);
             },
             onSuccess: async () => {
                 await queryClient.invalidateQueries({ queryKey: allKey });
