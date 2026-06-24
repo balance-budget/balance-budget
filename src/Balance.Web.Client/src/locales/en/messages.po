@@ -220,6 +220,9 @@ msgstr "Account name"
 msgid "Account number"
 msgstr "Account number"
 
+msgid "Account source"
+msgstr "Account source"
+
 msgid "Account to adopt"
 msgstr "Account to adopt"
 
@@ -1144,6 +1147,9 @@ msgstr "Filter by counter-account"
 
 msgid "Filter by sub-account"
 msgstr "Filter by sub-account"
+
+msgid "Filter candidates"
+msgstr "Filter candidates"
 
 msgid "Filter…"
 msgstr "Filter…"

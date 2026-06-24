@@ -17,6 +17,7 @@ import { Amount } from '../components/Amount';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { DateRangePicker } from '../components/ui/DateRangePicker';
 import { SearchField } from '../components/ui/SearchField';
+import { SelectionCheckbox } from '../components/ui/SelectionCheckbox';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Pagination } from '../components/Pagination';
@@ -606,14 +607,12 @@ function RowSelectCheckbox({
 }) {
     const { t } = useLingui();
     return (
-        <input
-            type="checkbox"
+        <SelectionCheckbox
             aria-label={ariaLabel}
             title={disabled ? t`Cleared and reconciled lines can’t be moved.` : undefined}
-            checked={selected}
-            disabled={disabled}
+            isSelected={selected}
+            isDisabled={disabled}
             onChange={onChange}
-            className="h-4 w-4 cursor-pointer accent-brand-primary disabled:opacity-40 disabled:cursor-not-allowed"
         />
     );
 }
@@ -628,18 +627,13 @@ function HeaderSelectAllCheckbox({
     disabled: boolean;
 }) {
     const { t } = useLingui();
-    function setRef(el: HTMLInputElement | null) {
-        if (el) el.indeterminate = state === 'some';
-    }
     return (
-        <input
-            ref={setRef}
-            type="checkbox"
+        <SelectionCheckbox
             aria-label={t`Select all movable rows on this page`}
-            checked={state === 'all'}
-            disabled={disabled}
+            isSelected={state === 'all'}
+            isIndeterminate={state === 'some'}
+            isDisabled={disabled}
             onChange={onClick}
-            className="h-4 w-4 cursor-pointer accent-brand-primary disabled:opacity-40 disabled:cursor-not-allowed"
         />
     );
 }

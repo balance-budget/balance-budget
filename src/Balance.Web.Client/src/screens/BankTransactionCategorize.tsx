@@ -22,6 +22,7 @@ import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import { useLoanPaymentProposal, type LoanProposal } from '../api/loans';
 import { AccountSelect } from '../components/AccountSelect';
 import { BankTransactionDetails } from '../components/BankTransactionDetails';
+import { Checkbox } from '../components/ui/Checkbox';
 import { ComboBox } from '../components/ui/ComboBox';
 import { type ComboBoxItem } from '../components/ui/combobox.state';
 import { ErrorState } from '../components/ErrorState';
@@ -34,6 +35,7 @@ import { Skeleton } from '../components/Skeleton';
 import { IconButton } from '../components/ui/Button';
 import { DatePicker } from '../components/ui/DatePicker';
 import { NumberField } from '../components/ui/NumberField';
+import { SearchField } from '../components/ui/SearchField';
 import { TextField } from '../components/ui/TextField';
 import { useToast } from '../components/ui/Toast';
 import { todayIso } from '../lib/dates';
@@ -441,22 +443,16 @@ function HeaderInputs({
                 }}
                 isRequired
             />
-            <label className="flex flex-col gap-1">
-                <span className="text-xs font-medium text-fg-2">
-                    <Trans>Description</Trans>
-                </span>
-                <input
-                    type="text"
-                    value={form.description}
-                    onChange={e => {
-                        onPatch({ description: e.target.value });
-                    }}
-                    maxLength={500}
-                    placeholder={t`Optional`}
-                    className="px-3 py-2 rounded-lg bg-surface-2 border border-border-soft text-fg-1 text-sm focus:outline-none focus:border-border-strong"
-                />
-                <FieldError name="Description" errors={fieldErrors} />
-            </label>
+            <TextField
+                label={t`Description`}
+                name="Description"
+                value={form.description}
+                onChange={description => {
+                    onPatch({ description });
+                }}
+                maxLength={500}
+                placeholder={t`Optional`}
+            />
             <CounterpartyInput
                 form={form}
                 counterparties={counterparties}
@@ -775,19 +771,15 @@ function LoanModePanel({
                         const included =
                             includedParts === null || includedParts.has(line.loanPartId);
                         return (
-                            <label
+                            <Checkbox
                                 key={line.loanPartId}
-                                className="inline-flex items-center gap-1.5"
+                                isSelected={included}
+                                onChange={() => {
+                                    onToggle(line.loanPartId);
+                                }}
                             >
-                                <input
-                                    type="checkbox"
-                                    checked={included}
-                                    onChange={() => {
-                                        onToggle(line.loanPartId);
-                                    }}
-                                />
                                 {line.label}
-                            </label>
+                            </Checkbox>
                         );
                     })}
                 </div>
@@ -927,28 +919,23 @@ function JePickerModal({
             width="md"
         >
             <div className="flex flex-wrap items-center gap-3 mb-3">
-                <label className="flex items-center gap-2 text-xs text-fg-2">
-                    <Trans>Date window (±days)</Trans>
-                    <input
-                        type="number"
-                        min={0}
-                        max={365}
-                        value={days}
-                        onChange={e => {
-                            const n = Number.parseInt(e.target.value, 10);
-                            setDays(Number.isNaN(n) ? 0 : Math.max(0, Math.min(365, n)));
-                        }}
-                        className="w-20 px-2 py-1 rounded-lg bg-surface-2 border border-border-soft text-fg-1 text-xs"
-                    />
-                </label>
-                <input
-                    type="text"
-                    value={query}
-                    onChange={e => {
-                        setQuery(e.target.value);
+                <NumberField
+                    label={t`Date window (±days)`}
+                    minValue={0}
+                    maxValue={365}
+                    value={days}
+                    onChange={value => {
+                        setDays(Number.isNaN(value) ? 0 : Math.max(0, Math.min(365, value)));
                     }}
+                    className="flex-row items-center gap-2"
+                    inputClassName="w-20"
+                />
+                <SearchField
+                    aria-label={t`Filter candidates`}
+                    value={query}
+                    onChange={setQuery}
                     placeholder={t`Filter…`}
-                    className="flex-1 min-w-[160px] px-2 py-1 rounded-lg bg-surface-2 border border-border-soft text-fg-1 text-xs"
+                    className="flex-1 min-w-[160px]"
                 />
             </div>
 

@@ -220,6 +220,9 @@ msgstr "帳戶名稱"
 msgid "Account number"
 msgstr "帳號"
 
+msgid "Account source"
+msgstr "帳戶來源"
+
 msgid "Account to adopt"
 msgstr "要採用的帳戶"
 
@@ -1144,6 +1147,9 @@ msgstr "依對方帳戶篩選"
 
 msgid "Filter by sub-account"
 msgstr "依子帳戶篩選"
+
+msgid "Filter candidates"
+msgstr "篩選候選項目"
 
 msgid "Filter…"
 msgstr "篩選…"

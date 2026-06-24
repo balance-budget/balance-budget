@@ -220,6 +220,9 @@ msgstr "Rekeningnaam"
 msgid "Account number"
 msgstr "Rekeningnummer"
 
+msgid "Account source"
+msgstr "Rekeningbron"
+
 msgid "Account to adopt"
 msgstr "Over te nemen rekening"
 
@@ -1144,6 +1147,9 @@ msgstr "Filteren op tegenrekening"
 
 msgid "Filter by sub-account"
 msgstr "Filteren op subrekening"
+
+msgid "Filter candidates"
+msgstr "Kandidaten filteren"
 
 msgid "Filter…"
 msgstr "Filteren…"

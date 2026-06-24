@@ -26,6 +26,7 @@ import { Button } from '../components/ui/Button';
 import { ComboBox } from '../components/ui/ComboBox';
 import { DatePicker } from '../components/ui/DatePicker';
 import { Modal, ModalFooter } from '../components/ui/Modal';
+import { Radio, RadioGroup } from '../components/ui/RadioGroup';
 import { Select, SelectItem } from '../components/ui/Select';
 import { TextField } from '../components/ui/TextField';
 import { useToast } from '../components/ui/Toast';
@@ -575,28 +576,21 @@ function PartFields({
                 />
             </div>
 
-            <div className="flex items-center gap-4 text-sm">
-                <label className="inline-flex items-center gap-1.5">
-                    <input
-                        type="radio"
-                        checked={part.mode === 'adopt'}
-                        onChange={() => {
-                            onChange({ mode: 'adopt' });
-                        }}
-                    />
+            <RadioGroup
+                aria-label={t`Account source`}
+                orientation="horizontal"
+                value={part.mode}
+                onChange={value => {
+                    onChange({ mode: value as PartDraft['mode'] });
+                }}
+            >
+                <Radio value="adopt">
                     <Trans>Adopt an existing account</Trans>
-                </label>
-                <label className="inline-flex items-center gap-1.5">
-                    <input
-                        type="radio"
-                        checked={part.mode === 'new'}
-                        onChange={() => {
-                            onChange({ mode: 'new' });
-                        }}
-                    />
+                </Radio>
+                <Radio value="new">
                     <Trans>Create a fresh account</Trans>
-                </label>
-            </div>
+                </Radio>
+            </RadioGroup>
 
             {part.mode === 'adopt' ? (
                 <div className="flex flex-col gap-1">
