@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { plural, t } from '@lingui/core/macro';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
@@ -20,10 +20,12 @@ import { ComboBox } from '../components/ui/ComboBox';
 import { type ComboBoxItem } from '../components/ui/combobox.state';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ErrorState } from '../components/ErrorState';
-import { FieldError } from '../components/FieldError';
 import { FormErrorBanner } from '../components/FormErrorBanner';
 import { Icon } from '../components/Icon';
+import { Form } from 'react-aria-components';
 import { Modal, ModalFooter } from '../components/ui/Modal';
+import { SelectionCheckbox } from '../components/ui/SelectionCheckbox';
+import { TextField } from '../components/ui/TextField';
 import { SearchField } from '../components/ui/SearchField';
 import { selectedKey } from '../components/ui/selection';
 import { Tag, TagGroup } from '../components/ui/TagGroup';
@@ -743,28 +745,14 @@ function RowSelectCheckbox({
     onClick: (shiftKey: boolean) => void;
     ariaLabel: string;
 }) {
-    // Capture shift via mousedown/keydown — onChange doesn't carry modifier
-    // flags. We avoid the onClick + preventDefault pattern because it leaves
-    // the controlled checkbox's internal value tracker out of sync with React
-    // state in some browsers, which surfaced as the wrong row being toggled.
-    const shiftRef = useRef(false);
     return (
-        <input
-            type="checkbox"
+        <SelectionCheckbox
             aria-label={ariaLabel}
-            checked={selected}
-            disabled={disabled}
-            onMouseDown={e => {
-                shiftRef.current = e.shiftKey;
+            isSelected={selected}
+            isDisabled={disabled}
+            onChange={({ shiftKey }) => {
+                onClick(shiftKey);
             }}
-            onKeyDown={e => {
-                shiftRef.current = e.shiftKey;
-            }}
-            onChange={() => {
-                onClick(shiftRef.current);
-                shiftRef.current = false;
-            }}
-            className="h-4 w-4 cursor-pointer accent-brand-primary disabled:opacity-40 disabled:cursor-not-allowed"
         />
     );
 }
@@ -778,19 +766,14 @@ function HeaderSelectAllCheckbox({
     onClick: () => void;
     disabled: boolean;
 }) {
-    function setRef(el: HTMLInputElement | null) {
-        if (el) el.indeterminate = state === 'some';
-    }
     const { t } = useLingui();
     return (
-        <input
-            ref={setRef}
-            type="checkbox"
+        <SelectionCheckbox
             aria-label={t`Select all visible rows`}
-            checked={state === 'all'}
-            disabled={disabled}
+            isSelected={state === 'all'}
+            isIndeterminate={state === 'some'}
+            isDisabled={disabled}
             onChange={onClick}
-            className="h-4 w-4 cursor-pointer accent-brand-primary disabled:opacity-40 disabled:cursor-not-allowed"
         />
     );
 }
@@ -1414,32 +1397,26 @@ function DismissDialog({
             description={t`Mark this row as not needing a journal entry. You can undismiss later.`}
             width="sm"
         >
-            <form
+            <Form
+                validationErrors={fieldErrors ?? undefined}
                 onSubmit={e => {
                     e.preventDefault();
                     void submit();
                 }}
-                noValidate
             >
                 <FormErrorBanner message={topError} />
-                <label className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-fg-2">
-                        <Trans>Reason</Trans>
-                    </span>
-                    <textarea
-                        value={reason}
-                        onChange={e => {
-                            setReason(e.target.value);
-                        }}
-                        required
-                        maxLength={500}
-                        rows={3}
-                        autoFocus
-                        placeholder={t`e.g. settled by journal entry X`}
-                        className="px-3 py-2 rounded-lg bg-surface-2 border border-border-soft text-fg-1 text-sm focus:outline-none focus:border-border-strong resize-none"
-                    />
-                    <FieldError name="Reason" errors={fieldErrors} />
-                </label>
+                <TextField
+                    multiline
+                    rows={3}
+                    name="Reason"
+                    label={t`Reason`}
+                    value={reason}
+                    onChange={setReason}
+                    isRequired
+                    maxLength={500}
+                    autoFocus
+                    placeholder={t`e.g. settled by journal entry X`}
+                />
                 <ModalFooter>
                     <button
                         type="button"
@@ -1457,7 +1434,7 @@ function DismissDialog({
                         {dismiss.isPending ? t`Dismissing…` : t`Dismiss`}
                     </button>
                 </ModalFooter>
-            </form>
+            </Form>
         </Modal>
     );
 }
@@ -1492,30 +1469,23 @@ function BulkDismissDialog({
             description={t`Stage these rows for dismissal. Save-all to commit; until then you can review or reset per row.`}
             width="sm"
         >
-            <form
+            <Form
                 onSubmit={e => {
                     e.preventDefault();
                     submit();
                 }}
-                noValidate
             >
-                <label className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-fg-2">
-                        <Trans>Reason</Trans>
-                    </span>
-                    <textarea
-                        value={reason}
-                        onChange={e => {
-                            setReason(e.target.value);
-                        }}
-                        required
-                        maxLength={500}
-                        rows={3}
-                        autoFocus
-                        placeholder={t`e.g. fee corrections, self-transfer siblings`}
-                        className="px-3 py-2 rounded-lg bg-surface-2 border border-border-soft text-fg-1 text-sm focus:outline-none focus:border-border-strong resize-none"
-                    />
-                </label>
+                <TextField
+                    multiline
+                    rows={3}
+                    label={t`Reason`}
+                    value={reason}
+                    onChange={setReason}
+                    isRequired
+                    maxLength={500}
+                    autoFocus
+                    placeholder={t`e.g. fee corrections, self-transfer siblings`}
+                />
                 <ModalFooter>
                     <button
                         type="button"
@@ -1532,7 +1502,7 @@ function BulkDismissDialog({
                         <Plural value={selectionCount} one="Dismiss # row" other="Dismiss # rows" />
                     </button>
                 </ModalFooter>
-            </form>
+            </Form>
         </Modal>
     );
 }
