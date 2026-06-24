@@ -12,16 +12,19 @@ internal sealed class AccountService : IAccountService
 {
     private readonly BalanceDbContext _dbContext;
     private readonly ICurrencyService _currencyService;
+    private readonly AccountFactory _accountFactory;
     private readonly TimeProvider _timeProvider;
 
     public AccountService(
         BalanceDbContext dbContext,
         ICurrencyService currencyService,
+        AccountFactory accountFactory,
         TimeProvider timeProvider
     )
     {
         _dbContext = dbContext;
         _currencyService = currencyService;
+        _accountFactory = accountFactory;
         _timeProvider = timeProvider;
     }
 
@@ -88,25 +91,9 @@ internal sealed class AccountService : IAccountService
     {
         ArgumentNullException.ThrowIfNull(input);
 
-        var name = input.Name?.Trim() ?? string.Empty;
-        if (name.Length == 0)
-        {
-            return new InvariantError(ErrorCodes.AccountNameEmpty, "Account name is required.");
-        }
-
-        var code = input.Code?.Trim() ?? string.Empty;
-        if (code.Length == 0)
-        {
-            return new InvariantError(ErrorCodes.AccountCodeEmpty, "Account code is required.");
-        }
-
         var currencyCheck = await EnsureCurrencyExistsAsync(input.CurrencyCode, cancellationToken);
         if (currencyCheck.IsFailure)
             return currencyCheck.Error;
-
-        var codeCheck = await EnsureCodeAvailableAsync(code, excludingId: null, cancellationToken);
-        if (codeCheck.IsFailure)
-            return codeCheck.Error;
 
         if (input.ParentAccountId is { } parentId)
         {
@@ -121,23 +108,25 @@ internal sealed class AccountService : IAccountService
         }
 
         var now = _timeProvider.GetUtcNow().UtcDateTime;
-        var account = new Account
-        {
-            Id = new AccountId(Guid.CreateVersion7()),
-            Name = name,
-            Code = code,
-            AccountType = input.AccountType,
-            CurrencyCode = input.CurrencyCode,
-            IsPostable = input.IsPostable,
-            IsLiquid = input.IsLiquid,
-            Horizon = input.Horizon,
-            ParentAccountId = input.ParentAccountId,
-            IconName = NormalizeIconName(input.IconName),
-            CreatedAt = now,
-            UpdatedAt = now,
-        };
+        var stageResult = await _accountFactory.StageAsync(
+            new NewAccount(
+                input.Name,
+                input.Code,
+                input.AccountType,
+                input.CurrencyCode,
+                input.IsPostable,
+                input.IsLiquid,
+                input.Horizon,
+                input.ParentAccountId,
+                NormalizeIconName(input.IconName),
+                now
+            ),
+            cancellationToken
+        );
+        if (stageResult.IsFailure)
+            return stageResult.Error;
+        var account = stageResult.Value;
 
-        _dbContext.Accounts.Add(account);
         var saveResult = await _dbContext.SaveChangesAndCatchAsync(cancellationToken);
         if (saveResult.IsFailure)
             return saveResult.Error;
