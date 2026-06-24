@@ -11,6 +11,7 @@ import { FormErrorBanner } from '../components/FormErrorBanner';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { Button } from '../components/ui/Button';
+import { DateTimePicker } from '../components/ui/DateTimePicker';
 import { TextField } from '../components/ui/TextField';
 import { formatInstant } from '../i18n/format';
 import { ApiError } from '../lib/http';
@@ -30,7 +31,7 @@ export function Tokens() {
         try {
             const result = await create.mutateAsync({
                 name,
-                expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+                expiresAt: expiresAt || null,
             });
             setJustCreated(result);
             setName('');
@@ -127,9 +128,8 @@ export function Tokens() {
                         onChange={setName}
                         className="mb-3"
                     />
-                    <TextField
+                    <DateTimePicker
                         label={t`Expires (optional)`}
-                        type="datetime-local"
                         value={expiresAt}
                         onChange={setExpiresAt}
                         className="mb-4"
