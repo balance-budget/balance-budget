@@ -43,6 +43,7 @@ public static class ServiceCollectionExtensions
                 includeInternalTypes: true
             )
             .AddScoped<ICurrencyService, CurrencyService>()
+            .AddScoped<AccountFactory>()
             .AddScoped<IAccountService, AccountService>()
             .AddScoped<IAccountBalanceService, AccountBalanceService>()
             .AddScoped<IRegisterService, RegisterService>()

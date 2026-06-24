@@ -3,6 +3,7 @@ using Balance.Data.Configurations;
 using Balance.Data.Entities;
 using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
+using Balance.Services.Accounts;
 using Balance.Services.Contracts;
 using Balance.Services.Helpers;
 using Microsoft.EntityFrameworkCore;
@@ -12,11 +13,17 @@ namespace Balance.Services.Loans;
 internal sealed class LoanService : ILoanService
 {
     private readonly BalanceDbContext _dbContext;
+    private readonly AccountFactory _accountFactory;
     private readonly TimeProvider _timeProvider;
 
-    public LoanService(BalanceDbContext dbContext, TimeProvider timeProvider)
+    public LoanService(
+        BalanceDbContext dbContext,
+        AccountFactory accountFactory,
+        TimeProvider timeProvider
+    )
     {
         _dbContext = dbContext;
+        _accountFactory = accountFactory;
         _timeProvider = timeProvider;
     }
 
@@ -643,7 +650,7 @@ internal sealed class LoanService : ILoanService
         return Result.Success;
     }
 
-    private async Task<Result<Account>> CreateAccountAsync(
+    private Task<Result<Account>> CreateAccountAsync(
         string name,
         string code,
         CurrencyCode currencyCode,
@@ -651,54 +658,22 @@ internal sealed class LoanService : ILoanService
         AccountId? parentId,
         DateTime now,
         CancellationToken cancellationToken
-    )
-    {
-        var trimmedName = name?.Trim() ?? string.Empty;
-        var trimmedCode = code?.Trim() ?? string.Empty;
-        if (trimmedName.Length == 0)
-            return new InvariantError(ErrorCodes.AccountNameEmpty, "Account name cannot be empty.");
-
-        if (trimmedCode.Length == 0)
-            return new InvariantError(ErrorCodes.AccountCodeEmpty, "Account code cannot be empty.");
-
-        var codeCheck = await _dbContext
-            .Accounts.Where(a => a.Code == trimmedCode)
-            .EnsureNoneAsync(
-                ErrorCodes.AccountCodeTaken,
-                $"Account code '{trimmedCode}' is already taken.",
-                cancellationToken
-            );
-        if (codeCheck.IsFailure)
-            return codeCheck.Error;
-
-        // Codes created earlier in the same graph (parent vs. fresh parts) collide too.
-        var pendingCollision = _dbContext
-            .ChangeTracker.Entries<Account>()
-            .Any(e => e.State == EntityState.Added && e.Entity.Code == trimmedCode);
-        if (pendingCollision)
-        {
-            return new ConflictError(
-                ErrorCodes.AccountCodeTaken,
-                $"Account code '{trimmedCode}' is already taken."
-            );
-        }
-
-        var account = new Account
-        {
-            Id = new AccountId(Guid.CreateVersion7()),
-            Name = trimmedName,
-            Code = trimmedCode,
-            AccountType = AccountType.Liability,
-            CurrencyCode = currencyCode,
-            IsPostable = postable,
-            IsLiquid = false,
-            ParentAccountId = parentId,
-            CreatedAt = now,
-            UpdatedAt = now,
-        };
-        _dbContext.Accounts.Add(account);
-        return account;
-    }
+    ) =>
+        _accountFactory.StageAsync(
+            new NewAccount(
+                name,
+                code,
+                AccountType.Liability,
+                currencyCode,
+                postable,
+                IsLiquid: false,
+                Horizon.ShortTerm,
+                parentId,
+                IconName: null,
+                now
+            ),
+            cancellationToken
+        );
 
     // The existing Opening balance convention: pair the account against the seeded Opening
     // Balances equity account, both legs Reconciled, no bank import. A liability's opening
