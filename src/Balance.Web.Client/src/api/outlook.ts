@@ -295,8 +295,8 @@ export function useOutlookProjection(
             const wire = await postJson<WireProjection>(
                 `/api/outlook/projection?currency=${encodeURIComponent(currencyCode)}&horizon=${horizonMonths}`,
                 { scenario },
-                signal,
                 'load outlook projection',
+                signal,
             );
             return toProjection(wire);
         },
@@ -311,7 +311,6 @@ export function useCreateTemplate() {
             const wire = await postJson<WireTemplate>(
                 '/api/outlook/templates',
                 request,
-                new AbortController().signal,
                 'create recurring item',
             );
             return toTemplate(wire);
@@ -332,7 +331,6 @@ export function useUpdateTemplate() {
             const wire = await putJson<WireTemplate>(
                 `/api/outlook/templates/${args.id}`,
                 args.request,
-                new AbortController().signal,
                 'update recurring item',
             );
             return toTemplate(wire);
@@ -347,11 +345,7 @@ export function useDeleteTemplate() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (id: JournalEntryTemplateId) => {
-            await deleteRequest(
-                `/api/outlook/templates/${id}`,
-                new AbortController().signal,
-                'delete recurring item',
-            );
+            await deleteRequest(`/api/outlook/templates/${id}`, 'delete recurring item');
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: outlookKeys.all });

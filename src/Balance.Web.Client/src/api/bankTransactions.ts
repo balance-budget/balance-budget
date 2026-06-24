@@ -220,7 +220,6 @@ export function useCategorizeBankTransaction() {
             const wire = await postJson<WireJournalEntry>(
                 `/api/bank-transactions/${args.id}/categorize`,
                 args.request,
-                new AbortController().signal,
                 'categorize bank transaction',
             );
             // Brand the escaping id at the boundary (ADR-0006). Mapped inline rather than
@@ -244,7 +243,6 @@ export function useDismissBankTransaction() {
             const wire = await postJson<WireBankTransaction>(
                 `/api/bank-transactions/${args.id}/dismiss`,
                 { reason: args.reason },
-                new AbortController().signal,
                 'dismiss bank transaction',
             );
             return toBankTransaction(wire);
@@ -262,7 +260,6 @@ export function useAttachBankTransaction() {
             const wire = await postJson<WireJournalEntryDetail>(
                 `/api/bank-transactions/${args.id}/attach`,
                 { journalEntryId: args.journalEntryId },
-                new AbortController().signal,
                 'attach bank transaction',
             );
             return { ...wire, id: asJournalEntryId(wire.id) };
@@ -281,7 +278,6 @@ export function useDetachBankTransaction() {
             const wire = await postJson<WireJournalEntryDetail>(
                 `/api/bank-transactions/${id}/detach`,
                 {},
-                new AbortController().signal,
                 'detach bank transaction',
             );
             return { ...wire, id: asJournalEntryId(wire.id) };
@@ -315,7 +311,6 @@ export function useUndismissBankTransaction() {
             const wire = await postJson<WireBankTransaction>(
                 `/api/bank-transactions/${id}/undismiss`,
                 {},
-                new AbortController().signal,
                 'undismiss bank transaction',
             );
             return toBankTransaction(wire);

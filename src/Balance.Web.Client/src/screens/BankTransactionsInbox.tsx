@@ -974,7 +974,6 @@ function InboxEditorReady({
                 const wire = await postJson<WireCounterparty>(
                     '/api/counterparties',
                     { name },
-                    new AbortController().signal,
                     'create counterparty',
                 );
                 return asCounterpartyId(wire.id);
@@ -983,7 +982,6 @@ function InboxEditorReady({
                 await postJson<WireJournalEntry>(
                     `/api/bank-transactions/${id}/categorize`,
                     request,
-                    new AbortController().signal,
                     'categorize bank transaction',
                 );
             },
@@ -991,7 +989,6 @@ function InboxEditorReady({
                 await postJson<components['schemas']['BankTransactionOutput']>(
                     `/api/bank-transactions/${id}/dismiss`,
                     { reason },
-                    new AbortController().signal,
                     'dismiss bank transaction',
                 );
             },

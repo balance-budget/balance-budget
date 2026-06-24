@@ -45,7 +45,7 @@ type ProblemDetails = {
 let cachedRequestToken: string | null = null;
 let inflightTokenFetch: Promise<string> | null = null;
 
-async function fetchRequestToken(signal: AbortSignal): Promise<string> {
+async function fetchRequestToken(signal?: AbortSignal): Promise<string> {
     if (inflightTokenFetch) return inflightTokenFetch;
     inflightTokenFetch = (async () => {
         try {
@@ -71,7 +71,7 @@ async function fetchRequestToken(signal: AbortSignal): Promise<string> {
     return inflightTokenFetch;
 }
 
-async function ensureRequestToken(signal: AbortSignal): Promise<string> {
+async function ensureRequestToken(signal?: AbortSignal): Promise<string> {
     if (cachedRequestToken) return cachedRequestToken;
     return fetchRequestToken(signal);
 }
@@ -82,7 +82,7 @@ function clearRequestTokenCache(): void {
 
 async function withXsrfHeader(
     headers: Record<string, string>,
-    signal: AbortSignal,
+    signal?: AbortSignal,
 ): Promise<Record<string, string>> {
     const token = await ensureRequestToken(signal);
     return { ...headers, 'X-XSRF-TOKEN': token };
@@ -109,8 +109,8 @@ async function sendMutation(
     method: string,
     body: BodyInit | null,
     headers: Record<string, string>,
-    signal: AbortSignal,
     label: string,
+    signal?: AbortSignal,
 ): Promise<Response> {
     async function attempt(): Promise<Response> {
         const finalHeaders = await withXsrfHeader(headers, signal);
@@ -134,16 +134,16 @@ async function sendMutation(
 export async function postJson<T>(
     url: string,
     body: unknown,
-    signal: AbortSignal,
     label: string,
+    signal?: AbortSignal,
 ): Promise<T> {
     const response = await sendMutation(
         url,
         'POST',
         JSON.stringify(body),
         { 'Content-Type': 'application/json' },
-        signal,
         label,
+        signal,
     );
     return (await response.json()) as T;
 }
@@ -151,42 +151,42 @@ export async function postJson<T>(
 export async function postJsonNoContent(
     url: string,
     body: unknown,
-    signal: AbortSignal,
     label: string,
+    signal?: AbortSignal,
 ): Promise<void> {
     await sendMutation(
         url,
         'POST',
         JSON.stringify(body),
         { 'Content-Type': 'application/json' },
-        signal,
         label,
+        signal,
     );
 }
 
 export async function postFormData<T>(
     url: string,
     formData: FormData,
-    signal: AbortSignal,
     label: string,
+    signal?: AbortSignal,
 ): Promise<T> {
-    const response = await sendMutation(url, 'POST', formData, {}, signal, label);
+    const response = await sendMutation(url, 'POST', formData, {}, label, signal);
     return (await response.json()) as T;
 }
 
 export async function putJson<T>(
     url: string,
     body: unknown,
-    signal: AbortSignal,
     label: string,
+    signal?: AbortSignal,
 ): Promise<T> {
     const response = await sendMutation(
         url,
         'PUT',
         JSON.stringify(body),
         { 'Content-Type': 'application/json' },
-        signal,
         label,
+        signal,
     );
     return (await response.json()) as T;
 }
@@ -194,16 +194,16 @@ export async function putJson<T>(
 export async function putJsonNoContent(
     url: string,
     body: unknown,
-    signal: AbortSignal,
     label: string,
+    signal?: AbortSignal,
 ): Promise<void> {
     await sendMutation(
         url,
         'PUT',
         JSON.stringify(body),
         { 'Content-Type': 'application/json' },
-        signal,
         label,
+        signal,
     );
 }
 
@@ -214,16 +214,16 @@ export async function putJsonNoContent(
 export async function patchJson<T>(
     url: string,
     patch: unknown,
-    signal: AbortSignal,
     label: string,
+    signal?: AbortSignal,
 ): Promise<T> {
     const response = await sendMutation(
         url,
         'PATCH',
         JSON.stringify(patch),
         { 'Content-Type': 'application/json-patch+json' },
-        signal,
         label,
+        signal,
     );
     return (await response.json()) as T;
 }
@@ -236,31 +236,31 @@ export async function patchJson<T>(
 export async function patchJsonBody<T>(
     url: string,
     body: unknown,
-    signal: AbortSignal,
     label: string,
+    signal?: AbortSignal,
 ): Promise<T> {
     const response = await sendMutation(
         url,
         'PATCH',
         JSON.stringify(body),
         { 'Content-Type': 'application/json' },
-        signal,
         label,
+        signal,
     );
     return (await response.json()) as T;
 }
 
 export async function deleteRequest(
     url: string,
-    signal: AbortSignal,
     label: string,
+    signal?: AbortSignal,
 ): Promise<void> {
-    await sendMutation(url, 'DELETE', null, {}, signal, label);
+    await sendMutation(url, 'DELETE', null, {}, label, signal);
 }
 
 /** DELETE that returns the updated parent resource (sub-resource deletes). */
-export async function deleteJson<T>(url: string, signal: AbortSignal, label: string): Promise<T> {
-    const response = await sendMutation(url, 'DELETE', null, {}, signal, label);
+export async function deleteJson<T>(url: string, label: string, signal?: AbortSignal): Promise<T> {
+    const response = await sendMutation(url, 'DELETE', null, {}, label, signal);
     return (await response.json()) as T;
 }
 
@@ -269,7 +269,7 @@ export async function deleteJson<T>(url: string, signal: AbortSignal, label: str
  * the caller's identity (login, logout, setup) — the server's tokens are bound to the
  * current user and the previously-cached token will fail validation after a transition.
  */
-export async function refreshAntiforgeryToken(signal: AbortSignal): Promise<void> {
+export async function refreshAntiforgeryToken(signal?: AbortSignal): Promise<void> {
     clearRequestTokenCache();
     await fetchRequestToken(signal);
 }

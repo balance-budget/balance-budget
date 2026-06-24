@@ -172,7 +172,6 @@ export function useCreateJournalEntry() {
             const wire = await postJson<WireEntryDetail>(
                 '/api/journal-entries',
                 input,
-                new AbortController().signal,
                 'create journal entry',
             );
             return toEntryDetail(wire);
@@ -190,7 +189,6 @@ export function useReplaceJournalEntry() {
             const wire = await putJson<WireEntryDetail>(
                 `/api/journal-entries/${args.id}`,
                 args.request,
-                new AbortController().signal,
                 'update journal entry',
             );
             return toEntryDetail(wire);
@@ -208,11 +206,7 @@ export function useDeleteJournalEntry() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (id: JournalEntryId) => {
-            await deleteRequest(
-                `/api/journal-entries/${id}`,
-                new AbortController().signal,
-                'delete journal entry',
-            );
+            await deleteRequest(`/api/journal-entries/${id}`, 'delete journal entry');
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: journalEntriesKeys.all });

@@ -67,10 +67,9 @@ export function useLogin() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (request: WireLoginRequest) => {
-            const ctrl = new AbortController();
-            await postJsonNoContent('/api/auth/login', request, ctrl.signal, 'log in');
+            await postJsonNoContent('/api/auth/login', request, 'log in');
             // Identity changed — the antiforgery token cached before login is now invalid.
-            await refreshAntiforgeryToken(ctrl.signal);
+            await refreshAntiforgeryToken();
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: authKeys.me });
@@ -82,8 +81,7 @@ export function useLogout() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async () => {
-            const ctrl = new AbortController();
-            await postJsonNoContent('/api/auth/logout', {}, ctrl.signal, 'log out');
+            await postJsonNoContent('/api/auth/logout', {}, 'log out');
         },
         onSuccess: () => {
             queryClient.setQueryData(authKeys.me, null);
@@ -96,13 +94,7 @@ export function useUpdatePreferences() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (request: WireUpdatePreferences) => {
-            const ctrl = new AbortController();
-            await putJsonNoContent(
-                '/api/auth/me/preferences',
-                request,
-                ctrl.signal,
-                'save preferences',
-            );
+            await putJsonNoContent('/api/auth/me/preferences', request, 'save preferences');
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: authKeys.me });
@@ -114,9 +106,8 @@ export function useSetup() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (request: WireSetupRequest) => {
-            const ctrl = new AbortController();
-            await postJsonNoContent('/api/auth/setup', request, ctrl.signal, 'set up');
-            await refreshAntiforgeryToken(ctrl.signal);
+            await postJsonNoContent('/api/auth/setup', request, 'set up');
+            await refreshAntiforgeryToken();
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: authKeys.me });
