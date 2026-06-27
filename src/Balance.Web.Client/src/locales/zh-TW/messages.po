@@ -239,6 +239,9 @@ msgstr "動作"
 msgid "Active"
 msgstr "啟用中"
 
+msgid "Active loans"
+msgstr "啟用中的貸款"
+
 msgid "Activity"
 msgstr "明細"
 
@@ -1057,6 +1060,9 @@ msgstr "月底"
 
 msgid "Ended"
 msgstr "已結束"
+
+msgid "Ended loans"
+msgstr "已結束的貸款"
 
 msgid "Enter a positive amount"
 msgstr "請輸入正數金額"
@@ -2186,6 +2192,9 @@ msgstr "發生錯誤"
 msgid "Something went wrong."
 msgstr "發生錯誤。"
 
+msgid "Source"
+msgstr "來源"
+
 msgid "Spending"
 msgstr "支出"
 
@@ -2322,6 +2331,9 @@ msgstr "至"
 
 msgid "today"
 msgstr "今天"
+
+msgid "Tokens"
+msgstr "權杖"
 
 msgid "Total"
 msgstr "合計"

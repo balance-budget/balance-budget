@@ -239,6 +239,9 @@ msgstr "Actions"
 msgid "Active"
 msgstr "Active"
 
+msgid "Active loans"
+msgstr "Active loans"
+
 msgid "Activity"
 msgstr "Activity"
 
@@ -1057,6 +1060,9 @@ msgstr "End of month"
 
 msgid "Ended"
 msgstr "Ended"
+
+msgid "Ended loans"
+msgstr "Ended loans"
 
 msgid "Enter a positive amount"
 msgstr "Enter a positive amount"
@@ -2186,6 +2192,9 @@ msgstr "Something went wrong"
 msgid "Something went wrong."
 msgstr "Something went wrong."
 
+msgid "Source"
+msgstr "Source"
+
 msgid "Spending"
 msgstr "Spending"
 
@@ -2322,6 +2331,9 @@ msgstr "To"
 
 msgid "today"
 msgstr "today"
+
+msgid "Tokens"
+msgstr "Tokens"
 
 msgid "Total"
 msgstr "Total"
