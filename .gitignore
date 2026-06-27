@@ -18,3 +18,4 @@ Desktop.ini
 node_modules/
 
 .claude/
+.agents/
