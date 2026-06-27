@@ -1,5 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toBankTransactionDetail, type BankTransactionDetail } from './bankTransactions';
+import { accountsKeys } from './accounts';
+import { bankAccountsKeys } from './bankAccounts';
+import {
+    bankTransactionsKeys,
+    toBankTransactionDetail,
+    type BankTransactionDetail,
+} from './bankTransactions';
+import { counterpartiesKeys } from './counterparties';
 import type { components } from '../lib/api-types.gen';
 import {
     type AccountId,
@@ -176,8 +183,15 @@ export function useCreateJournalEntry() {
             );
             return toEntryDetail(wire);
         },
+        // A journal entry posts lines to accounts and references a counterparty, so its
+        // creation changes account balances (and the register, keyed under accounts),
+        // bank-account figures, and counterparty-derived views — mirror the invalidation
+        // set of useCategorizeBankTransaction, which also creates a journal entry.
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: journalEntriesKeys.all });
+            await queryClient.invalidateQueries({ queryKey: accountsKeys.all });
+            await queryClient.invalidateQueries({ queryKey: counterpartiesKeys.all });
+            await queryClient.invalidateQueries({ queryKey: bankAccountsKeys.all });
         },
     });
 }
@@ -198,6 +212,9 @@ export function useReplaceJournalEntry() {
             await queryClient.invalidateQueries({
                 queryKey: journalEntriesKeys.detail(vars.id),
             });
+            await queryClient.invalidateQueries({ queryKey: accountsKeys.all });
+            await queryClient.invalidateQueries({ queryKey: counterpartiesKeys.all });
+            await queryClient.invalidateQueries({ queryKey: bankAccountsKeys.all });
         },
     });
 }
@@ -208,8 +225,14 @@ export function useDeleteJournalEntry() {
         mutationFn: async (id: JournalEntryId) => {
             await deleteRequest(`/api/journal-entries/${id}`, 'delete journal entry');
         },
+        // Deleting also releases any attached bank transactions back to the inbox, so
+        // invalidate bank transactions on top of the balance-affecting keys.
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: journalEntriesKeys.all });
+            await queryClient.invalidateQueries({ queryKey: accountsKeys.all });
+            await queryClient.invalidateQueries({ queryKey: counterpartiesKeys.all });
+            await queryClient.invalidateQueries({ queryKey: bankAccountsKeys.all });
+            await queryClient.invalidateQueries({ queryKey: bankTransactionsKeys.all });
         },
     });
 }
