@@ -1,7 +1,7 @@
 import { msg } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { type MessageDescriptor } from '@lingui/core';
-import { useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { Button } from 'react-aria-components';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import logo from '../assets/logo.svg';
@@ -125,17 +125,16 @@ function matchActiveAccountId(pathname: string): string | null {
     return match?.[1] ?? null;
 }
 
-function SidebarAccountRow({
-    account,
-    ctx,
-    active,
-}: {
-    account: Account;
-    ctx: AccountRowContext;
-    active: boolean;
-}) {
+// The active account is published via context, not a captured prop: RAC's Tree
+// caches each rendered row by item reference (useCachedChildren), and the
+// account objects are reference-stable across navigations, so a captured
+// `active` flag would never update. Context propagation bypasses that cache.
+const ActiveAccountContext = createContext<string | null>(null);
+
+function SidebarAccountRow({ account, ctx }: { account: Account; ctx: AccountRowContext }) {
     const { t } = useLingui();
     const catalog = useCurrencyCatalog();
+    const active = useContext(ActiveAccountContext) === String(account.id);
     const identifier = accountIdentifier(account);
     const isNegative = account.balance.amount < 0;
     // Income/Expense are category accounts: their "balance" is the lifetime
@@ -273,39 +272,35 @@ function AccountsGroup() {
     }
 
     return (
-        <AccountTreeSections
-            accounts={data}
-            typeOrder={SIDEBAR_TYPE_ORDER}
-            typeLabels={SIDEBAR_TYPE_LABELS}
-            treeClassName="gap-[2px]"
-            expandedKeys={effectiveExpanded}
-            onExpandedChange={keys => {
-                setExpandedIds(new Set([...keys].map(String)));
-            }}
-            onAction={(key: AccountId) => {
-                void navigate({
-                    to: '/accounts/$id',
-                    params: { id: key },
-                    search: {
-                        page: 1,
-                        q: '',
-                        posted: '',
-                        counter: '',
-                        from: '',
-                        to: '',
-                        status: '',
-                    },
-                });
-            }}
-            renderHeading={label => <SectionLabel>{label}</SectionLabel>}
-            renderRow={(account, ctx) => (
-                <SidebarAccountRow
-                    account={account}
-                    ctx={ctx}
-                    active={String(account.id) === activeAccountId}
-                />
-            )}
-        />
+        <ActiveAccountContext.Provider value={activeAccountId}>
+            <AccountTreeSections
+                accounts={data}
+                typeOrder={SIDEBAR_TYPE_ORDER}
+                typeLabels={SIDEBAR_TYPE_LABELS}
+                treeClassName="gap-[2px]"
+                expandedKeys={effectiveExpanded}
+                onExpandedChange={keys => {
+                    setExpandedIds(new Set([...keys].map(String)));
+                }}
+                onAction={(key: AccountId) => {
+                    void navigate({
+                        to: '/accounts/$id',
+                        params: { id: key },
+                        search: {
+                            page: 1,
+                            q: '',
+                            posted: '',
+                            counter: '',
+                            from: '',
+                            to: '',
+                            status: '',
+                        },
+                    });
+                }}
+                renderHeading={label => <SectionLabel>{label}</SectionLabel>}
+                renderRow={(account, ctx) => <SidebarAccountRow account={account} ctx={ctx} />}
+            />
+        </ActiveAccountContext.Provider>
     );
 }
 
