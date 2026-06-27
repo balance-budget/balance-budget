@@ -7,6 +7,13 @@ internal static partial class IngPatterns
     [GeneratedRegex(@"([A-Z]\d{8})")]
     public static partial Regex SavingsAccount();
 
+    // ING current/savings exports are named "<IBAN>_<from>_<to>.csv" (e.g.
+    // "NL69INGB0123456789_01-01-2026_31-01-2026.csv"), so the leading IBAN is the fastest
+    // account anchor for drop-and-detect (ADR 0034). Anchored to the start so it never matches
+    // an IBAN buried elsewhere in the name.
+    [GeneratedRegex(@"^(?<iban>NL\d{2}INGB\d{10})_", RegexOptions.IgnoreCase)]
+    public static partial Regex StatementFilenameIban();
+
     [GeneratedRegex(@"^NL\d{2} INGB \d{4} \d{4} \d{2}$", RegexOptions.IgnoreCase)]
     public static partial Regex CreditCardLinkedAccount();
 

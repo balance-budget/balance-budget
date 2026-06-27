@@ -408,6 +408,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["DetectAndImportStatements"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/bank-transactions": {
         parameters: {
             query?: never;
@@ -1255,6 +1271,17 @@ export interface components {
             periodEnd: string;
             currencyCode: components["schemas"]["CurrencyCode"];
         };
+        DetectedImportOutcome: {
+            fileName: string;
+            status: components["schemas"]["ImportFileStatus"];
+            bankAccountId: null | components["schemas"]["BankAccountId"];
+            accountAnchor: null | string;
+            /** Format: int32 */
+            imported: number | string;
+            /** Format: int32 */
+            skippedAsDuplicate: number | string;
+            detail: null | string;
+        };
         DismissBankTransactionRequest: {
             reason: string;
         };
@@ -1295,6 +1322,9 @@ export interface components {
         };
         /** Format: binary */
         IFormFile: string;
+        IFormFileCollection: components["schemas"]["IFormFile"][];
+        /** @enum {unknown} */
+        ImportFileStatus: "Imported" | "Unrecognized" | "NoMatchingAccount" | "AmbiguousMatch" | "NotImportable" | "Failed";
         ImportResult: {
             /** Format: int32 */
             imported: number | string;
@@ -3687,6 +3717,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    DetectAndImportStatements: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    files: components["schemas"]["IFormFileCollection"];
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DetectedImportOutcome"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
         };

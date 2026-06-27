@@ -338,6 +338,105 @@ internal sealed class BankAccountImportEndpointTests : EndpointsTestsBase
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
     }
 
+    [Test]
+    public async Task DetectAndImport_resolves_account_by_filename_iban_and_imports()
+    {
+        using var client = Factory.CreateClient();
+        var iban = $"NL69INGB{NextDigits(10)}";
+        var account = await CreateAccountAsync(client, $"Detect-Name-{Guid.NewGuid():N}");
+        var bankAccount = await CreateBankAccountForAccountAsync(client, iban, account.Id);
+
+        var csvBytes = BuildCsvBytes(iban, RowEtosTemplate, RowCoolblueTemplate);
+        var outcomes = await PostDetectAsync(
+            client,
+            (csvBytes, $"{iban}_01-01-2026_31-01-2026.csv")
+        );
+
+        await Assert.That(outcomes.Count).IsEqualTo(1);
+        await Assert.That(outcomes[0].Status).IsEqualTo("Imported");
+        await Assert.That(outcomes[0].BankAccountId).IsEqualTo(bankAccount.Id);
+        await Assert.That(outcomes[0].Imported).IsEqualTo(2);
+    }
+
+    [Test]
+    public async Task DetectAndImport_resolves_account_by_file_content_and_imports()
+    {
+        using var client = Factory.CreateClient();
+        var iban = $"NL69INGB{NextDigits(10)}";
+        var account = await CreateAccountAsync(client, $"Detect-Content-{Guid.NewGuid():N}");
+        var bankAccount = await CreateBankAccountForAccountAsync(client, iban, account.Id);
+
+        // No IBAN in the filename forces the content slow path.
+        var csvBytes = BuildCsvBytes(iban, RowEtosTemplate);
+        var outcomes = await PostDetectAsync(client, (csvBytes, "export.csv"));
+
+        await Assert.That(outcomes.Count).IsEqualTo(1);
+        await Assert.That(outcomes[0].Status).IsEqualTo("Imported");
+        await Assert.That(outcomes[0].BankAccountId).IsEqualTo(bankAccount.Id);
+        await Assert.That(outcomes[0].Imported).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task DetectAndImport_no_matching_account_is_surfaced()
+    {
+        using var client = Factory.CreateClient();
+        var iban = $"NL69INGB{NextDigits(10)}";
+        var csvBytes = BuildCsvBytes(iban, RowEtosTemplate);
+        var outcomes = await PostDetectAsync(
+            client,
+            (csvBytes, $"{iban}_01-01-2026_31-01-2026.csv")
+        );
+
+        await Assert.That(outcomes.Count).IsEqualTo(1);
+        await Assert.That(outcomes[0].Status).IsEqualTo("NoMatchingAccount");
+        await Assert.That(outcomes[0].BankAccountId).IsNull();
+    }
+
+    [Test]
+    public async Task DetectAndImport_unrecognized_file_is_surfaced()
+    {
+        using var client = Factory.CreateClient();
+        var bytes = Encoding.UTF8.GetBytes("this is not a statement file");
+        var outcomes = await PostDetectAsync(client, (bytes, "notes.txt"));
+
+        await Assert.That(outcomes.Count).IsEqualTo(1);
+        await Assert.That(outcomes[0].Status).IsEqualTo("Unrecognized");
+    }
+
+    private static async Task<List<DetectedImportOutcomeDto>> PostDetectAsync(
+        HttpClient client,
+        params (byte[] Bytes, string FileName)[] files
+    )
+    {
+        using var multipart = new MultipartFormDataContent();
+        var contents = new List<ByteArrayContent>();
+        foreach (var (bytes, fileName) in files)
+        {
+            var content = new ByteArrayContent(bytes);
+            content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+            contents.Add(content);
+            multipart.Add(content, "files", fileName);
+        }
+
+        try
+        {
+            using var response = await client.PostAsync(
+                new Uri("/api/imports", UriKind.Relative),
+                multipart
+            );
+            await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+            var outcomes = await response.Content.ReadFromJsonAsync<
+                List<DetectedImportOutcomeDto>
+            >();
+            return outcomes!;
+        }
+        finally
+        {
+            foreach (var content in contents)
+                content.Dispose();
+        }
+    }
+
     private static byte[] BuildCsvBytes(string iban, params string[] rowTemplates)
     {
         var sb = new StringBuilder();
@@ -438,6 +537,16 @@ internal sealed class BankAccountImportEndpointTests : EndpointsTestsBase
 }
 
 internal sealed record ImportResultDto(int Imported, int SkippedAsDuplicate);
+
+internal sealed record DetectedImportOutcomeDto(
+    string FileName,
+    string Status,
+    Guid? BankAccountId,
+    string? AccountAnchor,
+    int Imported,
+    int SkippedAsDuplicate,
+    string? Detail
+);
 
 internal sealed record BankTransactionDetailDto(
     Guid Id,

@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using Balance.Integration.Ing.Contracts;
 using Balance.Integration.Ing.Models.BankAccount;
 using CsvHelper;
@@ -13,7 +14,15 @@ internal sealed class IngCurrentAccountStatementParser : IIngCurrentAccountState
         CancellationToken cancellationToken
     )
     {
-        using var reader = new StreamReader(stream);
+        // leaveOpen: the caller owns the stream — detection probes it and then re-reads it for
+        // the actual import (ADR 0034), so the parser must not dispose it.
+        using var reader = new StreamReader(
+            stream,
+            Encoding.UTF8,
+            detectEncodingFromByteOrderMarks: true,
+            bufferSize: -1,
+            leaveOpen: true
+        );
         using var csv = GetCsvReader(reader);
 
         await csv.ReadAsync();
