@@ -28,8 +28,8 @@ type AccountTreeSectionsProps = {
     defaultExpandedKeys?: Iterable<Key> | 'all';
     /** Whole-row action (e.g. navigate to the register). */
     onAction?: (key: AccountId) => void;
-    /** Leading indent applied per nesting level, in rem. */
-    indentRem?: number;
+    /** Per-`<Tree>` (type-section) class, e.g. inter-row gap. */
+    treeClassName?: string;
 };
 
 /**
@@ -47,7 +47,7 @@ export function AccountTreeSections({
     onExpandedChange,
     defaultExpandedKeys,
     onAction,
-    indentRem = 1.25,
+    treeClassName,
 }: AccountTreeSectionsProps) {
     const { i18n } = useLingui();
     const childrenByParent = buildChildrenMap(accounts);
@@ -58,14 +58,9 @@ export function AccountTreeSections({
         return (
             <TreeItem id={account.id} textValue={account.name}>
                 <TreeItemContent>
-                    {({ level, hasChildItems, isExpanded }) => (
-                        <div
-                            className="flex items-center"
-                            style={{ paddingLeft: `${String((level - 1) * indentRem)}rem` }}
-                        >
-                            {renderRow(account, { hasChildren: hasChildItems, isExpanded, level })}
-                        </div>
-                    )}
+                    {({ level, hasChildItems, isExpanded }) =>
+                        renderRow(account, { hasChildren: hasChildItems, isExpanded, level })
+                    }
                 </TreeItemContent>
                 <Collection items={children}>{renderItem}</Collection>
             </TreeItem>
@@ -92,6 +87,7 @@ export function AccountTreeSections({
                         {renderHeading(i18n._(typeLabels[type]))}
                         <Tree
                             aria-label={i18n._(typeLabels[type])}
+                            className={treeClassName}
                             items={roots}
                             selectionMode="none"
                             {...selectionProps}

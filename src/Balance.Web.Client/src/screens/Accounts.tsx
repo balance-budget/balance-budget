@@ -172,7 +172,10 @@ function AccountRow({
     const identifier = accountIdentifier(account);
     const isNegative = account.balance.amount < 0;
     return (
-        <div className="flex-1 min-w-0 flex items-center gap-3 py-3 cursor-pointer">
+        <div
+            className="flex items-center gap-3 py-3 pr-1 border-b border-border-soft cursor-pointer rounded-lg group-data-[hovered]:bg-surface-2 group-data-[focus-visible]:bg-surface-2 transition-colors"
+            style={{ paddingLeft: `${String((ctx.level - 1) * 1.25)}rem` }}
+        >
             {ctx.hasChildren ? (
                 <TreeExpandButton
                     ariaLabel={ctx.isExpanded ? t`Collapse` : t`Expand`}

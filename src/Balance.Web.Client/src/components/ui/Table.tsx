@@ -45,7 +45,7 @@ export function TableHeader<T extends object>(props: TableHeaderProps<T>) {
                 'text-left text-xs text-fg-3 uppercase tracking-wider',
             )}
         >
-            {allowsDragging && <AriaColumn className="w-0" />}
+            {allowsDragging && <AriaColumn className="w-0 border-b border-border-soft" />}
             {selectionBehavior === 'toggle' && (
                 <AriaColumn className="w-9 py-2 pr-3 align-middle border-b border-border-soft">
                     {selectionMode === 'multiple' && <CollectionSelectionCheckbox />}
@@ -62,7 +62,7 @@ export function Column(props: ColumnProps & { children?: React.ReactNode }) {
             {...props}
             className={composeTailwindRenderProps(
                 props.className,
-                'py-2 pr-3 font-medium outline-none cursor-default last:pr-0',
+                'py-2 pr-3 font-medium outline-none cursor-default last:pr-0 border-b border-border-soft',
             )}
         >
             {props.children}
