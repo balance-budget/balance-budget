@@ -636,6 +636,10 @@ function InboxEditorReady({
                     selectedKeys={selection}
                     onSelectionChange={onSelectionChange}
                     items={visibleBts}
+                    // RAC caches rendered rows by item reference; the bank-transaction
+                    // objects are stable across edits, so the per-row draft/error state
+                    // would go stale without invalidating the cache here.
+                    dependencies={[draftFor, isRowPristine, dismissDrafts, rowErrors, saving]}
                 >
                     {bt => {
                         const draft = draftFor(bt.id);
