@@ -154,6 +154,14 @@ The web host startup follows this order:
 - Prefer running targeted tests instead of the full suite.
 - Submit changes as a PR when done
 
+## Writing Style
+When writing copy within the application, follow these guidelines:
+- Write like Stripe, Linear, GitHub, or Notion.
+- Short, clear, conversational, and specific.
+- Never use em dashes (—).
+- Avoid AI-sounding phrases, marketing copy, and buzzwords.
+- Prefer plain English, sentence case, and brevity.
+
 ## Agent skills
 
 ### Issue tracker
