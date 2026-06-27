@@ -13,6 +13,7 @@ import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { Button } from '../components/ui/Button';
 import { SearchField } from '../components/ui/SearchField';
+import { Cell, Column, Row, Table, TableBody, TableHeader } from '../components/ui/Table';
 import { useToast } from '../components/ui/Toast';
 import { handleActionError } from '../lib/formErrors';
 import { CurrencyFormModal } from './CurrencyForm';
@@ -128,34 +129,34 @@ function CurrencyTable({
     onEdit: (currency: Currency) => void;
     onDelete: (currency: Currency) => void;
 }) {
+    const { t } = useLingui();
     return (
-        <table className="w-full text-sm">
-            <thead>
-                <tr className="text-left text-xs text-fg-3 uppercase tracking-wider border-b border-border-soft">
-                    <th className="py-2 pr-3 font-medium">
-                        <Trans>Code</Trans>
-                    </th>
-                    <th className="py-2 pr-3 font-medium">
-                        <Trans>Name</Trans>
-                    </th>
-                    <th className="py-2 pr-3 font-medium">
-                        <Trans>Symbol</Trans>
-                    </th>
-                    <th className="py-2 pr-3 font-medium text-right">
-                        <Trans>Scale</Trans>
-                    </th>
-                    <th className="py-2 pr-3 font-medium">
-                        <Trans>Usage</Trans>
-                    </th>
-                    <th className="py-2 font-medium sr-only">
+        <Table aria-label={t`Currencies`}>
+            <TableHeader>
+                <Column isRowHeader>
+                    <Trans>Code</Trans>
+                </Column>
+                <Column>
+                    <Trans>Name</Trans>
+                </Column>
+                <Column>
+                    <Trans>Symbol</Trans>
+                </Column>
+                <Column className="py-2 pr-3 font-medium text-right">
+                    <Trans>Scale</Trans>
+                </Column>
+                <Column>
+                    <Trans>Usage</Trans>
+                </Column>
+                <Column>
+                    <span className="sr-only">
                         <Trans>Actions</Trans>
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                {currencies.map(currency => (
+                    </span>
+                </Column>
+            </TableHeader>
+            <TableBody items={currencies}>
+                {currency => (
                     <CurrencyRow
-                        key={currency.code}
                         currency={currency}
                         onEdit={() => {
                             onEdit(currency);
@@ -164,9 +165,9 @@ function CurrencyTable({
                             onDelete(currency);
                         }}
                     />
-                ))}
-            </tbody>
-        </table>
+                )}
+            </TableBody>
+        </Table>
     );
 }
 
@@ -183,17 +184,19 @@ function CurrencyRow({
     const inUse = isCurrencyInUse(currency);
 
     return (
-        <tr className="border-b border-border-soft last:border-b-0 hover:bg-surface-2">
-            <td className="py-[10px] pr-3 font-medium text-fg-1 tabular-nums">{currency.code}</td>
-            <td className="py-[10px] pr-3 text-fg-1">{currency.name}</td>
-            <td className="py-[10px] pr-3 text-fg-2">{currency.symbol ?? '—'}</td>
-            <td className="py-[10px] pr-3 text-right text-fg-2 tabular-nums">
+        <Row id={currency.code}>
+            <Cell className="py-[10px] pr-3 font-medium text-fg-1 tabular-nums">
+                {currency.code}
+            </Cell>
+            <Cell className="py-[10px] pr-3 text-fg-1">{currency.name}</Cell>
+            <Cell className="py-[10px] pr-3 text-fg-2">{currency.symbol ?? '—'}</Cell>
+            <Cell className="py-[10px] pr-3 text-right text-fg-2 tabular-nums">
                 {currency.minorUnitScale}
-            </td>
-            <td className="py-[10px] pr-3 text-fg-2">
+            </Cell>
+            <Cell className="py-[10px] pr-3 text-fg-2">
                 <CurrencyUsage currency={currency} />
-            </td>
-            <td className="py-[10px] text-right whitespace-nowrap">
+            </Cell>
+            <Cell className="py-[10px] text-right whitespace-nowrap">
                 <Button onPress={onEdit} className="py-[5px] text-xs">
                     <Trans>Edit</Trans>
                 </Button>{' '}
@@ -207,8 +210,8 @@ function CurrencyRow({
                 >
                     <Trans>Delete</Trans>
                 </Button>
-            </td>
-        </tr>
+            </Cell>
+        </Row>
     );
 }
 
