@@ -143,12 +143,17 @@ function SidebarAccountRow({ account, ctx }: { account: Account; ctx: AccountRow
     const showBalance = isLedgerAccount(account);
     // No indentation — the chart-of-accounts nests several levels deep and the
     // sidebar is narrow. Instead each nested row sits on a translucent shade that
-    // compounds with depth (a flattened restatement of the old nested-container
-    // look, since RAC's Tree DOM is flat — ADR-0035).
+    // compounds with depth, matching the old nested `bg-surface-2` containers:
+    // each level layers another surface-2 (alpha 0.04), so the effective alpha is
+    // 1 - 0.96^(level-1). The base channels flip black→white in dark mode via
+    // --surface-lift-rgb. (RAC's Tree DOM is flat, so this is per-row — ADR-0035.)
     const shade =
         ctx.level > 1
-            ? // eslint-disable-next-line lingui/no-unlocalized-strings -- CSS color value, not UI copy.
-              { backgroundColor: `rgba(0, 0, 0, ${String(0.04 * (ctx.level - 1))})` }
+            ? {
+                  backgroundColor: `rgb(var(--surface-lift-rgb) / ${String(
+                      1 - Math.pow(1 - 0.04, ctx.level - 1),
+                  )})`,
+              }
             : undefined;
     return (
         <div className="relative" style={shade}>

@@ -35,6 +35,10 @@
     --color-surface-2: rgba(0, 0, 0, 0.04);
     --color-surface-3: rgba(0, 0, 0, 0.08);
     --color-surface-overlay: rgba(0, 0, 0, 0.4);
+    /* Base channels for the surface alpha-lift (surface-2's color, without its
+       alpha) so depth-compounded tints (the sidebar account tree) stay
+       theme-aware. Flipped to white in .dark below. */
+    --surface-lift-rgb: 0 0 0;
 
     /* Borders — black alpha on light. */
     --color-border-soft: rgba(0, 0, 0, 0.1);
@@ -121,6 +125,7 @@
     --color-surface-2: rgba(255, 255, 255, 0.04);
     --color-surface-3: rgba(255, 255, 255, 0.08);
     --color-surface-overlay: rgba(0, 0, 0, 0.6);
+    --surface-lift-rgb: 255 255 255;
 
     --color-border-soft: rgba(255, 255, 255, 0.08);
     --color-border-strong: rgba(255, 255, 255, 0.18);
