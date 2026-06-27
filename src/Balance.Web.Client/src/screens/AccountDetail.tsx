@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { plural } from '@lingui/core/macro';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { Link, useNavigate } from '@tanstack/react-router';
+import { type Selection } from 'react-aria-components';
 import { useAccount, useAccounts, useDeleteAccount, type Account } from '../api/accounts';
 import { useCurrencyCatalog } from '../api/currencies';
 import { useReassignJournalLines } from '../api/journalLines';
@@ -17,7 +18,7 @@ import { Amount } from '../components/Amount';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { DateRangePicker } from '../components/ui/DateRangePicker';
 import { SearchField } from '../components/ui/SearchField';
-import { SelectionCheckbox } from '../components/ui/SelectionCheckbox';
+import { Cell, Column, Row, Table, TableBody, TableHeader } from '../components/ui/Table';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Pagination } from '../components/Pagination';
@@ -29,6 +30,7 @@ import { selectedKey } from '../components/ui/selection';
 import { Tag, TagGroup } from '../components/ui/TagGroup';
 import { useToast } from '../components/ui/Toast';
 import { accountPathLabel } from '../lib/accountTree';
+import { disabledLineKeys, prunePageSelection, selectableLineIds } from './accountRegister.state';
 import { cx } from '../lib/cx';
 import { formatTableDate } from '../lib/dates';
 import { type AccountId, type JournalLineId } from '../lib/domain';
@@ -336,6 +338,7 @@ function RegisterTable({
     onPageChange: (p: number) => void;
 }) {
     const { t } = useLingui();
+    const navigate = useNavigate();
     const skip = (page - 1) * REGISTER_PAGE_SIZE;
     const debouncedQ = useDebouncedValue(q, 200);
     const registerFilters: RegisterFilters = { q: debouncedQ, ...filters };
@@ -346,27 +349,15 @@ function RegisterTable({
     // Show the posted-account column only when rows can come from descendants — on a
     // leaf register every row would repeat the viewed account.
     const showAccountColumn = !account.isPostable;
-    const gridClass = showAccountColumn
-        ? 'grid-cols-[24px_100px_1fr_150px_160px_120px]'
-        : 'grid-cols-[24px_100px_1fr_180px_120px]';
 
     const rows = useMemo(() => register.data?.items ?? [], [register.data]);
     // Selection is page-bound and prunes itself: ids that fell off the current page (or
     // stopped being movable) simply no longer count.
-    const visibleSelected = useMemo(
-        () =>
-            new Set(
-                rows
-                    .filter(
-                        r =>
-                            selected.has(r.journalLineId) && r.reconciliationStatus === 'Uncleared',
-                    )
-                    .map(r => r.journalLineId),
-            ),
-        [rows, selected],
-    );
-    const selectableIds = useMemo(
-        () => rows.filter(r => r.reconciliationStatus === 'Uncleared').map(r => r.journalLineId),
+    const visibleSelected = useMemo(() => prunePageSelection(rows, selected), [rows, selected]);
+    const selectableIds = useMemo(() => selectableLineIds(rows), [rows]);
+    const disabledKeys = useMemo(() => disabledLineKeys(rows), [rows]);
+    const entryIdByLine = useMemo(
+        () => new Map(rows.map(r => [r.journalLineId, r.journalEntryId])),
         [rows],
     );
 
@@ -407,30 +398,9 @@ function RegisterTable({
         );
     }
 
-    function toggleRow(id: JournalLineId) {
-        setSelected(prev => {
-            const next = new Set(prev);
-            if (next.has(id)) {
-                next.delete(id);
-            } else {
-                next.add(id);
-            }
-            return next;
-        });
+    function onSelectionChange(keys: Selection) {
+        setSelected(keys === 'all' ? new Set(selectableIds) : new Set(keys as Set<JournalLineId>));
     }
-
-    function toggleAll() {
-        setSelected(
-            visibleSelected.size === selectableIds.length ? new Set() : new Set(selectableIds),
-        );
-    }
-
-    const allState: 'none' | 'some' | 'all' =
-        visibleSelected.size === 0
-            ? 'none'
-            : visibleSelected.size === selectableIds.length
-              ? 'all'
-              : 'some';
 
     return (
         <div className="flex flex-col">
@@ -443,50 +413,51 @@ function RegisterTable({
                     }}
                 />
             )}
-            <div
-                className={cx(
-                    'hidden lg:grid gap-3 px-2 pb-2 text-xs text-fg-3 uppercase tracking-wider border-b border-border-soft',
-                    gridClass,
-                )}
-            >
-                <span className="flex items-center">
-                    <HeaderSelectAllCheckbox
-                        state={allState}
-                        disabled={selectableIds.length === 0}
-                        onClick={toggleAll}
-                    />
-                </span>
-                <span>
-                    <Trans>Date</Trans>
-                </span>
-                <span>
-                    <Trans>Description</Trans>
-                </span>
-                {showAccountColumn && (
-                    <span>
-                        <Trans>Account</Trans>
-                    </span>
-                )}
-                <span>
-                    <Trans>Counter</Trans>
-                </span>
-                <span className="text-right">
-                    <Trans>Amount</Trans>
-                </span>
-            </div>
-            {rows.map(row => (
-                <RegisterRowView
-                    key={row.journalLineId}
-                    row={row}
-                    catalog={catalog}
-                    gridClass={gridClass}
-                    showAccountColumn={showAccountColumn}
-                    selected={visibleSelected.has(row.journalLineId)}
-                    onToggle={() => {
-                        toggleRow(row.journalLineId);
+            <div className="overflow-x-auto">
+                <Table
+                    aria-label={t`Register`}
+                    selectionMode="multiple"
+                    disabledBehavior="selection"
+                    disabledKeys={disabledKeys}
+                    selectedKeys={visibleSelected}
+                    onSelectionChange={onSelectionChange}
+                    onRowAction={key => {
+                        const entryId = entryIdByLine.get(key as JournalLineId);
+                        if (entryId !== undefined) {
+                            void navigate({ to: '/journal/$id', params: { id: entryId } });
+                        }
                     }}
-                />
-            ))}
+                >
+                    <TableHeader>
+                        <Column isRowHeader width={100}>
+                            <Trans>Date</Trans>
+                        </Column>
+                        <Column>
+                            <Trans>Description</Trans>
+                        </Column>
+                        {showAccountColumn ? (
+                            <Column width={150}>
+                                <Trans>Account</Trans>
+                            </Column>
+                        ) : null}
+                        <Column width={160}>
+                            <Trans>Counter</Trans>
+                        </Column>
+                        <Column width={120} className="text-right">
+                            <Trans>Amount</Trans>
+                        </Column>
+                    </TableHeader>
+                    <TableBody items={rows}>
+                        {row => (
+                            <RegisterRowView
+                                row={row}
+                                catalog={catalog}
+                                showAccountColumn={showAccountColumn}
+                            />
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
             <Pagination
                 page={page}
                 pageSize={REGISTER_PAGE_SIZE}
@@ -594,143 +565,56 @@ function ReassignBar({
     );
 }
 
-function RowSelectCheckbox({
-    selected,
-    disabled,
-    onChange,
-    ariaLabel,
-}: {
-    selected: boolean;
-    disabled: boolean;
-    onChange: () => void;
-    ariaLabel: string;
-}) {
-    const { t } = useLingui();
-    return (
-        <SelectionCheckbox
-            aria-label={ariaLabel}
-            title={disabled ? t`Cleared and reconciled lines can’t be moved.` : undefined}
-            isSelected={selected}
-            isDisabled={disabled}
-            onChange={onChange}
-        />
-    );
-}
-
-function HeaderSelectAllCheckbox({
-    state,
-    onClick,
-    disabled,
-}: {
-    state: 'none' | 'some' | 'all';
-    onClick: () => void;
-    disabled: boolean;
-}) {
-    const { t } = useLingui();
-    return (
-        <SelectionCheckbox
-            aria-label={t`Select all movable rows on this page`}
-            isSelected={state === 'all'}
-            isIndeterminate={state === 'some'}
-            isDisabled={disabled}
-            onChange={onClick}
-        />
-    );
-}
-
 function RegisterRowView({
     row,
     catalog,
-    gridClass,
     showAccountColumn,
-    selected,
-    onToggle,
 }: {
     row: RegisterRow;
     catalog: ReturnType<typeof useCurrencyCatalog>;
-    gridClass: string;
     showAccountColumn: boolean;
-    selected: boolean;
-    onToggle: () => void;
 }) {
-    const { t } = useLingui();
     const counter = row.counter[0];
     const extra = row.counter.length - 1;
     const negative = row.amount.amount < 0;
-    const movable = row.reconciliationStatus === 'Uncleared';
     const heading = row.counterpartyName ?? row.entryDescription ?? '—';
-    // Match the journal-list amount-coloring convention: in = success, out = danger.
-    const amount = (
-        <span
-            className={cx(
-                'font-mono text-sm tabular-nums text-right',
-                negative ? 'text-danger' : 'text-success',
-            )}
-        >
-            {formatMoney(row.amount.amount, row.amount.currencyCode, catalog, { sign: true })}
-        </span>
-    );
-    const counterLabel = (
-        <span className="text-xs text-fg-2 truncate">
-            {counter ? counter.accountName : '—'}
-            {extra > 0 ? <span className="text-fg-3"> +{extra}</span> : null}
-        </span>
-    );
-    const checkbox = (
-        <RowSelectCheckbox
-            selected={selected}
-            disabled={!movable}
-            onChange={onToggle}
-            ariaLabel={t`Select line of ${row.date}`}
-        />
-    );
     return (
-        <div className="border-b border-border-soft last:border-b-0 hover:bg-surface-2">
-            <div className={cx('hidden lg:grid gap-3 items-center px-2 py-2', gridClass)}>
-                <span className="flex items-center">{checkbox}</span>
-                <Link to="/journal/$id" params={{ id: row.journalEntryId }} className="contents">
-                    <span className="text-xs text-fg-3 tabular-nums">
-                        {formatTableDate(row.date)}
-                    </span>
-                    <div className="flex flex-col min-w-0">
-                        <span className="text-sm text-fg-1 truncate">{heading}</span>
-                        {row.lineDescription ? (
-                            <span className="text-xs text-fg-3 truncate">
-                                {row.lineDescription}
-                            </span>
-                        ) : null}
-                    </div>
-                    {showAccountColumn && (
-                        <span className="text-xs text-fg-2 truncate">{row.accountName}</span>
-                    )}
-                    {counterLabel}
-                    {amount}
-                </Link>
-            </div>
-            <div className="lg:hidden flex gap-3 px-2 py-3">
-                <span className="flex items-start pt-[2px]">{checkbox}</span>
-                <Link
-                    to="/journal/$id"
-                    params={{ id: row.journalEntryId }}
-                    className="flex-1 flex flex-col gap-1 min-w-0"
-                >
-                    <div className="flex items-center justify-between gap-3">
-                        <span className="text-xs text-fg-3 tabular-nums">
-                            {formatTableDate(row.date)}
-                        </span>
-                        {amount}
-                    </div>
+        <Row id={row.journalLineId} className="cursor-pointer">
+            <Cell className="py-2 pr-3 align-middle text-xs text-fg-3 tabular-nums">
+                {formatTableDate(row.date)}
+            </Cell>
+            <Cell className="py-2 pr-3 align-middle">
+                <div className="flex flex-col min-w-0">
                     <span className="text-sm text-fg-1 truncate">{heading}</span>
                     {row.lineDescription ? (
                         <span className="text-xs text-fg-3 truncate">{row.lineDescription}</span>
                     ) : null}
-                    {showAccountColumn && (
-                        <span className="text-xs text-fg-2 truncate">{row.accountName}</span>
+                </div>
+            </Cell>
+            {showAccountColumn ? (
+                <Cell className="py-2 pr-3 align-middle text-xs text-fg-2 truncate">
+                    {row.accountName}
+                </Cell>
+            ) : null}
+            <Cell className="py-2 pr-3 align-middle">
+                <span className="text-xs text-fg-2 truncate">
+                    {counter ? counter.accountName : '—'}
+                    {extra > 0 ? <span className="text-fg-3"> +{extra}</span> : null}
+                </span>
+            </Cell>
+            <Cell className="py-2 align-middle text-right">
+                <span
+                    className={cx(
+                        'font-mono text-sm tabular-nums',
+                        negative ? 'text-danger' : 'text-success',
                     )}
-                    {counterLabel}
-                </Link>
-            </div>
-        </div>
+                >
+                    {formatMoney(row.amount.amount, row.amount.currencyCode, catalog, {
+                        sign: true,
+                    })}
+                </span>
+            </Cell>
+        </Row>
     );
 }
 

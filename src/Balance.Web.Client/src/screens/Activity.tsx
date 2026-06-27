@@ -1,11 +1,12 @@
 import { useMemo } from 'react';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { useAccounts, type Account } from '../api/accounts';
 import { useJournalEntries, type JournalEntry } from '../api/journalEntries';
 import { AccountSelect } from '../components/AccountSelect';
 import { DateRangePicker } from '../components/ui/DateRangePicker';
 import { SearchField } from '../components/ui/SearchField';
+import { Cell, Column, Row, Table, TableBody, TableHeader } from '../components/ui/Table';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Pagination } from '../components/Pagination';
@@ -198,24 +199,9 @@ function JournalBody({
 
     return (
         <div className="flex flex-col">
-            <div className="hidden lg:grid grid-cols-[100px_24px_1fr_minmax(180px,1.2fr)_140px] gap-3 px-2 pb-2 text-xs text-fg-3 uppercase tracking-wider border-b border-border-soft">
-                <span>
-                    <Trans>Date</Trans>
-                </span>
-                <span />
-                <span>
-                    <Trans>Counterparty</Trans>
-                </span>
-                <span>
-                    <Trans>From</Trans> → <Trans>To</Trans>
-                </span>
-                <span className="text-right">
-                    <Trans>Amount</Trans>
-                </span>
+            <div className="overflow-x-auto">
+                <JournalTable entries={entries.data.items} accountById={accountById} />
             </div>
-            {entries.data.items.map(entry => (
-                <JournalRow key={entry.id} entry={entry} accountById={accountById} />
-            ))}
             <Pagination
                 page={page}
                 pageSize={PAGE_SIZE}
@@ -223,6 +209,48 @@ function JournalBody({
                 onPageChange={onPageChange}
             />
         </div>
+    );
+}
+
+function JournalTable({
+    entries,
+    accountById,
+}: {
+    entries: JournalEntry[];
+    accountById: ReadonlyMap<AccountId, Account>;
+}) {
+    const { t } = useLingui();
+    const navigate = useNavigate();
+    return (
+        <Table
+            aria-label={t`Activity`}
+            onRowAction={key => {
+                void navigate({ to: '/journal/$id', params: { id: String(key) } });
+            }}
+        >
+            <TableHeader>
+                <Column isRowHeader width={100}>
+                    <Trans>Date</Trans>
+                </Column>
+                <Column width={24}>
+                    <span className="sr-only">
+                        <Trans>Source</Trans>
+                    </span>
+                </Column>
+                <Column>
+                    <Trans>Counterparty</Trans>
+                </Column>
+                <Column width={220}>
+                    <Trans>From</Trans> → <Trans>To</Trans>
+                </Column>
+                <Column width={140} className="text-right">
+                    <Trans>Amount</Trans>
+                </Column>
+            </TableHeader>
+            <TableBody items={entries}>
+                {entry => <JournalRow entry={entry} accountById={accountById} />}
+            </TableBody>
+        </Table>
     );
 }
 
@@ -236,45 +264,25 @@ function JournalRow({
     const projection = projectEntry(entry, accountById);
     const heading = entry.counterpartyName ?? entry.description ?? '—';
     return (
-        <Link
-            to="/journal/$id"
-            params={{ id: entry.id }}
-            className="block border-b border-border-soft last:border-b-0 hover:bg-surface-2"
-        >
-            <div className="hidden lg:grid grid-cols-[100px_24px_1fr_minmax(180px,1.2fr)_140px] gap-3 items-center px-2 py-2">
-                <span className="text-xs text-fg-3 tabular-nums">
-                    {formatTableDate(entry.date)}
-                </span>
-                <span className="flex items-center justify-center text-fg-3" aria-hidden="true">
-                    {entry.hasBankTransactions ? (
-                        <Icon name="download" size={12} strokeWidth={2} />
-                    ) : null}
-                </span>
-                <span className="text-sm text-fg-1 truncate">{heading}</span>
+        <Row id={entry.id} className="cursor-pointer">
+            <Cell className="py-2 pr-3 align-middle text-xs text-fg-3 tabular-nums">
+                {formatTableDate(entry.date)}
+            </Cell>
+            <Cell className="py-2 pr-3 align-middle text-fg-3">
+                {entry.hasBankTransactions ? (
+                    <Icon name="download" size={12} strokeWidth={2} aria-hidden="true" />
+                ) : null}
+            </Cell>
+            <Cell className="py-2 pr-3 align-middle">
+                <span className="text-sm text-fg-1 truncate block">{heading}</span>
+            </Cell>
+            <Cell className="py-2 pr-3 align-middle">
                 <FromToCell projection={projection} lineCount={entry.lines.length} />
+            </Cell>
+            <Cell className="py-2 align-middle text-right">
                 <ProjectionAmount projection={projection} variant="row" />
-            </div>
-            <div className="lg:hidden flex flex-col gap-1 px-2 py-3">
-                <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-xs text-fg-3 tabular-nums shrink-0">
-                            {formatTableDate(entry.date)}
-                        </span>
-                        {entry.hasBankTransactions ? (
-                            <Icon
-                                name="download"
-                                size={12}
-                                strokeWidth={2}
-                                className="text-fg-3 shrink-0"
-                            />
-                        ) : null}
-                    </div>
-                    <ProjectionAmount projection={projection} variant="row" />
-                </div>
-                <span className="text-sm text-fg-1 truncate">{heading}</span>
-                <FromToCell projection={projection} lineCount={entry.lines.length} />
-            </div>
-        </Link>
+            </Cell>
+        </Row>
     );
 }
 

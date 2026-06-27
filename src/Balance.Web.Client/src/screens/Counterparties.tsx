@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Link } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import {
     useCounterpartiesPage,
     useDeleteCounterparty,
@@ -13,6 +13,7 @@ import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useToast } from '../components/ui/Toast';
+import { GridList, GridListItem } from '../components/ui/GridList';
 import { SearchField } from '../components/ui/SearchField';
 import { handleActionError } from '../lib/formErrors';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
@@ -162,9 +163,7 @@ function CounterpartyList({
 
     return (
         <div>
-            {query.data.items.map(c => (
-                <CounterpartyRow key={c.id} counterparty={c} onEdit={onEdit} onDelete={onDelete} />
-            ))}
+            <CounterpartyGrid items={query.data.items} onEdit={onEdit} onDelete={onDelete} />
             <Pagination
                 page={page}
                 pageSize={PAGE_SIZE}
@@ -172,6 +171,34 @@ function CounterpartyList({
                 onPageChange={onPageChange}
             />
         </div>
+    );
+}
+
+function CounterpartyGrid({
+    items,
+    onEdit,
+    onDelete,
+}: {
+    items: Counterparty[];
+    onEdit: (c: Counterparty) => void;
+    onDelete: (c: Counterparty) => void;
+}) {
+    const { t } = useLingui();
+    const navigate = useNavigate();
+    return (
+        <GridList
+            aria-label={t`Counterparties`}
+            items={items}
+            onAction={key => {
+                void navigate({
+                    to: '/counterparties/$id',
+                    search: { page: 1 },
+                    params: { id: String(key) },
+                });
+            }}
+        >
+            {c => <CounterpartyRow counterparty={c} onEdit={onEdit} onDelete={onDelete} />}
+        </GridList>
     );
 }
 
@@ -186,22 +213,21 @@ function CounterpartyRow({
 }) {
     const { t } = useLingui();
     return (
-        <div className="py-3 first:pt-0 last:pb-0 flex items-center gap-3 border-b border-border-soft last:border-b-0">
-            <Link
-                to="/counterparties/$id"
-                search={{ page: 1 }}
-                params={{ id: counterparty.id }}
-                className="flex-1 min-w-0 text-sm font-medium text-fg-1 hover:text-brand-primary truncate"
-            >
+        <GridListItem
+            id={counterparty.id}
+            textValue={counterparty.name}
+            className="flex items-center gap-3 px-3 py-[10px] cursor-pointer"
+        >
+            <span className="flex-1 min-w-0 text-sm font-medium text-fg-1 truncate">
                 {counterparty.name}
-            </Link>
+            </span>
             <button
                 type="button"
                 onClick={() => {
                     onEdit(counterparty);
                 }}
                 aria-label={t`Edit`}
-                className="p-2 rounded-lg text-fg-3 hover:text-fg-1 hover:bg-surface-2"
+                className="p-2 rounded-lg text-fg-3 hover:text-fg-1 hover:bg-surface-3"
             >
                 <Icon name="pencil" size={14} strokeWidth={2} />
             </button>
@@ -211,11 +237,11 @@ function CounterpartyRow({
                     onDelete(counterparty);
                 }}
                 aria-label={t`Delete`}
-                className="p-2 rounded-lg text-fg-3 hover:text-danger hover:bg-surface-2"
+                className="p-2 rounded-lg text-fg-3 hover:text-danger hover:bg-surface-3"
             >
                 <Icon name="trash" size={14} strokeWidth={2} />
             </button>
-        </div>
+        </GridListItem>
     );
 }
 

@@ -7,6 +7,7 @@ import { FormErrorBanner } from '../components/FormErrorBanner';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { Button } from '../components/ui/Button';
+import { GridList, GridListItem } from '../components/ui/GridList';
 import { TextField } from '../components/ui/TextField';
 import { ApiError } from '../lib/http';
 
@@ -56,18 +57,17 @@ export function Users() {
                         <Skeleton className="h-12" />
                     </div>
                 ) : usersQuery.data ? (
-                    <ul className="flex flex-col gap-2">
-                        {usersQuery.data.map(u => (
+                    <GridList aria-label={t`Users`} items={usersQuery.data}>
+                        {u => (
                             <UserRow
-                                key={u.id}
                                 user={u}
                                 isSelf={me.data?.id === u.id}
                                 onToggle={active => {
                                     toggle.mutate({ id: u.id, active });
                                 }}
                             />
-                        ))}
-                    </ul>
+                        )}
+                    </GridList>
                 ) : null}
                 {toggleError ? (
                     <div className="mt-3">
@@ -136,7 +136,11 @@ function UserRow({
     onToggle: (active: boolean) => void;
 }) {
     return (
-        <li className="flex items-center justify-between gap-3 px-3 py-[10px] rounded-lg bg-surface-2 border border-border-soft">
+        <GridListItem
+            id={user.id}
+            textValue={user.displayName}
+            className="flex items-center justify-between gap-3 px-3 py-[10px]"
+        >
             <div className="min-w-0">
                 <div className="text-sm font-medium text-fg-1 truncate">
                     {user.displayName}
@@ -169,6 +173,6 @@ function UserRow({
                     </Button>
                 )}
             </div>
-        </li>
+        </GridListItem>
     );
 }

@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Link } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { msg } from '@lingui/core/macro';
 import type { MessageDescriptor } from '@lingui/core';
 import { accountIdentifier, useAccounts, useDeleteAccount, type Account } from '../api/accounts';
 import { AccountAvatar } from '../components/AccountAvatar';
+import { AccountTreeSections, type AccountRowContext } from '../components/AccountTree';
+import { TreeExpandButton } from '../components/ui/Tree';
 import { Amount } from '../components/Amount';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ErrorState } from '../components/ErrorState';
@@ -89,7 +91,8 @@ function AccountList({
     onEdit: (a: Account) => void;
     onDelete: (a: Account) => void;
 }) {
-    const { i18n, t } = useLingui();
+    const { t } = useLingui();
+    const navigate = useNavigate();
     const query = useAccounts();
 
     if (query.isPending) {
@@ -121,155 +124,89 @@ function AccountList({
         );
     }
 
-    const childrenByParent = buildChildrenMap(query.data);
-    const rootsByType = groupRootsByType(query.data);
-
     return (
-        <div className="flex flex-col gap-5">
-            {TYPE_ORDER.map(type => {
-                const roots = rootsByType.get(type);
-                if (!roots || roots.length === 0) return null;
-                return (
-                    <div key={type} className="flex flex-col">
-                        <h3 className="text-xs font-medium text-fg-3 tracking-widest uppercase pb-1 mb-1 border-b border-border-soft">
-                            {i18n._(TYPE_LABELS[type])}
-                        </h3>
-                        {roots.map(a => (
-                            <AccountTreeRows
-                                key={a.id}
-                                account={a}
-                                depth={0}
-                                childrenByParent={childrenByParent}
-                                onEdit={onEdit}
-                                onDelete={onDelete}
-                            />
-                        ))}
-                    </div>
-                );
-            })}
-        </div>
-    );
-}
-
-const sortSiblings = (a: Account, b: Account) =>
-    a.code.localeCompare(b.code, undefined, { numeric: true }) || a.name.localeCompare(b.name);
-
-/** Maps a parent id to its sorted children; the `null` key holds the roots. */
-function buildChildrenMap(accounts: Account[]): Map<string | null, Account[]> {
-    const map = new Map<string | null, Account[]>();
-    for (const a of accounts) {
-        const key = a.parentId;
-        const bucket = map.get(key) ?? [];
-        bucket.push(a);
-        map.set(key, bucket);
-    }
-    for (const bucket of map.values()) bucket.sort(sortSiblings);
-    return map;
-}
-
-function groupRootsByType(accounts: Account[]): Map<AccountType, Account[]> {
-    const map = new Map<AccountType, Account[]>();
-    for (const a of accounts) {
-        if (a.parentId !== null) continue;
-        const bucket = map.get(a.type) ?? [];
-        bucket.push(a);
-        map.set(a.type, bucket);
-    }
-    for (const bucket of map.values()) bucket.sort(sortSiblings);
-    return map;
-}
-
-/** Renders an account row followed by its descendant rows, indented by depth. */
-function AccountTreeRows({
-    account,
-    depth,
-    childrenByParent,
-    onEdit,
-    onDelete,
-}: {
-    account: Account;
-    depth: number;
-    childrenByParent: Map<string | null, Account[]>;
-    onEdit: (a: Account) => void;
-    onDelete: (a: Account) => void;
-}) {
-    const children = childrenByParent.get(account.id) ?? [];
-    return (
-        <>
-            <AccountRow account={account} depth={depth} onEdit={onEdit} onDelete={onDelete} />
-            {children.map(child => (
-                <AccountTreeRows
-                    key={child.id}
-                    account={child}
-                    depth={depth + 1}
-                    childrenByParent={childrenByParent}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                />
-            ))}
-        </>
+        <AccountTreeSections
+            accounts={query.data}
+            typeOrder={TYPE_ORDER}
+            typeLabels={TYPE_LABELS}
+            defaultExpandedKeys="all"
+            onAction={key => {
+                void navigate({
+                    to: '/accounts/$id',
+                    params: { id: key },
+                    search: {
+                        page: 1,
+                        q: '',
+                        posted: '',
+                        counter: '',
+                        from: '',
+                        to: '',
+                        status: '',
+                    },
+                });
+            }}
+            renderHeading={label => (
+                <h3 className="text-xs font-medium text-fg-3 tracking-widest uppercase pb-1 mb-1 border-b border-border-soft">
+                    {label}
+                </h3>
+            )}
+            renderRow={(account, ctx) => (
+                <AccountRow account={account} ctx={ctx} onEdit={onEdit} onDelete={onDelete} />
+            )}
+        />
     );
 }
 
 function AccountRow({
     account,
-    depth,
+    ctx,
     onEdit,
     onDelete,
 }: {
     account: Account;
-    depth: number;
+    ctx: AccountRowContext;
     onEdit: (a: Account) => void;
     onDelete: (a: Account) => void;
 }) {
     const { t } = useLingui();
     const identifier = accountIdentifier(account);
     const isNegative = account.balance.amount < 0;
-    // Nest children visually; the indent is applied to the row's leading edge.
-    const indent = { paddingLeft: `${String(depth * 1.25)}rem` };
     return (
         <div
-            className="py-3 first:pt-0 last:pb-0 flex items-center gap-3 border-b border-border-soft last:border-b-0"
-            style={indent}
+            className="flex items-center gap-3 py-3 pr-1 border-b border-border-soft cursor-pointer rounded-lg group-data-[hovered]:bg-surface-2 group-data-[focus-visible]:bg-surface-2 transition-colors"
+            style={{ paddingLeft: `${String((ctx.level - 1) * 1.25)}rem` }}
         >
-            <Link
-                to="/accounts/$id"
-                params={{ id: account.id }}
-                search={{
-                    page: 1,
-                    q: '',
-                    posted: '',
-                    counter: '',
-                    from: '',
-                    to: '',
-                    status: '',
-                }}
-                className="flex items-center gap-3 flex-1 min-w-0 hover:text-brand-primary"
-            >
-                <AccountAvatar account={account} size="md" />
-                <div className="flex flex-col gap-[2px] flex-1 min-w-0">
-                    <span className="flex items-center gap-2 min-w-0">
-                        {!account.isPostable ? (
-                            <Icon
-                                name="folder-tree"
-                                size={14}
-                                strokeWidth={1.75}
-                                className="shrink-0 text-fg-3"
-                                aria-label={t`Roll-up account`}
-                            />
-                        ) : null}
-                        <span
-                            className={`text-sm truncate ${account.isPostable ? 'font-medium text-fg-1' : 'font-semibold text-fg-2'}`}
-                        >
-                            {account.name}
-                        </span>
+            {ctx.hasChildren ? (
+                <TreeExpandButton
+                    ariaLabel={ctx.isExpanded ? t`Collapse` : t`Expand`}
+                    isExpanded={ctx.isExpanded}
+                />
+            ) : (
+                <span className="shrink-0 w-[22px]" aria-hidden="true" />
+            )}
+            <AccountAvatar account={account} size="md" />
+            <div className="flex flex-col gap-[2px] flex-1 min-w-0">
+                <span className="flex items-center gap-2 min-w-0">
+                    {!account.isPostable ? (
+                        <Icon
+                            name="folder-tree"
+                            size={14}
+                            strokeWidth={1.75}
+                            className="shrink-0 text-fg-3"
+                            aria-label={t`Roll-up account`}
+                        />
+                    ) : null}
+                    <span
+                        className={`text-sm truncate ${account.isPostable ? 'font-medium text-fg-1' : 'font-semibold text-fg-2'}`}
+                    >
+                        {account.name}
                     </span>
-                    <span className="text-xs text-fg-3 truncate tabular-nums">
-                        {account.code}
-                        {identifier ? ` · ${identifier}` : ''}
-                    </span>
-                </div>
-            </Link>
+                </span>
+                <span className="text-xs text-fg-3 truncate tabular-nums">
+                    {account.code}
+                    {identifier ? ` · ${identifier}` : ''}
+                </span>
+            </div>
             <Amount
                 minor={account.balance.amount}
                 currencyCode={account.balance.currencyCode}

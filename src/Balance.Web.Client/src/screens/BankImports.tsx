@@ -15,6 +15,7 @@ import {
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Button } from '../components/ui/Button';
+import { GridList, GridListItem } from '../components/ui/GridList';
 import { Select, SelectItem } from '../components/ui/Select';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
@@ -55,7 +56,11 @@ function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
     const isUploading = importStatement.isPending;
 
     return (
-        <div className="py-4 first:pt-0 last:pb-0 flex flex-col gap-2 border-b border-border-soft last:border-b-0">
+        <GridListItem
+            id={bankAccount.id}
+            textValue={formatBankAccountLabel(bankAccount)}
+            className="flex flex-col gap-2 px-3 py-4"
+        >
             <div className="flex items-center gap-3">
                 <span className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-xl bg-brand-primary-soft text-brand-primary">
                     <Icon name={bankAccountTypeIcon(bankAccount.type)} size={16} strokeWidth={2} />
@@ -113,7 +118,7 @@ function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
             {feedback?.kind === 'error' && (
                 <div className="pl-12 text-xs text-danger">{feedback.message}</div>
             )}
-        </div>
+        </GridListItem>
     );
 }
 
@@ -400,11 +405,9 @@ function ImportsPanel() {
     }
 
     return (
-        <div>
-            {targets.map(ba => (
-                <ImportRow key={ba.id} bankAccount={ba} />
-            ))}
-        </div>
+        <GridList aria-label={t`Bank accounts`} items={targets}>
+            {ba => <ImportRow bankAccount={ba} />}
+        </GridList>
     );
 }
 

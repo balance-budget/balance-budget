@@ -1,7 +1,7 @@
 import { msg } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { type MessageDescriptor } from '@lingui/core';
-import { useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { Button } from 'react-aria-components';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import logo from '../assets/logo.svg';
@@ -10,11 +10,22 @@ import { accountIdentifier, useAccounts, type Account } from '../api/accounts';
 import { useCurrentUser, useLogout } from '../api/auth';
 import { useCurrencyCatalog } from '../api/currencies';
 import { AccountAvatar } from './AccountAvatar';
+import { AccountTreeSections, type AccountRowContext } from './AccountTree';
+import { TreeExpandButton } from './ui/Tree';
 import { Skeleton } from './Skeleton';
 import { ErrorState } from './ErrorState';
 import { cx } from '../lib/cx';
-import { isLedgerAccount } from '../lib/domain';
+import { isLedgerAccount, type AccountId, type AccountType } from '../lib/domain';
 import { formatMoney } from '../lib/money';
+
+const SIDEBAR_TYPE_ORDER: AccountType[] = ['Asset', 'Liability', 'Income', 'Expense'];
+const SIDEBAR_TYPE_LABELS: Record<AccountType, MessageDescriptor> = {
+    Asset: msg`Assets`,
+    Liability: msg`Liabilities`,
+    Equity: msg`Equity`,
+    Income: msg`Income`,
+    Expense: msg`Expenses`,
+};
 
 function SectionLabel({ children }: { children: ReactNode }) {
     return (
@@ -108,169 +119,96 @@ function loadExpandedIds(): Set<string> {
     }
 }
 
-/** Maps a parent id to its children, sorted by code then name; the `null` key
- *  holds the roots. Mirrors the Accounts screen's ordering. */
-function buildChildrenMap(accounts: Account[]): Map<string | null, Account[]> {
-    const map = new Map<string | null, Account[]>();
-    for (const a of accounts) {
-        const bucket = map.get(a.parentId) ?? [];
-        bucket.push(a);
-        map.set(a.parentId, bucket);
-    }
-    const sort = (a: Account, b: Account) =>
-        a.code.localeCompare(b.code, undefined, { numeric: true }) || a.name.localeCompare(b.name);
-    for (const bucket of map.values()) bucket.sort(sort);
-    return map;
-}
-
 /** The active-account id encoded in the current path (`/accounts/<id>`), or null. */
 function matchActiveAccountId(pathname: string): string | null {
     const match = /^\/accounts\/([^/]+)/.exec(pathname);
     return match?.[1] ?? null;
 }
 
-function AccountTreeNode({
-    account,
-    childrenByParent,
-    expandedIds,
-    onToggle,
-}: {
-    account: Account;
-    childrenByParent: Map<string | null, Account[]>;
-    expandedIds: Set<string>;
-    onToggle: (id: string) => void;
-}) {
+// The active account is published via context, not a captured prop: RAC's Tree
+// caches each rendered row by item reference (useCachedChildren), and the
+// account objects are reference-stable across navigations, so a captured
+// `active` flag would never update. Context propagation bypasses that cache.
+const ActiveAccountContext = createContext<string | null>(null);
+
+function SidebarAccountRow({ account, ctx }: { account: Account; ctx: AccountRowContext }) {
     const { t } = useLingui();
     const catalog = useCurrencyCatalog();
+    const active = useContext(ActiveAccountContext) === String(account.id);
     const identifier = accountIdentifier(account);
     const isNegative = account.balance.amount < 0;
     // Income/Expense are category accounts: their "balance" is the lifetime
     // accumulated total, which isn't a meaningful figure in personal finance.
     // Only ledger (Asset/Liability) accounts have a balance worth showing here.
     const showBalance = isLedgerAccount(account);
-    const children = childrenByParent.get(account.id) ?? [];
-    const hasChildren = children.length > 0;
-    const expanded = expandedIds.has(account.id);
-
+    // No indentation — the chart-of-accounts nests several levels deep and the
+    // sidebar is narrow. Instead each nested row sits on a translucent shade that
+    // compounds with depth, matching the old nested `bg-surface-2` containers:
+    // each level layers another surface-2 (alpha 0.04), so the effective alpha is
+    // 1 - 0.96^(level-1). The base channels flip black→white in dark mode via
+    // --surface-lift-rgb. (RAC's Tree DOM is flat, so this is per-row — ADR-0035.)
+    const shade =
+        ctx.level > 1
+            ? {
+                  backgroundColor: `rgb(var(--surface-lift-rgb) / ${String(
+                      1 - Math.pow(1 - 0.04, ctx.level - 1),
+                  )})`,
+              }
+            : undefined;
     return (
-        <div className="flex flex-col gap-[2px]">
-            <div className="relative flex items-center">
-                <Link
-                    to="/accounts/$id"
-                    params={{ id: account.id }}
-                    search={{
-                        page: 1,
-                        q: '',
-                        posted: '',
-                        counter: '',
-                        from: '',
-                        to: '',
-                        status: '',
-                    }}
-                    className="flex-1 min-w-0 flex items-center gap-3 pl-2 pr-8 py-2 rounded-lg text-fg-1 hover:bg-surface-2 transition-colors"
-                    activeProps={{ className: 'bg-brand-primary-soft text-brand-primary' }}
-                >
-                    <AccountAvatar account={account} />
-                    <div className="flex-1 min-w-0 flex flex-col leading-tight">
-                        <span className="truncate text-sm">{account.name}</span>
-                        {identifier && (
-                            <span className="text-xs text-fg-3 truncate tabular-nums">
-                                {identifier}
-                            </span>
-                        )}
-                    </div>
-                    {showBalance && (
-                        <span
-                            className={cx(
-                                'shrink-0 text-xs tabular-nums',
-                                isNegative ? 'text-danger' : 'text-fg-2',
-                            )}
-                        >
-                            {formatMoney(
-                                account.balance.amount,
-                                account.balance.currencyCode,
-                                catalog,
-                                { decimals: false },
-                            )}
+        <div className="relative" style={shade}>
+            <div
+                className={cx(
+                    'relative flex items-center gap-3 pl-2 pr-8 py-2 rounded-lg cursor-pointer transition-colors',
+                    active
+                        ? 'bg-brand-primary-soft text-brand-primary'
+                        : 'text-fg-1 group-data-[hovered]:bg-surface-2 group-data-[focus-visible]:bg-surface-2',
+                )}
+            >
+                <AccountAvatar account={account} />
+                <div className="flex-1 min-w-0 flex flex-col leading-tight">
+                    <span className="truncate text-sm">{account.name}</span>
+                    {identifier && (
+                        <span className="text-xs text-fg-3 truncate tabular-nums">
+                            {identifier}
                         </span>
                     )}
-                </Link>
-                {hasChildren && (
-                    // Floated over the link's reserved right padding (pr-8) so the
+                </div>
+                {showBalance && (
+                    <span
+                        className={cx(
+                            'shrink-0 text-xs tabular-nums',
+                            isNegative ? 'text-danger' : 'text-fg-2',
+                        )}
+                    >
+                        {formatMoney(
+                            account.balance.amount,
+                            account.balance.currencyCode,
+                            catalog,
+                            {
+                                decimals: false,
+                            },
+                        )}
+                    </span>
+                )}
+                {ctx.hasChildren && (
+                    // Floated over the row's reserved right padding (pr-8) so the
                     // active/hover background spans the full row width while the
                     // chevron stays its own clickable target.
-                    <Button
-                        onPress={() => {
-                            onToggle(account.id);
-                        }}
-                        aria-label={expanded ? t`Collapse` : t`Expand`}
-                        aria-expanded={expanded}
-                        className="absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded-lg text-fg-3 cursor-pointer outline-none data-[hovered]:text-fg-1 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary"
-                    >
-                        <Icon
-                            name="chevron-right"
-                            size={14}
-                            className={cx(
-                                'transition-transform duration-120',
-                                expanded && 'rotate-90',
-                            )}
-                        />
-                    </Button>
+                    <TreeExpandButton
+                        ariaLabel={ctx.isExpanded ? t`Collapse` : t`Expand`}
+                        isExpanded={ctx.isExpanded}
+                        className="absolute right-1 top-1/2 -translate-y-1/2"
+                    />
                 )}
             </div>
-            {hasChildren && expanded && (
-                // No indentation — the chart-of-accounts can nest several levels
-                // deep and the sidebar is narrow. Instead, each expanded group sits
-                // on a translucent shade that compounds with depth, so nested
-                // subtrees read progressively brighter without eating width.
-                <div className="flex flex-col gap-[2px] rounded-xl bg-surface-2 py-[2px]">
-                    {children.map(child => (
-                        <AccountTreeNode
-                            key={child.id}
-                            account={child}
-                            childrenByParent={childrenByParent}
-                            expandedIds={expandedIds}
-                            onToggle={onToggle}
-                        />
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-}
-
-function AccountTreeSection({
-    title,
-    roots,
-    childrenByParent,
-    expandedIds,
-    onToggle,
-}: {
-    title: ReactNode;
-    roots: Account[];
-    childrenByParent: Map<string | null, Account[]>;
-    expandedIds: Set<string>;
-    onToggle: (id: string) => void;
-}) {
-    if (roots.length === 0) return null;
-    return (
-        <div className="flex flex-col gap-[2px]">
-            <SectionLabel>{title}</SectionLabel>
-            {roots.map(root => (
-                <AccountTreeNode
-                    key={root.id}
-                    account={root}
-                    childrenByParent={childrenByParent}
-                    expandedIds={expandedIds}
-                    onToggle={onToggle}
-                />
-            ))}
         </div>
     );
 }
 
 function AccountsGroup() {
     const { t } = useLingui();
+    const navigate = useNavigate();
     const { data, isPending, isError, refetch } = useAccounts();
     const pathname = useRouterState({ select: s => s.location.pathname });
     const [expandedIds, setExpandedIds] = useState<Set<string>>(loadExpandedIds);
@@ -282,15 +220,6 @@ function AccountsGroup() {
             // Persistence is best-effort; ignore quota/availability errors.
         }
     }, [expandedIds]);
-
-    const toggle = (id: string) => {
-        setExpandedIds(prev => {
-            const next = new Set(prev);
-            if (next.has(id)) next.delete(id);
-            else next.add(id);
-            return next;
-        });
-    };
 
     if (isPending) {
         return (
@@ -336,56 +265,47 @@ function AccountsGroup() {
         );
     }
 
-    const childrenByParent = buildChildrenMap(data);
-    // Roots come from the map's `null` bucket, which buildChildrenMap already
-    // sorts by code then name — so each type section is code-ordered too.
-    const roots = childrenByParent.get(null) ?? [];
-    const assetRoots = roots.filter(a => a.type === 'Asset');
-    const liabilityRoots = roots.filter(a => a.type === 'Liability');
-    const incomeRoots = roots.filter(a => a.type === 'Income');
-    const expenseRoots = roots.filter(a => a.type === 'Expense');
-
     // Auto-expand the ancestors of the account being viewed so it's never hidden
     // behind a collapsed parent — unioned with the user's persisted expansions.
+    const activeAccountId = matchActiveAccountId(pathname);
     const parentOf = new Map<string, string | null>(data.map(a => [a.id, a.parentId]));
-    const effectiveExpanded = new Set(expandedIds);
-    let cursor = parentOf.get(matchActiveAccountId(pathname) ?? '') ?? null;
+    const effectiveExpanded = new Set<string>(expandedIds);
+    let cursor = parentOf.get(activeAccountId ?? '') ?? null;
     while (cursor) {
         effectiveExpanded.add(cursor);
         cursor = parentOf.get(cursor) ?? null;
     }
 
     return (
-        <>
-            <AccountTreeSection
-                title={<Trans>Assets</Trans>}
-                roots={assetRoots}
-                childrenByParent={childrenByParent}
-                expandedIds={effectiveExpanded}
-                onToggle={toggle}
+        <ActiveAccountContext.Provider value={activeAccountId}>
+            <AccountTreeSections
+                accounts={data}
+                typeOrder={SIDEBAR_TYPE_ORDER}
+                typeLabels={SIDEBAR_TYPE_LABELS}
+                treeClassName="gap-[2px]"
+                expandedKeys={effectiveExpanded}
+                onExpandedChange={keys => {
+                    setExpandedIds(new Set([...keys].map(String)));
+                }}
+                onAction={(key: AccountId) => {
+                    void navigate({
+                        to: '/accounts/$id',
+                        params: { id: key },
+                        search: {
+                            page: 1,
+                            q: '',
+                            posted: '',
+                            counter: '',
+                            from: '',
+                            to: '',
+                            status: '',
+                        },
+                    });
+                }}
+                renderHeading={label => <SectionLabel>{label}</SectionLabel>}
+                renderRow={(account, ctx) => <SidebarAccountRow account={account} ctx={ctx} />}
             />
-            <AccountTreeSection
-                title={<Trans>Liabilities</Trans>}
-                roots={liabilityRoots}
-                childrenByParent={childrenByParent}
-                expandedIds={effectiveExpanded}
-                onToggle={toggle}
-            />
-            <AccountTreeSection
-                title={<Trans>Income</Trans>}
-                roots={incomeRoots}
-                childrenByParent={childrenByParent}
-                expandedIds={effectiveExpanded}
-                onToggle={toggle}
-            />
-            <AccountTreeSection
-                title={<Trans>Expenses</Trans>}
-                roots={expenseRoots}
-                childrenByParent={childrenByParent}
-                expandedIds={effectiveExpanded}
-                onToggle={toggle}
-            />
-        </>
+        </ActiveAccountContext.Provider>
     );
 }
 

@@ -239,6 +239,9 @@ msgstr "Actions"
 msgid "Active"
 msgstr "Active"
 
+msgid "Active loans"
+msgstr "Active loans"
+
 msgid "Activity"
 msgstr "Activity"
 
@@ -545,8 +548,8 @@ msgstr "Cleared"
 msgid "Cleared and Reconciled lines are frozen. Only their description can be edited."
 msgstr "Cleared and Reconciled lines are frozen. Only their description can be edited."
 
-msgid "Cleared and reconciled lines can’t be moved."
-msgstr "Cleared and reconciled lines can’t be moved."
+#~ msgid "Cleared and reconciled lines can’t be moved."
+#~ msgstr "Cleared and reconciled lines can’t be moved."
 
 msgid "Close"
 msgstr "Close"
@@ -1057,6 +1060,9 @@ msgstr "End of month"
 
 msgid "Ended"
 msgstr "Ended"
+
+msgid "Ended loans"
+msgstr "Ended loans"
 
 msgid "Enter a positive amount"
 msgstr "Enter a positive amount"
@@ -2111,8 +2117,8 @@ msgstr "Searching…"
 msgid "Select a counterparty…"
 msgstr "Select a counterparty…"
 
-msgid "Select all movable rows on this page"
-msgstr "Select all movable rows on this page"
+#~ msgid "Select all movable rows on this page"
+#~ msgstr "Select all movable rows on this page"
 
 msgid "Select all visible rows"
 msgstr "Select all visible rows"
@@ -2124,12 +2130,12 @@ msgid "Select an account…"
 msgstr "Select an account…"
 
 #. placeholder {0}: bankTransaction.description
-msgid "Select bank transaction {0}"
-msgstr "Select bank transaction {0}"
+#~ msgid "Select bank transaction {0}"
+#~ msgstr "Select bank transaction {0}"
 
 #. placeholder {0}: row.date
-msgid "Select line of {0}"
-msgstr "Select line of {0}"
+#~ msgid "Select line of {0}"
+#~ msgstr "Select line of {0}"
 
 msgid "Select…"
 msgstr "Select…"
@@ -2185,6 +2191,9 @@ msgstr "Something went wrong"
 
 msgid "Something went wrong."
 msgstr "Something went wrong."
+
+msgid "Source"
+msgstr "Source"
 
 msgid "Spending"
 msgstr "Spending"
@@ -2322,6 +2331,9 @@ msgstr "To"
 
 msgid "today"
 msgstr "today"
+
+msgid "Tokens"
+msgstr "Tokens"
 
 msgid "Total"
 msgstr "Total"

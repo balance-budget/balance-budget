@@ -337,91 +337,9 @@ function errorMessage(err: unknown): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Multi-select + bulk-apply (issue #85). Selection state and the bulk-apply
-// mutator are pure helpers so the component owns only React wiring.
+// Bulk-apply (issue #85). Selection mechanics now come from RAC's GridList
+// (ADR-0035); only the bulk-apply mutator and currency helpers stay pure.
 // ─────────────────────────────────────────────────────────────────────────────
-
-/** Flip a single row's membership in the selection set. */
-export function toggleSelection(
-    current: ReadonlySet<BankTransactionId>,
-    id: BankTransactionId,
-): Set<BankTransactionId> {
-    const next = new Set(current);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    return next;
-}
-
-/**
- * Shift-click range selection. The range from `anchorId` to `targetId`
- * (inclusive, in `orderedIds` order) is set to the *new* state of `targetId`,
- * i.e. the toggled state of the target.
- *
- * - If target was unselected, the range becomes selected (target included).
- * - If target was selected, the range becomes unselected (target included).
- *
- * When anchor or target is not in `orderedIds` (e.g. anchor scrolled off-page),
- * falls back to a plain toggle of the target.
- */
-export function computeRangeSelection(
-    orderedIds: readonly BankTransactionId[],
-    current: ReadonlySet<BankTransactionId>,
-    anchorId: BankTransactionId,
-    targetId: BankTransactionId,
-): Set<BankTransactionId> {
-    const anchorIdx = orderedIds.indexOf(anchorId);
-    const targetIdx = orderedIds.indexOf(targetId);
-    if (anchorIdx === -1 || targetIdx === -1) {
-        return toggleSelection(current, targetId);
-    }
-    const newState = !current.has(targetId);
-    const [lo, hi] = anchorIdx <= targetIdx ? [anchorIdx, targetIdx] : [targetIdx, anchorIdx];
-    const next = new Set(current);
-    for (let i = lo; i <= hi; i += 1) {
-        const id = orderedIds[i];
-        if (id === undefined) continue;
-        if (newState) next.add(id);
-        else next.delete(id);
-    }
-    return next;
-}
-
-/** Add every id in `visibleIds` to the selection. */
-export function selectAllVisible(
-    current: ReadonlySet<BankTransactionId>,
-    visibleIds: readonly BankTransactionId[],
-): Set<BankTransactionId> {
-    const next = new Set(current);
-    for (const id of visibleIds) next.add(id);
-    return next;
-}
-
-/** Remove every id in `visibleIds` from the selection. */
-export function clearVisibleSelection(
-    current: ReadonlySet<BankTransactionId>,
-    visibleIds: readonly BankTransactionId[],
-): Set<BankTransactionId> {
-    const next = new Set(current);
-    for (const id of visibleIds) next.delete(id);
-    return next;
-}
-
-/** "Select-all checkbox" state for a visible row list. */
-export type AllVisibleSelectionState = 'all' | 'some' | 'none';
-
-export function allVisibleSelectionState(
-    selection: ReadonlySet<BankTransactionId>,
-    visibleIds: readonly BankTransactionId[],
-): AllVisibleSelectionState {
-    if (visibleIds.length === 0) return 'none';
-    let selectedCount = 0;
-    for (const id of visibleIds) {
-        if (selection.has(id)) selectedCount += 1;
-    }
-    if (selectedCount === 0) return 'none';
-    if (selectedCount === visibleIds.length) return 'all';
-    return 'some';
-}
 
 /** Distinct currency codes across the given rows, preserving first-seen
  *  order. Used by the sticky footer to decide whether the Account picker is
