@@ -20,6 +20,7 @@ type WireBankAccountImporter = components['schemas']['BankAccountImporterOutput'
 type WireCreateRequest = components['schemas']['CreateBankAccountRequest'];
 type WireUpdateInput = components['schemas']['UpdateBankAccountInput'];
 type WireImportResult = components['schemas']['ImportResult'];
+type WireDetectedImportOutcome = components['schemas']['DetectedImportOutcome'];
 
 export type BankAccountType = 'Current' | 'Savings' | 'Card';
 
@@ -53,6 +54,18 @@ export type BankAccountImporter = {
 export type ImportResult = {
     imported: number;
     skippedAsDuplicate: number;
+};
+
+export type ImportFileStatus = WireDetectedImportOutcome['status'];
+
+export type DetectedImportOutcome = {
+    fileName: string;
+    status: ImportFileStatus;
+    bankAccountId: BankAccountId | null;
+    accountAnchor: string | null;
+    imported: number;
+    skippedAsDuplicate: number;
+    detail: string | null;
 };
 
 const BANK_ACCOUNT_TYPE_LABEL: Record<BankAccountType, string> = {
@@ -151,6 +164,18 @@ function toImportResult(wire: WireImportResult): ImportResult {
     return {
         imported: toNumber(wire.imported),
         skippedAsDuplicate: toNumber(wire.skippedAsDuplicate),
+    };
+}
+
+function toDetectedImportOutcome(wire: WireDetectedImportOutcome): DetectedImportOutcome {
+    return {
+        fileName: wire.fileName,
+        status: wire.status,
+        bankAccountId: wire.bankAccountId ? asBankAccountId(wire.bankAccountId) : null,
+        accountAnchor: wire.accountAnchor ?? null,
+        imported: toNumber(wire.imported),
+        skippedAsDuplicate: toNumber(wire.skippedAsDuplicate),
+        detail: wire.detail ?? null,
     };
 }
 
@@ -259,6 +284,31 @@ export function useImportStatement() {
             await queryClient.invalidateQueries({
                 queryKey: [...bankAccountsKeys.all, vars.bankAccountId],
             });
+        },
+    });
+}
+
+/**
+ * Drop-and-detect upload (ADR-0034): posts N files to /api/imports with no chosen
+ * account. The server detects each file's target and imports the unambiguous ones,
+ * returning a per-file outcome; unresolved files are resolved manually via
+ * `useImportStatement` against a user-picked account.
+ */
+export function useDetectAndImportStatements() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (files: File[]) => {
+            const formData = new FormData();
+            for (const file of files) formData.append('files', file);
+            const wire = await postFormData<WireDetectedImportOutcome[]>(
+                '/api/imports',
+                formData,
+                'detect and import statements',
+            );
+            return wire.map(toDetectedImportOutcome);
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: bankAccountsKeys.all });
         },
     });
 }
