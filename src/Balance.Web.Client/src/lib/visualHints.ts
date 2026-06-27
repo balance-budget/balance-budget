@@ -1,11 +1,12 @@
+import type { IconName } from '../components/Icon';
 import type { AccountType } from './domain';
 
 export type VisualHint = {
     accentColor: string;
-    iconName: string;
+    iconName: IconName;
 };
 
-const ICON_BY_TYPE: Record<AccountType, string> = {
+const ICON_BY_TYPE: Record<AccountType, IconName> = {
     Asset: 'wallet',
     Liability: 'credit-card',
     Equity: 'landmark',
@@ -17,7 +18,7 @@ const ICON_BY_TYPE: Record<AccountType, string> = {
 // backend — is the source of truth for which icons exist (the API validates shape
 // only), so a stored name that ever drops out of this set falls back to the type
 // default below instead of breaking. Every entry must be registered in Icon.tsx.
-export const ACCOUNT_ICON_CHOICES: readonly string[] = [
+export const ACCOUNT_ICON_CHOICES: readonly IconName[] = [
     // money & banking
     'wallet',
     'banknote',
@@ -76,7 +77,13 @@ export const ACCOUNT_ICON_CHOICES: readonly string[] = [
     'sparkles',
 ];
 
-const ACCOUNT_ICON_SET: ReadonlySet<string> = new Set(ACCOUNT_ICON_CHOICES);
+const ACCOUNT_ICON_SET: ReadonlySet<IconName> = new Set(ACCOUNT_ICON_CHOICES);
+
+// Narrows an arbitrary (e.g. persisted/API) string to a curated IconName so the
+// fall-through to the type default below is type-checked, not just runtime-safe.
+function isAccountIcon(name: string): name is IconName {
+    return ACCOUNT_ICON_SET.has(name as IconName);
+}
 
 // One accent per AccountType — accounts no longer get per-instance tints, so
 // the list / sidebar / dashboard read as type-grouped at a glance. This is the
@@ -105,7 +112,7 @@ export function visualHintFor(account: AccountVisual): VisualHint {
     return {
         accentColor: ACCENT_BY_TYPE[account.type],
         iconName:
-            account.icon !== null && ACCOUNT_ICON_SET.has(account.icon)
+            account.icon !== null && isAccountIcon(account.icon)
                 ? account.icon
                 : ICON_BY_TYPE[account.type],
     };

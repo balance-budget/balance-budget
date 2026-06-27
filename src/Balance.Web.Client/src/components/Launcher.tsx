@@ -16,7 +16,7 @@ import {
 import { useNavigate } from '@tanstack/react-router';
 import { useSearch } from '../api/search';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
-import { Icon } from './Icon';
+import { Icon, type IconName } from './Icon';
 
 type LauncherProps = {
     open: boolean;
@@ -296,7 +296,7 @@ function ResultItem({
     secondary,
     ...props
 }: MenuItemProps & {
-    icon: string;
+    icon: IconName;
     primary: string;
     secondary?: string | null;
 }) {

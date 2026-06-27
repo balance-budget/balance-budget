@@ -1,6 +1,6 @@
 import { Button } from 'react-aria-components';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Icon } from './Icon';
+import { Icon, type IconName } from './Icon';
 import { cx } from '../lib/cx';
 
 type PaginationProps = {
@@ -144,7 +144,7 @@ function PageButton({
     onClick,
 }: {
     label: string;
-    icon: string;
+    icon: IconName;
     rotated?: boolean;
     disabled: boolean;
     onClick: () => void;
