@@ -12,6 +12,7 @@ import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { Button } from '../components/ui/Button';
 import { DateTimePicker } from '../components/ui/DateTimePicker';
+import { GridList, GridListItem } from '../components/ui/GridList';
 import { TextField } from '../components/ui/TextField';
 import { formatInstant } from '../i18n/format';
 import { ApiError } from '../lib/http';
@@ -92,17 +93,16 @@ export function Tokens() {
                         <Skeleton className="h-14" />
                     </div>
                 ) : tokensQuery.data && tokensQuery.data.length > 0 ? (
-                    <ul className="flex flex-col gap-2">
-                        {tokensQuery.data.map(t => (
+                    <GridList aria-label={t`Tokens`} items={tokensQuery.data}>
+                        {token => (
                             <TokenRow
-                                key={t.id}
-                                token={t}
+                                token={token}
                                 onRevoke={() => {
-                                    revoke.mutate(t.id);
+                                    revoke.mutate(token.id);
                                 }}
                             />
-                        ))}
-                    </ul>
+                        )}
+                    </GridList>
                 ) : (
                     <p className="text-sm text-fg-3">
                         <Trans>No tokens yet.</Trans>
@@ -153,7 +153,11 @@ function TokenRow({ token, onRevoke }: { token: Token; onRevoke: () => void }) {
     const isRevoked = !!token.revokedAt;
     const isExpired = token.expiresAt ? new Date(token.expiresAt) <= new Date() : false;
     return (
-        <li className="flex items-center justify-between gap-3 px-3 py-[10px] rounded-lg bg-surface-2 border border-border-soft">
+        <GridListItem
+            id={token.id}
+            textValue={token.name}
+            className="flex items-center justify-between gap-3 px-3 py-[10px]"
+        >
             <div className="min-w-0 flex-1">
                 <div className="text-sm font-medium text-fg-1 truncate">{token.name}</div>
                 <div className="text-xs text-fg-3 font-mono">
@@ -186,6 +190,6 @@ function TokenRow({ token, onRevoke }: { token: Token; onRevoke: () => void }) {
                     </Button>
                 )}
             </div>
-        </li>
+        </GridListItem>
     );
 }
