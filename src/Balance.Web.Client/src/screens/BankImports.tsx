@@ -323,9 +323,6 @@ function StatementDropZone({ importableAccounts }: { importableAccounts: BankAcc
                 }}
                 className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border-soft bg-surface-2 px-6 py-8 text-center data-[drop-target]:border-brand-primary data-[drop-target]:bg-brand-primary-soft"
             >
-                <span className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-brand-primary-soft text-brand-primary">
-                    <Icon name="upload" size={18} strokeWidth={2} />
-                </span>
                 <Text slot="label" className="text-sm text-fg-2">
                     {detect.isPending ? (
                         <Trans>Detecting…</Trans>
