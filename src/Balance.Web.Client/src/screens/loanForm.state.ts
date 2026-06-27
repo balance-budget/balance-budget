@@ -144,7 +144,7 @@ export function buildDeposit(d: DepositDraft): BuildDepositResult {
     if (!allSet) {
         return {
             ok: false,
-            error: t`A construction deposit needs an asset account, an income account, and a rate - set all three or none.`,
+            error: t`A construction deposit needs an asset account, an income account, and a rate. Set all three or none.`,
         };
     }
 

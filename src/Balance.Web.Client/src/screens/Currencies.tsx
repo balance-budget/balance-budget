@@ -202,7 +202,7 @@ function CurrencyRow({
                     isDisabled={inUse}
                     className="py-[5px] text-xs"
                     {...(inUse
-                        ? { 'aria-label': t`In use — can't be deleted while referenced` }
+                        ? { 'aria-label': t`In use, can't be deleted while referenced` }
                         : {})}
                 >
                     <Trans>Delete</Trans>

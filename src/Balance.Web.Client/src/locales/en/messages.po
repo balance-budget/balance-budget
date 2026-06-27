@@ -176,8 +176,8 @@ msgstr "2–8 uppercase letters or digits, e.g. EUR, USD, BTC."
 msgid "31 Dec {year}"
 msgstr "31 Dec {year}"
 
-msgid "A construction deposit needs an asset account, an income account, and a rate - set all three or none."
-msgstr "A construction deposit needs an asset account, an income account, and a rate - set all three or none."
+msgid "A construction deposit needs an asset account, an income account, and a rate. Set all three or none."
+msgstr "A construction deposit needs an asset account, an income account, and a rate. Set all three or none."
 
 msgid "A fresh part account needs a name and a code."
 msgstr "A fresh part account needs a name and a code."
@@ -199,9 +199,6 @@ msgstr "Account"
 
 msgid "Account (mixed currencies)"
 msgstr "Account (mixed currencies)"
-
-#~ msgid "Account balances"
-#~ msgstr "Account balances"
 
 msgid "Account code"
 msgstr "Account code"
@@ -287,8 +284,8 @@ msgstr "Add user"
 msgid "Add your first ledger account to get started."
 msgstr "Add your first ledger account to get started."
 
-msgid "Add your rent, salary, and subscriptions — or accept a detected one."
-msgstr "Add your rent, salary, and subscriptions — or accept a detected one."
+msgid "Add your rent, salary, and subscriptions, or accept a detected one."
+msgstr "Add your rent, salary, and subscriptions, or accept a detected one."
 
 msgid "Adding…"
 msgstr "Adding…"
@@ -370,8 +367,8 @@ msgid "Assumed rate after fixation (%)"
 msgstr "Assumed rate after fixation (%)"
 
 #. placeholder {0}: loan.constructionDeposit.annualRatePercent.toFixed(2)
-msgid "at {0}% - interest offsets the payment until it drains."
-msgstr "at {0}% - interest offsets the payment until it drains."
+msgid "at {0}%, interest offsets the payment until it drains."
+msgstr "at {0}%, interest offsets the payment until it drains."
 
 msgid "At least two lines are required."
 msgstr "At least two lines are required."
@@ -545,8 +542,8 @@ msgstr "Clear selection"
 msgid "Cleared"
 msgstr "Cleared"
 
-msgid "Cleared and Reconciled lines are frozen - only their description can be edited."
-msgstr "Cleared and Reconciled lines are frozen - only their description can be edited."
+msgid "Cleared and Reconciled lines are frozen. Only their description can be edited."
+msgstr "Cleared and Reconciled lines are frozen. Only their description can be edited."
 
 msgid "Cleared and reconciled lines can’t be moved."
 msgstr "Cleared and reconciled lines can’t be moved."
@@ -637,9 +634,6 @@ msgstr "Couldn't load journal entry."
 
 msgid "Couldn't load loans."
 msgstr "Couldn't load loans."
-
-#~ msgid "Couldn't load recent activity."
-#~ msgstr "Couldn't load recent activity."
 
 msgid "Couldn't load recurring items."
 msgstr "Couldn't load recurring items."
@@ -793,17 +787,14 @@ msgstr "Date range"
 msgid "Date window (±days)"
 msgstr "Date window (±days)"
 
-#~ msgid "Day · Month · Year"
-#~ msgstr "Day · Month · Year"
-
 msgid "Debit"
 msgstr "Debit"
 
 msgid "Debit and Credit totals must balance to zero."
 msgstr "Debit and Credit totals must balance to zero."
 
-msgid "Decimal places: 2 for EUR/USD, 0 for JPY, 8 for BTC. Set carefully — to change it later you delete and recreate the currency."
-msgstr "Decimal places: 2 for EUR/USD, 0 for JPY, 8 for BTC. Set carefully — to change it later you delete and recreate the currency."
+msgid "Decimal places: 2 for EUR/USD, 0 for JPY, 8 for BTC. Set this carefully. To change it later you delete and recreate the currency."
+msgstr "Decimal places: 2 for EUR/USD, 0 for JPY, 8 for BTC. Set this carefully. To change it later you delete and recreate the currency."
 
 msgid "Default"
 msgstr "Default"
@@ -886,8 +877,8 @@ msgstr "Detach"
 msgid "Detach bank transaction"
 msgstr "Detach bank transaction"
 
-msgid "Detach this bank transaction - returns it to the inbox and clears the matching line back to Uncleared."
-msgstr "Detach this bank transaction - returns it to the inbox and clears the matching line back to Uncleared."
+msgid "Detach this bank transaction. Returns it to the inbox and clears the matching line back to Uncleared."
+msgstr "Detach this bank transaction. Returns it to the inbox and clears the matching line back to Uncleared."
 
 msgid "Detached. Bank transaction returned to the inbox."
 msgstr "Detached. Bank transaction returned to the inbox."
@@ -961,11 +952,11 @@ msgstr "Dr "
 msgid "Drives the Inbox's loan-payment hint."
 msgstr "Drives the Inbox's loan-payment hint."
 
-msgid "Drop your statement files and we'll match each to its bank account. Re-uploads are safe — duplicate rows are skipped."
-msgstr "Drop your statement files and we'll match each to its bank account. Re-uploads are safe — duplicate rows are skipped."
+msgid "Drop your statement files and we'll match each to its bank account. Re-uploads are safe. Duplicate rows are skipped."
+msgstr "Drop your statement files and we'll match each to its bank account. Re-uploads are safe. Duplicate rows are skipped."
 
-msgid "Drop your statement files here — we'll match each to its account."
-msgstr "Drop your statement files here — we'll match each to its account."
+msgid "Drop your statement files here. We'll match each to its account."
+msgstr "Drop your statement files here. We'll match each to its account."
 
 msgid "e.g. € or $"
 msgstr "e.g. € or $"
@@ -1034,8 +1025,8 @@ msgid "Edit part"
 msgstr "Edit part"
 
 #. placeholder {0}: part.label
-msgid "Edit part - {0}"
-msgstr "Edit part - {0}"
+msgid "Edit part: {0}"
+msgstr "Edit part: {0}"
 
 msgid "Edit rate period"
 msgstr "Edit rate period"
@@ -1204,17 +1195,17 @@ msgstr "From and To amounts must balance to zero."
 msgid "From bank import"
 msgstr "From bank import"
 
-msgid "Frozen - line cannot be removed"
-msgstr "Frozen - line cannot be removed"
+msgid "Frozen: line can't be removed"
+msgstr "Frozen: line can't be removed"
 
-msgid "Frozen - line is Cleared or Reconciled"
-msgstr "Frozen - line is Cleared or Reconciled"
+msgid "Frozen: line is Cleared or Reconciled"
+msgstr "Frozen: line is Cleared or Reconciled"
 
 msgid "Future"
 msgstr "Future"
 
-msgid "General-journal table - explicit debit / credit per line."
-msgstr "General-journal table - explicit debit / credit per line."
+msgid "General-journal table. Explicit debit / credit per line."
+msgstr "General-journal table. Explicit debit / credit per line."
 
 msgid "Groups this account into a dashboard balance chart by how soon you'll draw on it."
 msgstr "Groups this account into a dashboard balance chart by how soon you'll draw on it."
@@ -1228,8 +1219,8 @@ msgstr "Horizon"
 msgid "How dates and numbers are displayed. The interface language is separate from formatting."
 msgstr "How dates and numbers are displayed. The interface language is separate from formatting."
 
-msgid "Hypothetical extra repayments - nothing is saved."
-msgstr "Hypothetical extra repayments - nothing is saved."
+msgid "Hypothetical extra repayments. Nothing is saved."
+msgstr "Hypothetical extra repayments. Nothing is saved."
 
 msgid "I've copied it"
 msgstr "I've copied it"
@@ -1284,8 +1275,8 @@ msgstr "Importing…"
 msgid "In force"
 msgstr "In force"
 
-msgid "In use — can't be deleted while referenced"
-msgstr "In use — can't be deleted while referenced"
+msgid "In use, can't be deleted while referenced"
+msgstr "In use, can't be deleted while referenced"
 
 msgid "Inbox"
 msgstr "Inbox"
@@ -1374,8 +1365,8 @@ msgstr "Leave"
 msgid "Leave with unsaved drafts?"
 msgstr "Leave with unsaved drafts?"
 
-msgid "Ledger accounts in the double-entry sense - assets, liabilities, income, expenses, equity."
-msgstr "Ledger accounts in the double-entry sense - assets, liabilities, income, expenses, equity."
+msgid "Ledger accounts in the double-entry sense: assets, liabilities, income, expenses, equity."
+msgstr "Ledger accounts in the double-entry sense: assets, liabilities, income, expenses, equity."
 
 msgid "Lender"
 msgstr "Lender"
@@ -1413,9 +1404,6 @@ msgstr "Linked bank accounts"
 msgid "Liquid"
 msgstr "Liquid"
 
-msgid "Liquid - counts toward liquid net worth"
-msgstr "Liquid - counts toward liquid net worth"
-
 msgid "Liquid and illiquid · All time"
 msgstr "Liquid and illiquid · All time"
 
@@ -1427,6 +1415,9 @@ msgstr "Liquid and illiquid · Last year"
 
 msgid "Liquid net worth"
 msgstr "Liquid net worth"
+
+msgid "Liquid: counts toward liquid net worth"
+msgstr "Liquid: counts toward liquid net worth"
 
 msgid "Loading…"
 msgstr "Loading…"
@@ -1527,9 +1518,6 @@ msgstr "Money moved from one or more sources to one or more destinations."
 msgid "Money out"
 msgstr "Money out"
 
-#~ msgid "Month · Day · Year"
-#~ msgstr "Month · Day · Year"
-
 msgid "Monthly payment"
 msgstr "Monthly payment"
 
@@ -1566,23 +1554,14 @@ msgstr "Net movement per period, stacked by sub-account."
 msgid "Net movement per period."
 msgstr "Net movement per period."
 
-msgid "Net negative this period - see the breakdown."
-msgstr "Net negative this period - see the breakdown."
-
 msgid "Net negative this period (excluded from the chart)"
 msgstr "Net negative this period (excluded from the chart)"
 
+msgid "Net negative this period. See the breakdown."
+msgstr "Net negative this period. See the breakdown."
+
 msgid "Net worth"
 msgstr "Net worth"
-
-#~ msgid "Net worth and liquid · All time"
-#~ msgstr "Net worth and liquid · All time"
-
-#~ msgid "Net worth and liquid · Last 3 years"
-#~ msgstr "Net worth and liquid · Last 3 years"
-
-#~ msgid "Net worth and liquid · Last year"
-#~ msgstr "Net worth and liquid · Last year"
 
 msgid "Net worth range"
 msgstr "Net worth range"
@@ -1612,8 +1591,8 @@ msgid "New rate"
 msgstr "New rate"
 
 #. placeholder {0}: part.label
-msgid "New rate period - {0}"
-msgstr "New rate period - {0}"
+msgid "New rate period: {0}"
+msgstr "New rate period: {0}"
 
 msgid "New recurring item"
 msgstr "New recurring item"
@@ -1633,9 +1612,6 @@ msgstr "Next page"
 
 msgid "No accounts yet."
 msgstr "No accounts yet."
-
-#~ msgid "No balance history yet."
-#~ msgstr "No balance history yet."
 
 msgid "No bank account matched this file."
 msgstr "No bank account matched this file."
@@ -1712,8 +1688,8 @@ msgstr "No short-term accounts yet."
 msgid "No spending yet this month."
 msgstr "No spending yet this month."
 
-msgid "No structural matches in this window. Widen the date range or fall back to creating a new JE below."
-msgstr "No structural matches in this window. Widen the date range or fall back to creating a new JE below."
+msgid "No structural matches in this window. Widen the date range or fall back to creating a new journal entry below."
+msgstr "No structural matches in this window. Widen the date range or fall back to creating a new journal entry below."
 
 msgid "No suggestions to apply."
 msgstr "No suggestions to apply."
@@ -1724,8 +1700,8 @@ msgstr "No tokens yet."
 msgid "None"
 msgstr "None"
 
-msgid "None - top level"
-msgstr "None - top level"
+msgid "None (top level)"
+msgstr "None (top level)"
 
 msgid "Nothing categorized yet."
 msgstr "Nothing categorized yet."
@@ -1755,8 +1731,8 @@ msgstr "Off by {diffStr}"
 msgid "Only non-postable accounts of the same type and currency can be parents."
 msgstr "Only non-postable accounts of the same type and currency can be parents."
 
-msgid "Only the selected side of each journal entry moves - dates, amounts and the other side stay untouched. The whole batch moves together, or not at all."
-msgstr "Only the selected side of each journal entry moves - dates, amounts and the other side stay untouched. The whole batch moves together, or not at all."
+msgid "Only the selected side of each journal entry moves. Dates, amounts, and the other side stay untouched. The whole batch moves together, or not at all."
+msgstr "Only the selected side of each journal entry moves. Dates, amounts, and the other side stay untouched. The whole batch moves together, or not at all."
 
 msgid "Open calendar"
 msgstr "Open calendar"
@@ -1843,11 +1819,11 @@ msgstr "Part updated."
 msgid "Parts"
 msgstr "Parts"
 
-msgid "Parts - each with its own terms and rate history."
-msgstr "Parts - each with its own terms and rate history."
-
 msgid "Parts in this payment:"
 msgstr "Parts in this payment:"
+
+msgid "Parts, each with its own terms and rate history."
+msgstr "Parts, each with its own terms and rate history."
 
 msgid "Password"
 msgstr "Password"
@@ -1910,8 +1886,8 @@ msgid "Posted actuals to the left of today, the engine's projection to the right
 msgstr "Posted actuals to the left of today, the engine's projection to the right."
 
 #. placeholder {0}: proposal.month.slice(0, 7)
-msgid "Pre-filled from the schedule for {0} - adjust the amounts to match the bank's charge."
-msgstr "Pre-filled from the schedule for {0} - adjust the amounts to match the bank's charge."
+msgid "Pre-filled from the schedule for {0}. Adjust the amounts to match the bank's charge."
+msgstr "Pre-filled from the schedule for {0}. Adjust the amounts to match the bank's charge."
 
 msgid "Preferences"
 msgstr "Preferences"
@@ -2159,8 +2135,8 @@ msgid "Select…"
 msgstr "Select…"
 
 #. placeholder {0}: selectedCurrencies.join(' + ')
-msgid "Selected rows span {0} - Account can't be bulk-applied."
-msgstr "Selected rows span {0} - Account can't be bulk-applied."
+msgid "Selected rows span {0}. Account can't be bulk-applied."
+msgstr "Selected rows span {0}. Account can't be bulk-applied."
 
 msgid "SEPA creditor ID"
 msgstr "SEPA creditor ID"
@@ -2292,8 +2268,8 @@ msgstr "The loan needs a name."
 msgid "The matched bank account has no importer configured."
 msgstr "The matched bank account has no importer configured."
 
-msgid "The part definition and its rate history are removed. Its account and every posted entry stay untouched - it becomes an ordinary account again."
-msgstr "The part definition and its rate history are removed. Its account and every posted entry stay untouched - it becomes an ordinary account again."
+msgid "The part definition and its rate history are removed. Its account and every posted entry stay untouched. It becomes an ordinary account again."
+msgstr "The part definition and its rate history are removed. Its account and every posted entry stay untouched. It becomes an ordinary account again."
 
 msgid "The part's account holds its principal and posted history, so it can't be changed here."
 msgstr "The part's account holds its principal and posted history, so it can't be changed here."
@@ -2323,8 +2299,8 @@ msgid "This file matched more than one bank account."
 msgstr "This file matched more than one bank account."
 
 #. placeholder {0}: justCreated.metadata.name
-msgid "This is the only time you'll see \"{0}\" in full. Store it somewhere safe - it can't be retrieved again."
-msgstr "This is the only time you'll see \"{0}\" in full. Store it somewhere safe - it can't be retrieved again."
+msgid "This is the only time you'll see \"{0}\" in full. Store it somewhere safe. It can't be retrieved again."
+msgstr "This is the only time you'll see \"{0}\" in full. Store it somewhere safe. It can't be retrieved again."
 
 msgid "This month"
 msgstr "This month"
@@ -2394,9 +2370,6 @@ msgstr "Unused"
 
 msgid "Upcoming"
 msgstr "Upcoming"
-
-#~ msgid "Upload an ING current-account CSV against the matching bank account. Re-uploads are safe - duplicate rows are skipped."
-#~ msgstr "Upload an ING current-account CSV against the matching bank account. Re-uploads are safe - duplicate rows are skipped."
 
 msgid "Usage"
 msgstr "Usage"

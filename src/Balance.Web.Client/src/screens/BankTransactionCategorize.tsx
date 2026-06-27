@@ -748,7 +748,7 @@ function LoanModePanel({
                 ) : (
                     <span className="text-fg-3">
                         <Trans>
-                            Pre-filled from the schedule for {proposal.month.slice(0, 7)} - adjust
+                            Pre-filled from the schedule for {proposal.month.slice(0, 7)}. Adjust
                             the amounts to match the bank&apos;s charge.
                         </Trans>
                     </span>
@@ -950,7 +950,7 @@ function JePickerModal({
                 <p className="text-xs text-fg-3">
                     <Trans>
                         No structural matches in this window. Widen the date range or fall back to
-                        creating a new JE below.
+                        creating a new journal entry below.
                     </Trans>
                 </p>
             )}

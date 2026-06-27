@@ -920,7 +920,7 @@ function ActionBar({
                     {mixedCurrency && (
                         <p className="mt-1 text-xs text-fg-3">
                             <Trans>
-                                Selected rows span {selectedCurrencies.join(' + ')} - Account
+                                Selected rows span {selectedCurrencies.join(' + ')}. Account
                                 can&apos;t be bulk-applied.
                             </Trans>
                         </p>
