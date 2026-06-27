@@ -2,6 +2,7 @@ using Balance.Data.Entities;
 using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
 using Balance.Integration.Ing.Contracts;
+using Balance.Integration.Ing.Helpers;
 using Balance.Integration.Ing.Models.BankAccount;
 using Balance.Services.BankTransactions;
 using Balance.Services.Contracts;
@@ -119,6 +120,46 @@ internal sealed class IngSavingsAccountTransactionExtractor : IBankTransactionEx
             bankTransactions.Add(mapped.Value);
         }
         return bankTransactions;
+    }
+
+    public async Task<ImportIdentity?> TryIdentifyAsync(
+        ImportFile file,
+        CancellationToken cancellationToken
+    )
+    {
+        ArgumentNullException.ThrowIfNull(file);
+
+        // Fast path: ING embeds the account IBAN in the filename.
+        var fromFilename = IngAnchor.FromFilename(file.FileName);
+        if (fromFilename is not null)
+            return new ImportIdentity(ImporterKey, SupportedType, fromFilename);
+
+        // Slow path: parse the CSV and anchor on the first row's Account. Leave the stream
+        // rewound so the eventual import can re-read and re-validate it.
+        if (!file.Content.CanSeek)
+            return null;
+
+        file.Content.Seek(0, SeekOrigin.Begin);
+        IReadOnlyList<SavingsAccountStatementRow> rows;
+        try
+        {
+            rows = await _ingSavingsAccountStatementParser.ParseStatementsAsync(
+                file.Content,
+                cancellationToken
+            );
+        }
+        catch (CsvHelperException)
+        {
+            return null;
+        }
+        finally
+        {
+            file.Content.Seek(0, SeekOrigin.Begin);
+        }
+
+        return rows.Count == 0
+            ? null
+            : new ImportIdentity(ImporterKey, SupportedType, NormalizeAccount(rows[0].Account));
     }
 
     private static Result<BankTransaction> ToBankTransaction(

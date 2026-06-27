@@ -39,4 +39,14 @@ public interface IBankTransactionExtractor
         Stream stream,
         CancellationToken cancellationToken
     );
+
+    /// <summary>
+    /// Probe a dropped file (no chosen BankAccount) for the account it belongs to, for the
+    /// drop-and-detect flow (ADR 0034). Returns the recognized <see cref="ImportIdentity"/> or
+    /// <c>null</c> when this extractor does not recognize the file. Implementations take the
+    /// fastest reliable anchor source — a filename the bank embeds the identifier in, otherwise
+    /// the file content — and must leave <see cref="ImportFile.Content"/> seekable for callers
+    /// (the eventual import re-reads and re-validates it).
+    /// </summary>
+    Task<ImportIdentity?> TryIdentifyAsync(ImportFile file, CancellationToken cancellationToken);
 }

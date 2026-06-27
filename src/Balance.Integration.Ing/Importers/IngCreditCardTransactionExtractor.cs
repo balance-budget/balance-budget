@@ -131,6 +131,44 @@ internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtrac
         return bankTransactions;
     }
 
+    public Task<ImportIdentity?> TryIdentifyAsync(
+        ImportFile file,
+        CancellationToken cancellationToken
+    )
+    {
+        ArgumentNullException.ThrowIfNull(file);
+
+        // Credit-card statements are PDFs with no account anchor in the filename; the card number
+        // only lives in the content. Skip non-PDF drops cheaply rather than letting the PDF
+        // reader throw, then sniff the layout and anchor on the first row's card number.
+        if (!IngAnchor.LooksLikePdf(file.Content))
+            return Task.FromResult<ImportIdentity?>(null);
+
+        var lines = IngCreditCardPdfReader.ExtractLines(file.Content, cancellationToken);
+        if (file.Content.CanSeek)
+            file.Content.Seek(0, SeekOrigin.Begin);
+
+        var layout = _layouts.FirstOrDefault(candidate => candidate.CanParse(lines));
+        if (layout is null)
+            return Task.FromResult<ImportIdentity?>(null);
+
+        CreditCardStatement statement;
+        try
+        {
+            statement = layout.ParseStatement(lines, cancellationToken);
+        }
+        catch (InvalidOperationException)
+        {
+            return Task.FromResult<ImportIdentity?>(null);
+        }
+
+        var identity =
+            statement.Rows.Count == 0
+                ? null
+                : new ImportIdentity(Key, SupportedType, Normalize(statement.Rows[0].CardNumber));
+        return Task.FromResult(identity);
+    }
+
     private Result<BankTransaction> ToBankTransaction(
         BankAccountId bankAccountId,
         CreditCardStatementRow row,
