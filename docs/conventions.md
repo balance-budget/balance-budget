@@ -133,6 +133,18 @@ The SPA lives at `src/Balance.Web.Client` (React 19 + TypeScript + Vite 8). Page
 
 During development, run the .NET host (`dotnet run --project src/Balance.Web`) and the Vite dev server (`npm run dev` from the repo root) in two terminals and browse the Vite URL (default `http://localhost:5173`) for HMR; Vite proxies `/api` to `http://localhost:5248` per `vite.config.ts`, so the browser only sees one origin.
 
+## Lists, tables, and trees (React Aria collections)
+
+Interactive non-input structures use a React Aria collection, not a hand-rolled `<div>` grid, native `<table>`, or recursive `<div>` tree (ADR-0035). Pick by **cell content, not by whether it has selection** — `Table` and `GridList` both ship multi-selection, select-all, and shift/keyboard range selection:
+
+- **`Table`** — rows of scalar cells you scan, compare, or sort down a column, with a column header (the register, `Activity`, `Currencies`, `Loans`).
+- **`GridList`** — a list of composite, multi-control, or inline-editable rows with no scalar-cell grid (the bank transaction inbox; the tokens/users/counterparties record lists).
+- **`Tree`** — the chart-of-accounts hierarchy. Type grouping lives *outside* the tree (one `<Tree>` per type section) because RAC `Tree` has no `Section`; share the scaffolding (`buildChildrenMap`, `groupRootsByType`) and swap row content via render-prop.
+
+Use RAC's selection model directly (`selectedKeys` + `disabledKeys`) rather than re-implementing select-all/indeterminate/range state. Filter chips that narrow one list in place are a single-select `ToggleButtonGroup`, never `role="tab"` (tabs require real panels). RAC `Tooltip` is for hints on focusable controls only; truncation reveals keep `title=` with the full text in the DOM (RAC `Tooltip` needs a focusable trigger and is not shown on touch).
+
+Exceptions: `LoanScheduleTable` stays a native `<table>` (grouped `colSpan` headers + nested expandable rows are outside RAC `Table`'s column model), flat sidebar nav stays plain `<nav>`/`<Link>`, and `Pagination`/presentational components stay custom.
+
 ## Page chrome (title, breadcrumb, actions)
 
 The **TopBar is the single authority for a page's title** — a page title is never printed twice. Section pages set it via the route's `staticData.title`; entity-detail pages set a *specific* title plus a breadcrumb at runtime with `usePageHeader({ title, breadcrumb })` (the register shows `Accounts › Checking`, not a generic `Account`). The `AppShell` reads that context and falls back to the static title when a screen sets none.
