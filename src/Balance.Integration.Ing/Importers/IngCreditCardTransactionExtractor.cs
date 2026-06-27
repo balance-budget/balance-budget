@@ -23,6 +23,7 @@ internal abstract class IngCreditCardTransactionExtractor : IBankTransactionExtr
         _parser = parser;
 
     public abstract string Key { get; }
+    public string BankName => "ING";
     public BankAccountType SupportedType => BankAccountType.Card;
 
     // ING statements list the most recent transaction first. Layouts that need insertion order —

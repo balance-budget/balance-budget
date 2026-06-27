@@ -20,6 +20,7 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
     private const string ImporterKey = "Ing.CurrentAccount.V1";
 
     public string Key => ImporterKey;
+    public string BankName => "ING";
     public BankAccountType SupportedType => BankAccountType.Current;
 
     private static readonly CurrencyCode Eur = new("EUR");

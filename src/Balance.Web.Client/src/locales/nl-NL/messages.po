@@ -744,6 +744,9 @@ msgstr "Aanmaken…"
 msgid "Credit"
 msgstr "Credit"
 
+msgid "Credit card"
+msgstr "Creditcard"
+
 msgid "Currencies"
 msgstr "Valuta's"
 
@@ -755,6 +758,9 @@ msgstr "Valuta verwijderd."
 
 msgid "Current"
 msgstr "Huidig"
+
+msgid "Current account"
+msgstr "Betaalrekening"
 
 msgid "Custom"
 msgstr "Aangepast"
@@ -2042,6 +2048,9 @@ msgstr "Opslaan…"
 
 msgid "Savings"
 msgstr "Sparen"
+
+msgid "Savings account"
+msgstr "Spaarrekening"
 
 msgid "Scale"
 msgstr "Schaal"
