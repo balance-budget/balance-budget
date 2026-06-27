@@ -94,6 +94,22 @@ internal sealed class BankAccountConfiguration : IEntityTypeConfiguration<BankAc
             .HasFilter("\"Iban\" IS NOT NULL")
             .HasDatabaseName("IX_BankAccounts_Iban");
 
+        // Statement detection (ADR 0034) resolves a file's account anchor to a single own
+        // BankAccount. Scope uniqueness to owned accounts (AccountId IS NOT NULL) so an ambiguous
+        // anchor match is structurally impossible, mirroring the Iban index above. Counterparty
+        // BankAccounts are never import targets and may legitimately repeat these identifiers.
+        builder
+            .HasIndex(b => b.AccountNumber)
+            .IsUnique()
+            .HasFilter("\"AccountNumber\" IS NOT NULL AND \"AccountId\" IS NOT NULL")
+            .HasDatabaseName("IX_BankAccounts_AccountNumber_Owned");
+
+        builder
+            .HasIndex(b => b.CardIdentifier)
+            .IsUnique()
+            .HasFilter("\"CardIdentifier\" IS NOT NULL AND \"AccountId\" IS NOT NULL")
+            .HasDatabaseName("IX_BankAccounts_CardIdentifier_Owned");
+
         builder
             .HasIndex(b => b.AccountId)
             .IsUnique()

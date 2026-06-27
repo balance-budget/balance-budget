@@ -300,6 +300,16 @@ namespace Balance.Data.Sqlite.Migrations
                         .HasDatabaseName("IX_BankAccounts_AccountId")
                         .HasFilter("\"AccountId\" IS NOT NULL");
 
+                    b.HasIndex("AccountNumber")
+                        .IsUnique()
+                        .HasDatabaseName("IX_BankAccounts_AccountNumber_Owned")
+                        .HasFilter("\"AccountNumber\" IS NOT NULL AND \"AccountId\" IS NOT NULL");
+
+                    b.HasIndex("CardIdentifier")
+                        .IsUnique()
+                        .HasDatabaseName("IX_BankAccounts_CardIdentifier_Owned")
+                        .HasFilter("\"CardIdentifier\" IS NOT NULL AND \"AccountId\" IS NOT NULL");
+
                     b.HasIndex("CounterpartyId")
                         .HasDatabaseName("IX_BankAccounts_CounterpartyId");
 
