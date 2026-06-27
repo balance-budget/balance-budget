@@ -176,7 +176,7 @@ function LoanDetailLoaded({ loan }: { loan: LoanDetailModel }) {
                                 size="inline"
                             />{' '}
                             <Trans>
-                                at {loan.constructionDeposit.annualRatePercent.toFixed(2)}% -
+                                at {loan.constructionDeposit.annualRatePercent.toFixed(2)}%,
                                 interest offsets the payment until it drains.
                             </Trans>
                         </span>
@@ -207,7 +207,7 @@ function LoanDetailLoaded({ loan }: { loan: LoanDetailModel }) {
                 <Panel>
                     <SectionHead
                         title={<Trans>What if…</Trans>}
-                        subtitle={<Trans>Hypothetical extra repayments - nothing is saved.</Trans>}
+                        subtitle={<Trans>Hypothetical extra repayments. Nothing is saved.</Trans>}
                     />
                     <Simulator
                         loan={loan}
@@ -221,7 +221,7 @@ function LoanDetailLoaded({ loan }: { loan: LoanDetailModel }) {
             <Panel>
                 <SectionHead
                     title={<Trans>Parts</Trans>}
-                    subtitle={<Trans>Parts - each with its own terms and rate history.</Trans>}
+                    subtitle={<Trans>Parts, each with its own terms and rate history.</Trans>}
                 />
                 <PartsTable
                     loan={loan}
@@ -308,7 +308,7 @@ function LoanDetailLoaded({ loan }: { loan: LoanDetailModel }) {
                 <ConfirmDialog
                     open
                     title={t`Delete ${deletingPart.label}?`}
-                    message={t`The part definition and its rate history are removed. Its account and every posted entry stay untouched - it becomes an ordinary account again.`}
+                    message={t`The part definition and its rate history are removed. Its account and every posted entry stay untouched. It becomes an ordinary account again.`}
                     confirmLabel={t`Delete part`}
                     variant="destructive"
                     busy={deletePart.isPending}

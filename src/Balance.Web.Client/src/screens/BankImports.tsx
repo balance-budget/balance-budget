@@ -328,7 +328,7 @@ function StatementDropZone({ importableAccounts }: { importableAccounts: BankAcc
                         <Trans>Detecting…</Trans>
                     ) : (
                         <Trans>
-                            Drop your statement files here — we'll match each to its account.
+                            Drop your statement files here. We'll match each to its account.
                         </Trans>
                     )}
                 </Text>
@@ -418,7 +418,7 @@ export function BankImports() {
         <Panel>
             <SectionHead
                 title={t`Import statements`}
-                subtitle={t`Drop your statement files and we'll match each to its bank account. Re-uploads are safe — duplicate rows are skipped.`}
+                subtitle={t`Drop your statement files and we'll match each to its bank account. Re-uploads are safe. Duplicate rows are skipped.`}
             />
             <div className="flex flex-col gap-6">
                 <StatementDropZone importableAccounts={importableAccounts} />

@@ -113,7 +113,7 @@ export function CurrencyFormModal(props: Props) {
                     maxValue={30}
                     description={
                         props.mode === 'create'
-                            ? t`Decimal places: 2 for EUR/USD, 0 for JPY, 8 for BTC. Set carefully — to change it later you delete and recreate the currency.`
+                            ? t`Decimal places: 2 for EUR/USD, 0 for JPY, 8 for BTC. Set this carefully. To change it later you delete and recreate the currency.`
                             : t`The scale can't be changed after creation.`
                     }
                 />

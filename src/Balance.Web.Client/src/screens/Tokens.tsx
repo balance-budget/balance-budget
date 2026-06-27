@@ -57,7 +57,7 @@ export function Tokens() {
                         subtitle={
                             <Trans>
                                 This is the only time you'll see "{justCreated.metadata.name}" in
-                                full. Store it somewhere safe - it can't be retrieved again.
+                                full. Store it somewhere safe. It can't be retrieved again.
                             </Trans>
                         }
                     />

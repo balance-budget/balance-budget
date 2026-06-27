@@ -176,8 +176,8 @@ msgstr "2–8 hoofdletters of cijfers, bijv. EUR, USD, BTC."
 msgid "31 Dec {year}"
 msgstr "31 dec {year}"
 
-msgid "A construction deposit needs an asset account, an income account, and a rate - set all three or none."
-msgstr "Een bouwdepot vereist een activarekening, een opbrengstenrekening en een rente - stel alle drie in, of geen enkele."
+msgid "A construction deposit needs an asset account, an income account, and a rate. Set all three or none."
+msgstr "Een bouwdepot vereist een activarekening, een opbrengstenrekening en een rente. Stel alle drie in, of geen enkele."
 
 msgid "A fresh part account needs a name and a code."
 msgstr "Een nieuwe deelrekening vereist een naam en een code."
@@ -199,9 +199,6 @@ msgstr "Rekening"
 
 msgid "Account (mixed currencies)"
 msgstr "Rekening (gemengde valuta)"
-
-#~ msgid "Account balances"
-#~ msgstr "Rekeningsaldi"
 
 msgid "Account code"
 msgstr "Rekeningcode"
@@ -287,8 +284,8 @@ msgstr "Gebruiker toevoegen"
 msgid "Add your first ledger account to get started."
 msgstr "Voeg je eerste grootboekrekening toe om te beginnen."
 
-msgid "Add your rent, salary, and subscriptions — or accept a detected one."
-msgstr "Voeg je huur, salaris en abonnementen toe — of accepteer een gedetecteerde."
+msgid "Add your rent, salary, and subscriptions, or accept a detected one."
+msgstr "Voeg je huur, salaris en abonnementen toe, of accepteer een gedetecteerde."
 
 msgid "Adding…"
 msgstr "Toevoegen…"
@@ -370,8 +367,8 @@ msgid "Assumed rate after fixation (%)"
 msgstr "Aangenomen rente na rentevaste periode (%)"
 
 #. placeholder {0}: loan.constructionDeposit.annualRatePercent.toFixed(2)
-msgid "at {0}% - interest offsets the payment until it drains."
-msgstr "tegen {0}% - rente compenseert de betaling tot het depot leeg is."
+msgid "at {0}%, interest offsets the payment until it drains."
+msgstr "tegen {0}%, rente compenseert de betaling tot het depot leeg is."
 
 msgid "At least two lines are required."
 msgstr "Er zijn minstens twee regels vereist."
@@ -545,8 +542,8 @@ msgstr "Selectie wissen"
 msgid "Cleared"
 msgstr "Verwerkt"
 
-msgid "Cleared and Reconciled lines are frozen - only their description can be edited."
-msgstr "Verwerkte en afgestemde regels zijn bevroren - alleen de omschrijving kan worden bewerkt."
+msgid "Cleared and Reconciled lines are frozen. Only their description can be edited."
+msgstr "Verwerkte en afgestemde regels zijn bevroren. Alleen de omschrijving kan worden bewerkt."
 
 msgid "Cleared and reconciled lines can’t be moved."
 msgstr "Verwerkte en afgestemde regels kunnen niet worden verplaatst."
@@ -637,9 +634,6 @@ msgstr "Kon journaalpost niet laden."
 
 msgid "Couldn't load loans."
 msgstr "Kon leningen niet laden."
-
-#~ msgid "Couldn't load recent activity."
-#~ msgstr "Kon recente activiteit niet laden."
 
 msgid "Couldn't load recurring items."
 msgstr "Kan terugkerende posten niet laden."
@@ -793,17 +787,14 @@ msgstr "Datumbereik"
 msgid "Date window (±days)"
 msgstr "Datumvenster (±dagen)"
 
-#~ msgid "Day · Month · Year"
-#~ msgstr "Dag · Maand · Jaar"
-
 msgid "Debit"
 msgstr "Debet"
 
 msgid "Debit and Credit totals must balance to zero."
 msgstr "Debet- en credittotalen moeten op nul sluiten."
 
-msgid "Decimal places: 2 for EUR/USD, 0 for JPY, 8 for BTC. Set carefully — to change it later you delete and recreate the currency."
-msgstr "Decimalen: 2 voor EUR/USD, 0 voor JPY, 8 voor BTC. Stel dit zorgvuldig in — om het later te wijzigen verwijder en hermaak je de valuta."
+msgid "Decimal places: 2 for EUR/USD, 0 for JPY, 8 for BTC. Set this carefully. To change it later you delete and recreate the currency."
+msgstr "Decimalen: 2 voor EUR/USD, 0 voor JPY, 8 voor BTC. Stel dit zorgvuldig in. Om het later te wijzigen verwijder en hermaak je de valuta."
 
 msgid "Default"
 msgstr "Standaard"
@@ -886,8 +877,8 @@ msgstr "Ontkoppelen"
 msgid "Detach bank transaction"
 msgstr "Banktransactie ontkoppelen"
 
-msgid "Detach this bank transaction - returns it to the inbox and clears the matching line back to Uncleared."
-msgstr "Deze banktransactie ontkoppelen - zet hem terug in het postvak en zet de bijbehorende regel terug op Niet verwerkt."
+msgid "Detach this bank transaction. Returns it to the inbox and clears the matching line back to Uncleared."
+msgstr "Deze banktransactie ontkoppelen. Zet hem terug in het postvak en zet de bijbehorende regel terug op Niet verwerkt."
 
 msgid "Detached. Bank transaction returned to the inbox."
 msgstr "Ontkoppeld. Banktransactie teruggezet in het postvak."
@@ -961,11 +952,11 @@ msgstr "Dr "
 msgid "Drives the Inbox's loan-payment hint."
 msgstr "Stuurt de hint voor leningbetalingen in het postvak aan."
 
-msgid "Drop your statement files and we'll match each to its bank account. Re-uploads are safe — duplicate rows are skipped."
-msgstr "Sleep je afschriftbestanden hierheen; we koppelen elk bestand aan de juiste bankrekening. Opnieuw uploaden is veilig — dubbele regels worden overgeslagen."
+msgid "Drop your statement files and we'll match each to its bank account. Re-uploads are safe. Duplicate rows are skipped."
+msgstr "Sleep je afschriftbestanden hierheen; we koppelen elk bestand aan de juiste bankrekening. Opnieuw uploaden is veilig. Dubbele regels worden overgeslagen."
 
-msgid "Drop your statement files here — we'll match each to its account."
-msgstr "Sleep je afschriftbestanden hierheen — we koppelen elk aan de juiste rekening."
+msgid "Drop your statement files here. We'll match each to its account."
+msgstr "Sleep je afschriftbestanden hierheen. We koppelen elk aan de juiste rekening."
 
 msgid "e.g. € or $"
 msgstr "bijv. € of $"
@@ -1034,8 +1025,8 @@ msgid "Edit part"
 msgstr "Deel bewerken"
 
 #. placeholder {0}: part.label
-msgid "Edit part - {0}"
-msgstr "Deel bewerken - {0}"
+msgid "Edit part: {0}"
+msgstr "Deel bewerken: {0}"
 
 msgid "Edit rate period"
 msgstr "Renteperiode bewerken"
@@ -1204,17 +1195,17 @@ msgstr "Van- en Naar-bedragen moeten op nul sluiten."
 msgid "From bank import"
 msgstr "Uit bankimport"
 
-msgid "Frozen - line cannot be removed"
-msgstr "Bevroren - regel kan niet worden verwijderd"
+msgid "Frozen: line can't be removed"
+msgstr "Bevroren: regel kan niet worden verwijderd"
 
-msgid "Frozen - line is Cleared or Reconciled"
-msgstr "Bevroren - regel is verwerkt of afgestemd"
+msgid "Frozen: line is Cleared or Reconciled"
+msgstr "Bevroren: regel is verwerkt of afgestemd"
 
 msgid "Future"
 msgstr "Toekomst"
 
-msgid "General-journal table - explicit debit / credit per line."
-msgstr "Memoriaaltabel - expliciet debet / credit per regel."
+msgid "General-journal table. Explicit debit / credit per line."
+msgstr "Memoriaaltabel. Expliciet debet / credit per regel."
 
 msgid "Groups this account into a dashboard balance chart by how soon you'll draw on it."
 msgstr "Groepeert dit account in een saldografiek op het dashboard op basis van hoe snel je het geld nodig hebt."
@@ -1228,8 +1219,8 @@ msgstr "Horizon"
 msgid "How dates and numbers are displayed. The interface language is separate from formatting."
 msgstr "Hoe datums en getallen worden weergegeven. De interfacetaal staat los van de opmaak."
 
-msgid "Hypothetical extra repayments - nothing is saved."
-msgstr "Hypothetische extra aflossingen - er wordt niets opgeslagen."
+msgid "Hypothetical extra repayments. Nothing is saved."
+msgstr "Hypothetische extra aflossingen. Er wordt niets opgeslagen."
 
 msgid "I've copied it"
 msgstr "Ik heb het gekopieerd"
@@ -1284,8 +1275,8 @@ msgstr "Importeren…"
 msgid "In force"
 msgstr "Van kracht"
 
-msgid "In use — can't be deleted while referenced"
-msgstr "In gebruik — kan niet worden verwijderd zolang er verwijzingen zijn"
+msgid "In use, can't be deleted while referenced"
+msgstr "In gebruik, kan niet worden verwijderd zolang er verwijzingen zijn"
 
 msgid "Inbox"
 msgstr "Postvak"
@@ -1374,8 +1365,8 @@ msgstr "Verlaten"
 msgid "Leave with unsaved drafts?"
 msgstr "Verlaten met niet-opgeslagen concepten?"
 
-msgid "Ledger accounts in the double-entry sense - assets, liabilities, income, expenses, equity."
-msgstr "Grootboekrekeningen in de zin van dubbel boekhouden - activa, passiva, opbrengsten, kosten, eigen vermogen."
+msgid "Ledger accounts in the double-entry sense: assets, liabilities, income, expenses, equity."
+msgstr "Grootboekrekeningen in de zin van dubbel boekhouden: activa, passiva, opbrengsten, kosten, eigen vermogen."
 
 msgid "Lender"
 msgstr "Kredietverstrekker"
@@ -1413,9 +1404,6 @@ msgstr "Gekoppelde bankrekeningen"
 msgid "Liquid"
 msgstr "Liquide"
 
-msgid "Liquid - counts toward liquid net worth"
-msgstr "Liquide - telt mee voor het liquide vermogen"
-
 msgid "Liquid and illiquid · All time"
 msgstr "Liquide en niet-liquide · Alle tijd"
 
@@ -1427,6 +1415,9 @@ msgstr "Liquide en niet-liquide · Afgelopen jaar"
 
 msgid "Liquid net worth"
 msgstr "Liquide vermogen"
+
+msgid "Liquid: counts toward liquid net worth"
+msgstr "Liquide: telt mee voor het liquide vermogen"
 
 msgid "Loading…"
 msgstr "Laden…"
@@ -1527,9 +1518,6 @@ msgstr "Geld verplaatst van een of meer bronnen naar een of meer bestemmingen."
 msgid "Money out"
 msgstr "Geld uit"
 
-#~ msgid "Month · Day · Year"
-#~ msgstr "Maand · Dag · Jaar"
-
 msgid "Monthly payment"
 msgstr "Maandbetaling"
 
@@ -1566,23 +1554,14 @@ msgstr "Nettomutatie per periode, gestapeld per subrekening."
 msgid "Net movement per period."
 msgstr "Nettomutatie per periode."
 
-msgid "Net negative this period - see the breakdown."
-msgstr "Netto negatief deze periode - zie de uitsplitsing."
-
 msgid "Net negative this period (excluded from the chart)"
 msgstr "Netto negatief deze periode (uitgesloten van de grafiek)"
 
+msgid "Net negative this period. See the breakdown."
+msgstr "Netto negatief deze periode. Zie de uitsplitsing."
+
 msgid "Net worth"
 msgstr "Nettovermogen"
-
-#~ msgid "Net worth and liquid · All time"
-#~ msgstr "Vermogen en liquide · Alle tijd"
-
-#~ msgid "Net worth and liquid · Last 3 years"
-#~ msgstr "Vermogen en liquide · Afgelopen 3 jaar"
-
-#~ msgid "Net worth and liquid · Last year"
-#~ msgstr "Vermogen en liquide · Afgelopen jaar"
 
 msgid "Net worth range"
 msgstr "Vermogensbereik"
@@ -1612,8 +1591,8 @@ msgid "New rate"
 msgstr "Nieuwe rente"
 
 #. placeholder {0}: part.label
-msgid "New rate period - {0}"
-msgstr "Nieuwe renteperiode - {0}"
+msgid "New rate period: {0}"
+msgstr "Nieuwe renteperiode: {0}"
 
 msgid "New recurring item"
 msgstr "Nieuwe terugkerende post"
@@ -1633,9 +1612,6 @@ msgstr "Volgende pagina"
 
 msgid "No accounts yet."
 msgstr "Nog geen rekeningen."
-
-#~ msgid "No balance history yet."
-#~ msgstr "Nog geen saldohistorie."
 
 msgid "No bank account matched this file."
 msgstr "Geen bankrekening kwam overeen met dit bestand."
@@ -1712,7 +1688,7 @@ msgstr "Nog geen rekeningen op korte termijn."
 msgid "No spending yet this month."
 msgstr "Nog geen uitgaven deze maand."
 
-msgid "No structural matches in this window. Widen the date range or fall back to creating a new JE below."
+msgid "No structural matches in this window. Widen the date range or fall back to creating a new journal entry below."
 msgstr "Geen structurele overeenkomsten in dit venster. Verbreed het datumbereik of maak hieronder een nieuwe journaalpost aan."
 
 msgid "No suggestions to apply."
@@ -1724,8 +1700,8 @@ msgstr "Nog geen tokens."
 msgid "None"
 msgstr "Geen"
 
-msgid "None - top level"
-msgstr "Geen - hoogste niveau"
+msgid "None (top level)"
+msgstr "Geen (hoogste niveau)"
 
 msgid "Nothing categorized yet."
 msgstr "Nog niets gecategoriseerd."
@@ -1755,8 +1731,8 @@ msgstr "{diffStr} ernaast"
 msgid "Only non-postable accounts of the same type and currency can be parents."
 msgstr "Alleen niet-boekbare rekeningen van hetzelfde type en dezelfde valuta kunnen bovenliggend zijn."
 
-msgid "Only the selected side of each journal entry moves - dates, amounts and the other side stay untouched. The whole batch moves together, or not at all."
-msgstr "Alleen de geselecteerde zijde van elke journaalpost verplaatst - datums, bedragen en de andere zijde blijven ongewijzigd. De hele batch verplaatst samen, of helemaal niet."
+msgid "Only the selected side of each journal entry moves. Dates, amounts, and the other side stay untouched. The whole batch moves together, or not at all."
+msgstr "Alleen de geselecteerde zijde van elke journaalpost verplaatst. Datums, bedragen en de andere zijde blijven ongewijzigd. De hele batch verplaatst samen, of helemaal niet."
 
 msgid "Open calendar"
 msgstr "Kalender openen"
@@ -1843,11 +1819,11 @@ msgstr "Deel bijgewerkt."
 msgid "Parts"
 msgstr "Delen"
 
-msgid "Parts - each with its own terms and rate history."
-msgstr "Delen - elk met eigen voorwaarden en rentehistorie."
-
 msgid "Parts in this payment:"
 msgstr "Delen in deze betaling:"
+
+msgid "Parts, each with its own terms and rate history."
+msgstr "Delen, elk met eigen voorwaarden en rentehistorie."
 
 msgid "Password"
 msgstr "Wachtwoord"
@@ -1910,8 +1886,8 @@ msgid "Posted actuals to the left of today, the engine's projection to the right
 msgstr "Geboekte werkelijke cijfers links van vandaag, de prognose van de engine rechts."
 
 #. placeholder {0}: proposal.month.slice(0, 7)
-msgid "Pre-filled from the schedule for {0} - adjust the amounts to match the bank's charge."
-msgstr "Vooraf ingevuld op basis van het schema voor {0} - pas de bedragen aan de afschrijving van de bank aan."
+msgid "Pre-filled from the schedule for {0}. Adjust the amounts to match the bank's charge."
+msgstr "Vooraf ingevuld op basis van het schema voor {0}. Pas de bedragen aan de afschrijving van de bank aan."
 
 msgid "Preferences"
 msgstr "Voorkeuren"
@@ -2159,8 +2135,8 @@ msgid "Select…"
 msgstr "Selecteren…"
 
 #. placeholder {0}: selectedCurrencies.join(' + ')
-msgid "Selected rows span {0} - Account can't be bulk-applied."
-msgstr "Geselecteerde rijen omvatten {0} - rekening kan niet in bulk worden toegepast."
+msgid "Selected rows span {0}. Account can't be bulk-applied."
+msgstr "Geselecteerde rijen omvatten {0}. Rekening kan niet in bulk worden toegepast."
 
 msgid "SEPA creditor ID"
 msgstr "SEPA-incassant-ID"
@@ -2292,8 +2268,8 @@ msgstr "De lening heeft een naam nodig."
 msgid "The matched bank account has no importer configured."
 msgstr "De gekoppelde bankrekening heeft geen importer geconfigureerd."
 
-msgid "The part definition and its rate history are removed. Its account and every posted entry stay untouched - it becomes an ordinary account again."
-msgstr "De deeldefinitie en de rentehistorie worden verwijderd. De rekening en alle geboekte posten blijven ongewijzigd - het wordt weer een gewone rekening."
+msgid "The part definition and its rate history are removed. Its account and every posted entry stay untouched. It becomes an ordinary account again."
+msgstr "De deeldefinitie en de rentehistorie worden verwijderd. De rekening en alle geboekte posten blijven ongewijzigd. Het wordt weer een gewone rekening."
 
 msgid "The part's account holds its principal and posted history, so it can't be changed here."
 msgstr "De rekening van het deel bevat de hoofdsom en geboekte historie en kan hier daarom niet worden gewijzigd."
@@ -2323,8 +2299,8 @@ msgid "This file matched more than one bank account."
 msgstr "Dit bestand kwam overeen met meer dan één bankrekening."
 
 #. placeholder {0}: justCreated.metadata.name
-msgid "This is the only time you'll see \"{0}\" in full. Store it somewhere safe - it can't be retrieved again."
-msgstr "Dit is de enige keer dat je \"{0}\" volledig ziet. Bewaar het op een veilige plek - het kan niet opnieuw worden opgehaald."
+msgid "This is the only time you'll see \"{0}\" in full. Store it somewhere safe. It can't be retrieved again."
+msgstr "Dit is de enige keer dat je \"{0}\" volledig ziet. Bewaar het op een veilige plek. Het kan niet opnieuw worden opgehaald."
 
 msgid "This month"
 msgstr "Deze maand"
@@ -2394,9 +2370,6 @@ msgstr "Ongebruikt"
 
 msgid "Upcoming"
 msgstr "Aankomend"
-
-#~ msgid "Upload an ING current-account CSV against the matching bank account. Re-uploads are safe - duplicate rows are skipped."
-#~ msgstr "Upload een CSV van een ING-betaalrekening tegen de bijbehorende bankrekening. Opnieuw uploaden is veilig - dubbele rijen worden overgeslagen."
 
 msgid "Usage"
 msgstr "Gebruik"

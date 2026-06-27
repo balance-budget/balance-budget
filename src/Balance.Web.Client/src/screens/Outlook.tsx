@@ -542,7 +542,7 @@ function RecurringPanel({
             ) : visible.length === 0 ? (
                 <Empty
                     title={t`No recurring items yet`}
-                    hint={t`Add your rent, salary, and subscriptions — or accept a detected one.`}
+                    hint={t`Add your rent, salary, and subscriptions, or accept a detected one.`}
                 />
             ) : (
                 <div className="flex flex-col divide-y divide-border-soft">

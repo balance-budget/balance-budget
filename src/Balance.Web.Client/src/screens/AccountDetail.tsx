@@ -584,7 +584,7 @@ function ReassignBar({
                         one: '# line',
                         other: '# lines',
                     })} to “${targetName}”?`}
-                    message={t`Only the selected side of each journal entry moves - dates, amounts and the other side stay untouched. The whole batch moves together, or not at all.`}
+                    message={t`Only the selected side of each journal entry moves. Dates, amounts, and the other side stay untouched. The whole batch moves together, or not at all.`}
                     confirmLabel={t`Move`}
                     busy={reassign.isPending}
                     error={error}
