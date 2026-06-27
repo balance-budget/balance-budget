@@ -54,6 +54,7 @@ msgid "{0, plural, one {# part} other {# parts}}"
 msgstr "{0, plural, one {# deel} other {# delen}}"
 
 #. placeholder {0}: feedback.skipped
+#. placeholder {0}: outcome.skippedAsDuplicate
 msgid "{0, plural, one {skipped # duplicate} other {skipped # duplicates}}"
 msgstr "{0, plural, one {# duplicaat overgeslagen} other {# duplicaten overgeslagen}}"
 
@@ -469,6 +470,9 @@ msgstr "Banktransacties"
 msgid "BIC"
 msgstr "BIC"
 
+msgid "Browse files"
+msgstr "Bestanden bladeren"
+
 msgid "Budgets"
 msgstr "Budgetten"
 
@@ -519,6 +523,12 @@ msgstr "Gecategoriseerd."
 
 msgid "Categorizing…"
 msgstr "Categoriseren…"
+
+msgid "Choose a bank account"
+msgstr "Kies een bankrekening"
+
+msgid "Choose a bank account…"
+msgstr "Kies een bankrekening…"
 
 msgid "Choose a light or dark theme, or follow your system setting. Applies immediately."
 msgstr "Kies een licht of donker thema, of volg je systeeminstelling. Wordt direct toegepast."
@@ -888,6 +898,9 @@ msgstr "Ontkoppelen…"
 msgid "Detected"
 msgstr "Gedetecteerd"
 
+msgid "Detecting…"
+msgstr "Detecteren…"
+
 msgid "Direction"
 msgstr "Richting"
 
@@ -947,6 +960,12 @@ msgstr "Dr "
 
 msgid "Drives the Inbox's loan-payment hint."
 msgstr "Stuurt de hint voor leningbetalingen in het postvak aan."
+
+msgid "Drop your statement files and we'll match each to its bank account. Re-uploads are safe — duplicate rows are skipped."
+msgstr "Sleep je afschriftbestanden hierheen; we koppelen elk bestand aan de juiste bankrekening. Opnieuw uploaden is veilig — dubbele regels worden overgeslagen."
+
+msgid "Drop your statement files here — we'll match each to its account."
+msgstr "Sleep je afschriftbestanden hierheen — we koppelen elk aan de juiste rekening."
 
 msgid "e.g. € or $"
 msgstr "bijv. € of $"
@@ -1230,6 +1249,9 @@ msgstr "Pictogram"
 msgid "Illiquid"
 msgstr "Niet-liquide"
 
+msgid "Import"
+msgstr "Importeren"
+
 msgid "Import a bank statement from Bank imports to get started."
 msgstr "Importeer een bankafschrift via Bankimports om te beginnen."
 
@@ -1243,6 +1265,7 @@ msgid "Import statements"
 msgstr "Afschriften importeren"
 
 #. placeholder {0}: feedback.imported
+#. placeholder {0}: outcome.imported
 msgid "Imported {0}"
 msgstr "{0} geïmporteerd"
 
@@ -1614,6 +1637,9 @@ msgstr "Nog geen rekeningen."
 #~ msgid "No balance history yet."
 #~ msgstr "Nog geen saldohistorie."
 
+msgid "No bank account matched this file."
+msgstr "Geen bankrekening kwam overeen met dit bestand."
+
 msgid "No bank accounts linked to one of your own accounts yet."
 msgstr "Nog geen bankrekeningen gekoppeld aan een van je eigen rekeningen."
 
@@ -1743,6 +1769,9 @@ msgstr "Beginsaldo ({currencyCode})"
 
 msgid "Optional"
 msgstr "Optioneel"
+
+msgid "Or import to a specific account"
+msgstr "Of importeer naar een specifieke rekening"
 
 msgid "or scroll down to create a new journal entry."
 msgstr "of scroll omlaag om een nieuwe journaalpost aan te maken."
@@ -2260,6 +2289,9 @@ msgstr "De leningdefinitie, de delen en de rentehistorie worden verwijderd. De r
 msgid "The loan needs a name."
 msgstr "De lening heeft een naam nodig."
 
+msgid "The matched bank account has no importer configured."
+msgstr "De gekoppelde bankrekening heeft geen importer geconfigureerd."
+
 msgid "The part definition and its rate history are removed. Its account and every posted entry stay untouched - it becomes an ordinary account again."
 msgstr "De deeldefinitie en de rentehistorie worden verwijderd. De rekening en alle geboekte posten blijven ongewijzigd - het wordt weer een gewone rekening."
 
@@ -2283,6 +2315,12 @@ msgstr "Dit kan niet ongedaan worden gemaakt. Rekeningen met journaalposten kunn
 
 msgid "This can't be undone. The bookkeeping lines on every affected account will disappear with it."
 msgstr "Dit kan niet ongedaan worden gemaakt. De boekingsregels op elke betrokken rekening verdwijnen ermee."
+
+msgid "This file isn't a recognized statement."
+msgstr "Dit bestand is geen herkend afschrift."
+
+msgid "This file matched more than one bank account."
+msgstr "Dit bestand kwam overeen met meer dan één bankrekening."
 
 #. placeholder {0}: justCreated.metadata.name
 msgid "This is the only time you'll see \"{0}\" in full. Store it somewhere safe - it can't be retrieved again."
@@ -2357,8 +2395,8 @@ msgstr "Ongebruikt"
 msgid "Upcoming"
 msgstr "Aankomend"
 
-msgid "Upload an ING current-account CSV against the matching bank account. Re-uploads are safe - duplicate rows are skipped."
-msgstr "Upload een CSV van een ING-betaalrekening tegen de bijbehorende bankrekening. Opnieuw uploaden is veilig - dubbele rijen worden overgeslagen."
+#~ msgid "Upload an ING current-account CSV against the matching bank account. Re-uploads are safe - duplicate rows are skipped."
+#~ msgstr "Upload een CSV van een ING-betaalrekening tegen de bijbehorende bankrekening. Opnieuw uploaden is veilig - dubbele rijen worden overgeslagen."
 
 msgid "Usage"
 msgstr "Gebruik"

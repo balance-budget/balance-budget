@@ -54,6 +54,7 @@ msgid "{0, plural, one {# part} other {# parts}}"
 msgstr "{0, plural, other {# 個部分}}"
 
 #. placeholder {0}: feedback.skipped
+#. placeholder {0}: outcome.skippedAsDuplicate
 msgid "{0, plural, one {skipped # duplicate} other {skipped # duplicates}}"
 msgstr "{0, plural, other {已略過 # 筆重複資料}}"
 
@@ -469,6 +470,9 @@ msgstr "銀行交易"
 msgid "BIC"
 msgstr "BIC"
 
+msgid "Browse files"
+msgstr "瀏覽檔案"
+
 msgid "Budgets"
 msgstr "預算"
 
@@ -519,6 +523,12 @@ msgstr "已分類。"
 
 msgid "Categorizing…"
 msgstr "分類中…"
+
+msgid "Choose a bank account"
+msgstr "選擇銀行帳戶"
+
+msgid "Choose a bank account…"
+msgstr "選擇銀行帳戶…"
 
 msgid "Choose a light or dark theme, or follow your system setting. Applies immediately."
 msgstr "選擇淺色或深色主題，或跟隨系統設定。立即套用。"
@@ -888,6 +898,9 @@ msgstr "卸除中…"
 msgid "Detected"
 msgstr "已偵測"
 
+msgid "Detecting…"
+msgstr "偵測中…"
+
 msgid "Direction"
 msgstr "方向"
 
@@ -947,6 +960,12 @@ msgstr "借 "
 
 msgid "Drives the Inbox's loan-payment hint."
 msgstr "驅動收件匣的貸款支付提示。"
+
+msgid "Drop your statement files and we'll match each to its bank account. Re-uploads are safe — duplicate rows are skipped."
+msgstr "拖放您的對帳單檔案，我們會將每個檔案配對到對應的銀行帳戶。重複上傳是安全的——重複的列會被略過。"
+
+msgid "Drop your statement files here — we'll match each to its account."
+msgstr "將您的對帳單檔案拖放到此處——我們會將每個檔案配對到對應的帳戶。"
 
 msgid "e.g. € or $"
 msgstr "例如 € 或 $"
@@ -1230,6 +1249,9 @@ msgstr "圖示"
 msgid "Illiquid"
 msgstr "非流動"
 
+msgid "Import"
+msgstr "匯入"
+
 msgid "Import a bank statement from Bank imports to get started."
 msgstr "從「銀行匯入」匯入銀行對帳單以開始使用。"
 
@@ -1243,6 +1265,7 @@ msgid "Import statements"
 msgstr "匯入對帳單"
 
 #. placeholder {0}: feedback.imported
+#. placeholder {0}: outcome.imported
 msgid "Imported {0}"
 msgstr "已匯入 {0}"
 
@@ -1614,6 +1637,9 @@ msgstr "尚無帳戶。"
 #~ msgid "No balance history yet."
 #~ msgstr "尚無餘額歷史。"
 
+msgid "No bank account matched this file."
+msgstr "沒有銀行帳戶與此檔案相符。"
+
 msgid "No bank accounts linked to one of your own accounts yet."
 msgstr "尚未有銀行帳戶連結到你自己的帳戶。"
 
@@ -1743,6 +1769,9 @@ msgstr "期初餘額（{currencyCode}）"
 
 msgid "Optional"
 msgstr "選填"
+
+msgid "Or import to a specific account"
+msgstr "或匯入到特定帳戶"
 
 msgid "or scroll down to create a new journal entry."
 msgstr "或向下捲動以建立新的日記帳分錄。"
@@ -2260,6 +2289,9 @@ msgstr "貸款定義、其部分與利率歷史將被移除。帳戶與所有已
 msgid "The loan needs a name."
 msgstr "貸款需要一個名稱。"
 
+msgid "The matched bank account has no importer configured."
+msgstr "相符的銀行帳戶未設定匯入器。"
+
 msgid "The part definition and its rate history are removed. Its account and every posted entry stay untouched - it becomes an ordinary account again."
 msgstr "部分定義與其利率歷史將被移除。其帳戶與所有已過帳的分錄保持不變 - 它會再次成為一般帳戶。"
 
@@ -2283,6 +2315,12 @@ msgstr "此動作無法復原。含有日記帳分錄的帳戶必須先移除這
 
 msgid "This can't be undone. The bookkeeping lines on every affected account will disappear with it."
 msgstr "此動作無法復原。每個受影響帳戶上的簿記項目都將隨之消失。"
+
+msgid "This file isn't a recognized statement."
+msgstr "此檔案不是可辨識的對帳單。"
+
+msgid "This file matched more than one bank account."
+msgstr "此檔案與多個銀行帳戶相符。"
 
 #. placeholder {0}: justCreated.metadata.name
 msgid "This is the only time you'll see \"{0}\" in full. Store it somewhere safe - it can't be retrieved again."
@@ -2357,8 +2395,8 @@ msgstr "未使用"
 msgid "Upcoming"
 msgstr "即將到來"
 
-msgid "Upload an ING current-account CSV against the matching bank account. Re-uploads are safe - duplicate rows are skipped."
-msgstr "針對對應的銀行帳戶上傳 ING 活期帳戶 CSV。重複上傳是安全的 - 重複的項目會被略過。"
+#~ msgid "Upload an ING current-account CSV against the matching bank account. Re-uploads are safe - duplicate rows are skipped."
+#~ msgstr "針對對應的銀行帳戶上傳 ING 活期帳戶 CSV。重複上傳是安全的 - 重複的項目會被略過。"
 
 msgid "Usage"
 msgstr "使用情形"

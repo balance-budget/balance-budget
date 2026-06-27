@@ -54,6 +54,7 @@ msgid "{0, plural, one {# part} other {# parts}}"
 msgstr "{0, plural, one {# part} other {# parts}}"
 
 #. placeholder {0}: feedback.skipped
+#. placeholder {0}: outcome.skippedAsDuplicate
 msgid "{0, plural, one {skipped # duplicate} other {skipped # duplicates}}"
 msgstr "{0, plural, one {skipped # duplicate} other {skipped # duplicates}}"
 
@@ -469,6 +470,9 @@ msgstr "Bank transactions"
 msgid "BIC"
 msgstr "BIC"
 
+msgid "Browse files"
+msgstr "Browse files"
+
 msgid "Budgets"
 msgstr "Budgets"
 
@@ -519,6 +523,12 @@ msgstr "Categorized."
 
 msgid "Categorizing…"
 msgstr "Categorizing…"
+
+msgid "Choose a bank account"
+msgstr "Choose a bank account"
+
+msgid "Choose a bank account…"
+msgstr "Choose a bank account…"
 
 msgid "Choose a light or dark theme, or follow your system setting. Applies immediately."
 msgstr "Choose a light or dark theme, or follow your system setting. Applies immediately."
@@ -888,6 +898,9 @@ msgstr "Detaching…"
 msgid "Detected"
 msgstr "Detected"
 
+msgid "Detecting…"
+msgstr "Detecting…"
+
 msgid "Direction"
 msgstr "Direction"
 
@@ -947,6 +960,12 @@ msgstr "Dr "
 
 msgid "Drives the Inbox's loan-payment hint."
 msgstr "Drives the Inbox's loan-payment hint."
+
+msgid "Drop your statement files and we'll match each to its bank account. Re-uploads are safe — duplicate rows are skipped."
+msgstr "Drop your statement files and we'll match each to its bank account. Re-uploads are safe — duplicate rows are skipped."
+
+msgid "Drop your statement files here — we'll match each to its account."
+msgstr "Drop your statement files here — we'll match each to its account."
 
 msgid "e.g. € or $"
 msgstr "e.g. € or $"
@@ -1230,6 +1249,9 @@ msgstr "Icon"
 msgid "Illiquid"
 msgstr "Illiquid"
 
+msgid "Import"
+msgstr "Import"
+
 msgid "Import a bank statement from Bank imports to get started."
 msgstr "Import a bank statement from Bank imports to get started."
 
@@ -1243,6 +1265,7 @@ msgid "Import statements"
 msgstr "Import statements"
 
 #. placeholder {0}: feedback.imported
+#. placeholder {0}: outcome.imported
 msgid "Imported {0}"
 msgstr "Imported {0}"
 
@@ -1614,6 +1637,9 @@ msgstr "No accounts yet."
 #~ msgid "No balance history yet."
 #~ msgstr "No balance history yet."
 
+msgid "No bank account matched this file."
+msgstr "No bank account matched this file."
+
 msgid "No bank accounts linked to one of your own accounts yet."
 msgstr "No bank accounts linked to one of your own accounts yet."
 
@@ -1743,6 +1769,9 @@ msgstr "Opening balance ({currencyCode})"
 
 msgid "Optional"
 msgstr "Optional"
+
+msgid "Or import to a specific account"
+msgstr "Or import to a specific account"
 
 msgid "or scroll down to create a new journal entry."
 msgstr "or scroll down to create a new journal entry."
@@ -2260,6 +2289,9 @@ msgstr "The loan definition, its parts, and rate history are removed. The accoun
 msgid "The loan needs a name."
 msgstr "The loan needs a name."
 
+msgid "The matched bank account has no importer configured."
+msgstr "The matched bank account has no importer configured."
+
 msgid "The part definition and its rate history are removed. Its account and every posted entry stay untouched - it becomes an ordinary account again."
 msgstr "The part definition and its rate history are removed. Its account and every posted entry stay untouched - it becomes an ordinary account again."
 
@@ -2283,6 +2315,12 @@ msgstr "This can't be undone. Accounts with journal entries can't be deleted unt
 
 msgid "This can't be undone. The bookkeeping lines on every affected account will disappear with it."
 msgstr "This can't be undone. The bookkeeping lines on every affected account will disappear with it."
+
+msgid "This file isn't a recognized statement."
+msgstr "This file isn't a recognized statement."
+
+msgid "This file matched more than one bank account."
+msgstr "This file matched more than one bank account."
 
 #. placeholder {0}: justCreated.metadata.name
 msgid "This is the only time you'll see \"{0}\" in full. Store it somewhere safe - it can't be retrieved again."
@@ -2357,8 +2395,8 @@ msgstr "Unused"
 msgid "Upcoming"
 msgstr "Upcoming"
 
-msgid "Upload an ING current-account CSV against the matching bank account. Re-uploads are safe - duplicate rows are skipped."
-msgstr "Upload an ING current-account CSV against the matching bank account. Re-uploads are safe - duplicate rows are skipped."
+#~ msgid "Upload an ING current-account CSV against the matching bank account. Re-uploads are safe - duplicate rows are skipped."
+#~ msgstr "Upload an ING current-account CSV against the matching bank account. Re-uploads are safe - duplicate rows are skipped."
 
 msgid "Usage"
 msgstr "Usage"
