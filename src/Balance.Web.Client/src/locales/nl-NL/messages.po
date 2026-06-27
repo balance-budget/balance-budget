@@ -239,6 +239,9 @@ msgstr "Acties"
 msgid "Active"
 msgstr "Actief"
 
+msgid "Active loans"
+msgstr "Actieve leningen"
+
 msgid "Activity"
 msgstr "Activiteit"
 
@@ -1057,6 +1060,9 @@ msgstr "Einde van de maand"
 
 msgid "Ended"
 msgstr "Beëindigd"
+
+msgid "Ended loans"
+msgstr "Beëindigde leningen"
 
 msgid "Enter a positive amount"
 msgstr "Voer een positief bedrag in"
@@ -2186,6 +2192,9 @@ msgstr "Er ging iets mis"
 msgid "Something went wrong."
 msgstr "Er ging iets mis."
 
+msgid "Source"
+msgstr "Bron"
+
 msgid "Spending"
 msgstr "Uitgaven"
 
@@ -2322,6 +2331,9 @@ msgstr "Naar"
 
 msgid "today"
 msgstr "vandaag"
+
+msgid "Tokens"
+msgstr "Tokens"
 
 msgid "Total"
 msgstr "Totaal"

@@ -1,5 +1,42 @@
 import type { Account } from '../api/accounts';
-import type { AccountId } from './domain';
+import type { AccountId, AccountType } from './domain';
+
+/**
+ * Sibling order for the chart of accounts: by code (numeric-aware), then by
+ * name. Shared so the Accounts screen and the sidebar tree order identically.
+ */
+export const sortSiblings = (a: Account, b: Account): number =>
+    a.code.localeCompare(b.code, undefined, { numeric: true }) || a.name.localeCompare(b.name);
+
+/**
+ * Maps a parent id to its children, each bucket sorted by {@link sortSiblings};
+ * the `null` key holds the roots. Single tested source for the tree structure
+ * shared by the Accounts screen and the sidebar (ADR-0035).
+ */
+export function buildChildrenMap(accounts: readonly Account[]): Map<AccountId | null, Account[]> {
+    const map = new Map<AccountId | null, Account[]>();
+    for (const a of accounts) {
+        const bucket = map.get(a.parentId) ?? [];
+        bucket.push(a);
+        map.set(a.parentId, bucket);
+    }
+    for (const bucket of map.values()) bucket.sort(sortSiblings);
+    return map;
+}
+
+/** Groups root accounts (no parent) by their {@link AccountType}, each bucket
+ *  sorted by {@link sortSiblings}. */
+export function groupRootsByType(accounts: readonly Account[]): Map<AccountType, Account[]> {
+    const map = new Map<AccountType, Account[]>();
+    for (const a of accounts) {
+        if (a.parentId !== null) continue;
+        const bucket = map.get(a.type) ?? [];
+        bucket.push(a);
+        map.set(a.type, bucket);
+    }
+    for (const bucket of map.values()) bucket.sort(sortSiblings);
+    return map;
+}
 
 /**
  * The ids of `root` and all of its transitive descendants in the chart-of-accounts
