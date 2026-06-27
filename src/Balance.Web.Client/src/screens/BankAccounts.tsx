@@ -25,7 +25,7 @@ import { usePageHeader } from '../components/PageHeader';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/ui/Toast';
 import { SearchField } from '../components/ui/SearchField';
-import { cx } from '../lib/cx';
+import { ToggleButton, ToggleButtonGroup } from '../components/ui/ToggleButtonGroup';
 import type { BankAccountId } from '../lib/domain';
 import { handleActionError } from '../lib/formErrors';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
@@ -109,30 +109,22 @@ function OwnerFilterChips({
 }) {
     const { i18n, t } = useLingui();
     return (
-        <div className="flex items-center gap-2 mb-4" role="tablist" aria-label={t`Owner filter`}>
-            {BANK_ACCOUNT_OWNER_FILTERS.map(o => {
-                const active = o === value;
-                return (
-                    <button
-                        key={o}
-                        type="button"
-                        role="tab"
-                        aria-selected={active}
-                        onClick={() => {
-                            onChange(o);
-                        }}
-                        className={cx(
-                            'px-3 py-1 rounded-lg text-xs font-medium select-none transition-colors',
-                            active
-                                ? 'bg-brand-primary-soft text-brand-primary'
-                                : 'text-fg-2 hover:bg-surface-2 hover:text-fg-1',
-                        )}
-                    >
-                        {i18n._(OWNER_FILTER_LABELS[o])}
-                    </button>
-                );
-            })}
-        </div>
+        <ToggleButtonGroup
+            aria-label={t`Owner filter`}
+            className="mb-4"
+            disallowEmptySelection
+            selectedKeys={[value]}
+            onSelectionChange={keys => {
+                const next = [...keys][0];
+                if (next !== undefined) onChange(next as BankAccountOwnerFilter);
+            }}
+        >
+            {BANK_ACCOUNT_OWNER_FILTERS.map(o => (
+                <ToggleButton key={o} id={o}>
+                    {i18n._(OWNER_FILTER_LABELS[o])}
+                </ToggleButton>
+            ))}
+        </ToggleButtonGroup>
     );
 }
 
