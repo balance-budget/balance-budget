@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { useLoans, type Loan } from '../api/loans';
 import { Amount } from '../components/Amount';
@@ -8,6 +8,7 @@ import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
+import { Cell, Column, Row, Table, TableBody, TableHeader } from '../components/ui/Table';
 import { LoanFormModal } from './LoanForm';
 
 /**
@@ -76,76 +77,88 @@ function LoanList({ loans }: { loans: ReturnType<typeof useLoans> }) {
 
     return (
         <div className="flex flex-col gap-2">
-            {active.map(loan => (
-                <LoanRow key={loan.id} loan={loan} />
-            ))}
+            <LoanTable loans={active} label={t`Active loans`} />
             {ended.length > 0 && (
                 <>
                     <div className="text-xs font-medium text-fg-3 uppercase tracking-wide mt-4 mb-1">
                         <Trans>Ended</Trans>
                     </div>
-                    {ended.map(loan => (
-                        <LoanRow key={loan.id} loan={loan} />
-                    ))}
+                    <LoanTable loans={ended} label={t`Ended loans`} />
                 </>
             )}
         </div>
     );
 }
 
-function LoanRow({ loan }: { loan: Loan }) {
-    const { t } = useLingui();
+function LoanTable({ loans, label }: { loans: Loan[]; label: string }) {
+    const navigate = useNavigate();
     return (
-        <Link
-            to="/loans/$id"
-            params={{ id: loan.id }}
-            className="grid grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))] items-center gap-3 px-3 py-3 rounded-lg border border-border-soft hover:border-border-strong transition-colors"
+        <Table
+            aria-label={label}
+            onRowAction={key => {
+                void navigate({ to: '/loans/$id', params: { id: String(key) } });
+            }}
         >
-            <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                    <Icon name="landmark" size={16} strokeWidth={1.75} className="text-fg-3" />
-                    <span className="text-sm font-medium text-fg-1 truncate">{loan.name}</span>
-                    {loan.isEnded && (
-                        <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-surface-2 text-fg-3">
-                            <Trans>Ended</Trans>
-                        </span>
-                    )}
+            <TableHeader>
+                <Column isRowHeader>
+                    <Trans>Loan</Trans>
+                </Column>
+                <Column className="text-right">
+                    <Trans>Outstanding</Trans>
+                </Column>
+                <Column className="text-right">
+                    <Trans>Monthly payment</Trans>
+                </Column>
+                <Column className="text-right">
+                    <Trans>Weighted rate</Trans>
+                </Column>
+            </TableHeader>
+            <TableBody items={loans}>{loan => <LoanRow loan={loan} />}</TableBody>
+        </Table>
+    );
+}
+
+function LoanRow({ loan }: { loan: Loan }) {
+    return (
+        <Row id={loan.id} className="cursor-pointer">
+            <Cell className="py-3 pr-3 align-middle">
+                <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                        <Icon name="landmark" size={16} strokeWidth={1.75} className="text-fg-3" />
+                        <span className="text-sm font-medium text-fg-1 truncate">{loan.name}</span>
+                        {loan.isEnded && (
+                            <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-surface-2 text-fg-3">
+                                <Trans>Ended</Trans>
+                            </span>
+                        )}
+                    </div>
+                    <div className="text-xs text-fg-3 mt-0.5 truncate">
+                        {loan.lenderName} ·{' '}
+                        <Plural value={loan.partCount} one="# part" other="# parts" />
+                    </div>
                 </div>
-                <div className="text-xs text-fg-3 mt-0.5 truncate">
-                    {loan.lenderName} ·{' '}
-                    <Plural value={loan.partCount} one="# part" other="# parts" />
-                </div>
-            </div>
-            <Stat label={t`Outstanding`}>
+            </Cell>
+            <Cell className="py-3 pr-3 text-right align-middle">
                 <Amount
                     minor={loan.outstandingBalance}
                     currencyCode={loan.currencyCode}
                     size="inline"
                 />
-            </Stat>
-            <Stat label={t`Monthly payment`}>
+            </Cell>
+            <Cell className="py-3 pr-3 text-right align-middle">
                 <Amount
                     minor={loan.currentPayment}
                     currencyCode={loan.currencyCode}
                     size="inline"
                 />
-            </Stat>
-            <Stat label={t`Weighted rate`}>
+            </Cell>
+            <Cell className="py-3 pr-3 text-right align-middle">
                 <span className="text-sm font-medium tabular-nums">
                     {loan.weightedAnnualRatePercent === null
                         ? '—'
                         : `${loan.weightedAnnualRatePercent.toFixed(2)}%`}
                 </span>
-            </Stat>
-        </Link>
-    );
-}
-
-function Stat({ label, children }: { label: string; children: React.ReactNode }) {
-    return (
-        <div className="flex flex-col items-end gap-0.5">
-            <span className="text-[11px] text-fg-3">{label}</span>
-            {children}
-        </div>
+            </Cell>
+        </Row>
     );
 }
