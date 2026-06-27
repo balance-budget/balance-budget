@@ -9,7 +9,7 @@ import {
     UNSTABLE_ToastRegion as ToastRegion,
 } from 'react-aria-components';
 import { cx } from '../../lib/cx';
-import { Icon } from '../Icon';
+import { Icon, type IconName } from '../Icon';
 
 /*
  * React Aria's Toast is still exported under UNSTABLE_ prefixes (RAC 1.18).
@@ -57,7 +57,7 @@ const VARIANT_CLASS: Record<ToastVariant, string> = {
     info: 'bg-surface-2 text-fg-1 border-border-soft',
 };
 
-const VARIANT_ICON: Record<ToastVariant, string> = {
+const VARIANT_ICON: Record<ToastVariant, IconName> = {
     success: 'check-circle',
     error: 'alert-circle',
     info: 'info',

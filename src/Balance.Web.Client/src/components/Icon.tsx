@@ -97,7 +97,7 @@ import {
  * future API can carry them as strings); the component maps each name to a
  * tree-shaken lucide-react import. Add new icons here as screens grow.
  */
-const REGISTRY: Record<string, LucideIcon> = {
+const REGISTRY = {
     amphora: Amphora,
     'alert-circle': AlertCircle,
     'arrow-left-right': ArrowLeftRight,
@@ -186,11 +186,24 @@ const REGISTRY: Record<string, LucideIcon> = {
     wrench: Wrench,
     x: X,
     zap: Zap,
-};
+} satisfies Record<string, LucideIcon>;
 
-export type IconProps = LucideProps & { name: string };
+/**
+ * The set of icon names known to the registry. Typing call sites against this
+ * (instead of plain `string`) makes an unregistered `<Icon name="...">` a
+ * compile error rather than a silent question-mark fallback at runtime.
+ */
+export type IconName = keyof typeof REGISTRY;
+
+export type IconProps = LucideProps & { name: IconName };
+
+// Widened view used only for the defensive lookup below: indexing a string-keyed
+// record yields `LucideIcon | undefined` (noUncheckedIndexedAccess), so the
+// `?? CircleHelp` fallback stays meaningful for names that slip past the type via
+// a cast or a stale persisted value.
+const REGISTRY_LOOKUP: Record<string, LucideIcon> = REGISTRY;
 
 export function Icon({ name, ...rest }: IconProps) {
-    const Component = REGISTRY[name] ?? CircleHelp;
+    const Component: LucideIcon = REGISTRY_LOOKUP[name] ?? CircleHelp;
     return <Component {...rest} />;
 }

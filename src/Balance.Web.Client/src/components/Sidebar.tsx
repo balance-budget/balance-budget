@@ -5,7 +5,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Button } from 'react-aria-components';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import logo from '../assets/logo.svg';
-import { Icon } from './Icon';
+import { Icon, type IconName } from './Icon';
 import { accountIdentifier, useAccounts, type Account } from '../api/accounts';
 import { useCurrentUser, useLogout } from '../api/auth';
 import { useCurrencyCatalog } from '../api/currencies';
@@ -27,7 +27,7 @@ function SectionLabel({ children }: { children: ReactNode }) {
 type NavLink = {
     to: string;
     label: MessageDescriptor;
-    iconName: string;
+    iconName: IconName;
 };
 
 // Loans is the only built "Plan" surface, so it sits in the main nav after

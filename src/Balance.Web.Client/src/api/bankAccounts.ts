@@ -11,6 +11,7 @@ import {
 } from '../lib/domain';
 import { getJson, postFormData } from '../lib/http';
 import { toNumber } from '../lib/money';
+import type { IconName } from '../components/Icon';
 import type { Page } from '../lib/paging';
 import { createResourceCrud } from '../lib/resourceApi';
 import { bankTransactionsKeys } from './bankTransactions';
@@ -105,7 +106,7 @@ export function useImporterLabel(): (importer: {
     };
 }
 
-export function bankAccountTypeIcon(type: BankAccountType): string {
+export function bankAccountTypeIcon(type: BankAccountType): IconName {
     switch (type) {
         case 'Savings':
             return 'piggy-bank';
