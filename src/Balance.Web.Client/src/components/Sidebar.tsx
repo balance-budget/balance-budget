@@ -125,7 +125,15 @@ function matchActiveAccountId(pathname: string): string | null {
     return match?.[1] ?? null;
 }
 
-function SidebarAccountRow({ account, ctx }: { account: Account; ctx: AccountRowContext }) {
+function SidebarAccountRow({
+    account,
+    ctx,
+    active,
+}: {
+    account: Account;
+    ctx: AccountRowContext;
+    active: boolean;
+}) {
     const { t } = useLingui();
     const catalog = useCurrencyCatalog();
     const identifier = accountIdentifier(account);
@@ -134,35 +142,62 @@ function SidebarAccountRow({ account, ctx }: { account: Account; ctx: AccountRow
     // accumulated total, which isn't a meaningful figure in personal finance.
     // Only ledger (Asset/Liability) accounts have a balance worth showing here.
     const showBalance = isLedgerAccount(account);
+    // No indentation — the chart-of-accounts nests several levels deep and the
+    // sidebar is narrow. Instead each nested row sits on a translucent shade that
+    // compounds with depth (a flattened restatement of the old nested-container
+    // look, since RAC's Tree DOM is flat — ADR-0035).
+    const shade =
+        ctx.level > 1
+            ? // eslint-disable-next-line lingui/no-unlocalized-strings -- CSS color value, not UI copy.
+              { backgroundColor: `rgba(0, 0, 0, ${String(0.04 * (ctx.level - 1))})` }
+            : undefined;
     return (
-        <div className="flex-1 min-w-0 flex items-center gap-2 pl-1 pr-2 py-2 rounded-lg text-fg-1 cursor-pointer group-data-[hovered]:bg-surface-2 group-data-[selected]:bg-brand-primary-soft group-data-[selected]:text-brand-primary transition-colors">
-            {ctx.hasChildren ? (
-                <TreeExpandButton
-                    ariaLabel={ctx.isExpanded ? t`Collapse` : t`Expand`}
-                    isExpanded={ctx.isExpanded}
-                />
-            ) : (
-                <span className="shrink-0 w-[22px]" aria-hidden="true" />
-            )}
-            <AccountAvatar account={account} />
-            <div className="flex-1 min-w-0 flex flex-col leading-tight">
-                <span className="truncate text-sm">{account.name}</span>
-                {identifier && (
-                    <span className="text-xs text-fg-3 truncate tabular-nums">{identifier}</span>
+        <div className="relative" style={shade}>
+            <div
+                className={cx(
+                    'relative flex items-center gap-3 pl-2 pr-8 py-2 rounded-lg cursor-pointer transition-colors',
+                    active
+                        ? 'bg-brand-primary-soft text-brand-primary'
+                        : 'text-fg-1 group-data-[hovered]:bg-surface-2 group-data-[focus-visible]:bg-surface-2',
+                )}
+            >
+                <AccountAvatar account={account} />
+                <div className="flex-1 min-w-0 flex flex-col leading-tight">
+                    <span className="truncate text-sm">{account.name}</span>
+                    {identifier && (
+                        <span className="text-xs text-fg-3 truncate tabular-nums">
+                            {identifier}
+                        </span>
+                    )}
+                </div>
+                {showBalance && (
+                    <span
+                        className={cx(
+                            'shrink-0 text-xs tabular-nums',
+                            isNegative ? 'text-danger' : 'text-fg-2',
+                        )}
+                    >
+                        {formatMoney(
+                            account.balance.amount,
+                            account.balance.currencyCode,
+                            catalog,
+                            {
+                                decimals: false,
+                            },
+                        )}
+                    </span>
+                )}
+                {ctx.hasChildren && (
+                    // Floated over the row's reserved right padding (pr-8) so the
+                    // active/hover background spans the full row width while the
+                    // chevron stays its own clickable target.
+                    <TreeExpandButton
+                        ariaLabel={ctx.isExpanded ? t`Collapse` : t`Expand`}
+                        isExpanded={ctx.isExpanded}
+                        className="absolute right-1 top-1/2 -translate-y-1/2"
+                    />
                 )}
             </div>
-            {showBalance && (
-                <span
-                    className={cx(
-                        'shrink-0 text-xs tabular-nums',
-                        isNegative ? 'text-danger' : 'text-fg-2',
-                    )}
-                >
-                    {formatMoney(account.balance.amount, account.balance.currencyCode, catalog, {
-                        decimals: false,
-                    })}
-                </span>
-            )}
         </div>
     );
 }
@@ -228,9 +263,10 @@ function AccountsGroup() {
 
     // Auto-expand the ancestors of the account being viewed so it's never hidden
     // behind a collapsed parent — unioned with the user's persisted expansions.
+    const activeAccountId = matchActiveAccountId(pathname);
     const parentOf = new Map<string, string | null>(data.map(a => [a.id, a.parentId]));
     const effectiveExpanded = new Set<string>(expandedIds);
-    let cursor = parentOf.get(matchActiveAccountId(pathname) ?? '') ?? null;
+    let cursor = parentOf.get(activeAccountId ?? '') ?? null;
     while (cursor) {
         effectiveExpanded.add(cursor);
         cursor = parentOf.get(cursor) ?? null;
@@ -241,7 +277,7 @@ function AccountsGroup() {
             accounts={data}
             typeOrder={SIDEBAR_TYPE_ORDER}
             typeLabels={SIDEBAR_TYPE_LABELS}
-            indentRem={0.75}
+            treeClassName="gap-[2px]"
             expandedKeys={effectiveExpanded}
             onExpandedChange={keys => {
                 setExpandedIds(new Set([...keys].map(String)));
@@ -262,7 +298,13 @@ function AccountsGroup() {
                 });
             }}
             renderHeading={label => <SectionLabel>{label}</SectionLabel>}
-            renderRow={(account, ctx) => <SidebarAccountRow account={account} ctx={ctx} />}
+            renderRow={(account, ctx) => (
+                <SidebarAccountRow
+                    account={account}
+                    ctx={ctx}
+                    active={String(account.id) === activeAccountId}
+                />
+            )}
         />
     );
 }

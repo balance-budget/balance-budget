@@ -631,6 +631,7 @@ function InboxEditorReady({
                 </div>
                 <GridList
                     aria-label={t`Bank transactions`}
+                    variant="flat"
                     selectionMode="multiple"
                     selectedKeys={selection}
                     onSelectionChange={onSelectionChange}
@@ -991,8 +992,9 @@ function InboxRow({
     return (
         <GridListItem
             id={bankTransaction.id}
+            variant="flat"
             textValue={bankTransaction.description}
-            className="grid grid-cols-[28px_88px_1fr_minmax(180px,1.4fr)_minmax(180px,1.4fr)_120px_120px] gap-3 items-start px-2 py-2 border border-transparent border-b-border-soft last:border-b-transparent outline-none data-[selected]:bg-brand-primary-soft data-[focus-visible]:ring-1 data-[focus-visible]:ring-inset data-[focus-visible]:ring-brand-primary"
+            className="grid grid-cols-[28px_88px_1fr_minmax(180px,1.4fr)_minmax(180px,1.4fr)_120px_120px] gap-3 items-start px-2 py-2"
         >
             <div className="pt-2">
                 <CollectionSelectionCheckbox />

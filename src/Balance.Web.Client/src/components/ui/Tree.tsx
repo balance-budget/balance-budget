@@ -8,6 +8,7 @@ import {
     type TreeProps,
 } from 'react-aria-components';
 import { Icon } from '../Icon';
+import { cx } from '../../lib/cx';
 import { composeTailwindRenderProps } from './compose';
 
 /**
@@ -20,23 +21,20 @@ export function Tree<T extends object>(props: TreeProps<T>) {
     return (
         <AriaTree
             {...props}
-            className={composeTailwindRenderProps(
-                props.className,
-                'flex flex-col gap-[2px] outline-none',
-            )}
+            // Spacing between rows is left to the surface (border separators vs a
+            // gap), so no default gap here.
+            className={composeTailwindRenderProps(props.className, 'flex flex-col outline-none')}
         />
     );
 }
 
+/** `group` is set so row renderers can react to RAC's `data-[hovered]` /
+ *  `data-[selected]` / `data-[focus-visible]` state via `group-data-*`. */
 export function TreeItem(props: TreeItemProps) {
     return (
         <AriaTreeItem
             {...props}
-            className={composeTailwindRenderProps(
-                props.className,
-                'outline-none rounded-lg ' +
-                    'data-[focus-visible]:ring-1 data-[focus-visible]:ring-inset data-[focus-visible]:ring-brand-primary',
-            )}
+            className={composeTailwindRenderProps(props.className, 'group outline-none')}
         />
     );
 }
@@ -45,15 +43,20 @@ export function TreeItem(props: TreeItemProps) {
 export function TreeExpandButton({
     ariaLabel,
     isExpanded,
+    className,
 }: {
     ariaLabel: string;
     isExpanded: boolean;
+    className?: string;
 }) {
     return (
         <Button
             slot="chevron"
             aria-label={ariaLabel}
-            className="shrink-0 p-1 rounded-lg text-fg-3 cursor-pointer outline-none data-[hovered]:text-fg-1 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary"
+            className={cx(
+                'shrink-0 p-1 rounded-lg text-fg-3 cursor-pointer outline-none data-[hovered]:text-fg-1 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary',
+                className,
+            )}
         >
             <Icon
                 name="chevron-right"
