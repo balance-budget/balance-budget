@@ -2130,8 +2130,8 @@ msgid "Select an account…"
 msgstr "Select an account…"
 
 #. placeholder {0}: bankTransaction.description
-msgid "Select bank transaction {0}"
-msgstr "Select bank transaction {0}"
+#~ msgid "Select bank transaction {0}"
+#~ msgstr "Select bank transaction {0}"
 
 #. placeholder {0}: row.date
 #~ msgid "Select line of {0}"

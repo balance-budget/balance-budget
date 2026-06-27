@@ -1,5 +1,6 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useBlocker } from '@tanstack/react-router';
+import { type Selection } from 'react-aria-components';
 import { t } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
@@ -23,11 +24,8 @@ import {
 } from '../lib/domain';
 import { getJson, postJson } from '../lib/http';
 import {
-    allVisibleSelectionState,
     applyBulkPatchToOverride,
     buildSuggestionOverride,
-    clearVisibleSelection,
-    computeRangeSelection,
     distinctRowCurrencies,
     emptyDraft,
     isPristine,
@@ -35,9 +33,7 @@ import {
     resolveCounterpartyByIban,
     rowStatus,
     runSaveAll,
-    selectAllVisible,
     setBulkDismissDrafts,
-    toggleSelection,
     type BulkApplyCounterparty,
     type BulkApplyInput,
     type RowDraft,
@@ -106,8 +102,10 @@ export type InboxEditorModel = {
     isRowPristine: (id: BankTransactionId) => boolean;
     patchDraft: (id: BankTransactionId, patch: Partial<RowDraft>) => void;
     resetRow: (id: BankTransactionId) => void;
-    onRowCheckboxClick: (id: BankTransactionId, shiftKey: boolean) => void;
-    onHeaderCheckboxClick: () => void;
+    /** RAC selection change for the inbox GridList. */
+    onSelectionChange: (keys: Selection) => void;
+    /** Toggle the page-wide select-all (header checkbox). */
+    onToggleSelectAll: () => void;
     applyBulkDismiss: (reason: string) => void;
     discardAll: () => void;
 };
@@ -292,16 +290,15 @@ export function useInboxEditor({
     }
 
     // ── Selection ────────────────────────────────────────────────────────────
+    // RAC's GridList owns the selection mechanics (toggle, shift/keyboard range,
+    // select-all); this state just mirrors the selected keys so the bulk bar and
+    // Save-all can read them (ADR-0035).
     const [selection, setSelection] = useState<Set<BankTransactionId>>(new Set());
-    const selectionAnchorRef = useRef<BankTransactionId | null>(null);
     // Bulk picker values live here so they survive Apply, Clear, and pagination
     // — re-applying the same CP+Account across page after page of similar rows
     // is the common categorization flow.
     const [bulkCounterparty, setBulkCounterparty] = useState<BulkApplyCounterparty | null>(null);
     const [bulkAccountId, setBulkAccountId] = useState<AccountId | null>(null);
-    function setSelectionAnchor(id: BankTransactionId | null) {
-        selectionAnchorRef.current = id;
-    }
 
     const visibleIds = useMemo(() => visibleBts.map(b => b.id), [visibleBts]);
 
@@ -310,27 +307,19 @@ export function useInboxEditor({
         setDismissDrafts(new Map());
         setRowErrors(new Map());
         setSelection(new Set());
-        setSelectionAnchor(null);
     }
 
-    function onRowCheckboxClick(id: BankTransactionId, shiftKey: boolean) {
-        const anchor = selectionAnchorRef.current;
-        if (shiftKey && anchor !== null) {
-            setSelection(prev => computeRangeSelection(visibleIds, prev, anchor, id));
-        } else {
-            setSelection(prev => toggleSelection(prev, id));
-        }
-        setSelectionAnchor(id);
+    function onSelectionChange(keys: Selection) {
+        // "all" maps to every visible row on this page, preserving the
+        // page-bound, self-pruning behavior of the old select-all sentinel.
+        setSelection(
+            keys === 'all' ? new Set(visibleIds) : new Set(keys as Set<BankTransactionId>),
+        );
     }
 
-    function onHeaderCheckboxClick() {
-        const state = allVisibleSelectionState(selection, visibleIds);
-        if (state === 'all') {
-            setSelection(prev => clearVisibleSelection(prev, visibleIds));
-        } else {
-            setSelection(prev => selectAllVisible(prev, visibleIds));
-        }
-        setSelectionAnchor(null);
+    function onToggleSelectAll() {
+        const allSelected = visibleIds.length > 0 && visibleIds.every(id => selection.has(id));
+        setSelection(allSelected ? new Set() : new Set(visibleIds));
     }
 
     function visibleSelection(): BankTransactionId[] {
@@ -580,7 +569,6 @@ export function useInboxEditor({
         },
         onClearSelection: () => {
             setSelection(new Set());
-            setSelectionAnchor(null);
         },
         onSave: () => void saveAll(),
         onDiscard: () => {
@@ -610,8 +598,8 @@ export function useInboxEditor({
         isRowPristine,
         patchDraft,
         resetRow,
-        onRowCheckboxClick,
-        onHeaderCheckboxClick,
+        onSelectionChange,
+        onToggleSelectAll,
         applyBulkDismiss,
         discardAll,
     };

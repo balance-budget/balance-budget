@@ -12,13 +12,10 @@ import {
     type CounterpartyId,
 } from '../lib/domain';
 import {
-    allVisibleSelectionState,
     applyBulkPatchToOverride,
     buildRowRequest,
     buildSuggestionOverride,
-    clearVisibleSelection,
     collectNewCounterpartyNames,
-    computeRangeSelection,
     distinctRowCurrencies,
     emptyDraft,
     isPristine,
@@ -27,9 +24,7 @@ import {
     resolveCounterpartyByIban,
     rowStatus,
     runSaveAll,
-    selectAllVisible,
     setBulkDismissDrafts,
-    toggleSelection,
     type RowDraft,
     type SaveAllRow,
     type SaveAllAction,
@@ -663,97 +658,7 @@ describe('runSaveAll', () => {
 const id1 = asBankTransactionId('bt000001-0000-0000-0000-000000000101');
 const id2 = asBankTransactionId('bt000001-0000-0000-0000-000000000102');
 const id3 = asBankTransactionId('bt000001-0000-0000-0000-000000000103');
-const id4 = asBankTransactionId('bt000001-0000-0000-0000-000000000104');
 const id5 = asBankTransactionId('bt000001-0000-0000-0000-000000000105');
-
-describe('toggleSelection', () => {
-    it('adds an id when missing', () => {
-        const next = toggleSelection(new Set(), id1);
-        expect(next.has(id1)).toBe(true);
-    });
-
-    it('removes an id when present', () => {
-        const next = toggleSelection(new Set([id1, id2]), id1);
-        expect(next.has(id1)).toBe(false);
-        expect(next.has(id2)).toBe(true);
-    });
-
-    it('returns a new set (does not mutate input)', () => {
-        const start = new Set([id1]);
-        const next = toggleSelection(start, id2);
-        expect(start.has(id2)).toBe(false);
-        expect(next).not.toBe(start);
-    });
-});
-
-describe('computeRangeSelection', () => {
-    const ordered = [id1, id2, id3, id4, id5];
-
-    it('selects every id in the range when the target was unselected (anchor before target)', () => {
-        const next = computeRangeSelection(ordered, new Set(), id2, id4);
-        expect([...next].sort()).toEqual([id2, id3, id4].sort());
-    });
-
-    it('selects every id in the range when anchor is after target', () => {
-        const next = computeRangeSelection(ordered, new Set(), id4, id2);
-        expect([...next].sort()).toEqual([id2, id3, id4].sort());
-    });
-
-    it('deselects every id in the range when the target was already selected', () => {
-        const next = computeRangeSelection(ordered, new Set([id1, id2, id3, id4]), id2, id4);
-        expect(next.has(id1)).toBe(true);
-        expect(next.has(id2)).toBe(false);
-        expect(next.has(id3)).toBe(false);
-        expect(next.has(id4)).toBe(false);
-    });
-
-    it('preserves selection state of ids outside the range', () => {
-        const next = computeRangeSelection(ordered, new Set([id5]), id1, id2);
-        expect(next.has(id5)).toBe(true);
-        expect(next.has(id1)).toBe(true);
-        expect(next.has(id2)).toBe(true);
-    });
-
-    it('falls back to a single toggle when the anchor is no longer visible', () => {
-        const ghost = asBankTransactionId('bt000001-0000-0000-0000-0000000000ff');
-        const next = computeRangeSelection(ordered, new Set(), ghost, id3);
-        expect([...next]).toEqual([id3]);
-    });
-});
-
-describe('selectAllVisible / clearVisibleSelection', () => {
-    it('selectAllVisible unions the visible ids into the selection', () => {
-        const next = selectAllVisible(new Set([id5]), [id1, id2]);
-        expect(next.has(id1)).toBe(true);
-        expect(next.has(id2)).toBe(true);
-        expect(next.has(id5)).toBe(true);
-    });
-
-    it('clearVisibleSelection drops visible ids but leaves others', () => {
-        const next = clearVisibleSelection(new Set([id1, id2, id5]), [id1, id2]);
-        expect(next.has(id1)).toBe(false);
-        expect(next.has(id2)).toBe(false);
-        expect(next.has(id5)).toBe(true);
-    });
-});
-
-describe('allVisibleSelectionState', () => {
-    it("returns 'all' when every visible id is selected", () => {
-        expect(allVisibleSelectionState(new Set([id1, id2]), [id1, id2])).toBe('all');
-    });
-
-    it("returns 'none' when no visible id is selected", () => {
-        expect(allVisibleSelectionState(new Set(), [id1, id2])).toBe('none');
-    });
-
-    it("returns 'some' when only part of the visible set is selected", () => {
-        expect(allVisibleSelectionState(new Set([id1]), [id1, id2])).toBe('some');
-    });
-
-    it("returns 'none' for an empty visible list", () => {
-        expect(allVisibleSelectionState(new Set([id1]), [])).toBe('none');
-    });
-});
 
 describe('distinctRowCurrencies', () => {
     function row(currency: string) {
