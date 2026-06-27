@@ -548,8 +548,8 @@ msgstr "Verwerkt"
 msgid "Cleared and Reconciled lines are frozen. Only their description can be edited."
 msgstr "Verwerkte en afgestemde regels zijn bevroren. Alleen de omschrijving kan worden bewerkt."
 
-msgid "Cleared and reconciled lines can’t be moved."
-msgstr "Verwerkte en afgestemde regels kunnen niet worden verplaatst."
+#~ msgid "Cleared and reconciled lines can’t be moved."
+#~ msgstr "Verwerkte en afgestemde regels kunnen niet worden verplaatst."
 
 msgid "Close"
 msgstr "Sluiten"
@@ -2117,8 +2117,8 @@ msgstr "Zoeken…"
 msgid "Select a counterparty…"
 msgstr "Selecteer een tegenpartij…"
 
-msgid "Select all movable rows on this page"
-msgstr "Selecteer alle verplaatsbare rijen op deze pagina"
+#~ msgid "Select all movable rows on this page"
+#~ msgstr "Selecteer alle verplaatsbare rijen op deze pagina"
 
 msgid "Select all visible rows"
 msgstr "Selecteer alle zichtbare rijen"
@@ -2134,8 +2134,8 @@ msgid "Select bank transaction {0}"
 msgstr "Banktransactie {0} selecteren"
 
 #. placeholder {0}: row.date
-msgid "Select line of {0}"
-msgstr "Regel van {0} selecteren"
+#~ msgid "Select line of {0}"
+#~ msgstr "Regel van {0} selecteren"
 
 msgid "Select…"
 msgstr "Selecteren…"
