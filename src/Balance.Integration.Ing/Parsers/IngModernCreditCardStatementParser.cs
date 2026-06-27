@@ -21,7 +21,21 @@ internal sealed class IngModernCreditCardStatementParser : IngCreditCardStatemen
             ["Correctie"] = CreditCardTransactionType.Correction,
         }.ToFrozenDictionary();
 
-    protected override CreditCardStatement ParseStatement(
+    // Most-recent-first layout: rows are reversed before insertion (see IIngCreditCardStatementParser).
+    public override bool RowsAreMostRecentFirst => true;
+
+    // Structural signature: at least one line in the modern transaction-row shape. The modern and
+    // legacy transaction-line patterns are mutually exclusive, so the extractor's "exactly one
+    // layout must match" rule resolves the file unambiguously (ADR 0034).
+    public override bool CanParse(IReadOnlyList<string> lines)
+    {
+        ArgumentNullException.ThrowIfNull(lines);
+        return lines.Any(line =>
+            IngPatterns.ModernCreditCardTransactionLine().IsMatch(line.Trim())
+        );
+    }
+
+    public override CreditCardStatement ParseStatement(
         IReadOnlyList<string> lines,
         CancellationToken cancellationToken
     ) =>

@@ -358,7 +358,7 @@ internal sealed class BankTransactionImportServiceTests : EndpointsTestsBase
                 BankName: null,
                 AccountHolderName: null,
                 CurrencyCode: new CurrencyCode("EUR"),
-                ImporterKey: "Ing.CurrentAccount.V1",
+                ImporterKey: "Ing.CurrentAccount",
                 AccountId: accountResult.Value!.Id,
                 CounterpartyId: null
             ),
@@ -413,7 +413,7 @@ internal sealed class BankTransactionImportServiceTests : EndpointsTestsBase
             b => b.Id == bankAccountResult.Value!.Id,
             cancellationToken
         );
-        row.ImporterKey = "Ing.CurrentAccount.V1";
+        row.ImporterKey = "Ing.CurrentAccount";
         await db.SaveChangesAsync(cancellationToken);
         return await db
             .BankAccounts.AsNoTracking()

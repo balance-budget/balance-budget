@@ -15,7 +15,8 @@ public interface IBankTransactionExtractor
     /// <summary>
     /// Stable identifier for this extractor; matches <see cref="BankAccount.ImporterKey"/> and
     /// the <c>ImporterKey</c> stamped on every <see cref="BankTransaction"/> the extractor
-    /// produces. Bank-prefixed and version-suffixed, e.g. <c>Ing.CurrentAccount.V1</c>.
+    /// produces. Bank-prefixed and version-free — the logical importer identity, not a statement
+    /// layout version, e.g. <c>Ing.CurrentAccount</c> or <c>Ing.CreditCard</c> (ADR 0034).
     /// </summary>
     string Key { get; }
 

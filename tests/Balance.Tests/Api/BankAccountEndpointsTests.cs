@@ -344,7 +344,7 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
             AccountId: account.Id,
             CounterpartyId: null,
             Type: "Current",
-            ImporterKey: "Ing.CreditCard.V1"
+            ImporterKey: "Ing.CreditCard"
         );
         using var response = await client.PostAsJsonAsync(
             new Uri("/api/bank-accounts", UriKind.Relative),
@@ -365,16 +365,16 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
 
         var importers = await response.Content.ReadFromJsonAsync<List<BankAccountImporterDto>>();
         await Assert.That(importers).IsNotNull();
-        await Assert.That(importers!.Any(i => i.Key == "Ing.CurrentAccount.V1")).IsTrue();
-        await Assert.That(importers.Any(i => i.Key == "Ing.CreditCard.V1")).IsTrue();
+        await Assert.That(importers!.Any(i => i.Key == "Ing.CurrentAccount")).IsTrue();
+        await Assert.That(importers.Any(i => i.Key == "Ing.CreditCard")).IsTrue();
         await Assert
-            .That(importers.Single(i => i.Key == "Ing.CurrentAccount.V1").SupportedType)
+            .That(importers.Single(i => i.Key == "Ing.CurrentAccount").SupportedType)
             .IsEqualTo("Current");
         await Assert
-            .That(importers.Single(i => i.Key == "Ing.CreditCard.V1").SupportedType)
+            .That(importers.Single(i => i.Key == "Ing.CreditCard").SupportedType)
             .IsEqualTo("Card");
         await Assert
-            .That(importers.Single(i => i.Key == "Ing.CurrentAccount.V1").BankName)
+            .That(importers.Single(i => i.Key == "Ing.CurrentAccount").BankName)
             .IsEqualTo("ING");
     }
 

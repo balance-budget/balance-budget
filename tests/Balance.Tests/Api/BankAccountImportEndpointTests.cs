@@ -224,7 +224,7 @@ internal sealed class BankAccountImportEndpointTests : EndpointsTestsBase
         await Assert.That(sepa.ForeignAmount).IsNull();
         await Assert.That(sepa.ForeignCurrencyCode).IsNull();
         await Assert.That(sepa.ExchangeRate).IsNull();
-        await Assert.That(sepa.ImporterKey).IsEqualTo("Ing.CurrentAccount.V1");
+        await Assert.That(sepa.ImporterKey).IsEqualTo("Ing.CurrentAccount");
 
         var fx = rows.Single(r => r.Description == "ATM Belarus");
         await Assert.That(fx.ForeignAmount).IsEqualTo(10000L);
@@ -233,7 +233,7 @@ internal sealed class BankAccountImportEndpointTests : EndpointsTestsBase
         await Assert.That(fx.ValueDate).IsEqualTo(new DateOnly(2026, 1, 28));
         await Assert.That(fx.MandateId).IsNull();
         await Assert.That(fx.SepaCreditorId).IsNull();
-        await Assert.That(fx.ImporterKey).IsEqualTo("Ing.CurrentAccount.V1");
+        await Assert.That(fx.ImporterKey).IsEqualTo("Ing.CurrentAccount");
 
         var etos = rows.Single(r => r.Description == "Etos");
         // Etos row has no SEPA / FX note fields — only the card-sequence date.
@@ -243,7 +243,7 @@ internal sealed class BankAccountImportEndpointTests : EndpointsTestsBase
         await Assert.That(etos.ForeignAmount).IsNull();
         await Assert.That(etos.ForeignCurrencyCode).IsNull();
         await Assert.That(etos.ExchangeRate).IsNull();
-        await Assert.That(etos.ImporterKey).IsEqualTo("Ing.CurrentAccount.V1");
+        await Assert.That(etos.ImporterKey).IsEqualTo("Ing.CurrentAccount");
     }
 
     [Test]
@@ -392,7 +392,7 @@ internal sealed class BankAccountImportEndpointTests : EndpointsTestsBase
             AccountId: accountId,
             CounterpartyId: null,
             Type: "Current",
-            ImporterKey: "Ing.CurrentAccount.V1"
+            ImporterKey: "Ing.CurrentAccount"
         );
         using var response = await client.PostAsJsonAsync(
             new Uri("/api/bank-accounts", UriKind.Relative),
