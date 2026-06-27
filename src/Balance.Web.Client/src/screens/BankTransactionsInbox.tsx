@@ -24,6 +24,8 @@ import { FormErrorBanner } from '../components/FormErrorBanner';
 import { Icon } from '../components/Icon';
 import { Form } from 'react-aria-components';
 import { Button } from '../components/ui/Button';
+import { CollectionSelectionCheckbox } from '../components/ui/collectionSelection';
+import { GridList, GridListItem } from '../components/ui/GridList';
 import { Modal, ModalFooter } from '../components/ui/Modal';
 import { SelectionCheckbox } from '../components/ui/SelectionCheckbox';
 import { TooltipHint } from '../components/ui/Tooltip';
@@ -41,13 +43,7 @@ import { type AccountId, type CounterpartyId } from '../lib/domain';
 import { handleFormError } from '../lib/formErrors';
 import { formatMoney } from '../lib/money';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
-import {
-    allVisibleSelectionState,
-    rowStatus,
-    type AllVisibleSelectionState,
-    type RowDraft,
-    type RowStatus,
-} from './bankTransactionsInbox.state';
+import { rowStatus, type RowDraft, type RowStatus } from './bankTransactionsInbox.state';
 import { useInboxEditor, type ActionBarProps } from './bankTransactionsInbox.hooks';
 
 const PAGE_SIZE = 50;
@@ -579,7 +575,6 @@ function InboxEditorReady({
         visibleIds,
         selection,
         saving,
-        prefillByBt,
         dismissDrafts,
         rowErrors,
         counterpartyItems,
@@ -595,11 +590,14 @@ function InboxEditorReady({
         isRowPristine,
         patchDraft,
         resetRow,
-        onRowCheckboxClick,
-        onHeaderCheckboxClick,
+        onSelectionChange,
+        onToggleSelectAll,
         applyBulkDismiss,
         discardAll,
     } = useInboxEditor({ bankTransactions, accounts, counterparties, bankAccounts });
+
+    const allSelected = visibleIds.length > 0 && visibleIds.every(id => selection.has(id));
+    const someSelected = !allSelected && visibleIds.some(id => selection.has(id));
 
     return (
         <div className="flex flex-col">
@@ -607,8 +605,9 @@ function InboxEditorReady({
             <div className="hidden lg:flex flex-col">
                 <div className="grid grid-cols-[28px_88px_1fr_minmax(180px,1.4fr)_minmax(180px,1.4fr)_120px_120px] gap-3 px-2 pb-2 text-xs text-fg-3 uppercase tracking-wider border-b border-border-soft">
                     <HeaderSelectAllCheckbox
-                        state={allVisibleSelectionState(selection, visibleIds)}
-                        onClick={onHeaderCheckboxClick}
+                        allSelected={allSelected}
+                        someSelected={someSelected}
+                        onToggle={onToggleSelectAll}
                         disabled={saving || visibleIds.length === 0}
                     />
                     <span>
@@ -630,40 +629,41 @@ function InboxEditorReady({
                         <Trans>Actions</Trans>
                     </span>
                 </div>
-                {visibleBts.map(bt => {
-                    const prefill = prefillByBt.get(bt.id);
-                    if (!prefill) return null;
-                    const draft = draftFor(bt.id);
-                    const pristine = isRowPristine(bt.id) && !dismissDrafts.has(bt.id);
-                    return (
-                        <InboxRow
-                            key={bt.id}
-                            bankTransaction={bt}
-                            draft={draft}
-                            pristine={pristine}
-                            dismissDraft={dismissDrafts.get(bt.id) ?? null}
-                            error={rowErrors.get(bt.id) ?? null}
-                            counterpartyItems={counterpartyItems}
-                            currencyCode={bt.money.currencyCode}
-                            excludeAccountId={
-                                bankAccountsById.get(bt.bankAccountId)?.accountId ?? null
-                            }
-                            catalog={catalog}
-                            saving={saving}
-                            selected={selection.has(bt.id)}
-                            onCheckboxClick={shiftKey => {
-                                onRowCheckboxClick(bt.id, shiftKey);
-                            }}
-                            onPatch={patch => {
-                                patchDraft(bt.id, patch);
-                            }}
-                            onReset={() => {
-                                resetRow(bt.id);
-                            }}
-                            onDismiss={onDismiss}
-                        />
-                    );
-                })}
+                <GridList
+                    aria-label={t`Bank transactions`}
+                    selectionMode="multiple"
+                    selectedKeys={selection}
+                    onSelectionChange={onSelectionChange}
+                    items={visibleBts}
+                >
+                    {bt => {
+                        const draft = draftFor(bt.id);
+                        const pristine = isRowPristine(bt.id) && !dismissDrafts.has(bt.id);
+                        return (
+                            <InboxRow
+                                bankTransaction={bt}
+                                draft={draft}
+                                pristine={pristine}
+                                dismissDraft={dismissDrafts.get(bt.id) ?? null}
+                                error={rowErrors.get(bt.id) ?? null}
+                                counterpartyItems={counterpartyItems}
+                                currencyCode={bt.money.currencyCode}
+                                excludeAccountId={
+                                    bankAccountsById.get(bt.bankAccountId)?.accountId ?? null
+                                }
+                                catalog={catalog}
+                                saving={saving}
+                                onPatch={patch => {
+                                    patchDraft(bt.id, patch);
+                                }}
+                                onReset={() => {
+                                    resetRow(bt.id);
+                                }}
+                                onDismiss={onDismiss}
+                            />
+                        );
+                    }}
+                </GridList>
             </div>
             <div className="lg:hidden flex flex-col">
                 {visibleBts.map(bt => (
@@ -736,46 +736,25 @@ function InboxEditorReady({
     );
 }
 
-function RowSelectCheckbox({
-    selected,
-    disabled,
-    onClick,
-    ariaLabel,
-}: {
-    selected: boolean;
-    disabled: boolean;
-    onClick: (shiftKey: boolean) => void;
-    ariaLabel: string;
-}) {
-    return (
-        <SelectionCheckbox
-            aria-label={ariaLabel}
-            isSelected={selected}
-            isDisabled={disabled}
-            onChange={({ shiftKey }) => {
-                onClick(shiftKey);
-            }}
-        />
-    );
-}
-
 function HeaderSelectAllCheckbox({
-    state,
-    onClick,
+    allSelected,
+    someSelected,
+    onToggle,
     disabled,
 }: {
-    state: AllVisibleSelectionState;
-    onClick: () => void;
+    allSelected: boolean;
+    someSelected: boolean;
+    onToggle: () => void;
     disabled: boolean;
 }) {
     const { t } = useLingui();
     return (
         <SelectionCheckbox
             aria-label={t`Select all visible rows`}
-            isSelected={state === 'all'}
-            isIndeterminate={state === 'some'}
+            isSelected={allSelected}
+            isIndeterminate={someSelected}
             isDisabled={disabled}
-            onChange={onClick}
+            onChange={onToggle}
         />
     );
 }
@@ -988,8 +967,6 @@ function InboxRow({
     excludeAccountId,
     catalog,
     saving,
-    selected,
-    onCheckboxClick,
     onPatch,
     onReset,
     onDismiss,
@@ -1004,25 +981,21 @@ function InboxRow({
     excludeAccountId: AccountId | null;
     catalog: CurrencyCatalog;
     saving: boolean;
-    selected: boolean;
-    onCheckboxClick: (shiftKey: boolean) => void;
     onPatch: (patch: Partial<RowDraft>) => void;
     onReset: () => void;
     onDismiss: (bt: BankTransaction) => void;
 }) {
-    const { t } = useLingui();
     const status = rowStatus(draft);
     const willDismiss = dismissDraft !== null;
 
     return (
-        <div className="grid grid-cols-[28px_88px_1fr_minmax(180px,1.4fr)_minmax(180px,1.4fr)_120px_120px] gap-3 items-start px-2 py-2 border-b border-border-soft last:border-b-0">
+        <GridListItem
+            id={bankTransaction.id}
+            textValue={bankTransaction.description}
+            className="grid grid-cols-[28px_88px_1fr_minmax(180px,1.4fr)_minmax(180px,1.4fr)_120px_120px] gap-3 items-start px-2 py-2 border border-transparent border-b-border-soft last:border-b-transparent outline-none data-[selected]:bg-brand-primary-soft data-[focus-visible]:ring-1 data-[focus-visible]:ring-inset data-[focus-visible]:ring-brand-primary"
+        >
             <div className="pt-2">
-                <RowSelectCheckbox
-                    selected={selected}
-                    disabled={saving}
-                    onClick={onCheckboxClick}
-                    ariaLabel={t`Select bank transaction ${bankTransaction.description}`}
-                />
+                <CollectionSelectionCheckbox />
             </div>
             <div className="flex flex-col leading-tight pt-2">
                 <span className="text-xs text-fg-3 tabular-nums">
@@ -1090,7 +1063,7 @@ function InboxRow({
                 onReset={onReset}
                 onDismiss={onDismiss}
             />
-        </div>
+        </GridListItem>
     );
 }
 
