@@ -13,6 +13,7 @@ import { getJson, postFormData } from '../lib/http';
 import { toNumber } from '../lib/money';
 import type { Page } from '../lib/paging';
 import { createResourceCrud } from '../lib/resourceApi';
+import { bankTransactionsKeys } from './bankTransactions';
 
 type WireBankAccount = components['schemas']['BankAccountOutput'];
 type WirePagedBankAccounts = components['schemas']['PagedOutputOfBankAccountOutput'];
@@ -278,12 +279,12 @@ export function useImportStatement() {
             return toImportResult(wire);
         },
         onSuccess: async (_result, vars) => {
-            // BankTransactions for this BankAccount may have changed; no SPA surface
-            // reads them yet, so invalidate broadly under the BankAccount key to
-            // future-proof the next slice that lists them.
+            // Importing creates BankTransactions for this BankAccount, so refresh both
+            // the BankAccount (its derived figures) and the BankTransactions inbox/list.
             await queryClient.invalidateQueries({
                 queryKey: [...bankAccountsKeys.all, vars.bankAccountId],
             });
+            await queryClient.invalidateQueries({ queryKey: bankTransactionsKeys.all });
         },
     });
 }
@@ -309,6 +310,7 @@ export function useDetectAndImportStatements() {
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: bankAccountsKeys.all });
+            await queryClient.invalidateQueries({ queryKey: bankTransactionsKeys.all });
         },
     });
 }
