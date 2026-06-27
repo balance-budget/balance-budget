@@ -548,8 +548,8 @@ msgstr "已結清"
 msgid "Cleared and Reconciled lines are frozen. Only their description can be edited."
 msgstr "已結清與已對帳的橫列項目已凍結。僅可編輯其描述。"
 
-msgid "Cleared and reconciled lines can’t be moved."
-msgstr "已結清與已對帳的橫列項目無法移動。"
+#~ msgid "Cleared and reconciled lines can’t be moved."
+#~ msgstr "已結清與已對帳的橫列項目無法移動。"
 
 msgid "Close"
 msgstr "關閉"
@@ -2117,8 +2117,8 @@ msgstr "搜尋中…"
 msgid "Select a counterparty…"
 msgstr "選取交易對方…"
 
-msgid "Select all movable rows on this page"
-msgstr "選取此頁所有可移動的列"
+#~ msgid "Select all movable rows on this page"
+#~ msgstr "選取此頁所有可移動的列"
 
 msgid "Select all visible rows"
 msgstr "選取所有可見的列"
@@ -2134,8 +2134,8 @@ msgid "Select bank transaction {0}"
 msgstr "選取銀行交易 {0}"
 
 #. placeholder {0}: row.date
-msgid "Select line of {0}"
-msgstr "選取 {0} 的列"
+#~ msgid "Select line of {0}"
+#~ msgstr "選取 {0} 的列"
 
 msgid "Select…"
 msgstr "選取…"
