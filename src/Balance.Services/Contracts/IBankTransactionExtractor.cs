@@ -20,6 +20,14 @@ public interface IBankTransactionExtractor
     string Key { get; }
 
     /// <summary>
+    /// The proper-noun name of the bank this extractor reads, e.g. <c>"ING"</c>. A presentation
+    /// hint only: the frontend composes the human importer label from this plus the
+    /// (translated) <see cref="SupportedType"/> word, so no user-facing copy lives in backend
+    /// code (ADR 0022/0034).
+    /// </summary>
+    string BankName { get; }
+
+    /// <summary>
     /// The <see cref="BankAccountType"/> this extractor accepts. The dispatcher refuses any
     /// pairing where the BankAccount's <c>Type</c> disagrees with this value.
     /// </summary>

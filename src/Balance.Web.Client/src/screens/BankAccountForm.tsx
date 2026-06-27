@@ -4,6 +4,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import {
     useBankAccountImporters,
     useCreateBankAccount,
+    useImporterLabel,
     useUpdateBankAccount,
     type BankAccount,
     type BankAccountType,
@@ -92,6 +93,7 @@ export function BankAccountFormModal(props: Props) {
     const counterparties = useCounterparties();
     const currencies = useCurrencies();
     const importers = useBankAccountImporters();
+    const importerLabel = useImporterLabel();
 
     const [form, setForm] = useState<FormState>(() => initialState(props));
     const [topError, setTopError] = useState<string | null>(null);
@@ -348,8 +350,8 @@ export function BankAccountFormModal(props: Props) {
                             placeholder={t`(none)`}
                         >
                             {importerOptions.map(i => (
-                                <SelectItem key={i.key} id={i.key}>
-                                    {i.key}
+                                <SelectItem key={i.key} id={i.key} textValue={importerLabel(i)}>
+                                    {importerLabel(i)}
                                 </SelectItem>
                             ))}
                         </Select>

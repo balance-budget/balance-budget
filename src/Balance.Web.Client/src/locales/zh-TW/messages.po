@@ -744,6 +744,9 @@ msgstr "建立中…"
 msgid "Credit"
 msgstr "貸方"
 
+msgid "Credit card"
+msgstr "信用卡"
+
 msgid "Currencies"
 msgstr "貨幣"
 
@@ -755,6 +758,9 @@ msgstr "已刪除貨幣。"
 
 msgid "Current"
 msgstr "目前"
+
+msgid "Current account"
+msgstr "活期帳戶"
 
 msgid "Custom"
 msgstr "自訂"
@@ -2042,6 +2048,9 @@ msgstr "儲存中…"
 
 msgid "Savings"
 msgstr "儲蓄"
+
+msgid "Savings account"
+msgstr "儲蓄帳戶"
 
 msgid "Scale"
 msgstr "小數位數"

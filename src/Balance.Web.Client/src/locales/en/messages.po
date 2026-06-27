@@ -744,6 +744,9 @@ msgstr "Creating…"
 msgid "Credit"
 msgstr "Credit"
 
+msgid "Credit card"
+msgstr "Credit card"
+
 msgid "Currencies"
 msgstr "Currencies"
 
@@ -755,6 +758,9 @@ msgstr "Currency deleted."
 
 msgid "Current"
 msgstr "Current"
+
+msgid "Current account"
+msgstr "Current account"
 
 msgid "Custom"
 msgstr "Custom"
@@ -2042,6 +2048,9 @@ msgstr "Saving…"
 
 msgid "Savings"
 msgstr "Savings"
+
+msgid "Savings account"
+msgstr "Savings account"
 
 msgid "Scale"
 msgstr "Scale"

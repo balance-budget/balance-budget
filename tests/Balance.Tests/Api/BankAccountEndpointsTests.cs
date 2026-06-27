@@ -373,6 +373,9 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
         await Assert
             .That(importers.Single(i => i.Key == "Ing.CreditCard.V1").SupportedType)
             .IsEqualTo("Card");
+        await Assert
+            .That(importers.Single(i => i.Key == "Ing.CurrentAccount.V1").BankName)
+            .IsEqualTo("ING");
     }
 
     [Test]
@@ -805,7 +808,7 @@ internal sealed record BankAccountDto(
     Guid? CounterpartyId
 );
 
-internal sealed record BankAccountImporterDto(string Key, string SupportedType);
+internal sealed record BankAccountImporterDto(string Key, string BankName, string SupportedType);
 
 internal sealed record CreateBankAccountRequestDto(
     string? Iban,

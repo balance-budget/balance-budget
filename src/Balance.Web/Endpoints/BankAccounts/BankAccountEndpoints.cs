@@ -66,7 +66,7 @@ internal static class BankAccountEndpoints
     )
     {
         var registry = extractors
-            .Select(e => new BankAccountImporterOutput(e.Key, e.SupportedType))
+            .Select(e => new BankAccountImporterOutput(e.Key, e.BankName, e.SupportedType))
             .OrderBy(e => e.Key, StringComparer.Ordinal)
             .ToList();
         return TypedResults.Ok<IReadOnlyList<BankAccountImporterOutput>>(registry);

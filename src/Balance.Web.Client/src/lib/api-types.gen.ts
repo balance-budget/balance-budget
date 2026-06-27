@@ -974,6 +974,7 @@ export interface components {
         BankAccountId: string;
         BankAccountImporterOutput: {
             key: string;
+            bankName: string;
             supportedType: components["schemas"]["BankAccountType"];
         };
         BankAccountOutput: {

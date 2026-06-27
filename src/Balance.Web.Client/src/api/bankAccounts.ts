@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLingui } from '@lingui/react/macro';
 import type { components } from '../lib/api-types.gen';
 import {
     asAccountId,
@@ -45,6 +46,7 @@ export type BankAccount = {
 
 export type BankAccountImporter = {
     key: string;
+    bankName: string;
     supportedType: BankAccountType;
 };
 
@@ -65,6 +67,28 @@ export function formatBankAccountIdentifier(ba: BankAccount): string | null {
 
 export function formatBankAccountLabel(ba: BankAccount): string {
     return ba.bankName ?? formatBankAccountIdentifier(ba) ?? 'Bank account';
+}
+
+/**
+ * Composes a friendly importer label — the bank's proper noun plus the translated account-type
+ * word (e.g. "ING · Current account") — instead of exposing the raw ImporterKey. The type word
+ * goes through Lingui so it stays translatable (ADR-0022/0034); the bank name is a proper noun
+ * supplied by the backend and is never translated.
+ */
+export function useImporterLabel(): (importer: {
+    bankName: string;
+    supportedType: BankAccountType;
+}) => string {
+    const { t } = useLingui();
+    return ({ bankName, supportedType }) => {
+        const typeWord =
+            supportedType === 'Savings'
+                ? t`Savings account`
+                : supportedType === 'Card'
+                  ? t`Credit card`
+                  : t`Current account`;
+        return `${bankName} · ${typeWord}`;
+    };
 }
 
 export function bankAccountTypeIcon(type: BankAccountType): string {
@@ -120,7 +144,7 @@ function toBankAccount(wire: WireBankAccount): BankAccount {
 }
 
 function toBankAccountImporter(wire: WireBankAccountImporter): BankAccountImporter {
-    return { key: wire.key, supportedType: wire.supportedType };
+    return { key: wire.key, bankName: wire.bankName, supportedType: wire.supportedType };
 }
 
 function toImportResult(wire: WireImportResult): ImportResult {
