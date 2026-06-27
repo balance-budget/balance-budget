@@ -23,8 +23,10 @@ import { ErrorState } from '../components/ErrorState';
 import { FormErrorBanner } from '../components/FormErrorBanner';
 import { Icon } from '../components/Icon';
 import { Form } from 'react-aria-components';
+import { Button } from '../components/ui/Button';
 import { Modal, ModalFooter } from '../components/ui/Modal';
 import { SelectionCheckbox } from '../components/ui/SelectionCheckbox';
+import { TooltipHint } from '../components/ui/Tooltip';
 import { TextField } from '../components/ui/TextField';
 import { SearchField } from '../components/ui/SearchField';
 import { selectedKey } from '../components/ui/selection';
@@ -891,15 +893,17 @@ function ActionBar({
                         >
                             <Trans>Apply to {selectionCount.toString()} selected</Trans>
                         </button>
-                        <button
-                            type="button"
-                            onClick={onApplySuggestions}
-                            disabled={saving}
-                            title={t`Fill the selected rows with the IBAN-matched counterparty and the last-used account for that counterparty.`}
-                            className="px-3 py-[7px] rounded-lg text-sm font-medium text-fg-1 border border-border-strong hover:bg-surface-2 disabled:opacity-60"
+                        <TooltipHint
+                            hint={t`Fill the selected rows with the IBAN-matched counterparty and the last-used account for that counterparty.`}
                         >
-                            <Trans>Apply suggestions</Trans>
-                        </button>
+                            <Button
+                                onPress={onApplySuggestions}
+                                isDisabled={saving}
+                                className="h-auto px-3 py-[7px] text-fg-1 border-border-strong data-[hovered]:bg-surface-2"
+                            >
+                                <Trans>Apply suggestions</Trans>
+                            </Button>
+                        </TooltipHint>
                         <button
                             type="button"
                             onClick={onBulkDismiss}
