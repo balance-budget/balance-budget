@@ -3,38 +3,41 @@ using Balance.Data.Entities;
 using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
 using Balance.Integration.Ing.Contracts;
+using Balance.Integration.Ing.Helpers;
 using Balance.Integration.Ing.Models.CreditCard;
 using Balance.Services.BankTransactions;
 using Balance.Services.Contracts;
-using CsvHelper;
 
 namespace Balance.Integration.Ing.Importers;
 
-// Shared extraction pipeline for the ING credit-card layouts. Both layouts parse into the same
-// CreditCardStatement and map identically to BankTransactions; subclasses only supply their
-// importer Key, the layout-specific parser, and (optionally) the row insertion order.
-internal abstract class IngCreditCardTransactionExtractor : IBankTransactionExtractor
+// The single logical ING credit-card importer (ADR 0034). It reads the PDF once, then sniffs the
+// concrete statement layout (legacy pre-2016 vs current) by content — never filename or date —
+// and parses with the one matching layout. Both layouts map identically to BankTransactions.
+internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtractor
 {
     private static readonly CurrencyCode Eur = new("EUR");
 
-    private readonly IIngCreditCardStatementParser _parser;
+    private readonly IReadOnlyList<IIngCreditCardStatementParser> _layouts;
 
-    protected IngCreditCardTransactionExtractor(IIngCreditCardStatementParser parser) =>
-        _parser = parser;
+    public IngCreditCardTransactionExtractor(IEnumerable<IIngCreditCardStatementParser> layouts) =>
+        _layouts = layouts.ToList();
 
-    public abstract string Key { get; }
+    public string Key => "Ing.CreditCard";
     public string BankName => "ING";
     public BankAccountType SupportedType => BankAccountType.Card;
 
-    // ING statements list the most recent transaction first. Layouts that need insertion order —
-    // and the time-ordered BankTransaction.Id minted per row — to follow BookingDate override
-    // this to reverse, so a list sorted by (BookingDate, Id) breaks intra-day ties in
-    // chronological order.
-    protected virtual IEnumerable<CreditCardStatementRow> OrderForInsertion(
-        IReadOnlyList<CreditCardStatementRow> rows
-    ) => rows;
+    public Task<Result<IReadOnlyList<BankTransaction>>> ExtractAsync(
+        BankAccount bankAccount,
+        Stream stream,
+        CancellationToken cancellationToken
+    )
+    {
+        ArgumentNullException.ThrowIfNull(bankAccount);
+        ArgumentNullException.ThrowIfNull(stream);
+        return Task.FromResult(Extract(bankAccount, stream, cancellationToken));
+    }
 
-    public async Task<Result<IReadOnlyList<BankTransaction>>> ExtractAsync(
+    private Result<IReadOnlyList<BankTransaction>> Extract(
         BankAccount bankAccount,
         Stream stream,
         CancellationToken cancellationToken
@@ -53,21 +56,36 @@ internal abstract class IngCreditCardTransactionExtractor : IBankTransactionExtr
         {
             return new InvariantError(
                 ErrorCodes.ImportCurrencyMismatch,
-                $"ING current-account statements are in EUR; this BankAccount uses "
+                $"ING credit-card statements are in EUR; this BankAccount uses "
                     + $"{bankAccount.CurrencyCode?.Value ?? "(none)"}."
             );
         }
 
-        CreditCardStatement statement;
-        try
-        {
-            statement = await _parser.ParseStatementsAsync(stream, cancellationToken);
-        }
-        catch (CsvHelperException ex)
+        var lines = IngCreditCardPdfReader.ExtractLines(stream, cancellationToken);
+
+        // Content sniffing: exactly one layout must recognize the file. None means an
+        // unrecognized export; more than one would be a bug-class layout overlap. Either way we
+        // fail loudly rather than guess (ADR 0034).
+        var matching = _layouts.Where(layout => layout.CanParse(lines)).ToList();
+        if (matching.Count != 1)
         {
             return new InvariantError(
                 ErrorCodes.ImportFormatInvalid,
-                $"Failed to parse ING statement CSV: {ex.Message}"
+                "This file does not match a known ING credit-card statement layout."
+            );
+        }
+
+        var layout = matching[0];
+        CreditCardStatement statement;
+        try
+        {
+            statement = layout.ParseStatement(lines, cancellationToken);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return new InvariantError(
+                ErrorCodes.ImportFormatInvalid,
+                $"Failed to parse ING credit-card statement: {ex.Message}"
             );
         }
 
@@ -96,8 +114,14 @@ internal abstract class IngCreditCardTransactionExtractor : IBankTransactionExtr
             }
         }
 
+        // Some layouts list the most recent transaction first; reverse those so the time-ordered
+        // BankTransaction.Id minted per row follows BookingDate.
+        var ordered = layout.RowsAreMostRecentFirst
+            ? statement.Rows.AsEnumerable().Reverse()
+            : statement.Rows;
+
         var bankTransactions = new List<BankTransaction>(statement.Rows.Count);
-        foreach (var row in OrderForInsertion(statement.Rows))
+        foreach (var row in ordered)
         {
             var mapped = ToBankTransaction(bankAccount.Id, row, statement.LinkedAccount);
             if (mapped.IsFailure)

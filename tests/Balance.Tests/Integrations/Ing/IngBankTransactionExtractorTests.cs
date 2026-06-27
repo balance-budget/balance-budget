@@ -363,8 +363,8 @@ internal sealed class IngBankTransactionExtractorTests
 
         await Assert.That(result.IsSuccess).IsTrue();
         var rows = result.Value!;
-        await Assert.That(rows[0].ImporterKey).IsEqualTo("Ing.CurrentAccount.V1");
-        await Assert.That(rows[1].ImporterKey).IsEqualTo("Ing.CurrentAccount.V1");
+        await Assert.That(rows[0].ImporterKey).IsEqualTo("Ing.CurrentAccount");
+        await Assert.That(rows[1].ImporterKey).IsEqualTo("Ing.CurrentAccount");
     }
 
     [Test]
@@ -395,7 +395,7 @@ internal sealed class IngBankTransactionExtractorTests
         await Assert.That(row.ForeignAmount).IsNull();
         await Assert.That(row.ForeignCurrencyCode).IsNull();
         await Assert.That(row.ExchangeRate).IsNull();
-        await Assert.That(row.ImporterKey).IsEqualTo("Ing.CurrentAccount.V1");
+        await Assert.That(row.ImporterKey).IsEqualTo("Ing.CurrentAccount");
     }
 
     [Test]
@@ -423,7 +423,7 @@ internal sealed class IngBankTransactionExtractorTests
         await Assert.That(row.ValueDate).IsEqualTo(new DateOnly(2026, 12, 31));
         await Assert.That(row.MandateId).IsNull();
         await Assert.That(row.SepaCreditorId).IsNull();
-        await Assert.That(row.ImporterKey).IsEqualTo("Ing.CurrentAccount.V1");
+        await Assert.That(row.ImporterKey).IsEqualTo("Ing.CurrentAccount");
     }
 
     [Test]
@@ -450,7 +450,7 @@ internal sealed class IngBankTransactionExtractorTests
         await Assert.That(row.ForeignCurrencyCode).IsNull();
         await Assert.That(row.ExchangeRate).IsNull();
         // ImporterKey is always stamped, even for rows without note fields.
-        await Assert.That(row.ImporterKey).IsEqualTo("Ing.CurrentAccount.V1");
+        await Assert.That(row.ImporterKey).IsEqualTo("Ing.CurrentAccount");
     }
 
     [Test]

@@ -17,7 +17,7 @@ namespace Balance.Integration.Ing.Importers;
 
 internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
 {
-    private const string ImporterKey = "Ing.CurrentAccount.V1";
+    private const string ImporterKey = "Ing.CurrentAccount";
 
     public string Key => ImporterKey;
     public string BankName => "ING";

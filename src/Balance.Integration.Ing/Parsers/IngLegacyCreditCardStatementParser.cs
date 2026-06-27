@@ -7,7 +7,18 @@ namespace Balance.Integration.Ing.Parsers;
 
 internal sealed class IngLegacyCreditCardStatementParser : IngCreditCardStatementParser
 {
-    protected override CreditCardStatement ParseStatement(
+    // Structural signature: at least one line in the legacy transaction-row shape. The legacy and
+    // modern transaction-line patterns are mutually exclusive, so the extractor's "exactly one
+    // layout must match" rule resolves the file unambiguously (ADR 0034).
+    public override bool CanParse(IReadOnlyList<string> lines)
+    {
+        ArgumentNullException.ThrowIfNull(lines);
+        return lines.Any(line =>
+            IngPatterns.LegacyCreditCardTransactionLine().IsMatch(line.Trim())
+        );
+    }
+
+    public override CreditCardStatement ParseStatement(
         IReadOnlyList<string> lines,
         CancellationToken cancellationToken
     )

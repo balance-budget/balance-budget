@@ -1,30 +1,21 @@
 using System.Globalization;
 using Balance.Integration.Ing.Contracts;
 using Balance.Integration.Ing.Models.CreditCard;
-using UglyToad.PdfPig;
-using UglyToad.PdfPig.Content;
 
 namespace Balance.Integration.Ing.Parsers;
 
-// Shared scaffolding for the ING credit-card statement parsers. Both layouts arrive as PDFs
-// whose visual lines have to be reconstructed from positioned words; the per-layout subclasses
-// only differ in how they interpret those lines into a CreditCardStatement.
+// Shared scaffolding for the ING credit-card statement layouts. The PDF lines are extracted once
+// by the extractor (IngCreditCardPdfReader); the per-layout subclasses only differ in how they
+// recognize (CanParse) and interpret those lines into a CreditCardStatement.
 internal abstract class IngCreditCardStatementParser : IIngCreditCardStatementParser
 {
-    private const double LineYTolerance = 0.5;
-
     protected static readonly CultureInfo NlCulture = CultureInfo.GetCultureInfo("nl-NL");
 
-    public ValueTask<CreditCardStatement> ParseStatementsAsync(
-        Stream stream,
-        CancellationToken cancellationToken
-    )
-    {
-        var lines = ExtractLines(stream, cancellationToken);
-        return ValueTask.FromResult(ParseStatement(lines, cancellationToken));
-    }
+    public abstract bool CanParse(IReadOnlyList<string> lines);
 
-    protected abstract CreditCardStatement ParseStatement(
+    public virtual bool RowsAreMostRecentFirst => false;
+
+    public abstract CreditCardStatement ParseStatement(
         IReadOnlyList<string> lines,
         CancellationToken cancellationToken
     );
@@ -44,27 +35,4 @@ internal abstract class IngCreditCardStatementParser : IIngCreditCardStatementPa
             NumberStyles.Number | NumberStyles.AllowLeadingSign,
             NlCulture
         );
-
-    private static List<string> ExtractLines(Stream stream, CancellationToken cancellationToken)
-    {
-        using var document = PdfDocument.Open(stream);
-        var lines = new List<string>();
-
-        foreach (var page in document.GetPages())
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            lines.AddRange(ExtractPageLines(page));
-        }
-
-        return lines;
-    }
-
-    // Group words by Y (with tolerance) to reconstruct visual lines. PDF coordinates put
-    // the origin at the bottom-left, so larger Y is higher on the page — order descending
-    // for top-down, then ascending X within each line for left-to-right.
-    private static IEnumerable<string> ExtractPageLines(Page page) =>
-        page.GetWords()
-            .GroupBy(w => Math.Round(w.BoundingBox.Bottom / LineYTolerance))
-            .OrderByDescending(g => g.Key)
-            .Select(g => string.Join(' ', g.OrderBy(w => w.BoundingBox.Left).Select(w => w.Text)));
 }

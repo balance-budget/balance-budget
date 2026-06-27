@@ -1,3 +1,4 @@
+using Balance.Integration.Ing.Helpers;
 using Balance.Integration.Ing.Parsers;
 
 namespace Balance.Tests.Integrations.Ing;
@@ -16,8 +17,10 @@ internal sealed class IngLegacyCreditCardStatementParserTests
         );
 
         await using var stream = File.OpenRead(path);
+        var lines = IngCreditCardPdfReader.ExtractLines(stream, cancellationToken);
         var parser = new IngLegacyCreditCardStatementParser();
-        var result = await parser.ParseStatementsAsync(stream, cancellationToken);
+        await Assert.That(parser.CanParse(lines)).IsTrue();
+        var result = parser.ParseStatement(lines, cancellationToken);
 
         await Assert.That(result).IsNotNull();
         await Assert.That(result.Rows.Count).IsGreaterThan(0);
