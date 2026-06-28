@@ -121,7 +121,7 @@ function LoanTable({ loans, label }: { loans: Loan[]; label: string }) {
 function LoanRow({ loan }: { loan: Loan }) {
     return (
         <Row id={loan.id} className="cursor-pointer">
-            <Cell className="py-3 pr-3 align-middle">
+            <Cell>
                 <div className="min-w-0">
                     <div className="flex items-center gap-2">
                         <Icon name="landmark" size={16} strokeWidth={1.75} className="text-fg-3" />
@@ -138,21 +138,21 @@ function LoanRow({ loan }: { loan: Loan }) {
                     </div>
                 </div>
             </Cell>
-            <Cell className="py-3 pr-3 text-right align-middle">
+            <Cell className="text-right">
                 <Amount
                     minor={loan.outstandingBalance}
                     currencyCode={loan.currencyCode}
                     size="inline"
                 />
             </Cell>
-            <Cell className="py-3 pr-3 text-right align-middle">
+            <Cell className="text-right">
                 <Amount
                     minor={loan.currentPayment}
                     currencyCode={loan.currencyCode}
                     size="inline"
                 />
             </Cell>
-            <Cell className="py-3 pr-3 text-right align-middle">
+            <Cell className="text-right">
                 <span className="text-sm font-medium tabular-nums">
                     {loan.weightedAnnualRatePercent === null
                         ? '—'

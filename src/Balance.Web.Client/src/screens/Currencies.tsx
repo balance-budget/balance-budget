@@ -11,7 +11,7 @@ import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
-import { Button } from '../components/ui/Button';
+import { RowActions } from '../components/ui/RowActions';
 import { SearchField } from '../components/ui/SearchField';
 import { Cell, Column, Row, Table, TableBody, TableHeader } from '../components/ui/Table';
 import { useToast } from '../components/ui/Toast';
@@ -142,7 +142,7 @@ function CurrencyTable({
                 <Column>
                     <Trans>Symbol</Trans>
                 </Column>
-                <Column className="py-2 pr-3 font-medium text-right">
+                <Column className="text-right">
                     <Trans>Scale</Trans>
                 </Column>
                 <Column>
@@ -185,31 +185,27 @@ function CurrencyRow({
 
     return (
         <Row id={currency.code}>
-            <Cell className="py-[10px] pr-3 font-medium text-fg-1 tabular-nums">
-                {currency.code}
-            </Cell>
-            <Cell className="py-[10px] pr-3 text-fg-1">{currency.name}</Cell>
-            <Cell className="py-[10px] pr-3 text-fg-2">{currency.symbol ?? '—'}</Cell>
-            <Cell className="py-[10px] pr-3 text-right text-fg-2 tabular-nums">
-                {currency.minorUnitScale}
-            </Cell>
-            <Cell className="py-[10px] pr-3 text-fg-2">
+            <Cell className="font-medium text-fg-1 tabular-nums">{currency.code}</Cell>
+            <Cell className="text-fg-1">{currency.name}</Cell>
+            <Cell className="text-fg-2">{currency.symbol ?? '—'}</Cell>
+            <Cell className="text-right text-fg-2 tabular-nums">{currency.minorUnitScale}</Cell>
+            <Cell className="text-fg-2">
                 <CurrencyUsage currency={currency} />
             </Cell>
-            <Cell className="py-[10px] text-right whitespace-nowrap">
-                <Button onPress={onEdit} className="py-[5px] text-xs">
-                    <Trans>Edit</Trans>
-                </Button>{' '}
-                <Button
-                    onPress={onDelete}
-                    isDisabled={inUse}
-                    className="py-[5px] text-xs"
-                    {...(inUse
-                        ? { 'aria-label': t`In use, can't be deleted while referenced` }
-                        : {})}
-                >
-                    <Trans>Delete</Trans>
-                </Button>
+            <Cell className="text-right">
+                <RowActions
+                    actions={[
+                        { icon: 'pencil', label: t`Edit`, onPress: onEdit },
+                        {
+                            icon: 'trash',
+                            label: t`Delete`,
+                            danger: true,
+                            isDisabled: inUse,
+                            disabledReason: t`In use, can't be deleted while referenced`,
+                            onPress: onDelete,
+                        },
+                    ]}
+                />
             </Cell>
         </Row>
     );
