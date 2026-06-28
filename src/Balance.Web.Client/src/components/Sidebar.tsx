@@ -1,14 +1,7 @@
 import { msg } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { type MessageDescriptor } from '@lingui/core';
-import {
-    createContext,
-    useContext,
-    useEffect,
-    useState,
-    type CSSProperties,
-    type ReactNode,
-} from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { Button } from 'react-aria-components';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import logo from '../assets/logo.svg';
@@ -138,6 +131,27 @@ function matchActiveAccountId(pathname: string): string | null {
 // `active` flag would never update. Context propagation bypasses that cache.
 const ActiveAccountContext = createContext<string | null>(null);
 
+// Depth ramp utility classes, indexed by level (1 = sidebar base / no fill).
+// Written as literal class strings so Tailwind keeps the `--color-sidebar-tree-*`
+// tokens; levels deeper than the ramp clamp to the last stop (ADR-0036).
+const clampLevel = (level: number, max: number) => Math.min(Math.max(level, 1), max);
+const TREE_FILL = [
+    '',
+    'bg-sidebar-tree-1',
+    'bg-sidebar-tree-2',
+    'bg-sidebar-tree-3',
+    'bg-sidebar-tree-4',
+    'bg-sidebar-tree-5',
+] as const;
+const TREE_HOVER = [
+    '',
+    'group-data-[hovered]:bg-sidebar-tree-1 group-data-[focus-visible]:bg-sidebar-tree-1',
+    'group-data-[hovered]:bg-sidebar-tree-2 group-data-[focus-visible]:bg-sidebar-tree-2',
+    'group-data-[hovered]:bg-sidebar-tree-3 group-data-[focus-visible]:bg-sidebar-tree-3',
+    'group-data-[hovered]:bg-sidebar-tree-4 group-data-[focus-visible]:bg-sidebar-tree-4',
+    'group-data-[hovered]:bg-sidebar-tree-5 group-data-[focus-visible]:bg-sidebar-tree-5',
+] as const;
+
 function SidebarAccountRow({ account, ctx }: { account: Account; ctx: AccountRowContext }) {
     const { t } = useLingui();
     const catalog = useCurrencyCatalog();
@@ -161,10 +175,9 @@ function SidebarAccountRow({ account, ctx }: { account: Account; ctx: AccountRow
     //                  active (orange) or hover/focus tint and otherwise stays
     //                  transparent so the band shows through; its rounded gutters
     //                  reveal the band shade.
-    const clamp = (n: number, max: number) => Math.min(Math.max(n, 1), max);
-    const ownVar = `var(--sidebar-tree-${String(clamp(ctx.level, 4))})`;
-    const parentVar = `var(--sidebar-tree-${String(clamp(ctx.level - 1, 4))})`;
-    const hoverVar = `var(--sidebar-tree-${String(clamp(ctx.level + 1, 5))})`;
+    const ownFill = TREE_FILL[clampLevel(ctx.level, 4)];
+    const parentFill = TREE_FILL[clampLevel(ctx.level - 1, 4)];
+    const hoverFill = TREE_HOVER[clampLevel(ctx.level + 1, 5)];
 
     const closesOwnBand = ctx.isLastChild && (!ctx.hasChildren || !ctx.isExpanded);
     const roundTop = ctx.level > 1 && ctx.isFirstChild;
@@ -174,30 +187,19 @@ function SidebarAccountRow({ account, ctx }: { account: Account; ctx: AccountRow
     const outerRoundsBottom = roundBottom && ctx.parentIsLastChild;
 
     return (
-        <div
-            className="relative"
-            style={
-                {
-                    '--tree-own': ownVar,
-                    '--tree-parent': parentVar,
-                    '--tree-hover': hoverVar,
-                } as CSSProperties
-            }
-        >
+        <div className="relative">
             {/* Outer fill: the parent band color, revealed in the band's rounded
                 corner gutters. */}
             <div
                 aria-hidden="true"
-                className={cx(
-                    'absolute inset-0 bg-[var(--tree-parent)]',
-                    outerRoundsBottom && 'rounded-b-lg',
-                )}
+                className={cx('absolute inset-0', parentFill, outerRoundsBottom && 'rounded-b-lg')}
             />
             {/* Band fill: this row's own level color. */}
             <div
                 aria-hidden="true"
                 className={cx(
-                    'absolute inset-0 bg-[var(--tree-own)]',
+                    'absolute inset-0',
+                    ownFill,
                     roundTop && 'rounded-t-lg',
                     roundBottom && 'rounded-b-lg',
                 )}
@@ -207,7 +209,7 @@ function SidebarAccountRow({ account, ctx }: { account: Account; ctx: AccountRow
                     'relative flex items-center gap-3 pl-2 pr-8 py-2 cursor-pointer transition-colors rounded-lg',
                     active
                         ? 'bg-brand-primary-soft text-brand-primary'
-                        : 'text-fg-1 group-data-[hovered]:bg-[var(--tree-hover)] group-data-[focus-visible]:bg-[var(--tree-hover)]',
+                        : cx('text-fg-1', hoverFill),
                 )}
             >
                 <AccountAvatar account={account} />

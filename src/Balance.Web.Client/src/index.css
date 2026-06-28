@@ -40,16 +40,18 @@
        theme-aware. Flipped to white in .dark below. */
     --surface-lift-rgb: 0 0 0;
 
-    /* Sidebar account-tree depth ramp (ADR-0036). Opaque, not alpha lifts: the
-       RAC tree DOM is flat, so each row fakes the old nested containers with two
-       stacked opaque fills (own level + parent level). Level 1 = no fill; deeper
-       levels darken on light. Index 5 is the hover/focus step for the clamped
-       deepest band. */
-    --sidebar-tree-1: transparent;
-    --sidebar-tree-2: #efeae3;
-    --sidebar-tree-3: #e7e1d9;
-    --sidebar-tree-4: #ded7cd;
-    --sidebar-tree-5: #d4ccc1;
+    /* Sidebar account-tree depth ramp (ADR-0036). Opaque steps that fake the old
+       nested containers over RAC's flat tree DOM, consumed as bg-sidebar-tree-*
+       utilities. Each level mixes the page base toward the foreground, so it
+       darkens on light and lightens on dark automatically (like the *-soft
+       tints): --color-bg-0 and --color-fg-1 both flip per theme, so no .dark
+       override is needed. Level 1 = no fill; level 5 is the hover/focus step for
+       the clamped deepest band. */
+    --color-sidebar-tree-1: transparent;
+    --color-sidebar-tree-2: color-mix(in oklab, var(--color-bg-0), var(--color-fg-1) 6%);
+    --color-sidebar-tree-3: color-mix(in oklab, var(--color-bg-0), var(--color-fg-1) 12%);
+    --color-sidebar-tree-4: color-mix(in oklab, var(--color-bg-0), var(--color-fg-1) 18%);
+    --color-sidebar-tree-5: color-mix(in oklab, var(--color-bg-0), var(--color-fg-1) 24%);
 
     /* Borders — black alpha on light. */
     --color-border-soft: rgba(0, 0, 0, 0.1);
@@ -137,12 +139,6 @@
     --color-surface-3: rgba(255, 255, 255, 0.08);
     --color-surface-overlay: rgba(0, 0, 0, 0.6);
     --surface-lift-rgb: 255 255 255;
-
-    /* Dark ramp brightens with depth (ADR-0036). */
-    --sidebar-tree-2: #242322;
-    --sidebar-tree-3: #2d2b29;
-    --sidebar-tree-4: #363330;
-    --sidebar-tree-5: #3f3c39;
 
     --color-border-soft: rgba(255, 255, 255, 0.08);
     --color-border-strong: rgba(255, 255, 255, 0.18);
