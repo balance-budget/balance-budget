@@ -126,7 +126,15 @@ internal static class DevelopmentSeedData
             var groceries = Leaf("5310", "Groceries", AccountType.Expense, household);
 
             var transport = Leaf("5400", "Transport", AccountType.Expense);
-            var car = Leaf("5410", "Car", AccountType.Expense, transport);
+            // Car is a non-postable branch that nests two extra levels deep
+            // (Insurance → Liability/Comprehensive), so the chart of accounts
+            // exercises a 4-level path for the nested-tree UI.
+            var car = Branch("5410", "Car", AccountType.Expense, transport);
+            var fuel = Leaf("5411", "Fuel", AccountType.Expense, car);
+            var carInsurance = Branch("5412", "Insurance", AccountType.Expense, car);
+            var carLiability = Leaf("5413", "Liability", AccountType.Expense, carInsurance);
+            var carComprehensive = Leaf("5414", "Comprehensive", AccountType.Expense, carInsurance);
+            var carMaintenance = Leaf("5415", "Maintenance", AccountType.Expense, car);
             var publicTransport = Leaf("5420", "Public Transport", AccountType.Expense, transport);
             var bike = Leaf("5430", "Bike", AccountType.Expense, transport);
 
@@ -163,6 +171,8 @@ internal static class DevelopmentSeedData
             var handyman = Counterparty("Klusbedrijf Jansen");
             var waterCo = Counterparty("Vitens");
             var garage = Counterparty("Garage Bosch");
+            var fuelStation = Counterparty("Shell");
+            var carInsurer = Counterparty("Allianz");
             var bikeShop = Counterparty("Swapfiets");
             var dentist = Counterparty("Tandartspraktijk");
             var travelCo = Counterparty("TUI");
@@ -244,6 +254,7 @@ internal static class DevelopmentSeedData
                 (13, subscriptions, streaming, -2_580, "Subscriptions"),
                 (14, groceries, supermarket, -4_810, "Groceries"),
                 (18, financial, bank, -350, "Account fee"),
+                (15, fuel, fuelStation, -6_000, "Fuel"),
                 (22, groceries, supermarket, -6_390, "Groceries"),
                 (26, investments, broker, -25_000, "Investment contribution"),
             ];
@@ -270,7 +281,16 @@ internal static class DevelopmentSeedData
                 ),
                 (month => month is 6 or 11, 12, maintenance, handyman, -15_000, "Home maintenance"),
                 (month => month % 3 == 1, 20, water, waterCo, -3_000, "Water"),
-                (month => month % 3 == 2, 16, car, garage, -9_000, "Car service"),
+                (month => month % 3 == 2, 16, carMaintenance, garage, -9_000, "Car service"),
+                (month => month == 2, 14, carLiability, carInsurer, -42_000, "Car liability cover"),
+                (
+                    month => month == 8,
+                    14,
+                    carComprehensive,
+                    carInsurer,
+                    -31_000,
+                    "Car comprehensive cover"
+                ),
                 (month => month == 4, 11, bike, bikeShop, -3_500, "Bike repair"),
                 (month => month is 2 or 9, 19, medical, dentist, -4_500, "Dentist"),
                 (month => month == 7, 5, holidays, travelCo, -180_000, "Summer holiday"),
@@ -614,7 +634,7 @@ internal static class DevelopmentSeedData
             Template(
                 "Car service",
                 checking,
-                car,
+                carMaintenance,
                 garage,
                 Cadence.Quarterly,
                 m => m % 3 == 2,
