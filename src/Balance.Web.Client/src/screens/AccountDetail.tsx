@@ -580,10 +580,8 @@ function RegisterRowView({
     const heading = row.counterpartyName ?? row.entryDescription ?? '—';
     return (
         <Row id={row.journalLineId} className="cursor-pointer">
-            <Cell className="py-2 pr-3 align-middle text-xs text-fg-3 tabular-nums">
-                {formatTableDate(row.date)}
-            </Cell>
-            <Cell className="py-2 pr-3 align-middle">
+            <Cell className="text-xs text-fg-3 tabular-nums">{formatTableDate(row.date)}</Cell>
+            <Cell>
                 <div className="flex flex-col min-w-0">
                     <span className="text-sm text-fg-1 truncate">{heading}</span>
                     {row.lineDescription ? (
@@ -592,17 +590,15 @@ function RegisterRowView({
                 </div>
             </Cell>
             {showAccountColumn ? (
-                <Cell className="py-2 pr-3 align-middle text-xs text-fg-2 truncate">
-                    {row.accountName}
-                </Cell>
+                <Cell className="text-xs text-fg-2 truncate">{row.accountName}</Cell>
             ) : null}
-            <Cell className="py-2 pr-3 align-middle">
+            <Cell>
                 <span className="text-xs text-fg-2 truncate">
                     {counter ? counter.accountName : '—'}
                     {extra > 0 ? <span className="text-fg-3"> +{extra}</span> : null}
                 </span>
             </Cell>
-            <Cell className="py-2 align-middle text-right">
+            <Cell className="text-right">
                 <span
                     className={cx(
                         'font-mono text-sm tabular-nums',

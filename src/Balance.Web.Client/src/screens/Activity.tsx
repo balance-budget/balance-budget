@@ -265,21 +265,19 @@ function JournalRow({
     const heading = entry.counterpartyName ?? entry.description ?? '—';
     return (
         <Row id={entry.id} className="cursor-pointer">
-            <Cell className="py-2 pr-3 align-middle text-xs text-fg-3 tabular-nums">
-                {formatTableDate(entry.date)}
-            </Cell>
-            <Cell className="py-2 pr-3 align-middle text-fg-3">
+            <Cell className="text-xs text-fg-3 tabular-nums">{formatTableDate(entry.date)}</Cell>
+            <Cell className="text-fg-3">
                 {entry.hasBankTransactions ? (
                     <Icon name="download" size={12} strokeWidth={2} aria-hidden="true" />
                 ) : null}
             </Cell>
-            <Cell className="py-2 pr-3 align-middle">
+            <Cell>
                 <span className="text-sm text-fg-1 truncate block">{heading}</span>
             </Cell>
-            <Cell className="py-2 pr-3 align-middle">
+            <Cell>
                 <FromToCell projection={projection} lineCount={entry.lines.length} />
             </Cell>
-            <Cell className="py-2 align-middle text-right">
+            <Cell className="text-right">
                 <ProjectionAmount projection={projection} variant="row" />
             </Cell>
         </Row>
