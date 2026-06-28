@@ -708,8 +708,8 @@ msgstr "Counterparty bank accounts appear as you categorize imported transaction
 msgid "Counterparty…"
 msgstr "Counterparty…"
 
-msgid "Cr "
-msgstr "Cr "
+#~ msgid "Cr "
+#~ msgstr "Cr "
 
 msgid "Create"
 msgstr "Create"
@@ -949,8 +949,8 @@ msgstr "Distribution"
 msgid "Double-entry detail."
 msgstr "Double-entry detail."
 
-msgid "Dr "
-msgstr "Dr "
+#~ msgid "Dr "
+#~ msgstr "Dr "
 
 msgid "Drives the Inbox's loan-payment hint."
 msgstr "Drives the Inbox's loan-payment hint."
@@ -1340,6 +1340,9 @@ msgstr "Journal entry created."
 
 msgid "Journal entry saved."
 msgstr "Journal entry saved."
+
+msgid "Journal lines"
+msgstr "Journal lines"
 
 msgid "Keep the payment, finish earlier"
 msgstr "Keep the payment, finish earlier"

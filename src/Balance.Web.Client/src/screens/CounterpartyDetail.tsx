@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
-import { Link, useNavigate } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { useAccounts, type Account } from '../api/accounts';
 import { useCounterparty, useDeleteCounterparty } from '../api/counterparties';
 import { useJournalEntries, type JournalEntry } from '../api/journalEntries';
@@ -12,9 +12,10 @@ import { Panel, SectionHead } from '../components/Panel';
 import { usePageHeader } from '../components/PageHeader';
 import { ProjectionAmount } from '../components/ProjectionAmount';
 import { Skeleton } from '../components/Skeleton';
+import { Cell, Column, Row, Table, TableBody, TableHeader } from '../components/ui/Table';
 import { useToast } from '../components/ui/Toast';
 import { formatTableDate } from '../lib/dates';
-import { type AccountId, type CounterpartyId } from '../lib/domain';
+import { type AccountId, type CounterpartyId, type JournalEntryId } from '../lib/domain';
 import { handleActionError } from '../lib/formErrors';
 import { formatLegLabel, projectEntry, type JournalProjection } from '../lib/journalProjection';
 import { LinkedBankAccountsSection } from './LinkedBankAccounts';
@@ -140,6 +141,7 @@ function JournalEntriesSection({
     onPageChange: (page: number) => void;
 }) {
     const { t } = useLingui();
+    const navigate = useNavigate();
     const skip = (page - 1) * PAGE_SIZE;
     const entries = useJournalEntries(skip, PAGE_SIZE, '', { counterpartyId });
     const accounts = useAccounts();
@@ -178,23 +180,35 @@ function JournalEntriesSection({
 
     return (
         <div className="flex flex-col">
-            <div className="hidden lg:grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px] gap-3 px-2 pb-2 text-xs text-fg-3 uppercase tracking-wider border-b border-border-soft">
-                <span>
-                    <Trans>Date</Trans>
-                </span>
-                <span>
-                    <Trans>Description</Trans>
-                </span>
-                <span>
-                    <Trans>From</Trans> → <Trans>To</Trans>
-                </span>
-                <span className="text-right">
-                    <Trans>Amount</Trans>
-                </span>
+            <div className="overflow-x-auto">
+                <Table
+                    aria-label={t`Journal entries`}
+                    onRowAction={key => {
+                        void navigate({
+                            to: '/journal/$id',
+                            params: { id: key as JournalEntryId },
+                        });
+                    }}
+                >
+                    <TableHeader>
+                        <Column isRowHeader width={100}>
+                            <Trans>Date</Trans>
+                        </Column>
+                        <Column>
+                            <Trans>Description</Trans>
+                        </Column>
+                        <Column width={220}>
+                            <Trans>From</Trans> → <Trans>To</Trans>
+                        </Column>
+                        <Column width={140} className="text-right">
+                            <Trans>Amount</Trans>
+                        </Column>
+                    </TableHeader>
+                    <TableBody items={entries.data.items}>
+                        {entry => <CounterpartyEntryRow entry={entry} accountById={accountById} />}
+                    </TableBody>
+                </Table>
             </div>
-            {entries.data.items.map(entry => (
-                <CounterpartyEntryRow key={entry.id} entry={entry} accountById={accountById} />
-            ))}
             <Pagination
                 page={page}
                 pageSize={PAGE_SIZE}
@@ -215,30 +229,16 @@ function CounterpartyEntryRow({
     const projection = projectEntry(entry, accountById);
     const description = entry.description ?? '—';
     return (
-        <Link
-            to="/journal/$id"
-            params={{ id: entry.id }}
-            className="block border-b border-border-soft last:border-b-0 hover:bg-surface-2"
-        >
-            <div className="hidden lg:grid grid-cols-[100px_1fr_minmax(180px,1.2fr)_140px] gap-3 items-center px-2 py-2">
-                <span className="text-xs text-fg-3 tabular-nums">
-                    {formatTableDate(entry.date)}
-                </span>
-                <span className="text-sm text-fg-1 truncate">{description}</span>
+        <Row id={entry.id} className="cursor-pointer">
+            <Cell className="text-xs text-fg-3 tabular-nums">{formatTableDate(entry.date)}</Cell>
+            <Cell className="text-sm text-fg-1 truncate">{description}</Cell>
+            <Cell>
                 <FromToCell projection={projection} lineCount={entry.lines.length} />
+            </Cell>
+            <Cell className="text-right">
                 <ProjectionAmount projection={projection} variant="row" />
-            </div>
-            <div className="lg:hidden flex flex-col gap-1 px-2 py-3">
-                <div className="flex items-center justify-between gap-3">
-                    <span className="text-xs text-fg-3 tabular-nums shrink-0">
-                        {formatTableDate(entry.date)}
-                    </span>
-                    <ProjectionAmount projection={projection} variant="row" />
-                </div>
-                <span className="text-sm text-fg-1 truncate">{description}</span>
-                <FromToCell projection={projection} lineCount={entry.lines.length} />
-            </div>
-        </Link>
+            </Cell>
+        </Row>
     );
 }
 
