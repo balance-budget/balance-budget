@@ -12,21 +12,26 @@ DOM.
 
 ## Decision
 
-Each account row (level >= 2) paints **two opaque, full-width, non-inset
-elements**:
+Each account row paints **three opaque, full-width, non-inset layers**, outer to
+inner:
 
-- **inner** = the row's own band color; **outer** = the parent level's band
-  color, sitting behind it so the inner's rounded corner gutters reveal the
-  parent shade.
-- inner rounds its **top** corners when the row is the first child of its
-  parent, and its **bottom** corners when it is a last leaf / collapsed last
-  child (the last-descendant of the band; flat DOM forces bottom-rounding onto
-  the deepest last leaf, not the parent row).
-- the **active** row swaps this: inner = `brand-primary-soft` fully rounded on
-  all four corners with `text-brand-primary`, outer = the row's **own** band
-  color so the pill floats inside its sibling band.
-- **hover / focus-visible** brightens the inner by one ramp step (clamped); the
-  active row keeps its orange and does not step.
+1. **outer** = the parent level's band color. Square, except it rounds its
+   **bottom** when the parent band also ends at this row.
+2. **band** = the row's own level color. Rounds its **top** when the row is the
+   first child of its parent, and its **bottom** when it is a last leaf /
+   collapsed last child (the last-descendant of the band; flat DOM forces
+   bottom-rounding onto the deepest last leaf, not the parent row). Those
+   rounded gutters reveal the **outer** (parent) shade.
+3. **content** = the row itself, a fully-rounded pill. Transparent by default so
+   the band shows through; fills with `brand-primary-soft` + `text-brand-primary`
+   when active, or the one-step-brighter hover/focus tint on
+   `hover` / `focus-visible`. Its rounded gutters reveal the **band** shade.
+
+The third layer is what lets a highlighted row (active or hovered) still close a
+band correctly: the band layer reveals the parent at its rounded corners while
+the pill reveals the band at its own corners. Level-1 rows have transparent
+outer and band layers, so their hover/active pill simply floats on the sidebar
+base.
 
 Band colors come from a **4-stop opaque ramp** (L1 = sidebar base / no fill;
 L2-L4 increasing, brighter in dark and darker in light per ADR-0031); levels
@@ -38,15 +43,16 @@ fill and no rounding.
 Opaque colors were chosen over the old translucent alpha lift to drop the
 layer-compositing math: with translucent levels, reproducing the nested look
 needs one composited layer per ancestor level and per-level increment
-arithmetic. Opaque colors make each level "just this color," so two elements
-(parent + own) reproduce every case in the target screenshot.
+arithmetic. Opaque colors make each level "just this color," so a fixed three
+layers (parent + own + highlight pill) reproduce every case in the target
+screenshot regardless of depth.
 
 Two accepted trade-offs:
 
 1. Nested rows no longer share the sidebar's translucent `backdrop-blur`; they
    are solid. Invisible in practice deep in the nav.
 2. A single leaf that closes two or more bands at once (last child of a last
-   child) would need a third element to show the grandparent shade in its corner
-   gutter; with two elements that gutter falls back to the base sidebar color.
-   It is a 1px sliver and the common case (a sibling separates the groups, as in
-   the screenshot) is exact.
+   child) would need an extra layer per closed band to show every intermediate
+   shade in its corner gutter; the fixed three layers show the immediate parent
+   and then fall back to the base sidebar color. It is a 1px sliver and the
+   common case (a sibling separates the groups, as in the screenshot) is exact.

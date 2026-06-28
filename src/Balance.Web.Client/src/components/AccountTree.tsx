@@ -13,6 +13,13 @@ export type AccountRowContext = {
     isExpanded: boolean;
     /** RAC nesting depth, starting at 1 for a root. */
     level: number;
+    /** First in its sibling group — rounds the top of its band (ADR-0036). */
+    isFirstChild: boolean;
+    /** Last in its sibling group — closes the bottom of its band when collapsed/leaf. */
+    isLastChild: boolean;
+    /** Whether this row's parent is itself the last child of the grandparent.
+     *  Drives whether the parent band also closes here (a doubly-closed bottom). */
+    parentIsLastChild: boolean;
 };
 
 type AccountTreeSectionsProps = {
@@ -52,14 +59,29 @@ export function AccountTreeSections({
     const { i18n } = useLingui();
     const childrenByParent = buildChildrenMap(accounts);
     const rootsByType = groupRootsByType(accounts);
+    const byId = new Map(accounts.map(a => [a.id, a]));
 
     function renderItem(account: Account): ReactNode {
         const children = childrenByParent.get(account.id) ?? [];
+        const siblings = childrenByParent.get(account.parentId) ?? [];
+        const isFirstChild = siblings[0]?.id === account.id;
+        const isLastChild = siblings[siblings.length - 1]?.id === account.id;
+        const parent = account.parentId !== null ? byId.get(account.parentId) : undefined;
+        const parentSiblings = parent ? (childrenByParent.get(parent.parentId) ?? []) : [];
+        const parentIsLastChild =
+            parent !== undefined && parentSiblings[parentSiblings.length - 1]?.id === parent.id;
         return (
             <TreeItem id={account.id} textValue={account.name}>
                 <TreeItemContent>
                     {({ level, hasChildItems, isExpanded }) =>
-                        renderRow(account, { hasChildren: hasChildItems, isExpanded, level })
+                        renderRow(account, {
+                            hasChildren: hasChildItems,
+                            isExpanded,
+                            level,
+                            isFirstChild,
+                            isLastChild,
+                            parentIsLastChild,
+                        })
                     }
                 </TreeItemContent>
                 <Collection items={children}>{renderItem}</Collection>

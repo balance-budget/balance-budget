@@ -1,7 +1,14 @@
 import { msg } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { type MessageDescriptor } from '@lingui/core';
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import {
+    createContext,
+    useContext,
+    useEffect,
+    useState,
+    type CSSProperties,
+    type ReactNode,
+} from 'react';
 import { Button } from 'react-aria-components';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import logo from '../assets/logo.svg';
@@ -142,30 +149,65 @@ function SidebarAccountRow({ account, ctx }: { account: Account; ctx: AccountRow
     // Only ledger (Asset/Liability) accounts have a balance worth showing here.
     const showBalance = isLedgerAccount(account);
     // No indentation — the chart-of-accounts nests several levels deep and the
-    // sidebar is narrow. Instead each nested row sits on a translucent shade that
-    // compounds with depth, matching the old nested `bg-surface-2` containers:
-    // each level layers another surface-2 (alpha 0.04), so the effective alpha is
-    // 1 - 0.96^(level-1). The base channels flip black→white in dark mode via
-    // --surface-lift-rgb. The first two levels get a rounded pill; deeper rows
-    // are square.
-    const nested = ctx.level > 1;
-    const roundedPill = ctx.level <= 2;
-    const shade = nested
-        ? {
-              backgroundColor: `rgb(var(--surface-lift-rgb) / ${String(
-                  1 - Math.pow(1 - 0.04, ctx.level - 1),
-              )})`,
-          }
-        : undefined;
+    // sidebar is narrow. RAC's tree DOM is flat, so each row fakes the old nested
+    // containers with three stacked opaque layers (ADR-0036):
+    //   1. `outer`   — the parent level's color, square except it rounds its
+    //                  bottom when the parent band also ends here.
+    //   2. `band`    — this row's own level color. Rounds its top when it's a
+    //                  band's first child and its bottom when it closes the band
+    //                  (last leaf / collapsed last child); those rounded gutters
+    //                  reveal the parent (`outer`) shade.
+    //   3. `content` — the row itself. A fully-rounded pill that fills with the
+    //                  active (orange) or hover/focus tint and otherwise stays
+    //                  transparent so the band shows through; its rounded gutters
+    //                  reveal the band shade.
+    const clamp = (n: number, max: number) => Math.min(Math.max(n, 1), max);
+    const ownVar = `var(--sidebar-tree-${String(clamp(ctx.level, 4))})`;
+    const parentVar = `var(--sidebar-tree-${String(clamp(ctx.level - 1, 4))})`;
+    const hoverVar = `var(--sidebar-tree-${String(clamp(ctx.level + 1, 5))})`;
+
+    const closesOwnBand = ctx.isLastChild && (!ctx.hasChildren || !ctx.isExpanded);
+    const roundTop = ctx.level > 1 && ctx.isFirstChild;
+    const roundBottom = ctx.level > 1 && closesOwnBand;
+    // Round the outer (parent) fill only when the parent band also ends here, so a
+    // square parent-colored nub never pokes out below the rounded band corner.
+    const outerRoundsBottom = roundBottom && ctx.parentIsLastChild;
+
     return (
-        <div className="relative" style={shade}>
+        <div
+            className="relative"
+            style={
+                {
+                    '--tree-own': ownVar,
+                    '--tree-parent': parentVar,
+                    '--tree-hover': hoverVar,
+                } as CSSProperties
+            }
+        >
+            {/* Outer fill: the parent band color, revealed in the band's rounded
+                corner gutters. */}
+            <div
+                aria-hidden="true"
+                className={cx(
+                    'absolute inset-0 bg-[var(--tree-parent)]',
+                    outerRoundsBottom && 'rounded-b-lg',
+                )}
+            />
+            {/* Band fill: this row's own level color. */}
+            <div
+                aria-hidden="true"
+                className={cx(
+                    'absolute inset-0 bg-[var(--tree-own)]',
+                    roundTop && 'rounded-t-lg',
+                    roundBottom && 'rounded-b-lg',
+                )}
+            />
             <div
                 className={cx(
-                    'relative flex items-center gap-3 pl-2 pr-8 py-2 cursor-pointer transition-colors',
-                    roundedPill && 'rounded-lg',
+                    'relative flex items-center gap-3 pl-2 pr-8 py-2 cursor-pointer transition-colors rounded-lg',
                     active
                         ? 'bg-brand-primary-soft text-brand-primary'
-                        : 'text-fg-1 group-data-[hovered]:bg-surface-2 group-data-[focus-visible]:bg-surface-2',
+                        : 'text-fg-1 group-data-[hovered]:bg-[var(--tree-hover)] group-data-[focus-visible]:bg-[var(--tree-hover)]',
                 )}
             >
                 <AccountAvatar account={account} />
