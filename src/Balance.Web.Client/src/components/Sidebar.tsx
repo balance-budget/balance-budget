@@ -171,7 +171,7 @@ function SidebarAccountRow({ account, ctx }: { account: Account; ctx: AccountRow
         >
             <div
                 className={cx(
-                    'relative flex items-center gap-3 pl-2 pr-8 py-2 m-[2px] rounded-lg cursor-pointer transition-colors',
+                    'relative flex items-center gap-3 pl-2 pr-8 py-2 rounded-lg cursor-pointer transition-colors',
                     active
                         ? 'bg-brand-primary-soft text-brand-primary'
                         : 'text-fg-1 group-data-[hovered]:bg-surface-2 group-data-[focus-visible]:bg-surface-2',
