@@ -708,8 +708,8 @@ msgstr "當你分類匯入的交易時，交易對方的銀行帳戶會出現。
 msgid "Counterparty…"
 msgstr "交易對方…"
 
-msgid "Cr "
-msgstr "貸 "
+#~ msgid "Cr "
+#~ msgstr "貸 "
 
 msgid "Create"
 msgstr "建立"
@@ -949,8 +949,8 @@ msgstr "分佈"
 msgid "Double-entry detail."
 msgstr "複式記帳明細。"
 
-msgid "Dr "
-msgstr "借 "
+#~ msgid "Dr "
+#~ msgstr "借 "
 
 msgid "Drives the Inbox's loan-payment hint."
 msgstr "驅動收件匣的貸款支付提示。"
@@ -1340,6 +1340,9 @@ msgstr "已建立日記帳分錄。"
 
 msgid "Journal entry saved."
 msgstr "已儲存日記帳分錄。"
+
+msgid "Journal lines"
+msgstr "分錄明細"
 
 msgid "Keep the payment, finish earlier"
 msgstr "維持支付金額，提早還清"

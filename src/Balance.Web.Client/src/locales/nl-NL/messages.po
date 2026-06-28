@@ -708,8 +708,8 @@ msgstr "Bankrekeningen van tegenpartijen verschijnen terwijl je geïmporteerde t
 msgid "Counterparty…"
 msgstr "Tegenpartij…"
 
-msgid "Cr "
-msgstr "Cr "
+#~ msgid "Cr "
+#~ msgstr "Cr "
 
 msgid "Create"
 msgstr "Aanmaken"
@@ -949,8 +949,8 @@ msgstr "Verdeling"
 msgid "Double-entry detail."
 msgstr "Detail van dubbel boekhouden."
 
-msgid "Dr "
-msgstr "Dr "
+#~ msgid "Dr "
+#~ msgstr "Dr "
 
 msgid "Drives the Inbox's loan-payment hint."
 msgstr "Stuurt de hint voor leningbetalingen in het postvak aan."
@@ -1340,6 +1340,9 @@ msgstr "Journaalpost aangemaakt."
 
 msgid "Journal entry saved."
 msgstr "Journaalpost opgeslagen."
+
+msgid "Journal lines"
+msgstr "Journaalregels"
 
 msgid "Keep the payment, finish earlier"
 msgstr "Houd de betaling gelijk, eerder klaar"

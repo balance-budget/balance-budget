@@ -30,6 +30,7 @@ import { Button, IconButton } from '../components/ui/Button';
 import { DatePicker } from '../components/ui/DatePicker';
 import { NumberField } from '../components/ui/NumberField';
 import { Select, SelectItem } from '../components/ui/Select';
+import { Cell, Column, Row, Table, TableBody, TableHeader } from '../components/ui/Table';
 import { TextField } from '../components/ui/TextField';
 import { useToast } from '../components/ui/Toast';
 import { formatNumber } from '../i18n/format';
@@ -291,35 +292,39 @@ function orderLinesForDisplay(lines: readonly JournalLine[]): JournalLine[] {
 }
 
 function LineTable({ entry, projection }: { entry: JournalEntry; projection: JournalProjection }) {
+    const { t } = useLingui();
     const catalog = useCurrencyCatalog();
     const orderedLines = useMemo(() => orderLinesForDisplay(entry.lines), [entry.lines]);
     return (
-        <div className="flex flex-col">
-            <div className="hidden lg:grid grid-cols-[1fr_120px_120px_140px_minmax(120px,1.4fr)] gap-3 px-2 pb-2 text-xs text-fg-3 uppercase tracking-wider border-b border-border-soft">
-                <span>
-                    <Trans>Account</Trans>
-                </span>
-                <span className="text-right">
-                    <Trans>Debit</Trans>
-                </span>
-                <span className="text-right">
-                    <Trans>Credit</Trans>
-                </span>
-                <span>
-                    <Trans>Status</Trans>
-                </span>
-                <span>
-                    <Trans>Description</Trans>
-                </span>
-            </div>
-            {orderedLines.map(line => (
-                <LineRow
-                    key={line.id}
-                    line={line}
-                    currencyCode={projection.netWorthChange.currencyCode}
-                    catalog={catalog}
-                />
-            ))}
+        <div className="overflow-x-auto">
+            <Table aria-label={t`Journal lines`}>
+                <TableHeader>
+                    <Column isRowHeader>
+                        <Trans>Account</Trans>
+                    </Column>
+                    <Column width={120} className="text-right">
+                        <Trans>Debit</Trans>
+                    </Column>
+                    <Column width={120} className="text-right">
+                        <Trans>Credit</Trans>
+                    </Column>
+                    <Column width={140}>
+                        <Trans>Status</Trans>
+                    </Column>
+                    <Column>
+                        <Trans>Description</Trans>
+                    </Column>
+                </TableHeader>
+                <TableBody items={orderedLines}>
+                    {line => (
+                        <LineRow
+                            line={line}
+                            currencyCode={projection.netWorthChange.currencyCode}
+                            catalog={catalog}
+                        />
+                    )}
+                </TableBody>
+            </Table>
         </div>
     );
 }
@@ -337,34 +342,19 @@ function LineRow({
     const magnitude = Math.abs(line.amount);
     const moneyStr = formatMoney(magnitude, currencyCode, catalog);
     return (
-        <div className="border-b border-border-soft last:border-b-0">
-            <div className="hidden lg:grid grid-cols-[1fr_120px_120px_140px_minmax(120px,1.4fr)] gap-3 items-center px-2 py-2">
-                <span className="text-sm text-fg-1 truncate">{line.accountName}</span>
-                <span className="font-mono text-sm tabular-nums text-right text-fg-1">
-                    {isDebit ? moneyStr : ''}
-                </span>
-                <span className="font-mono text-sm tabular-nums text-right text-fg-1">
-                    {!isDebit ? moneyStr : ''}
-                </span>
+        <Row id={line.id}>
+            <Cell className="text-sm text-fg-1 truncate">{line.accountName}</Cell>
+            <Cell className="font-mono text-sm tabular-nums text-right text-fg-1">
+                {isDebit ? moneyStr : ''}
+            </Cell>
+            <Cell className="font-mono text-sm tabular-nums text-right text-fg-1">
+                {!isDebit ? moneyStr : ''}
+            </Cell>
+            <Cell>
                 <ReconciliationChip status={line.reconciliationStatus} />
-                <span className="text-xs text-fg-3 truncate">{line.description ?? ''}</span>
-            </div>
-            <div className="lg:hidden flex flex-col gap-1 px-2 py-3">
-                <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-sm text-fg-1 truncate">{line.accountName}</span>
-                    <span className="font-mono text-sm tabular-nums shrink-0 text-fg-1">
-                        {isDebit ? <Trans>Dr </Trans> : <Trans>Cr </Trans>}
-                        {moneyStr}
-                    </span>
-                </div>
-                <div className="flex items-center justify-between gap-2">
-                    <ReconciliationChip status={line.reconciliationStatus} />
-                    {line.description ? (
-                        <span className="text-xs text-fg-3 truncate">{line.description}</span>
-                    ) : null}
-                </div>
-            </div>
-        </div>
+            </Cell>
+            <Cell className="text-xs text-fg-3 truncate">{line.description ?? ''}</Cell>
+        </Row>
     );
 }
 

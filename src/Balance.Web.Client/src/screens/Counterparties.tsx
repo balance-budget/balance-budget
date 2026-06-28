@@ -13,7 +13,8 @@ import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useToast } from '../components/ui/Toast';
-import { GridList, GridListItem } from '../components/ui/GridList';
+import { Cell, Column, Row, Table, TableBody, TableHeader } from '../components/ui/Table';
+import { RowActions } from '../components/ui/RowActions';
 import { SearchField } from '../components/ui/SearchField';
 import { handleActionError } from '../lib/formErrors';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
@@ -163,7 +164,7 @@ function CounterpartyList({
 
     return (
         <div>
-            <CounterpartyGrid items={query.data.items} onEdit={onEdit} onDelete={onDelete} />
+            <CounterpartyTable items={query.data.items} onEdit={onEdit} onDelete={onDelete} />
             <Pagination
                 page={page}
                 pageSize={PAGE_SIZE}
@@ -174,7 +175,7 @@ function CounterpartyList({
     );
 }
 
-function CounterpartyGrid({
+function CounterpartyTable({
     items,
     onEdit,
     onDelete,
@@ -186,19 +187,32 @@ function CounterpartyGrid({
     const { t } = useLingui();
     const navigate = useNavigate();
     return (
-        <GridList
-            aria-label={t`Counterparties`}
-            items={items}
-            onAction={key => {
-                void navigate({
-                    to: '/counterparties/$id',
-                    search: { page: 1 },
-                    params: { id: String(key) },
-                });
-            }}
-        >
-            {c => <CounterpartyRow counterparty={c} onEdit={onEdit} onDelete={onDelete} />}
-        </GridList>
+        <div className="overflow-x-auto">
+            <Table
+                aria-label={t`Counterparties`}
+                onRowAction={key => {
+                    void navigate({
+                        to: '/counterparties/$id',
+                        search: { page: 1 },
+                        params: { id: String(key) },
+                    });
+                }}
+            >
+                <TableHeader>
+                    <Column isRowHeader>
+                        <Trans>Name</Trans>
+                    </Column>
+                    <Column width={96} className="text-right">
+                        <span className="sr-only">
+                            <Trans>Actions</Trans>
+                        </span>
+                    </Column>
+                </TableHeader>
+                <TableBody items={items}>
+                    {c => <CounterpartyRow counterparty={c} onEdit={onEdit} onDelete={onDelete} />}
+                </TableBody>
+            </Table>
+        </div>
     );
 }
 
@@ -213,35 +227,30 @@ function CounterpartyRow({
 }) {
     const { t } = useLingui();
     return (
-        <GridListItem
-            id={counterparty.id}
-            textValue={counterparty.name}
-            className="flex items-center gap-3 px-3 py-[10px] cursor-pointer"
-        >
-            <span className="flex-1 min-w-0 text-sm font-medium text-fg-1 truncate">
-                {counterparty.name}
-            </span>
-            <button
-                type="button"
-                onClick={() => {
-                    onEdit(counterparty);
-                }}
-                aria-label={t`Edit`}
-                className="p-2 rounded-lg text-fg-3 hover:text-fg-1 hover:bg-surface-3"
-            >
-                <Icon name="pencil" size={14} strokeWidth={2} />
-            </button>
-            <button
-                type="button"
-                onClick={() => {
-                    onDelete(counterparty);
-                }}
-                aria-label={t`Delete`}
-                className="p-2 rounded-lg text-fg-3 hover:text-danger hover:bg-surface-3"
-            >
-                <Icon name="trash" size={14} strokeWidth={2} />
-            </button>
-        </GridListItem>
+        <Row id={counterparty.id} className="cursor-pointer">
+            <Cell className="text-sm font-medium text-fg-1 truncate">{counterparty.name}</Cell>
+            <Cell className="text-right">
+                <RowActions
+                    actions={[
+                        {
+                            icon: 'pencil',
+                            label: t`Edit`,
+                            onPress: () => {
+                                onEdit(counterparty);
+                            },
+                        },
+                        {
+                            icon: 'trash',
+                            label: t`Delete`,
+                            danger: true,
+                            onPress: () => {
+                                onDelete(counterparty);
+                            },
+                        },
+                    ]}
+                />
+            </Cell>
+        </Row>
     );
 }
 

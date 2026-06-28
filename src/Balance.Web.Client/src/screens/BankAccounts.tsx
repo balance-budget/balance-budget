@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { msg, t } from '@lingui/core/macro';
 import type { MessageDescriptor } from '@lingui/core';
@@ -26,6 +26,7 @@ import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/ui/Toast';
 import { SearchField } from '../components/ui/SearchField';
 import { ToggleButton, ToggleButtonGroup } from '../components/ui/ToggleButtonGroup';
+import { Cell, Column, Row, Table, TableBody, TableHeader } from '../components/ui/Table';
 import type { BankAccountId } from '../lib/domain';
 import { handleActionError } from '../lib/formErrors';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
@@ -140,6 +141,7 @@ function BankAccountList({
     onPageChange: (page: number) => void;
 }) {
     const { t } = useLingui();
+    const navigate = useNavigate();
     const skip = (page - 1) * PAGE_SIZE;
     const debouncedQ = useDebouncedValue(q, 200);
     const query = useBankAccountsPage(skip, PAGE_SIZE, debouncedQ, owner);
@@ -197,13 +199,34 @@ function BankAccountList({
 
     return (
         <div>
-            {items.map(ba => (
-                <BankAccountRow
-                    key={ba.id}
-                    bankAccount={ba}
-                    ownerLabel={resolveOwnerLabel(ba, accountsById, counterpartiesById)}
-                />
-            ))}
+            <div className="overflow-x-auto">
+                <Table
+                    aria-label={t`Bank accounts`}
+                    onRowAction={key => {
+                        void navigate({
+                            to: '/settings/bank-accounts/$id',
+                            params: { id: key as BankAccountId },
+                        });
+                    }}
+                >
+                    <TableHeader>
+                        <Column isRowHeader>
+                            <Trans>Bank account</Trans>
+                        </Column>
+                        <Column width={200}>
+                            <Trans>Owner</Trans>
+                        </Column>
+                    </TableHeader>
+                    <TableBody items={items}>
+                        {ba => (
+                            <BankAccountRow
+                                bankAccount={ba}
+                                ownerLabel={resolveOwnerLabel(ba, accountsById, counterpartiesById)}
+                            />
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
             <Pagination
                 page={page}
                 pageSize={PAGE_SIZE}
@@ -239,28 +262,33 @@ function BankAccountRow({
     const ownerKind = bankAccount.accountId ? t`Account` : t`Counterparty`;
 
     return (
-        <Link
-            to="/settings/bank-accounts/$id"
-            params={{ id: bankAccount.id }}
-            className="py-3 first:pt-0 last:pb-0 flex items-center gap-3 border-b border-border-soft last:border-b-0 hover:bg-surface-2 px-1 -mx-1 rounded-lg"
-        >
-            <span className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-xl bg-brand-primary-soft text-brand-primary">
-                <Icon name={bankAccountTypeIcon(bankAccount.type)} size={16} strokeWidth={2} />
-            </span>
-            <div className="flex-1 min-w-0 flex flex-col leading-tight">
-                <span className="text-sm font-medium text-fg-1 truncate">
-                    {formatBankAccountLabel(bankAccount)}
-                </span>
-                <span className="text-xs text-fg-3 tabular-nums truncate">
-                    {formatBankAccountSubline(bankAccount)}
-                </span>
-            </div>
-            <div className="shrink-0 flex flex-col items-end leading-tight">
-                <span className="text-xs text-fg-3 uppercase tracking-wider">{ownerKind}</span>
-                <span className="text-xs text-fg-2 truncate max-w-[160px]">{ownerLabel}</span>
-            </div>
-            <Icon name="chevron-right" size={14} className="text-fg-3" />
-        </Link>
+        <Row id={bankAccount.id} className="cursor-pointer">
+            <Cell>
+                <div className="flex items-center gap-3">
+                    <span className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-xl bg-brand-primary-soft text-brand-primary">
+                        <Icon
+                            name={bankAccountTypeIcon(bankAccount.type)}
+                            size={16}
+                            strokeWidth={2}
+                        />
+                    </span>
+                    <div className="min-w-0 flex flex-col leading-tight">
+                        <span className="text-sm font-medium text-fg-1 truncate">
+                            {formatBankAccountLabel(bankAccount)}
+                        </span>
+                        <span className="text-xs text-fg-3 tabular-nums truncate">
+                            {formatBankAccountSubline(bankAccount)}
+                        </span>
+                    </div>
+                </div>
+            </Cell>
+            <Cell>
+                <div className="flex flex-col leading-tight">
+                    <span className="text-xs text-fg-3 uppercase tracking-wider">{ownerKind}</span>
+                    <span className="text-xs text-fg-2 truncate max-w-[200px]">{ownerLabel}</span>
+                </div>
+            </Cell>
+        </Row>
     );
 }
 
