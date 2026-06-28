@@ -146,8 +146,10 @@ function SidebarAccountRow({ account, ctx }: { account: Account; ctx: AccountRow
     // compounds with depth, matching the old nested `bg-surface-2` containers:
     // each level layers another surface-2 (alpha 0.04), so the effective alpha is
     // 1 - 0.96^(level-1). The base channels flip black→white in dark mode via
-    // --surface-lift-rgb. Nested rows are square; only roots get a rounded pill.
+    // --surface-lift-rgb. The first two levels get a rounded pill; deeper rows
+    // are square.
     const nested = ctx.level > 1;
+    const roundedPill = ctx.level <= 2;
     const shade = nested
         ? {
               backgroundColor: `rgb(var(--surface-lift-rgb) / ${String(
@@ -160,7 +162,7 @@ function SidebarAccountRow({ account, ctx }: { account: Account; ctx: AccountRow
             <div
                 className={cx(
                     'relative flex items-center gap-3 pl-2 pr-8 py-2 cursor-pointer transition-colors',
-                    !nested && 'rounded-lg',
+                    roundedPill && 'rounded-lg',
                     active
                         ? 'bg-brand-primary-soft text-brand-primary'
                         : 'text-fg-1 group-data-[hovered]:bg-surface-2 group-data-[focus-visible]:bg-surface-2',
