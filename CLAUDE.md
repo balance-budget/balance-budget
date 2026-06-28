@@ -155,12 +155,22 @@ The web host startup follows this order:
 - Submit changes as a PR when done
 
 ## Writing Style
+
 When writing copy within the application, follow these guidelines:
 - Write like Stripe, Linear, GitHub, or Notion.
 - Short, clear, conversational, and specific.
 - Never use em dashes (—).
 - Avoid AI-sounding phrases, marketing copy, and buzzwords.
 - Prefer plain English, sentence case, and brevity.
+
+## Design decisions and consistency
+When making any design decisions, be extremely consistent.
+This applies to architectural decisions as well as UX/UI decisions.
+Follow these guidelines:
+- Reuse an existing pattern.
+- If multiple patterns exist, use the most common one.
+- Only invent a new pattern if none exists. 
+- Explain why a new pattern is necessary.
 
 ## Agent skills
 
