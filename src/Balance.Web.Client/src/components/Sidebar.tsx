@@ -14,7 +14,6 @@ import { AccountTreeSections, type AccountRowContext } from './AccountTree';
 import { TreeExpandButton } from './ui/Tree';
 import { Skeleton } from './Skeleton';
 import { ErrorState } from './ErrorState';
-import { computeRowDecor, type RowDecor } from './sidebarTree';
 import { cx } from '../lib/cx';
 import { isLedgerAccount, type AccountId, type AccountType } from '../lib/domain';
 import { formatMoney } from '../lib/money';
@@ -132,13 +131,10 @@ function matchActiveAccountId(pathname: string): string | null {
 // `active` flag would never update. Context propagation bypasses that cache.
 const ActiveAccountContext = createContext<string | null>(null);
 
-const RowDecorContext = createContext<ReadonlyMap<string, RowDecor>>(new Map());
-
 function SidebarAccountRow({ account, ctx }: { account: Account; ctx: AccountRowContext }) {
     const { t } = useLingui();
     const catalog = useCurrencyCatalog();
     const active = useContext(ActiveAccountContext) === String(account.id);
-    const decor = useContext(RowDecorContext).get(String(account.id));
     const identifier = accountIdentifier(account);
     const isNegative = account.balance.amount < 0;
     // Income/Expense are category accounts: their "balance" is the lifetime
@@ -146,12 +142,11 @@ function SidebarAccountRow({ account, ctx }: { account: Account; ctx: AccountRow
     // Only ledger (Asset/Liability) accounts have a balance worth showing here.
     const showBalance = isLedgerAccount(account);
     // No indentation — the chart-of-accounts nests several levels deep and the
-    // sidebar is narrow. Instead each nested subtree reads as a rounded shaded
-    // block that compounds with depth, matching the old nested `bg-surface-2`
-    // containers: each level layers another surface-2 (alpha 0.04), so the
-    // effective alpha is 1 - 0.96^(level-1). RAC's Tree DOM is flat (sibling rows
-    // with aria-level), so the block is reconstructed per row — the shade is a
-    // continuous band and the corners are rounded at the block's first/last row.
+    // sidebar is narrow. Instead each nested row sits on a translucent shade that
+    // compounds with depth, matching the old nested `bg-surface-2` containers:
+    // each level layers another surface-2 (alpha 0.04), so the effective alpha is
+    // 1 - 0.96^(level-1). The base channels flip black→white in dark mode via
+    // --surface-lift-rgb. Nested rows are square; only roots get a rounded pill.
     const nested = ctx.level > 1;
     const shade = nested
         ? {
@@ -161,17 +156,11 @@ function SidebarAccountRow({ account, ctx }: { account: Account; ctx: AccountRow
           }
         : undefined;
     return (
-        <div
-            className={cx(
-                'relative',
-                nested && decor?.roundTop && 'rounded-t-xl',
-                nested && decor?.roundBottom && 'rounded-b-xl',
-            )}
-            style={shade}
-        >
+        <div className="relative" style={shade}>
             <div
                 className={cx(
-                    'relative flex items-center gap-3 pl-2 pr-8 py-2 rounded-lg cursor-pointer transition-colors',
+                    'relative flex items-center gap-3 pl-2 pr-8 py-2 cursor-pointer transition-colors',
+                    !nested && 'rounded-lg',
                     active
                         ? 'bg-brand-primary-soft text-brand-primary'
                         : 'text-fg-1 group-data-[hovered]:bg-surface-2 group-data-[focus-visible]:bg-surface-2',
@@ -287,38 +276,35 @@ function AccountsGroup() {
         effectiveExpanded.add(cursor);
         cursor = parentOf.get(cursor) ?? null;
     }
-    const rowDecor = computeRowDecor(data, SIDEBAR_TYPE_ORDER, effectiveExpanded);
 
     return (
         <ActiveAccountContext.Provider value={activeAccountId}>
-            <RowDecorContext.Provider value={rowDecor}>
-                <AccountTreeSections
-                    accounts={data}
-                    typeOrder={SIDEBAR_TYPE_ORDER}
-                    typeLabels={SIDEBAR_TYPE_LABELS}
-                    expandedKeys={effectiveExpanded}
-                    onExpandedChange={keys => {
-                        setExpandedIds(new Set([...keys].map(String)));
-                    }}
-                    onAction={(key: AccountId) => {
-                        void navigate({
-                            to: '/accounts/$id',
-                            params: { id: key },
-                            search: {
-                                page: 1,
-                                q: '',
-                                posted: '',
-                                counter: '',
-                                from: '',
-                                to: '',
-                                status: '',
-                            },
-                        });
-                    }}
-                    renderHeading={label => <SectionLabel>{label}</SectionLabel>}
-                    renderRow={(account, ctx) => <SidebarAccountRow account={account} ctx={ctx} />}
-                />
-            </RowDecorContext.Provider>
+            <AccountTreeSections
+                accounts={data}
+                typeOrder={SIDEBAR_TYPE_ORDER}
+                typeLabels={SIDEBAR_TYPE_LABELS}
+                expandedKeys={effectiveExpanded}
+                onExpandedChange={keys => {
+                    setExpandedIds(new Set([...keys].map(String)));
+                }}
+                onAction={(key: AccountId) => {
+                    void navigate({
+                        to: '/accounts/$id',
+                        params: { id: key },
+                        search: {
+                            page: 1,
+                            q: '',
+                            posted: '',
+                            counter: '',
+                            from: '',
+                            to: '',
+                            status: '',
+                        },
+                    });
+                }}
+                renderHeading={label => <SectionLabel>{label}</SectionLabel>}
+                renderRow={(account, ctx) => <SidebarAccountRow account={account} ctx={ctx} />}
+            />
         </ActiveAccountContext.Provider>
     );
 }
