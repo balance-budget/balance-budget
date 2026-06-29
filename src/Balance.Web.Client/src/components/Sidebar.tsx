@@ -208,7 +208,7 @@ function SidebarAccountRow({ account, ctx }: { account: Account; ctx: AccountRow
                 className={cx(
                     'relative flex items-center gap-3 pl-2 pr-8 py-2 cursor-pointer transition-colors rounded-lg',
                     active
-                        ? 'bg-brand-primary-soft text-brand-primary'
+                        ? 'bg-brand-primary-soft text-fg-1'
                         : cx('text-fg-1', hoverFill),
                 )}
             >
