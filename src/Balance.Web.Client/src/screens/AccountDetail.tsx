@@ -450,6 +450,7 @@ function RegisterTable({
                     <TableBody items={rows}>
                         {row => (
                             <RegisterRowView
+                                id={row.journalLineId}
                                 row={row}
                                 catalog={catalog}
                                 showAccountColumn={showAccountColumn}
@@ -566,10 +567,16 @@ function ReassignBar({
 }
 
 function RegisterRowView({
+    id,
     row,
     catalog,
     showAccountColumn,
 }: {
+    // RAC keys dynamic rows on the rendered element's `id` (RegisterRow has no
+    // `id`/`key` field of its own, so without this the key falls back to the
+    // array index and an in-place page swap throws "Cannot change the id of an
+    // item").
+    id: JournalLineId;
     row: RegisterRow;
     catalog: ReturnType<typeof useCurrencyCatalog>;
     showAccountColumn: boolean;
@@ -579,7 +586,7 @@ function RegisterRowView({
     const negative = row.amount.amount < 0;
     const heading = row.counterpartyName ?? row.entryDescription ?? '—';
     return (
-        <Row id={row.journalLineId} className="cursor-pointer">
+        <Row id={id} className="cursor-pointer">
             <Cell className="text-xs text-fg-3 tabular-nums">{formatTableDate(row.date)}</Cell>
             <Cell>
                 <div className="flex flex-col min-w-0">
