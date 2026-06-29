@@ -206,7 +206,7 @@ function SidebarAccountRow({ account, ctx }: { account: Account; ctx: AccountRow
             />
             <div
                 className={cx(
-                    'relative flex items-center gap-3 pl-2 pr-8 py-2 cursor-pointer transition-colors rounded-lg',
+                    'relative flex items-center gap-3 px-2 py-2 cursor-pointer transition-colors rounded-lg',
                     active ? 'bg-brand-primary-soft text-fg-1' : cx('text-fg-1', hoverFill),
                 )}
             >
@@ -237,13 +237,12 @@ function SidebarAccountRow({ account, ctx }: { account: Account; ctx: AccountRow
                     </span>
                 )}
                 {ctx.hasChildren && (
-                    // Floated over the row's reserved right padding (pr-8) so the
-                    // active/hover background spans the full row width while the
-                    // chevron stays its own clickable target.
+                    // In-flow at the row's end (its own clickable target); the
+                    // active/hover background still spans the full row from the
+                    // parent. Symmetric px-2 keeps the right edge level with the left.
                     <TreeExpandButton
                         ariaLabel={ctx.isExpanded ? t`Collapse` : t`Expand`}
                         isExpanded={ctx.isExpanded}
-                        className="absolute right-1 top-1/2 -translate-y-1/2"
                     />
                 )}
             </div>
