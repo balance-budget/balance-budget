@@ -430,10 +430,11 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
                     </span>
                 </div>
 
-                {/* `-mr-4 pr-4` extends the scroll container to the aside's right
-                    edge so the scrollbar sits flush, while keeping the content
-                    inset where it was. */}
-                <nav className="flex flex-col gap-1 overflow-y-auto -mr-4 pr-4">
+                {/* `-mr-4` extends the scroll container to the aside's right edge.
+                    `pr-2` then leaves room for the thin scrollbar (~8px) so the
+                    rows' right edge lands on the aside content inset, level with the
+                    left and with the (non-scrolling) user card below. */}
+                <nav className="flex flex-col gap-1 overflow-y-auto -mr-4 pr-2">
                     <NavGroup items={NAV_MAIN} currentPath={pathname} />
                     <AccountsGroup />
                     <NavGroup
