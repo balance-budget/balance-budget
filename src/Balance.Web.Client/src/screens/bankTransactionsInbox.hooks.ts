@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useBlocker } from '@tanstack/react-router';
 import { type Selection } from 'react-aria-components';
 import { t } from '@lingui/core/macro';
@@ -257,19 +257,29 @@ export function useInboxEditor({
         return m;
     }, [visibleBts]);
 
-    function draftFor(id: BankTransactionId): RowDraft {
-        const prefill = prefillByBt.get(id) ?? emptyDraft();
-        const override = userOverrides.get(id);
-        return { ...prefill, ...override };
-    }
+    // Memoized so their identities only change when the underlying draft state
+    // does. The inbox GridList keys its per-row render cache on these via
+    // `dependencies`; fresh identities every render would defeat that cache and
+    // re-render all rows (each with two heavy ComboBoxes) on every keystroke.
+    const draftFor = useCallback(
+        (id: BankTransactionId): RowDraft => {
+            const prefill = prefillByBt.get(id) ?? emptyDraft();
+            const override = userOverrides.get(id);
+            return { ...prefill, ...override };
+        },
+        [prefillByBt, userOverrides],
+    );
 
-    function isRowPristine(id: BankTransactionId): boolean {
-        const override = userOverrides.get(id);
-        if (!override) return true;
-        const prefill = prefillByBt.get(id);
-        if (!prefill) return false;
-        return isPristine({ ...prefill, ...override }, prefill);
-    }
+    const isRowPristine = useCallback(
+        (id: BankTransactionId): boolean => {
+            const override = userOverrides.get(id);
+            if (!override) return true;
+            const prefill = prefillByBt.get(id);
+            if (!prefill) return false;
+            return isPristine({ ...prefill, ...override }, prefill);
+        },
+        [prefillByBt, userOverrides],
+    );
 
     function patchDraft(id: BankTransactionId, patch: Partial<RowDraft>) {
         setRowErrors(prev => withoutKey(prev, id));

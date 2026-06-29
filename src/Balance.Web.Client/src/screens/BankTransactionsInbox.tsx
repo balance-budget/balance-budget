@@ -632,6 +632,11 @@ function InboxEditorReady({
                 <GridList
                     aria-label={t`Bank transactions`}
                     variant="flat"
+                    // Rows embed ComboBoxes; with the default arrow-key behavior the
+                    // grid would swallow Up/Down (and typing) as row navigation, so the
+                    // combobox listbox never sees them. Tab navigation moves focus in and
+                    // out of a row instead, leaving arrow keys to the focused control.
+                    keyboardNavigationBehavior="tab"
                     selectionMode="multiple"
                     selectedKeys={selection}
                     onSelectionChange={onSelectionChange}
