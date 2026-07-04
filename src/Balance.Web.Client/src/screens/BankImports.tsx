@@ -22,8 +22,7 @@ import { Skeleton } from '../components/Skeleton';
 import { ApiError } from '../lib/http';
 
 type ImportFeedback =
-    | { kind: 'success'; imported: number; skipped: number }
-    | { kind: 'error'; message: string };
+    { kind: 'success'; imported: number; skipped: number } | { kind: 'error'; message: string };
 
 function ImportRow({ bankAccount }: { bankAccount: BankAccount }) {
     const { t } = useLingui();
