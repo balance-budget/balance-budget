@@ -7,6 +7,10 @@
 
 import { afterEach } from 'vitest';
 
+// Apply the same React Aria childNodes patch the app entry installs, so ComboBox
+// tests exercise the patched prototype (see the module comment).
+import './lib/patchReactAriaChildNodes';
+
 // Activate the i18n catalog so <Trans>/`t` render their English source defaults
 // in tests (ADR-0022). Importing for its activation side effect.
 import './i18n/i18n';

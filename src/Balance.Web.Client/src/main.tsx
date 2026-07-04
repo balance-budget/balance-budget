@@ -1,3 +1,6 @@
+// Must run before any React Aria collection renders (see the module comment).
+import './lib/patchReactAriaChildNodes';
+
 import { StrictMode } from 'react';
 import type { MessageDescriptor } from '@lingui/core';
 import { createRoot } from 'react-dom/client';
