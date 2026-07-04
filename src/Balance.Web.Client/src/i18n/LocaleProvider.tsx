@@ -10,7 +10,7 @@
  * user's saved choice always wins (the requirement that drove this work).
  */
 
-import { useContext, createContext, type ReactNode } from 'react';
+import { useContext, useLayoutEffect, createContext, type ReactNode } from 'react';
 import { I18nProvider as AriaI18nProvider } from 'react-aria-components';
 import { I18nProvider as LinguiProvider } from '@lingui/react';
 import { useCurrentUser } from '../api/auth';
@@ -46,13 +46,22 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
         : DEFAULT_LANGUAGE;
     const region = resolveRegion(user?.dateFormat, user?.numberFormat);
 
-    // Sync the singletons + Lingui catalog before children render so the pure
-    // formatters in lib/ read fresh values on this pass.
+    // Sync the plain formatting singletons before children render so the pure
+    // formatters in lib/ read fresh values on this pass. These are module-level
+    // variable writes with no React state, so they're safe during render.
     setActiveRegion(region);
     setActiveLanguage(language);
-    if (i18n.locale !== language) {
-        activateLanguage(language);
-    }
+
+    // Activating the Lingui catalog emits a change event that makes Lingui's
+    // I18nProvider call setState. Doing that during render triggers React's
+    // "Cannot update a component while rendering a different component" warning,
+    // so defer it to a layout effect. It runs before paint, so Lingui re-renders
+    // with the new catalog synchronously and the user never sees a stale pass.
+    useLayoutEffect(() => {
+        if (i18n.locale !== language) {
+            activateLanguage(language);
+        }
+    }, [language]);
 
     // Remount the subtree on a (rare, user-initiated) settings change so chart and
     // money formatters that read the singleton recompute. `display: contents`
