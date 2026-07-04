@@ -45,10 +45,10 @@
     <PackageVersion Include="PhenX.EntityFrameworkCore.BulkInsert.PostgreSql" Version="0.5.0" />
     <PackageVersion Include="PhenX.EntityFrameworkCore.BulkInsert.Sqlite" Version="0.5.0" />
     <PackageVersion Include="Quartz.Extensions.Hosting" Version="3.18.2" />
-    <PackageVersion Include="Scalar.AspNetCore" Version="2.16.6" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.16.10" />
     <PackageVersion Include="StronglyTypedId" Version="1.0.0-beta08" />
-    <PackageVersion Include="TUnit" Version="1.56.35" />
-    <PackageVersion Include="TUnit.AspNetCore" Version="1.56.35" />
-    <PackageVersion Include="TUnit.Mocks" Version="1.56.35" />
+    <PackageVersion Include="TUnit" Version="1.58.0" />
+    <PackageVersion Include="TUnit.AspNetCore" Version="1.58.0" />
+    <PackageVersion Include="TUnit.Mocks" Version="1.58.0" />
   </ItemGroup>
 </Project>
