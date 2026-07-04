@@ -14,8 +14,7 @@ import { useToast } from '../components/ui/Toast';
 import { handleFormError } from '../lib/formErrors';
 
 type Props = { onClose: () => void } & (
-    | { mode: 'create' }
-    | { mode: 'edit'; counterparty: Counterparty }
+    { mode: 'create' } | { mode: 'edit'; counterparty: Counterparty }
 );
 
 export function CounterpartyFormModal(props: Props) {

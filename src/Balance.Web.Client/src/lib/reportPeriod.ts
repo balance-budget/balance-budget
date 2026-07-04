@@ -22,13 +22,7 @@ import {
 export type ReportPeriod = { from: string; to: string };
 
 export type PeriodPreset =
-    | 'this-month'
-    | 'last-month'
-    | 'this-year'
-    | 'last-year'
-    | 'last-30'
-    | 'last-90'
-    | 'custom';
+    'this-month' | 'last-month' | 'this-year' | 'last-year' | 'last-30' | 'last-90' | 'custom';
 
 // Labels are MessageDescriptors (the `msg` macro) so they're extracted for
 // translation; resolve them at the render site with `i18n._(label)`.

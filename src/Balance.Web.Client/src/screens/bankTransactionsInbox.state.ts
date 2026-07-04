@@ -206,8 +206,7 @@ export function buildRowRequest(
  *  component level (setting a dismiss-draft clears any categorize override and
  *  vice versa), so the orchestrator only sees one action per row. */
 export type SaveAllAction =
-    | { kind: 'categorize'; draft: RowDraft }
-    | { kind: 'dismiss'; reason: string };
+    { kind: 'categorize'; draft: RowDraft } | { kind: 'dismiss'; reason: string };
 
 export type SaveAllRow = {
     id: BankTransactionId;
@@ -359,8 +358,7 @@ export function distinctRowCurrencies(
 }
 
 export type BulkApplyCounterparty =
-    | { kind: 'existing'; counterpartyId: CounterpartyId | null }
-    | { kind: 'new'; name: string };
+    { kind: 'existing'; counterpartyId: CounterpartyId | null } | { kind: 'new'; name: string };
 
 export type BulkApplyInput = {
     /** null = don't touch the row's counterparty draft. */

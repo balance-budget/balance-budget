@@ -45,8 +45,7 @@ export function emptyPart(index: number): PartDraft {
 }
 
 export type BuildPartResult =
-    | { ok: true; request: WireCreateLoanPartRequest }
-    | { ok: false; error: string };
+    { ok: true; request: WireCreateLoanPartRequest } | { ok: false; error: string };
 
 export function buildPartRequest(part: PartDraft, scale: number): BuildPartResult {
     if (part.label.trim() === '') return { ok: false, error: t`Every part needs a label.` };
@@ -121,8 +120,7 @@ export type DepositRequestFields = {
 };
 
 export type BuildDepositResult =
-    | { ok: true; value: DepositRequestFields }
-    | { ok: false; error: string };
+    { ok: true; value: DepositRequestFields } | { ok: false; error: string };
 
 // The Construction deposit is optional, but all three fields go together (ADR-0026).
 export function buildDeposit(d: DepositDraft): BuildDepositResult {
