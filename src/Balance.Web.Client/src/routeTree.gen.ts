@@ -9,109 +9,44 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SubscriptionsRouteImport } from './routes/subscriptions'
-import { Route as SetupRouteImport } from './routes/setup'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as ReportsRouteImport } from './routes/reports'
-import { Route as PiggyBanksRouteImport } from './routes/piggy-banks'
-import { Route as OutlookRouteImport } from './routes/outlook'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as LoansRouteImport } from './routes/loans'
-import { Route as JournalRouteImport } from './routes/journal'
-import { Route as CounterpartiesRouteImport } from './routes/counterparties'
-import { Route as BudgetsRouteImport } from './routes/budgets'
-import { Route as BankTransactionsRouteImport } from './routes/bank-transactions'
-import { Route as BankImportsRouteImport } from './routes/bank-imports'
-import { Route as ActivityRouteImport } from './routes/activity'
-import { Route as AccountsRouteImport } from './routes/accounts'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as SettingsIndexRouteImport } from './routes/settings.index'
-import { Route as LoansIndexRouteImport } from './routes/loans.index'
-import { Route as CounterpartiesIndexRouteImport } from './routes/counterparties.index'
-import { Route as BankTransactionsIndexRouteImport } from './routes/bank-transactions.index'
+import { Route as AccountsRouteImport } from './routes/accounts'
+import { Route as ActivityRouteImport } from './routes/activity'
+import { Route as BankImportsRouteImport } from './routes/bank-imports'
+import { Route as BankTransactionsRouteImport } from './routes/bank-transactions'
+import { Route as BudgetsRouteImport } from './routes/budgets'
+import { Route as CounterpartiesRouteImport } from './routes/counterparties'
+import { Route as JournalRouteImport } from './routes/journal'
+import { Route as LoansRouteImport } from './routes/loans'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as OutlookRouteImport } from './routes/outlook'
+import { Route as PiggyBanksRouteImport } from './routes/piggy-banks'
+import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SetupRouteImport } from './routes/setup'
+import { Route as SubscriptionsRouteImport } from './routes/subscriptions'
 import { Route as AccountsIndexRouteImport } from './routes/accounts.index'
-import { Route as SettingsUsersRouteImport } from './routes/settings.users'
-import { Route as SettingsTokensRouteImport } from './routes/settings.tokens'
-import { Route as SettingsPreferencesRouteImport } from './routes/settings.preferences'
-import { Route as SettingsCurrenciesRouteImport } from './routes/settings.currencies'
-import { Route as SettingsBankAccountsRouteImport } from './routes/settings.bank-accounts'
-import { Route as LoansIdRouteImport } from './routes/loans.$id'
-import { Route as JournalNewRouteImport } from './routes/journal.new'
-import { Route as JournalIdRouteImport } from './routes/journal.$id'
-import { Route as CounterpartiesIdRouteImport } from './routes/counterparties.$id'
 import { Route as AccountsIdRouteImport } from './routes/accounts.$id'
+import { Route as BankTransactionsIndexRouteImport } from './routes/bank-transactions.index'
+import { Route as CounterpartiesIndexRouteImport } from './routes/counterparties.index'
+import { Route as CounterpartiesIdRouteImport } from './routes/counterparties.$id'
+import { Route as JournalIdRouteImport } from './routes/journal.$id'
+import { Route as JournalNewRouteImport } from './routes/journal.new'
+import { Route as LoansIndexRouteImport } from './routes/loans.index'
+import { Route as LoansIdRouteImport } from './routes/loans.$id'
+import { Route as SettingsIndexRouteImport } from './routes/settings.index'
+import { Route as SettingsBankAccountsRouteImport } from './routes/settings.bank-accounts'
+import { Route as SettingsCurrenciesRouteImport } from './routes/settings.currencies'
+import { Route as SettingsPreferencesRouteImport } from './routes/settings.preferences'
+import { Route as SettingsTokensRouteImport } from './routes/settings.tokens'
+import { Route as SettingsUsersRouteImport } from './routes/settings.users'
+import { Route as BankTransactionsIdCategorizeRouteImport } from './routes/bank-transactions.$id.categorize'
 import { Route as SettingsBankAccountsIndexRouteImport } from './routes/settings.bank-accounts.index'
 import { Route as SettingsBankAccountsIdRouteImport } from './routes/settings.bank-accounts.$id'
-import { Route as BankTransactionsIdCategorizeRouteImport } from './routes/bank-transactions.$id.categorize'
 
-const SubscriptionsRoute = SubscriptionsRouteImport.update({
-  id: '/subscriptions',
-  path: '/subscriptions',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SetupRoute = SetupRouteImport.update({
-  id: '/setup',
-  path: '/setup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReportsRoute = ReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PiggyBanksRoute = PiggyBanksRouteImport.update({
-  id: '/piggy-banks',
-  path: '/piggy-banks',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OutlookRoute = OutlookRouteImport.update({
-  id: '/outlook',
-  path: '/outlook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoansRoute = LoansRouteImport.update({
-  id: '/loans',
-  path: '/loans',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const JournalRoute = JournalRouteImport.update({
-  id: '/journal',
-  path: '/journal',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CounterpartiesRoute = CounterpartiesRouteImport.update({
-  id: '/counterparties',
-  path: '/counterparties',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BudgetsRoute = BudgetsRouteImport.update({
-  id: '/budgets',
-  path: '/budgets',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BankTransactionsRoute = BankTransactionsRouteImport.update({
-  id: '/bank-transactions',
-  path: '/bank-transactions',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BankImportsRoute = BankImportsRouteImport.update({
-  id: '/bank-imports',
-  path: '/bank-imports',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ActivityRoute = ActivityRouteImport.update({
-  id: '/activity',
-  path: '/activity',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccountsRoute = AccountsRouteImport.update({
@@ -119,54 +54,124 @@ const AccountsRoute = AccountsRouteImport.update({
   path: '/accounts',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ActivityRoute = ActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsIndexRoute = SettingsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => SettingsRoute,
+const BankImportsRoute = BankImportsRouteImport.update({
+  id: '/bank-imports',
+  path: '/bank-imports',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const LoansIndexRoute = LoansIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => LoansRoute,
+const BankTransactionsRoute = BankTransactionsRouteImport.update({
+  id: '/bank-transactions',
+  path: '/bank-transactions',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const CounterpartiesIndexRoute = CounterpartiesIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => CounterpartiesRoute,
+const BudgetsRoute = BudgetsRouteImport.update({
+  id: '/budgets',
+  path: '/budgets',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const BankTransactionsIndexRoute = BankTransactionsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => BankTransactionsRoute,
+const CounterpartiesRoute = CounterpartiesRouteImport.update({
+  id: '/counterparties',
+  path: '/counterparties',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JournalRoute = JournalRouteImport.update({
+  id: '/journal',
+  path: '/journal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoansRoute = LoansRouteImport.update({
+  id: '/loans',
+  path: '/loans',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OutlookRoute = OutlookRouteImport.update({
+  id: '/outlook',
+  path: '/outlook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PiggyBanksRoute = PiggyBanksRouteImport.update({
+  id: '/piggy-banks',
+  path: '/piggy-banks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SetupRoute = SetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SubscriptionsRoute = SubscriptionsRouteImport.update({
+  id: '/subscriptions',
+  path: '/subscriptions',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AccountsIndexRoute = AccountsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AccountsRoute,
 } as any)
-const SettingsUsersRoute = SettingsUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => SettingsRoute,
+const AccountsIdRoute = AccountsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AccountsRoute,
 } as any)
-const SettingsTokensRoute = SettingsTokensRouteImport.update({
-  id: '/tokens',
-  path: '/tokens',
-  getParentRoute: () => SettingsRoute,
+const BankTransactionsIndexRoute = BankTransactionsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => BankTransactionsRoute,
 } as any)
-const SettingsPreferencesRoute = SettingsPreferencesRouteImport.update({
-  id: '/preferences',
-  path: '/preferences',
-  getParentRoute: () => SettingsRoute,
+const CounterpartiesIndexRoute = CounterpartiesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CounterpartiesRoute,
 } as any)
-const SettingsCurrenciesRoute = SettingsCurrenciesRouteImport.update({
-  id: '/currencies',
-  path: '/currencies',
+const CounterpartiesIdRoute = CounterpartiesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => CounterpartiesRoute,
+} as any)
+const JournalIdRoute = JournalIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => JournalRoute,
+} as any)
+const JournalNewRoute = JournalNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => JournalRoute,
+} as any)
+const LoansIndexRoute = LoansIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LoansRoute,
+} as any)
+const LoansIdRoute = LoansIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => LoansRoute,
+} as any)
+const SettingsIndexRoute = SettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => SettingsRoute,
 } as any)
 const SettingsBankAccountsRoute = SettingsBankAccountsRouteImport.update({
@@ -174,31 +179,32 @@ const SettingsBankAccountsRoute = SettingsBankAccountsRouteImport.update({
   path: '/bank-accounts',
   getParentRoute: () => SettingsRoute,
 } as any)
-const LoansIdRoute = LoansIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => LoansRoute,
+const SettingsCurrenciesRoute = SettingsCurrenciesRouteImport.update({
+  id: '/currencies',
+  path: '/currencies',
+  getParentRoute: () => SettingsRoute,
 } as any)
-const JournalNewRoute = JournalNewRouteImport.update({
-  id: '/new',
-  path: '/new',
-  getParentRoute: () => JournalRoute,
+const SettingsPreferencesRoute = SettingsPreferencesRouteImport.update({
+  id: '/preferences',
+  path: '/preferences',
+  getParentRoute: () => SettingsRoute,
 } as any)
-const JournalIdRoute = JournalIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => JournalRoute,
+const SettingsTokensRoute = SettingsTokensRouteImport.update({
+  id: '/tokens',
+  path: '/tokens',
+  getParentRoute: () => SettingsRoute,
 } as any)
-const CounterpartiesIdRoute = CounterpartiesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => CounterpartiesRoute,
+const SettingsUsersRoute = SettingsUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => SettingsRoute,
 } as any)
-const AccountsIdRoute = AccountsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AccountsRoute,
-} as any)
+const BankTransactionsIdCategorizeRoute =
+  BankTransactionsIdCategorizeRouteImport.update({
+    id: '/$id/categorize',
+    path: '/$id/categorize',
+    getParentRoute: () => BankTransactionsRoute,
+  } as any)
 const SettingsBankAccountsIndexRoute =
   SettingsBankAccountsIndexRouteImport.update({
     id: '/',
@@ -210,12 +216,6 @@ const SettingsBankAccountsIdRoute = SettingsBankAccountsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => SettingsBankAccountsRoute,
 } as any)
-const BankTransactionsIdCategorizeRoute =
-  BankTransactionsIdCategorizeRouteImport.update({
-    id: '/$id/categorize',
-    path: '/$id/categorize',
-    getParentRoute: () => BankTransactionsRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -446,102 +446,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/subscriptions': {
-      id: '/subscriptions'
-      path: '/subscriptions'
-      fullPath: '/subscriptions'
-      preLoaderRoute: typeof SubscriptionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/setup': {
-      id: '/setup'
-      path: '/setup'
-      fullPath: '/setup'
-      preLoaderRoute: typeof SetupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reports': {
-      id: '/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof ReportsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/piggy-banks': {
-      id: '/piggy-banks'
-      path: '/piggy-banks'
-      fullPath: '/piggy-banks'
-      preLoaderRoute: typeof PiggyBanksRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/outlook': {
-      id: '/outlook'
-      path: '/outlook'
-      fullPath: '/outlook'
-      preLoaderRoute: typeof OutlookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/loans': {
-      id: '/loans'
-      path: '/loans'
-      fullPath: '/loans'
-      preLoaderRoute: typeof LoansRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/journal': {
-      id: '/journal'
-      path: '/journal'
-      fullPath: '/journal'
-      preLoaderRoute: typeof JournalRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/counterparties': {
-      id: '/counterparties'
-      path: '/counterparties'
-      fullPath: '/counterparties'
-      preLoaderRoute: typeof CounterpartiesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/budgets': {
-      id: '/budgets'
-      path: '/budgets'
-      fullPath: '/budgets'
-      preLoaderRoute: typeof BudgetsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/bank-transactions': {
-      id: '/bank-transactions'
-      path: '/bank-transactions'
-      fullPath: '/bank-transactions'
-      preLoaderRoute: typeof BankTransactionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/bank-imports': {
-      id: '/bank-imports'
-      path: '/bank-imports'
-      fullPath: '/bank-imports'
-      preLoaderRoute: typeof BankImportsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/activity': {
-      id: '/activity'
-      path: '/activity'
-      fullPath: '/activity'
-      preLoaderRoute: typeof ActivityRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/accounts': {
@@ -551,40 +460,103 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/activity': {
+      id: '/activity'
+      path: '/activity'
+      fullPath: '/activity'
+      preLoaderRoute: typeof ActivityRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/settings/': {
-      id: '/settings/'
-      path: '/'
-      fullPath: '/settings/'
-      preLoaderRoute: typeof SettingsIndexRouteImport
-      parentRoute: typeof SettingsRoute
+    '/bank-imports': {
+      id: '/bank-imports'
+      path: '/bank-imports'
+      fullPath: '/bank-imports'
+      preLoaderRoute: typeof BankImportsRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/loans/': {
-      id: '/loans/'
-      path: '/'
-      fullPath: '/loans/'
-      preLoaderRoute: typeof LoansIndexRouteImport
-      parentRoute: typeof LoansRoute
+    '/bank-transactions': {
+      id: '/bank-transactions'
+      path: '/bank-transactions'
+      fullPath: '/bank-transactions'
+      preLoaderRoute: typeof BankTransactionsRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/counterparties/': {
-      id: '/counterparties/'
-      path: '/'
-      fullPath: '/counterparties/'
-      preLoaderRoute: typeof CounterpartiesIndexRouteImport
-      parentRoute: typeof CounterpartiesRoute
+    '/budgets': {
+      id: '/budgets'
+      path: '/budgets'
+      fullPath: '/budgets'
+      preLoaderRoute: typeof BudgetsRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/bank-transactions/': {
-      id: '/bank-transactions/'
-      path: '/'
-      fullPath: '/bank-transactions/'
-      preLoaderRoute: typeof BankTransactionsIndexRouteImport
-      parentRoute: typeof BankTransactionsRoute
+    '/counterparties': {
+      id: '/counterparties'
+      path: '/counterparties'
+      fullPath: '/counterparties'
+      preLoaderRoute: typeof CounterpartiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/journal': {
+      id: '/journal'
+      path: '/journal'
+      fullPath: '/journal'
+      preLoaderRoute: typeof JournalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/loans': {
+      id: '/loans'
+      path: '/loans'
+      fullPath: '/loans'
+      preLoaderRoute: typeof LoansRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/outlook': {
+      id: '/outlook'
+      path: '/outlook'
+      fullPath: '/outlook'
+      preLoaderRoute: typeof OutlookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/piggy-banks': {
+      id: '/piggy-banks'
+      path: '/piggy-banks'
+      fullPath: '/piggy-banks'
+      preLoaderRoute: typeof PiggyBanksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/setup': {
+      id: '/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof SetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/subscriptions': {
+      id: '/subscriptions'
+      path: '/subscriptions'
+      fullPath: '/subscriptions'
+      preLoaderRoute: typeof SubscriptionsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/accounts/': {
       id: '/accounts/'
@@ -593,32 +565,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountsIndexRouteImport
       parentRoute: typeof AccountsRoute
     }
-    '/settings/users': {
-      id: '/settings/users'
-      path: '/users'
-      fullPath: '/settings/users'
-      preLoaderRoute: typeof SettingsUsersRouteImport
-      parentRoute: typeof SettingsRoute
+    '/accounts/$id': {
+      id: '/accounts/$id'
+      path: '/$id'
+      fullPath: '/accounts/$id'
+      preLoaderRoute: typeof AccountsIdRouteImport
+      parentRoute: typeof AccountsRoute
     }
-    '/settings/tokens': {
-      id: '/settings/tokens'
-      path: '/tokens'
-      fullPath: '/settings/tokens'
-      preLoaderRoute: typeof SettingsTokensRouteImport
-      parentRoute: typeof SettingsRoute
+    '/bank-transactions/': {
+      id: '/bank-transactions/'
+      path: '/'
+      fullPath: '/bank-transactions/'
+      preLoaderRoute: typeof BankTransactionsIndexRouteImport
+      parentRoute: typeof BankTransactionsRoute
     }
-    '/settings/preferences': {
-      id: '/settings/preferences'
-      path: '/preferences'
-      fullPath: '/settings/preferences'
-      preLoaderRoute: typeof SettingsPreferencesRouteImport
-      parentRoute: typeof SettingsRoute
+    '/counterparties/': {
+      id: '/counterparties/'
+      path: '/'
+      fullPath: '/counterparties/'
+      preLoaderRoute: typeof CounterpartiesIndexRouteImport
+      parentRoute: typeof CounterpartiesRoute
     }
-    '/settings/currencies': {
-      id: '/settings/currencies'
-      path: '/currencies'
-      fullPath: '/settings/currencies'
-      preLoaderRoute: typeof SettingsCurrenciesRouteImport
+    '/counterparties/$id': {
+      id: '/counterparties/$id'
+      path: '/$id'
+      fullPath: '/counterparties/$id'
+      preLoaderRoute: typeof CounterpartiesIdRouteImport
+      parentRoute: typeof CounterpartiesRoute
+    }
+    '/journal/$id': {
+      id: '/journal/$id'
+      path: '/$id'
+      fullPath: '/journal/$id'
+      preLoaderRoute: typeof JournalIdRouteImport
+      parentRoute: typeof JournalRoute
+    }
+    '/journal/new': {
+      id: '/journal/new'
+      path: '/new'
+      fullPath: '/journal/new'
+      preLoaderRoute: typeof JournalNewRouteImport
+      parentRoute: typeof JournalRoute
+    }
+    '/loans/': {
+      id: '/loans/'
+      path: '/'
+      fullPath: '/loans/'
+      preLoaderRoute: typeof LoansIndexRouteImport
+      parentRoute: typeof LoansRoute
+    }
+    '/loans/$id': {
+      id: '/loans/$id'
+      path: '/$id'
+      fullPath: '/loans/$id'
+      preLoaderRoute: typeof LoansIdRouteImport
+      parentRoute: typeof LoansRoute
+    }
+    '/settings/': {
+      id: '/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof SettingsIndexRouteImport
       parentRoute: typeof SettingsRoute
     }
     '/settings/bank-accounts': {
@@ -628,40 +635,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsBankAccountsRouteImport
       parentRoute: typeof SettingsRoute
     }
-    '/loans/$id': {
-      id: '/loans/$id'
-      path: '/$id'
-      fullPath: '/loans/$id'
-      preLoaderRoute: typeof LoansIdRouteImport
-      parentRoute: typeof LoansRoute
+    '/settings/currencies': {
+      id: '/settings/currencies'
+      path: '/currencies'
+      fullPath: '/settings/currencies'
+      preLoaderRoute: typeof SettingsCurrenciesRouteImport
+      parentRoute: typeof SettingsRoute
     }
-    '/journal/new': {
-      id: '/journal/new'
-      path: '/new'
-      fullPath: '/journal/new'
-      preLoaderRoute: typeof JournalNewRouteImport
-      parentRoute: typeof JournalRoute
+    '/settings/preferences': {
+      id: '/settings/preferences'
+      path: '/preferences'
+      fullPath: '/settings/preferences'
+      preLoaderRoute: typeof SettingsPreferencesRouteImport
+      parentRoute: typeof SettingsRoute
     }
-    '/journal/$id': {
-      id: '/journal/$id'
-      path: '/$id'
-      fullPath: '/journal/$id'
-      preLoaderRoute: typeof JournalIdRouteImport
-      parentRoute: typeof JournalRoute
+    '/settings/tokens': {
+      id: '/settings/tokens'
+      path: '/tokens'
+      fullPath: '/settings/tokens'
+      preLoaderRoute: typeof SettingsTokensRouteImport
+      parentRoute: typeof SettingsRoute
     }
-    '/counterparties/$id': {
-      id: '/counterparties/$id'
-      path: '/$id'
-      fullPath: '/counterparties/$id'
-      preLoaderRoute: typeof CounterpartiesIdRouteImport
-      parentRoute: typeof CounterpartiesRoute
+    '/settings/users': {
+      id: '/settings/users'
+      path: '/users'
+      fullPath: '/settings/users'
+      preLoaderRoute: typeof SettingsUsersRouteImport
+      parentRoute: typeof SettingsRoute
     }
-    '/accounts/$id': {
-      id: '/accounts/$id'
-      path: '/$id'
-      fullPath: '/accounts/$id'
-      preLoaderRoute: typeof AccountsIdRouteImport
-      parentRoute: typeof AccountsRoute
+    '/bank-transactions/$id/categorize': {
+      id: '/bank-transactions/$id/categorize'
+      path: '/$id/categorize'
+      fullPath: '/bank-transactions/$id/categorize'
+      preLoaderRoute: typeof BankTransactionsIdCategorizeRouteImport
+      parentRoute: typeof BankTransactionsRoute
     }
     '/settings/bank-accounts/': {
       id: '/settings/bank-accounts/'
@@ -676,13 +683,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings/bank-accounts/$id'
       preLoaderRoute: typeof SettingsBankAccountsIdRouteImport
       parentRoute: typeof SettingsBankAccountsRoute
-    }
-    '/bank-transactions/$id/categorize': {
-      id: '/bank-transactions/$id/categorize'
-      path: '/$id/categorize'
-      fullPath: '/bank-transactions/$id/categorize'
-      preLoaderRoute: typeof BankTransactionsIdCategorizeRouteImport
-      parentRoute: typeof BankTransactionsRoute
     }
   }
 }
