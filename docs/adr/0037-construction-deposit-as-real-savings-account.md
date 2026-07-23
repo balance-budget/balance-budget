@@ -8,12 +8,16 @@ A **Construction deposit** (Dutch *bouwdepot*) behaves like a savings account, n
 
 ## What we record
 
-Each construction month produces **two JournalEntries** from **three** imported **BankTransaction**s (the bouwdepot statement is imported like any other account, keyed by its non-IBAN `AccountNumber`, which equals the loan number):
+Each construction month produces **two JournalEntries** from **three** imported **BankTransaction**s. The bouwdepot statement is imported like any other account, keyed by its non-IBAN `AccountNumber` (which equals the loan number), using `BankAccountType.Savings` (the only type whose CHECK permits a bare `AccountNumber`, so no schema change). The extractor is keyed by the mortgage-servicing platform that *produces* the layout, not the consumer lender — `Balance.Integration.Stater`, `ImporterKey = "Stater.ConstructionDeposit"` — because many Dutch banks issue byte-identical statements off Stater (consistent with ADR-0034's "logical importer identity, not a layout version"); the account's own `BankName` still carries the actual lender. The three row kinds:
 
 - **Deposit-interest credit** (Entry A) — from **Categorizing** the *Rentevergoeding* row: debit the **Construction deposit** (**Asset**), credit the **Loan**'s deposit-interest **Income** account. Amount = `deposit balance at period start × monthly deposit rate`. The interest lands in the balance, so next period's interest is computed on a base that still includes it (compounding).
 - **Loan payment** (Entry B) — from **Categorizing** the checking **net debit** row: the usual per-part interest **Expense** and principal lines, plus a **Deposit settlement** funding leg (a credit to the **Construction deposit**) equal to the *previous* period's credit (one period in arrears). The cash (bank) leg is therefore `gross + principal − settlement`, matching the reduced debit the bank collects. The settlement leg is created `Uncleared`; the deposit statement's *Verrekening* row **Attaches** to it.
 
 Draws (*Uitbetaling*) remain ordinary categorized activity (disbursement to a contractor, or a **Self-transfer** reimbursement into Checking). The forward **Projection** stays rough and local (ADR-0027): the "current payment" headline nets the next settlement off *today's* deposit balance × monthly rate and reverts to gross at €0; it does not forecast draws (unforecastable) or simulate the deposit balance forward.
+
+## Recognizing a loan payment for the Attach relaxation
+
+A `JournalEntry` has no loan reference; the only loan signals are `JournalLine.LoanPartId` and the lender `CounterpartyId`. The generalized Attach relaxes guards **only when both**: the uniquely-matching `Uncleared` line is on an Account some `Loan` references as its `ConstructionDepositAccountId`, **and** the JE carries at least one `LoanPartId`-attributed line. This is purely structural (no `EntryKind` marker) and physically cannot loosen attach onto anything but a construction-deposit settlement leg. The settlement amount pre-fills from the *actual posted prior-month Deposit-interest credit* (ledger truth, matches the `Verrekening` to the cent), falling back to `prior balance × monthly rate` only when none is posted yet (first month, or credit not categorized). The `Rentevergoeding` itself stays a plain Categorize (its Income counter-account is filled by the existing last-used-account heuristic) — no new loan-aware trigger.
 
 ## Amendment to ADR-0012 (Attach)
 
