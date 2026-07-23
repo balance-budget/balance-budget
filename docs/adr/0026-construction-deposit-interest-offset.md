@@ -1,3 +1,5 @@
+> **Superseded by [ADR-0037](0037-construction-deposit-as-real-savings-account.md).** The netted-offset model below never let deposit interest land in the balance, so it could not represent compounding or the one-period arrears the bank actually books. ADR-0037 replaces it with two real flows (interest credited into the deposit, then settled against the loan payment).
+
 # Construction deposit: a plain asset account, with interest recorded as an offset inside the loan payment
 
 A **Construction deposit** (Dutch *bouwdepot*) is mortgage money the lender has not yet disbursed — funds earmarked for building or renovation, drawn down as invoices arrive. We model it as a **plain Asset Account**, *not* **Loan-managed**: draw-downs are ordinary flows (a manual **JournalEntry** when the lender pays the contractor directly, or a **Self-transfer** when the lender reimburses you into Checking). The **Loan** only *references* it — via three optional, set-together fields (`ConstructionDepositAccountId`, `ConstructionDepositInterestIncomeAccountId`, `ConstructionDepositAnnualRatePercent`) — and never manages it.
