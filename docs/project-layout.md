@@ -24,6 +24,7 @@ balance-budget/
 │   ├── Balance.Data.Sqlite/
 │   ├── Balance.Services/
 │   ├── Balance.Integration.Ing/     ING bank-statement importers (references Services)
+│   ├── Balance.Integration.Stater/  Stater construction-deposit importer (references Services)
 │   ├── Balance.Web/                 ASP.NET host (API + SPA shell)
 │   └── Balance.Web.Client/          React + Vite SPA (npm workspace)
 ├── tests/
@@ -44,6 +45,7 @@ balance-budget/
 | Background job (Quartz `IJob`)                | `src/Balance.Services/Jobs/<JobName>.cs`, scheduled in `AddBalanceJobs` |
 | Bank-statement importer for a **new bank**    | New `src/Balance.Integration.<Bank>/` project implementing `IBankTransactionExtractor`; wire one `AddBalanceIntegration<Bank>()` call at the host (ADR-0018) |
 | Bank-statement importer / parser for **ING**  | `src/Balance.Integration.Ing/` — `Importers/` (extractors), `Parsers/`, `Models/` |
+| Construction-deposit (bouwdepot) importer     | `src/Balance.Integration.Stater/` — the Stater servicing-platform statement (ADR-0037) |
 | Options class                                 | `src/Balance.Configuration/Options/`, implement `IOptionsSection`   |
 | Minimal API endpoint (JSON)                   | `src/Balance.Web/Endpoints/` — new `Map<Feature>Endpoints` group, called on the `/api` route group in `Program.cs` |
 | Frontend page / component                     | `src/Balance.Web.Client/src/`                                       |

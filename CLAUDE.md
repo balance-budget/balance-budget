@@ -80,6 +80,7 @@ graph LR
     Sqlite[Balance.Data.Sqlite]
     Postgres[Balance.Data.PostgreSql]
     IntegrationIng[Balance.Integration.Ing]
+    IntegrationStater[Balance.Integration.Stater]
 
     Web -->|serves Vite build output from wwwroot| Client
     Web --> Services
@@ -93,6 +94,8 @@ graph LR
 
     Web --> IntegrationIng
     IntegrationIng -->|implements IBankTransactionExtractor| Services
+    Web --> IntegrationStater
+    IntegrationStater -->|implements IBankTransactionExtractor| Services
 ```
 
 **Layers**
@@ -100,6 +103,7 @@ graph LR
 - `Balance.Web.Client` — React 19 + TypeScript + Vite SPA. A plain npm workspace package (no .NET project). `npm run build` outputs straight into `src/Balance.Web/wwwroot/` (gitignored), where the standard static-web-assets pipeline discovers it on publish (ADR-0023). `dotnet build` never invokes npm.
 - `Balance.Services` — Business logic, Quartz jobs, `IApplicationVersionService`, and the bank-import contract `IBankTransactionExtractor`. Composes `Configuration` + `Data` + `Jobs`.
 - `Balance.Integration.Ing` — ING bank-statement importers. References `Balance.Services` and implements `IBankTransactionExtractor`; composed at the host *beside* Services (a third `AddBalanceIntegrationIng()` call), not nested under it, to avoid a Services↔Integration reference cycle. See `docs/adr/0018-integration-layer-composed-at-host.md`. New banks are new `Balance.Integration.<Bank>` projects.
+- `Balance.Integration.Stater` — construction-deposit (bouwdepot) statement importer for the Stater servicing platform (ADR-0037). Same shape as `Balance.Integration.Ing`, composed beside Services via `AddBalanceIntegrationStater()`.
 - `Balance.Data` — EF Core `BalanceDbContext` (also implements `IDataProtectionKeyContext`), abstract `BaseEntity` (`Id`/`CreatedAt`/`UpdatedAt`), migration host extension, UTC value converters.
 - `Balance.Data.Sqlite` / `Balance.Data.PostgreSql` — Provider-specific migrations assemblies (referenced by `Balance.Web`, not by `Balance.Data`).
 - `Balance.Configuration` — Options pattern. `IOptionsSection` static-abstract contract, `DatabaseOptions` selecting `Sqlite` or `Postgres`, host environment helpers.
@@ -110,7 +114,7 @@ graph LR
 These are conventions to follow when adding new code. See [docs/conventions.md](docs/conventions.md) for examples.
 
 - **Use idiomatic C# with the latest language features.**
-- **DI composition.** Each layer exposes a `public static class ServiceCollectionExtensions` with a single `AddBalance<Layer>(...)` extension. A layer composes its dependencies by calling the lower layer's `AddBalance*` inside its own. The web entry point calls `AddBalanceServices` + `AddBalanceIntegrationIng` + `AddBalanceWeb` — the integration layer is the documented exception that composes beside Services rather than nesting (ADR-0018); all other layers nest.
+- **DI composition.** Each layer exposes a `public static class ServiceCollectionExtensions` with a single `AddBalance<Layer>(...)` extension. A layer composes its dependencies by calling the lower layer's `AddBalance*` inside its own. The web entry point calls `AddBalanceServices` + `AddBalanceIntegrationIng` + `AddBalanceIntegrationStater` + `AddBalanceWeb` — the integration layer is the documented exception that composes beside Services rather than nesting (ADR-0018); all other layers nest.
 - **Options.** Strongly-typed options classes live under `Balance.Configuration/Options`, implement `IOptionsSection` (static-abstract `Section` name), and are wired through `AddSettings<T>` in `Balance.Configuration.ServiceCollectionExtensions`.
 - **Database provider.** Selected at runtime via `Database:Provider` (`Sqlite` or `Postgres`). The provider switch lives in `Balance.Data/Helpers/DbContextOptionsBuilderExtensions.UseProvider`. Migrations live in the provider-specific assemblies; `BalanceDbContext` is provider-agnostic.
 - **Entities.** Derive from `Balance.Data.Entities.BaseEntity` (`Id` `int`, `CreatedAt` `init`, `UpdatedAt`). All `DateTime` columns must round-trip as UTC via `DateConverters.UtcConverter`.
