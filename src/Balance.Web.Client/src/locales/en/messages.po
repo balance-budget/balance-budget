@@ -581,8 +581,11 @@ msgstr "Construction deposit (optional)"
 msgid "Construction deposit account"
 msgstr "Construction deposit account"
 
-msgid "Construction deposit interest offset"
-msgstr "Construction deposit interest offset"
+#~ msgid "Construction deposit interest offset"
+#~ msgstr "Construction deposit interest offset"
+
+msgid "Construction deposit settlement"
+msgstr "Construction deposit settlement"
 
 msgid "Copy your token now"
 msgstr "Copy your token now"

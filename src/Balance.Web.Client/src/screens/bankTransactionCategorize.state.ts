@@ -30,9 +30,9 @@ export type LineInput = {
     loanPartId?: LoanPartId | null;
     /**
      * A credit line on the *opposite* side from the other counter lines — the
-     * deposit-interest offset (ADR-0026): an Income credit that lowers the total
-     * so it matches the netted bank debit. The magnitude is still entered
-     * positive; this flips its sign at projection time.
+     * Deposit settlement (ADR-0037): a credit to the Construction deposit that
+     * lowers the total so it matches the reduced bank debit. The magnitude is
+     * still entered positive; this flips its sign at projection time.
      */
     credit?: boolean;
 };
@@ -225,14 +225,15 @@ export function linesFromLoanProposal(
         });
     }
 
-    // Construction deposit interest offset (ADR-0026): an Income credit that nets
-    // the gross interest down to the bank's actual debit during construction.
-    if (proposal.depositOffset && proposal.depositOffset.amount > 0 && lines.length > 0) {
+    // Construction deposit settlement (ADR-0037): a credit to the Construction
+    // deposit that nets the gross payment down to the reduced bank debit during
+    // construction. The deposit statement's Verrekening row later Attaches to it.
+    if (proposal.depositSettlement && proposal.depositSettlement.amount > 0 && lines.length > 0) {
         lines.push({
             id: nextLineId(),
-            accountId: proposal.depositOffset.incomeAccountId,
-            amount: formatMagnitude(proposal.depositOffset.amount),
-            description: t`Construction deposit interest offset`,
+            accountId: proposal.depositSettlement.depositAccountId,
+            amount: formatMagnitude(proposal.depositSettlement.amount),
+            description: t`Construction deposit settlement`,
             credit: true,
         });
     }

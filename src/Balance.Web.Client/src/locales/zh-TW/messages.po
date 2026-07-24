@@ -581,8 +581,11 @@ msgstr "建築存款（選填）"
 msgid "Construction deposit account"
 msgstr "建築存款帳戶"
 
-msgid "Construction deposit interest offset"
-msgstr "建築存款利息抵銷"
+#~ msgid "Construction deposit interest offset"
+#~ msgstr "建築存款利息抵銷"
+
+msgid "Construction deposit settlement"
+msgstr "建築存款結算"
 
 msgid "Copy your token now"
 msgstr "立即複製你的存取權杖"
