@@ -54,25 +54,41 @@ internal sealed class LoanProjectionService : ILoanProjectionService
             );
         }
 
-        // Deposit-interest offset (ADR-0026): deposit balance × monthly rate, capped at the gross
-        // interest, credited to the income account so the entry's net matches the bank's debit.
-        LoanDepositOffsetOutput? depositOffset = null;
-        if (
-            graph is { DepositIncomeAccountId: { } incomeAccountId, DepositRate: { } depositRate }
-            && graph.DepositBalance > 0
-            && depositRate > 0m
-        )
+        // Deposit settlement (ADR-0037): a credit to the Construction deposit equal to the prior
+        // period's Deposit-interest credit (one period in arrears). Prefer the actual posted credit
+        // (ledger truth, matches the Verrekening to the cent); fall back to prior balance × monthly
+        // rate when none is posted yet; €0 (null) in the first month when neither applies.
+        LoanDepositSettlementOutput? depositSettlement = null;
+        if (graph is { DepositAccountId: { } depositAccountId, DepositRate: { } depositRate })
         {
-            var grossInterest = lines.Sum(l => l.Interest);
-            var monthly = (long)
-                Math.Round(
-                    graph.DepositBalance * depositRate / 100m / 12m,
-                    0,
-                    MidpointRounding.AwayFromZero
-                );
-            var amount = Math.Min(Math.Max(0L, monthly), grossInterest);
+            var priorMonth = requested.AddMonths(-1);
+            var posted = await PostedInterestCreditAsync(
+                graph.DepositIncomeAccountId,
+                priorMonth,
+                cancellationToken
+            );
+
+            long amount;
+            if (posted is { } credited)
+            {
+                amount = credited;
+            }
+            else if (graph.DepositBalance > 0 && depositRate > 0m)
+            {
+                amount = (long)
+                    Math.Round(
+                        graph.DepositBalance * depositRate / 100m / 12m,
+                        0,
+                        MidpointRounding.AwayFromZero
+                    );
+            }
+            else
+            {
+                amount = 0L;
+            }
+
             if (amount > 0)
-                depositOffset = new LoanDepositOffsetOutput(incomeAccountId, amount);
+                depositSettlement = new LoanDepositSettlementOutput(depositAccountId, amount);
         }
 
         return new LoanPaymentProposalOutput(
@@ -82,8 +98,42 @@ internal sealed class LoanProjectionService : ILoanProjectionService
             graph.Loan.InterestExpenseAccountId,
             lines,
             lines.Sum(l => l.Payment),
-            depositOffset
+            depositSettlement
         );
+    }
+
+    /// <summary>
+    /// The magnitude of the Deposit-interest credit posted in <paramref name="month"/>: the net
+    /// credit booked to the loan's deposit-interest Income account that month (a credit is a
+    /// negative line amount, so the magnitude is its negation). Null when no income account is
+    /// configured or nothing was posted — the caller then falls back to the balance-×-rate estimate.
+    /// </summary>
+    private async Task<long?> PostedInterestCreditAsync(
+        AccountId? incomeAccountId,
+        DateOnly month,
+        CancellationToken cancellationToken
+    )
+    {
+        if (incomeAccountId is not { } accountId)
+            return null;
+
+        var monthStart = FirstOfMonth(month);
+        var nextMonth = monthStart.AddMonths(1);
+        var net = await _dbContext
+            .JournalLines.AsNoTracking()
+            .Where(l => l.AccountId == accountId)
+            .Join(
+                _dbContext.JournalEntries.AsNoTracking(),
+                l => l.JournalEntryId,
+                e => e.Id,
+                (l, e) => new { l.Amount, e.Date }
+            )
+            .Where(x => x.Date >= monthStart && x.Date < nextMonth)
+            .SumAsync(x => (long?)x.Amount, cancellationToken);
+
+        // Income credits are negative line amounts; the credited magnitude is their negation.
+        var credited = -(net ?? 0L);
+        return credited > 0 ? credited : null;
     }
 
     public async Task<Result<LoanProjectionOutput>> GetProjectionAsync(
@@ -310,6 +360,7 @@ internal sealed class LoanProjectionService : ILoanProjectionService
         IReadOnlyList<LoanPartGraph> Parts,
         IReadOnlyList<AmortizationPartSpec> Specs,
         DateOnly CurrentMonth,
+        AccountId? DepositAccountId,
         AccountId? DepositIncomeAccountId,
         decimal? DepositRate,
         long DepositBalance
@@ -387,6 +438,7 @@ internal sealed class LoanProjectionService : ILoanProjectionService
             parts,
             specs,
             FirstOfMonth(today),
+            loan.ConstructionDepositAccountId,
             loan.ConstructionDepositInterestIncomeAccountId,
             loan.ConstructionDepositAnnualRatePercent,
             depositBalance

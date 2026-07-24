@@ -27,18 +27,19 @@ public sealed class Loan : BaseEntity<LoanId>
     public required AccountId ParentAccountId { get; set; }
 
     /// <summary>
-    /// Optional Construction deposit (Dutch <em>bouwdepot</em>, ADR-0026): an Asset account holding
+    /// Optional Construction deposit (Dutch <em>bouwdepot</em>, ADR-0037): an Asset account holding
     /// mortgage money the lender has not yet disbursed. A plain, non-loan-managed account; the loan
-    /// references it only to compute the deposit-interest offset on its payment. Set together with
+    /// references it to compute the Deposit-interest credit and the matching Deposit settlement on
+    /// its payment. Set together with
     /// <see cref="ConstructionDepositInterestIncomeAccountId"/> and
     /// <see cref="ConstructionDepositAnnualRatePercent"/>, or all three null.
     /// </summary>
     public AccountId? ConstructionDepositAccountId { get; set; }
 
-    /// <summary>The Income account credited by the deposit-interest offset (ADR-0026).</summary>
+    /// <summary>The Income account credited by the Deposit-interest credit (ADR-0037).</summary>
     public AccountId? ConstructionDepositInterestIncomeAccountId { get; set; }
 
-    /// <summary>The annual nominal rate the Construction deposit earns; ÷12 per month (ADR-0026).</summary>
+    /// <summary>The annual nominal rate the Construction deposit earns; ÷12 per month (ADR-0037).</summary>
     public decimal? ConstructionDepositAnnualRatePercent { get; set; }
 
     public Collection<LoanPart> Parts { get; } = [];
