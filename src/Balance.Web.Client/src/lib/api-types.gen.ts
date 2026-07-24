@@ -1519,8 +1519,8 @@ export interface components {
             /** Format: int64 */
             balance: number | string;
         };
-        LoanDepositOffsetOutput: {
-            incomeAccountId: components["schemas"]["AccountId"];
+        LoanDepositSettlementOutput: {
+            depositAccountId: components["schemas"]["AccountId"];
             /** Format: int64 */
             amount: number | string;
         };
@@ -1608,7 +1608,7 @@ export interface components {
             lines: components["schemas"]["LoanPaymentProposalLineOutput"][];
             /** Format: int64 */
             total: number | string;
-            depositOffset: null | components["schemas"]["LoanDepositOffsetOutput"];
+            depositSettlement: null | components["schemas"]["LoanDepositSettlementOutput"];
         };
         LoanPeriodRowOutput: {
             /** Format: date */

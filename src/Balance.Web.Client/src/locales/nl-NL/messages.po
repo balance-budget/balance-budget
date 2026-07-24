@@ -581,8 +581,11 @@ msgstr "Bouwdepot (optioneel)"
 msgid "Construction deposit account"
 msgstr "Bouwdepotrekening"
 
-msgid "Construction deposit interest offset"
-msgstr "Rentecompensatie bouwdepot"
+#~ msgid "Construction deposit interest offset"
+#~ msgstr "Rentecompensatie bouwdepot"
+
+msgid "Construction deposit settlement"
+msgstr "Verrekening bouwdepot"
 
 msgid "Copy your token now"
 msgstr "Kopieer je token nu"

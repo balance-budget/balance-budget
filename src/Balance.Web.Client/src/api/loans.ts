@@ -110,8 +110,8 @@ export type LoanProposalLine = {
     payment: number;
 };
 
-export type LoanDepositOffset = {
-    incomeAccountId: AccountId;
+export type LoanDepositSettlement = {
+    depositAccountId: AccountId;
     amount: number;
 };
 
@@ -122,7 +122,7 @@ export type LoanProposal = {
     interestExpenseAccountId: AccountId;
     lines: LoanProposalLine[];
     total: number;
-    depositOffset: LoanDepositOffset | null;
+    depositSettlement: LoanDepositSettlement | null;
 };
 
 export type LoanPeriodRow = {
@@ -328,10 +328,10 @@ export function useLoanPaymentProposal(id: LoanId | null, month: string) {
                     payment: toNumber(l.payment),
                 })),
                 total: toNumber(wire.total),
-                depositOffset: wire.depositOffset
+                depositSettlement: wire.depositSettlement
                     ? {
-                          incomeAccountId: asAccountId(wire.depositOffset.incomeAccountId),
-                          amount: toNumber(wire.depositOffset.amount),
+                          depositAccountId: asAccountId(wire.depositSettlement.depositAccountId),
+                          amount: toNumber(wire.depositSettlement.amount),
                       }
                     : null,
             } satisfies LoanProposal;
