@@ -5,5 +5,5 @@ namespace Balance.Integration.Stater.Contracts;
 internal interface IStaterStatementParser
 {
     // Null when the lines carry no recognizable header account number.
-    StaterStatement? Parse(IReadOnlyList<string> lines);
+    StaterStatement? Parse(IReadOnlyList<StaterTextLine> lines);
 }

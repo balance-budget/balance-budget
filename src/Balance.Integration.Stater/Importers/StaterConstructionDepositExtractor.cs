@@ -66,7 +66,7 @@ internal sealed class StaterConstructionDepositExtractor : IBankTransactionExtra
             );
         }
 
-        List<string> lines;
+        List<StaterTextLine> lines;
         try
         {
             lines = StaterPdfReader.ExtractLines(stream, cancellationToken);
@@ -117,7 +117,7 @@ internal sealed class StaterConstructionDepositExtractor : IBankTransactionExtra
         if (!StaterPdfReader.LooksLikePdf(file.Content))
             return Task.FromResult<ImportIdentity?>(null);
 
-        List<string> lines;
+        List<StaterTextLine> lines;
         try
         {
             lines = StaterPdfReader.ExtractLines(file.Content, cancellationToken);
