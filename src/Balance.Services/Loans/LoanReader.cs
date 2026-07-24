@@ -161,9 +161,11 @@ internal sealed class LoanReader
         return graphs;
     }
 
-    // The deposit-interest offset for one month (ADR-0026): deposit balance × monthly rate,
-    // capped at the month's gross interest so the proposal never goes negative.
-    private static long DepositOffsetForMonth(
+    // The next Deposit settlement for the "current payment" headline (ADR-0037): today's deposit
+    // balance × monthly rate, capped at the month's gross interest so the headline never goes
+    // negative. Reverts to €0 once the deposit balance drains, reverting the headline to gross.
+    // This stays rough and local (ADR-0027): no forward simulation of the deposit balance.
+    private static long DepositSettlementForMonth(
         LoanConstructionDepositOutput? deposit,
         long grossInterest
     )
@@ -256,11 +258,12 @@ internal sealed class LoanReader
             currentMonth
         );
         var currentRows = projection.Where(r => r.Period == currentMonth).ToList();
-        // Net of the deposit-interest offset (ADR-0026): the headline payment matches the single
-        // netted debit the lender collects during construction; gross once the deposit drains.
+        // Net of the next Deposit settlement (ADR-0037): the headline payment matches the reduced
+        // debit the lender collects during construction; gross once the deposit balance drains.
         var grossInterest = currentRows.Sum(r => r.Interest);
         var currentPayment =
-            currentRows.Sum(r => r.Payment) - DepositOffsetForMonth(graph.Deposit, grossInterest);
+            currentRows.Sum(r => r.Payment)
+            - DepositSettlementForMonth(graph.Deposit, grossInterest);
 
         decimal? weightedRate = null;
         if (outstanding > 0)

@@ -38,17 +38,21 @@ public sealed record LoanPaymentProposalOutput(
     AccountId InterestExpenseAccountId,
     IReadOnlyList<LoanPaymentProposalLineOutput> Lines,
     long Total,
-    LoanDepositOffsetOutput? DepositOffset
+    LoanDepositSettlementOutput? DepositSettlement
 );
 
 /// <summary>
-/// The deposit-interest offset to pre-fill on the loan payment during construction (ADR-0026):
-/// an Income credit on <see cref="IncomeAccountId"/> of <see cref="Amount"/> minor units, so the
-/// entry's net matches the single netted debit the lender collects. Null when the loan has no
-/// Construction deposit or its balance is zero. <see cref="Total"/> on the proposal stays gross
-/// (sum of part payments); the net is <c>Total − DepositOffset.Amount</c>.
+/// The Deposit settlement funding leg to pre-fill on the loan payment during construction
+/// (ADR-0037): a credit to the Construction deposit <see cref="DepositAccountId"/> of
+/// <see cref="Amount"/> minor units, so the entry's cash (bank) leg is <c>gross + principal −
+/// settlement</c> — the reduced debit the lender collects. The amount is the actual posted
+/// prior-month Deposit-interest credit (ledger truth), falling back to <c>prior deposit balance ×
+/// monthly deposit rate</c> when none is posted yet. Null when the loan has no Construction
+/// deposit, or in the first construction month before any credit or balance exists (€0).
+/// <see cref="Total"/> on the proposal stays gross (sum of part payments); the net is
+/// <c>Total − DepositSettlement.Amount</c>.
 /// </summary>
-public sealed record LoanDepositOffsetOutput(AccountId IncomeAccountId, long Amount);
+public sealed record LoanDepositSettlementOutput(AccountId DepositAccountId, long Amount);
 
 public sealed record LoanPaymentProposalLineOutput(
     LoanPartId LoanPartId,
