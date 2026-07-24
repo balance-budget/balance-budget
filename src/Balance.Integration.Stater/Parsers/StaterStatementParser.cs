@@ -31,8 +31,27 @@ internal sealed partial class StaterStatementParser : IStaterStatementParser
             return null;
 
         var rows = new List<StaterStatementRow>();
+        var matchingTransactions = false;
         foreach (var line in lines)
         {
+            // Ignore page footer and single character lines (side margin numbers)
+            if (PageFooterRegex().IsMatch(line) || line.Length == 1)
+                continue;
+
+            // We detected a header, any following lines should be transaction rows
+            if (TransactionHeaderRegex().IsMatch(line))
+            {
+                matchingTransactions = true;
+                continue;
+            }
+
+            if (!matchingTransactions)
+                continue;
+
+            // Closing section, stop parsing
+            if (ClosingSectionRegex().IsMatch(line))
+                break;
+
             var row = ParseRow(line);
             if (row is not null)
                 rows.Add(row);
@@ -43,30 +62,24 @@ internal sealed partial class StaterStatementParser : IStaterStatementParser
 
     private static StaterStatementRow? ParseRow(string line)
     {
-        var match = RowRegex().Match(line);
+        var match = TransactionRowRegex().Match(line);
         if (!match.Success)
             return null;
 
         if (!TryParseDate(match.Groups["date"].Value, out var date))
             return null;
-        if (!TryParseAmount(match.Groups["amount"].Value, out var magnitude))
+        if (!TryParseAmount(match.Groups["amount"].Value, out var amount))
             return null;
 
-        var isCredit = string.Equals(
-            match.Groups["direction"].Value,
-            "Bij",
-            StringComparison.OrdinalIgnoreCase
-        );
-        var amount = isCredit ? magnitude : -magnitude;
-
-        var body = match.Groups["body"].Value.Trim();
-        var (description, counterparty) = SplitBody(body);
+        var counterparty = match.Groups["to"].Value.Trim();
+        var description = match.Groups["description"].Value.Trim();
 
         return new StaterStatementRow(date, description, counterparty, amount, line.Trim());
     }
 
     private static (string Description, string? Counterparty) SplitBody(string body)
     {
+        /*
         var marker = PaidToRegex().Match(body);
         if (!marker.Success)
             return (body, null);
@@ -76,7 +89,8 @@ internal sealed partial class StaterStatementParser : IStaterStatementParser
         return (
             description.Length == 0 ? body : description,
             counterparty.Length == 0 ? null : counterparty
-        );
+        );*/
+        return ("", "");
     }
 
     private static bool TryParseDate(string value, out DateOnly date) =>
@@ -111,18 +125,28 @@ internal sealed partial class StaterStatementParser : IStaterStatementParser
         return true;
     }
 
-    [GeneratedRegex(
-        @"(?:Bouwdepotnummer|Rekeningnummer|Leningnummer)\s*:?\s*(?<acct>[0-9][0-9\s]*[0-9]|[0-9])",
-        RegexOptions.IgnoreCase
-    )]
+    [GeneratedRegex(@"(?:Nummer)\s*:?\s*(?<acct>[0-9]+\.[0-9]+\.[0-9]+)", RegexOptions.IgnoreCase)]
     private static partial Regex HeaderAccountRegex();
 
     [GeneratedRegex(
-        @"^(?<date>\d{2}-\d{2}-\d{4})\s+(?<body>.+?)\s+(?<amount>\d{1,3}(?:\.\d{3})*,\d{2})\s+(?<direction>Af|Bij)$",
+        @"^Datum bij– of(afschrijving)?\s+Bedrag\s+Betaald aan\s+Omschrijving",
         RegexOptions.IgnoreCase
     )]
-    private static partial Regex RowRegex();
+    private static partial Regex TransactionHeaderRegex();
 
-    [GeneratedRegex(@"\bBetaald aan\b", RegexOptions.IgnoreCase)]
-    private static partial Regex PaidToRegex();
+    //01-07-2026 -2.614,77 Lloyds Bank Verrekening i.v.m. maandbedrag/
+    [GeneratedRegex(
+        @"^(?<date>\d{2}-\d{2}-\d{4})\s+(?<amount>[\-\.\,0-9]+)\s((?<to>.+?)\s+)?((?<description>.+?)?)$",
+        RegexOptions.IgnoreCase
+    )]
+    private static partial Regex TransactionRowRegex();
+
+    [GeneratedRegex(@"^Heeft u nog vragen\?", RegexOptions.IgnoreCase)]
+    private static partial Regex ClosingSectionRegex();
+
+    [GeneratedRegex(
+        "^(Lloyds Bank GmbH|Bestuurders|Nederlandse vestiging)",
+        RegexOptions.IgnoreCase
+    )]
+    private static partial Regex PageFooterRegex();
 }
