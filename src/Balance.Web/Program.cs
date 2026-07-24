@@ -1,6 +1,7 @@
 using Balance.Configuration.Helpers;
 using Balance.Data.Helpers;
 using Balance.Integration.Ing;
+using Balance.Integration.Stater;
 using Balance.Services;
 using Balance.Services.BankTransactions;
 using Balance.Web;
@@ -30,6 +31,7 @@ var builder = WebApplication.CreateSlimBuilder(args);
 builder.Logging.AddConsole(builder.Environment);
 builder.Services.AddBalanceServices(builder.Configuration, builder.Environment);
 builder.Services.AddBalanceIntegrationIng();
+builder.Services.AddBalanceIntegrationStater();
 builder.Services.AddBalanceWeb(builder.Configuration, builder.Environment);
 
 var app = builder.Build();
