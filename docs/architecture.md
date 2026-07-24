@@ -16,6 +16,7 @@ Balance.slnx
 │   ├── Balance.Data.Sqlite
 │   ├── Balance.Services
 │   ├── Balance.Integration.Ing
+│   ├── Balance.Integration.Stater
 │   ├── Balance.Web
 │   └── Balance.Web.Client
 └── /tests/
@@ -34,17 +35,20 @@ graph TD
     Data[Balance.Data]
     Configuration[Balance.Configuration]
     IntegrationIng[Balance.Integration.Ing]
+    IntegrationStater[Balance.Integration.Stater]
 
     Web -->|ReferenceOutputAssembly=false| Client
     Web --> Sqlite
     Web --> Services
     Web --> Postgres
     Web --> IntegrationIng
+    Web --> IntegrationStater
 
     Sqlite --> Data
     Services --> Data
     Postgres --> Data
     IntegrationIng --> Services
+    IntegrationStater --> Services
 
     Data --> Configuration
 ```
@@ -52,9 +56,9 @@ graph TD
 Notes:
 - `Balance.Data` does **not** reference the provider-specific projects. It targets EF Core's relational abstractions and lets the host process load the right migrations assembly at runtime.
 - `Balance.Web` references both provider-specific projects directly so their migration assemblies are loaded.
-- `Balance.Integration.Ing` references `Balance.Services` (its extractors implement the Services-owned `IBankTransactionExtractor` contract) and is therefore composed *beside* Services at the host, not nested under it — see [Startup composition](#startup-composition) and [ADR-0018](adr/0018-integration-layer-composed-at-host.md).
+- `Balance.Integration.Ing` and `Balance.Integration.Stater` reference `Balance.Services` (their extractors implement the Services-owned `IBankTransactionExtractor` contract) and are therefore composed *beside* Services at the host, not nested under it — see [Startup composition](#startup-composition) and [ADR-0018](adr/0018-integration-layer-composed-at-host.md). `Balance.Integration.Stater` reads the construction-deposit (bouwdepot) statement produced by the Stater servicing platform (ADR-0037).
 - `Balance.Web.Client` is a plain npm workspace package — not a .NET project. `npm run build` (Vite) outputs straight into `src/Balance.Web/wwwroot/` (gitignored), where the standard static-web-assets discovery pipeline picks it up at publish and packs it into the ASP.NET publish output (ADR-0023). `dotnet build` never invokes npm.
-- `Balance.Tests` references `Balance.Web` and `Balance.Services` (transitively pulling in the rest). `Balance.Web`, `Balance.Services`, and `Balance.Integration.Ing` expose internals via `InternalsVisibleTo("Balance.Tests")`.
+- `Balance.Tests` references `Balance.Web` and `Balance.Services` (transitively pulling in the rest). `Balance.Web`, `Balance.Services`, `Balance.Integration.Ing`, and `Balance.Integration.Stater` expose internals via `InternalsVisibleTo("Balance.Tests")`.
 
 ## Layers
 
@@ -98,6 +102,14 @@ Bank-specific statement importers for ING. References `Balance.Services` and imp
 - `Parsers/` — CsvHelper-backed statement parsers and the ING note parser; `Models/` — `internal` CSV row models and value types; `Helpers/` — `RowHasher` (idempotent re-import hash) and parsing utilities.
 - `ServiceCollectionExtensions.AddBalanceIntegrationIng` — the layer's single `public` DI entry point; everything else is `internal`. Composed at the host *beside* `Balance.Services` (not nested under it) because nesting would invert the Services → Integration dependency into a cycle — see [ADR-0018](adr/0018-integration-layer-composed-at-host.md).
 
+### Balance.Integration.Stater
+
+Importer for the construction-deposit (bouwdepot) statement produced by the Stater mortgage-servicing platform, which many Dutch lenders run on (ADR-0037). Same shape as `Balance.Integration.Ing`: references `Balance.Services`, implements `IBankTransactionExtractor`, composed beside Services at the host.
+
+- `Importers/StaterConstructionDepositExtractor` — `Key = "Stater.ConstructionDeposit"`, `SupportedType = Savings` (the only type whose CHECK permits a bare `AccountNumber`), anchored on the header account number (= the loan number, not an IBAN). Rows map money-in-positive so the settlement row's amount equals the loan payment's deposit settlement leg.
+- `Parsers/StaterStatementParser` — parses the reconstructed PDF text lines into rows; split out so the (provisional) layout grammar is unit-tested over canned lines. `Helpers/StaterPdfReader` reconstructs text lines from the PDF.
+- `ServiceCollectionExtensions.AddBalanceIntegrationStater` — the layer's single `public` DI entry point.
+
 ### Balance.Web
 
 Built with `WebApplication.CreateSlimBuilder` for fast startup and minimal default services. Uses workstation GC (`<ServerGarbageCollection>false</ServerGarbageCollection>`) because the app is expected to run in resource-constrained containers. Hosts both the JSON API and the React SPA shell.
@@ -124,7 +136,8 @@ The web host follows this shape:
 builder.Logging.AddConsole(...)
 builder.Configuration.MapConfigurationSources(...)
 builder.Services.AddBalanceServices(builder.Configuration)
-builder.Services.AddBalanceIntegrationIng()   // bank importers — beside Services (ADR-0018)
+builder.Services.AddBalanceIntegrationIng()      // bank importers — beside Services (ADR-0018)
+builder.Services.AddBalanceIntegrationStater()   // construction-deposit importer (ADR-0037)
 builder.Services.AddBalanceWeb()
 var app = builder.Build();
 await app.MigrateDatabaseAsync(lifetime.ApplicationStopping);
