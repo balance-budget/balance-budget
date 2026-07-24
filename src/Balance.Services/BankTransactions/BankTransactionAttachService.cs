@@ -167,8 +167,6 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
             return null;
         if (bankTransaction.JournalEntryId is not null || bankTransaction.DismissedAt is not null)
             return null;
-        if (string.IsNullOrWhiteSpace(bankTransaction.CounterpartyAccountNumber))
-            return null;
 
         var bankAccount = await _dbContext
             .BankAccounts.AsNoTracking()
@@ -272,15 +270,6 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
             );
         }
 
-        // (7) JE.CounterpartyId is null.
-        if (entry.CounterpartyId is not null)
-        {
-            return new InvariantError(
-                ErrorCodes.AttachPredicateFailed,
-                "JournalEntry has a Counterparty; only self-transfer entries can be attached."
-            );
-        }
-
         // (4) |BT.BookingDate - JE.Date| <= 7 days.
         if (
             Math.Abs(bankTransaction.BookingDate.DayNumber - entry.Date.DayNumber)
@@ -306,19 +295,6 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
             .BankAccounts.AsNoTracking()
             .Where(b => b.AccountId != null && accountIds.Contains(b.AccountId!.Value))
             .ToDictionaryAsync(b => b.AccountId!.Value, cancellationToken);
-
-        // (6) every line is on an own-Account (self-transfer shape guard).
-        foreach (var line in entry.Lines)
-        {
-            if (!bankAccountsByAccountId.ContainsKey(line.AccountId))
-            {
-                return new InvariantError(
-                    ErrorCodes.AttachSelfTransferGuard,
-                    "JournalEntry has a line whose Account is not backed by a BankAccount — "
-                        + "only self-transfer entries (every line on an own-Account) accept Attach."
-                );
-            }
-        }
 
         // (2) find L1: Uncleared, on the bank-side Account, amount matches BT.Amount.
         // The sign-aligned-in-the-focal-account-frame rule: positive BT = money in to BankAccount,
@@ -375,31 +351,91 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
             );
         }
 
-        // (3) there exists L2 on the same JE whose Account has a backing BankAccount with Iban
-        // == BT.CounterpartyAccountNumber.
-        if (string.IsNullOrWhiteSpace(bankTransaction.CounterpartyAccountNumber))
-        {
-            return new InvariantError(
-                ErrorCodes.AttachPredicateFailed,
-                "BankTransaction has no CounterpartyAccountNumber — cannot match a counter-side line."
-            );
-        }
-
-        var counterIban = bankTransaction.CounterpartyAccountNumber;
-        var hasCounterLine = entry.Lines.Any(l =>
-            l.Id != l1.Id
-            && bankAccountsByAccountId.TryGetValue(l.AccountId, out var ba)
-            && ba.Iban == counterIban
+        // The Attach relaxation (ADR-0037): a construction-phase Loan payment is the second
+        // JournalEntry shape (alongside self-transfers) allowed to be referenced by more than one
+        // BankTransaction. It is recognized purely structurally — the uniquely-matching Uncleared
+        // line L1 sits on an Account some Loan references as its ConstructionDepositAccountId, and
+        // the JE carries at least one LoanPartId-attributed line. When both hold, drop guards (6)
+        // (every line own-Account) and (7) (CounterpartyId null); every other JE keeps the strict
+        // self-transfer guard.
+        var isLoanPaymentSettlement = await IsConstructionDepositSettlementAsync(
+            l1,
+            entry,
+            cancellationToken
         );
-        if (!hasCounterLine)
+
+        if (!isLoanPaymentSettlement)
         {
-            return new InvariantError(
-                ErrorCodes.AttachPredicateFailed,
-                "JournalEntry has no line on an Account backed by a BankAccount with the BT's CounterpartyAccountNumber."
+            // (7) JE.CounterpartyId is null.
+            if (entry.CounterpartyId is not null)
+            {
+                return new InvariantError(
+                    ErrorCodes.AttachPredicateFailed,
+                    "JournalEntry has a Counterparty; only self-transfer entries can be attached."
+                );
+            }
+
+            // (6) every line is on an own-Account (self-transfer shape guard).
+            foreach (var line in entry.Lines)
+            {
+                if (!bankAccountsByAccountId.ContainsKey(line.AccountId))
+                {
+                    return new InvariantError(
+                        ErrorCodes.AttachSelfTransferGuard,
+                        "JournalEntry has a line whose Account is not backed by a BankAccount — "
+                            + "only self-transfer entries (every line on an own-Account) accept Attach."
+                    );
+                }
+            }
+
+            // (3) there exists L2 on the same JE whose Account has a backing BankAccount with Iban
+            // == BT.CounterpartyAccountNumber.
+            if (string.IsNullOrWhiteSpace(bankTransaction.CounterpartyAccountNumber))
+            {
+                return new InvariantError(
+                    ErrorCodes.AttachPredicateFailed,
+                    "BankTransaction has no CounterpartyAccountNumber — cannot match a counter-side line."
+                );
+            }
+
+            var counterIban = bankTransaction.CounterpartyAccountNumber;
+            var hasCounterLine = entry.Lines.Any(l =>
+                l.Id != l1.Id
+                && bankAccountsByAccountId.TryGetValue(l.AccountId, out var ba)
+                && ba.Iban == counterIban
             );
+            if (!hasCounterLine)
+            {
+                return new InvariantError(
+                    ErrorCodes.AttachPredicateFailed,
+                    "JournalEntry has no line on an Account backed by a BankAccount with the BT's CounterpartyAccountNumber."
+                );
+            }
         }
 
         return new Result<JournalLine>(l1);
+    }
+
+    /// <summary>
+    /// The structural recognizer for the ADR-0037 Attach relaxation: <paramref name="matchedLine"/>
+    /// (the uniquely-matching Uncleared bank-side line) sits on an Account some Loan references as
+    /// its <c>ConstructionDepositAccountId</c>, and the entry carries at least one
+    /// <c>LoanPartId</c>-attributed line. Physically this can only match a construction-deposit
+    /// settlement leg, so it never loosens Attach onto any other shape.
+    /// </summary>
+    private async Task<bool> IsConstructionDepositSettlementAsync(
+        JournalLine matchedLine,
+        JournalEntry entry,
+        CancellationToken cancellationToken
+    )
+    {
+        if (!entry.Lines.Any(l => l.LoanPartId is not null))
+            return false;
+
+        return await _dbContext.Loans.AnyAsync(
+            l => l.ConstructionDepositAccountId == matchedLine.AccountId,
+            cancellationToken
+        );
     }
 
     /// <summary>
@@ -414,14 +450,31 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
         CancellationToken cancellationToken
     )
     {
-        var matches = await FindSelfTransferCandidatesAsync(
-            bankTransaction,
-            bankSideAccountId,
-            dateWindowDays,
-            requireCounterIbanMatch: true,
-            cancellationToken
+        // Self-transfer path needs a CounterpartyAccountNumber to pin the counter-side line; the
+        // loan-payment settlement path (ADR-0037) does not (the Verrekening row carries none).
+        var matches = new List<CandidateMatch>();
+        if (!string.IsNullOrWhiteSpace(bankTransaction.CounterpartyAccountNumber))
+        {
+            matches.AddRange(
+                await FindSelfTransferCandidatesAsync(
+                    bankTransaction,
+                    bankSideAccountId,
+                    dateWindowDays,
+                    requireCounterIbanMatch: true,
+                    cancellationToken
+                )
+            );
+        }
+        matches.AddRange(
+            await FindLoanPaymentCandidatesAsync(
+                bankTransaction,
+                bankSideAccountId,
+                dateWindowDays,
+                cancellationToken
+            )
         );
         return matches
+            .DistinctBy(m => m.Id)
             .Select(m => new AttachHintOutput(m.Id, m.Date, m.Description, m.OtherAccountName))
             .ToList();
     }
@@ -446,6 +499,17 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
             requireCounterIbanMatch: false,
             cancellationToken
         );
+        matches = matches
+            .Concat(
+                await FindLoanPaymentCandidatesAsync(
+                    bankTransaction,
+                    bankSideAccountId,
+                    dateWindowDays,
+                    cancellationToken
+                )
+            )
+            .DistinctBy(m => m.Id)
+            .ToList();
         return matches
             .OrderBy(m => Math.Abs(m.Date.DayNumber - bankTransaction.BookingDate.DayNumber))
             .ThenByDescending(m => m.Date)
@@ -581,6 +645,112 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
                     candidate.Date,
                     candidate.Description,
                     otherAccount.Name,
+                    counterLine.Amount
+                )
+            );
+        }
+        return matches;
+    }
+
+    /// <summary>
+    /// Read-side twin of the ADR-0037 relaxation: construction-phase Loan payments whose deposit
+    /// settlement leg (an Uncleared line on the BT's own Account, which some Loan references as its
+    /// <c>ConstructionDepositAccountId</c>) matches the BT amount and currency, and which carry at
+    /// least one <c>LoanPartId</c>-attributed line. Unlike the self-transfer path this drops the
+    /// own-Account-only and counterparty-null guards, and needs no CounterpartyAccountNumber.
+    /// </summary>
+    private async Task<List<CandidateMatch>> FindLoanPaymentCandidatesAsync(
+        BankTransaction bankTransaction,
+        AccountId bankSideAccountId,
+        int dateWindowDays,
+        CancellationToken cancellationToken
+    )
+    {
+        var isDepositAccount = await _dbContext.Loans.AnyAsync(
+            l => l.ConstructionDepositAccountId == bankSideAccountId,
+            cancellationToken
+        );
+        if (!isDepositAccount)
+            return [];
+
+        var minDate = bankTransaction.BookingDate.AddDays(-dateWindowDays);
+        var maxDate = bankTransaction.BookingDate.AddDays(dateWindowDays);
+        var amount = bankTransaction.Money.Amount;
+        var currency = bankTransaction.Money.CurrencyCode.Value;
+
+        var candidates = await _dbContext
+            .JournalEntries.AsNoTracking()
+            .Where(e =>
+                e.Date >= minDate
+                && e.Date <= maxDate
+                && e.Lines.Any(l =>
+                    l.AccountId == bankSideAccountId
+                    && l.ReconciliationStatus == ReconciliationStatus.Uncleared
+                    && l.Amount == amount
+                )
+                && e.Lines.Any(l => l.LoanPartId != null)
+            )
+            .Select(e => new
+            {
+                e.Id,
+                e.Date,
+                e.Description,
+                Lines = e
+                    .Lines.Select(l => new
+                    {
+                        l.Id,
+                        l.AccountId,
+                        l.Amount,
+                        l.ReconciliationStatus,
+                    })
+                    .ToList(),
+            })
+            .ToListAsync(cancellationToken);
+
+        if (candidates.Count == 0)
+            return [];
+
+        var allAccountIds = candidates
+            .SelectMany(c => c.Lines.Select(l => l.AccountId))
+            .Distinct()
+            .ToList();
+        var accounts = await _dbContext
+            .Accounts.AsNoTracking()
+            .Where(a => allAccountIds.Contains(a.Id))
+            .ToDictionaryAsync(a => a.Id, cancellationToken);
+
+        var matches = new List<CandidateMatch>();
+        foreach (var candidate in candidates)
+        {
+            var l1 = candidate.Lines.SingleOrDefault(l =>
+                l.AccountId == bankSideAccountId
+                && l.ReconciliationStatus == ReconciliationStatus.Uncleared
+                && l.Amount == amount
+            );
+            if (l1 is null)
+                continue;
+            if (!accounts.TryGetValue(l1.AccountId, out var l1Account))
+                continue;
+            if (l1Account.CurrencyCode.Value != currency)
+                continue;
+
+            // The counter-side name for the hint: the loan interest/principal line (attributed)
+            // best names the payment; fall back to any other line.
+            var counterLine =
+                candidate.Lines.FirstOrDefault(l =>
+                    l.Id != l1.Id && accounts.ContainsKey(l.AccountId)
+                ) ?? candidate.Lines.FirstOrDefault(l => l.Id != l1.Id);
+            if (counterLine is null)
+                continue;
+
+            matches.Add(
+                new CandidateMatch(
+                    candidate.Id,
+                    candidate.Date,
+                    candidate.Description,
+                    accounts.TryGetValue(counterLine.AccountId, out var ca)
+                        ? ca.Name
+                        : string.Empty,
                     counterLine.Amount
                 )
             );
