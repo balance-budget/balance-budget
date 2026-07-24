@@ -1,3 +1,4 @@
+using Balance.Integration.Stater.Models;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.Content;
 
@@ -7,10 +8,13 @@ internal static class StaterPdfReader
 {
     private const double LineYTolerance = 0.5;
 
-    public static List<string> ExtractLines(Stream stream, CancellationToken cancellationToken)
+    public static List<StaterTextLine> ExtractLines(
+        Stream stream,
+        CancellationToken cancellationToken
+    )
     {
         using var document = PdfDocument.Open(stream);
-        var lines = new List<string>();
+        var lines = new List<StaterTextLine>();
 
         foreach (var page in document.GetPages())
         {
@@ -22,11 +26,17 @@ internal static class StaterPdfReader
     }
 
     // PDF origin is bottom-left, so descending Y is top-down; ascending X is left-to-right.
-    private static IEnumerable<string> ExtractPageLines(Page page) =>
+    private static IEnumerable<StaterTextLine> ExtractPageLines(Page page) =>
         page.GetWords()
             .GroupBy(w => Math.Round(w.BoundingBox.Bottom / LineYTolerance))
             .OrderByDescending(g => g.Key)
-            .Select(g => string.Join(' ', g.OrderBy(w => w.BoundingBox.Left).Select(w => w.Text)));
+            .Select(g =>
+            {
+                var words = g.OrderBy(w => w.BoundingBox.Left)
+                    .Select(w => new StaterWord(w.Text, w.BoundingBox.Left, w.BoundingBox.Right))
+                    .ToList();
+                return new StaterTextLine(string.Join(' ', words.Select(w => w.Text)), words);
+            });
 
     // Leaves the stream rewound.
     public static bool LooksLikePdf(Stream stream)
