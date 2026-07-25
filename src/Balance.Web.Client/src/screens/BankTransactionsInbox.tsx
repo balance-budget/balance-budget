@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { plural, t } from '@lingui/core/macro';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
-import { useAccounts, type Account } from '../api/accounts';
+import { useAccountIndex, useAccounts, type Account } from '../api/accounts';
 import { useBankAccounts, type BankAccount } from '../api/bankAccounts';
 import {
     BANK_TRANSACTION_FILTERS,
@@ -15,6 +15,7 @@ import {
 } from '../api/bankTransactions';
 import { useCounterparties, type Counterparty } from '../api/counterparties';
 import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
+import { AccountLabel } from '../components/AccountLabel';
 import { AccountSelect } from '../components/AccountSelect';
 import { ComboBox } from '../components/ui/ComboBox';
 import { type ComboBoxItem } from '../components/ui/combobox.state';
@@ -37,6 +38,7 @@ import { Pagination } from '../components/Pagination';
 import { Panel, SectionHead } from '../components/Panel';
 import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/ui/Toast';
+import { accountPathText } from '../lib/accountTree';
 import { cx } from '../lib/cx';
 import { formatTableDate } from '../lib/dates';
 import { type AccountId, type CounterpartyId } from '../lib/domain';
@@ -1104,11 +1106,19 @@ function AttachHintBadge({ hint }: { hint: NonNullable<BankTransaction['matching
     const { t } = useLingui();
     return (
         <span
-            className="text-xs text-brand-primary mt-1 truncate inline-flex items-center gap-1"
+            className="text-xs text-brand-primary mt-1 inline-flex items-center gap-1 min-w-0"
             title={t`Auto-matched to journal entry on ${hint.date}`}
         >
-            <Icon name="link" size={11} strokeWidth={2} />
-            <Trans>Matches journal entry · {hint.otherAccountName}</Trans>
+            <Icon name="link" size={11} strokeWidth={2} className="shrink-0" />
+            <span className="shrink-0">
+                <Trans>Matches journal entry ·</Trans>
+            </span>
+            {/* The badge already leads with a link icon; a second glyph would crowd it. */}
+            <AccountLabel
+                accountId={hint.otherAccountId}
+                fallbackName={hint.otherAccountName}
+                glyph="none"
+            />
         </span>
     );
 }
@@ -1253,6 +1263,8 @@ function InboxRowActions({
     const attach = useAttachBankTransaction();
     const toast = useToast();
     const hint = bankTransaction.matchingJournalEntry;
+    const byId = useAccountIndex();
+    const hintPath = hint ? accountPathText(byId, hint.otherAccountId, hint.otherAccountName) : '';
 
     async function onAttachClick() {
         if (!hint) return;
@@ -1261,7 +1273,7 @@ function InboxRowActions({
                 id: bankTransaction.id,
                 journalEntryId: hint.id,
             });
-            toast.success(t`Attached to ${hint.otherAccountName}.`);
+            toast.success(t`Attached to ${hintPath}.`);
         } catch (err) {
             if (err instanceof Error) {
                 toast.error(err.message);
@@ -1276,8 +1288,8 @@ function InboxRowActions({
                     type="button"
                     onClick={() => void onAttachClick()}
                     disabled={disabled || attach.isPending}
-                    aria-label={t`Attach to ${hint.otherAccountName}`}
-                    title={t`Attach to journal entry on ${hint.date} (${hint.otherAccountName})`}
+                    aria-label={t`Attach to ${hintPath}`}
+                    title={t`Attach to journal entry on ${hint.date} (${hintPath})`}
                     className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-brand-primary hover:bg-brand-primary-soft disabled:opacity-60"
                 >
                     <Icon name="link" size={14} strokeWidth={2} />

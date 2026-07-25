@@ -966,6 +966,7 @@ export interface components {
             /** Format: date */
             date: string;
             description: null | string;
+            otherAccountId: components["schemas"]["AccountId"];
             otherAccountName: string;
             /** Format: int64 */
             amount: number | string;
@@ -975,6 +976,7 @@ export interface components {
             /** Format: date */
             date: string;
             description: null | string;
+            otherAccountId: components["schemas"]["AccountId"];
             otherAccountName: string;
         };
         BankAccountHit: {

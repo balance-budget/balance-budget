@@ -23,7 +23,7 @@ import { Button } from '../components/ui/Button';
 import { Checkbox } from '../components/ui/Checkbox';
 import { ToggleButton, ToggleButtonGroup } from '../components/ui/ToggleButtonGroup';
 import { useToast } from '../components/ui/Toast';
-import { accountPathLabel, accountPathSegments, ACCOUNT_PATH_SEPARATOR } from '../lib/accountTree';
+import { accountPathLabel, accountPathText } from '../lib/accountTree';
 import { cx } from '../lib/cx';
 import { type AccountId, type JournalEntryTemplateId } from '../lib/domain';
 import { formatCalendarDate } from '../i18n/format';
@@ -163,10 +163,7 @@ function ProjectionPanel({
     const { t } = useLingui();
 
     const byId = useAccountIndex();
-    const pathLabel = (id: AccountId, fallback: string) => {
-        const segments = accountPathSegments(byId, id);
-        return segments.length > 0 ? segments.join(ACCOUNT_PATH_SEPARATOR) : fallback;
-    };
+    const pathLabel = (id: AccountId, fallback: string) => accountPathText(byId, id, fallback);
 
     const accounts = projection.data?.accounts ?? [];
 

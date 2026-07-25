@@ -3,6 +3,7 @@ import {
     ACCOUNT_PATH_SEPARATOR,
     accountPathLabel,
     accountPathSegments,
+    accountPathText,
     type AccountIndex,
 } from '../lib/accountTree';
 import { cx } from '../lib/cx';
@@ -110,10 +111,8 @@ function accountLabelText(
     accountId: AccountId,
     options: { fallbackName?: string | null; showCode?: boolean } = {},
 ): string {
-    const account = byId.get(accountId);
-    if (!account) return options.fallbackName ?? '';
-
+    const fallback = options.fallbackName ?? '';
     return options.showCode === true
-        ? (accountPathLabel(byId, accountId) ?? '')
-        : accountPathSegments(byId, accountId).join(ACCOUNT_PATH_SEPARATOR);
+        ? (accountPathLabel(byId, accountId) ?? fallback)
+        : accountPathText(byId, accountId, fallback);
 }

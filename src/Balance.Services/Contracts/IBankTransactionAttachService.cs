@@ -53,6 +53,7 @@ public sealed record AttachHintOutput(
     JournalEntryId Id,
     DateOnly Date,
     string? Description,
+    AccountId OtherAccountId,
     string OtherAccountName
 );
 
@@ -63,6 +64,7 @@ public sealed record AttachCandidateOutput(
     JournalEntryId Id,
     DateOnly Date,
     string? Description,
+    AccountId OtherAccountId,
     string OtherAccountName,
     long Amount
 );

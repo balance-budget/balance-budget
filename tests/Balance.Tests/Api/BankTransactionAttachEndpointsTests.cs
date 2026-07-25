@@ -129,6 +129,9 @@ internal sealed class BankTransactionAttachEndpointsTests : EndpointsTestsBase
         var siblingRow = paged!.Items.Single(r => r.Id == scenario.SiblingBtId);
         await Assert.That(siblingRow.MatchingJournalEntry).IsNotNull();
         await Assert.That(siblingRow.MatchingJournalEntry!.Id).IsEqualTo(scenario.SelfTransferJeId);
+        await Assert
+            .That(siblingRow.MatchingJournalEntry.OtherAccountId)
+            .IsEqualTo(scenario.CurrentAccountId);
     }
 
     [Test]
@@ -155,7 +158,8 @@ internal sealed class BankTransactionAttachEndpointsTests : EndpointsTestsBase
         var candidates = await list.Content.ReadFromJsonAsync<IReadOnlyList<AttachCandidateDto>>(
             cancellationToken
         );
-        await Assert.That(candidates!.Any(c => c.Id == scenario.SelfTransferJeId)).IsTrue();
+        var candidate = candidates!.Single(c => c.Id == scenario.SelfTransferJeId);
+        await Assert.That(candidate.OtherAccountId).IsEqualTo(scenario.CurrentAccountId);
     }
 
     private static async Task<SelfTransferScenarioDto> SeedSelfTransferScenarioAsync(
@@ -231,7 +235,7 @@ internal sealed class BankTransactionAttachEndpointsTests : EndpointsTestsBase
         btBResponse.EnsureSuccessStatusCode();
         var btB = await btBResponse.Content.ReadFromJsonAsync<BankTransactionDto>();
 
-        return new SelfTransferScenarioDto(je!.Id, btB!.Id);
+        return new SelfTransferScenarioDto(je!.Id, btB!.Id, currentAccount.Id);
     }
 
     private static async Task<AccountDto> CreateAccountAsync(HttpClient client, string namePrefix)
@@ -272,7 +276,11 @@ internal sealed class BankTransactionAttachEndpointsTests : EndpointsTestsBase
     }
 }
 
-internal sealed record SelfTransferScenarioDto(Guid SelfTransferJeId, Guid SiblingBtId);
+internal sealed record SelfTransferScenarioDto(
+    Guid SelfTransferJeId,
+    Guid SiblingBtId,
+    Guid CurrentAccountId
+);
 
 internal sealed record BankTransactionWithHintDto(
     Guid Id,
@@ -284,6 +292,7 @@ internal sealed record AttachHintDto(
     Guid Id,
     DateOnly Date,
     string? Description,
+    Guid OtherAccountId,
     string OtherAccountName
 );
 
@@ -291,6 +300,7 @@ internal sealed record AttachCandidateDto(
     Guid Id,
     DateOnly Date,
     string? Description,
+    Guid OtherAccountId,
     string OtherAccountName,
     long Amount
 );

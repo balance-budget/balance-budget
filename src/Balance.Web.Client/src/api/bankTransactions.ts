@@ -1,10 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { components } from '../lib/api-types.gen';
 import {
+    asAccountId,
     asBankAccountId,
     asBankTransactionId,
     asJournalEntryId,
     asLoanId,
+    type AccountId,
     type BankAccountId,
     type BankTransactionId,
     type JournalEntryId,
@@ -67,6 +69,7 @@ export type AttachHint = {
     id: JournalEntryId;
     date: string;
     description: string | null;
+    otherAccountId: AccountId;
     otherAccountName: string;
 };
 
@@ -80,6 +83,7 @@ export type AttachCandidate = {
     id: JournalEntryId;
     date: string;
     description: string | null;
+    otherAccountId: AccountId;
     otherAccountName: string;
     amount: number;
 };
@@ -138,6 +142,7 @@ function toAttachHint(wire: WireAttachHint): AttachHint {
         id: asJournalEntryId(wire.id),
         date: wire.date,
         description: wire.description,
+        otherAccountId: asAccountId(wire.otherAccountId),
         otherAccountName: wire.otherAccountName,
     };
 }
@@ -147,6 +152,7 @@ function toAttachCandidate(wire: WireAttachCandidate): AttachCandidate {
         id: asJournalEntryId(wire.id),
         date: wire.date,
         description: wire.description,
+        otherAccountId: asAccountId(wire.otherAccountId),
         otherAccountName: wire.otherAccountName,
         amount: Number(wire.amount),
     };
