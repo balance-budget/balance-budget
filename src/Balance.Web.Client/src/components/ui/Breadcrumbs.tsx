@@ -18,8 +18,13 @@ export function Breadcrumbs<T extends object>(props: BreadcrumbsProps<T>) {
     );
 }
 
+// The separator's color is scoped to the same `:not(:first-child)` as its content:
+// a bare `before:` utility emits `content: var(--tw-content)` (empty by default), and
+// that empty box is a flex item the `gap-1` still spaces, indenting the first crumb
+// away from the heading below it.
 const CRUMB_CLASS =
-    'flex items-center gap-1 min-w-0 [&:not(:first-child)]:before:content-["›"] before:text-fg-4';
+    'flex items-center gap-1 min-w-0 ' +
+    '[&:not(:first-child)]:before:content-["›"] [&:not(:first-child)]:before:text-fg-4';
 
 /**
  * Styling for a crumb's clickable element, for crumbs that bring their own link.
