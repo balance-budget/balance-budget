@@ -1,7 +1,10 @@
 import type { Account } from '../api/accounts';
 import type { AccountId, AccountType } from './domain';
 
-const INDEX_CACHE = new WeakMap<readonly Account[], ReadonlyMap<AccountId, Account>>();
+/** An id→Account lookup over the whole chart of accounts. */
+export type AccountIndex = ReadonlyMap<AccountId, Account>;
+
+const INDEX_CACHE = new WeakMap<readonly Account[], AccountIndex>();
 
 /**
  * The id→Account index for a chart of accounts, memoized on the array's identity.
@@ -9,7 +12,7 @@ const INDEX_CACHE = new WeakMap<readonly Account[], ReadonlyMap<AccountId, Accou
  * table must share one index instead of each building its own (ADR-0039); react-query
  * hands out the same array until the query refetches, which is what makes the cache hit.
  */
-export function accountIndexFor(accounts: readonly Account[]): ReadonlyMap<AccountId, Account> {
+export function accountIndexFor(accounts: readonly Account[]): AccountIndex {
     const cached = INDEX_CACHE.get(accounts);
     if (cached) return cached;
 
@@ -98,10 +101,7 @@ export const ACCOUNT_PATH_SEPARATOR = ' › ';
  * A root account returns just its own name. Showing the full path makes nested
  * leaves unambiguous (Car › Tax vs Home › Tax) — see ADR-0019.
  */
-export function accountPathSegments(
-    byId: ReadonlyMap<AccountId, Account>,
-    id: AccountId,
-): string[] {
+export function accountPathSegments(byId: AccountIndex, id: AccountId): string[] {
     const segments: string[] = [];
     const guard = new Set<AccountId>();
     let current = byId.get(id);
@@ -118,10 +118,7 @@ export function accountPathSegments(
  * displays — e.g. a frozen journal line that shows where it posted without an
  * editable picker. Returns null when the account is unknown.
  */
-export function accountPathLabel(
-    byId: ReadonlyMap<AccountId, Account>,
-    id: AccountId,
-): string | null {
+export function accountPathLabel(byId: AccountIndex, id: AccountId): string | null {
     const account = byId.get(id);
     if (!account) return null;
     return `${account.code}  ${accountPathSegments(byId, id).join(ACCOUNT_PATH_SEPARATOR)}`;
