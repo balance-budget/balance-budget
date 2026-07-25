@@ -9,8 +9,6 @@ using Balance.Services.Contracts;
 
 namespace Balance.Integration.Stater.Importers;
 
-// Savings is the only BankAccountType whose CHECK permits a bare AccountNumber (no IBAN); the
-// bouwdepot's header account number equals the loan number, not an IBAN.
 internal sealed class StaterConstructionDepositExtractor : IBankTransactionExtractor
 {
     private const string ImporterKey = "Stater.ConstructionDeposit";
@@ -18,15 +16,10 @@ internal sealed class StaterConstructionDepositExtractor : IBankTransactionExtra
 
     private readonly IStaterStatementParser _parser;
 
-    public StaterConstructionDepositExtractor(IStaterStatementParser parser)
-    {
-        _parser = parser;
-    }
+    public StaterConstructionDepositExtractor(IStaterStatementParser parser) => _parser = parser;
 
     public string Key => ImporterKey;
 
-    // The servicing platform that owns the layout, not the consumer lender; the account's own
-    // BankAccount.BankName carries the actual lender.
     public string BankName => "Stater";
 
     public BankAccountType SupportedType => BankAccountType.Savings;
