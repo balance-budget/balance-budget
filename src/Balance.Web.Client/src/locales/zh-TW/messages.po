@@ -470,6 +470,9 @@ msgstr "銀行交易"
 msgid "BIC"
 msgstr "BIC"
 
+msgid "Breadcrumb"
+msgstr "導覽路徑"
+
 msgid "Browse files"
 msgstr "瀏覽檔案"
 
