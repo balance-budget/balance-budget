@@ -11,7 +11,7 @@ import {
     type TemplateCandidate,
     type WireScenarioRequest,
 } from '../api/outlook';
-import { useAccounts } from '../api/accounts';
+import { useAccountIndex } from '../api/accounts';
 import { useCurrencyCatalog } from '../api/currencies';
 import { Amount } from '../components/Amount';
 import { Empty } from '../components/Empty';
@@ -162,11 +162,7 @@ function ProjectionPanel({
 }) {
     const { t } = useLingui();
 
-    const allAccounts = useAccounts();
-    const byId = useMemo(
-        () => new Map((allAccounts.data ?? []).map(a => [a.id, a])),
-        [allAccounts.data],
-    );
+    const byId = useAccountIndex();
     const pathLabel = (id: AccountId, fallback: string) => {
         const segments = accountPathSegments(byId, id);
         return segments.length > 0 ? segments.join(ACCOUNT_PATH_SEPARATOR) : fallback;
@@ -496,11 +492,7 @@ function RecurringPanel({
     const templates = useOutlookTemplates();
     const remove = useDeleteTemplate();
     const toast = useToast();
-    const allAccounts = useAccounts();
-    const byId = useMemo(
-        () => new Map((allAccounts.data ?? []).map(a => [a.id, a])),
-        [allAccounts.data],
-    );
+    const byId = useAccountIndex();
 
     const visible = (templates.data ?? []).filter(tpl => tpl.accountId === accountId);
 
@@ -641,11 +633,7 @@ function CandidatesPanel({
 }) {
     const { t } = useLingui();
     const candidates = useTemplateCandidates();
-    const allAccounts = useAccounts();
-    const byId = useMemo(
-        () => new Map((allAccounts.data ?? []).map(a => [a.id, a])),
-        [allAccounts.data],
-    );
+    const byId = useAccountIndex();
 
     const visible = (candidates.data ?? []).filter(c => c.accountId === accountId);
 

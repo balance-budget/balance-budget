@@ -1,6 +1,23 @@
 import type { Account } from '../api/accounts';
 import type { AccountId, AccountType } from './domain';
 
+const INDEX_CACHE = new WeakMap<readonly Account[], ReadonlyMap<AccountId, Account>>();
+
+/**
+ * The id→Account index for a chart of accounts, memoized on the array's identity.
+ * `AccountLabel` renders in every row of every collection, so a hundred labels in one
+ * table must share one index instead of each building its own (ADR-0039); react-query
+ * hands out the same array until the query refetches, which is what makes the cache hit.
+ */
+export function accountIndexFor(accounts: readonly Account[]): ReadonlyMap<AccountId, Account> {
+    const cached = INDEX_CACHE.get(accounts);
+    if (cached) return cached;
+
+    const index = new Map(accounts.map(a => [a.id, a]));
+    INDEX_CACHE.set(accounts, index);
+    return index;
+}
+
 /**
  * Sibling order for the chart of accounts: by code (numeric-aware), then by
  * name. Shared so the Accounts screen and the sidebar tree order identically.

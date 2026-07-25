@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Account } from '../api/accounts';
 import { asAccountId, type AccountId } from './domain';
 import {
+    accountIndexFor,
     accountPathLabel,
     accountPathSegments,
     buildChildrenMap,
@@ -48,6 +49,23 @@ function tree(): Account[] {
 function byId(accounts: Account[]): Map<AccountId, Account> {
     return new Map(accounts.map(a => [a.id, a]));
 }
+
+describe('accountIndexFor', () => {
+    it('indexes every account by id', () => {
+        const index = accountIndexFor(tree());
+        expect(index.size).toBe(6);
+        expect(index.get(asAccountId('car-ins-liab'))?.name).toBe('Liability');
+    });
+
+    it('hands the same index back for the same array, so one table builds it once', () => {
+        const accounts = tree();
+        expect(accountIndexFor(accounts)).toBe(accountIndexFor(accounts));
+    });
+
+    it('rebuilds for a new array, so a refetch is picked up', () => {
+        expect(accountIndexFor(tree())).not.toBe(accountIndexFor(tree()));
+    });
+});
 
 describe('accountPathSegments', () => {
     it('returns the full chain from root to leaf', () => {

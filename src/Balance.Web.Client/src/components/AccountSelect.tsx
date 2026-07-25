@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useAccounts, type Account } from '../api/accounts';
+import { useAccountIndex, useAccounts, type Account } from '../api/accounts';
 import {
     ACCOUNT_PATH_SEPARATOR,
     accountPathSegments,
@@ -112,7 +112,7 @@ export function AccountSelect({
 }: AccountSelectProps) {
     const accounts = useAccounts();
     const all = useMemo(() => accounts.data ?? [], [accounts.data]);
-    const byId = useMemo(() => new Map(all.map(a => [a.id, a])), [all]);
+    const byId = useAccountIndex();
 
     // Inline arrays would re-run the memo every render; key on the contents.
     const excludeKey = (exclude ?? []).join(',');

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { components } from '../lib/api-types.gen';
+import { accountIndexFor } from '../lib/accountTree';
 import { type AccountId, type AccountType, type Horizon, asAccountId } from '../lib/domain';
 import { getJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
@@ -91,6 +92,16 @@ export function useAccounts() {
         },
     });
 }
+
+/** The shared id→Account index over the cached chart of accounts — empty until the
+ *  query resolves. Read this instead of building a local `Map` per screen. */
+export function useAccountIndex(): ReadonlyMap<AccountId, Account> {
+    const { data } = useAccounts();
+    return accountIndexFor(data ?? EMPTY_ACCOUNTS);
+}
+
+// A stable identity, so the index cache hits while the query is still pending.
+const EMPTY_ACCOUNTS: readonly Account[] = [];
 
 const crud = createResourceCrud<
     WireAccount,
