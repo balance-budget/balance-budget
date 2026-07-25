@@ -7,7 +7,7 @@ using Balance.Integration.Ing.Models.Notes;
 
 namespace Balance.Integration.Ing.Parsers;
 
-internal sealed class IngModernCreditCardStatementParser : IngCreditCardStatementParser
+internal sealed class IngModernCreditCardStatementParser : IngCreditCardPdfStatementParser
 {
     private static readonly FrozenDictionary<string, CreditCardTransactionType> TransactionTypes =
         new Dictionary<string, CreditCardTransactionType>(StringComparer.Ordinal)
@@ -19,6 +19,7 @@ internal sealed class IngModernCreditCardStatementParser : IngCreditCardStatemen
             ["Geldopname"] = CreditCardTransactionType.CashWithdrawal,
             ["Kosten"] = CreditCardTransactionType.Fees,
             ["Correctie"] = CreditCardTransactionType.Correction,
+            ["Diversen"] = CreditCardTransactionType.Miscellaneous,
         }.ToFrozenDictionary();
 
     // Most-recent-first layout: rows are reversed before insertion (see IIngCreditCardStatementParser).
@@ -109,7 +110,10 @@ internal sealed class IngModernCreditCardStatementParser : IngCreditCardStatemen
         {
             Date = bookingDate,
             Description = transaction.Match.Groups["name"].Value.Trim(),
-            TransactionType = TransactionTypes[transaction.Match.Groups["type"].Value],
+            TransactionType = TransactionTypes.GetValueOrDefault(
+                transaction.Match.Groups["type"].Value,
+                CreditCardTransactionType.Unknown
+            ),
             Amount = ParseAmount(transaction.Match.Groups["amount"].Value),
             CardNumber = notes.CardNumber ?? string.Empty,
             TransactionDate = notes.TransactionDate ?? bookingDate,
@@ -155,7 +159,10 @@ internal sealed class IngModernCreditCardStatementParser : IngCreditCardStatemen
             TryGroup(match, "fcamount", out var fcAmount)
             && TryGroup(match, "fccode", out var fcCode)
         )
-            notes.ForeignCurrencyAmount = CurrencyAmount.TryParse($"{fcAmount} {fcCode}");
+            notes.ForeignCurrencyAmount = CurrencyAmount.TryParse(
+                $"{fcAmount} {fcCode}",
+                NlCulture
+            );
 
         if (
             TryGroup(match, "fcrate", out var fcRate)
@@ -167,7 +174,10 @@ internal sealed class IngModernCreditCardStatementParser : IngCreditCardStatemen
             TryGroup(match, "fcmarkupamount", out var markUp)
             && TryGroup(match, "fcmarkupcode", out var markUpCode)
         )
-            notes.ForeignCurrencyMarkUp = CurrencyAmount.TryParse($"{markUp} {markUpCode}");
+            notes.ForeignCurrencyMarkUp = CurrencyAmount.TryParse(
+                $"{markUp} {markUpCode}",
+                NlCulture
+            );
     }
 
     private static bool TryGroup(Match match, string name, out string value)

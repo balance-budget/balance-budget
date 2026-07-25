@@ -5,7 +5,7 @@ using Balance.Integration.Ing.Models.Notes;
 
 namespace Balance.Integration.Ing.Parsers;
 
-internal sealed class IngLegacyCreditCardStatementParser : IngCreditCardStatementParser
+internal sealed class IngLegacyCreditCardStatementParser : IngCreditCardPdfStatementParser
 {
     // Structural signature: at least one line in the legacy transaction-row shape. The legacy and
     // modern transaction-line patterns are mutually exclusive, so the extractor's "exactly one

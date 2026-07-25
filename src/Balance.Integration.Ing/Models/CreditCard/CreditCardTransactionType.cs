@@ -39,4 +39,15 @@ internal enum CreditCardTransactionType
     /// Correctie
     /// </summary>
     Correction,
+
+    /// <summary>
+    /// Diversen — the CSV export's bucket for card/funding-account transfers.
+    /// </summary>
+    Miscellaneous,
+
+    /// <summary>
+    /// A label no layout recognizes. ING adds labels over time, so an unknown one degrades to this
+    /// rather than failing the import; the raw row survives in RawSource either way.
+    /// </summary>
+    Unknown,
 }
