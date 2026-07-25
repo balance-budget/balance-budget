@@ -14,6 +14,7 @@ import {
 import { useDetachBankTransaction, type BankTransactionDetail } from '../api/bankTransactions';
 import { useCounterparties, useCreateCounterparty } from '../api/counterparties';
 import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
+import { AccountLabel } from '../components/AccountLabel';
 import { AccountSelect } from '../components/AccountSelect';
 import { BankTransactionDetails } from '../components/BankTransactionDetails';
 import { ComboBox } from '../components/ui/ComboBox';
@@ -343,7 +344,9 @@ function LineRow({
     const moneyStr = formatMoney(magnitude, currencyCode, catalog);
     return (
         <Row id={line.id}>
-            <Cell className="text-sm text-fg-1 truncate">{line.accountName}</Cell>
+            <Cell className="text-sm text-fg-1">
+                <AccountLabel accountId={line.accountId} fallbackName={line.accountName} />
+            </Cell>
             <Cell className="font-mono text-sm tabular-nums text-right text-fg-1">
                 {isDebit ? moneyStr : ''}
             </Cell>

@@ -13,6 +13,7 @@ import {
     type RegisterStatusFilter,
 } from '../api/register';
 import { AccountAvatar } from '../components/AccountAvatar';
+import { AccountLabel } from '../components/AccountLabel';
 import { AccountSelect } from '../components/AccountSelect';
 import { Amount } from '../components/Amount';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -444,11 +445,11 @@ function RegisterTable({
                             <Trans>Description</Trans>
                         </Column>
                         {showAccountColumn ? (
-                            <Column width={150}>
+                            <Column width={200}>
                                 <Trans>Account</Trans>
                             </Column>
                         ) : null}
-                        <Column width={160}>
+                        <Column width={200}>
                             <Trans>Counter</Trans>
                         </Column>
                         <Column width={120} className="text-right">
@@ -604,13 +605,26 @@ function RegisterRowView({
                 </div>
             </Cell>
             {showAccountColumn ? (
-                <Cell className="text-xs text-fg-2 truncate">{row.accountName}</Cell>
+                <Cell className="text-xs text-fg-2">
+                    <AccountLabel
+                        accountId={row.accountId}
+                        fallbackName={row.accountName}
+                        glyph="dot"
+                    />
+                </Cell>
             ) : null}
-            <Cell>
-                <span className="text-xs text-fg-2 truncate">
-                    {counter ? counter.accountName : '—'}
-                    {extra > 0 ? <span className="text-fg-3"> +{extra}</span> : null}
-                </span>
+            <Cell className="text-xs text-fg-2">
+                {counter ? (
+                    <span className="flex items-center gap-1 min-w-0">
+                        <AccountLabel
+                            accountId={counter.accountId}
+                            fallbackName={counter.accountName}
+                        />
+                        {extra > 0 ? <span className="shrink-0 text-fg-3">+{extra}</span> : null}
+                    </span>
+                ) : (
+                    '—'
+                )}
             </Cell>
             <Cell className="text-right">
                 <span
