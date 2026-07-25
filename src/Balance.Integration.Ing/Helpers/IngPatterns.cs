@@ -14,6 +14,10 @@ internal static partial class IngPatterns
     [GeneratedRegex(@"^(?<iban>NL\d{2}INGB\d{10})_", RegexOptions.IgnoreCase)]
     public static partial Regex StatementFilenameIban();
 
+    // ING credit-card CSV exports are named "CreditCard_<Overeenkomstnummer>_<from>_<to>.csv".
+    [GeneratedRegex(@"^CreditCard_(?<number>\d+)_", RegexOptions.IgnoreCase)]
+    public static partial Regex CreditCardFilenameContractNumber();
+
     [GeneratedRegex(@"^NL\d{2} INGB \d{4} \d{4} \d{2}$", RegexOptions.IgnoreCase)]
     public static partial Regex CreditCardLinkedAccount();
 

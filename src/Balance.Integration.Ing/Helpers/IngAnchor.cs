@@ -18,4 +18,14 @@ internal static class IngAnchor
         var match = IngPatterns.StatementFilenameIban().Match(fileName);
         return match.Success ? Normalize(match.Groups["iban"].Value) : null;
     }
+
+    // ING credit-card CSV exports are named "CreditCard_<Overeenkomstnummer>_<from>_<to>.csv". That
+    // contract number is not the masked card number, so it only resolves a BankAccount that records
+    // it as its AccountNumber — which is why it is a fallback for statements whose every row is a
+    // Funding-account transfer and therefore names no card at all (ADR 0038).
+    public static string? FromCreditCardFilename(string fileName)
+    {
+        var match = IngPatterns.CreditCardFilenameContractNumber().Match(fileName);
+        return match.Success ? Normalize(match.Groups["number"].Value) : null;
+    }
 }
