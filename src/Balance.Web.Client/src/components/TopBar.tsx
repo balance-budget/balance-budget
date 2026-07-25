@@ -4,6 +4,7 @@ import { Link } from '@tanstack/react-router';
 import { Icon } from './Icon';
 import type { Crumb } from './PageHeader';
 import { useTheme } from './ThemeProvider';
+import { BreadcrumbItem, Breadcrumbs, breadcrumbLinkStyles } from './ui/Breadcrumbs';
 import { composeTailwindRenderProps } from './ui/compose';
 
 type TopBarProps = {
@@ -29,18 +30,18 @@ export function TopBar({ title, breadcrumb, period, onMenuClick, onSearchClick }
             </TopBarButton>
             <div className="flex flex-col gap-[2px] min-w-0">
                 {breadcrumb && breadcrumb.length > 0 ? (
-                    <nav className="flex items-center gap-1 text-xs text-fg-3 min-w-0">
-                        {breadcrumb.map(crumb => (
-                            <span key={crumb.to} className="flex items-center gap-1 min-w-0">
-                                <Link
-                                    to={crumb.to}
-                                    className="truncate rounded-sm outline-none data-[hovered]:text-fg-1 data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary"
-                                >
-                                    {crumb.label}
-                                </Link>
-                                <Icon name="chevron-right" size={12} className="shrink-0" />
-                            </span>
-                        ))}
+                    // Wraps rather than squeezing: a deep account path would otherwise
+                    // truncate every crumb to a couple of characters on a phone.
+                    <nav aria-label={t`Breadcrumb`} className="min-w-0">
+                        <Breadcrumbs className="text-fg-3">
+                            {breadcrumb.map(crumb => (
+                                <BreadcrumbItem key={crumb.to}>
+                                    <Link to={crumb.to} className={breadcrumbLinkStyles}>
+                                        {crumb.label}
+                                    </Link>
+                                </BreadcrumbItem>
+                            ))}
+                        </Breadcrumbs>
                     </nav>
                 ) : null}
                 <h1 className="text-lg md:text-xl font-semibold truncate">{title}</h1>

@@ -470,6 +470,9 @@ msgstr "Banktransacties"
 msgid "BIC"
 msgstr "BIC"
 
+msgid "Breadcrumb"
+msgstr "Kruimelpad"
+
 msgid "Browse files"
 msgstr "Bestanden bladeren"
 

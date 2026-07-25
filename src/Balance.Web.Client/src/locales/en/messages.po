@@ -470,6 +470,9 @@ msgstr "Bank transactions"
 msgid "BIC"
 msgstr "BIC"
 
+msgid "Breadcrumb"
+msgstr "Breadcrumb"
+
 msgid "Browse files"
 msgstr "Browse files"
 
