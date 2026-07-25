@@ -23,5 +23,11 @@
     <None Update="Integrations\Ing\NL69INGB0123456789_01-03-2026_31-03-2026.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Integrations\Ing\CreditCard_123456789000_01-03-2026_31-03-2026.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Integrations\Ing\CreditCard_123456789000_01-01-2026_31-01-2026.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>
