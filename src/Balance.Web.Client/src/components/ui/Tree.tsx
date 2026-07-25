@@ -7,7 +7,7 @@ import {
     type TreeItemProps,
     type TreeProps,
 } from 'react-aria-components';
-import { Icon } from '../Icon';
+import { ChevronRight } from 'lucide-react';
 import { cx } from '../../lib/cx';
 import { composeTailwindRenderProps } from './compose';
 
@@ -58,9 +58,9 @@ export function TreeExpandButton({
                 className,
             )}
         >
-            <Icon
-                name="chevron-right"
+            <ChevronRight
                 size={14}
+                aria-hidden="true"
                 className={'transition-transform duration-120 ' + (isExpanded ? 'rotate-90' : '')}
             />
         </Button>
