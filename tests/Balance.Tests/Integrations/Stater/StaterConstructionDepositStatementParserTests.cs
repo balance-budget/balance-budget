@@ -6,7 +6,7 @@ namespace Balance.Tests.Integrations.Stater;
 internal sealed class StaterConstructionDepositStatementParserTests
 {
     [Test]
-    [Skip("Requires file to be present")]
+    [Explicit]
     public async Task ParsesStatement(CancellationToken cancellationToken)
     {
         var path = Path.Combine(

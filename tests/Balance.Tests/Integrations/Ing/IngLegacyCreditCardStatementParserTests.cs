@@ -6,7 +6,7 @@ namespace Balance.Tests.Integrations.Ing;
 internal sealed class IngLegacyCreditCardStatementParserTests
 {
     [Test]
-    //[Skip("Requires file to be present")]
+    [Explicit]
     public async Task ParsesStatement(CancellationToken cancellationToken)
     {
         var path = Path.Combine(
