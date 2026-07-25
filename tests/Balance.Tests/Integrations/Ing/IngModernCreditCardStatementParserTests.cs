@@ -11,9 +11,13 @@ internal sealed class IngModernCreditCardStatementParserTests
     {
         var path = Path.Combine(
             AppContext.BaseDirectory,
-            "Integrations",
-            "Ing",
-            "creditcard-modern.pdf"
+            "..",
+            "..",
+            "..",
+            "..",
+            "tests",
+            "data",
+            "cc-modern.pdf"
         );
 
         await using var stream = File.OpenRead(path);

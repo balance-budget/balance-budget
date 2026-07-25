@@ -1,4 +1,4 @@
-using Balance.Integration.Stater.Helpers;
+using Balance.Integration.Pdf;
 using Balance.Integration.Stater.Parsers;
 
 namespace Balance.Tests.Integrations.Stater;
@@ -6,17 +6,22 @@ namespace Balance.Tests.Integrations.Stater;
 internal sealed class StaterConstructionDepositStatementParserTests
 {
     [Test]
-    [Skip("Requires a real Stater statement PDF fixture")]
+    [Skip("Requires file to be present")]
     public async Task ParsesStatement(CancellationToken cancellationToken)
     {
         var path = Path.Combine(
             AppContext.BaseDirectory,
-            "Integrations",
-            "Stater",
+            "..",
+            "..",
+            "..",
+            "..",
+            "tests",
+            "data",
             "construction-deposit.pdf"
         );
+
         await using var stream = File.OpenRead(path);
-        var lines = StaterPdfReader.ExtractLines(stream, cancellationToken);
+        var lines = PdfTextReader.ExtractLines(stream, cancellationToken);
         var parser = new StaterStatementParser();
         var result = parser.Parse(lines);
 

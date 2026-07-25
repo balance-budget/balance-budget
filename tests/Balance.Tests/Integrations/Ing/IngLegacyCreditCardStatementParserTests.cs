@@ -6,14 +6,18 @@ namespace Balance.Tests.Integrations.Ing;
 internal sealed class IngLegacyCreditCardStatementParserTests
 {
     [Test]
-    [Skip("Requires file to be present")]
+    //[Skip("Requires file to be present")]
     public async Task ParsesStatement(CancellationToken cancellationToken)
     {
         var path = Path.Combine(
             AppContext.BaseDirectory,
-            "Integrations",
-            "Ing",
-            "creditcard-legacy.pdf"
+            "..",
+            "..",
+            "..",
+            "..",
+            "tests",
+            "data",
+            "cc-legacy.pdf"
         );
 
         await using var stream = File.OpenRead(path);

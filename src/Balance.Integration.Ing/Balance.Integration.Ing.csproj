@@ -4,9 +4,9 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CsvHelper" />
-    <PackageReference Include="PdfPig" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Balance.Integration\Balance.Integration.csproj" />
     <ProjectReference Include="..\Balance.Services\Balance.Services.csproj" />
   </ItemGroup>
 </Project>

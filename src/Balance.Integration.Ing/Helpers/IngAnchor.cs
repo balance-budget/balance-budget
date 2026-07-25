@@ -18,18 +18,4 @@ internal static class IngAnchor
         var match = IngPatterns.StatementFilenameIban().Match(fileName);
         return match.Success ? Normalize(match.Groups["iban"].Value) : null;
     }
-
-    // Cheap, allocation-light check that a stream is a PDF, so the credit-card probe can skip
-    // (rather than throw on) a dropped CSV or other non-PDF file. Leaves the stream rewound.
-    public static bool LooksLikePdf(Stream stream)
-    {
-        if (!stream.CanSeek)
-            return false;
-
-        stream.Seek(0, SeekOrigin.Begin);
-        Span<byte> header = stackalloc byte[5];
-        var read = stream.ReadAtLeast(header, header.Length, throwOnEndOfStream: false);
-        stream.Seek(0, SeekOrigin.Begin);
-        return read == header.Length && header.SequenceEqual("%PDF-"u8);
-    }
 }

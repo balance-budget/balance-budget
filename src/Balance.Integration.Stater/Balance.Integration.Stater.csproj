@@ -1,11 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <InternalsVisibleTo Include="Balance.Tests" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="PdfPig" />
-  </ItemGroup>
-  <ItemGroup>
+    <ProjectReference Include="..\Balance.Integration\Balance.Integration.csproj" />
     <ProjectReference Include="..\Balance.Services\Balance.Services.csproj" />
   </ItemGroup>
 </Project>

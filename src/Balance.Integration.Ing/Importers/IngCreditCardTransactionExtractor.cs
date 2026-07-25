@@ -5,6 +5,7 @@ using Balance.Data.Entities.Ids;
 using Balance.Integration.Ing.Contracts;
 using Balance.Integration.Ing.Helpers;
 using Balance.Integration.Ing.Models.CreditCard;
+using Balance.Integration.Pdf;
 using Balance.Services.BankTransactions;
 using Balance.Services.Contracts;
 
@@ -141,7 +142,7 @@ internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtrac
         // Credit-card statements are PDFs with no account anchor in the filename; the card number
         // only lives in the content. Skip non-PDF drops cheaply rather than letting the PDF
         // reader throw, then sniff the layout and anchor on the first row's card number.
-        if (!IngAnchor.LooksLikePdf(file.Content))
+        if (!PdfTextReader.LooksLikePdf(file.Content))
             return Task.FromResult<ImportIdentity?>(null);
 
         var lines = IngCreditCardPdfReader.ExtractLines(file.Content, cancellationToken);
