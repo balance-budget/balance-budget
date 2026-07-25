@@ -39,6 +39,7 @@ public sealed record CreateBankAccountInput(
     string? Iban,
     string? AccountNumber,
     string? CardIdentifier,
+    BankAccountId? FundingBankAccountId,
     string? Bic,
     string? BankName,
     string? AccountHolderName,
@@ -54,6 +55,7 @@ public sealed record UpdateBankAccountInput
     public string? Iban { get; set; }
     public string? AccountNumber { get; set; }
     public string? CardIdentifier { get; set; }
+    public BankAccountId? FundingBankAccountId { get; set; }
     public string? Bic { get; set; }
     public string? BankName { get; set; }
     public string? AccountHolderName { get; set; }

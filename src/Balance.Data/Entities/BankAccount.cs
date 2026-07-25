@@ -9,6 +9,15 @@ public sealed class BankAccount : BaseEntity<BankAccountId>
     public string? Iban { get; set; }
     public string? AccountNumber { get; set; }
     public string? CardIdentifier { get; set; }
+
+    /// <summary>
+    /// The BankAccount a <see cref="BankAccountType.Card"/> settles against — the current account
+    /// that pays it down. Optional: card statements omit it because a human knows it implicitly,
+    /// so it is configuration rather than imported data (ADR 0038).
+    /// </summary>
+    public BankAccountId? FundingBankAccountId { get; set; }
+
+    public BankAccount? FundingBankAccount { get; set; }
     public string? Bic { get; set; }
     public string? BankName { get; set; }
     public string? AccountHolderName { get; set; }

@@ -391,6 +391,7 @@ internal sealed class ConstructionDepositTests : EndpointsTestsBase
             Iban: iban,
             AccountNumber: accountNumber,
             CardIdentifier: null,
+            FundingBankAccountId: null,
             Bic: null,
             BankName: null,
             AccountHolderName: null,

@@ -513,6 +513,7 @@ internal sealed class BankTransactionCategorizationServiceTests : EndpointsTests
                     Iban: $"NL69INGB{NextDigits(10)}",
                     AccountNumber: null,
                     CardIdentifier: null,
+                    FundingBankAccountId: null,
                     Bic: null,
                     BankName: null,
                     AccountHolderName: null,

@@ -999,6 +999,7 @@ export interface components {
             iban: null | string;
             accountNumber: null | string;
             cardIdentifier: null | string;
+            fundingBankAccountId: null | components["schemas"]["BankAccountId"];
             bic: null | string;
             bankName: null | string;
             accountHolderName: null | string;
@@ -1141,6 +1142,7 @@ export interface components {
             iban: null | string;
             accountNumber: null | string;
             cardIdentifier: null | string;
+            fundingBankAccountId: null | components["schemas"]["BankAccountId"];
             bic: null | string;
             bankName: null | string;
             accountHolderName: null | string;
@@ -1441,19 +1443,19 @@ export interface components {
             /** @enum {string} */
             op: "add" | "replace" | "test";
             /** @enum {string} */
-            path: "/type" | "/iban" | "/accountNumber" | "/cardIdentifier" | "/bic" | "/bankName" | "/accountHolderName" | "/currencyCode" | "/importerKey" | "/accountId" | "/counterpartyId";
+            path: "/type" | "/iban" | "/accountNumber" | "/cardIdentifier" | "/fundingBankAccountId" | "/bic" | "/bankName" | "/accountHolderName" | "/currencyCode" | "/importerKey" | "/accountId" | "/counterpartyId";
             value: unknown;
         } | {
             /** @enum {string} */
             op: "move" | "copy";
             /** @enum {string} */
-            path: "/type" | "/iban" | "/accountNumber" | "/cardIdentifier" | "/bic" | "/bankName" | "/accountHolderName" | "/currencyCode" | "/importerKey" | "/accountId" | "/counterpartyId";
+            path: "/type" | "/iban" | "/accountNumber" | "/cardIdentifier" | "/fundingBankAccountId" | "/bic" | "/bankName" | "/accountHolderName" | "/currencyCode" | "/importerKey" | "/accountId" | "/counterpartyId";
             from: string;
         } | {
             /** @enum {string} */
             op: "remove";
             /** @enum {string} */
-            path: "/type" | "/iban" | "/accountNumber" | "/cardIdentifier" | "/bic" | "/bankName" | "/accountHolderName" | "/currencyCode" | "/importerKey" | "/accountId" | "/counterpartyId";
+            path: "/type" | "/iban" | "/accountNumber" | "/cardIdentifier" | "/fundingBankAccountId" | "/bic" | "/bankName" | "/accountHolderName" | "/currencyCode" | "/importerKey" | "/accountId" | "/counterpartyId";
         })[];
         JsonPatchDocumentOfUpdateCounterpartyInput: ({
             /** @enum {string} */
@@ -2085,6 +2087,7 @@ export interface components {
             iban?: null | string;
             accountNumber?: null | string;
             cardIdentifier?: null | string;
+            fundingBankAccountId?: unknown;
             bic?: null | string;
             bankName?: null | string;
             accountHolderName?: null | string;

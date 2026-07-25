@@ -226,6 +226,7 @@ internal sealed class BankTransactionCategorizationService : IBankTransactionCat
                 Iban: iban,
                 AccountNumber: null,
                 CardIdentifier: null,
+                FundingBankAccountId: null,
                 Bic: null,
                 BankName: null,
                 AccountHolderName: accountHolderName,

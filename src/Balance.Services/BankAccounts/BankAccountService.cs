@@ -89,6 +89,7 @@ internal sealed class BankAccountService : IBankAccountService
                 b.Iban,
                 b.AccountNumber,
                 b.CardIdentifier,
+                b.FundingBankAccountId,
                 b.Bic,
                 b.BankName,
                 b.AccountHolderName,
@@ -116,6 +117,7 @@ internal sealed class BankAccountService : IBankAccountService
                 b.Iban,
                 b.AccountNumber,
                 b.CardIdentifier,
+                b.FundingBankAccountId,
                 b.Bic,
                 b.BankName,
                 b.AccountHolderName,
@@ -144,6 +146,7 @@ internal sealed class BankAccountService : IBankAccountService
                 Iban = b.Iban,
                 AccountNumber = b.AccountNumber,
                 CardIdentifier = b.CardIdentifier,
+                FundingBankAccountId = b.FundingBankAccountId,
                 Bic = b.Bic,
                 BankName = b.BankName,
                 AccountHolderName = b.AccountHolderName,
@@ -202,6 +205,15 @@ internal sealed class BankAccountService : IBankAccountService
         if (referencesCheck.IsFailure)
             return referencesCheck.Error;
 
+        var fundingCheck = await EnsureFundingAccountAsync(
+            input.FundingBankAccountId,
+            input.Type,
+            selfId: null,
+            cancellationToken
+        );
+        if (fundingCheck.IsFailure)
+            return fundingCheck.Error;
+
         var ibanCheck = await EnsureIbanAvailableAsync(iban, excludingId: null, cancellationToken);
         if (ibanCheck.IsFailure)
             return ibanCheck.Error;
@@ -222,6 +234,7 @@ internal sealed class BankAccountService : IBankAccountService
             Iban = iban,
             AccountNumber = accountNumber,
             CardIdentifier = cardIdentifier,
+            FundingBankAccountId = input.FundingBankAccountId,
             Bic = bic,
             BankName = bankName,
             AccountHolderName = accountHolderName,
@@ -297,6 +310,15 @@ internal sealed class BankAccountService : IBankAccountService
         if (referencesCheck.IsFailure)
             return referencesCheck.Error;
 
+        var fundingCheck = await EnsureFundingAccountAsync(
+            input.FundingBankAccountId,
+            input.Type,
+            selfId: id,
+            cancellationToken
+        );
+        if (fundingCheck.IsFailure)
+            return fundingCheck.Error;
+
         var ibanCheck = await EnsureIbanAvailableAsync(iban, excludingId: id, cancellationToken);
         if (ibanCheck.IsFailure)
             return ibanCheck.Error;
@@ -313,6 +335,7 @@ internal sealed class BankAccountService : IBankAccountService
         bankAccount.Iban = iban;
         bankAccount.AccountNumber = accountNumber;
         bankAccount.CardIdentifier = cardIdentifier;
+        bankAccount.FundingBankAccountId = input.FundingBankAccountId;
         bankAccount.Bic = bic;
         bankAccount.BankName = bankName;
         bankAccount.AccountHolderName = accountHolderName;
@@ -340,6 +363,7 @@ internal sealed class BankAccountService : IBankAccountService
             bankAccount.Iban,
             bankAccount.AccountNumber,
             bankAccount.CardIdentifier,
+            bankAccount.FundingBankAccountId,
             bankAccount.Bic,
             bankAccount.BankName,
             bankAccount.AccountHolderName,
@@ -490,6 +514,54 @@ internal sealed class BankAccountService : IBankAccountService
                 .EnsureExistsAsync("Counterparty", cid.Value.ToString(), cancellationToken);
             if (counterpartyExists.IsFailure)
                 return counterpartyExists.Error;
+        }
+
+        return Result.Success;
+    }
+
+    // The CHECK constraint enforces card-only and non-self; the remaining rules (the target must
+    // be a Current BankAccount you own) are validated here so they surface as a request error
+    // rather than a database failure (ADR 0038).
+    private async Task<Result> EnsureFundingAccountAsync(
+        BankAccountId? fundingBankAccountId,
+        BankAccountType type,
+        BankAccountId? selfId,
+        CancellationToken cancellationToken
+    )
+    {
+        if (fundingBankAccountId is not { } fundingId)
+            return Result.Success;
+
+        if (type is not BankAccountType.Card)
+        {
+            return new InvariantError(
+                ErrorCodes.BankAccountFundingInvalid,
+                "Only a Card BankAccount can reference a funding BankAccount."
+            );
+        }
+
+        if (selfId == fundingId)
+        {
+            return new InvariantError(
+                ErrorCodes.BankAccountFundingInvalid,
+                "A BankAccount cannot be its own funding BankAccount."
+            );
+        }
+
+        var funding = await _dbContext
+            .BankAccounts.AsNoTracking()
+            .Where(b => b.Id == fundingId)
+            .Select(b => new { b.Type, b.AccountId })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (funding is null)
+            return new NotFoundError("BankAccount", fundingId.Value.ToString());
+
+        if (funding.Type is not BankAccountType.Current || funding.AccountId is null)
+        {
+            return new InvariantError(
+                ErrorCodes.BankAccountFundingInvalid,
+                "A funding BankAccount must be a Current BankAccount that you own."
+            );
         }
 
         return Result.Success;

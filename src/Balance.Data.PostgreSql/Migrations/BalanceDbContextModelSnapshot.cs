@@ -18,7 +18,7 @@ namespace Balance.Data.PostgreSql.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.9")
+                .HasAnnotation("ProductVersion", "10.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "citext");
@@ -280,6 +280,9 @@ namespace Balance.Data.PostgreSql.Migrations
                         .HasMaxLength(8)
                         .HasColumnType("character varying(8)");
 
+                    b.Property<Guid?>("FundingBankAccountId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Iban")
                         .HasMaxLength(34)
                         .HasColumnType("character varying(34)");
@@ -320,6 +323,9 @@ namespace Balance.Data.PostgreSql.Migrations
 
                     b.HasIndex("CurrencyCode");
 
+                    b.HasIndex("FundingBankAccountId")
+                        .HasDatabaseName("IX_BankAccounts_FundingBankAccountId");
+
                     b.HasIndex("Iban")
                         .IsUnique()
                         .HasDatabaseName("IX_BankAccounts_Iban")
@@ -330,6 +336,8 @@ namespace Balance.Data.PostgreSql.Migrations
                             t.HasCheckConstraint("CK_BankAccounts_CardOwnedOnly", "\"Type\" <> 'Card' OR \"AccountId\" IS NOT NULL");
 
                             t.HasCheckConstraint("CK_BankAccounts_CurrencyRequiredWhenOwned", "\"AccountId\" IS NULL OR \"CurrencyCode\" IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_BankAccounts_FundingCardOnly", "\"FundingBankAccountId\" IS NULL OR (\"Type\" = 'Card' AND \"FundingBankAccountId\" <> \"Id\")");
 
                             t.HasCheckConstraint("CK_BankAccounts_IdentifierByType", "(\"Type\" = 'Current' AND \"Iban\" IS NOT NULL) OR (\"Type\" = 'Savings' AND (\"Iban\" IS NOT NULL OR \"AccountNumber\" IS NOT NULL)) OR (\"Type\" = 'Card' AND \"CardIdentifier\" IS NOT NULL)");
 
@@ -955,6 +963,13 @@ namespace Balance.Data.PostgreSql.Migrations
                         .WithMany()
                         .HasForeignKey("CurrencyCode")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Balance.Data.Entities.BankAccount", "FundingBankAccount")
+                        .WithMany()
+                        .HasForeignKey("FundingBankAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("FundingBankAccount");
                 });
 
             modelBuilder.Entity("Balance.Data.Entities.BankTransaction", b =>

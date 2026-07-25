@@ -39,6 +39,7 @@ public static class ErrorCodes
         "bank_account.currency_required_when_owned";
     public const string BankAccountImporterUnknown = "bank_account.importer_unknown";
     public const string BankAccountImporterTypeMismatch = "bank_account.importer_type_mismatch";
+    public const string BankAccountFundingInvalid = "bank_account.funding_invalid";
 
     // BankTransaction
     public const string BankTransactionAmountZero = "bank_transaction.amount_zero";

@@ -35,6 +35,14 @@ internal sealed class BankAccountConfiguration : IEntityTypeConfiguration<BankAc
                     "CK_BankAccounts_CurrencyRequiredWhenOwned",
                     "\"AccountId\" IS NULL OR \"CurrencyCode\" IS NOT NULL"
                 );
+                // A Funding account is only meaningful for a Card, and nothing settles against
+                // itself (ADR 0038). The referenced row being a Current account you own is
+                // enforced in the service layer, which can report it as a validation error.
+                t.HasCheckConstraint(
+                    "CK_BankAccounts_FundingCardOnly",
+                    "\"FundingBankAccountId\" IS NULL"
+                        + " OR (\"Type\" = 'Card' AND \"FundingBankAccountId\" <> \"Id\")"
+                );
             }
         );
 
@@ -62,6 +70,10 @@ internal sealed class BankAccountConfiguration : IEntityTypeConfiguration<BankAc
             .HasConversion<CurrencyCode.EfCoreValueConverter>()
             .HasMaxLength(8);
 
+        builder
+            .Property(b => b.FundingBankAccountId)
+            .HasConversion<BankAccountId.EfCoreValueConverter>();
+
         builder.Property(b => b.AccountId).HasConversion<AccountId.EfCoreValueConverter>();
         builder
             .Property(b => b.CounterpartyId)
@@ -86,6 +98,15 @@ internal sealed class BankAccountConfiguration : IEntityTypeConfiguration<BankAc
             .HasOne<Counterparty>()
             .WithMany()
             .HasForeignKey(b => b.CounterpartyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Restrict, not SetNull: silently unlinking a card when its funding account is deleted
+        // would turn a loud ImportIbanMismatch (ADR 0038) into a silently null counterparty on
+        // every future pay-down row.
+        builder
+            .HasOne(b => b.FundingBankAccount)
+            .WithMany()
+            .HasForeignKey(b => b.FundingBankAccountId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder
@@ -117,5 +138,9 @@ internal sealed class BankAccountConfiguration : IEntityTypeConfiguration<BankAc
             .HasDatabaseName("IX_BankAccounts_AccountId");
 
         builder.HasIndex(b => b.CounterpartyId).HasDatabaseName("IX_BankAccounts_CounterpartyId");
+
+        builder
+            .HasIndex(b => b.FundingBankAccountId)
+            .HasDatabaseName("IX_BankAccounts_FundingBankAccountId");
     }
 }
