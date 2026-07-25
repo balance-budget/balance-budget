@@ -29,7 +29,7 @@ import { Skeleton } from '../components/Skeleton';
 import { selectedKey } from '../components/ui/selection';
 import { Tag, TagGroup } from '../components/ui/TagGroup';
 import { useToast } from '../components/ui/Toast';
-import { accountPathLabel } from '../lib/accountTree';
+import { accountAncestors, accountPathLabel } from '../lib/accountTree';
 import { disabledLineKeys, prunePageSelection, selectableLineIds } from './accountRegister.state';
 import { cx } from '../lib/cx';
 import { formatTableDate } from '../lib/dates';
@@ -73,12 +73,20 @@ export function AccountDetail({
     const [editing, setEditing] = useState(false);
     const [deleting, setDeleting] = useState(false);
 
-    // The TopBar owns the page title: the account name, under an "Accounts"
-    // breadcrumb. Until the account loads, it falls back to the route's static
-    // "Account" title.
+    // The TopBar owns the page title: the account name, under a breadcrumb of
+    // "Accounts" plus this account's ancestors, each linking to its own register
+    // (ADR-0039). Until the account loads, the title falls back to the route's
+    // static "Account".
+    const byId = useAccountIndex();
     usePageHeader({
         title: query.data?.name,
-        breadcrumb: [{ label: t`Accounts`, to: '/accounts' }],
+        breadcrumb: [
+            { label: t`Accounts`, to: '/accounts' },
+            ...accountAncestors(byId, id).map(ancestor => ({
+                label: ancestor.name,
+                to: `/accounts/${ancestor.id}`,
+            })),
+        ],
     });
 
     if (query.isPending) {
@@ -107,9 +115,9 @@ export function AccountDetail({
         <>
             <Panel>
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                    {/* The account name + "Accounts" breadcrumb live in the TopBar
-                     *  (see usePageHeader above); this card carries the identity
-                     *  avatar, classification, balance, and actions. */}
+                    {/* The account name and its ancestor path live in the TopBar (see
+                     *  usePageHeader above); this card carries the identity avatar,
+                     *  classification, balance, and actions. */}
                     <div className="flex items-center gap-3 min-w-0">
                         <AccountAvatar account={account} size="md" />
                         <div className="flex flex-col gap-[2px] min-w-0">

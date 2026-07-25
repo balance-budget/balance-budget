@@ -97,20 +97,35 @@ export function descendantAndSelfIds(
 export const ACCOUNT_PATH_SEPARATOR = ' › ';
 
 /**
+ * The accounts from the root down to `id` inclusive, root first. Empty when `id` is
+ * unknown. Guarded against a cycle the server rejects but the cache could still hold
+ * mid-reparent.
+ */
+export function accountChain(byId: AccountIndex, id: AccountId): Account[] {
+    const chain: Account[] = [];
+    const guard = new Set<AccountId>();
+    let current = byId.get(id);
+    while (current && !guard.has(current.id)) {
+        guard.add(current.id);
+        chain.unshift(current);
+        current = current.parentId === null ? undefined : byId.get(current.parentId);
+    }
+    return chain;
+}
+
+/** `id`'s ancestors, root first, excluding the account itself — the breadcrumb trail
+ *  above an account's own page. */
+export function accountAncestors(byId: AccountIndex, id: AccountId): Account[] {
+    return accountChain(byId, id).slice(0, -1);
+}
+
+/**
  * The chain of account names from the root down to `id`, e.g. `['Car', 'Tax']`.
  * A root account returns just its own name. Showing the full path makes nested
  * leaves unambiguous (Car › Tax vs Home › Tax) — see ADR-0019.
  */
 export function accountPathSegments(byId: AccountIndex, id: AccountId): string[] {
-    const segments: string[] = [];
-    const guard = new Set<AccountId>();
-    let current = byId.get(id);
-    while (current && !guard.has(current.id)) {
-        guard.add(current.id);
-        segments.unshift(current.name);
-        current = current.parentId === null ? undefined : byId.get(current.parentId);
-    }
-    return segments;
+    return accountChain(byId, id).map(a => a.name);
 }
 
 /**
