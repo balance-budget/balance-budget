@@ -158,6 +158,7 @@ The web host startup follows this order:
 - **Only build/test when neccesary**, these can be long running operations.
 - Prefer running targeted tests instead of the full suite.
 - Submit changes as a PR when done
+- **Never** read files from `./tests/data`
 
 ## Writing Style
 
