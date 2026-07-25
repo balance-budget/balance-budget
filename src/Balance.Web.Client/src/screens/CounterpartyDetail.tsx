@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
-import { Plural, Trans, useLingui } from '@lingui/react/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useNavigate } from '@tanstack/react-router';
 import { useAccounts, type Account } from '../api/accounts';
 import { useCounterparty, useDeleteCounterparty } from '../api/counterparties';
 import { useJournalEntries, type JournalEntry } from '../api/journalEntries';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ErrorState } from '../components/ErrorState';
+import { AccountLegs } from '../components/AccountLegs';
 import { Icon } from '../components/Icon';
 import { Pagination } from '../components/Pagination';
 import { Panel, SectionHead } from '../components/Panel';
@@ -17,7 +18,7 @@ import { useToast } from '../components/ui/Toast';
 import { formatTableDate } from '../lib/dates';
 import { type AccountId, type CounterpartyId, type JournalEntryId } from '../lib/domain';
 import { handleActionError } from '../lib/formErrors';
-import { formatLegLabel, projectEntry, type JournalProjection } from '../lib/journalProjection';
+import { projectEntry } from '../lib/journalProjection';
 import { LinkedBankAccountsSection } from './LinkedBankAccounts';
 import { CounterpartyFormModal } from './CounterpartyForm';
 
@@ -197,8 +198,11 @@ function JournalEntriesSection({
                         <Column>
                             <Trans>Description</Trans>
                         </Column>
-                        <Column width={220}>
-                            <Trans>From</Trans> → <Trans>To</Trans>
+                        <Column width={200}>
+                            <Trans>From</Trans>
+                        </Column>
+                        <Column width={200}>
+                            <Trans>To</Trans>
                         </Column>
                         <Column width={140} className="text-right">
                             <Trans>Amount</Trans>
@@ -232,40 +236,16 @@ function CounterpartyEntryRow({
         <Row id={entry.id} className="cursor-pointer">
             <Cell className="text-xs text-fg-3 tabular-nums">{formatTableDate(entry.date)}</Cell>
             <Cell className="text-sm text-fg-1 truncate">{description}</Cell>
-            <Cell>
-                <FromToCell projection={projection} lineCount={entry.lines.length} />
+            <Cell className="text-xs text-fg-2">
+                <AccountLegs legs={projection.fromLegs} />
+            </Cell>
+            <Cell className="text-xs text-fg-2">
+                <AccountLegs legs={projection.toLegs} />
             </Cell>
             <Cell className="text-right">
                 <ProjectionAmount projection={projection} variant="row" />
             </Cell>
         </Row>
-    );
-}
-
-function FromToCell({
-    projection,
-    lineCount,
-}: {
-    projection: JournalProjection;
-    lineCount: number;
-}) {
-    if (!projection.isSimplifiable) {
-        return (
-            <span className="text-xs text-fg-3 truncate">
-                <Trans>
-                    Split (<Plural value={lineCount} one="# line" other="# lines" />)
-                </Trans>
-            </span>
-        );
-    }
-    const fromLabel = formatLegLabel(projection.fromLegs);
-    const toLabel = formatLegLabel(projection.toLegs);
-    return (
-        <span className="text-xs text-fg-2 truncate flex items-center gap-1">
-            <span className="truncate">{fromLabel}</span>
-            <Icon name="arrow-right" size={10} strokeWidth={2} className="text-fg-3 shrink-0" />
-            <span className="truncate">{toLabel}</span>
-        </span>
     );
 }
 

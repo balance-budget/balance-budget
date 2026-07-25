@@ -14,6 +14,7 @@ import {
 } from '../api/register';
 import { AccountAvatar } from '../components/AccountAvatar';
 import { AccountLabel } from '../components/AccountLabel';
+import { AccountLegs } from '../components/AccountLegs';
 import { AccountSelect } from '../components/AccountSelect';
 import { Amount } from '../components/Amount';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -589,8 +590,6 @@ function RegisterRowView({
     catalog: ReturnType<typeof useCurrencyCatalog>;
     showAccountColumn: boolean;
 }) {
-    const counter = row.counter[0];
-    const extra = row.counter.length - 1;
     const negative = row.amount.amount < 0;
     const heading = row.counterpartyName ?? row.entryDescription ?? '—';
     return (
@@ -614,17 +613,7 @@ function RegisterRowView({
                 </Cell>
             ) : null}
             <Cell className="text-xs text-fg-2">
-                {counter ? (
-                    <span className="flex items-center gap-1 min-w-0">
-                        <AccountLabel
-                            accountId={counter.accountId}
-                            fallbackName={counter.accountName}
-                        />
-                        {extra > 0 ? <span className="shrink-0 text-fg-3">+{extra}</span> : null}
-                    </span>
-                ) : (
-                    '—'
-                )}
+                <AccountLegs legs={row.counter} />
             </Cell>
             <Cell className="text-right">
                 <span

@@ -9,9 +9,10 @@
  *   - isTransfer = netWorthChange == 0.
  *   - grossMagnitude = Σ positive amounts (the debits).
  *   - isSimplifiable = exactly one distinct debit account or exactly one
- *     distinct credit account (1-to-N or N-to-1).
- *   - When simplifiable, fromLegs are the credit-side accounts and toLegs are
- *     the debit-side accounts, each deduplicated and ordered by accountName.
+ *     distinct credit account (1-to-N or N-to-1) — i.e. whether the entry can be
+ *     read as a single "from → to" arrow.
+ *   - fromLegs are the credit-side accounts and toLegs the debit-side accounts,
+ *     each deduplicated and ordered by accountName, always populated.
  *
  * The journal overview is the sole consumer; the SPA already has
  * AccountType cached via useAccounts(), so the projection runs at render time
@@ -79,8 +80,10 @@ export function projectJournalEntry(
     const isTransfer = netWorthChange === 0;
     const isSimplifiable = debitAccounts.size === 1 || creditAccounts.size === 1;
 
-    const fromLegs: ProjectionLeg[] = isSimplifiable ? sortLegs(creditAccounts) : [];
-    const toLegs: ProjectionLeg[] = isSimplifiable ? sortLegs(debitAccounts) : [];
+    // Populated whichever shape the entry has: an N-to-M entry has no honest single
+    // arrow, but two independent From/To columns can still name both sides (ADR-0039).
+    const fromLegs: ProjectionLeg[] = sortLegs(creditAccounts);
+    const toLegs: ProjectionLeg[] = sortLegs(debitAccounts);
 
     return {
         isTransfer,
@@ -123,16 +126,4 @@ export function projectEntry(
         amount: line.amount,
     }));
     return projectJournalEntry(projectionLines, currencyCode);
-}
-
-/**
- * Renders the From/To label for a simplifiable projection: "—" for an empty
- * leg, the single name when there's one account, or "{first} +{n}" when
- * multiple accounts collapse onto one side.
- */
-export function formatLegLabel(legs: readonly ProjectionLeg[]): string {
-    const first = legs[0];
-    if (!first) return '—';
-    if (legs.length === 1) return first.accountName;
-    return `${first.accountName} +${legs.length - 1}`;
 }

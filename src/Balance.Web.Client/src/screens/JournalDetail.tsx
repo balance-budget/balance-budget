@@ -15,6 +15,7 @@ import { useDetachBankTransaction, type BankTransactionDetail } from '../api/ban
 import { useCounterparties, useCreateCounterparty } from '../api/counterparties';
 import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import { AccountLabel } from '../components/AccountLabel';
+import { AccountLegs } from '../components/AccountLegs';
 import { AccountSelect } from '../components/AccountSelect';
 import { BankTransactionDetails } from '../components/BankTransactionDetails';
 import { ComboBox } from '../components/ui/ComboBox';
@@ -40,7 +41,7 @@ import { cx } from '../lib/cx';
 import { formatTableDate } from '../lib/dates';
 import { type AccountId, type CounterpartyId, type JournalEntryId } from '../lib/domain';
 import { handleActionError, handleFormError } from '../lib/formErrors';
-import { formatLegLabel, projectEntry, type JournalProjection } from '../lib/journalProjection';
+import { projectEntry, type JournalProjection } from '../lib/journalProjection';
 import { formatMoney } from '../lib/money';
 import {
     buildReplaceRequest,
@@ -264,14 +265,13 @@ function FromToSummary({
         );
     }
 
-    const from = formatLegLabel(projection.fromLegs);
-    const to = formatLegLabel(projection.toLegs);
-
+    // A sentence about the whole entry, not a table row, so it keeps the single arrow
+    // — and with it the Split fallback, which a two-column table no longer needs.
     return (
-        <span className="text-xs text-fg-2 mt-1 inline-flex items-center gap-1">
-            <span>{from}</span>
+        <span className="text-xs text-fg-2 mt-1 inline-flex items-center gap-1 min-w-0">
+            <AccountLegs legs={projection.fromLegs} glyph="dot" />
             <Icon name="arrow-right" size={10} strokeWidth={2} className="text-fg-3 shrink-0" />
-            <span>{to}</span>
+            <AccountLegs legs={projection.toLegs} glyph="dot" />
         </span>
     );
 }
