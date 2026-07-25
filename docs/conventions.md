@@ -147,7 +147,7 @@ Exceptions: `LoanScheduleTable` stays a native `<table>` (grouped `colSpan` head
 
 ## Page chrome (title, breadcrumb, actions)
 
-The **TopBar is the single authority for a page's title** — a page title is never printed twice. Section pages set it via the route's `staticData.title`; entity-detail pages set a *specific* title plus a breadcrumb at runtime with `usePageHeader({ title, breadcrumb })` (the register shows `Accounts › Checking`, not a generic `Account`). The `AppShell` reads that context and falls back to the static title when a screen sets none.
+The **TopBar is the single authority for a page's title** — a page title is never printed twice. Section pages set it via the route's `staticData.title`; entity-detail pages set a *specific* title plus a breadcrumb at runtime with `usePageHeader({ title, breadcrumb })` (the register shows `Accounts › Car › Insurance` above the title `Excess`, not a generic `Account`). Crumbs render through `ui/Breadcrumbs`, so the trailing separator and `aria-current` come from RAC; an account register's crumbs are its ancestors, each linking to its own register. The `AppShell` reads that context and falls back to the static title when a screen sets none.
 
 Consequences for a screen's own markup:
 
@@ -161,6 +161,18 @@ Consequences for a screen's own markup:
 Color encodes **AccountType**, not an ad-hoc per-chart palette. `ACCENT_BY_TYPE` in `lib/visualHints.ts` is the single source mapping each `AccountType` to a hue; avatars, the distribution donut's base, and the money-flow nodes all read from it (a chart that needs its own type colors imports it — it never re-declares the mapping). Within one type, slices/series are pulled apart by **shade** (`shadeOf`). When several accounts of the *same* type must read as distinct series (two asset trend lines), use the deterministic `chartColorFor(id)` hash palette instead.
 
 The underlying CSS custom properties are named by **hue** (`--color-chart-amber`, `--color-chart-blue`, …), never by spending category — "category" is a term the domain deliberately avoids (see [Language and spelling](#language-and-spelling) and `CONTEXT.md`).
+
+## Account display
+
+Every read-only account display renders through **`AccountLabel`** — never a hand-rolled name, and never the flat `accountName` a read model happens to carry (ADR-0039). Pass the `accountId` plus that flat name as `fallbackName`; the component resolves the **Account path** from the shared `useAccounts()` cache and falls back to the flat name while the cache is cold or when the id is unknown. Never build a local `Map` of accounts to do this by hand: `useAccountIndex()` in `lib/accountTree.ts` is the shared, memoized id→account index.
+
+- **Glyph**: `icon` (a 20px `xs` `AccountAvatar`) by default; `dot` where the icon would repeat down every row of a column; `none` where a larger avatar already leads the row.
+- **`showCode`** is off by default — on only where the column is wide enough to spend ~35px on it.
+- **Truncation** is handled by the component (ancestors shrink to `…` before the leaf does) with the untruncated path in `title=`. Don't add your own `truncate` to the cell.
+
+The two hierarchy/flow glyphs are not interchangeable: **`›`** (and `chevron-right`) means *descend a level* — an account path, a page breadcrumb, a drill-down, a disclosure twisty. **`→`** (`arrow-right`) means *money moved from here to there*. A chevron between two account names reads as "child of" and must never stand for a from→to.
+
+Selection UI is exempt from `AccountLabel` in one respect only: `AccountSelect` renders its options with it (`showCode`, `glyph="none"`) but still needs plain `label`/`searchText` strings alongside, since RAC matches typing against text, not nodes. The chart-of-accounts trees (sidebar, `Accounts`) show no path at all — indentation *is* the path there.
 
 ## Date and number display
 
