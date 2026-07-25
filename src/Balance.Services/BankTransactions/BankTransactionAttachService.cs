@@ -184,13 +184,7 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
         if (candidates.Count != 1)
             return null;
 
-        var match = candidates[0];
-        return new AttachHintOutput(
-            match.Id,
-            match.Date,
-            match.Description,
-            match.OtherAccountName
-        );
+        return candidates[0];
     }
 
     public async Task<Result<IReadOnlyList<AttachCandidateOutput>>> ListCandidatesAsync(
@@ -475,7 +469,13 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
         );
         return matches
             .DistinctBy(m => m.Id)
-            .Select(m => new AttachHintOutput(m.Id, m.Date, m.Description, m.OtherAccountName))
+            .Select(m => new AttachHintOutput(
+                m.Id,
+                m.Date,
+                m.Description,
+                m.OtherAccountId,
+                m.OtherAccountName
+            ))
             .ToList();
     }
 
@@ -517,6 +517,7 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
                 m.Id,
                 m.Date,
                 m.Description,
+                m.OtherAccountId,
                 m.OtherAccountName,
                 m.CounterAmount
             ))
@@ -644,6 +645,7 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
                     candidate.Id,
                     candidate.Date,
                     candidate.Description,
+                    counterLine.AccountId,
                     otherAccount.Name,
                     counterLine.Amount
                 )
@@ -748,6 +750,7 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
                     candidate.Id,
                     candidate.Date,
                     candidate.Description,
+                    counterLine.AccountId,
                     accounts.TryGetValue(counterLine.AccountId, out var ca)
                         ? ca.Name
                         : string.Empty,
@@ -766,6 +769,7 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
         JournalEntryId Id,
         DateOnly Date,
         string? Description,
+        AccountId OtherAccountId,
         string OtherAccountName,
         long CounterAmount
     );

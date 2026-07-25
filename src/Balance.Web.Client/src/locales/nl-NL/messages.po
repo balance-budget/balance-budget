@@ -383,8 +383,11 @@ msgid "Attach"
 msgstr "Koppelen"
 
 #. placeholder {0}: hint.otherAccountName
-msgid "Attach to {0}"
-msgstr "Koppelen aan {0}"
+#~ msgid "Attach to {0}"
+#~ msgstr "Koppelen aan {0}"
+
+msgid "Attach to {hintPath}"
+msgstr "Koppelen aan {hintPath}"
 
 #. placeholder {0}: hint.date
 #. placeholder {1}: hint.otherAccountName
@@ -393,12 +396,19 @@ msgstr "Koppelen aan journaalpost op {0} · {1}"
 
 #. placeholder {0}: hint.date
 #. placeholder {1}: hint.otherAccountName
-msgid "Attach to journal entry on {0} ({1})"
-msgstr "Koppelen aan journaalpost op {0} ({1})"
+#~ msgid "Attach to journal entry on {0} ({1})"
+#~ msgstr "Koppelen aan journaalpost op {0} ({1})"
+
+#. placeholder {0}: hint.date
+msgid "Attach to journal entry on {0} ({hintPath})"
+msgstr "Koppelen aan journaalpost op {0} ({hintPath})"
 
 #. placeholder {0}: hint.otherAccountName
-msgid "Attached to {0}."
-msgstr "Gekoppeld aan {0}."
+#~ msgid "Attached to {0}."
+#~ msgstr "Gekoppeld aan {0}."
+
+msgid "Attached to {hintPath}."
+msgstr "Gekoppeld aan {hintPath}."
 
 msgid "Attached."
 msgstr "Gekoppeld."
@@ -1499,9 +1509,12 @@ msgstr "Taal volgen"
 msgid "Matched"
 msgstr "Gematcht"
 
+msgid "Matches journal entry ·"
+msgstr "Komt overeen met journaalpost ·"
+
 #. placeholder {0}: hint.otherAccountName
-msgid "Matches journal entry · {0}"
-msgstr "Komt overeen met journaalpost · {0}"
+#~ msgid "Matches journal entry · {0}"
+#~ msgstr "Komt overeen met journaalpost · {0}"
 
 msgid "Medium-term · Reserves"
 msgstr "Middellange termijn · Reserves"

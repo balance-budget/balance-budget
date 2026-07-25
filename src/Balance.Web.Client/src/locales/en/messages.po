@@ -383,8 +383,11 @@ msgid "Attach"
 msgstr "Attach"
 
 #. placeholder {0}: hint.otherAccountName
-msgid "Attach to {0}"
-msgstr "Attach to {0}"
+#~ msgid "Attach to {0}"
+#~ msgstr "Attach to {0}"
+
+msgid "Attach to {hintPath}"
+msgstr "Attach to {hintPath}"
 
 #. placeholder {0}: hint.date
 #. placeholder {1}: hint.otherAccountName
@@ -393,12 +396,19 @@ msgstr "Attach to journal entry on {0} · {1}"
 
 #. placeholder {0}: hint.date
 #. placeholder {1}: hint.otherAccountName
-msgid "Attach to journal entry on {0} ({1})"
-msgstr "Attach to journal entry on {0} ({1})"
+#~ msgid "Attach to journal entry on {0} ({1})"
+#~ msgstr "Attach to journal entry on {0} ({1})"
+
+#. placeholder {0}: hint.date
+msgid "Attach to journal entry on {0} ({hintPath})"
+msgstr "Attach to journal entry on {0} ({hintPath})"
 
 #. placeholder {0}: hint.otherAccountName
-msgid "Attached to {0}."
-msgstr "Attached to {0}."
+#~ msgid "Attached to {0}."
+#~ msgstr "Attached to {0}."
+
+msgid "Attached to {hintPath}."
+msgstr "Attached to {hintPath}."
 
 msgid "Attached."
 msgstr "Attached."
@@ -1499,9 +1509,12 @@ msgstr "Match language"
 msgid "Matched"
 msgstr "Matched"
 
+msgid "Matches journal entry ·"
+msgstr "Matches journal entry ·"
+
 #. placeholder {0}: hint.otherAccountName
-msgid "Matches journal entry · {0}"
-msgstr "Matches journal entry · {0}"
+#~ msgid "Matches journal entry · {0}"
+#~ msgstr "Matches journal entry · {0}"
 
 msgid "Medium-term · Reserves"
 msgstr "Medium-term · Reserves"

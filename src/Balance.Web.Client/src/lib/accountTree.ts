@@ -128,6 +128,13 @@ export function accountPathSegments(byId: AccountIndex, id: AccountId): string[]
     return accountChain(byId, id).map(a => a.name);
 }
 
+/** The path as plain text, or `fallback` when the account is unknown — for the places
+ *  that need a string rather than an `AccountLabel` (an aria-label, a toast, a filter). */
+export function accountPathText(byId: AccountIndex, id: AccountId, fallback: string): string {
+    const segments = accountPathSegments(byId, id);
+    return segments.length > 0 ? segments.join(ACCOUNT_PATH_SEPARATOR) : fallback;
+}
+
 /**
  * Plain "5110  Car › Tax" label (code + full path) for read-only account
  * displays — e.g. a frozen journal line that shows where it posted without an

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Form } from 'react-aria-components';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useAccounts, type Account } from '../api/accounts';
+import { useAccountIndex, useAccounts, type Account } from '../api/accounts';
 import { useBankAccounts, type BankAccount } from '../api/bankAccounts';
 import {
     useAttachBankTransaction,
@@ -20,6 +20,7 @@ import {
 } from '../api/counterparties';
 import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
 import { useLoanPaymentProposal, type LoanProposal } from '../api/loans';
+import { AccountLabel } from '../components/AccountLabel';
 import { AccountSelect } from '../components/AccountSelect';
 import { BankTransactionDetails } from '../components/BankTransactionDetails';
 import { Checkbox } from '../components/ui/Checkbox';
@@ -38,6 +39,7 @@ import { NumberField } from '../components/ui/NumberField';
 import { SearchField } from '../components/ui/SearchField';
 import { TextField } from '../components/ui/TextField';
 import { useToast } from '../components/ui/Toast';
+import { accountPathText } from '../lib/accountTree';
 import { todayIso } from '../lib/dates';
 import {
     type AccountId,
@@ -898,6 +900,7 @@ function JePickerModal({
     const candidates = useAttachCandidates(bt.id, days);
     const [query, setQuery] = useState('');
 
+    const byId = useAccountIndex();
     const filtered = useMemo(() => {
         const data = candidates.data ?? [];
         const q = query.trim().toLowerCase();
@@ -905,10 +908,12 @@ function JePickerModal({
         return data.filter(
             c =>
                 (c.description ?? '').toLowerCase().includes(q) ||
-                c.otherAccountName.toLowerCase().includes(q) ||
+                accountPathText(byId, c.otherAccountId, c.otherAccountName)
+                    .toLowerCase()
+                    .includes(q) ||
                 c.date.includes(q),
         );
-    }, [candidates.data, query]);
+    }, [byId, candidates.data, query]);
 
     return (
         <Modal
@@ -970,8 +975,13 @@ function JePickerModal({
                                     <span className="text-sm text-fg-1 truncate">
                                         {candidate.description ?? t`(no description)`}
                                     </span>
-                                    <span className="text-xs text-fg-3 truncate">
-                                        {candidate.date} · {candidate.otherAccountName}
+                                    <span className="text-xs text-fg-3 flex items-center gap-1 min-w-0">
+                                        <span className="shrink-0">{candidate.date} ·</span>
+                                        <AccountLabel
+                                            accountId={candidate.otherAccountId}
+                                            fallbackName={candidate.otherAccountName}
+                                            glyph="none"
+                                        />
                                     </span>
                                 </span>
                                 <span className="text-xs font-mono text-fg-2 tabular-nums shrink-0">
