@@ -3,7 +3,7 @@ import { plural } from '@lingui/core/macro';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { type Selection } from 'react-aria-components';
-import { useAccount, useAccounts, useDeleteAccount, type Account } from '../api/accounts';
+import { useAccount, useAccountIndex, useDeleteAccount, type Account } from '../api/accounts';
 import { useCurrencyCatalog } from '../api/currencies';
 import { useReassignJournalLines } from '../api/journalLines';
 import {
@@ -479,14 +479,13 @@ function ReassignBar({
     onDone: () => void;
 }) {
     const { t } = useLingui();
-    const accounts = useAccounts();
     const reassign = useReassignJournalLines();
     const toast = useToast();
     const [target, setTarget] = useState<AccountId | null>(null);
     const [confirming, setConfirming] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const byId = useMemo(() => new Map((accounts.data ?? []).map(a => [a.id, a])), [accounts.data]);
+    const byId = useAccountIndex();
     const targetName = target !== null ? (accountPathLabel(byId, target) ?? '') : '';
     const count = selectedIds.length;
 

@@ -3,7 +3,7 @@ import { useLingui } from '@lingui/react/macro';
 import { type MessageDescriptor } from '@lingui/core';
 import { Collection, type Key, type Selection } from 'react-aria-components';
 import { type Account } from '../api/accounts';
-import { buildChildrenMap, groupRootsByType } from '../lib/accountTree';
+import { accountIndexFor, buildChildrenMap, groupRootsByType } from '../lib/accountTree';
 import { type AccountId, type AccountType } from '../lib/domain';
 import { Tree, TreeItem, TreeItemContent } from './ui/Tree';
 
@@ -59,7 +59,7 @@ export function AccountTreeSections({
     const { i18n } = useLingui();
     const childrenByParent = buildChildrenMap(accounts);
     const rootsByType = groupRootsByType(accounts);
-    const byId = new Map(accounts.map(a => [a.id, a]));
+    const byId = accountIndexFor(accounts);
 
     function renderItem(account: Account): ReactNode {
         const children = childrenByParent.get(account.id) ?? [];
