@@ -13,6 +13,7 @@ import {
     type LoanPart,
     type LoanRatePeriod,
 } from '../api/loans';
+import { AccountLabel } from '../components/AccountLabel';
 import { Amount } from '../components/Amount';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ErrorState } from '../components/ErrorState';
@@ -168,8 +169,13 @@ function LoanDetailLoaded({ loan }: { loan: LoanDetailModel }) {
                             <Icon name="landmark" size={13} strokeWidth={2} />
                             <Trans>Construction deposit</Trans>
                         </span>
-                        <span className="text-fg-3">
-                            {loan.constructionDeposit.accountName} ·{' '}
+                        <span className="text-fg-3 inline-flex items-center gap-1 min-w-0">
+                            <AccountLabel
+                                accountId={loan.constructionDeposit.accountId}
+                                fallbackName={loan.constructionDeposit.accountName}
+                                glyph="dot"
+                            />{' '}
+                            ·{' '}
                             <Amount
                                 minor={loan.constructionDeposit.balance}
                                 currencyCode={loan.currencyCode}
@@ -451,7 +457,13 @@ function PartsTable({
                                 <div className="text-sm font-medium text-fg-1 truncate">
                                     {part.label}
                                 </div>
-                                <div className="text-xs text-fg-3 truncate">{part.accountName}</div>
+                                <div className="text-xs text-fg-3">
+                                    <AccountLabel
+                                        accountId={part.accountId}
+                                        fallbackName={part.accountName}
+                                        glyph="dot"
+                                    />
+                                </div>
                             </div>
                             <PartStat label={t`Type`} value={partTypeLabel(part.repaymentType)} />
                             <PartStat

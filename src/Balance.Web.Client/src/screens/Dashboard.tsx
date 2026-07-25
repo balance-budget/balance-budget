@@ -15,6 +15,7 @@ import {
     type TrendRange,
 } from '../api/dashboard';
 import { AccountAvatar } from '../components/AccountAvatar';
+import { AccountLabel } from '../components/AccountLabel';
 import { Amount } from '../components/Amount';
 import { ErrorState } from '../components/ErrorState';
 import { MtdDeltaChip } from '../components/MtdDeltaChip';
@@ -35,7 +36,9 @@ function AccountRow({ account }: { account: Account }) {
         <div className="py-3 first:pt-0 last:pb-0 flex items-center gap-3 border-b border-border-soft last:border-b-0">
             <AccountAvatar account={account} size="md" />
             <div className="flex flex-col gap-[2px] flex-1 min-w-0">
-                <span className="text-sm font-medium text-fg-1 truncate">{account.name}</span>
+                <span className="text-sm font-medium text-fg-1">
+                    <AccountLabel accountId={account.id} fallbackName={account.name} glyph="none" />
+                </span>
                 <span className="text-xs text-fg-3 truncate">
                     {account.type}
                     {identifier ? ` · ${identifier}` : ''}

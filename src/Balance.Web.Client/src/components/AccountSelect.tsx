@@ -4,6 +4,7 @@ import {
     ACCOUNT_PATH_SEPARATOR,
     accountPathSegments,
     descendantAndSelfIds,
+    type AccountIndex,
 } from '../lib/accountTree';
 import {
     ACCOUNT_TYPE_LABEL,
@@ -11,6 +12,7 @@ import {
     type AccountId,
     type AccountType,
 } from '../lib/domain';
+import { AccountLabel } from './AccountLabel';
 import { ComboBox } from './ui/ComboBox';
 import type { ComboBoxItem } from './ui/combobox.state';
 
@@ -64,31 +66,19 @@ export type AccountSelectProps = {
     name?: string;
 };
 
-function toItem(account: Account, byId: ReadonlyMap<AccountId, Account>): ComboBoxItem<AccountId> {
+function toItem(account: Account, byId: AccountIndex): ComboBoxItem<AccountId> {
     const segments = accountPathSegments(byId, account.id);
-    const leaf = segments[segments.length - 1];
-    const ancestors = segments.slice(0, -1);
-    const path = segments.join(ACCOUNT_PATH_SEPARATOR);
     return {
         key: account.id,
         value: account.id,
         group: account.type,
         // Collapsed/selected display.
-        label: `${account.code}  ${path}`,
+        label: `${account.code}  ${segments.join(ACCOUNT_PATH_SEPARATOR)}`,
         // Space-joined so "car t" matches "Car › Tax" and "5110" jumps straight to it.
         searchText: `${account.code} ${segments.join(' ')}`,
-        render: (
-            <>
-                <span className="text-fg-3 tabular-nums mr-2">{account.code}</span>
-                {ancestors.length > 0 && (
-                    <span className="text-fg-3">
-                        {ancestors.join(ACCOUNT_PATH_SEPARATOR)}
-                        {ACCOUNT_PATH_SEPARATOR}
-                    </span>
-                )}
-                <span>{leaf}</span>
-            </>
-        ),
+        // A node for the open list, but RAC still matches typing against the strings
+        // above — hence both. No glyph: an icon per option would reshape the picker.
+        render: <AccountLabel accountId={account.id} glyph="none" showCode />,
     };
 }
 

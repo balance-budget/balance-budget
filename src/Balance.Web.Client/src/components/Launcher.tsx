@@ -14,8 +14,11 @@ import {
     SearchField,
 } from 'react-aria-components';
 import { useNavigate } from '@tanstack/react-router';
+import { useAccountIndex } from '../api/accounts';
 import { useSearch } from '../api/search';
+import { accountPathText } from '../lib/accountTree';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
+import { AccountLabel } from './AccountLabel';
 import { Icon, type IconName } from './Icon';
 
 type LauncherProps = {
@@ -35,6 +38,7 @@ export function Launcher({ open, onClose }: LauncherProps) {
     const debounced = useDebouncedValue(query, 200);
     const navigate = useNavigate();
     const search = useSearch(debounced);
+    const byId = useAccountIndex();
 
     const data = search.data ?? null;
     const isPending = search.isPending && search.fetchStatus !== 'idle';
@@ -117,9 +121,13 @@ export function Launcher({ open, onClose }: LauncherProps) {
                                         <ResultItem
                                             key={hit.id}
                                             id={`account-${hit.id}`}
-                                            textValue={hit.name}
-                                            icon="wallet"
-                                            primary={hit.name}
+                                            textValue={accountPathText(byId, hit.id, hit.name)}
+                                            primary={
+                                                <AccountLabel
+                                                    accountId={hit.id}
+                                                    fallbackName={hit.name}
+                                                />
+                                            }
                                             secondary={hit.accountType}
                                             onAction={() => {
                                                 close();
@@ -296,8 +304,9 @@ function ResultItem({
     secondary,
     ...props
 }: MenuItemProps & {
-    icon: IconName;
-    primary: string;
+    /** Omitted when `primary` brings its own glyph (an account's avatar). */
+    icon?: IconName;
+    primary: React.ReactNode;
     secondary?: string | null;
 }) {
     return (
@@ -308,7 +317,9 @@ function ResultItem({
                 'data-[focused]:bg-surface-2 data-[hovered]:bg-surface-2'
             }
         >
-            <Icon name={icon} size={14} strokeWidth={2} className="text-fg-3 shrink-0" />
+            {icon ? (
+                <Icon name={icon} size={14} strokeWidth={2} className="text-fg-3 shrink-0" />
+            ) : null}
             <span className="flex-1 min-w-0 truncate text-sm text-fg-1">{primary}</span>
             {secondary ? (
                 <span className="text-xs text-fg-3 tabular-nums truncate max-w-[40%]">

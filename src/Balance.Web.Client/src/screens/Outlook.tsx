@@ -13,6 +13,7 @@ import {
 } from '../api/outlook';
 import { useAccountIndex } from '../api/accounts';
 import { useCurrencyCatalog } from '../api/currencies';
+import { AccountLabel } from '../components/AccountLabel';
 import { Amount } from '../components/Amount';
 import { Empty } from '../components/Empty';
 import { ErrorState } from '../components/ErrorState';
@@ -23,7 +24,7 @@ import { Button } from '../components/ui/Button';
 import { Checkbox } from '../components/ui/Checkbox';
 import { ToggleButton, ToggleButtonGroup } from '../components/ui/ToggleButtonGroup';
 import { useToast } from '../components/ui/Toast';
-import { accountPathLabel, accountPathText } from '../lib/accountTree';
+import { accountPathText } from '../lib/accountTree';
 import { cx } from '../lib/cx';
 import { type AccountId, type JournalEntryTemplateId } from '../lib/domain';
 import { formatCalendarDate } from '../i18n/format';
@@ -489,7 +490,6 @@ function RecurringPanel({
     const templates = useOutlookTemplates();
     const remove = useDeleteTemplate();
     const toast = useToast();
-    const byId = useAccountIndex();
 
     const visible = (templates.data ?? []).filter(tpl => tpl.accountId === accountId);
 
@@ -539,9 +539,6 @@ function RecurringPanel({
                         <TemplateRow
                             key={template.id}
                             template={template}
-                            accountLabel={
-                                accountPathLabel(byId, template.accountId) ?? template.accountName
-                            }
                             disabled={disabledIds.has(template.id)}
                             onToggleDisabled={() => {
                                 onToggleDisabled(template.id);
@@ -560,14 +557,12 @@ function RecurringPanel({
 
 function TemplateRow({
     template,
-    accountLabel,
     disabled,
     onToggleDisabled,
     onEdit,
     onDelete,
 }: {
     template: JournalEntryTemplate;
-    accountLabel: string;
     disabled: boolean;
     onToggleDisabled: () => void;
     onEdit: () => void;
@@ -586,13 +581,17 @@ function TemplateRow({
                     <span className="text-sm font-medium text-fg-1 truncate">{template.name}</span>
                     <span className="text-xs text-fg-3 shrink-0">{template.cadence}</span>
                 </div>
-                <div className="text-xs text-fg-3 truncate">
-                    {accountLabel}
+                <div className="text-xs text-fg-3 flex items-center gap-1 min-w-0">
+                    <AccountLabel
+                        accountId={template.accountId}
+                        fallbackName={template.accountName}
+                        glyph="dot"
+                    />
                     {template.nextDueDate && (
-                        <>
+                        <span className="shrink-0">
                             {' · '}
                             <Trans>next {formatDueDate(template.nextDueDate)}</Trans>
-                        </>
+                        </span>
                     )}
                 </div>
             </div>
@@ -630,7 +629,6 @@ function CandidatesPanel({
 }) {
     const { t } = useLingui();
     const candidates = useTemplateCandidates();
-    const byId = useAccountIndex();
 
     const visible = (candidates.data ?? []).filter(c => c.accountId === accountId);
 
@@ -667,11 +665,16 @@ function CandidatesPanel({
                                 <div className="text-sm font-medium text-fg-1 truncate">
                                     {candidate.suggestedName}
                                 </div>
-                                <div className="text-xs text-fg-3 truncate">
-                                    {accountPathLabel(byId, candidate.accountId) ??
-                                        candidate.accountName}{' '}
-                                    · {candidate.cadence} ·{' '}
-                                    <Trans>{candidate.occurrenceCount} seen</Trans>
+                                <div className="text-xs text-fg-3 flex items-center gap-1 min-w-0">
+                                    <AccountLabel
+                                        accountId={candidate.accountId}
+                                        fallbackName={candidate.accountName}
+                                        glyph="dot"
+                                    />
+                                    <span className="shrink-0">
+                                        · {candidate.cadence} ·{' '}
+                                        <Trans>{candidate.occurrenceCount} seen</Trans>
+                                    </span>
                                 </div>
                             </div>
                             <Amount
