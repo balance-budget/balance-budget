@@ -35,8 +35,11 @@ internal sealed class BankTransactionImportService : IBankTransactionImportServi
     {
         ArgumentNullException.ThrowIfNull(stream);
 
+        // Include the Funding account: a Card extractor resolves the counterparty on card/account
+        // transfer rows from it, since the statement names no counterparty there (ADR 0038).
         var bankAccount = await _dbContext
             .BankAccounts.AsNoTracking()
+            .Include(b => b.FundingBankAccount)
             .FirstOrDefaultAsync(b => b.Id == bankAccountId, cancellationToken);
         if (bankAccount is null)
             return new NotFoundError("BankAccount", bankAccountId.Value.ToString());
