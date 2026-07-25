@@ -12,9 +12,9 @@ import {
     type BankAccount,
     type BankAccountType,
 } from '../api/bankAccounts';
-import { useAccounts } from '../api/accounts';
 import { useCounterparties } from '../api/counterparties';
 import { useCurrencies } from '../api/currencies';
+import { AccountSelect } from '../components/AccountSelect';
 import { FormErrorBanner } from '../components/FormErrorBanner';
 import { Button } from '../components/ui/Button';
 import { Modal, ModalFooter } from '../components/ui/Modal';
@@ -22,7 +22,7 @@ import { Radio, RadioGroup } from '../components/ui/RadioGroup';
 import { Select, SelectItem } from '../components/ui/Select';
 import { TextField } from '../components/ui/TextField';
 import { useToast } from '../components/ui/Toast';
-import { asAccountId, asCounterpartyId, isLedgerAccount } from '../lib/domain';
+import { asAccountId, asCounterpartyId } from '../lib/domain';
 import type { AccountId, CounterpartyId } from '../lib/domain';
 import { handleFormError } from '../lib/formErrors';
 
@@ -95,7 +95,6 @@ export function BankAccountFormModal(props: Props) {
     const create = useCreateBankAccount();
     const update = useUpdateBankAccount();
     const toast = useToast();
-    const accounts = useAccounts();
     const bankAccounts = useBankAccounts();
     const counterparties = useCounterparties();
     const currencies = useCurrencies();
@@ -182,7 +181,6 @@ export function BankAccountFormModal(props: Props) {
         }
     }
 
-    const ledgerAccounts = (accounts.data ?? []).filter(isLedgerAccount);
     const counterpartyList = counterparties.data ?? [];
     const currencyList = Array.from(currencies.data?.values() ?? []);
     const importerOptions = (importers.data ?? []).filter(i => i.supportedType === form.type);
@@ -251,23 +249,18 @@ export function BankAccountFormModal(props: Props) {
 
                 <div className="mb-4">
                     {form.ownerKind === 'account' ? (
-                        <Select
-                            aria-label={t`Owner account`}
+                        <AccountSelect
+                            ariaLabel={t`Owner account`}
                             name="AccountId"
-                            value={form.accountId === '' ? null : form.accountId}
-                            onChange={key => {
-                                update_({ accountId: key === null ? '' : String(key) });
+                            value={form.accountId === '' ? null : asAccountId(form.accountId)}
+                            onChange={id => {
+                                update_({ accountId: id });
                             }}
-                            isDisabled={ownerLocked}
-                            isRequired
+                            ledgerOnly
+                            disabled={ownerLocked}
+                            required
                             placeholder={t`Select an account…`}
-                        >
-                            {ledgerAccounts.map(a => (
-                                <SelectItem key={a.id} id={a.id}>
-                                    {a.name} ({a.type})
-                                </SelectItem>
-                            ))}
-                        </Select>
+                        />
                     ) : (
                         <Select
                             aria-label={t`Owner counterparty`}
