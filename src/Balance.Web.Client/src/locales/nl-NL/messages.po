@@ -2227,8 +2227,8 @@ msgstr "Uitgaven"
 msgid "Split ({0} lines)"
 msgstr "Splitsen ({0} regels)"
 
-msgid "Split ({lineCount, plural, one {# line} other {# lines}})"
-msgstr "Splitsen ({lineCount, plural, one {# regel} other {# regels}})"
+#~ msgid "Split ({lineCount, plural, one {# line} other {# lines}})"
+#~ msgstr "Splitsen ({lineCount, plural, one {# regel} other {# regels}})"
 
 msgid "Stage these rows for dismissal. Save-all to commit; until then you can review or reset per row."
 msgstr "Zet deze rijen klaar om te negeren. Sla alles op om te bevestigen; tot dan kun je per rij beoordelen of resetten."

@@ -2227,8 +2227,8 @@ msgstr "Spending"
 msgid "Split ({0} lines)"
 msgstr "Split ({0} lines)"
 
-msgid "Split ({lineCount, plural, one {# line} other {# lines}})"
-msgstr "Split ({lineCount, plural, one {# line} other {# lines}})"
+#~ msgid "Split ({lineCount, plural, one {# line} other {# lines}})"
+#~ msgstr "Split ({lineCount, plural, one {# line} other {# lines}})"
 
 msgid "Stage these rows for dismissal. Save-all to commit; until then you can review or reset per row."
 msgstr "Stage these rows for dismissal. Save-all to commit; until then you can review or reset per row."

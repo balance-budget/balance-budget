@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Plural, Trans, useLingui } from '@lingui/react/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useAccounts, type Account } from '../api/accounts';
 import { useJournalEntries, type JournalEntry } from '../api/journalEntries';
@@ -8,6 +8,7 @@ import { DateRangePicker } from '../components/ui/DateRangePicker';
 import { SearchField } from '../components/ui/SearchField';
 import { Cell, Column, Row, Table, TableBody, TableHeader } from '../components/ui/Table';
 import { ErrorState } from '../components/ErrorState';
+import { AccountLegs } from '../components/AccountLegs';
 import { Icon } from '../components/Icon';
 import { Pagination } from '../components/Pagination';
 import { Panel, SectionHead } from '../components/Panel';
@@ -15,7 +16,7 @@ import { ProjectionAmount } from '../components/ProjectionAmount';
 import { Skeleton } from '../components/Skeleton';
 import { formatTableDate } from '../lib/dates';
 import { type AccountId } from '../lib/domain';
-import { formatLegLabel, projectEntry, type JournalProjection } from '../lib/journalProjection';
+import { projectEntry } from '../lib/journalProjection';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
 
 const PAGE_SIZE = 50;
@@ -240,8 +241,11 @@ function JournalTable({
                 <Column>
                     <Trans>Counterparty</Trans>
                 </Column>
-                <Column width={220}>
-                    <Trans>From</Trans> → <Trans>To</Trans>
+                <Column width={200}>
+                    <Trans>From</Trans>
+                </Column>
+                <Column width={200}>
+                    <Trans>To</Trans>
                 </Column>
                 <Column width={140} className="text-right">
                     <Trans>Amount</Trans>
@@ -274,41 +278,15 @@ function JournalRow({
             <Cell>
                 <span className="text-sm text-fg-1 truncate block">{heading}</span>
             </Cell>
-            <Cell>
-                <FromToCell projection={projection} lineCount={entry.lines.length} />
+            <Cell className="text-xs text-fg-2">
+                <AccountLegs legs={projection.fromLegs} />
+            </Cell>
+            <Cell className="text-xs text-fg-2">
+                <AccountLegs legs={projection.toLegs} />
             </Cell>
             <Cell className="text-right">
                 <ProjectionAmount projection={projection} variant="row" />
             </Cell>
         </Row>
-    );
-}
-
-function FromToCell({
-    projection,
-    lineCount,
-}: {
-    projection: JournalProjection;
-    lineCount: number;
-}) {
-    if (!projection.isSimplifiable) {
-        return (
-            <span className="text-xs text-fg-3 truncate">
-                <Trans>
-                    Split (<Plural value={lineCount} one="# line" other="# lines" />)
-                </Trans>
-            </span>
-        );
-    }
-
-    const fromLabel = formatLegLabel(projection.fromLegs);
-    const toLabel = formatLegLabel(projection.toLegs);
-
-    return (
-        <span className="text-xs text-fg-2 truncate flex items-center gap-1">
-            <span className="truncate">{fromLabel}</span>
-            <Icon name="arrow-right" size={10} strokeWidth={2} className="text-fg-3 shrink-0" />
-            <span className="truncate">{toLabel}</span>
-        </span>
     );
 }

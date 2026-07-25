@@ -163,7 +163,7 @@ describe('projectJournalEntry', () => {
         expect(result.toLegs.map(l => l.accountId)).toEqual([Mortgage]);
     });
 
-    it('Multi_source_multi_destination_is_not_simplifiable', () => {
+    it('Multi_source_multi_destination_is_not_simplifiable_but_still_names_both_sides', () => {
         const result = projectJournalEntry(
             [
                 line(Salary, 'Income', -300000),
@@ -177,9 +177,10 @@ describe('projectJournalEntry', () => {
         expect(result.netWorthChange.amount).toBe(250000);
         expect(result.isTransfer).toBe(false);
         expect(result.grossMagnitude.amount).toBe(350000);
+        // No honest single arrow, but the From/To columns still list each side.
         expect(result.isSimplifiable).toBe(false);
-        expect(result.fromLegs).toHaveLength(0);
-        expect(result.toLegs).toHaveLength(0);
+        expect(result.fromLegs.map(l => l.accountId)).toEqual([Bonus, Salary]);
+        expect(result.toLegs.map(l => l.accountId)).toEqual([Checking, TaxWithheld]);
     });
 
     it('Gross_magnitude_equals_sum_of_debits', () => {

@@ -2227,8 +2227,8 @@ msgstr "支出"
 msgid "Split ({0} lines)"
 msgstr "拆分（{0} 列）"
 
-msgid "Split ({lineCount, plural, one {# line} other {# lines}})"
-msgstr "拆分（{lineCount, plural, other {# 列}}）"
+#~ msgid "Split ({lineCount, plural, one {# line} other {# lines}})"
+#~ msgstr "拆分（{lineCount, plural, other {# 列}}）"
 
 msgid "Stage these rows for dismissal. Save-all to commit; until then you can review or reset per row."
 msgstr "將這些列暫存以待忽略。全部儲存即可確認；在此之前可逐列檢視或重設。"
