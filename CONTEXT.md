@@ -20,6 +20,10 @@ _Avoid_: "account number" (collides with **BankAccount.AccountNumber**), "id" (t
 The tree of **Accounts** formed by the nullable `ParentAccountId` self-reference, to arbitrary depth. Leaves are **Postable**; interior nodes are non-postable placeholders whose balance is the recursive signed sum of their descendant leaves. Every Account in a subtree shares one **AccountType** and one **Currency** (the homogeneity rule; the currency half relaxes when multi-currency lands). Re-parenting is allowed and re-rolls balances automatically (they are derived), guarded against cycles — an Account may not become its own ancestor. A parent with children cannot be deleted (FK `RESTRICT`); its children must be re-parented or removed first.
 _Avoid_: category tree, folder, group hierarchy (those imply the banned **category**/bucket framing — this is a ledger account tree).
 
+**Account path**:
+The chain of **Account** names from a root down to a given Account, rendered `Car › Insurance › Excess` (root first, leaf last, `›` between). A root Account's path is just its own name. The path is what makes a nested leaf unambiguous — `Tax` under `Car` and `Tax` under `Home` are otherwise indistinguishable — so every read-only account display shows the path, not the bare **Name** (ADR-0039). *Derived, never stored*: it is computed from `ParentAccountId` on demand, so a rename or re-parent is reflected everywhere immediately and no denormalized copy can go stale. The **Code** is a separate, optional prefix to a rendered path (`5131  Car › Insurance › Excess`), shown where there is room for it.
+_Avoid_: trail, breadcrumb (breadcrumb is the *page*-hierarchy chrome in the TopBar), full name, hierarchy string.
+
 **AccountType**:
 The accounting classification of an **Account**, one of the five standard types: **Asset**, **Liability**, **Equity**, **Income**, **Expense**. Determines normal balance (debit-normal for Asset/Expense; credit-normal for Liability/Equity/Income) and how the account contributes to reports.
 
