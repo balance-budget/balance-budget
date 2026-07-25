@@ -107,6 +107,7 @@ describe('resolveOpenContext', () => {
             iban: args.iban,
             accountNumber: null,
             cardIdentifier: null,
+            fundingBankAccountId: null,
             bic: null,
             bankName: null,
             accountHolderName: null,

@@ -1210,6 +1210,9 @@ msgstr "Bevroren: regel kan niet worden verwijderd"
 msgid "Frozen: line is Cleared or Reconciled"
 msgstr "Bevroren: regel is verwerkt of afgestemd"
 
+msgid "Funding account"
+msgstr "Tegenrekening"
+
 msgid "Future"
 msgstr "Toekomst"
 
@@ -2264,6 +2267,9 @@ msgstr "Doel"
 #. placeholder {2}: deletingRate.part.label
 msgid "The {0}% rate effective {1} is removed from {2}. Projections recompute; posted entries are untouched."
 msgstr "De rente van {0}%, ingaand {1}, wordt verwijderd uit {2}. Prognoses worden herberekend; geboekte posten blijven ongewijzigd."
+
+msgid "The account this card is paid off from."
+msgstr "De rekening waarvan deze kaart wordt afgelost."
 
 msgid "The code can't be changed after creation."
 msgstr "De code kan na het aanmaken niet meer worden gewijzigd."
