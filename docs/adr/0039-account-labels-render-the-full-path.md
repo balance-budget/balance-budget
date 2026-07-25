@@ -47,10 +47,13 @@ added rather than accepting a label that cannot resolve.
   `dot` (a 6px circle in the AccountType accent), or `none`. The icon carries the
   account's identity, since it is the one visual the user chooses per account; the color
   never is — it always derives from the AccountType (see **Account icon** in
-  `CONTEXT.md`). A `dot` therefore conveys *type only*, which is why it is the variant
-  for columns where the icon would repeat down every row (a register's posted-account
-  column, all of whose rows are descendants of the account being viewed), not a
-  general-purpose default.
+  `CONTEXT.md`). A `dot` conveys *type only*.
+- **Tables take the `dot`, never the icon.** A column of tinted 20px tiles is a column of
+  noise: the eye reads the tiles as the content and has to look past them to reach the
+  paths, and two account columns per row double it. The dot holds the same left edge and
+  keeps the type color, at a weight a dense row can carry. The icon stays where a label
+  stands on its own and identifying the account *is* the job — search results, detail
+  panels, a picker's selected value.
 
 ## Ancestors give up their pixels first
 

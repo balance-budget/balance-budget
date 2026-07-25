@@ -12,7 +12,8 @@ import { ACCENT_BY_TYPE } from '../lib/visualHints';
 import { AccountAvatar } from './AccountAvatar';
 
 /** `icon` carries the account's identity (the user's own glyph); `dot` carries only
- *  its AccountType, for columns where the icon would repeat down every row. */
+ *  its AccountType, and is what every table row takes — a column of tinted tiles
+ *  outweighs the paths it leads (ADR-0039). */
 export type AccountLabelGlyph = 'icon' | 'dot' | 'none';
 
 export type AccountLabelProps = {
