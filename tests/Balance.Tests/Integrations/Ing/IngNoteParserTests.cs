@@ -1,3 +1,4 @@
+using System.Globalization;
 using Balance.Integration.Ing.Models.Notes;
 using Balance.Integration.Ing.Parsers;
 
@@ -125,7 +126,9 @@ internal sealed class IngNoteParserTests
     [Arguments("")]
     public async Task CurrencyAmount_TryParse_returns_null_on_malformed_value(string value)
     {
-        await Assert.That(CurrencyAmount.TryParse(value)).IsNull();
+        await Assert
+            .That(CurrencyAmount.TryParse(value, CultureInfo.GetCultureInfo("nl-NL")))
+            .IsNull();
     }
 
     [Test]

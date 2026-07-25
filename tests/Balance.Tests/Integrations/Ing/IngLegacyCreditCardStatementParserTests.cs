@@ -21,10 +21,10 @@ internal sealed class IngLegacyCreditCardStatementParserTests
         );
 
         await using var stream = File.OpenRead(path);
-        var lines = IngCreditCardPdfReader.ExtractLines(stream, cancellationToken);
+        var source = new IngCreditCardStatementSource(stream);
         var parser = new IngLegacyCreditCardStatementParser();
-        await Assert.That(parser.CanParse(lines)).IsTrue();
-        var result = parser.ParseStatement(lines, cancellationToken);
+        await Assert.That(await parser.CanParseAsync(source, cancellationToken)).IsTrue();
+        var result = await parser.ParseStatementAsync(source, cancellationToken);
 
         await Assert.That(result).IsNotNull();
         await Assert.That(result.Rows.Count).IsGreaterThan(0);
