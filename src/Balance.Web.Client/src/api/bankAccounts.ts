@@ -38,6 +38,8 @@ export type BankAccount = {
     iban: string | null;
     accountNumber: string | null;
     cardIdentifier: string | null;
+    /** The Current bank account a Card settles against. Only ever set on a Card. */
+    fundingBankAccountId: BankAccountId | null;
     bic: string | null;
     bankName: string | null;
     accountHolderName: string | null;
@@ -148,6 +150,9 @@ function toBankAccount(wire: WireBankAccount): BankAccount {
         iban: wire.iban,
         accountNumber: wire.accountNumber,
         cardIdentifier: wire.cardIdentifier,
+        fundingBankAccountId: wire.fundingBankAccountId
+            ? asBankAccountId(wire.fundingBankAccountId)
+            : null,
         bic: wire.bic,
         bankName: wire.bankName,
         accountHolderName: wire.accountHolderName,

@@ -1210,6 +1210,9 @@ msgstr "已凍結：無法移除此列"
 msgid "Frozen: line is Cleared or Reconciled"
 msgstr "已凍結：此列已結清或已對帳"
 
+msgid "Funding account"
+msgstr "扣款帳戶"
+
 msgid "Future"
 msgstr "未來"
 
@@ -2264,6 +2267,9 @@ msgstr "目標"
 #. placeholder {2}: deletingRate.part.label
 msgid "The {0}% rate effective {1} is removed from {2}. Projections recompute; posted entries are untouched."
 msgstr "自 {1} 生效的 {0}% 利率將從 {2} 移除。預估值會重新計算；已過帳的分錄不受影響。"
+
+msgid "The account this card is paid off from."
+msgstr "這張卡片從此帳戶扣款還款。"
 
 msgid "The code can't be changed after creation."
 msgstr "建立後無法變更代碼。"

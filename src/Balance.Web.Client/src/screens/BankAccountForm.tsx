@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { Form } from 'react-aria-components';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
+    formatBankAccountIdentifier,
+    formatBankAccountLabel,
     useBankAccountImporters,
+    useBankAccounts,
     useCreateBankAccount,
     useImporterLabel,
     useUpdateBankAccount,
@@ -37,6 +40,7 @@ type FormState = {
     iban: string;
     accountNumber: string;
     cardIdentifier: string;
+    fundingBankAccountId: string;
     bic: string;
     bankName: string;
     accountHolderName: string;
@@ -56,6 +60,7 @@ function initialState(props: Props): FormState {
             iban: ba.iban ?? '',
             accountNumber: ba.accountNumber ?? '',
             cardIdentifier: ba.cardIdentifier ?? '',
+            fundingBankAccountId: ba.fundingBankAccountId ?? '',
             bic: ba.bic ?? '',
             bankName: ba.bankName ?? '',
             accountHolderName: ba.accountHolderName ?? '',
@@ -73,6 +78,7 @@ function initialState(props: Props): FormState {
         iban: '',
         accountNumber: '',
         cardIdentifier: '',
+        fundingBankAccountId: '',
         bic: '',
         bankName: '',
         accountHolderName: '',
@@ -90,6 +96,7 @@ export function BankAccountFormModal(props: Props) {
     const update = useUpdateBankAccount();
     const toast = useToast();
     const accounts = useAccounts();
+    const bankAccounts = useBankAccounts();
     const counterparties = useCounterparties();
     const currencies = useCurrencies();
     const importers = useBankAccountImporters();
@@ -112,7 +119,14 @@ export function BankAccountFormModal(props: Props) {
         const nextOwner: OwnerKind = next === 'Card' ? 'account' : form.ownerKind;
         const currentImporter = importers.data?.find(i => i.key === form.importerKey);
         const nextImporter = currentImporter?.supportedType === next ? form.importerKey : '';
-        update_({ type: next, ownerKind: nextOwner, importerKey: nextImporter });
+        // Only a Card settles against a funding account.
+        const nextFunding = next === 'Card' ? form.fundingBankAccountId : '';
+        update_({
+            type: next,
+            ownerKind: nextOwner,
+            importerKey: nextImporter,
+            fundingBankAccountId: nextFunding,
+        });
     }
 
     async function submit() {
@@ -135,6 +149,7 @@ export function BankAccountFormModal(props: Props) {
                     iban: emptyToNull(form.iban),
                     accountNumber: emptyToNull(form.accountNumber),
                     cardIdentifier: emptyToNull(form.cardIdentifier),
+                    fundingBankAccountId: emptyToNull(form.fundingBankAccountId),
                     bic: emptyToNull(form.bic),
                     bankName: emptyToNull(form.bankName),
                     accountHolderName: emptyToNull(form.accountHolderName),
@@ -150,6 +165,7 @@ export function BankAccountFormModal(props: Props) {
                     iban: emptyToNull(form.iban),
                     accountNumber: emptyToNull(form.accountNumber),
                     cardIdentifier: emptyToNull(form.cardIdentifier),
+                    fundingBankAccountId: emptyToNull(form.fundingBankAccountId),
                     bic: emptyToNull(form.bic),
                     bankName: emptyToNull(form.bankName),
                     accountHolderName: emptyToNull(form.accountHolderName),
@@ -170,6 +186,13 @@ export function BankAccountFormModal(props: Props) {
     const counterpartyList = counterparties.data ?? [];
     const currencyList = Array.from(currencies.data?.values() ?? []);
     const importerOptions = (importers.data ?? []).filter(i => i.supportedType === form.type);
+    // A card settles against a Current account you own, never a counterparty's and never itself.
+    const fundingOptions = (bankAccounts.data ?? []).filter(
+        ba =>
+            ba.type === 'Current' &&
+            ba.accountId !== null &&
+            (props.mode === 'create' || ba.id !== props.bankAccount.id),
+    );
     const ownerKindLocked = ownerLocked || form.type === 'Card';
 
     return (
@@ -299,6 +322,31 @@ export function BankAccountFormModal(props: Props) {
                             autoFocus
                         />
                     ) : null}
+                    {form.type === 'Card' ? (
+                        <Select
+                            label={t`Funding account`}
+                            name="FundingBankAccountId"
+                            value={
+                                form.fundingBankAccountId === '' ? null : form.fundingBankAccountId
+                            }
+                            onChange={key => {
+                                update_({
+                                    fundingBankAccountId: key === null ? '' : String(key),
+                                });
+                            }}
+                            placeholder={t`(none)`}
+                            description={t`The account this card is paid off from.`}
+                        >
+                            {fundingOptions.map(ba => {
+                                const label = `${formatBankAccountLabel(ba)} · ${formatBankAccountIdentifier(ba) ?? '—'}`;
+                                return (
+                                    <SelectItem key={ba.id} id={ba.id} textValue={label}>
+                                        {label}
+                                    </SelectItem>
+                                );
+                            })}
+                        </Select>
+                    ) : null}
                     <TextField
                         label={t`BIC`}
                         name="Bic"
@@ -390,6 +438,7 @@ function bankAccountToUpdateInput(ba: BankAccount) {
         iban: ba.iban,
         accountNumber: ba.accountNumber,
         cardIdentifier: ba.cardIdentifier,
+        fundingBankAccountId: ba.fundingBankAccountId,
         bic: ba.bic,
         bankName: ba.bankName,
         accountHolderName: ba.accountHolderName,

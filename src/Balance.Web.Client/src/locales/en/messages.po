@@ -1210,6 +1210,9 @@ msgstr "Frozen: line can't be removed"
 msgid "Frozen: line is Cleared or Reconciled"
 msgstr "Frozen: line is Cleared or Reconciled"
 
+msgid "Funding account"
+msgstr "Funding account"
+
 msgid "Future"
 msgstr "Future"
 
@@ -2264,6 +2267,9 @@ msgstr "Target"
 #. placeholder {2}: deletingRate.part.label
 msgid "The {0}% rate effective {1} is removed from {2}. Projections recompute; posted entries are untouched."
 msgstr "The {0}% rate effective {1} is removed from {2}. Projections recompute; posted entries are untouched."
+
+msgid "The account this card is paid off from."
+msgstr "The account this card is paid off from."
 
 msgid "The code can't be changed after creation."
 msgstr "The code can't be changed after creation."
