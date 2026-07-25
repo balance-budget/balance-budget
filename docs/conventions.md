@@ -166,7 +166,7 @@ The underlying CSS custom properties are named by **hue** (`--color-chart-amber`
 
 Every read-only account display renders through **`AccountLabel`** — never a hand-rolled name, and never the flat `accountName` a read model happens to carry (ADR-0039). Pass the `accountId` plus that flat name as `fallbackName`; the component resolves the **Account path** from the shared `useAccounts()` cache and falls back to the flat name while the cache is cold or when the id is unknown. Never build a local `Map` of accounts to do this by hand: `useAccountIndex()` in `lib/accountTree.ts` is the shared, memoized id→account index.
 
-- **Glyph**: `icon` (a 20px `xs` `AccountAvatar`) by default; `dot` where the icon would repeat down every row of a column; `none` where a larger avatar already leads the row.
+- **Glyph**: `dot` (a 6px circle in the AccountType accent) in every table row; `icon` (a 20px `xs` `AccountAvatar`, the default) where a label stands on its own — search results, detail panels; `none` where a larger avatar already leads the row.
 - **`showCode`** is off by default — on only where the column is wide enough to spend ~35px on it.
 - **Truncation** is handled by the component (ancestors shrink to `…` before the leaf does) with the untruncated path in `title=`. Don't add your own `truncate` to the cell.
 

@@ -269,9 +269,9 @@ function FromToSummary({
     // — and with it the Split fallback, which a two-column table no longer needs.
     return (
         <span className="text-xs text-fg-2 mt-1 inline-flex items-center gap-1 min-w-0">
-            <AccountLegs legs={projection.fromLegs} glyph="dot" />
+            <AccountLegs legs={projection.fromLegs} />
             <Icon name="arrow-right" size={10} strokeWidth={2} className="text-fg-3 shrink-0" />
-            <AccountLegs legs={projection.toLegs} glyph="dot" />
+            <AccountLegs legs={projection.toLegs} />
         </span>
     );
 }
@@ -345,7 +345,11 @@ function LineRow({
     return (
         <Row id={line.id}>
             <Cell className="text-sm text-fg-1">
-                <AccountLabel accountId={line.accountId} fallbackName={line.accountName} />
+                <AccountLabel
+                    accountId={line.accountId}
+                    fallbackName={line.accountName}
+                    glyph="dot"
+                />
             </Cell>
             <Cell className="font-mono text-sm tabular-nums text-right text-fg-1">
                 {isDebit ? moneyStr : ''}
