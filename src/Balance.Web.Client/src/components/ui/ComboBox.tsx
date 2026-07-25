@@ -41,6 +41,8 @@ export type ComboBoxProps<T> = {
     groupLabels?: Record<string, string>;
     placeholder?: string;
     disabled?: boolean;
+    /** Blocks submit with no selection, like `isRequired` on a plain field. */
+    required?: boolean;
     /** Visible-only label used by screen readers. */
     ariaLabel?: string;
     /** Field name for React Aria Form `validationErrors`. */
@@ -70,6 +72,7 @@ export function ComboBox<T>({
     groupLabels,
     placeholder,
     disabled,
+    required,
     ariaLabel,
     name,
     listboxMinWidth,
@@ -143,6 +146,7 @@ export function ComboBox<T>({
             aria-label={ariaLabel}
             name={name}
             isDisabled={disabled}
+            isRequired={required}
             menuTrigger="focus"
             defaultFilter={() => true}
             value={selectedItem?.key ?? null}

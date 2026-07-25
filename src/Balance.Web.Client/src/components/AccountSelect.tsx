@@ -48,6 +48,9 @@ export type AccountSelectProps = {
     placeholdersOnly?: boolean;
     /** Offer only liquid Asset/Liability accounts — the cash-flow pickers (e.g. Outlook). */
     liquidOnly?: boolean;
+    /** Offer only Asset/Liability accounts, liquid or not — the balance-sheet pickers
+     *  (e.g. the account a BankAccount belongs to). */
+    ledgerOnly?: boolean;
     /** Restrict to one currency. The current value stays visible regardless. */
     currencyCode?: string;
     /** Pin a single AccountType — the parent picker shares the child's type. */
@@ -61,6 +64,8 @@ export type AccountSelectProps = {
     noneLabel?: string;
     placeholder?: string;
     disabled?: boolean;
+    /** Blocks submit with no selection. */
+    required?: boolean;
     ariaLabel?: string;
     /** Field name for React Aria Form `validationErrors`. */
     name?: string;
@@ -89,6 +94,7 @@ export function AccountSelect({
     postableOnly,
     placeholdersOnly,
     liquidOnly,
+    ledgerOnly,
     currencyCode,
     type,
     exclude,
@@ -97,6 +103,7 @@ export function AccountSelect({
     noneLabel,
     placeholder,
     disabled,
+    required,
     ariaLabel,
     name,
 }: AccountSelectProps) {
@@ -119,6 +126,7 @@ export function AccountSelect({
             if (placeholdersOnly && a.isPostable) return false;
             if (liquidOnly && !(a.isLiquid && (a.type === 'Asset' || a.type === 'Liability')))
                 return false;
+            if (ledgerOnly && !(a.type === 'Asset' || a.type === 'Liability')) return false;
             if (type && a.type !== type) return false;
             if (currencyCode && a.currencyCode !== currencyCode) return false;
             if (excludeSet.has(a.id)) return false;
@@ -145,6 +153,7 @@ export function AccountSelect({
         postableOnly,
         placeholdersOnly,
         liquidOnly,
+        ledgerOnly,
         type,
         currencyCode,
         excludeKey,
@@ -163,6 +172,7 @@ export function AccountSelect({
             groupLabels={ACCOUNT_TYPE_LABEL}
             placeholder={placeholder}
             disabled={disabled}
+            required={required}
             ariaLabel={ariaLabel}
             name={name}
             listboxMinWidth={LISTBOX_MIN_WIDTH}
