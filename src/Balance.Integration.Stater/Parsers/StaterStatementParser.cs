@@ -1,39 +1,36 @@
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
+using Balance.Integration.Pdf;
 using Balance.Integration.Stater.Contracts;
 using Balance.Integration.Stater.Models;
 
 namespace Balance.Integration.Stater.Parsers;
 
 // Layout: a "Nummer: x.x.x" header carrying the account number (= the loan number), then a table
-// with columns Datum | Bedrag | Betaald aan | Omschrijving. Both the header and the Omschrijving
-// cell can wrap onto a second visual line, so rows are reconstructed from word x-positions: the
-// column an x falls in is fixed by the header labels, and a line whose Datum column holds no date
-// is a continuation whose words append to the row above.
+// with columns Datum | Bedrag | Betaald aan | Omschrijving. Rows are reconstructed from word
+// positions: the column a word belongs to follows from the header labels, a line carrying a date in
+// the Datum column starts a row, and any line close enough below it is a wrapped cell of that row.
 internal sealed partial class StaterStatementParser : IStaterStatementParser
 {
-    private enum Column
-    {
-        Date = 0,
-        Amount = 1,
-        Counterparty = 2,
-        Description = 3,
-    }
+    private const int DateColumn = 0;
+    private const int AmountColumn = 1;
+    private const int CounterpartyColumn = 2;
+    private const int DescriptionColumn = 3;
 
-    public StaterStatement? Parse(IReadOnlyList<StaterTextLine> lines)
+    // A wrapped cell sits on the next visual line, about one line height below. Anything further
+    // down has left the table (page footer, closing letter), so it ends the row instead.
+    private const double MaxWrapGapInLineHeights = 3;
+
+    public StaterStatement? Parse(IReadOnlyList<PdfTextLine> lines)
     {
         ArgumentNullException.ThrowIfNull(lines);
 
         var accountNumber = FindAccountNumber(lines);
-        if (accountNumber is null)
-            return null;
-
-        var rows = ParseRows(lines);
-        return new StaterStatement(accountNumber, rows);
+        return accountNumber is null ? null : new StaterStatement(accountNumber, ParseRows(lines));
     }
 
-    private static string? FindAccountNumber(IReadOnlyList<StaterTextLine> lines)
+    private static string? FindAccountNumber(IReadOnlyList<PdfTextLine> lines)
     {
         foreach (var line in lines)
         {
@@ -44,134 +41,161 @@ internal sealed partial class StaterStatementParser : IStaterStatementParser
         return null;
     }
 
-    private static List<StaterStatementRow> ParseRows(IReadOnlyList<StaterTextLine> lines)
+    private static List<StaterStatementRow> ParseRows(IReadOnlyList<PdfTextLine> lines)
     {
+        var header = FindTableHeader(lines);
+        if (header is null)
+            return [];
+
+        var (headerIndex, columns) = header.Value;
+
         var rows = new List<StaterStatementRow>();
+        Row? current = null;
+        var previous = lines[headerIndex];
 
-        double[]? boundaries = null;
-        RowBuilder? current = null;
-
-        void Flush()
+        for (var i = headerIndex + 1; i < lines.Count; i++)
         {
-            if (current?.ToRow() is { } row)
-                rows.Add(row);
-            current = null;
-        }
-
-        var inTable = false;
-        foreach (var line in lines)
-        {
-            if (PageFooterRegex().IsMatch(line.Text) || line.Text.Length <= 1)
-                continue;
-
-            if (!inTable)
-            {
-                if (
-                    TransactionHeaderRegex().IsMatch(line.Text)
-                    && TryColumnBoundaries(line, out var b)
-                )
-                {
-                    boundaries = b;
-                    inTable = true;
-                }
-                continue;
-            }
-
+            var line = lines[i];
             if (ClosingSectionRegex().IsMatch(line.Text))
                 break;
 
-            var startsRow = StartsNewRow(line, boundaries!);
+            var words = columns.WordsInTable(line);
+            if (words.Count == 0)
+                continue;
+
+            var startsRow = columns.StartsRow(words);
             if (startsRow)
             {
-                Flush();
-                current = new RowBuilder(line.Text);
+                Close(rows, current);
+                current = new Row();
             }
-            else if (current is null)
+            else if (current is null || !IsWrapOf(previous, line))
             {
+                Close(rows, current);
+                current = null;
+                previous = line;
                 continue;
             }
-            else
-            {
-                current.AppendRaw(line.Text);
-            }
 
-            foreach (var word in line.Words)
-                current!.Add(ColumnOf(word.Center, boundaries!), word.Text);
+            current.AddLine(line.Text);
+            foreach (var word in words)
+                current.AddWord(columns.ColumnOf(word), word.Text, isWrap: !startsRow);
+            previous = line;
         }
 
-        Flush();
+        Close(rows, current);
         return rows;
     }
 
-    // Column anchors are the header labels' centers; a word falls in the column whose center is
-    // nearest (boundaries sit midway between adjacent anchors).
-    private static bool TryColumnBoundaries(StaterTextLine header, out double[] boundaries)
+    // A row is only kept once complete: a date and an amount are what make it a transaction.
+    private static void Close(List<StaterStatementRow> rows, Row? current)
     {
-        boundaries = [];
-        if (
-            Center(header, "Datum") is not { } datum
-            || Center(header, "Bedrag") is not { } bedrag
-            || Center(header, "Betaald") is not { } betaald
-            || Center(header, "Omschrijving") is not { } omschrijving
-        )
-        {
-            return false;
-        }
-
-        boundaries = [(datum + bedrag) / 2, (bedrag + betaald) / 2, (betaald + omschrijving) / 2];
-        return true;
+        if (current?.ToStatementRow() is { } row)
+            rows.Add(row);
     }
 
-    private static double? Center(StaterTextLine line, string label)
+    // Wrapped cells keep the table's leading; a jump to the page footer or the closing letter does
+    // not. Baselines are only comparable within a page.
+    private static bool IsWrapOf(PdfTextLine previous, PdfTextLine line) =>
+        previous.PageNumber == line.PageNumber
+        && previous.Baseline - line.Baseline
+            <= MaxWrapGapInLineHeights * Math.Max(previous.Height, line.Height);
+
+    private static (int Index, TableColumns Columns)? FindTableHeader(
+        IReadOnlyList<PdfTextLine> lines
+    )
     {
-        foreach (var word in line.Words)
+        for (var i = 0; i < lines.Count; i++)
         {
-            if (word.Text.Equals(label, StringComparison.OrdinalIgnoreCase))
-                return word.Center;
+            if (
+                TransactionHeaderRegex().IsMatch(lines[i].Text)
+                && BuildColumns(lines[i]) is { } columns
+            )
+            {
+                return (i, columns);
+            }
         }
         return null;
     }
 
-    private static Column ColumnOf(double center, double[] boundaries)
+    // Column anchors are the header labels' centers, so a word belongs to the column whose anchor
+    // is nearest and the boundaries sit midway between adjacent anchors.
+    private static TableColumns? BuildColumns(PdfTextLine header)
     {
-        var index = 0;
-        foreach (var boundary in boundaries)
+        if (
+            CenterOf(header, "Datum") is not { } datum
+            || CenterOf(header, "Bedrag") is not { } bedrag
+            || CenterOf(header, "Betaald") is not { } betaald
+            || CenterOf(header, "Omschrijving") is not { } omschrijving
+        )
         {
-            if (center < boundary)
-                break;
-            index++;
+            return null;
         }
-        return (Column)index;
+
+        return new TableColumns(
+            header.Words[0].Left,
+            [(datum + bedrag) / 2, (bedrag + betaald) / 2, (betaald + omschrijving) / 2]
+        );
     }
 
-    private static bool StartsNewRow(StaterTextLine line, double[] boundaries)
+    private static double? CenterOf(PdfTextLine line, string label)
     {
         foreach (var word in line.Words)
         {
-            if (ColumnOf(word.Center, boundaries) == Column.Date && DateRegex().IsMatch(word.Text))
-                return true;
+            if (word.Text.Equals(label, StringComparison.OrdinalIgnoreCase))
+                return word.CenterX;
         }
-        return false;
+        return null;
     }
 
-    private sealed class RowBuilder
+    private sealed class TableColumns
     {
-        private readonly StringBuilder[] _cells =
-        [
-            new StringBuilder(),
-            new StringBuilder(),
-            new StringBuilder(),
-            new StringBuilder(),
-        ];
+        private readonly double _left;
+        private readonly double[] _boundaries;
+
+        public TableColumns(double left, double[] boundaries)
+        {
+            _left = left;
+            _boundaries = boundaries;
+        }
+
+        // Anything entirely left of the first column is page furniture (Stater prints a rotated
+        // form code down the margin), not table content.
+        public IReadOnlyList<PdfWord> WordsInTable(PdfTextLine line) =>
+            [.. line.Words.Where(word => word.Right >= _left)];
+
+        public bool StartsRow(IReadOnlyList<PdfWord> words) =>
+            words.Any(word => ColumnOf(word) == DateColumn && DateRegex().IsMatch(word.Text));
+
+        public int ColumnOf(PdfWord word)
+        {
+            var column = 0;
+            while (column < _boundaries.Length && word.CenterX >= _boundaries[column])
+                column++;
+            return column;
+        }
+    }
+
+    private sealed class Row
+    {
+        private readonly StringBuilder[] _cells = [new(), new(), new(), new()];
         private readonly StringBuilder _raw = new();
 
-        public RowBuilder(string rawFirstLine) => _raw.Append(rawFirstLine);
-
-        public void AppendRaw(string rawLine) => _raw.Append('\n').Append(rawLine);
-
-        public void Add(Column column, string text)
+        public void AddLine(string text)
         {
-            var cell = _cells[(int)column];
+            if (_raw.Length > 0)
+                _raw.Append('\n');
+            _raw.Append(text);
+        }
+
+        // A wrapped line only extends cells the row's first line already filled: a word that drifts
+        // into an empty column band must not be invented as that column's value.
+        public void AddWord(int column, string text, bool isWrap)
+        {
+            var cell = _cells[column];
+            if (isWrap && cell.Length == 0)
+                return;
+
             // A wrap that broke a word after '/' or '-' rejoins without a space; otherwise the
             // fragments are separate words and take a space.
             if (cell.Length > 0 && cell[^1] is not ('/' or '-'))
@@ -179,24 +203,24 @@ internal sealed partial class StaterStatementParser : IStaterStatementParser
             cell.Append(text);
         }
 
-        public StaterStatementRow? ToRow()
+        public StaterStatementRow? ToStatementRow()
         {
-            if (!TryParseDate(_cells[(int)Column.Date].ToString().Trim(), out var date))
+            if (!TryParseDate(Cell(DateColumn), out var date))
                 return null;
-            if (!TryParseAmount(_cells[(int)Column.Amount].ToString().Trim(), out var amount))
+            if (!TryParseAmount(Cell(AmountColumn), out var amount))
                 return null;
 
-            var counterparty = _cells[(int)Column.Counterparty].ToString().Trim();
-            var description = _cells[(int)Column.Description].ToString().Trim();
-
+            var counterparty = Cell(CounterpartyColumn);
             return new StaterStatementRow(
                 date,
-                description,
+                Cell(DescriptionColumn),
                 counterparty.Length == 0 ? null : counterparty,
                 amount,
                 _raw.ToString()
             );
         }
+
+        private string Cell(int column) => _cells[column].ToString().Trim();
     }
 
     private static bool TryParseDate(string value, out DateOnly date) =>
@@ -243,10 +267,4 @@ internal sealed partial class StaterStatementParser : IStaterStatementParser
 
     [GeneratedRegex(@"^Heeft u nog vragen\?", RegexOptions.IgnoreCase)]
     private static partial Regex ClosingSectionRegex();
-
-    [GeneratedRegex(
-        "^(Lloyds Bank GmbH|Bestuurders|Nederlandse vestiging)",
-        RegexOptions.IgnoreCase
-    )]
-    private static partial Regex PageFooterRegex();
 }

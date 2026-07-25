@@ -1,8 +1,8 @@
 using Balance.Data.Entities;
 using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
+using Balance.Integration.Pdf;
 using Balance.Integration.Stater.Contracts;
-using Balance.Integration.Stater.Helpers;
 using Balance.Integration.Stater.Models;
 using Balance.Services.BankTransactions;
 using Balance.Services.Contracts;
@@ -59,10 +59,10 @@ internal sealed class StaterConstructionDepositExtractor : IBankTransactionExtra
             );
         }
 
-        List<StaterTextLine> lines;
+        IReadOnlyList<PdfTextLine> lines;
         try
         {
-            lines = StaterPdfReader.ExtractLines(stream, cancellationToken);
+            lines = PdfTextReader.ExtractLines(stream, cancellationToken);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -107,13 +107,13 @@ internal sealed class StaterConstructionDepositExtractor : IBankTransactionExtra
     {
         ArgumentNullException.ThrowIfNull(file);
 
-        if (!StaterPdfReader.LooksLikePdf(file.Content))
+        if (!PdfTextReader.LooksLikePdf(file.Content))
             return Task.FromResult<ImportIdentity?>(null);
 
-        List<StaterTextLine> lines;
+        IReadOnlyList<PdfTextLine> lines;
         try
         {
-            lines = StaterPdfReader.ExtractLines(file.Content, cancellationToken);
+            lines = PdfTextReader.ExtractLines(file.Content, cancellationToken);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
