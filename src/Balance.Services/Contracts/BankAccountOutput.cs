@@ -9,6 +9,7 @@ public sealed record BankAccountOutput(
     string? Iban,
     string? AccountNumber,
     string? CardIdentifier,
+    BankAccountId? FundingBankAccountId,
     string? Bic,
     string? BankName,
     string? AccountHolderName,

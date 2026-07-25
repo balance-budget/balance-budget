@@ -163,6 +163,7 @@ internal sealed class BankTransactionJournalEntryIdFkTests : EndpointsTestsBase
                 Iban: $"NL00BANK{Guid.NewGuid():N}"[..18],
                 AccountNumber: null,
                 CardIdentifier: null,
+                FundingBankAccountId: null,
                 Bic: null,
                 BankName: null,
                 AccountHolderName: null,

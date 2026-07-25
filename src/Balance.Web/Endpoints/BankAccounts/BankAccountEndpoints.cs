@@ -104,6 +104,7 @@ internal static class BankAccountEndpoints
                 request.Iban,
                 request.AccountNumber,
                 request.CardIdentifier,
+                request.FundingBankAccountId,
                 request.Bic,
                 request.BankName,
                 request.AccountHolderName,
