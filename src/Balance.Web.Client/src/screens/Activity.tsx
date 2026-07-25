@@ -307,7 +307,7 @@ function FromToCell({
     return (
         <span className="text-xs text-fg-2 truncate flex items-center gap-1">
             <span className="truncate">{fromLabel}</span>
-            <Icon name="chevron-right" size={10} strokeWidth={2} className="text-fg-3 shrink-0" />
+            <Icon name="arrow-right" size={10} strokeWidth={2} className="text-fg-3 shrink-0" />
             <span className="truncate">{toLabel}</span>
         </span>
     );

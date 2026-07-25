@@ -269,7 +269,7 @@ function FromToSummary({
     return (
         <span className="text-xs text-fg-2 mt-1 inline-flex items-center gap-1">
             <span>{from}</span>
-            <Icon name="chevron-right" size={10} strokeWidth={2} className="text-fg-3 shrink-0" />
+            <Icon name="arrow-right" size={10} strokeWidth={2} className="text-fg-3 shrink-0" />
             <span>{to}</span>
         </span>
     );
