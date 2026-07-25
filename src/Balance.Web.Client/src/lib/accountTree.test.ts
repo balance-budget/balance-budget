@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Account } from '../api/accounts';
 import { asAccountId, type AccountId } from './domain';
 import {
+    accountAncestors,
     accountIndexFor,
     accountPathLabel,
     accountPathSegments,
@@ -64,6 +65,22 @@ describe('accountIndexFor', () => {
 
     it('rebuilds for a new array, so a refetch is picked up', () => {
         expect(accountIndexFor(tree())).not.toBe(accountIndexFor(tree()));
+    });
+});
+
+describe('accountAncestors', () => {
+    it('lists the ancestors root-first, excluding the account itself', () => {
+        const map = byId(tree());
+        expect(accountAncestors(map, asAccountId('car-ins-liab')).map(a => a.name)).toEqual([
+            'Car',
+            'Insurance',
+        ]);
+    });
+
+    it('is empty for a root account and for an unknown id', () => {
+        const map = byId(tree());
+        expect(accountAncestors(map, asAccountId('car'))).toEqual([]);
+        expect(accountAncestors(map, asAccountId('ghost'))).toEqual([]);
     });
 });
 
