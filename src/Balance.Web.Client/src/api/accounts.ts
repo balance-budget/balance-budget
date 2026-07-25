@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { components } from '../lib/api-types.gen';
-import { accountIndexFor } from '../lib/accountTree';
+import { accountIndexFor, type AccountIndex } from '../lib/accountTree';
 import { type AccountId, type AccountType, type Horizon, asAccountId } from '../lib/domain';
 import { getJson } from '../lib/http';
 import { toMoney, type Money } from '../lib/money';
@@ -95,7 +95,7 @@ export function useAccounts() {
 
 /** The shared id→Account index over the cached chart of accounts — empty until the
  *  query resolves. Read this instead of building a local `Map` per screen. */
-export function useAccountIndex(): ReadonlyMap<AccountId, Account> {
+export function useAccountIndex(): AccountIndex {
     const { data } = useAccounts();
     return accountIndexFor(data ?? EMPTY_ACCOUNTS);
 }

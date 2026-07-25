@@ -3,19 +3,22 @@ import { cx } from '../lib/cx';
 import { visualHintFor } from '../lib/visualHints';
 import { Icon } from './Icon';
 
-type Size = 'sm' | 'md';
+type Size = 'xs' | 'sm' | 'md';
 
 const BOX_CLASS: Record<Size, string> = {
+    xs: 'w-5 h-5 rounded-md',
     sm: 'w-6 h-6 rounded-lg',
     md: 'w-9 h-9 rounded-xl',
 };
 
 const ICON_SIZE: Record<Size, number> = {
+    xs: 12,
     sm: 14,
     md: 16,
 };
 
 const STROKE_WIDTH: Record<Size, number> = {
+    xs: 1.75,
     sm: 1.75,
     md: 2,
 };
@@ -32,6 +35,9 @@ type AccountAvatarProps = {
  * the per-AccountType default. The tint always follows the AccountType. Both
  * are derived from visualHintFor — kept in one component so the Sidebar and
  * Dashboard rows can't drift apart visually.
+ *
+ * `xs` is the in-text size `AccountLabel` leads a path with; it fits a table
+ * row without changing its height.
  */
 export function AccountAvatar({ account, size = 'sm', className }: AccountAvatarProps) {
     const visual = visualHintFor(account);
