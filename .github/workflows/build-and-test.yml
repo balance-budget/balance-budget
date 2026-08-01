@@ -117,7 +117,7 @@ jobs:
         path: ./tests/report/results.md
 
     - name: Publish code coverage results
-      uses: danielpalme/ReportGenerator-GitHub-Action@5.5.10
+      uses: danielpalme/ReportGenerator-GitHub-Action@5.5.11
       with:
         reports: ./tests/coverage/coverage.cobertura.xml
         targetdir: ./tests/report
