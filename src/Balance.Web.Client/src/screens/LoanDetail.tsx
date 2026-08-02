@@ -45,7 +45,7 @@ export function LoanDetail({ id }: { id: LoanId }) {
     // panel header keeps the lender/interest subtitle and the loan actions.
     usePageHeader({
         title: loan.data?.name,
-        breadcrumb: [{ label: t`Loans`, to: '/loans' }],
+        breadcrumb: [{ label: t`Loans`, href: { to: '/loans' } }],
     });
 
     if (loan.isPending) {

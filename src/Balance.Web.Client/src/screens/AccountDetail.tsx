@@ -3,7 +3,13 @@ import { plural } from '@lingui/core/macro';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { type Selection } from 'react-aria-components';
-import { useAccount, useAccountIndex, useDeleteAccount, type Account } from '../api/accounts';
+import {
+    accountRegisterLink,
+    useAccount,
+    useAccountIndex,
+    useDeleteAccount,
+    type Account,
+} from '../api/accounts';
 import { useCurrencyCatalog } from '../api/currencies';
 import { useReassignJournalLines } from '../api/journalLines';
 import {
@@ -83,10 +89,10 @@ export function AccountDetail({
     usePageHeader({
         title: query.data?.name,
         breadcrumb: [
-            { label: t`Accounts`, to: '/accounts' },
+            { label: t`Accounts`, href: { to: '/accounts' } },
             ...accountAncestors(byId, id).map(ancestor => ({
                 label: ancestor.name,
-                to: `/accounts/${ancestor.id}`,
+                href: accountRegisterLink(ancestor.id),
             })),
         ],
     });

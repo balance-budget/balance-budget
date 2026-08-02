@@ -1,10 +1,9 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Button } from 'react-aria-components';
-import { Link } from '@tanstack/react-router';
 import { Icon } from './Icon';
 import type { Crumb } from './PageHeader';
 import { useTheme } from './ThemeProvider';
-import { BreadcrumbItem, Breadcrumbs, breadcrumbLinkStyles } from './ui/Breadcrumbs';
+import { Breadcrumb, Breadcrumbs } from './ui/Breadcrumbs';
 import { composeTailwindRenderProps } from './ui/compose';
 
 type TopBarProps = {
@@ -35,11 +34,9 @@ export function TopBar({ title, breadcrumb, period, onMenuClick, onSearchClick }
                     <nav aria-label={t`Breadcrumb`} className="min-w-0">
                         <Breadcrumbs className="text-fg-3">
                             {breadcrumb.map(crumb => (
-                                <BreadcrumbItem key={crumb.to}>
-                                    <Link to={crumb.to} className={breadcrumbLinkStyles}>
-                                        {crumb.label}
-                                    </Link>
-                                </BreadcrumbItem>
+                                <Breadcrumb key={crumb.label} href={crumb.href}>
+                                    {crumb.label}
+                                </Breadcrumb>
                             ))}
                         </Breadcrumbs>
                     </nav>

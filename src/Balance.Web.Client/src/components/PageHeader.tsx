@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import type { ToOptions } from '@tanstack/react-router';
 
 /** One step in the TopBar breadcrumb — a parent section the current page sits under. */
-export type Crumb = { label: string; to: string };
+export type Crumb = { label: string; href: ToOptions };
 
 /** A page's contextual header. `title` overrides the route's static title with a
  *  specific one (e.g. an account name); `breadcrumb` is the trail of parent

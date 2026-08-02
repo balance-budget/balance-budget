@@ -4,7 +4,13 @@ import './lib/patchReactAriaChildNodes';
 import { StrictMode } from 'react';
 import type { MessageDescriptor } from '@lingui/core';
 import { createRoot } from 'react-dom/client';
-import { createRouter, RouterProvider } from '@tanstack/react-router';
+import {
+    createRouter,
+    RouterProvider,
+    type NavigateOptions,
+    type ToOptions,
+} from '@tanstack/react-router';
+import { RouterProvider as AriaRouterProvider } from 'react-aria-components';
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import '@fontsource/poppins/300.css';
@@ -17,6 +23,7 @@ import '@fontsource/jetbrains-mono/500.css';
 
 import './index.css';
 import { authKeys } from './api/auth';
+import { ariaRouterProps } from './lib/ariaRouter';
 import { RouteError } from './components/RouteError';
 import { ThemeProvider } from './components/ThemeProvider';
 import { AppToastRegion } from './components/ui/Toast';
@@ -75,6 +82,15 @@ const queryClient = new QueryClient({
 
 /* eslint-disable @typescript-eslint/consistent-type-definitions --
    declaration-merging into TanStack's module requires `interface`. */
+// React Aria's `href` is typed through this augmentation, so every RAC link takes
+// TanStack's `ToOptions` object instead of a hand-written URL string (ADR-0040).
+declare module 'react-aria-components' {
+    interface RouterConfig {
+        href: ToOptions;
+        routerOptions: Omit<NavigateOptions, keyof ToOptions>;
+    }
+}
+
 declare module '@tanstack/react-router' {
     interface Register {
         router: typeof router;
@@ -95,7 +111,9 @@ createRoot(rootElement).render(
         <QueryClientProvider client={queryClient}>
             <ThemeProvider>
                 <LocaleProvider>
-                    <RouterProvider router={router} />
+                    <AriaRouterProvider {...ariaRouterProps(router)}>
+                        <RouterProvider router={router} />
+                    </AriaRouterProvider>
                     <AppToastRegion />
                 </LocaleProvider>
             </ThemeProvider>

@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import type { ToOptions } from '@tanstack/react-router';
 import type { components } from '../lib/api-types.gen';
 import { accountIndexFor, type AccountIndex } from '../lib/accountTree';
 import { type AccountId, type AccountType, type Horizon, asAccountId } from '../lib/domain';
@@ -127,4 +128,15 @@ export const useDeleteAccount = crud.useDelete;
  *  rely on CSS `truncate` to fit constrained layouts (e.g. the sidebar). */
 export function accountIdentifier(account: Account): string | null {
     return account.bankAccount?.iban ?? account.bankAccount?.accountNumber ?? null;
+}
+
+/** Link target for an Account's register page. Shared because the route requires
+ *  every filter key up front, and four surfaces (both account trees, the launcher,
+ *  the breadcrumb) would otherwise each repeat the same defaults. */
+export function accountRegisterLink(id: AccountId | string) {
+    return {
+        to: '/accounts/$id',
+        params: { id: String(id) },
+        search: { page: 1, q: '', posted: '', counter: '', from: '', to: '', status: '' },
+    } as const satisfies ToOptions;
 }
