@@ -145,6 +145,14 @@ Use RAC's selection model directly (`selectedKeys` + `disabledKeys`) rather than
 
 Exceptions: `LoanScheduleTable` stays a native `<table>` (grouped `colSpan` headers + nested expandable rows are outside RAC `Table`'s column model), flat sidebar nav stays plain `<nav>`/`<Link>`, and `Pagination`/presentational components stay custom.
 
+## Navigation is always a link
+
+A control that navigates to a different resource renders an `<a href>` with the real URL, so it can be opened in a new tab, middle-clicked, and previewed in the status bar (ADR-0040). Controls that mutate state, open a dialog, or refine the current view (search, filters, sort, expand/collapse) stay buttons even though they write search params; redirects after a mutation stay imperative `navigate` calls.
+
+`href` takes TanStack's `ToOptions` object rather than a URL string — `href={{ to: '/journal/$id', params: { id } }}` — so route, params, and search are type-checked. Write the target inline at the call site; extract a helper only when the route requires search defaults (`accountRegisterLink`).
+
+A navigating collection row carries `href` on the row **and** a `RowLink` around the row-header cell's content. React Aria renders rows as `role="row"` with a synthetic link, so without the `RowLink` there is no anchor for the browser to right-click. The `Table`, `GridList`, and `Tree` wrappers omit `onRowAction`/`onAction` so this can't be bypassed. `ListBox` and `Menu` items render real anchors from `href` on their own and keep `onAction` for commands.
+
 ## Page chrome (title, breadcrumb, actions)
 
 The **TopBar is the single authority for a page's title** — a page title is never printed twice. Section pages set it via the route's `staticData.title`; entity-detail pages set a *specific* title plus a breadcrumb at runtime with `usePageHeader({ title, breadcrumb })` (the register shows `Accounts › Car › Insurance` above the title `Excess`, not a generic `Account`). Crumbs render through `ui/Breadcrumbs`, so the trailing separator and `aria-current` come from RAC; an account register's crumbs are its ancestors, each linking to its own register. The `AppShell` reads that context and falls back to the static title when a screen sets none.
