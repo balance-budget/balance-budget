@@ -23,7 +23,7 @@ import '@fontsource/jetbrains-mono/500.css';
 
 import './index.css';
 import { authKeys } from './api/auth';
-import { ariaRouterProps } from './lib/ariaRouter';
+import { ariaRouterProps } from './lib/router';
 import { RouteError } from './components/RouteError';
 import { ThemeProvider } from './components/ThemeProvider';
 import { AppToastRegion } from './components/ui/Toast';

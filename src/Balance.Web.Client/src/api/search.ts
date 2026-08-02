@@ -1,4 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
+import type { ToOptions } from '@tanstack/react-router';
+import { asRoutePath } from '../lib/router';
 import type { components } from '../lib/api-types.gen';
 import {
     asAccountId,
@@ -46,7 +48,7 @@ export type JournalEntryHit = {
 
 export type PageHit = {
     label: string;
-    route: string;
+    route: ToOptions['to'];
 };
 
 export type SearchSection<T> = {
@@ -95,7 +97,7 @@ function toJournalEntry(
 }
 
 function toPage(wire: WireSearchOutput['pages']['items'][number]): PageHit {
-    return { label: wire.label, route: wire.route };
+    return { label: wire.label, route: asRoutePath(wire.route) };
 }
 
 export const searchKeys = {
