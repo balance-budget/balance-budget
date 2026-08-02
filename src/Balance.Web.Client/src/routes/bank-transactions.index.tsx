@@ -21,9 +21,11 @@ export const Route = createFileRoute('/bank-transactions/')({
                 page={page}
                 filter={filter}
                 q={q}
-                onPageChange={p => {
-                    void navigate({ search: prev => ({ ...prev, page: p }) });
-                }}
+                hrefForPage={p => ({
+                    from: Route.fullPath,
+                    to: '.',
+                    search: (prev: Record<string, unknown>) => ({ ...prev, page: p }),
+                })}
                 // Filter changes always reset to page 1 — pagination is per-filter.
                 onFilterChange={f => {
                     void navigate({ search: prev => ({ ...prev, page: 1, filter: f }) });

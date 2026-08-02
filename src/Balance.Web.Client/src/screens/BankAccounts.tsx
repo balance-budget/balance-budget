@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ToOptions } from '@tanstack/react-router';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { msg, t } from '@lingui/core/macro';
 import type { MessageDescriptor } from '@lingui/core';
@@ -44,7 +45,7 @@ type Props = {
     page: number;
     q: string;
     onOwnerChange: (owner: BankAccountOwnerFilter) => void;
-    onPageChange: (page: number) => void;
+    hrefForPage: (page: number) => ToOptions;
     onSearchChange: (q: string) => void;
 };
 
@@ -53,7 +54,7 @@ export function BankAccounts({
     page,
     q,
     onOwnerChange,
-    onPageChange,
+    hrefForPage,
     onSearchChange,
 }: Props) {
     const { t } = useLingui();
@@ -86,7 +87,7 @@ export function BankAccounts({
                         placeholder={t`Search bank accounts…`}
                     />
                 </div>
-                <BankAccountList owner={owner} page={page} q={q} onPageChange={onPageChange} />
+                <BankAccountList owner={owner} page={page} q={q} hrefForPage={hrefForPage} />
             </Panel>
 
             {creating && (
@@ -133,12 +134,12 @@ function BankAccountList({
     owner,
     page,
     q,
-    onPageChange,
+    hrefForPage,
 }: {
     owner: BankAccountOwnerFilter;
     page: number;
     q: string;
-    onPageChange: (page: number) => void;
+    hrefForPage: (page: number) => ToOptions;
 }) {
     const { t } = useLingui();
     const skip = (page - 1) * PAGE_SIZE;
@@ -222,7 +223,7 @@ function BankAccountList({
                 page={page}
                 pageSize={PAGE_SIZE}
                 totalCount={query.data.totalCount}
-                onPageChange={onPageChange}
+                hrefForPage={hrefForPage}
             />
         </div>
     );
