@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Balance.Configuration.Options;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using PhenX.EntityFrameworkCore.BulkInsert.PostgreSql;
 using PhenX.EntityFrameworkCore.BulkInsert.Sqlite;
 
@@ -25,7 +26,7 @@ internal static class DbContextOptionsBuilderExtensions
                 .UseSqliteExceptionProcessor(),
             DatabaseProvider.Postgres => builder
                 .UseNpgsql(
-                    options.ConnectionString,
+                    DisablePostgresGssEncryption(options.ConnectionString),
                     x => x.MigrationsAssembly("Balance.Data.PostgreSql")
                 )
                 .UseBulkInsertPostgreSql()
@@ -46,4 +47,18 @@ internal static class DbContextOptionsBuilderExtensions
         EntityFramework.Exceptions.PostgreSQL.ExceptionProcessorExtensions.UseExceptionProcessor(
             builder
         );
+
+    /// <summary>
+    /// Npgsql tries to use GSSAPI encryption. This requires libgssapi_krb5 to be installed.
+    /// It also leads to a low-level memory corruption error in libgssapi_krb5 when opening many parallel connections.
+    /// Disable it by default for all PostgreSQL connections
+    /// </summary>
+    private static string DisablePostgresGssEncryption(string connectionString)
+    {
+        var builder = new NpgsqlConnectionStringBuilder(connectionString)
+        {
+            GssEncryptionMode = GssEncryptionMode.Disable,
+        };
+        return builder.ConnectionString;
+    }
 }
