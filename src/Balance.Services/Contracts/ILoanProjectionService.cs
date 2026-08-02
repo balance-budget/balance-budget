@@ -46,7 +46,7 @@ public sealed record LoanPaymentProposalOutput(
 /// (ADR-0037): a credit to the Construction deposit <see cref="DepositAccountId"/> of
 /// <see cref="Amount"/> minor units, so the entry's cash (bank) leg is <c>gross + principal −
 /// settlement</c> — the reduced debit the lender collects. The amount is the actual posted
-/// prior-month Deposit-interest credit (ledger truth), falling back to <c>prior deposit balance ×
+/// Deposit-interest credit of the same month (ledger truth), falling back to <c>deposit balance ×
 /// monthly deposit rate</c> when none is posted yet. Null when the loan has no Construction
 /// deposit, or in the first construction month before any credit or balance exists (€0).
 /// <see cref="Total"/> on the proposal stays gross (sum of part payments); the net is

@@ -54,17 +54,17 @@ internal sealed class LoanProjectionService : ILoanProjectionService
             );
         }
 
-        // Deposit settlement (ADR-0037): a credit to the Construction deposit equal to the prior
-        // period's Deposit-interest credit (one period in arrears). Prefer the actual posted credit
-        // (ledger truth, matches the Verrekening to the cent); fall back to prior balance × monthly
-        // rate when none is posted yet; €0 (null) in the first month when neither applies.
+        // Deposit settlement (ADR-0037): a credit to the Construction deposit equal to the same
+        // period's Deposit-interest credit — the lender credits the deposit at the start of the
+        // month and withdraws it again with that month's payment. Prefer the actual posted credit
+        // (ledger truth, matches the Verrekening to the cent); fall back to balance × monthly rate
+        // when none is posted yet; €0 (null) in the first month when neither applies.
         LoanDepositSettlementOutput? depositSettlement = null;
         if (graph is { DepositAccountId: { } depositAccountId, DepositRate: { } depositRate })
         {
-            var priorMonth = requested.AddMonths(-1);
             var posted = await PostedInterestCreditAsync(
                 graph.DepositIncomeAccountId,
-                priorMonth,
+                requested,
                 cancellationToken
             );
 

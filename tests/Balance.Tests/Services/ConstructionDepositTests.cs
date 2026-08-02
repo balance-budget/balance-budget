@@ -23,7 +23,7 @@ internal sealed class ConstructionDepositTests : EndpointsTestsBase
     private const long MonthlyInterest = 30_000;
 
     [Test]
-    public async Task Proposal_settlement_reads_the_posted_prior_month_credit(
+    public async Task Proposal_settlement_reads_the_posted_same_month_credit(
         CancellationToken cancellationToken
     )
     {
@@ -34,8 +34,35 @@ internal sealed class ConstructionDepositTests : EndpointsTestsBase
         );
 
         var month = FirstOfMonth(DateOnly.FromDateTime(DateTime.UtcNow));
-        // Post a prior-month credit that differs from the balance × rate fallback so we can tell
+        // Post a same-month credit that differs from the balance × rate fallback so we can tell
         // the read-through from the estimate.
+        await fixture.PostInterestCreditAsync(2_500, month, cancellationToken);
+
+        var result = await fixture.ProjectionService.GetPaymentProposalAsync(
+            loan.Id,
+            month,
+            cancellationToken
+        );
+
+        await Assert.That(result.IsSuccess).IsTrue();
+        var settlement = result.Value!.DepositSettlement;
+        await Assert.That(settlement).IsNotNull();
+        await Assert.That(settlement!.Amount).IsEqualTo(2_500L);
+        await Assert.That(settlement.DepositAccountId).IsEqualTo(fixture.DepositAccountId);
+    }
+
+    [Test]
+    public async Task Proposal_settlement_ignores_a_prior_month_credit(
+        CancellationToken cancellationToken
+    )
+    {
+        await using var fixture = await SeedAsync(cancellationToken);
+        var loan = await fixture.CreateLoanWithDepositAsync(
+            DepositOpeningBalance,
+            cancellationToken
+        );
+
+        var month = FirstOfMonth(DateOnly.FromDateTime(DateTime.UtcNow));
         await fixture.PostInterestCreditAsync(
             2_500,
             month.AddMonths(-1).AddDays(14),
@@ -49,10 +76,12 @@ internal sealed class ConstructionDepositTests : EndpointsTestsBase
         );
 
         await Assert.That(result.IsSuccess).IsTrue();
-        var settlement = result.Value!.DepositSettlement;
-        await Assert.That(settlement).IsNotNull();
-        await Assert.That(settlement!.Amount).IsEqualTo(2_500L);
-        await Assert.That(settlement.DepositAccountId).IsEqualTo(fixture.DepositAccountId);
+        // The prior month's credit was already settled with the prior month's payment; this
+        // month's settlement falls back to the balance × rate estimate.
+        var expected = (DepositOpeningBalance + 2_500) * DepositRate / 100m / 12m;
+        await Assert
+            .That(result.Value!.DepositSettlement!.Amount)
+            .IsEqualTo((long)Math.Round(expected, 0, MidpointRounding.AwayFromZero));
     }
 
     [Test]
