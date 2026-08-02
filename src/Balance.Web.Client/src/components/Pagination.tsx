@@ -1,5 +1,6 @@
-import { Button } from 'react-aria-components';
+import { Button, Link } from 'react-aria-components';
 import { Trans, useLingui } from '@lingui/react/macro';
+import type { ToOptions } from '@tanstack/react-router';
 import { Icon, type IconName } from './Icon';
 import { cx } from '../lib/cx';
 
@@ -7,10 +8,12 @@ type PaginationProps = {
     page: number;
     pageSize: number;
     totalCount: number;
-    onPageChange: (page: number) => void;
+    /** Where a page number points. Pages are links so they can be opened in a new
+     *  tab and previewed like any other URL (ADR-0040). */
+    hrefForPage: (page: number) => ToOptions;
 };
 
-export function Pagination({ page, pageSize, totalCount, onPageChange }: PaginationProps) {
+export function Pagination({ page, pageSize, totalCount, hrefForPage }: PaginationProps) {
     const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
     const current = Math.min(page, totalPages);
     const hasPrev = current > 1;
@@ -36,10 +39,7 @@ export function Pagination({ page, pageSize, totalCount, onPageChange }: Paginat
                     label={t`Previous page`}
                     icon="chevron-right"
                     rotated
-                    disabled={!hasPrev}
-                    onClick={() => {
-                        onPageChange(current - 1);
-                    }}
+                    href={hasPrev ? hrefForPage(current - 1) : undefined}
                 />
                 {tokens.map((token, i) =>
                     token === 'ellipsis' ? (
@@ -55,19 +55,14 @@ export function Pagination({ page, pageSize, totalCount, onPageChange }: Paginat
                             key={token}
                             page={token}
                             current={current}
-                            onClick={() => {
-                                onPageChange(token);
-                            }}
+                            href={hrefForPage(token)}
                         />
                     ),
                 )}
                 <PageButton
                     label={t`Next page`}
                     icon="chevron-right"
-                    disabled={!hasNext}
-                    onClick={() => {
-                        onPageChange(current + 1);
-                    }}
+                    href={hasNext ? hrefForPage(current + 1) : undefined}
                 />
             </div>
         </div>
@@ -106,23 +101,18 @@ function buildPageTokens(current: number, totalPages: number): PageToken[] {
     return tokens;
 }
 
-function PageNumber({
-    page,
-    current,
-    onClick,
-}: {
-    page: number;
-    current: number;
-    onClick: () => void;
-}) {
+// The current page is not a link: it goes nowhere, and an anchor to the page
+// you're already on is noise for keyboard and screen-reader users.
+function PageNumber({ page, current, href }: { page: number; current: number; href: ToOptions }) {
     const { t } = useLingui();
     const isCurrent = page === current;
+    const Element = isCurrent ? Button : Link;
     return (
-        <Button
+        <Element
             aria-label={t`Page ${page}`}
             aria-current={isCurrent ? 'page' : undefined}
             isDisabled={isCurrent}
-            onPress={onClick}
+            href={isCurrent ? undefined : href}
             className={cx(
                 'min-w-[28px] px-2 py-1 rounded-lg text-xs tabular-nums text-center outline-none',
                 'data-[focus-visible]:ring-1 data-[focus-visible]:ring-brand-primary',
@@ -132,28 +122,30 @@ function PageNumber({
             )}
         >
             {page}
-        </Button>
+        </Element>
     );
 }
 
+// Without a target page there is nothing to link to, so the edge states stay
+// non-navigable rather than becoming href-less anchors.
 function PageButton({
     label,
     icon,
     rotated,
-    disabled,
-    onClick,
+    href,
 }: {
     label: string;
     icon: IconName;
     rotated?: boolean;
-    disabled: boolean;
-    onClick: () => void;
+    href: ToOptions | undefined;
 }) {
+    const disabled = href === undefined;
+    const Element = disabled ? Button : Link;
     return (
-        <Button
+        <Element
             aria-label={label}
             isDisabled={disabled}
-            onPress={onClick}
+            href={href}
             className={cx(
                 'p-2 rounded-lg text-fg-3 outline-none cursor-pointer',
                 'data-[hovered]:text-fg-1 data-[hovered]:bg-surface-2',
@@ -167,6 +159,6 @@ function PageButton({
                 strokeWidth={2}
                 className={rotated ? 'rotate-180' : undefined}
             />
-        </Button>
+        </Element>
     );
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ToOptions } from '@tanstack/react-router';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
     useCounterpartiesPage,
@@ -25,12 +26,12 @@ const PAGE_SIZE = 50;
 export function Counterparties({
     page,
     q,
-    onPageChange,
+    hrefForPage,
     onSearchChange,
 }: {
     page: number;
     q: string;
-    onPageChange: (p: number) => void;
+    hrefForPage: (page: number) => ToOptions;
     onSearchChange: (q: string) => void;
 }) {
     const { t } = useLingui();
@@ -69,7 +70,7 @@ export function Counterparties({
                 <CounterpartyList
                     page={page}
                     q={q}
-                    onPageChange={onPageChange}
+                    hrefForPage={hrefForPage}
                     onEdit={setEditing}
                     onDelete={setDeleting}
                 />
@@ -107,13 +108,13 @@ export function Counterparties({
 function CounterpartyList({
     page,
     q,
-    onPageChange,
+    hrefForPage,
     onEdit,
     onDelete,
 }: {
     page: number;
     q: string;
-    onPageChange: (p: number) => void;
+    hrefForPage: (page: number) => ToOptions;
     onEdit: (c: Counterparty) => void;
     onDelete: (c: Counterparty) => void;
 }) {
@@ -169,7 +170,7 @@ function CounterpartyList({
                 page={page}
                 pageSize={PAGE_SIZE}
                 totalCount={query.data.totalCount}
-                onPageChange={onPageChange}
+                hrefForPage={hrefForPage}
             />
         </div>
     );

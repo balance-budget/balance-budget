@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Trans, useLingui } from '@lingui/react/macro';
+import type { ToOptions } from '@tanstack/react-router';
 import { useNavigate } from '@tanstack/react-router';
 import { useAccounts, type Account } from '../api/accounts';
 import { useCounterparty, useDeleteCounterparty } from '../api/counterparties';
@@ -28,10 +29,10 @@ const PAGE_SIZE = 50;
 type Props = {
     id: CounterpartyId;
     page: number;
-    onPageChange: (page: number) => void;
+    hrefForPage: (page: number) => ToOptions;
 };
 
-export function CounterpartyDetail({ id, page, onPageChange }: Props) {
+export function CounterpartyDetail({ id, page, hrefForPage }: Props) {
     const { t } = useLingui();
     const query = useCounterparty(id);
     const [editing, setEditing] = useState(false);
@@ -107,7 +108,7 @@ export function CounterpartyDetail({ id, page, onPageChange }: Props) {
                 <JournalEntriesSection
                     counterpartyId={cp.id}
                     page={page}
-                    onPageChange={onPageChange}
+                    hrefForPage={hrefForPage}
                 />
             </Panel>
 
@@ -136,11 +137,11 @@ export function CounterpartyDetail({ id, page, onPageChange }: Props) {
 function JournalEntriesSection({
     counterpartyId,
     page,
-    onPageChange,
+    hrefForPage,
 }: {
     counterpartyId: CounterpartyId;
     page: number;
-    onPageChange: (page: number) => void;
+    hrefForPage: (page: number) => ToOptions;
 }) {
     const { t } = useLingui();
     const skip = (page - 1) * PAGE_SIZE;
@@ -209,7 +210,7 @@ function JournalEntriesSection({
                 page={page}
                 pageSize={PAGE_SIZE}
                 totalCount={entries.data.totalCount}
-                onPageChange={onPageChange}
+                hrefForPage={hrefForPage}
             />
         </div>
     );

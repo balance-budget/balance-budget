@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { plural } from '@lingui/core/macro';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
+import type { ToOptions } from '@tanstack/react-router';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { type Selection } from 'react-aria-components';
 import {
@@ -65,7 +66,7 @@ export function AccountDetail({
     page,
     q,
     filters,
-    onPageChange,
+    hrefForPage,
     onSearchChange,
     onFiltersChange,
 }: {
@@ -73,7 +74,7 @@ export function AccountDetail({
     page: number;
     q: string;
     filters: RegisterFilterState;
-    onPageChange: (p: number) => void;
+    hrefForPage: (page: number) => ToOptions;
     onSearchChange: (q: string) => void;
     onFiltersChange: (patch: Partial<RegisterFilterState>) => void;
 }) {
@@ -227,7 +228,7 @@ export function AccountDetail({
                     page={page}
                     q={q}
                     filters={filters}
-                    onPageChange={onPageChange}
+                    hrefForPage={hrefForPage}
                 />
             </Panel>
 
@@ -346,13 +347,13 @@ function RegisterTable({
     page,
     q,
     filters,
-    onPageChange,
+    hrefForPage,
 }: {
     account: Account;
     page: number;
     q: string;
     filters: RegisterFilterState;
-    onPageChange: (p: number) => void;
+    hrefForPage: (page: number) => ToOptions;
 }) {
     const { t } = useLingui();
     const skip = (page - 1) * REGISTER_PAGE_SIZE;
@@ -468,7 +469,7 @@ function RegisterTable({
                 page={page}
                 pageSize={REGISTER_PAGE_SIZE}
                 totalCount={register.data.totalCount}
-                onPageChange={onPageChange}
+                hrefForPage={hrefForPage}
             />
         </div>
     );

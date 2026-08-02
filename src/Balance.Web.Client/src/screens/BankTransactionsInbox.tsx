@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import type { ToOptions } from '@tanstack/react-router';
 import { Link } from '@tanstack/react-router';
 import { plural, t } from '@lingui/core/macro';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
@@ -94,7 +95,7 @@ type Props = {
     page: number;
     filter: BankTransactionFilter;
     q: string;
-    onPageChange: (page: number) => void;
+    hrefForPage: (page: number) => ToOptions;
     onFilterChange: (filter: BankTransactionFilter) => void;
     onSearchChange: (q: string) => void;
 };
@@ -103,7 +104,7 @@ export function BankTransactionsInbox({
     page,
     filter,
     q,
-    onPageChange,
+    hrefForPage,
     onFilterChange,
     onSearchChange,
 }: Props) {
@@ -133,7 +134,7 @@ export function BankTransactionsInbox({
                     filter={filter}
                     page={page}
                     search={debouncedQ}
-                    onPageChange={onPageChange}
+                    hrefForPage={hrefForPage}
                     onDismiss={setDismissing}
                 />
             </Panel>
@@ -184,7 +185,7 @@ function Body({
     filter,
     page,
     search,
-    onPageChange,
+    hrefForPage,
     onDismiss,
 }: {
     query: ReturnType<typeof useBankTransactions>;
@@ -192,7 +193,7 @@ function Body({
     filter: BankTransactionFilter;
     page: number;
     search: string;
-    onPageChange: (page: number) => void;
+    hrefForPage: (page: number) => ToOptions;
     onDismiss: (bt: BankTransaction) => void;
 }) {
     const { t } = useLingui();
@@ -241,7 +242,7 @@ function Body({
                 totalCount={query.data.totalCount}
                 catalog={catalog}
                 page={page}
-                onPageChange={onPageChange}
+                hrefForPage={hrefForPage}
                 onDismiss={onDismiss}
             />
         );
@@ -253,7 +254,7 @@ function Body({
             totalCount={query.data.totalCount}
             catalog={catalog}
             page={page}
-            onPageChange={onPageChange}
+            hrefForPage={hrefForPage}
             onDismiss={onDismiss}
         />
     );
@@ -264,14 +265,14 @@ function ReadOnlyList({
     totalCount,
     catalog,
     page,
-    onPageChange,
+    hrefForPage,
     onDismiss,
 }: {
     bankTransactions: BankTransaction[];
     totalCount: number;
     catalog: CurrencyCatalog;
     page: number;
-    onPageChange: (page: number) => void;
+    hrefForPage: (page: number) => ToOptions;
     onDismiss: (bt: BankTransaction) => void;
 }) {
     return (
@@ -305,7 +306,7 @@ function ReadOnlyList({
                 page={page}
                 pageSize={PAGE_SIZE}
                 totalCount={totalCount}
-                onPageChange={onPageChange}
+                hrefForPage={hrefForPage}
             />
         </div>
     );
@@ -485,14 +486,14 @@ function InboxEditor({
     totalCount,
     catalog,
     page,
-    onPageChange,
+    hrefForPage,
     onDismiss,
 }: {
     bankTransactions: BankTransaction[];
     totalCount: number;
     catalog: CurrencyCatalog;
     page: number;
-    onPageChange: (page: number) => void;
+    hrefForPage: (page: number) => ToOptions;
     onDismiss: (bt: BankTransaction) => void;
 }) {
     const { t } = useLingui();
@@ -543,7 +544,7 @@ function InboxEditor({
             bankAccounts={bankAccounts.data}
             catalog={catalog}
             page={page}
-            onPageChange={onPageChange}
+            hrefForPage={hrefForPage}
             onDismiss={onDismiss}
         />
     );
@@ -557,7 +558,7 @@ function InboxEditorReady({
     bankAccounts,
     catalog,
     page,
-    onPageChange,
+    hrefForPage,
     onDismiss,
 }: {
     bankTransactions: BankTransaction[];
@@ -567,7 +568,7 @@ function InboxEditorReady({
     bankAccounts: BankAccount[];
     catalog: CurrencyCatalog;
     page: number;
-    onPageChange: (page: number) => void;
+    hrefForPage: (page: number) => ToOptions;
     onDismiss: (bt: BankTransaction) => void;
 }) {
     const { t } = useLingui();
@@ -691,7 +692,7 @@ function InboxEditorReady({
                 page={page}
                 pageSize={PAGE_SIZE}
                 totalCount={totalCount}
-                onPageChange={onPageChange}
+                hrefForPage={hrefForPage}
             />
 
             {bulkDismissOpen && (

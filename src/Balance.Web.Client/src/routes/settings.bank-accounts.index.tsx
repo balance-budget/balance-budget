@@ -25,9 +25,11 @@ export const Route = createFileRoute('/settings/bank-accounts/')({
                 onOwnerChange={o => {
                     void navigate({ search: prev => ({ ...prev, owner: o, page: 1 }) });
                 }}
-                onPageChange={p => {
-                    void navigate({ search: prev => ({ ...prev, page: p }) });
-                }}
+                hrefForPage={p => ({
+                    from: Route.fullPath,
+                    to: '.',
+                    search: (prev: Record<string, unknown>) => ({ ...prev, page: p }),
+                })}
                 onSearchChange={value => {
                     void navigate({ search: prev => ({ ...prev, page: 1, q: value }) });
                 }}

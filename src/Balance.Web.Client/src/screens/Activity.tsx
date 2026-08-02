@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Trans, useLingui } from '@lingui/react/macro';
+import type { ToOptions } from '@tanstack/react-router';
 import { Link } from '@tanstack/react-router';
 import { useAccounts, type Account } from '../api/accounts';
 import { useJournalEntries, type JournalEntry } from '../api/journalEntries';
@@ -33,14 +34,14 @@ export function Activity({
     page,
     q,
     filters,
-    onPageChange,
+    hrefForPage,
     onSearchChange,
     onFiltersChange,
 }: {
     page: number;
     q: string;
     filters: ActivityFilterState;
-    onPageChange: (p: number) => void;
+    hrefForPage: (page: number) => ToOptions;
     onSearchChange: (q: string) => void;
     onFiltersChange: (patch: Partial<ActivityFilterState>) => void;
 }) {
@@ -83,7 +84,7 @@ export function Activity({
                 page={page}
                 query={debouncedQ}
                 filtered={filters.account !== null || filters.from !== '' || filters.to !== ''}
-                onPageChange={onPageChange}
+                hrefForPage={hrefForPage}
             />
         </Panel>
     );
@@ -134,14 +135,14 @@ function JournalBody({
     page,
     query,
     filtered,
-    onPageChange,
+    hrefForPage,
 }: {
     entries: ReturnType<typeof useJournalEntries>;
     accounts: Account[];
     page: number;
     query: string;
     filtered: boolean;
-    onPageChange: (p: number) => void;
+    hrefForPage: (page: number) => ToOptions;
 }) {
     const { t } = useLingui();
     const accountById = useMemo(
@@ -208,7 +209,7 @@ function JournalBody({
                 page={page}
                 pageSize={PAGE_SIZE}
                 totalCount={entries.data.totalCount}
-                onPageChange={onPageChange}
+                hrefForPage={hrefForPage}
             />
         </div>
     );
