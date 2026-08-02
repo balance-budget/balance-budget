@@ -22,8 +22,11 @@ import { CollectionSelectionCheckbox } from './collectionSelection';
  * values you scan/compare/sort down a column, with a column header. Selection,
  * select-all, and keyboard/range navigation come from RAC; styling reuses the
  * existing `@theme` tokens so it matches the previous native `<table>` chrome.
+ *
+ * `onRowAction` is omitted on purpose: a row that navigates does so with `href`
+ * on the `Row` plus a `RowLink` in the row-header cell (ADR-0040).
  */
-export function Table(props: TableProps & { children?: React.ReactNode }) {
+export function Table(props: Omit<TableProps, 'onRowAction'> & { children?: React.ReactNode }) {
     return (
         <AriaTable
             {...props}

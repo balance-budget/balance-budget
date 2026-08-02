@@ -13,10 +13,11 @@ import { Panel, SectionHead } from '../components/Panel';
 import { usePageHeader } from '../components/PageHeader';
 import { ProjectionAmount } from '../components/ProjectionAmount';
 import { Skeleton } from '../components/Skeleton';
+import { RowLink } from '../components/ui/RowLink';
 import { Cell, Column, Row, Table, TableBody, TableHeader } from '../components/ui/Table';
 import { useToast } from '../components/ui/Toast';
 import { formatTableDate } from '../lib/dates';
-import { type AccountId, type CounterpartyId, type JournalEntryId } from '../lib/domain';
+import { type AccountId, type CounterpartyId } from '../lib/domain';
 import { handleActionError } from '../lib/formErrors';
 import { projectEntry } from '../lib/journalProjection';
 import { LinkedBankAccountsSection } from './LinkedBankAccounts';
@@ -142,7 +143,6 @@ function JournalEntriesSection({
     onPageChange: (page: number) => void;
 }) {
     const { t } = useLingui();
-    const navigate = useNavigate();
     const skip = (page - 1) * PAGE_SIZE;
     const entries = useJournalEntries(skip, PAGE_SIZE, '', { counterpartyId });
     const accounts = useAccounts();
@@ -182,20 +182,12 @@ function JournalEntriesSection({
     return (
         <div className="flex flex-col">
             <div className="overflow-x-auto">
-                <Table
-                    aria-label={t`Journal entries`}
-                    onRowAction={key => {
-                        void navigate({
-                            to: '/journal/$id',
-                            params: { id: key as JournalEntryId },
-                        });
-                    }}
-                >
+                <Table aria-label={t`Journal entries`}>
                     <TableHeader>
-                        <Column isRowHeader width={100}>
+                        <Column width={100}>
                             <Trans>Date</Trans>
                         </Column>
-                        <Column>
+                        <Column isRowHeader>
                             <Trans>Description</Trans>
                         </Column>
                         <Column width={200}>
@@ -232,10 +224,13 @@ function CounterpartyEntryRow({
 }) {
     const projection = projectEntry(entry, accountById);
     const description = entry.description ?? '—';
+    const href = { to: '/journal/$id', params: { id: String(entry.id) } } as const;
     return (
-        <Row id={entry.id} className="cursor-pointer">
+        <Row id={entry.id} href={href} className="cursor-pointer">
             <Cell className="text-xs text-fg-3 tabular-nums">{formatTableDate(entry.date)}</Cell>
-            <Cell className="text-sm text-fg-1 truncate">{description}</Cell>
+            <Cell className="text-sm text-fg-1 truncate">
+                <RowLink href={href}>{description}</RowLink>
+            </Cell>
             <Cell className="text-xs text-fg-2">
                 <AccountLegs legs={projection.fromLegs} />
             </Cell>

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { msg, t } from '@lingui/core/macro';
 import type { MessageDescriptor } from '@lingui/core';
@@ -26,6 +25,7 @@ import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/ui/Toast';
 import { SearchField } from '../components/ui/SearchField';
 import { ToggleButton, ToggleButtonGroup } from '../components/ui/ToggleButtonGroup';
+import { RowLink } from '../components/ui/RowLink';
 import { Cell, Column, Row, Table, TableBody, TableHeader } from '../components/ui/Table';
 import type { BankAccountId } from '../lib/domain';
 import { handleActionError } from '../lib/formErrors';
@@ -141,7 +141,6 @@ function BankAccountList({
     onPageChange: (page: number) => void;
 }) {
     const { t } = useLingui();
-    const navigate = useNavigate();
     const skip = (page - 1) * PAGE_SIZE;
     const debouncedQ = useDebouncedValue(q, 200);
     const query = useBankAccountsPage(skip, PAGE_SIZE, debouncedQ, owner);
@@ -200,15 +199,7 @@ function BankAccountList({
     return (
         <div>
             <div className="overflow-x-auto">
-                <Table
-                    aria-label={t`Bank accounts`}
-                    onRowAction={key => {
-                        void navigate({
-                            to: '/settings/bank-accounts/$id',
-                            params: { id: key as BankAccountId },
-                        });
-                    }}
-                >
+                <Table aria-label={t`Bank accounts`}>
                     <TableHeader>
                         <Column isRowHeader>
                             <Trans>Bank account</Trans>
@@ -260,11 +251,15 @@ function BankAccountRow({
 }) {
     const { t } = useLingui();
     const ownerKind = bankAccount.accountId ? t`Account` : t`Counterparty`;
+    const href = {
+        to: '/settings/bank-accounts/$id',
+        params: { id: String(bankAccount.id) },
+    } as const;
 
     return (
-        <Row id={bankAccount.id} className="cursor-pointer">
+        <Row id={bankAccount.id} href={href} className="cursor-pointer">
             <Cell>
-                <div className="flex items-center gap-3">
+                <RowLink href={href} className="flex items-center gap-3">
                     <span className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-xl bg-brand-primary-soft text-brand-primary">
                         <Icon
                             name={bankAccountTypeIcon(bankAccount.type)}
@@ -280,7 +275,7 @@ function BankAccountRow({
                             {formatBankAccountSubline(bankAccount)}
                         </span>
                     </div>
-                </div>
+                </RowLink>
             </Cell>
             <Cell>
                 <div className="flex flex-col leading-tight">

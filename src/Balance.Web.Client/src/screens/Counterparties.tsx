@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useNavigate } from '@tanstack/react-router';
 import {
     useCounterpartiesPage,
     useDeleteCounterparty,
@@ -15,6 +14,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useToast } from '../components/ui/Toast';
 import { Cell, Column, Row, Table, TableBody, TableHeader } from '../components/ui/Table';
 import { RowActions } from '../components/ui/RowActions';
+import { RowLink } from '../components/ui/RowLink';
 import { SearchField } from '../components/ui/SearchField';
 import { handleActionError } from '../lib/formErrors';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
@@ -185,19 +185,9 @@ function CounterpartyTable({
     onDelete: (c: Counterparty) => void;
 }) {
     const { t } = useLingui();
-    const navigate = useNavigate();
     return (
         <div className="overflow-x-auto">
-            <Table
-                aria-label={t`Counterparties`}
-                onRowAction={key => {
-                    void navigate({
-                        to: '/counterparties/$id',
-                        search: { page: 1 },
-                        params: { id: String(key) },
-                    });
-                }}
-            >
+            <Table aria-label={t`Counterparties`}>
                 <TableHeader>
                     <Column isRowHeader>
                         <Trans>Name</Trans>
@@ -226,9 +216,16 @@ function CounterpartyRow({
     onDelete: (c: Counterparty) => void;
 }) {
     const { t } = useLingui();
+    const href = {
+        to: '/counterparties/$id',
+        params: { id: String(counterparty.id) },
+        search: { page: 1 },
+    } as const;
     return (
-        <Row id={counterparty.id} className="cursor-pointer">
-            <Cell className="text-sm font-medium text-fg-1 truncate">{counterparty.name}</Cell>
+        <Row id={counterparty.id} href={href} className="cursor-pointer">
+            <Cell className="text-sm font-medium text-fg-1 truncate">
+                <RowLink href={href}>{counterparty.name}</RowLink>
+            </Cell>
             <Cell className="text-right">
                 <RowActions
                     actions={[

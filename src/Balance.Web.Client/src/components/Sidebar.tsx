@@ -6,16 +6,17 @@ import { Button } from 'react-aria-components';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import logo from '../assets/logo.svg';
 import { Icon, type IconName } from './Icon';
-import { accountIdentifier, useAccounts, type Account } from '../api/accounts';
+import { accountIdentifier, accountRegisterLink, useAccounts, type Account } from '../api/accounts';
 import { useCurrentUser, useLogout } from '../api/auth';
 import { useCurrencyCatalog } from '../api/currencies';
 import { AccountAvatar } from './AccountAvatar';
 import { AccountTreeSections, type AccountRowContext } from './AccountTree';
+import { RowLink } from './ui/RowLink';
 import { TreeExpandButton } from './ui/Tree';
 import { Skeleton } from './Skeleton';
 import { ErrorState } from './ErrorState';
 import { cx } from '../lib/cx';
-import { isLedgerAccount, type AccountId, type AccountType } from '../lib/domain';
+import { isLedgerAccount, type AccountType } from '../lib/domain';
 import { formatMoney } from '../lib/money';
 
 const SIDEBAR_TYPE_ORDER: AccountType[] = ['Asset', 'Liability', 'Income', 'Expense'];
@@ -211,14 +212,14 @@ function SidebarAccountRow({ account, ctx }: { account: Account; ctx: AccountRow
                 )}
             >
                 <AccountAvatar account={account} />
-                <div className="flex-1 min-w-0 flex flex-col leading-tight">
+                <RowLink href={ctx.href} className="flex-1 min-w-0 flex flex-col leading-tight">
                     <span className="truncate text-sm">{account.name}</span>
                     {identifier && (
                         <span className="text-xs text-fg-3 truncate tabular-nums">
                             {identifier}
                         </span>
                     )}
-                </div>
+                </RowLink>
                 {showBalance && (
                     <span
                         className={cx(
@@ -252,7 +253,6 @@ function SidebarAccountRow({ account, ctx }: { account: Account; ctx: AccountRow
 
 function AccountsGroup() {
     const { t } = useLingui();
-    const navigate = useNavigate();
     const { data, isPending, isError, refetch } = useAccounts();
     const pathname = useRouterState({ select: s => s.location.pathname });
     const [expandedIds, setExpandedIds] = useState<Set<string>>(loadExpandedIds);
@@ -330,21 +330,7 @@ function AccountsGroup() {
                 onExpandedChange={keys => {
                     setExpandedIds(new Set([...keys].map(String)));
                 }}
-                onAction={(key: AccountId) => {
-                    void navigate({
-                        to: '/accounts/$id',
-                        params: { id: key },
-                        search: {
-                            page: 1,
-                            q: '',
-                            posted: '',
-                            counter: '',
-                            from: '',
-                            to: '',
-                            status: '',
-                        },
-                    });
-                }}
+                rowHref={accountRegisterLink}
                 renderHeading={label => <SectionLabel>{label}</SectionLabel>}
                 renderRow={(account, ctx) => <SidebarAccountRow account={account} ctx={ctx} />}
             />

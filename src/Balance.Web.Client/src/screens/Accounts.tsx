@@ -1,11 +1,17 @@
 import { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { msg } from '@lingui/core/macro';
 import type { MessageDescriptor } from '@lingui/core';
-import { accountIdentifier, useAccounts, useDeleteAccount, type Account } from '../api/accounts';
+import {
+    accountIdentifier,
+    accountRegisterLink,
+    useAccounts,
+    useDeleteAccount,
+    type Account,
+} from '../api/accounts';
 import { AccountAvatar } from '../components/AccountAvatar';
 import { AccountTreeSections, type AccountRowContext } from '../components/AccountTree';
+import { RowLink } from '../components/ui/RowLink';
 import { TreeExpandButton } from '../components/ui/Tree';
 import { Amount } from '../components/Amount';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -92,7 +98,6 @@ function AccountList({
     onDelete: (a: Account) => void;
 }) {
     const { t } = useLingui();
-    const navigate = useNavigate();
     const query = useAccounts();
 
     if (query.isPending) {
@@ -130,21 +135,7 @@ function AccountList({
             typeOrder={TYPE_ORDER}
             typeLabels={TYPE_LABELS}
             defaultExpandedKeys="all"
-            onAction={key => {
-                void navigate({
-                    to: '/accounts/$id',
-                    params: { id: key },
-                    search: {
-                        page: 1,
-                        q: '',
-                        posted: '',
-                        counter: '',
-                        from: '',
-                        to: '',
-                        status: '',
-                    },
-                });
-            }}
+            rowHref={accountRegisterLink}
             renderHeading={label => (
                 <h3 className="text-xs font-medium text-fg-3 tracking-widest uppercase pb-1 mb-1 border-b border-border-soft">
                     {label}
@@ -185,7 +176,7 @@ function AccountRow({
                 <span className="shrink-0 w-[22px]" aria-hidden="true" />
             )}
             <AccountAvatar account={account} size="md" />
-            <div className="flex flex-col gap-[2px] flex-1 min-w-0">
+            <RowLink href={ctx.href} className="flex flex-col gap-[2px] flex-1 min-w-0">
                 <span className="flex items-center gap-2 min-w-0">
                     {!account.isPostable ? (
                         <Icon
@@ -206,7 +197,7 @@ function AccountRow({
                     {account.code}
                     {identifier ? ` · ${identifier}` : ''}
                 </span>
-            </div>
+            </RowLink>
             <Amount
                 minor={account.balance.amount}
                 currencyCode={account.balance.currencyCode}

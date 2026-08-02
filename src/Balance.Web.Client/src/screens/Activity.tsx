@@ -1,11 +1,12 @@
 import { useMemo } from 'react';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { useAccounts, type Account } from '../api/accounts';
 import { useJournalEntries, type JournalEntry } from '../api/journalEntries';
 import { AccountSelect } from '../components/AccountSelect';
 import { DateRangePicker } from '../components/ui/DateRangePicker';
 import { SearchField } from '../components/ui/SearchField';
+import { RowLink } from '../components/ui/RowLink';
 import { Cell, Column, Row, Table, TableBody, TableHeader } from '../components/ui/Table';
 import { ErrorState } from '../components/ErrorState';
 import { AccountLegs } from '../components/AccountLegs';
@@ -221,16 +222,10 @@ function JournalTable({
     accountById: ReadonlyMap<AccountId, Account>;
 }) {
     const { t } = useLingui();
-    const navigate = useNavigate();
     return (
-        <Table
-            aria-label={t`Activity`}
-            onRowAction={key => {
-                void navigate({ to: '/journal/$id', params: { id: String(key) } });
-            }}
-        >
+        <Table aria-label={t`Activity`}>
             <TableHeader>
-                <Column isRowHeader width={100}>
+                <Column width={100}>
                     <Trans>Date</Trans>
                 </Column>
                 <Column width={24}>
@@ -238,7 +233,7 @@ function JournalTable({
                         <Trans>Source</Trans>
                     </span>
                 </Column>
-                <Column>
+                <Column isRowHeader>
                     <Trans>Counterparty</Trans>
                 </Column>
                 <Column width={200}>
@@ -267,8 +262,9 @@ function JournalRow({
 }) {
     const projection = projectEntry(entry, accountById);
     const heading = entry.counterpartyName ?? entry.description ?? '—';
+    const href = { to: '/journal/$id', params: { id: String(entry.id) } } as const;
     return (
-        <Row id={entry.id} className="cursor-pointer">
+        <Row id={entry.id} href={href} className="cursor-pointer">
             <Cell className="text-xs text-fg-3 tabular-nums">{formatTableDate(entry.date)}</Cell>
             <Cell className="text-fg-3">
                 {entry.hasBankTransactions ? (
@@ -276,7 +272,9 @@ function JournalRow({
                 ) : null}
             </Cell>
             <Cell>
-                <span className="text-sm text-fg-1 truncate block">{heading}</span>
+                <RowLink href={href} className="block min-w-0">
+                    <span className="text-sm text-fg-1 truncate block">{heading}</span>
+                </RowLink>
             </Cell>
             <Cell className="text-xs text-fg-2">
                 <AccountLegs legs={projection.fromLegs} />
