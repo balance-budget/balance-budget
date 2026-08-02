@@ -5,7 +5,7 @@ import { I18nProvider } from '@lingui/react';
 import { createMemoryHistory, createRootRoute, createRouter } from '@tanstack/react-router';
 import { RouterProvider as AriaRouterProvider } from 'react-aria-components';
 import { i18n } from './i18n/i18n';
-import { ariaRouterProps } from './lib/ariaRouter';
+import { ariaRouterProps } from './lib/router';
 
 /**
  * A router with no routes: `buildLocation` still interpolates `to` + params +

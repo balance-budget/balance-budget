@@ -13,8 +13,7 @@ import {
     ModalOverlay,
     SearchField,
 } from 'react-aria-components';
-import { useNavigate } from '@tanstack/react-router';
-import { useAccountIndex } from '../api/accounts';
+import { accountRegisterLink, useAccountIndex } from '../api/accounts';
 import { useSearch } from '../api/search';
 import { accountPathText } from '../lib/accountTree';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
@@ -36,7 +35,6 @@ export function Launcher({ open, onClose }: LauncherProps) {
     const { t } = useLingui();
     const [query, setQuery] = useState('');
     const debounced = useDebouncedValue(query, 200);
-    const navigate = useNavigate();
     const search = useSearch(debounced);
     const byId = useAccountIndex();
 
@@ -129,22 +127,8 @@ export function Launcher({ open, onClose }: LauncherProps) {
                                                 />
                                             }
                                             secondary={hit.accountType}
-                                            onAction={() => {
-                                                close();
-                                                void navigate({
-                                                    to: '/accounts/$id',
-                                                    params: { id: hit.id },
-                                                    search: {
-                                                        page: 1,
-                                                        q: '',
-                                                        posted: '',
-                                                        counter: '',
-                                                        from: '',
-                                                        to: '',
-                                                        status: '',
-                                                    },
-                                                });
-                                            }}
+                                            href={accountRegisterLink(hit.id)}
+                                            onAction={close}
                                         />
                                     ))}
                                 </ResultSection>
@@ -160,14 +144,12 @@ export function Launcher({ open, onClose }: LauncherProps) {
                                             textValue={hit.name}
                                             icon="user"
                                             primary={hit.name}
-                                            onAction={() => {
-                                                close();
-                                                void navigate({
-                                                    to: '/counterparties/$id',
-                                                    params: { id: hit.id },
-                                                    search: { page: 1 },
-                                                });
+                                            href={{
+                                                to: '/counterparties/$id',
+                                                params: { id: hit.id },
+                                                search: { page: 1 },
                                             }}
+                                            onAction={close}
                                         />
                                     ))}
                                 </ResultSection>
@@ -196,13 +178,11 @@ export function Launcher({ open, onClose }: LauncherProps) {
                                                     hit.cardIdentifier ??
                                                     null
                                                 }
-                                                onAction={() => {
-                                                    close();
-                                                    void navigate({
-                                                        to: '/settings/bank-accounts/$id',
-                                                        params: { id: hit.id },
-                                                    });
+                                                href={{
+                                                    to: '/settings/bank-accounts/$id',
+                                                    params: { id: hit.id },
                                                 }}
+                                                onAction={close}
                                             />
                                         );
                                     })}
@@ -220,13 +200,8 @@ export function Launcher({ open, onClose }: LauncherProps) {
                                             icon="book-open"
                                             primary={hit.description ?? t`(no description)`}
                                             secondary={hit.date}
-                                            onAction={() => {
-                                                close();
-                                                void navigate({
-                                                    to: '/journal/$id',
-                                                    params: { id: hit.id },
-                                                });
-                                            }}
+                                            href={{ to: '/journal/$id', params: { id: hit.id } }}
+                                            onAction={close}
                                         />
                                     ))}
                                 </ResultSection>
@@ -243,10 +218,8 @@ export function Launcher({ open, onClose }: LauncherProps) {
                                             icon="arrow-right"
                                             primary={hit.label}
                                             secondary={hit.route}
-                                            onAction={() => {
-                                                close();
-                                                void navigate({ to: hit.route });
-                                            }}
+                                            href={{ to: hit.route }}
+                                            onAction={close}
                                         />
                                     ))}
                                 </ResultSection>

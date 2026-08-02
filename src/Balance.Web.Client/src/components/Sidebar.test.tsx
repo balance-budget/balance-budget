@@ -13,7 +13,7 @@ import { describe, expect, it } from 'vitest';
 import { accountsKeys, type Account } from '../api/accounts';
 import { authKeys } from '../api/auth';
 import { i18n } from '../i18n/i18n';
-import { ariaRouterProps } from '../lib/ariaRouter';
+import { ariaRouterProps } from '../lib/router';
 import { asAccountId } from '../lib/domain';
 import { Sidebar } from './Sidebar';
 

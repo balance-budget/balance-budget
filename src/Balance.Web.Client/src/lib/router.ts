@@ -21,3 +21,12 @@ export function ariaRouterProps(router: AnyRouter) {
             typeof href === 'string' ? href : router.buildLocation(href).href,
     };
 }
+
+/**
+ * Narrows a route path that the backend supplies (the searchable page index) to
+ * the SPA's known routes. The backend mirrors this route table, so a mismatch is
+ * a deployment skew rather than something a caller can handle.
+ */
+export function asRoutePath(route: string): ToOptions['to'] {
+    return route as ToOptions['to'];
+}
