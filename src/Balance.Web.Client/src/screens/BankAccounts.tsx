@@ -302,7 +302,7 @@ export function BankAccountDetail({ id }: { id: BankAccountId }) {
     // breadcrumb; this panel keeps the actions and the detail fields.
     usePageHeader({
         title: query.data ? formatBankAccountLabel(query.data) : undefined,
-        breadcrumb: [{ label: t`Bank accounts`, to: '/settings/bank-accounts' }],
+        breadcrumb: [{ label: t`Bank accounts`, href: { to: '/settings/bank-accounts' } }],
     });
 
     if (query.isPending) {

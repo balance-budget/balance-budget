@@ -51,7 +51,7 @@ function currencyFormat(currencyCode: string | null | undefined): Intl.NumberFor
 
 export function JournalNew({ prefillAccountId }: { prefillAccountId: AccountId | null }) {
     const { t } = useLingui();
-    usePageHeader({ breadcrumb: [{ label: t`Activity`, to: '/activity' }] });
+    usePageHeader({ breadcrumb: [{ label: t`Activity`, href: { to: '/activity' } }] });
     const accounts = useAccounts();
     const counterparties = useCounterparties();
     const catalog = useCurrencyCatalog();

@@ -40,7 +40,7 @@ export function CounterpartyDetail({ id, page, onPageChange }: Props) {
     // breadcrumb; the entity actions ride on the first content section below.
     usePageHeader({
         title: query.data?.name,
-        breadcrumb: [{ label: t`Counterparties`, to: '/counterparties' }],
+        breadcrumb: [{ label: t`Counterparties`, href: { to: '/counterparties' } }],
     });
 
     if (query.isPending) {
