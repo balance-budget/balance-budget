@@ -2,6 +2,7 @@ import { type ReactNode } from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { type MessageDescriptor } from '@lingui/core';
 import { Collection, type Key, type Selection } from 'react-aria-components';
+import type { ToOptions } from '@tanstack/react-router';
 import { type Account } from '../api/accounts';
 import { accountIndexFor, buildChildrenMap, groupRootsByType } from '../lib/accountTree';
 import { type AccountId, type AccountType } from '../lib/domain';
@@ -20,6 +21,9 @@ export type AccountRowContext = {
     /** Whether this row's parent is itself the last child of the grandparent.
      *  Drives whether the parent band also closes here (a doubly-closed bottom). */
     parentIsLastChild: boolean;
+    /** Where the row navigates, for the anchor the row content wraps its label in
+     *  (ADR-0040). Absent when the tree isn't navigable. */
+    href?: ToOptions;
 };
 
 type AccountTreeSectionsProps = {
@@ -33,8 +37,8 @@ type AccountTreeSectionsProps = {
     expandedKeys?: Iterable<Key>;
     onExpandedChange?: (keys: Set<Key>) => void;
     defaultExpandedKeys?: Iterable<Key> | 'all';
-    /** Whole-row action (e.g. navigate to the register). */
-    onAction?: (key: AccountId) => void;
+    /** Where a row navigates (e.g. the account's register). Omit for a static tree. */
+    rowHref?: (id: AccountId) => ToOptions;
     /** Per-`<Tree>` (type-section) class, e.g. inter-row gap. */
     treeClassName?: string;
 };
@@ -53,7 +57,7 @@ export function AccountTreeSections({
     expandedKeys,
     onExpandedChange,
     defaultExpandedKeys,
-    onAction,
+    rowHref,
     treeClassName,
 }: AccountTreeSectionsProps) {
     const { i18n } = useLingui();
@@ -70,8 +74,9 @@ export function AccountTreeSections({
         const parentSiblings = parent ? (childrenByParent.get(parent.parentId) ?? []) : [];
         const parentIsLastChild =
             parent !== undefined && parentSiblings[parentSiblings.length - 1]?.id === parent.id;
+        const href = rowHref?.(account.id);
         return (
-            <TreeItem id={account.id} textValue={account.name}>
+            <TreeItem id={account.id} textValue={account.name} href={href}>
                 <TreeItemContent>
                     {({ level, hasChildItems, isExpanded }) =>
                         renderRow(account, {
@@ -81,6 +86,7 @@ export function AccountTreeSections({
                             isFirstChild,
                             isLastChild,
                             parentIsLastChild,
+                            href,
                         })
                     }
                 </TreeItemContent>
@@ -113,13 +119,6 @@ export function AccountTreeSections({
                             items={roots}
                             selectionMode="none"
                             {...selectionProps}
-                            {...(onAction
-                                ? {
-                                      onAction: (key: Key) => {
-                                          onAction(key as AccountId);
-                                      },
-                                  }
-                                : {})}
                         >
                             {renderItem}
                         </Tree>

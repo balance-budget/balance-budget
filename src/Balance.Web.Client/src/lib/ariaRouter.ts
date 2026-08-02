@@ -15,6 +15,9 @@ export function ariaRouterProps(router: AnyRouter) {
         ) => {
             void router.navigate({ ...href, ...routerOptions });
         },
-        useHref: (href: ToOptions) => router.buildLocation(href).href,
+        // React Aria resolves `props.href ?? ''` for every link-capable component,
+        // so hrefless ones arrive here as an empty string rather than an object.
+        useHref: (href: ToOptions) =>
+            typeof href === 'string' ? href : router.buildLocation(href).href,
     };
 }

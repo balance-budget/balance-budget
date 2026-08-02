@@ -16,8 +16,11 @@ import { composeTailwindRenderProps } from './compose';
  * (ADR-0035): `role="treeitem"`, `aria-level`, set-size, and arrow-key
  * expand/collapse come from RAC. Type grouping stays outside the tree (one
  * `<Tree>` per type section) because RAC `Tree` has no `Section`.
+ *
+ * `onAction` is omitted on purpose: a row that navigates does so with `href` on
+ * the `TreeItem` plus a real anchor around the row's label (ADR-0040).
  */
-export function Tree<T extends object>(props: TreeProps<T>) {
+export function Tree<T extends object>(props: Omit<TreeProps<T>, 'onAction'>) {
     return (
         <AriaTree
             {...props}

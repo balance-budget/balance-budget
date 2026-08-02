@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { useLoans, type Loan } from '../api/loans';
 import { Amount } from '../components/Amount';
@@ -7,6 +6,7 @@ import { Empty } from '../components/Empty';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
 import { Panel, SectionHead } from '../components/Panel';
+import { RowLink } from '../components/ui/RowLink';
 import { Skeleton } from '../components/Skeleton';
 import { Cell, Column, Row, Table, TableBody, TableHeader } from '../components/ui/Table';
 import { LoanFormModal } from './LoanForm';
@@ -91,14 +91,8 @@ function LoanList({ loans }: { loans: ReturnType<typeof useLoans> }) {
 }
 
 function LoanTable({ loans, label }: { loans: Loan[]; label: string }) {
-    const navigate = useNavigate();
     return (
-        <Table
-            aria-label={label}
-            onRowAction={key => {
-                void navigate({ to: '/loans/$id', params: { id: String(key) } });
-            }}
-        >
+        <Table aria-label={label}>
             <TableHeader>
                 <Column isRowHeader>
                     <Trans>Loan</Trans>
@@ -119,10 +113,11 @@ function LoanTable({ loans, label }: { loans: Loan[]; label: string }) {
 }
 
 function LoanRow({ loan }: { loan: Loan }) {
+    const href = { to: '/loans/$id', params: { id: String(loan.id) } } as const;
     return (
-        <Row id={loan.id} className="cursor-pointer">
+        <Row id={loan.id} href={href} className="cursor-pointer">
             <Cell>
-                <div className="min-w-0">
+                <RowLink href={href} className="block min-w-0">
                     <div className="flex items-center gap-2">
                         <Icon name="landmark" size={16} strokeWidth={1.75} className="text-fg-3" />
                         <span className="text-sm font-medium text-fg-1 truncate">{loan.name}</span>
@@ -136,7 +131,7 @@ function LoanRow({ loan }: { loan: Loan }) {
                         {loan.lenderName} ·{' '}
                         <Plural value={loan.partCount} one="# part" other="# parts" />
                     </div>
-                </div>
+                </RowLink>
             </Cell>
             <Cell className="text-right">
                 <Amount

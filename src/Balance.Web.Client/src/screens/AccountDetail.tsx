@@ -26,6 +26,7 @@ import { Amount } from '../components/Amount';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { DateRangePicker } from '../components/ui/DateRangePicker';
 import { SearchField } from '../components/ui/SearchField';
+import { RowLink } from '../components/ui/RowLink';
 import { Cell, Column, Row, Table, TableBody, TableHeader } from '../components/ui/Table';
 import { ErrorState } from '../components/ErrorState';
 import { Icon } from '../components/Icon';
@@ -354,7 +355,6 @@ function RegisterTable({
     onPageChange: (p: number) => void;
 }) {
     const { t } = useLingui();
-    const navigate = useNavigate();
     const skip = (page - 1) * REGISTER_PAGE_SIZE;
     const debouncedQ = useDebouncedValue(q, 200);
     const registerFilters: RegisterFilters = { q: debouncedQ, ...filters };
@@ -372,11 +372,6 @@ function RegisterTable({
     const visibleSelected = useMemo(() => prunePageSelection(rows, selected), [rows, selected]);
     const selectableIds = useMemo(() => selectableLineIds(rows), [rows]);
     const disabledKeys = useMemo(() => disabledLineKeys(rows), [rows]);
-    const entryIdByLine = useMemo(
-        () => new Map(rows.map(r => [r.journalLineId, r.journalEntryId])),
-        [rows],
-    );
-
     if (register.isPending) {
         return (
             <div className="flex flex-col gap-2">
@@ -437,18 +432,12 @@ function RegisterTable({
                     disabledKeys={disabledKeys}
                     selectedKeys={visibleSelected}
                     onSelectionChange={onSelectionChange}
-                    onRowAction={key => {
-                        const entryId = entryIdByLine.get(key as JournalLineId);
-                        if (entryId !== undefined) {
-                            void navigate({ to: '/journal/$id', params: { id: entryId } });
-                        }
-                    }}
                 >
                     <TableHeader>
-                        <Column isRowHeader width={100}>
+                        <Column width={100}>
                             <Trans>Date</Trans>
                         </Column>
-                        <Column>
+                        <Column isRowHeader>
                             <Trans>Description</Trans>
                         </Column>
                         {showAccountColumn ? (
@@ -598,16 +587,17 @@ function RegisterRowView({
 }) {
     const negative = row.amount.amount < 0;
     const heading = row.counterpartyName ?? row.entryDescription ?? '—';
+    const href = { to: '/journal/$id', params: { id: String(row.journalEntryId) } } as const;
     return (
-        <Row id={id} className="cursor-pointer">
+        <Row id={id} href={href} className="cursor-pointer">
             <Cell className="text-xs text-fg-3 tabular-nums">{formatTableDate(row.date)}</Cell>
             <Cell>
-                <div className="flex flex-col min-w-0">
+                <RowLink href={href} className="flex flex-col min-w-0">
                     <span className="text-sm text-fg-1 truncate">{heading}</span>
                     {row.lineDescription ? (
                         <span className="text-xs text-fg-3 truncate">{row.lineDescription}</span>
                     ) : null}
-                </div>
+                </RowLink>
             </Cell>
             {showAccountColumn ? (
                 <Cell className="text-xs text-fg-2">

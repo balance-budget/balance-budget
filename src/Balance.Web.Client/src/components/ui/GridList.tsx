@@ -20,11 +20,14 @@ export type GridListVariant = 'card' | 'flat';
  * inside a row are secondary tab stops within the focused row. Selection,
  * select-all, and shift/keyboard range selection come from RAC when a
  * `selectionMode` is set; styling reuses the existing `@theme` tokens.
+ *
+ * `onAction` is omitted on purpose: a row that navigates does so with `href`
+ * (ADR-0040).
  */
 export function GridList<T extends object>({
     variant = 'card',
     ...props
-}: GridListProps<T> & { variant?: GridListVariant }) {
+}: Omit<GridListProps<T>, 'onAction'> & { variant?: GridListVariant }) {
     return (
         <AriaGridList
             {...props}
