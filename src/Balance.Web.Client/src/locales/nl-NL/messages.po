@@ -200,6 +200,9 @@ msgstr "Rekening"
 msgid "Account (mixed currencies)"
 msgstr "Rekening (gemengde valuta)"
 
+msgid "Account balances over time"
+msgstr "Rekeningsaldi in de tijd"
+
 msgid "Account code"
 msgstr "Rekeningcode"
 
@@ -2180,6 +2183,9 @@ msgstr "Geselecteerde rijen omvatten {0}. Rekening kan niet in bulk worden toege
 
 msgid "SEPA creditor ID"
 msgstr "SEPA-incassant-ID"
+
+msgid "Series visibility"
+msgstr "Zichtbaarheid van reeksen"
 
 msgid "Set an importer on this bank account to enable statement imports."
 msgstr "Stel een importer in op deze bankrekening om afschriftimports in te schakelen."

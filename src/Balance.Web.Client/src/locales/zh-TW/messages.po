@@ -200,6 +200,9 @@ msgstr "帳戶"
 msgid "Account (mixed currencies)"
 msgstr "帳戶（多幣別）"
 
+msgid "Account balances over time"
+msgstr "帳戶餘額變化"
+
 msgid "Account code"
 msgstr "帳戶代碼"
 
@@ -2180,6 +2183,9 @@ msgstr "選取的列橫跨 {0}。帳戶無法批次套用。"
 
 msgid "SEPA creditor ID"
 msgstr "SEPA 收款人 ID"
+
+msgid "Series visibility"
+msgstr "數列顯示狀態"
 
 msgid "Set an importer on this bank account to enable statement imports."
 msgstr "在此銀行帳戶設定匯入器以啟用對帳單匯入。"

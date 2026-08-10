@@ -200,6 +200,9 @@ msgstr "Account"
 msgid "Account (mixed currencies)"
 msgstr "Account (mixed currencies)"
 
+msgid "Account balances over time"
+msgstr "Account balances over time"
+
 msgid "Account code"
 msgstr "Account code"
 
@@ -2180,6 +2183,9 @@ msgstr "Selected rows span {0}. Account can't be bulk-applied."
 
 msgid "SEPA creditor ID"
 msgstr "SEPA creditor ID"
+
+msgid "Series visibility"
+msgstr "Series visibility"
 
 msgid "Set an importer on this bank account to enable statement imports."
 msgstr "Set an importer on this bank account to enable statement imports."
