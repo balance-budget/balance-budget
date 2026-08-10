@@ -88,8 +88,8 @@ msgid "{0} filled"
 msgstr "{0} filled"
 
 #. placeholder {0}: p.label
-msgid "{0} fixed until"
-msgstr "{0} fixed until"
+#~ msgid "{0} fixed until"
+#~ msgstr "{0} fixed until"
 
 #. placeholder {0}: cpOnly.toString()
 msgid "{0} got counterparty only"
@@ -1459,6 +1459,9 @@ msgstr "Loading…"
 msgid "Loan"
 msgstr "Loan"
 
+msgid "Loan balance over time"
+msgstr "Loan balance over time"
+
 msgid "Loan created."
 msgstr "Loan created."
 
@@ -1480,6 +1483,9 @@ msgstr "Loan payment"
 #. placeholder {0}: hint.loanName
 msgid "Loan payment · {0}"
 msgstr "Loan payment · {0}"
+
+msgid "Loan payments over time"
+msgstr "Loan payments over time"
 
 msgid "Loan updated."
 msgstr "Loan updated."
@@ -2375,8 +2381,8 @@ msgstr "This year"
 msgid "To"
 msgstr "To"
 
-msgid "today"
-msgstr "today"
+#~ msgid "today"
+#~ msgstr "today"
 
 msgid "Tokens"
 msgstr "Tokens"
