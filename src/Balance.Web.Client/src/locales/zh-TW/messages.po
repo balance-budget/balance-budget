@@ -1537,6 +1537,9 @@ msgstr "現金流向這些帳戶（借方）。"
 msgid "Money flow"
 msgstr "現金流動"
 
+msgid "Money flow between accounts"
+msgstr "帳戶之間的資金流動"
+
 msgid "Money in"
 msgstr "現金流入"
 

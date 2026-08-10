@@ -1537,6 +1537,9 @@ msgstr "Geld komt binnen op deze rekeningen (debet)."
 msgid "Money flow"
 msgstr "Geldstroom"
 
+msgid "Money flow between accounts"
+msgstr "Geldstroom tussen rekeningen"
+
 msgid "Money in"
 msgstr "Geld in"
 

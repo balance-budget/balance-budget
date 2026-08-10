@@ -1537,6 +1537,9 @@ msgstr "Money arrives in these accounts (debit)."
 msgid "Money flow"
 msgstr "Money flow"
 
+msgid "Money flow between accounts"
+msgstr "Money flow between accounts"
+
 msgid "Money in"
 msgstr "Money in"
 
