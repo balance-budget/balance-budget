@@ -1956,6 +1956,9 @@ msgstr "Hoofdsom"
 msgid "Projected"
 msgstr "Verwacht"
 
+msgid "Projected balance"
+msgstr "Verwacht saldo"
+
 msgid "Projected month-end liquid"
 msgstr "Verwacht liquide einde maand"
 
@@ -2404,6 +2407,9 @@ msgstr "Type"
 
 msgid "Type to search accounts, counterparties, bank accounts, journal entries."
 msgstr "Typ om te zoeken naar rekeningen, tegenpartijen, bankrekeningen en journaalposten."
+
+msgid "Typical range"
+msgstr "Gebruikelijke marge"
 
 msgid "Unallocated"
 msgstr "Niet toegewezen"

@@ -1956,6 +1956,9 @@ msgstr "Principal"
 msgid "Projected"
 msgstr "Projected"
 
+msgid "Projected balance"
+msgstr "Projected balance"
+
 msgid "Projected month-end liquid"
 msgstr "Projected month-end liquid"
 
@@ -2404,6 +2407,9 @@ msgstr "Type"
 
 msgid "Type to search accounts, counterparties, bank accounts, journal entries."
 msgstr "Type to search accounts, counterparties, bank accounts, journal entries."
+
+msgid "Typical range"
+msgstr "Typical range"
 
 msgid "Unallocated"
 msgstr "Unallocated"

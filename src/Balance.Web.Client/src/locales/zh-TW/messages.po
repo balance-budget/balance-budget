@@ -1956,6 +1956,9 @@ msgstr "本金"
 msgid "Projected"
 msgstr "預估"
 
+msgid "Projected balance"
+msgstr "預估餘額"
+
 msgid "Projected month-end liquid"
 msgstr "預估月底流動資金"
 
@@ -2404,6 +2407,9 @@ msgstr "類型"
 
 msgid "Type to search accounts, counterparties, bank accounts, journal entries."
 msgstr "輸入以搜尋帳戶、交易對方、銀行帳戶、日記帳分錄。"
+
+msgid "Typical range"
+msgstr "典型區間"
 
 msgid "Unallocated"
 msgstr "未分配"

@@ -1,35 +1,30 @@
-import { useId, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useLingui } from '@lingui/react/macro';
-import {
-    Area,
-    CartesianGrid,
-    ComposedChart,
-    Line,
-    ReferenceLine,
-    ResponsiveContainer,
-    Tooltip,
-    type TooltipContentProps,
-    XAxis,
-    YAxis,
-} from 'recharts';
-import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
+import { areaY, defineChart, lineY, ruleX, ruleY } from '@tanstack/charts';
+import { crosshair } from '@tanstack/charts/crosshair';
+import { d3Curve } from '@tanstack/charts/d3/shape';
+import { scaleLinear } from '@tanstack/charts/scales/linear';
+import { scalePoint } from '@tanstack/charts/scales/point';
+import { curveMonotoneX } from 'd3-shape';
+import { useCurrencyCatalog } from '../api/currencies';
 import type { OutlookAccountProjection } from '../api/outlook';
+import { chartTooltip } from '../lib/chart';
 import { formatMonthAxisDate } from '../lib/dates';
 import { formatCalendarDate } from '../i18n/format';
-import { formatMoney, formatMoneyAxis } from '../lib/money';
-import { moneyAxis } from '../lib/chartAxis';
-import { AxisBreakMark } from '../components/AxisBreakMark';
-import { ChartTooltipShell, ChartTooltipRow } from '../components/ChartTooltip';
+import { formatMoneyAxis } from '../lib/money';
+import { Chart } from '../components/Chart';
 
-type ChartRow = {
+type ActualRow = { kind: 'actual'; month: string; balance: number };
+type ProjectedRow = {
+    kind: 'projected';
     month: string;
-    actual?: number;
-    mid?: number;
-    band?: [number, number];
-    scenario?: number;
+    mid: number;
+    low: number;
+    high: number;
     expectedIn?: number;
     expectedOut?: number;
 };
+type ScenarioRow = { kind: 'scenario'; month: string; balance: number };
 
 /**
  * The liquid-balance Projection (ADR-0027): ledger actuals (solid) flowing into the
@@ -46,267 +41,189 @@ export function OutlookProjectionChart({
     const { t } = useLingui();
     const catalog = useCurrencyCatalog();
 
-    const rows = useMemo<ChartRow[]>(() => {
-        const result: ChartRow[] = account.actuals.map(a => ({
-            month: a.month,
-            actual: a.endBalance,
-        }));
-
-        // Seed the projection at the anchor (last actual) so the baseline/scenario lines
-        // and the band start from today's real balance rather than floating.
+    // The projection is seeded at the anchor (last actual) so the baseline, band and
+    // scenario start from today's real balance rather than floating.
+    const { actuals, projected, scenario } = useMemo(() => {
         const anchor = account.actuals.at(-1);
-        const last = result.at(-1);
-        if (anchor && last) {
-            last.mid = anchor.endBalance;
-            last.scenario = anchor.endBalance;
-            last.band = [anchor.endBalance, anchor.endBalance];
-        }
+        const seed: ProjectedRow[] =
+            anchor === undefined
+                ? []
+                : [
+                      {
+                          kind: 'projected' as const,
+                          month: anchor.month,
+                          mid: anchor.endBalance,
+                          low: anchor.endBalance,
+                          high: anchor.endBalance,
+                      },
+                  ];
 
-        account.baseline.forEach((b, i) => {
-            const scenarioMonth = account.scenario?.[i];
-            result.push({
-                month: b.month,
-                mid: b.endBalanceMid,
-                band: [b.endBalanceLow, b.endBalanceHigh],
-                scenario: scenarioMonth?.endBalanceMid,
-                expectedIn: b.expectedIn,
-                expectedOut: b.expectedOut,
-            });
-        });
-
-        return result;
+        return {
+            actuals: account.actuals.map((a): ActualRow => ({
+                kind: 'actual',
+                month: a.month,
+                balance: a.endBalance,
+            })),
+            projected: [
+                ...seed,
+                ...account.baseline.map((b): ProjectedRow => ({
+                    kind: 'projected',
+                    month: b.month,
+                    mid: b.endBalanceMid,
+                    low: b.endBalanceLow,
+                    high: b.endBalanceHigh,
+                    expectedIn: b.expectedIn,
+                    expectedOut: b.expectedOut,
+                })),
+            ],
+            scenario:
+                account.scenario === null
+                    ? []
+                    : [
+                          ...(anchor
+                              ? [
+                                    {
+                                        kind: 'scenario' as const,
+                                        month: anchor.month,
+                                        balance: anchor.endBalance,
+                                    },
+                                ]
+                              : []),
+                          ...account.scenario.map((s): ScenarioRow => ({
+                              kind: 'scenario',
+                              month: s.month,
+                              balance: s.endBalanceMid,
+                          })),
+                      ],
+        };
     }, [account]);
 
-    // Scale natively to everything plotted, the Typical-spend band included: the
-    // random-walk cone (ADR-0033) is tame enough that the y-axis can cover it and
-    // keep its tick labels meaningful across the whole frame. The band gradient
-    // below is then a purely cosmetic fade layered on top, never a reason to clip
-    // the cone out of the axis.
-    const axis = useMemo(
-        () =>
-            moneyAxis(
-                rows.flatMap(r =>
-                    [r.actual, r.mid, r.scenario, r.band?.[0], r.band?.[1]].filter(
-                        (v): v is number => v !== undefined,
-                    ),
-                ),
-            ),
-        [rows],
-    );
-
-    const hasScenario = account.scenario !== null;
-    // Vertical fade for the band: a soft cue that the uncertainty cone runs off the
-    // frame rather than the balance flatlining at the axis edge. A vertical gradient
-    // only needs y-bounds, which we derive from the chart height and the fixed top
-    // margin / default X-axis band — no plot-width probing, so no friction with the
-    // ResponsiveContainer. The mid 88% stays full opacity, so a normal-width band is
-    // untouched; only a cone that reaches the top/bottom edge fades.
-    const bandGradientId = useId();
-    const plotTop = 10; // matches the chart's top margin
-    const plotBottom = height - 30; // height minus Recharts' default X-axis band
     // The December row's category key, so the year-end marker lands on the right tick (absent when
     // the horizon stops before December).
     const yearEndMonth = `${account.yearEnd.date.slice(0, 7)}-01`;
 
-    return (
-        <ResponsiveContainer width="100%" height={height}>
-            <ComposedChart data={rows} margin={{ top: 10, right: 12, bottom: 0, left: 0 }}>
-                <defs>
-                    <linearGradient
-                        id={bandGradientId}
-                        gradientUnits="userSpaceOnUse"
-                        x1="0"
-                        y1={plotTop}
-                        x2="0"
-                        y2={plotBottom}
-                    >
-                        <stop offset="0%" stopColor="var(--color-brand-primary)" stopOpacity={0} />
-                        <stop
-                            offset="12%"
-                            stopColor="var(--color-brand-primary)"
-                            stopOpacity={0.12}
-                        />
-                        <stop
-                            offset="88%"
-                            stopColor="var(--color-brand-primary)"
-                            stopOpacity={0.12}
-                        />
-                        <stop
-                            offset="100%"
-                            stopColor="var(--color-brand-primary)"
-                            stopOpacity={0}
-                        />
-                    </linearGradient>
-                </defs>
-                <CartesianGrid
-                    stroke="var(--color-border-soft)"
-                    vertical={false}
-                    strokeDasharray="2 4"
-                />
-                <XAxis
-                    dataKey="month"
-                    tickFormatter={formatMonthAxisDate}
-                    tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                    minTickGap={16}
-                />
-                <YAxis
-                    domain={axis?.domain ?? ['auto', 'auto']}
-                    ticks={axis?.ticks}
-                    tickFormatter={(v: number) => formatMoneyAxis(v, account.currencyCode, catalog)}
-                    tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                    width={60}
-                />
-                <ReferenceLine y={0} stroke="var(--color-danger)" strokeDasharray="3 3" />
-                <ReferenceLine
-                    x={yearEndMonth}
-                    stroke="var(--color-border-strong)"
-                    strokeDasharray="3 3"
-                    label={{
-                        value: t`Year-end`,
-                        position: 'insideTopRight',
-                        fill: 'var(--color-fg-3)',
-                        fontSize: 10,
-                    }}
-                />
-                <Tooltip
-                    content={
-                        <ProjectionTooltip
-                            currencyCode={account.currencyCode}
-                            catalog={catalog}
-                            hasScenario={hasScenario}
-                        />
-                    }
-                    cursor={{ stroke: 'var(--color-border-strong)', strokeDasharray: '2 2' }}
-                />
-                {axis?.truncated && <AxisBreakMark />}
-                {/* The Typical-spend uncertainty band (projected months only). */}
-                <Area
-                    type="monotone"
-                    dataKey="band"
-                    stroke="none"
-                    fill={`url(#${bandGradientId})`}
-                    fillOpacity={1}
-                    isAnimationActive={false}
-                    connectNulls
-                />
-                {/* Ledger actuals — solid, left of today. */}
-                <Line
-                    type="monotone"
-                    dataKey="actual"
-                    name="Actual"
-                    stroke="var(--color-fg-2)"
-                    strokeWidth={1.25}
-                    dot={false}
-                    isAnimationActive={false}
-                    connectNulls
-                />
-                {/* Projected mid — dashed, right of today. */}
-                <Line
-                    type="monotone"
-                    dataKey="mid"
-                    name="Projected"
-                    stroke="var(--color-brand-primary)"
-                    strokeWidth={1.25}
-                    strokeDasharray="5 4"
-                    dot={false}
-                    isAnimationActive={false}
-                    connectNulls
-                />
-                {hasScenario && (
-                    <Line
-                        type="monotone"
-                        dataKey="scenario"
-                        name="What-if"
-                        stroke="var(--color-warning)"
-                        strokeWidth={1.25}
-                        strokeDasharray="2 3"
-                        dot={false}
-                        isAnimationActive={false}
-                        connectNulls
-                    />
-                )}
-            </ComposedChart>
-        </ResponsiveContainer>
+    const definition = useMemo(
+        () =>
+            defineChart({
+                marks: [
+                    // The Typical-spend uncertainty band (projected months only).
+                    areaY(projected, {
+                        id: 'band',
+                        x: 'month',
+                        y1: 'low',
+                        y2: 'high',
+                        curve: d3Curve(curveMonotoneX),
+                        fill: 'var(--color-brand-primary)',
+                        fillOpacity: 0.12,
+                    }),
+                    ruleY([0], {
+                        stroke: 'var(--color-danger)',
+                        strokeDasharray: '3 3',
+                        strokeOpacity: 1,
+                    }),
+                    ruleX([yearEndMonth], {
+                        stroke: 'var(--color-border-strong)',
+                        strokeDasharray: '3 3',
+                    }),
+                    // Ledger actuals — solid, left of today.
+                    lineY(actuals, {
+                        id: 'actual',
+                        x: 'month',
+                        y: 'balance',
+                        curve: d3Curve(curveMonotoneX),
+                        stroke: 'var(--color-fg-2)',
+                        strokeWidth: 1.25,
+                    }),
+                    // Projected mid — dashed, right of today.
+                    lineY(projected, {
+                        id: 'mid',
+                        x: 'month',
+                        y: 'mid',
+                        curve: d3Curve(curveMonotoneX),
+                        stroke: 'var(--color-brand-primary)',
+                        strokeWidth: 1.25,
+                        strokeDasharray: '5 4',
+                    }),
+                    ...(scenario.length > 0
+                        ? [
+                              lineY(scenario, {
+                                  id: 'scenario',
+                                  x: 'month',
+                                  y: 'balance',
+                                  curve: d3Curve(curveMonotoneX),
+                                  stroke: 'var(--color-warning)',
+                                  strokeWidth: 1.25,
+                                  strokeDasharray: '2 3',
+                              }),
+                          ]
+                        : []),
+                    crosshair({ x: true, y: false }),
+                ],
+                x: {
+                    scale: scalePoint,
+                    axis: {
+                        line: false,
+                        ticks: { format: formatMonthAxisDate },
+                        tickLabels: { thin: { minGap: 16 } },
+                    },
+                },
+                y: {
+                    scale: scaleLinear,
+                    nice: true,
+                    grid: true,
+                    axis: {
+                        line: false,
+                        ticks: {
+                            format: (v: number) =>
+                                formatMoneyAxis(v, account.currencyCode, catalog),
+                        },
+                    },
+                },
+                focus: 'group-x',
+                tooltip: chartTooltip,
+            }),
+        [actuals, projected, scenario, yearEndMonth, account.currencyCode, catalog],
     );
-}
-
-type ProjectionTooltipProps = Partial<TooltipContentProps<number, string>> & {
-    currencyCode: string;
-    catalog: CurrencyCatalog;
-    hasScenario: boolean;
-};
-
-function ProjectionTooltip({
-    active,
-    payload,
-    label,
-    currencyCode,
-    catalog,
-    hasScenario,
-}: ProjectionTooltipProps) {
-    const { t } = useLingui();
-    if (!active || !payload || payload.length === 0) return null;
-
-    const find = (key: string): number | undefined => {
-        const entry = payload.find(p => p.dataKey === key);
-        return typeof entry?.value === 'number' ? entry.value : undefined;
-    };
-    const band = payload.find(p => p.dataKey === 'band')?.value as [number, number] | undefined;
-    // expectedIn/expectedOut aren't rendered series, so read them off the row the tooltip carries.
-    const row = payload[0]?.payload as ChartRow | undefined;
-
-    const actual = find('actual');
-    const mid = find('mid');
-    const scenario = find('scenario');
 
     return (
-        <ChartTooltipShell
-            heading={
-                typeof label === 'string'
-                    ? formatCalendarDate(label, 'year-month', { style: 'long' })
-                    : ''
+        <Chart
+            definition={definition}
+            height={height}
+            currency={account.currencyCode}
+            ariaLabel={t`Projected balance`}
+            tooltipHeading={points =>
+                formatCalendarDate(points[0]?.xValue ?? '', 'year-month', { style: 'long' })
             }
-        >
-            {actual !== undefined && (
-                <ChartTooltipRow
-                    name={t`Actual`}
-                    value={formatMoney(actual, currencyCode, catalog)}
-                />
-            )}
-            {mid !== undefined && (
-                <ChartTooltipRow
-                    name={t`Projected`}
-                    value={formatMoney(mid, currencyCode, catalog)}
-                />
-            )}
-            {row?.expectedIn ? (
-                <ChartTooltipRow
-                    name={t`Expected in`}
-                    value={formatMoney(row.expectedIn, currencyCode, catalog)}
-                />
-            ) : null}
-            {row?.expectedOut ? (
-                <ChartTooltipRow
-                    name={t`Expected out`}
-                    value={formatMoney(row.expectedOut, currencyCode, catalog)}
-                />
-            ) : null}
-            {hasScenario && scenario !== undefined && (
-                <ChartTooltipRow
-                    name={t`What-if`}
-                    value={formatMoney(scenario, currencyCode, catalog)}
-                />
-            )}
-            {band && (
-                <div className="text-fg-3 pt-0.5">
-                    {formatMoney(band[0], currencyCode, catalog)} –{' '}
-                    {formatMoney(band[1], currencyCode, catalog)}
-                </div>
-            )}
-        </ChartTooltipShell>
+            tooltipRows={(points, money) =>
+                points.flatMap(point => {
+                    const row = point.datum;
+                    if (row.kind === 'actual') {
+                        return [{ name: t`Actual`, value: money(row.balance) }];
+                    }
+                    if (row.kind === 'scenario') {
+                        return [{ name: t`What-if`, value: money(row.balance) }];
+                    }
+                    // The band and the mid line share their rows, so the mark decides
+                    // whether this point reads as the range or as the projected balance.
+                    if (point.markId === 'band') {
+                        return [
+                            {
+                                name: t`Typical range`,
+                                value: `${money(row.low)} – ${money(row.high)}`,
+                            },
+                        ];
+                    }
+                    return [
+                        { name: t`Projected`, value: money(row.mid) },
+                        ...(row.expectedIn
+                            ? [{ name: t`Expected in`, value: money(row.expectedIn) }]
+                            : []),
+                        ...(row.expectedOut
+                            ? [{ name: t`Expected out`, value: money(row.expectedOut) }]
+                            : []),
+                    ];
+                })
+            }
+        />
     );
 }
