@@ -1597,6 +1597,9 @@ msgstr "本期淨額為負。請查看明細。"
 msgid "Net worth"
 msgstr "淨值"
 
+msgid "Net worth over time"
+msgstr "淨資產變化"
+
 msgid "Net worth range"
 msgstr "淨值範圍"
 

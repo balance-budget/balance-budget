@@ -1597,6 +1597,9 @@ msgstr "Netto negatief deze periode. Zie de uitsplitsing."
 msgid "Net worth"
 msgstr "Nettovermogen"
 
+msgid "Net worth over time"
+msgstr "Vermogen in de tijd"
+
 msgid "Net worth range"
 msgstr "Vermogensbereik"
 

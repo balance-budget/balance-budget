@@ -3,12 +3,14 @@ import { Chart as TanStackChart, type ChartProps } from '@tanstack/charts/react/
 import type { ChartPoint, ChartValue } from '@tanstack/charts';
 import { useCurrencyCatalog } from '../api/currencies';
 import { formatMoney } from '../lib/money';
-import { ChartTooltipShell, ChartTooltipRow } from './ChartTooltip';
+import { ChartTooltipShell, ChartTooltipRow, ChartTooltipTotalRow } from './ChartTooltip';
 
 export type ChartTooltipRowSpec = {
     color?: string;
     name: ReactNode;
     value: ReactNode;
+    /** Renders below the series rows, separated by a rule (stacked-chart totals). */
+    total?: boolean;
 };
 
 type Props<TDatum, TXValue extends ChartValue, TYValue extends ChartValue> = ChartProps<
@@ -47,7 +49,7 @@ export function Chart<
                         currency === undefined
                             ? String(amount)
                             : formatMoney(amount, currency, catalog);
-                    const rows =
+                    const rows: readonly ChartTooltipRowSpec[] =
                         tooltipRows?.(points, formatValue) ??
                         points.map(point => ({
                             color: point.color,
@@ -60,14 +62,22 @@ export function Chart<
 
                     return (
                         <ChartTooltipShell heading={tooltipHeading?.(points)}>
-                            {rows.map((row, i) => (
-                                <ChartTooltipRow
-                                    key={i}
-                                    color={row.color}
-                                    name={row.name}
-                                    value={row.value}
-                                />
-                            ))}
+                            {rows.map((row, i) =>
+                                row.total ? (
+                                    <ChartTooltipTotalRow
+                                        key={i}
+                                        name={row.name}
+                                        value={row.value}
+                                    />
+                                ) : (
+                                    <ChartTooltipRow
+                                        key={i}
+                                        color={row.color}
+                                        name={row.name}
+                                        value={row.value}
+                                    />
+                                ),
+                            )}
                         </ChartTooltipShell>
                     );
                 })

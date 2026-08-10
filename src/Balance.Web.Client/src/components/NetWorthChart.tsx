@@ -1,22 +1,18 @@
 import { useMemo } from 'react';
-import {
-    Area,
-    AreaChart,
-    CartesianGrid,
-    ResponsiveContainer,
-    Tooltip,
-    type TooltipContentProps,
-    XAxis,
-    YAxis,
-} from 'recharts';
+import { areaY, defineChart } from '@tanstack/charts';
+import { crosshair } from '@tanstack/charts/crosshair';
+import { d3Curve } from '@tanstack/charts/d3/shape';
+import { scaleLinear } from '@tanstack/charts/scales/linear';
+import { scalePoint } from '@tanstack/charts/scales/point';
+import { curveMonotoneX } from 'd3-shape';
 import { useLingui } from '@lingui/react/macro';
-import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
+import { useCurrencyCatalog } from '../api/currencies';
 import type { NetWorthPoint } from '../api/dashboard';
-import { moneyAxis } from '../lib/chartAxis';
+import { chartTooltip } from '../lib/chart';
 import { formatMonthAxisDate, formatTrendTooltipDate } from '../lib/dates';
-import { formatMoney, formatMoneyAxis } from '../lib/money';
+import { formatMoneyAxis } from '../lib/money';
 import { chartColorByIndex } from '../lib/visualHints';
-import { ChartTooltipShell, ChartTooltipRow, ChartTooltipTotalRow } from './ChartTooltip';
+import { Chart } from './Chart';
 
 type NetWorthChartProps = {
     points: NetWorthPoint[];
@@ -26,160 +22,105 @@ type NetWorthChartProps = {
 
 // The two stacked bands are a fixed, ordered pair (liquid below, illiquid
 // above), so they take the first two palette slots by position.
+type Band = 'liquid' | 'illiquid';
+const BAND_COLOR: Record<Band, string> = {
+    liquid: chartColorByIndex(0),
+    illiquid: chartColorByIndex(1),
+};
 
-type Row = { date: string; liquid: number; illiquid: number };
+type Row = { date: string; band: Band; amount: number };
 
 /**
  * The long-horizon dashboard chart (ADR-0030): net worth as a signed stack of its two components,
  * liquid (bottom) and illiquid (top), so the top edge is total net worth. The illiquid band is a
  * house amortizing against its mortgage; watching it grow over the years is the wealth-building
- * story. Signed stacking (stackOffset="sign") keeps a net-debt component honestly below zero.
+ * story. The stack is diverging, so a net-debt component stays honestly below zero.
  */
 export function NetWorthChart({ points, currencyCode, height = 240 }: NetWorthChartProps) {
     const { t } = useLingui();
     const catalog = useCurrencyCatalog();
+    const label: Record<Band, string> = { liquid: t`Liquid`, illiquid: t`Illiquid` };
 
     const rows = useMemo<Row[]>(
         () =>
-            points.map(p => ({
-                date: p.date,
-                liquid: p.liquidMinor,
-                illiquid: p.netWorthMinor - p.liquidMinor,
-            })),
+            points.flatMap(p => [
+                { date: p.date, band: 'liquid' as const, amount: p.liquidMinor },
+                {
+                    date: p.date,
+                    band: 'illiquid' as const,
+                    amount: p.netWorthMinor - p.liquidMinor,
+                },
+            ]),
         [points],
     );
 
     // Aim for roughly six date labels regardless of range length.
-    const ticks = useMemo(() => {
-        if (rows.length === 0) return [];
-        const step = Math.max(1, Math.ceil(rows.length / 6));
-        return rows.filter((_, i) => i % step === 0).map(r => r.date);
+    const tickValues = useMemo(() => {
+        const dates = [...new Set(rows.map(r => r.date))];
+        const step = Math.max(1, Math.ceil(dates.length / 6));
+        return dates.filter((_, i) => i % step === 0);
     }, [rows]);
 
-    // Scale to the stacked totals (positives and negatives summed per month), not the individual
-    // components, so the bands never overflow the axis.
-    const axis = useMemo(() => {
-        const sums = rows.flatMap(r => {
-            const pos = Math.max(r.liquid, 0) + Math.max(r.illiquid, 0);
-            const neg = Math.min(r.liquid, 0) + Math.min(r.illiquid, 0);
-            return [pos, neg];
-        });
-        return moneyAxis(sums, { includeZero: true });
-    }, [rows]);
-
-    return (
-        <ResponsiveContainer width="100%" height={height}>
-            <AreaChart
-                data={rows}
-                margin={{ top: 10, right: 12, bottom: 0, left: 0 }}
-                stackOffset="sign"
-            >
-                <CartesianGrid
-                    stroke="var(--color-border-soft)"
-                    vertical={false}
-                    strokeDasharray="2 4"
-                />
-                <XAxis
-                    dataKey="date"
-                    ticks={ticks}
-                    interval={0}
-                    tickFormatter={formatMonthAxisDate}
-                    tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                />
-                <YAxis
-                    domain={axis?.domain ?? ['auto', 'auto']}
-                    ticks={axis?.ticks}
-                    tickFormatter={(v: number) => formatMoneyAxis(v, currencyCode, catalog)}
-                    tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                    width={60}
-                />
-                <Tooltip
-                    content={
-                        <NetWorthTooltip
-                            currencyCode={currencyCode}
-                            catalog={catalog}
-                            netWorthLabel={t`Net worth`}
-                            liquidLabel={t`Liquid`}
-                            illiquidLabel={t`Illiquid`}
-                        />
-                    }
-                    cursor={{
-                        stroke: 'var(--color-border-strong)',
-                        strokeWidth: 1,
-                        strokeDasharray: '2 2',
-                    }}
-                />
-                <Area
-                    type="monotone"
-                    dataKey="liquid"
-                    name={t`Liquid`}
-                    stackId="netWorth"
-                    stroke={chartColorByIndex(0)}
-                    strokeWidth={1.25}
-                    fill={chartColorByIndex(0)}
-                    fillOpacity={0.55}
-                    isAnimationActive={false}
-                />
-                <Area
-                    type="monotone"
-                    dataKey="illiquid"
-                    name={t`Illiquid`}
-                    stackId="netWorth"
-                    stroke={chartColorByIndex(1)}
-                    strokeWidth={1.25}
-                    fill={chartColorByIndex(1)}
-                    fillOpacity={0.55}
-                    isAnimationActive={false}
-                />
-            </AreaChart>
-        </ResponsiveContainer>
+    const definition = useMemo(
+        () =>
+            defineChart({
+                marks: [
+                    areaY(rows, {
+                        x: 'date',
+                        y: 'amount',
+                        z: 'band',
+                        curve: d3Curve(curveMonotoneX),
+                        fillOpacity: 0.55,
+                        stroke: row => BAND_COLOR[row.band],
+                        strokeWidth: 1.25,
+                    }),
+                    crosshair({ x: true, y: false }),
+                ],
+                x: {
+                    scale: scalePoint,
+                    axis: {
+                        line: false,
+                        ticks: { values: tickValues, format: formatMonthAxisDate },
+                    },
+                },
+                y: {
+                    scale: scaleLinear,
+                    nice: true,
+                    grid: true,
+                    axis: {
+                        line: false,
+                        ticks: { format: (v: number) => formatMoneyAxis(v, currencyCode, catalog) },
+                    },
+                },
+                color: {
+                    domain: Object.keys(BAND_COLOR),
+                    range: Object.values(BAND_COLOR),
+                },
+                focus: 'group-x',
+                tooltip: chartTooltip,
+            }),
+        [rows, tickValues, currencyCode, catalog],
     );
-}
-
-type NetWorthTooltipProps = Partial<TooltipContentProps<number, string>> & {
-    currencyCode: string;
-    catalog: CurrencyCatalog;
-    netWorthLabel: string;
-    liquidLabel: string;
-    illiquidLabel: string;
-};
-
-function NetWorthTooltip({
-    active,
-    payload,
-    label,
-    currencyCode,
-    catalog,
-    netWorthLabel,
-    liquidLabel,
-    illiquidLabel,
-}: NetWorthTooltipProps) {
-    if (!active || !payload || payload.length === 0) return null;
-
-    const row = payload[0]?.payload as Row | undefined;
-    if (!row) return null;
-    const netWorth = row.liquid + row.illiquid;
 
     return (
-        <ChartTooltipShell heading={typeof label === 'string' ? formatTrendTooltipDate(label) : ''}>
-            <ChartTooltipRow
-                color={chartColorByIndex(0)}
-                name={liquidLabel}
-                value={formatMoney(row.liquid, currencyCode, catalog)}
-            />
-            <ChartTooltipRow
-                color={chartColorByIndex(1)}
-                name={illiquidLabel}
-                value={formatMoney(row.illiquid, currencyCode, catalog)}
-            />
-            <ChartTooltipTotalRow
-                name={netWorthLabel}
-                value={formatMoney(netWorth, currencyCode, catalog)}
-            />
-        </ChartTooltipShell>
+        <Chart
+            definition={definition}
+            height={height}
+            currency={currencyCode}
+            ariaLabel={t`Net worth over time`}
+            tooltipHeading={points => formatTrendTooltipDate(points[0]?.xValue ?? '')}
+            tooltipRows={(points, formatValue) => [
+                ...points.map(point => ({
+                    color: point.color,
+                    name: label[point.datum.band],
+                    value: formatValue(point.datum.amount),
+                })),
+                {
+                    name: t`Net worth`,
+                    value: formatValue(points.reduce((sum, p) => sum + p.datum.amount, 0)),
+                    total: true,
+                },
+            ]}
+        />
     );
 }
