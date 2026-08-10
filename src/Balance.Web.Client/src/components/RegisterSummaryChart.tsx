@@ -1,48 +1,36 @@
 import { useMemo } from 'react';
 import { Trans, useLingui } from '@lingui/react/macro';
-import {
-    Bar,
-    BarChart,
-    CartesianGrid,
-    Legend,
-    ReferenceLine,
-    ResponsiveContainer,
-    Tooltip,
-    type TooltipContentProps,
-    XAxis,
-    YAxis,
-} from 'recharts';
+import { barY, defineChart, ruleY } from '@tanstack/charts';
+import { crosshair } from '@tanstack/charts/crosshair';
+import { colorLegend } from '@tanstack/charts/legend';
+import { scaleBand } from '@tanstack/charts/scales/band';
+import { scaleLinear } from '@tanstack/charts/scales/linear';
 import type { Account } from '../api/accounts';
-import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
+import { useCurrencyCatalog } from '../api/currencies';
 import { useRegisterSummary, type RegisterSummary } from '../api/register';
+import { chartTooltip } from '../lib/chart';
 import { formatBucketAxisDate, formatBucketTooltipDate } from '../lib/dates';
 import { formatMoney, formatMoneyAxis } from '../lib/money';
-import { moneyAxis } from '../lib/chartAxis';
-import {
-    effectiveSummaryRange,
-    summaryBucketFor,
-    type RegisterSummaryBucketSize,
-} from '../lib/registerSummary';
+import { effectiveSummaryRange, summaryBucketFor } from '../lib/registerSummary';
 import { chartColorByIndex } from '../lib/visualHints';
-import { ChartTooltipShell, ChartTooltipRow, ChartTooltipTotalRow } from './ChartTooltip';
+import { Chart } from './Chart';
 import { ErrorState } from './ErrorState';
 import { Skeleton } from './Skeleton';
 
-type ChartRow = { start: string } & Record<string, number | string>;
+type Row = { start: string; segment: string; amount: number };
 
-/** Zero-fill every segment on every bucket — recharts stacks by key, so a
- *  missing key would make segments jump stack positions between bars. */
-function buildRows(summary: RegisterSummary): ChartRow[] {
-    return summary.buckets.map(bucket => {
-        const row: ChartRow = { start: bucket.start };
-        for (const segment of summary.segments) {
-            row[segment.accountId] = 0;
-        }
-        for (const value of bucket.values) {
-            row[value.accountId] = value.amount;
-        }
-        return row;
-    });
+/** One row per segment value that actually moved; a missing position/series pair
+ *  contributes zero to the stack layout without emitting a point. */
+function buildRows(summary: RegisterSummary): Row[] {
+    const nameById = new Map(summary.segments.map(s => [s.accountId, s.accountName]));
+    return summary.buckets.flatMap(bucket =>
+        bucket.values.flatMap(value => {
+            const segment = nameById.get(value.accountId);
+            return segment === undefined || value.amount === 0
+                ? []
+                : [{ start: bucket.start, segment, amount: value.amount }];
+        }),
+    );
 }
 
 /**
@@ -70,24 +58,47 @@ export function RegisterSummaryChart({
     );
     const bucket = summaryBucketFor(range);
     const query = useRegisterSummary(account.id, range, bucket);
-    const rows = useMemo(() => (query.data ? buildRows(query.data) : []), [query.data]);
-    // Sign-stacked: positive segments stack up from zero, negatives down. Scale
-    // to each bucket's positive and negative totals; zero-based, so the only
-    // effect is a little headroom above and below the tallest bars.
-    const axis = useMemo(() => {
-        const bounds: number[] = [];
-        for (const row of rows) {
-            let positive = 0;
-            let negative = 0;
-            for (const [key, value] of Object.entries(row)) {
-                if (key === 'start' || typeof value !== 'number') continue;
-                if (value > 0) positive += value;
-                else negative += value;
-            }
-            bounds.push(positive, negative);
-        }
-        return moneyAxis(bounds, { includeZero: true });
-    }, [rows]);
+    const summary = query.data;
+    const rows = useMemo(() => (summary ? buildRows(summary) : []), [summary]);
+
+    const definition = useMemo(() => {
+        const segments = summary?.segments ?? [];
+        return defineChart({
+            marks: [
+                barY(rows, { x: 'start', y: 'amount', color: 'segment' }),
+                ruleY([0], { stroke: 'var(--color-border-strong)', strokeOpacity: 1 }),
+                crosshair({ x: { band: true }, y: false }),
+            ],
+            x: {
+                scale: () => scaleBand().padding(0.2),
+                axis: {
+                    line: false,
+                    ticks: {
+                        format: (d: string) => formatBucketAxisDate(d, bucket),
+                    },
+                },
+            },
+            y: {
+                scale: scaleLinear,
+                nice: true,
+                grid: true,
+                axis: {
+                    line: false,
+                    ticks: {
+                        format: (v: number) =>
+                            formatMoneyAxis(v, summary?.currencyCode ?? '', catalog),
+                    },
+                },
+            },
+            color: {
+                domain: segments.map(s => s.accountName),
+                range: segments.map((_, i) => chartColorByIndex(i)),
+                legend: segments.length > 1 ? colorLegend({ placement: 'bottom' }) : undefined,
+            },
+            focus: 'group-x',
+            tooltip: chartTooltip,
+        });
+    }, [rows, summary, bucket, catalog]);
 
     if (query.isPending) {
         return <Skeleton className="w-full h-[240px]" />;
@@ -102,9 +113,7 @@ export function RegisterSummaryChart({
         );
     }
 
-    const summary = query.data;
-
-    if (summary.segments.length === 0) {
+    if (query.data.segments.length === 0) {
         return (
             <div className="flex items-center justify-center text-sm text-fg-3" style={{ height }}>
                 <Trans>No money moved in this period.</Trans>
@@ -113,107 +122,33 @@ export function RegisterSummaryChart({
     }
 
     return (
-        <ResponsiveContainer width="100%" height={height}>
-            <BarChart
-                data={rows}
-                stackOffset="sign"
-                margin={{ top: 10, right: 12, bottom: 0, left: 0 }}
-            >
-                <CartesianGrid
-                    stroke="var(--color-border-soft)"
-                    vertical={false}
-                    strokeDasharray="2 4"
-                />
-                <XAxis
-                    dataKey="start"
-                    tickFormatter={(d: string) => formatBucketAxisDate(d, summary.bucket)}
-                    tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                />
-                <YAxis
-                    domain={axis?.domain ?? ['auto', 'auto']}
-                    ticks={axis?.ticks}
-                    tickFormatter={(v: number) => formatMoneyAxis(v, summary.currencyCode, catalog)}
-                    tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                    width={60}
-                />
-                <ReferenceLine y={0} stroke="var(--color-border-strong)" />
-                <Tooltip
-                    content={
-                        <SummaryTooltip
-                            bucket={summary.bucket}
-                            currencyCode={summary.currencyCode}
-                            catalog={catalog}
-                        />
-                    }
-                    cursor={{ fill: 'var(--color-surface-2)', fillOpacity: 0.5 }}
-                />
-                {summary.segments.length > 1 && (
-                    <Legend
-                        iconType="circle"
-                        iconSize={8}
-                        wrapperStyle={{ fontSize: 13, paddingTop: 8 }}
-                    />
-                )}
-                {summary.segments.map((segment, i) => (
-                    <Bar
-                        key={segment.accountId}
-                        dataKey={segment.accountId}
-                        name={segment.accountName}
-                        stackId="period"
-                        fill={chartColorByIndex(i)}
-                        isAnimationActive={false}
-                    />
-                ))}
-            </BarChart>
-        </ResponsiveContainer>
-    );
-}
-
-type SummaryTooltipProps = Partial<TooltipContentProps<number, string>> & {
-    bucket: RegisterSummaryBucketSize;
-    currencyCode: string;
-    catalog: CurrencyCatalog;
-};
-
-function SummaryTooltip({
-    active,
-    payload,
-    label,
-    bucket,
-    currencyCode,
-    catalog,
-}: SummaryTooltipProps) {
-    if (!active || !payload || payload.length === 0) return null;
-
-    // Zero-filled rows put every segment in the payload; only money that
-    // actually moved is informative.
-    const moved = payload.filter(item => (Number(item.value) || 0) !== 0);
-    if (moved.length === 0) return null;
-    const total = moved.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
-    const heading = typeof label === 'string' ? formatBucketTooltipDate(label, bucket) : '';
-
-    return (
-        <ChartTooltipShell heading={bucket === 'Week' ? <Trans>Week of {heading}</Trans> : heading}>
-            {moved.map(item => (
-                <ChartTooltipRow
-                    key={String(item.dataKey)}
-                    color={item.color}
-                    name={String(item.name ?? '')}
-                    value={formatMoney(Number(item.value) || 0, currencyCode, catalog, {
-                        sign: true,
-                    })}
-                />
-            ))}
-            {moved.length > 1 && (
-                <ChartTooltipTotalRow
-                    name={<Trans>Net</Trans>}
-                    value={formatMoney(total, currencyCode, catalog, { sign: true })}
-                />
-            )}
-        </ChartTooltipShell>
+        <Chart
+            definition={definition}
+            height={height}
+            ariaLabel={t`Net movement per period`}
+            tooltipHeading={points => {
+                const heading = formatBucketTooltipDate(points[0]?.xValue ?? '', bucket);
+                return bucket === 'Week' ? <Trans>Week of {heading}</Trans> : heading;
+            }}
+            tooltipRows={points => {
+                // Movement is signed: a bucket reads as +€120 in / -€80 out.
+                const money = (amount: number) =>
+                    formatMoney(amount, query.data.currencyCode, catalog, { sign: true });
+                const specs = points.map(point => ({
+                    color: point.color,
+                    name: point.datum.segment,
+                    value: money(point.datum.amount),
+                }));
+                if (specs.length < 2) return specs;
+                return [
+                    ...specs,
+                    {
+                        name: t`Net`,
+                        value: money(points.reduce((sum, p) => sum + p.datum.amount, 0)),
+                        total: true,
+                    },
+                ];
+            }}
+        />
     );
 }

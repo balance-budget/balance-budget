@@ -1588,6 +1588,9 @@ msgstr "名稱"
 msgid "Net"
 msgstr "淨額"
 
+msgid "Net movement per period"
+msgstr "各期間淨變動"
+
 msgid "Net movement per period, stacked by sub-account."
 msgstr "各期間的淨變動（按子帳戶堆疊）"
 

@@ -1588,6 +1588,9 @@ msgstr "Name"
 msgid "Net"
 msgstr "Net"
 
+msgid "Net movement per period"
+msgstr "Net movement per period"
+
 msgid "Net movement per period, stacked by sub-account."
 msgstr "Net movement per period, stacked by sub-account."
 

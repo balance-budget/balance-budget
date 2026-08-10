@@ -1588,6 +1588,9 @@ msgstr "Naam"
 msgid "Net"
 msgstr "Netto"
 
+msgid "Net movement per period"
+msgstr "Nettomutatie per periode"
+
 msgid "Net movement per period, stacked by sub-account."
 msgstr "Nettomutatie per periode, gestapeld per subrekening."
 
