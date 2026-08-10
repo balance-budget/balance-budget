@@ -1,36 +1,37 @@
 import { useMemo, useState } from 'react';
-import {
-    Area,
-    CartesianGrid,
-    ComposedChart,
-    Line,
-    ReferenceLine,
-    ResponsiveContainer,
-    Tooltip,
-    type TooltipContentProps,
-    XAxis,
-    YAxis,
-} from 'recharts';
+import { areaY, defineChart, lineY, ruleX } from '@tanstack/charts';
+import { crosshair } from '@tanstack/charts/crosshair';
+import { scaleLinear } from '@tanstack/charts/scales/linear';
+import { scalePoint } from '@tanstack/charts/scales/point';
 import { t } from '@lingui/core/macro';
-import { Trans, useLingui } from '@lingui/react/macro';
+import { useLingui } from '@lingui/react/macro';
 import type { LoanProjection } from '../api/loans';
-import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
+import { useCurrencyCatalog } from '../api/currencies';
 import { formatCalendarDate } from '../i18n/format';
+import { chartTooltip } from '../lib/chart';
 import { cx } from '../lib/cx';
-import { formatMoney, formatMoneyAxis } from '../lib/money';
-import { moneyAxis } from '../lib/chartAxis';
-import { ChartTooltipShell, ChartTooltipRow, ChartTooltipTotalRow } from './ChartTooltip';
+import { formatMoneyAxis } from '../lib/money';
 import { buildChartColorMap, chartColorByIndex } from '../lib/visualHints';
 import { buildChartRows, buildPaymentRows } from '../screens/loanDetail.state';
+import { Chart } from './Chart';
 
 type LoanChartProps = {
     projection: LoanProjection;
     height?: number;
 };
 
-type FlatRow = { period: string } & Record<string, number | string | null>;
-
 type ChartMode = 'balance' | 'payments';
+
+/** Series id: `<prefix>:<loan part id>`, or the standalone what-if total. */
+type Row = { period: string; series: string; amount: number };
+
+const SCENARIO_SERIES = 'scenarioTotal';
+/** Series prefixes: balance actuals, balance projection, repayment, interest. */
+const PREFIX = { actual: 'a', projected: 'p', repay: 'pr', interest: 'pi' } as const;
+
+function seriesId(prefix: (typeof PREFIX)[keyof typeof PREFIX], partId: string): string {
+    return `${prefix}:${partId}`;
+}
 
 /**
  * Two views of the loan over one month axis (toggleable):
@@ -42,220 +43,253 @@ type ChartMode = 'balance' | 'payments';
  * Rate-fixation boundaries and the "today" marker show in both (ADR-0025).
  */
 export function LoanChart({ projection, height = 280 }: LoanChartProps) {
-    const { t } = useLingui();
+    const { t: tt } = useLingui();
     const catalog = useCurrencyCatalog();
     const [mode, setMode] = useState<ChartMode>('balance');
 
-    const { balanceRows, hasScenario } = useMemo(() => {
-        const chartRows = buildChartRows(projection);
-        const flat: FlatRow[] = chartRows.map(r => {
-            const row: FlatRow = { period: r.period, scenarioTotal: r.scenarioTotal };
-            for (const [partId, balance] of Object.entries(r.actual)) row[`a:${partId}`] = balance;
-            for (const [partId, balance] of Object.entries(r.proj)) row[`p:${partId}`] = balance;
-            return row;
-        });
-        return { balanceRows: flat, hasScenario: chartRows.some(r => r.scenarioTotal !== null) };
-    }, [projection]);
-
-    const paymentRows = useMemo(() => {
-        return buildPaymentRows(projection).map(r => {
-            const row: FlatRow = { period: r.period };
-            for (const [partId, v] of Object.entries(r.repay)) row[`pr:${partId}`] = v;
-            for (const [partId, v] of Object.entries(r.interest)) row[`pi:${partId}`] = v;
-            return row;
-        });
-    }, [projection]);
-
-    const rows = mode === 'balance' ? balanceRows : paymentRows;
-
-    // Scale to the tallest stack per period (actuals and projection stack
-    // separately on either side of today; payments share one stack), plus the
-    // scenario line. Zero-based, so this only adds headroom above the peak.
-    const axis = useMemo(() => {
-        const totals: number[] = [];
-        for (const row of rows) {
-            let actual = 0;
-            let proj = 0;
-            let pay = 0;
-            for (const [key, value] of Object.entries(row)) {
-                if (typeof value !== 'number') continue;
-                const colon = key.indexOf(':');
-                const prefix = colon === -1 ? key : key.slice(0, colon);
-                if (prefix === 'a') actual += value;
-                else if (prefix === 'p') proj += value;
-                else if (prefix === 'pr' || prefix === 'pi') pay += value;
-                else if (key === 'scenarioTotal') totals.push(value);
-            }
-            totals.push(actual, proj, pay);
-        }
-        return moneyAxis(totals, { includeZero: true });
-    }, [rows]);
-
-    const ticks = useMemo(() => {
-        // January of every nth year, thinned so long mortgages stay readable.
-        const januaries = rows.map(r => r.period).filter(p => p.slice(5, 7) === '01');
-        const step = Math.max(1, Math.ceil(januaries.length / 8));
-        return januaries.filter((_, i) => i % step === 0);
-    }, [rows]);
-
-    const labelByPart = new Map(projection.parts.map(p => [p.id as string, p.label]));
+    const labelByPart = useMemo(
+        () => new Map(projection.parts.map(p => [p.id as string, p.label])),
+        [projection.parts],
+    );
     // One stable hue per loan account, assigned by the parts' order so a part
     // always keeps its color across renders and modes.
-    const colorByAccount = buildChartColorMap(projection.parts.map(p => p.accountId));
-    const colorOf = (accountId: string) => colorByAccount.get(accountId) ?? chartColorByIndex(0);
+    const colorByAccount = useMemo(
+        () => buildChartColorMap(projection.parts.map(p => p.accountId)),
+        [projection.parts],
+    );
+    // Series stack in first-seen order, so iterate parts outermost. In the payment
+    // view each part's repayment and interest are emitted back-to-back, keeping the
+    // part one contiguous two-band block of a single hue.
+    const { actual, projected, scenario, payments } = useMemo(() => {
+        const chartRows = buildChartRows(projection);
+        const paymentRows = buildPaymentRows(projection);
+        const series = (
+            rows: readonly { period: string }[],
+            prefix: (typeof PREFIX)[keyof typeof PREFIX],
+            partId: string,
+            read: (index: number) => number | undefined,
+        ): Row[] =>
+            rows.flatMap((row, i) => {
+                const amount = read(i);
+                return amount === undefined
+                    ? []
+                    : [{ period: row.period, series: seriesId(prefix, partId), amount }];
+            });
+
+        return {
+            actual: projection.parts.flatMap(p =>
+                series(chartRows, PREFIX.actual, p.id, i => chartRows[i]?.actual[p.id]),
+            ),
+            projected: projection.parts.flatMap(p =>
+                series(chartRows, PREFIX.projected, p.id, i => chartRows[i]?.proj[p.id]),
+            ),
+            payments: projection.parts.flatMap(p => [
+                ...series(paymentRows, PREFIX.repay, p.id, i => paymentRows[i]?.repay[p.id]),
+                ...series(paymentRows, PREFIX.interest, p.id, i => paymentRows[i]?.interest[p.id]),
+            ]),
+            scenario: chartRows.flatMap(r =>
+                r.scenarioTotal === null
+                    ? []
+                    : [{ period: r.period, series: SCENARIO_SERIES, amount: r.scenarioTotal }],
+            ),
+        };
+    }, [projection]);
+
+    const tickValues = useMemo(() => {
+        // January of every nth year, thinned so long mortgages stay readable.
+        const periods = [...new Set([...actual, ...projected, ...payments].map(r => r.period))];
+        const januaries = periods.filter(p => p.slice(5, 7) === '01').sort();
+        const step = Math.max(1, Math.ceil(januaries.length / 8));
+        return januaries.filter((_, i) => i % step === 0);
+    }, [actual, projected, payments]);
+
+    const definition = useMemo(() => {
+        const colorOf = (accountId: string) =>
+            colorByAccount.get(accountId) ?? chartColorByIndex(0);
+        // Repayment reads darker than interest inside one hue, so bake the shade into
+        // the fill: one stack cannot carry two fill opacities.
+        const shaded = (accountId: string, percent: number) =>
+            // eslint-disable-next-line lingui/no-unlocalized-strings -- CSS color value, not UI copy.
+            `color-mix(in srgb, ${colorOf(accountId)} ${percent}%, transparent)`;
+        const partOf = (series: string) =>
+            projection.parts.find(p => p.id === series.slice(series.indexOf(':') + 1));
+        const hueOf = (row: Row) => {
+            const part = partOf(row.series);
+            return part ? colorOf(part.accountId) : chartColorByIndex(0);
+        };
+
+        const marks =
+            mode === 'balance'
+                ? [
+                      areaY(actual, {
+                          x: 'period',
+                          y: 'amount',
+                          color: 'series',
+                          fillOpacity: 0.45,
+                          stroke: hueOf,
+                          strokeWidth: 1.25,
+                      }),
+                      areaY(projected, {
+                          x: 'period',
+                          y: 'amount',
+                          color: 'series',
+                          fillOpacity: 0.16,
+                          stroke: hueOf,
+                          strokeWidth: 1.25,
+                          strokeDasharray: '4 3',
+                      }),
+                      ...(scenario.length > 0
+                          ? [
+                                lineY(scenario, {
+                                    x: 'period',
+                                    y: 'amount',
+                                    color: 'series',
+                                    strokeWidth: 1.75,
+                                    strokeDasharray: '6 3',
+                                }),
+                            ]
+                          : []),
+                  ]
+                : [
+                      areaY(payments, {
+                          x: 'period',
+                          y: 'amount',
+                          color: 'series',
+                          fill: row => {
+                              const part = partOf(row.series);
+                              return part
+                                  ? shaded(
+                                        part.accountId,
+                                        row.series.startsWith(PREFIX.repay) ? 80 : 32,
+                                    )
+                                  : chartColorByIndex(0);
+                          },
+                          fillOpacity: 1,
+                          stroke: hueOf,
+                          strokeWidth: 0.5,
+                      }),
+                  ];
+
+        const series = [
+            ...projection.parts.flatMap(p =>
+                Object.values(PREFIX).map(prefix => seriesId(prefix, p.id)),
+            ),
+            SCENARIO_SERIES,
+        ];
+
+        return defineChart({
+            marks: [
+                ...marks,
+                // Today: actuals to the left, projection to the right.
+                ruleX([projection.anchorMonth], {
+                    stroke: 'var(--color-border-strong)',
+                    strokeDasharray: '3 3',
+                }),
+                // Rate-fixation boundaries: where the projection stops being contractual.
+                ...projection.parts.flatMap(p =>
+                    p.fixedUntil === null
+                        ? []
+                        : [
+                              ruleX([firstOfMonth(p.fixedUntil)], {
+                                  stroke: colorOf(p.accountId),
+                                  strokeDasharray: '2 4',
+                              }),
+                          ],
+                ),
+                crosshair({ x: true, y: false }),
+            ],
+            x: {
+                scale: scalePoint,
+                axis: {
+                    line: false,
+                    ticks: { values: tickValues, format: (p: string) => p.slice(0, 4) },
+                },
+            },
+            y: {
+                scale: scaleLinear,
+                nice: true,
+                grid: true,
+                axis: {
+                    line: false,
+                    ticks: {
+                        format: (v: number) => formatMoneyAxis(v, projection.currencyCode, catalog),
+                    },
+                },
+            },
+            color: {
+                domain: series,
+                range: series.map(s =>
+                    s === SCENARIO_SERIES
+                        ? 'var(--color-fg-1)'
+                        : colorOf(partOf(s)?.accountId ?? ''),
+                ),
+            },
+            focus: 'group-x',
+            tooltip: chartTooltip,
+        });
+    }, [
+        mode,
+        actual,
+        projected,
+        scenario,
+        payments,
+        tickValues,
+        projection,
+        catalog,
+        colorByAccount,
+    ]);
 
     return (
         <div className="flex flex-col gap-2">
             <div className="flex justify-end">
                 <SegmentedToggle mode={mode} onChange={setMode} />
             </div>
-            <ResponsiveContainer width="100%" height={height}>
-                <ComposedChart data={rows} margin={{ top: 10, right: 12, bottom: 0, left: 0 }}>
-                    <CartesianGrid
-                        stroke="var(--color-border-soft)"
-                        vertical={false}
-                        strokeDasharray="2 4"
-                    />
-                    <XAxis
-                        dataKey="period"
-                        ticks={ticks}
-                        interval={0}
-                        tickFormatter={(p: string) => p.slice(0, 4)}
-                        tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
-                        axisLine={false}
-                        tickLine={false}
-                    />
-                    <YAxis
-                        domain={axis?.domain ?? [0, 'auto']}
-                        ticks={axis?.ticks}
-                        tickFormatter={(v: number) =>
-                            formatMoneyAxis(v, projection.currencyCode, catalog)
-                        }
-                        tick={{ fill: 'var(--color-fg-3)', fontSize: 11 }}
-                        axisLine={false}
-                        tickLine={false}
-                        width={64}
-                    />
-                    <Tooltip
-                        cursor={{
-                            stroke: 'var(--color-border-strong)',
-                            strokeWidth: 1,
-                            strokeDasharray: '2 2',
-                        }}
-                        content={
-                            <LoanTooltip
-                                currencyCode={projection.currencyCode}
-                                catalog={catalog}
-                                labelByPart={labelByPart}
-                            />
-                        }
-                    />
-                    {/* Today: actuals to the left, projection to the right. */}
-                    <ReferenceLine
-                        x={projection.anchorMonth}
-                        stroke="var(--color-border-strong)"
-                        strokeDasharray="3 3"
-                        label={{
-                            value: t`today`,
-                            position: 'insideTopLeft',
-                            fill: 'var(--color-fg-3)',
-                            fontSize: 10,
-                        }}
-                    />
-                    {/* Rate-fixation boundaries: where the projection stops being contractual. */}
-                    {projection.parts.map(p =>
-                        p.fixedUntil === null ? null : (
-                            <ReferenceLine
-                                key={`fix-${p.id}`}
-                                x={firstOfMonth(p.fixedUntil)}
-                                stroke={colorOf(p.accountId)}
-                                strokeDasharray="2 4"
-                                label={{
-                                    value: t`${p.label} fixed until`,
-                                    position: 'insideTopRight',
-                                    fill: 'var(--color-fg-3)',
-                                    fontSize: 10,
-                                }}
-                            />
-                        ),
-                    )}
-
-                    {mode === 'balance' && (
-                        <>
-                            {projection.parts.map(p => (
-                                <Area
-                                    key={`a:${p.id}`}
-                                    dataKey={`a:${p.id}`}
-                                    stackId="actual"
-                                    name={`a:${p.id}`}
-                                    stroke={colorOf(p.accountId)}
-                                    fill={colorOf(p.accountId)}
-                                    fillOpacity={0.45}
-                                    strokeWidth={1.25}
-                                    isAnimationActive={false}
-                                />
-                            ))}
-                            {projection.parts.map(p => (
-                                <Area
-                                    key={`p:${p.id}`}
-                                    dataKey={`p:${p.id}`}
-                                    stackId="proj"
-                                    name={`p:${p.id}`}
-                                    stroke={colorOf(p.accountId)}
-                                    strokeDasharray="4 3"
-                                    fill={colorOf(p.accountId)}
-                                    fillOpacity={0.16}
-                                    strokeWidth={1.25}
-                                    isAnimationActive={false}
-                                />
-                            ))}
-                            {hasScenario && (
-                                <Line
-                                    dataKey="scenarioTotal"
-                                    name="scenarioTotal"
-                                    stroke="var(--color-fg-1)"
-                                    strokeWidth={1.75}
-                                    strokeDasharray="6 3"
-                                    dot={false}
-                                    isAnimationActive={false}
-                                />
-                            )}
-                        </>
-                    )}
-
-                    {mode === 'payments' && (
-                        <>
-                            {/* Repayment (darker shade) then interest (lighter shade) per part,
-                                emitted back-to-back so each part stacks as one contiguous
-                                two-band block of a single hue (parts otherwise interleave). */}
-                            {projection.parts.flatMap(p => [
-                                <Area
-                                    key={`pr:${p.id}`}
-                                    dataKey={`pr:${p.id}`}
-                                    stackId="pay"
-                                    name={`pr:${p.id}`}
-                                    stroke={colorOf(p.accountId)}
-                                    fill={colorOf(p.accountId)}
-                                    fillOpacity={0.8}
-                                    strokeWidth={0.5}
-                                    isAnimationActive={false}
-                                />,
-                                <Area
-                                    key={`pi:${p.id}`}
-                                    dataKey={`pi:${p.id}`}
-                                    stackId="pay"
-                                    name={`pi:${p.id}`}
-                                    stroke={colorOf(p.accountId)}
-                                    fill={colorOf(p.accountId)}
-                                    fillOpacity={0.32}
-                                    strokeWidth={0.5}
-                                    isAnimationActive={false}
-                                />,
-                            ])}
-                        </>
-                    )}
-                </ComposedChart>
-            </ResponsiveContainer>
+            <Chart
+                definition={definition}
+                height={height}
+                currency={projection.currencyCode}
+                ariaLabel={
+                    mode === 'balance' ? tt`Loan balance over time` : tt`Loan payments over time`
+                }
+                tooltipHeading={points =>
+                    formatCalendarDate((points[0]?.xValue ?? '').slice(0, 7), 'year-month', {
+                        style: 'long',
+                    })
+                }
+                tooltipRows={(points, formatValue) => {
+                    // The what-if total is an alternative total, not a stack component, so it
+                    // renders as its own row and stays out of the sum.
+                    const components = points.filter(p => p.datum.series !== SCENARIO_SERIES);
+                    const scenarioPoint = points.find(p => p.datum.series === SCENARIO_SERIES);
+                    return [
+                        ...components.map(point => ({
+                            color: point.color,
+                            name: chartSeriesLabel(point.datum.series, labelByPart),
+                            value: formatValue(point.datum.amount),
+                        })),
+                        ...(components.length > 1
+                            ? [
+                                  {
+                                      name: tt`Total`,
+                                      value: formatValue(
+                                          components.reduce((sum, p) => sum + p.datum.amount, 0),
+                                      ),
+                                      total: true,
+                                  },
+                              ]
+                            : []),
+                        ...(scenarioPoint
+                            ? [
+                                  {
+                                      color: scenarioPoint.color,
+                                      name: chartSeriesLabel(SCENARIO_SERIES, labelByPart),
+                                      value: formatValue(scenarioPoint.datum.amount),
+                                  },
+                              ]
+                            : []),
+                    ];
+                }}
+            />
         </div>
     );
 }
@@ -291,64 +325,8 @@ function SegmentedToggle({
     );
 }
 
-type LoanTooltipProps = Partial<TooltipContentProps<number, string>> & {
-    currencyCode: string;
-    catalog: CurrencyCatalog;
-    labelByPart: Map<string, string>;
-};
-
-// Stacked balances/payments per loan part, plus the total they stack to. The
-// "What-if total" line is an alternative total (not a stack component), so it
-// renders as its own row and stays out of the sum.
-function LoanTooltip({
-    active,
-    payload,
-    label,
-    currencyCode,
-    catalog,
-    labelByPart,
-}: LoanTooltipProps) {
-    if (!active || !payload || payload.length === 0) return null;
-
-    const moved = payload.filter(item => (Number(item.value) || 0) !== 0);
-    if (moved.length === 0) return null;
-    const components = moved.filter(item => item.dataKey !== 'scenarioTotal');
-    const scenario = moved.find(item => item.dataKey === 'scenarioTotal');
-    const total = components.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
-    const heading =
-        typeof label === 'string'
-            ? formatCalendarDate(label.slice(0, 7), 'year-month', { style: 'long' })
-            : '';
-
-    return (
-        <ChartTooltipShell heading={heading}>
-            {components.map(item => (
-                <ChartTooltipRow
-                    key={String(item.dataKey)}
-                    color={item.color}
-                    name={chartSeriesLabel(String(item.name ?? item.dataKey), labelByPart)}
-                    value={formatMoney(Number(item.value) || 0, currencyCode, catalog)}
-                />
-            ))}
-            {components.length > 1 && (
-                <ChartTooltipTotalRow
-                    name={<Trans>Total</Trans>}
-                    value={formatMoney(total, currencyCode, catalog)}
-                />
-            )}
-            {scenario && (
-                <ChartTooltipRow
-                    color={scenario.color}
-                    name={chartSeriesLabel('scenarioTotal', labelByPart)}
-                    value={formatMoney(Number(scenario.value) || 0, currencyCode, catalog)}
-                />
-            )}
-        </ChartTooltipShell>
-    );
-}
-
 function chartSeriesLabel(seriesName: string, labelByPart: Map<string, string>): string {
-    if (seriesName === 'scenarioTotal') return t`What-if total`;
+    if (seriesName === SCENARIO_SERIES) return t`What-if total`;
     const colon = seriesName.indexOf(':');
     const prefix = seriesName.slice(0, colon);
     const label = labelByPart.get(seriesName.slice(colon + 1)) ?? t`Part`;

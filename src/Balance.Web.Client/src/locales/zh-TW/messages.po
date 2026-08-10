@@ -88,8 +88,8 @@ msgid "{0} filled"
 msgstr "已填入 {0} 筆"
 
 #. placeholder {0}: p.label
-msgid "{0} fixed until"
-msgstr "{0} 固定至"
+#~ msgid "{0} fixed until"
+#~ msgstr "{0} 固定至"
 
 #. placeholder {0}: cpOnly.toString()
 msgid "{0} got counterparty only"
@@ -199,6 +199,9 @@ msgstr "帳戶"
 
 msgid "Account (mixed currencies)"
 msgstr "帳戶（多幣別）"
+
+msgid "Account balances over time"
+msgstr "帳戶餘額變化"
 
 msgid "Account code"
 msgstr "帳戶代碼"
@@ -962,6 +965,9 @@ msgstr "已儲存顯示偏好設定。"
 msgid "Distribution"
 msgstr "分佈"
 
+msgid "Distribution by account"
+msgstr "各帳戶分佈"
+
 msgid "Double-entry detail."
 msgstr "複式記帳明細。"
 
@@ -1453,6 +1459,9 @@ msgstr "載入中…"
 msgid "Loan"
 msgstr "貸款"
 
+msgid "Loan balance over time"
+msgstr "貸款餘額變化"
+
 msgid "Loan created."
 msgstr "已建立貸款。"
 
@@ -1474,6 +1483,9 @@ msgstr "貸款支付"
 #. placeholder {0}: hint.loanName
 msgid "Loan payment · {0}"
 msgstr "貸款支付 · {0}"
+
+msgid "Loan payments over time"
+msgstr "貸款還款變化"
 
 msgid "Loan updated."
 msgstr "已更新貸款。"
@@ -1537,6 +1549,9 @@ msgstr "現金流向這些帳戶（借方）。"
 msgid "Money flow"
 msgstr "現金流動"
 
+msgid "Money flow between accounts"
+msgstr "帳戶之間的資金流動"
+
 msgid "Money in"
 msgstr "現金流入"
 
@@ -1579,6 +1594,9 @@ msgstr "名稱"
 msgid "Net"
 msgstr "淨額"
 
+msgid "Net movement per period"
+msgstr "各期間淨變動"
+
 msgid "Net movement per period, stacked by sub-account."
 msgstr "各期間的淨變動（按子帳戶堆疊）"
 
@@ -1593,6 +1611,9 @@ msgstr "本期淨額為負。請查看明細。"
 
 msgid "Net worth"
 msgstr "淨值"
+
+msgid "Net worth over time"
+msgstr "淨資產變化"
 
 msgid "Net worth range"
 msgstr "淨值範圍"
@@ -1935,6 +1956,9 @@ msgstr "本金"
 msgid "Projected"
 msgstr "預估"
 
+msgid "Projected balance"
+msgstr "預估餘額"
+
 msgid "Projected month-end liquid"
 msgstr "預估月底流動資金"
 
@@ -2172,6 +2196,9 @@ msgstr "選取的列橫跨 {0}。帳戶無法批次套用。"
 msgid "SEPA creditor ID"
 msgstr "SEPA 收款人 ID"
 
+msgid "Series visibility"
+msgstr "數列顯示狀態"
+
 msgid "Set an importer on this bank account to enable statement imports."
 msgstr "在此銀行帳戶設定匯入器以啟用對帳單匯入。"
 
@@ -2357,8 +2384,8 @@ msgstr "今年"
 msgid "To"
 msgstr "至"
 
-msgid "today"
-msgstr "今天"
+#~ msgid "today"
+#~ msgstr "今天"
 
 msgid "Tokens"
 msgstr "權杖"
@@ -2380,6 +2407,9 @@ msgstr "類型"
 
 msgid "Type to search accounts, counterparties, bank accounts, journal entries."
 msgstr "輸入以搜尋帳戶、交易對方、銀行帳戶、日記帳分錄。"
+
+msgid "Typical range"
+msgstr "典型區間"
 
 msgid "Unallocated"
 msgstr "未分配"

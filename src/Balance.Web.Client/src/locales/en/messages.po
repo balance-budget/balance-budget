@@ -88,8 +88,8 @@ msgid "{0} filled"
 msgstr "{0} filled"
 
 #. placeholder {0}: p.label
-msgid "{0} fixed until"
-msgstr "{0} fixed until"
+#~ msgid "{0} fixed until"
+#~ msgstr "{0} fixed until"
 
 #. placeholder {0}: cpOnly.toString()
 msgid "{0} got counterparty only"
@@ -199,6 +199,9 @@ msgstr "Account"
 
 msgid "Account (mixed currencies)"
 msgstr "Account (mixed currencies)"
+
+msgid "Account balances over time"
+msgstr "Account balances over time"
 
 msgid "Account code"
 msgstr "Account code"
@@ -962,6 +965,9 @@ msgstr "Display preferences saved."
 msgid "Distribution"
 msgstr "Distribution"
 
+msgid "Distribution by account"
+msgstr "Distribution by account"
+
 msgid "Double-entry detail."
 msgstr "Double-entry detail."
 
@@ -1453,6 +1459,9 @@ msgstr "Loading…"
 msgid "Loan"
 msgstr "Loan"
 
+msgid "Loan balance over time"
+msgstr "Loan balance over time"
+
 msgid "Loan created."
 msgstr "Loan created."
 
@@ -1474,6 +1483,9 @@ msgstr "Loan payment"
 #. placeholder {0}: hint.loanName
 msgid "Loan payment · {0}"
 msgstr "Loan payment · {0}"
+
+msgid "Loan payments over time"
+msgstr "Loan payments over time"
 
 msgid "Loan updated."
 msgstr "Loan updated."
@@ -1537,6 +1549,9 @@ msgstr "Money arrives in these accounts (debit)."
 msgid "Money flow"
 msgstr "Money flow"
 
+msgid "Money flow between accounts"
+msgstr "Money flow between accounts"
+
 msgid "Money in"
 msgstr "Money in"
 
@@ -1579,6 +1594,9 @@ msgstr "Name"
 msgid "Net"
 msgstr "Net"
 
+msgid "Net movement per period"
+msgstr "Net movement per period"
+
 msgid "Net movement per period, stacked by sub-account."
 msgstr "Net movement per period, stacked by sub-account."
 
@@ -1593,6 +1611,9 @@ msgstr "Net negative this period. See the breakdown."
 
 msgid "Net worth"
 msgstr "Net worth"
+
+msgid "Net worth over time"
+msgstr "Net worth over time"
 
 msgid "Net worth range"
 msgstr "Net worth range"
@@ -1935,6 +1956,9 @@ msgstr "Principal"
 msgid "Projected"
 msgstr "Projected"
 
+msgid "Projected balance"
+msgstr "Projected balance"
+
 msgid "Projected month-end liquid"
 msgstr "Projected month-end liquid"
 
@@ -2172,6 +2196,9 @@ msgstr "Selected rows span {0}. Account can't be bulk-applied."
 msgid "SEPA creditor ID"
 msgstr "SEPA creditor ID"
 
+msgid "Series visibility"
+msgstr "Series visibility"
+
 msgid "Set an importer on this bank account to enable statement imports."
 msgstr "Set an importer on this bank account to enable statement imports."
 
@@ -2357,8 +2384,8 @@ msgstr "This year"
 msgid "To"
 msgstr "To"
 
-msgid "today"
-msgstr "today"
+#~ msgid "today"
+#~ msgstr "today"
 
 msgid "Tokens"
 msgstr "Tokens"
@@ -2380,6 +2407,9 @@ msgstr "Type"
 
 msgid "Type to search accounts, counterparties, bank accounts, journal entries."
 msgstr "Type to search accounts, counterparties, bank accounts, journal entries."
+
+msgid "Typical range"
+msgstr "Typical range"
 
 msgid "Unallocated"
 msgstr "Unallocated"

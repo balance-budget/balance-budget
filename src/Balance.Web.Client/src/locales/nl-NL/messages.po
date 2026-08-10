@@ -88,8 +88,8 @@ msgid "{0} filled"
 msgstr "{0} ingevuld"
 
 #. placeholder {0}: p.label
-msgid "{0} fixed until"
-msgstr "{0} vast tot"
+#~ msgid "{0} fixed until"
+#~ msgstr "{0} vast tot"
 
 #. placeholder {0}: cpOnly.toString()
 msgid "{0} got counterparty only"
@@ -199,6 +199,9 @@ msgstr "Rekening"
 
 msgid "Account (mixed currencies)"
 msgstr "Rekening (gemengde valuta)"
+
+msgid "Account balances over time"
+msgstr "Rekeningsaldi in de tijd"
 
 msgid "Account code"
 msgstr "Rekeningcode"
@@ -962,6 +965,9 @@ msgstr "Weergavevoorkeuren opgeslagen."
 msgid "Distribution"
 msgstr "Verdeling"
 
+msgid "Distribution by account"
+msgstr "Verdeling per rekening"
+
 msgid "Double-entry detail."
 msgstr "Detail van dubbel boekhouden."
 
@@ -1453,6 +1459,9 @@ msgstr "Laden…"
 msgid "Loan"
 msgstr "Lening"
 
+msgid "Loan balance over time"
+msgstr "Leningsaldo in de tijd"
+
 msgid "Loan created."
 msgstr "Lening aangemaakt."
 
@@ -1474,6 +1483,9 @@ msgstr "Leningbetaling"
 #. placeholder {0}: hint.loanName
 msgid "Loan payment · {0}"
 msgstr "Leningbetaling · {0}"
+
+msgid "Loan payments over time"
+msgstr "Leningbetalingen in de tijd"
 
 msgid "Loan updated."
 msgstr "Lening bijgewerkt."
@@ -1537,6 +1549,9 @@ msgstr "Geld komt binnen op deze rekeningen (debet)."
 msgid "Money flow"
 msgstr "Geldstroom"
 
+msgid "Money flow between accounts"
+msgstr "Geldstroom tussen rekeningen"
+
 msgid "Money in"
 msgstr "Geld in"
 
@@ -1579,6 +1594,9 @@ msgstr "Naam"
 msgid "Net"
 msgstr "Netto"
 
+msgid "Net movement per period"
+msgstr "Nettomutatie per periode"
+
 msgid "Net movement per period, stacked by sub-account."
 msgstr "Nettomutatie per periode, gestapeld per subrekening."
 
@@ -1593,6 +1611,9 @@ msgstr "Netto negatief deze periode. Zie de uitsplitsing."
 
 msgid "Net worth"
 msgstr "Nettovermogen"
+
+msgid "Net worth over time"
+msgstr "Vermogen in de tijd"
 
 msgid "Net worth range"
 msgstr "Vermogensbereik"
@@ -1935,6 +1956,9 @@ msgstr "Hoofdsom"
 msgid "Projected"
 msgstr "Verwacht"
 
+msgid "Projected balance"
+msgstr "Verwacht saldo"
+
 msgid "Projected month-end liquid"
 msgstr "Verwacht liquide einde maand"
 
@@ -2172,6 +2196,9 @@ msgstr "Geselecteerde rijen omvatten {0}. Rekening kan niet in bulk worden toege
 msgid "SEPA creditor ID"
 msgstr "SEPA-incassant-ID"
 
+msgid "Series visibility"
+msgstr "Zichtbaarheid van reeksen"
+
 msgid "Set an importer on this bank account to enable statement imports."
 msgstr "Stel een importer in op deze bankrekening om afschriftimports in te schakelen."
 
@@ -2357,8 +2384,8 @@ msgstr "Dit jaar"
 msgid "To"
 msgstr "Naar"
 
-msgid "today"
-msgstr "vandaag"
+#~ msgid "today"
+#~ msgstr "vandaag"
 
 msgid "Tokens"
 msgstr "Tokens"
@@ -2380,6 +2407,9 @@ msgstr "Type"
 
 msgid "Type to search accounts, counterparties, bank accounts, journal entries."
 msgstr "Typ om te zoeken naar rekeningen, tegenpartijen, bankrekeningen en journaalposten."
+
+msgid "Typical range"
+msgstr "Gebruikelijke marge"
 
 msgid "Unallocated"
 msgstr "Niet toegewezen"
