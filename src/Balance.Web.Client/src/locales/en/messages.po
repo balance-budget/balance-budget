@@ -962,6 +962,9 @@ msgstr "Display preferences saved."
 msgid "Distribution"
 msgstr "Distribution"
 
+msgid "Distribution by account"
+msgstr "Distribution by account"
+
 msgid "Double-entry detail."
 msgstr "Double-entry detail."
 

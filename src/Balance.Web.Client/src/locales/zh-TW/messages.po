@@ -962,6 +962,9 @@ msgstr "已儲存顯示偏好設定。"
 msgid "Distribution"
 msgstr "分佈"
 
+msgid "Distribution by account"
+msgstr "各帳戶分佈"
+
 msgid "Double-entry detail."
 msgstr "複式記帳明細。"
 

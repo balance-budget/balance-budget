@@ -962,6 +962,9 @@ msgstr "Weergavevoorkeuren opgeslagen."
 msgid "Distribution"
 msgstr "Verdeling"
 
+msgid "Distribution by account"
+msgstr "Verdeling per rekening"
+
 msgid "Double-entry detail."
 msgstr "Detail van dubbel boekhouden."
 

@@ -1,20 +1,22 @@
 import { msg } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useMemo, useState } from 'react';
-import { Pie, PieChart, ResponsiveContainer, Tooltip, type TooltipContentProps } from 'recharts';
-import { useCurrencyCatalog, type CurrencyCatalog } from '../api/currencies';
+import { defineChart } from '@tanstack/charts';
+import { pie, polar, radialArc } from '@tanstack/charts/polar';
+import { useCurrencyCatalog } from '../api/currencies';
 import {
     useDistribution,
     type Distribution,
     type DistributionSlice,
     type DistributionType,
 } from '../api/reports';
+import { chartTooltip } from '../lib/chart';
 import { cx } from '../lib/cx';
 import type { AccountId } from '../lib/domain';
 import { formatMoney } from '../lib/money';
 import type { ReportPeriod } from '../lib/reportPeriod';
 import { chartColorByIndex } from '../lib/visualHints';
-import { ChartTooltipShell, ChartTooltipRow } from './ChartTooltip';
+import { Chart } from './Chart';
 import { ErrorState } from './ErrorState';
 import { Panel, SectionHead } from './Panel';
 import { Breadcrumb, Breadcrumbs } from './ui/Breadcrumbs';
@@ -26,6 +28,12 @@ type DistributionChartProps = {
 };
 
 type Crumb = { id: AccountId; name: string };
+
+const DONUT_HEIGHT = 240;
+const DONUT_INNER_RADIUS = 64;
+const DONUT_OUTER_RADIUS = 104;
+/** Breathing room between slices, in radians (the old 3° padding angle). */
+const DONUT_GAP_ANGLE = (3 * Math.PI) / 180;
 
 const TYPES = [
     { token: 'expense', label: msg`Expenses` },
@@ -147,6 +155,7 @@ function DistributionBody({
     currency: string;
     onDrill: (slice: DistributionSlice) => void;
 }) {
+    const { t } = useLingui();
     const catalog = useCurrencyCatalog();
 
     const positive = useMemo(() => data.slices.filter(s => s.amount.amount > 0), [data.slices]);
@@ -165,18 +174,41 @@ function DistributionBody({
         return map;
     }, [positive, negative]);
 
-    const pieData = positive.map(s => {
-        const color = colorByAccount.get(s.accountId) ?? chartColorByIndex(0);
-        return {
-            name: s.name,
-            value: s.amount.amount,
-            // recharts spreads each datum onto its sector, so per-entry `fill` /
-            // `stroke` style the slice — no deprecated <Cell> needed. Like the
-            // line charts: a crisp full-opacity edge over a translucent fill.
-            fill: color,
-            stroke: color,
-        };
-    });
+    const slices = useMemo(
+        () => pie(positive, { value: s => s.amount.amount, gapAngle: DONUT_GAP_ANGLE }),
+        [positive],
+    );
+
+    const definition = useMemo(
+        () =>
+            defineChart({
+                marks: [
+                    polar({
+                        marks: [
+                            radialArc(slices, {
+                                key: 'accountId',
+                                color: s => s.accountId,
+                                innerRadius: DONUT_INNER_RADIUS,
+                                outerRadius: DONUT_OUTER_RADIUS,
+                                cornerRadius: 3,
+                                // The same muted intensity as the translucent line and
+                                // area fills, with a thin full-opacity border.
+                                fillOpacity: 0.7,
+                                stroke: s =>
+                                    colorByAccount.get(s.accountId) ?? chartColorByIndex(0),
+                                strokeWidth: 1.5,
+                            }),
+                        ],
+                    }),
+                ],
+                color: {
+                    domain: [...colorByAccount.keys()],
+                    range: [...colorByAccount.values()],
+                },
+                tooltip: chartTooltip,
+            }),
+        [slices, colorByAccount],
+    );
 
     if (positive.length === 0 && negative.length === 0) {
         return (
@@ -189,41 +221,30 @@ function DistributionBody({
     return (
         <div className="grid gap-5 grid-cols-1 md:grid-cols-[240px_1fr] items-center">
             <div className="relative h-[240px]">
-                {pieData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                            <Pie
-                                data={pieData}
-                                dataKey="value"
-                                nameKey="name"
-                                innerRadius={64}
-                                outerRadius={104}
-                                // A bit of breathing room between slices, with
-                                // softly rounded ends, for a modern segmented look.
-                                paddingAngle={3}
-                                cornerRadius={3}
-                                minAngle={2}
-                                // Soften the fill to the same muted intensity as
-                                // the translucent line/area fills, with a thin
-                                // full-opacity border (per-slice stroke above) so
-                                // the donut reads like the line charts.
-                                fillOpacity={0.7}
-                                strokeWidth={1.5}
-                                isAnimationActive={false}
-                            />
-                            <Tooltip
-                                content={
-                                    <DistributionTooltip currency={currency} catalog={catalog} />
-                                }
-                            />
-                        </PieChart>
-                    </ResponsiveContainer>
+                {slices.length > 0 ? (
+                    <Chart
+                        definition={definition}
+                        height={DONUT_HEIGHT}
+                        currency={currency}
+                        ariaLabel={t`Distribution by account`}
+                        tooltipRows={(points, formatValue) =>
+                            points.map(point => ({
+                                color: point.color,
+                                name: point.datum.name,
+                                value: formatValue(point.datum.value),
+                            }))
+                        }
+                        onSelect={point => {
+                            const slice = point?.datum.source[0];
+                            if (slice) onDrill(slice);
+                        }}
+                    />
                 ) : (
                     <div className="h-full flex items-center justify-center text-xs text-fg-3 text-center px-4">
                         <Trans>Net negative this period. See the breakdown.</Trans>
                     </div>
                 )}
-                {pieData.length > 0 && (
+                {slices.length > 0 && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                         <span className="text-xs text-fg-3">
                             <Trans>Total</Trans>
@@ -265,30 +286,6 @@ function DistributionBody({
                 )}
             </div>
         </div>
-    );
-}
-
-type DistributionTooltipProps = Partial<TooltipContentProps<number, string>> & {
-    currency: string;
-    catalog: CurrencyCatalog;
-};
-
-function DistributionTooltip({ active, payload, currency, catalog }: DistributionTooltipProps) {
-    if (!active || !payload || payload.length === 0) return null;
-    return (
-        <ChartTooltipShell>
-            {payload.map((item, i) => {
-                const datum = item.payload as { fill?: string } | undefined;
-                return (
-                    <ChartTooltipRow
-                        key={`${String(item.name ?? '')}:${i}`}
-                        color={datum?.fill ?? item.color}
-                        name={String(item.name ?? '')}
-                        value={formatMoney(Number(item.value) || 0, currency, catalog)}
-                    />
-                );
-            })}
-        </ChartTooltipShell>
     );
 }
 
