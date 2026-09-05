@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react-swc';
 import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import { lingui } from '@lingui/vite-plugin';
+import { linguiMacroSwcPlugin } from '@lingui/swc-plugin/options';
 import { openApiCodegen } from './vite-plugin-openapi-codegen.ts';
 
 export default defineConfig({
@@ -16,7 +17,7 @@ export default defineConfig({
         // The Wasm plugin's AST layout must match the @swc/core host runtime, which is
         // why @swc/core is a direct devDependency instead of a transitive one: it pins
         // the host new enough for the swc_core version @lingui/swc-plugin was built with.
-        react({ plugins: [['@lingui/swc-plugin', {}]] }),
+        react({ plugins: [linguiMacroSwcPlugin()] }),
         lingui(),
         tailwindcss(),
     ],
