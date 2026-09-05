@@ -364,8 +364,8 @@ internal sealed class BankAccountEndpointsTests : EndpointsTestsBase
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
         var importers = await response.Content.ReadFromJsonAsync<List<BankAccountImporterDto>>();
-        await Assert.That(importers).IsNotNull();
-        await Assert.That(importers!.Any(i => i.Key == "Ing.CurrentAccount")).IsTrue();
+        Assert.NotNull(importers);
+        await Assert.That(importers.Any(i => i.Key == "Ing.CurrentAccount")).IsTrue();
         await Assert.That(importers.Any(i => i.Key == "Ing.CreditCard")).IsTrue();
         await Assert
             .That(importers.Single(i => i.Key == "Ing.CurrentAccount").SupportedType)
