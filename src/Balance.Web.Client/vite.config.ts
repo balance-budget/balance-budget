@@ -13,6 +13,9 @@ export default defineConfig({
         // plugin-react v6 transforms via oxc and has no Babel hook, so the Lingui
         // macros (<Trans>, t``) are compiled by the SWC plugin here; @lingui/vite-plugin
         // compiles `.po` catalogs to message objects on import (ADR-0022).
+        // The Wasm plugin's AST layout must match the @swc/core host runtime, which is
+        // why @swc/core is a direct devDependency instead of a transitive one: it pins
+        // the host new enough for the swc_core version @lingui/swc-plugin was built with.
         react({ plugins: [['@lingui/swc-plugin', {}]] }),
         lingui(),
         tailwindcss(),
