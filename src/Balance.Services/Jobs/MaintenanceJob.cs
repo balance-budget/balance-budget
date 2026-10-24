@@ -10,6 +10,6 @@ internal sealed class MaintenanceJob : IJob
     public MaintenanceJob(IDatabaseMaintenanceService databaseMaintenanceService) =>
         _databaseMaintenanceService = databaseMaintenanceService;
 
-    public async Task Execute(IJobExecutionContext context) =>
-        await _databaseMaintenanceService.Optimize(context.CancellationToken);
+    public async ValueTask Execute(IJobExecutionContext context, CancellationToken ct) =>
+        await _databaseMaintenanceService.Optimize(ct);
 }
