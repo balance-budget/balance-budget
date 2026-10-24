@@ -4,12 +4,9 @@ namespace Balance.Services.Jobs;
 
 internal static class ServiceCollectionQuartzConfiguratorExtensions
 {
-    public static IServiceCollectionQuartzConfigurator ScheduleJobAt<TJob>(
-        this IServiceCollectionQuartzConfigurator configurator,
-        string schedule
-    )
+    public static IQuartzBuilder ScheduleJobAt<TJob>(this IQuartzBuilder builder, string schedule)
         where TJob : IJob =>
-        configurator.ScheduleJob<TJob>(
+        builder.ScheduleJob<TJob>(
             t => t.StartNow().WithCronSchedule(schedule),
             j => j.WithIdentity(typeof(TJob).Name).DisallowConcurrentExecution()
         );

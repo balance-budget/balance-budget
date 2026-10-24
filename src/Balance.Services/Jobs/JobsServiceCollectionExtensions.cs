@@ -16,7 +16,9 @@ internal static class JobsServiceCollectionExtensions
             .AddQuartz(c =>
             {
                 var config = configuration.GetSection<JobsOptions>();
-                c.SchedulerName = "Balance Scheduler";
+                c.ConfigureOptions<QuartzSchedulerOptions>(o =>
+                    o.InstanceName = "Balance Scheduler"
+                );
                 c.ScheduleJobAt<MaintenanceJob>(config.MaintenanceSchedule);
             })
             .AddQuartzHostedService(c =>
