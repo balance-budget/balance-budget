@@ -17,7 +17,7 @@ export function RouteError({ error, reset }: ErrorComponentProps) {
                     <Trans>Something went wrong</Trans>
                 </h2>
                 <p className="text-sm text-fg-3">
-                    {error.message || t`An unexpected error occurred while loading this page.`}
+                    {error.message ?? t`An unexpected error occurred while loading this page.`}
                 </p>
                 <Button
                     onPress={() => {
