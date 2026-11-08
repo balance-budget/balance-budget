@@ -24,18 +24,6 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
 
     private static readonly CurrencyCode Eur = new("EUR");
 
-    private static readonly Dictionary<TransactionCode, string> TransactionCodeToString =
-        typeof(TransactionCode)
-            .GetFields(BindingFlags.Public | BindingFlags.Static)
-            .Where(f => f.IsLiteral)
-            .ToDictionary(
-                f => (TransactionCode)f.GetValue(null)!,
-                f =>
-                    f.GetCustomAttribute<CsvEnumNameAttribute>() is { Names.Count: > 0 } name
-                        ? name.Names[0]
-                        : f.Name
-            );
-
     private readonly IIngCurrentAccountStatementParser _ingCurrentAccountStatementParser;
     private readonly IIngNoteParser _ingNoteParser;
 
@@ -244,7 +232,7 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
         var entries = new List<BankTransactionMetadataValue>();
 
         // ING-specific fields
-        AddString(entries, "Transaction Code", TransactionCodeToString[row.Code]);
+        AddString(entries, "Transaction Code", row.Code.ToCode());
         AddString(entries, "Transaction Type", row.TransactionType);
         AddString(entries, "Tags", row.Tag);
 
