@@ -5,7 +5,6 @@ using Balance.Integration.Ing.Helpers;
 using Balance.Integration.Ing.Models.BankAccount;
 using Balance.Integration.Ing.Models.CreditCard;
 using CsvHelper;
-using CsvHelper.Configuration;
 
 namespace Balance.Integration.Ing.Parsers;
 
@@ -84,23 +83,27 @@ internal sealed class IngCreditCardCsvStatementParser : IIngCreditCardStatementP
     )
     {
         using var reader = NewReader(stream);
-        using var csv = new CsvReader(
+        using var csv = CsvReader.Create(
             reader,
-            new CsvConfiguration(dialect.Culture()) { HasHeaderRecord = true, Delimiter = ";" }
+            new CsvReaderOptions
+            {
+                HasHeader = true,
+                Separator = ';',
+                // Bad quoting means this is not a valid ING export: fail instead of recovering,
+                // so format detection keeps rejecting foreign files.
+                MalformedData = CsvMalformedDataHandling.Throw,
+                FormatProvider = dialect.Culture(),
+            },
+            leaveOpen: true
         );
-
-        await csv.ReadAsync();
-        csv.ReadHeader();
 
         var rows = new List<CreditCardStatementRow>();
         var occurrences = new Dictionary<string, int>(StringComparer.Ordinal);
 
-        while (await csv.ReadAsync())
+        while (await csv.ReadAsync(cancellationToken))
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
             var parsed = csv.GetRecord<CreditCardCsvRow>();
-            var rawRecord = (csv.Context.Parser?.RawRecord ?? string.Empty).TrimEnd();
+            var rawRecord = csv.Current.ToString().TrimEnd();
             rows.Add(BuildRow(parsed, dialect, Disambiguate(rawRecord, occurrences)));
         }
 

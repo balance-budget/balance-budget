@@ -3,7 +3,6 @@ using System.Text;
 using Balance.Integration.Ing.Contracts;
 using Balance.Integration.Ing.Models.BankAccount;
 using CsvHelper;
-using CsvHelper.Configuration;
 
 namespace Balance.Integration.Ing.Parsers;
 
@@ -25,28 +24,28 @@ internal sealed class IngSavingsAccountStatementParser : IIngSavingsAccountState
         );
         using var csv = GetCsvReader(reader);
 
-        await csv.ReadAsync();
-        csv.ReadHeader();
-
         var rows = new List<SavingsAccountStatementRow>();
-        while (await csv.ReadAsync())
+        while (await csv.ReadAsync(cancellationToken))
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
             var parsed = csv.GetRecord<SavingsAccountStatementRow>();
-            parsed.RawRecord = csv.Context.Parser?.RawRecord ?? string.Empty;
+            parsed.RawRecord = csv.Current.ToString();
             rows.Add(parsed);
         }
         return rows;
     }
 
     private static CsvReader GetCsvReader(TextReader reader) =>
-        new(
+        CsvReader.Create(
             reader,
-            new CsvConfiguration(CultureInfo.GetCultureInfo("nl-NL"))
+            new CsvReaderOptions
             {
-                HasHeaderRecord = true,
-                Delimiter = ";",
-            }
+                HasHeader = true,
+                Separator = ';',
+                // Bad quoting means this is not a valid ING export: fail instead of recovering,
+                // so format detection keeps rejecting foreign files.
+                MalformedData = CsvMalformedDataHandling.Throw,
+                FormatProvider = CultureInfo.GetCultureInfo("nl-NL"),
+            },
+            leaveOpen: true
         );
 }
