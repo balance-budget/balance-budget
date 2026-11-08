@@ -11,7 +11,6 @@ using Balance.Integration.Ing.Models.Notes;
 using Balance.Services.BankTransactions;
 using Balance.Services.Contracts;
 using CsvHelper;
-using CsvHelper.Configuration.Attributes;
 
 namespace Balance.Integration.Ing.Importers;
 
@@ -31,7 +30,10 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
             .Where(f => f.IsLiteral)
             .ToDictionary(
                 f => (TransactionCode)f.GetValue(null)!,
-                f => f.GetCustomAttribute<NameAttribute>()?.Names.FirstOrDefault() ?? f.Name
+                f =>
+                    f.GetCustomAttribute<CsvEnumNameAttribute>() is { Names.Count: > 0 } name
+                        ? name.Names[0]
+                        : f.Name
             );
 
     private readonly IIngCurrentAccountStatementParser _ingCurrentAccountStatementParser;
@@ -81,7 +83,14 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
                 cancellationToken
             );
         }
-        catch (CsvHelperException ex)
+        catch (CsvFormatException ex)
+        {
+            return new InvariantError(
+                ErrorCodes.ImportFormatInvalid,
+                $"Failed to parse ING statement CSV: {ex.Message}"
+            );
+        }
+        catch (KeyNotFoundException ex)
         {
             return new InvariantError(
                 ErrorCodes.ImportFormatInvalid,
@@ -156,7 +165,11 @@ internal sealed class IngBankTransactionExtractor : IBankTransactionExtractor
                 cancellationToken
             );
         }
-        catch (CsvHelperException)
+        catch (CsvFormatException)
+        {
+            return null;
+        }
+        catch (KeyNotFoundException)
         {
             return null;
         }

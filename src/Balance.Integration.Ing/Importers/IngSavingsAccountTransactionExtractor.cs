@@ -64,7 +64,14 @@ internal sealed class IngSavingsAccountTransactionExtractor : IBankTransactionEx
                 cancellationToken
             );
         }
-        catch (CsvHelperException ex)
+        catch (CsvFormatException ex)
+        {
+            return new InvariantError(
+                ErrorCodes.ImportFormatInvalid,
+                $"Failed to parse ING statement CSV: {ex.Message}"
+            );
+        }
+        catch (KeyNotFoundException ex)
         {
             return new InvariantError(
                 ErrorCodes.ImportFormatInvalid,
@@ -148,7 +155,11 @@ internal sealed class IngSavingsAccountTransactionExtractor : IBankTransactionEx
                 cancellationToken
             );
         }
-        catch (CsvHelperException)
+        catch (CsvFormatException)
+        {
+            return null;
+        }
+        catch (KeyNotFoundException)
         {
             return null;
         }

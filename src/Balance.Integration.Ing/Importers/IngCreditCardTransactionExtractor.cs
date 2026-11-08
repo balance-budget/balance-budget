@@ -87,7 +87,14 @@ internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtrac
                 $"Failed to parse ING credit-card statement: {ex.Message}"
             );
         }
-        catch (CsvHelperException ex)
+        catch (CsvFormatException ex)
+        {
+            return new InvariantError(
+                ErrorCodes.ImportFormatInvalid,
+                $"Failed to parse ING credit-card statement CSV: {ex.Message}"
+            );
+        }
+        catch (KeyNotFoundException ex)
         {
             return new InvariantError(
                 ErrorCodes.ImportFormatInvalid,
@@ -155,7 +162,11 @@ internal sealed class IngCreditCardTransactionExtractor : IBankTransactionExtrac
         {
             return null;
         }
-        catch (CsvHelperException)
+        catch (CsvFormatException)
+        {
+            return null;
+        }
+        catch (KeyNotFoundException)
         {
             return null;
         }
