@@ -1,43 +1,45 @@
-using CsvHelper.Configuration.Attributes;
+using CsvHelper;
 
 namespace Balance.Integration.Ing.Models.BankAccount;
 
-internal sealed class CurrentAccountStatementRow
+[CsvRecord]
+internal sealed partial class CurrentAccountStatementRow
 {
-    [Name("Date", "Datum")]
-    [Format("yyyyMMdd")]
+    [CsvColumn("Date", "Datum")]
+    [CsvFormat("yyyyMMdd")]
     public required DateOnly Date { get; init; }
 
-    [Name("Name / Description", "Naam / Omschrijving")]
+    [CsvColumn("Name / Description", "Naam / Omschrijving")]
     public required string Description { get; init; } = string.Empty;
 
-    [Name("Account", "Rekening")]
+    [CsvColumn("Account", "Rekening")]
     public required string Account { get; init; } = string.Empty;
 
-    [Name("Counterparty", "Tegenrekening")]
+    [CsvColumn("Counterparty", "Tegenrekening")]
     public required string CounterParty { get; init; } = string.Empty;
 
-    [Name("Code")]
+    [CsvColumn("Code")]
     public required TransactionCode Code { get; init; }
 
-    [Name("Debit/credit", "Af Bij")]
+    [CsvColumn("Debit/credit", "Af Bij")]
     public required DebitCredit DebitCredit { get; init; }
 
-    [Name("Amount (EUR)", "Bedrag (EUR)")]
+    [CsvColumn("Amount (EUR)", "Bedrag (EUR)")]
     public required decimal Amount { get; init; }
 
-    [Name("Transaction type", "Mutatiesoort")]
+    [CsvColumn("Transaction type", "Mutatiesoort")]
     public required string TransactionType { get; init; } = string.Empty;
 
-    [Name("Notifications", "Mededelingen")]
+    [CsvColumn("Notifications", "Mededelingen")]
     public required string Notifications { get; init; } = string.Empty;
 
-    [Name("Resulting balance", "Saldo na mutatie")]
+    [CsvColumn("Resulting balance", "Saldo na mutatie")]
     public required decimal ResultingBalance { get; init; }
 
-    [Name("Tag")]
+    [CsvColumn("Tag")]
     public required string Tag { get; init; } = string.Empty;
 
-    [Ignore]
-    public required string RawRecord { get; set; } = string.Empty;
+    // Filled in by the parser from the reader's current record, not by a column.
+    [CsvIgnore]
+    public string RawRecord { get; set; } = string.Empty;
 }

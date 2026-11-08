@@ -1,43 +1,45 @@
-using CsvHelper.Configuration.Attributes;
+using CsvHelper;
 
 namespace Balance.Integration.Ing.Models.BankAccount;
 
-internal sealed class SavingsAccountStatementRow
+[CsvRecord]
+internal sealed partial class SavingsAccountStatementRow
 {
-    [Name("Date")]
-    [Format("yyyy-MM-dd")]
+    [CsvColumn("Date")]
+    [CsvFormat("yyyy-MM-dd")]
     public required DateOnly Date { get; init; }
 
-    [Name("Description")]
+    [CsvColumn("Description")]
     public required string Description { get; init; } = string.Empty;
 
-    [Name("Account")]
+    [CsvColumn("Account")]
     public required string Account { get; init; } = string.Empty;
 
-    [Name("Account name")]
+    [CsvColumn("Account name")]
     public required string AccountName { get; init; } = string.Empty;
 
-    [Name("Counterparty")]
+    [CsvColumn("Counterparty")]
     public required string CounterParty { get; init; } = string.Empty;
 
-    [Name("Debit/credit")]
+    [CsvColumn("Debit/credit")]
     public required DebitCredit DebitCredit { get; init; }
 
-    [Name("Amount")]
+    [CsvColumn("Amount")]
     public required decimal Amount { get; init; }
 
-    [Name("Currency")]
+    [CsvColumn("Currency")]
     public required string Currency { get; init; } = string.Empty;
 
-    [Name("Transaction type")]
+    [CsvColumn("Transaction type")]
     public required string TransactionType { get; init; } = string.Empty;
 
-    [Name("Notifications")]
+    [CsvColumn("Notifications")]
     public required string Notifications { get; init; } = string.Empty;
 
-    [Name("Resulting balance")]
+    [CsvColumn("Resulting balance")]
     public required decimal ResultingBalance { get; init; }
 
-    [Ignore]
-    public required string RawRecord { get; set; } = string.Empty;
+    // Filled in by the parser from the reader's current record, not by a column.
+    [CsvIgnore]
+    public string RawRecord { get; set; } = string.Empty;
 }

@@ -1,12 +1,12 @@
-using CsvHelper.Configuration.Attributes;
+using CsvHelper;
 
 namespace Balance.Integration.Ing.Models.BankAccount;
 
 internal enum DebitCredit
 {
-    [Name("Debit", "Af")]
+    [CsvEnumName("Debit", "Af")]
     Debit,
 
-    [Name("Credit", "Bij")]
+    [CsvEnumName("Credit", "Bij")]
     Credit,
 }
