@@ -115,3 +115,35 @@ internal enum TransactionCode
     [CsvEnumName("TRF")]
     ForeignCurrencyTransfer,
 }
+
+internal static class TransactionCodes
+{
+    /// <summary>
+    /// The code as ING writes it, for metadata and round-tripping. Mirrors the
+    /// <see cref="CsvEnumNameAttribute" /> names, which CsvHelper only reads in the parse
+    /// direction; <c>TransactionCodeTests</c> guards the two against drift.
+    /// </summary>
+    public static string ToCode(this TransactionCode code) =>
+        code switch
+        {
+            TransactionCode.AcceptGiro => "AC",
+            TransactionCode.PaymentTerminal => "BA",
+            TransactionCode.Various => "DV",
+            TransactionCode.BranchTransfer => "FL",
+            TransactionCode.GiroPhone => "GF",
+            TransactionCode.CashMachine => "GM",
+            TransactionCode.OnlineBanking => "GT",
+            TransactionCode.SepaDirectDebit => "IC",
+            TransactionCode.Ideal => "ID",
+            TransactionCode.Transfer => "OV",
+            TransactionCode.BranchWithdrawal => "PK",
+            TransactionCode.RecurringTransfer => "PO",
+            TransactionCode.Deposit => "ST",
+            TransactionCode.BatchPayment => "VZ",
+            TransactionCode.IdealWero => "IW",
+            TransactionCode.Wero => "WERO",
+            TransactionCode.ForeignCurrencyCheque => "CHK",
+            TransactionCode.ForeignCurrencyTransfer => "TRF",
+            _ => throw new ArgumentOutOfRangeException(nameof(code), code, null),
+        };
+}
