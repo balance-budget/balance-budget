@@ -16,6 +16,7 @@ Balance.slnx
 │   ├── Balance.Data.Sqlite
 │   ├── Balance.Services
 │   ├── Balance.Integration.Ing
+│   ├── Balance.Integration.Rabobank
 │   ├── Balance.Integration.Stater
 │   ├── Balance.Web
 │   └── Balance.Web.Client
@@ -35,6 +36,7 @@ graph TD
     Data[Balance.Data]
     Configuration[Balance.Configuration]
     IntegrationIng[Balance.Integration.Ing]
+    IntegrationRabobank[Balance.Integration.Rabobank]
     IntegrationStater[Balance.Integration.Stater]
 
     Web -->|ReferenceOutputAssembly=false| Client
@@ -42,12 +44,14 @@ graph TD
     Web --> Services
     Web --> Postgres
     Web --> IntegrationIng
+    Web --> IntegrationRabobank
     Web --> IntegrationStater
 
     Sqlite --> Data
     Services --> Data
     Postgres --> Data
     IntegrationIng --> Services
+    IntegrationRabobank --> Services
     IntegrationStater --> Services
 
     Data --> Configuration
@@ -56,9 +60,9 @@ graph TD
 Notes:
 - `Balance.Data` does **not** reference the provider-specific projects. It targets EF Core's relational abstractions and lets the host process load the right migrations assembly at runtime.
 - `Balance.Web` references both provider-specific projects directly so their migration assemblies are loaded.
-- `Balance.Integration.Ing` and `Balance.Integration.Stater` reference `Balance.Services` (their extractors implement the Services-owned `IBankTransactionExtractor` contract) and are therefore composed *beside* Services at the host, not nested under it — see [Startup composition](#startup-composition) and [ADR-0018](adr/0018-integration-layer-composed-at-host.md). `Balance.Integration.Stater` reads the construction-deposit (bouwdepot) statement produced by the Stater servicing platform (ADR-0037).
+- `Balance.Integration.Ing`, `Balance.Integration.Rabobank`, and `Balance.Integration.Stater` reference `Balance.Services` (their extractors implement the Services-owned `IBankTransactionExtractor` contract) and are therefore composed *beside* Services at the host, not nested under it — see [Startup composition](#startup-composition) and [ADR-0018](adr/0018-integration-layer-composed-at-host.md). `Balance.Integration.Stater` reads the construction-deposit (bouwdepot) statement produced by the Stater servicing platform (ADR-0037).
 - `Balance.Web.Client` is a plain npm workspace package — not a .NET project. `npm run build` (Vite) outputs straight into `src/Balance.Web/wwwroot/` (gitignored), where the standard static-web-assets discovery pipeline picks it up at publish and packs it into the ASP.NET publish output (ADR-0023). `dotnet build` never invokes npm.
-- `Balance.Tests` references `Balance.Web` and `Balance.Services` (transitively pulling in the rest). `Balance.Web`, `Balance.Services`, `Balance.Integration.Ing`, and `Balance.Integration.Stater` expose internals via `InternalsVisibleTo("Balance.Tests")`.
+- `Balance.Tests` references `Balance.Web` and `Balance.Services` (transitively pulling in the rest). `Balance.Web`, `Balance.Services`, `Balance.Integration.Ing`, `Balance.Integration.Rabobank`, and `Balance.Integration.Stater` expose internals via `InternalsVisibleTo("Balance.Tests")`.
 
 ## Layers
 
@@ -102,6 +106,14 @@ Bank-specific statement importers for ING. References `Balance.Services` and imp
 - `Parsers/` — CsvHelper-backed statement parsers and the ING note parser; `Models/` — `internal` CSV row models and value types; `Helpers/` — `RowHasher` (idempotent re-import hash) and parsing utilities.
 - `ServiceCollectionExtensions.AddBalanceIntegrationIng` — the layer's single `public` DI entry point; everything else is `internal`. Composed at the host *beside* `Balance.Services` (not nested under it) because nesting would invert the Services → Integration dependency into a cycle — see [ADR-0018](adr/0018-integration-layer-composed-at-host.md).
 
+### Balance.Integration.Rabobank
+
+Statement importers for Rabobank CSV exports. Same shape as `Balance.Integration.Ing`: references `Balance.Services`, implements `IBankTransactionExtractor`, composed beside Services at the host.
+
+- `Importers/` — `Rabobank.CurrentAccount` and `Rabobank.SavingsAccount` share one abstract extractor because both account types export the same CSV layout; `Rabobank.CreditCard` reads the card export, which names the card's Funding account on every row (ADR-0038).
+- `Parsers/` — CsvHelper-backed parsers for the two layouts (Latin-1, comma-separated); `Models/` — `internal` CSV row models; `Helpers/` — anchors, patterns, amount parsing, and metadata building.
+- `ServiceCollectionExtensions.AddBalanceIntegrationRabobank` — the layer's single `public` DI entry point.
+
 ### Balance.Integration.Stater
 
 Importer for the construction-deposit (bouwdepot) statement produced by the Stater mortgage-servicing platform, which many Dutch lenders run on (ADR-0037). Same shape as `Balance.Integration.Ing`: references `Balance.Services`, implements `IBankTransactionExtractor`, composed beside Services at the host.
@@ -137,6 +149,7 @@ builder.Logging.AddConsole(...)
 builder.Configuration.MapConfigurationSources(...)
 builder.Services.AddBalanceServices(builder.Configuration)
 builder.Services.AddBalanceIntegrationIng()      // bank importers — beside Services (ADR-0018)
+builder.Services.AddBalanceIntegrationRabobank()
 builder.Services.AddBalanceIntegrationStater()   // construction-deposit importer (ADR-0037)
 builder.Services.AddBalanceWeb()
 var app = builder.Build();
