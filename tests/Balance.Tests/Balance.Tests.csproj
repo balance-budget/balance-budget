@@ -29,5 +29,14 @@
     <None Update="Integrations\Ing\CreditCard_123456789000_01-01-2026_31-01-2026.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Integrations\Rabobank\CSV_A_NL12RABO0123456789_EUR_20260101_20260131.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Integrations\Rabobank\CSV_A_NL34RABO0987654321_EUR_20260101_20260131.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Integrations\Rabobank\RA_CC_1234_20260101_20260131.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>

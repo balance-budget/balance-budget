@@ -1,5 +1,6 @@
 using Balance.Data.Helpers;
 using Balance.Integration.Ing;
+using Balance.Integration.Rabobank;
 using Balance.Integration.Stater;
 using Balance.Services;
 using Balance.Web;
@@ -29,6 +30,7 @@ var builder = WebApplication.CreateSlimBuilder(args);
 builder.Logging.AddConsole(builder.Environment);
 builder.Services.AddBalanceServices(builder.Configuration, builder.Environment);
 builder.Services.AddBalanceIntegrationIng();
+builder.Services.AddBalanceIntegrationRabobank();
 builder.Services.AddBalanceIntegrationStater();
 builder.Services.AddBalanceWeb(builder.Configuration, builder.Environment);
 
