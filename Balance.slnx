@@ -15,6 +15,7 @@
     <Project Path="src/Balance.Services/Balance.Services.csproj" />
     <Project Path="src/Balance.Web/Balance.Web.csproj" />
     <Project Path="src/Balance.Integration.Ing/Balance.Integration.Ing.csproj" />
+    <Project Path="src/Balance.Integration.Rabobank/Balance.Integration.Rabobank.csproj" />
     <Project Path="src/Balance.Integration.Stater/Balance.Integration.Stater.csproj" />
     <Project Path="src/Balance.Integration/Balance.Integration.csproj" />
   </Folder>
