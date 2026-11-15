@@ -68,8 +68,10 @@ internal sealed class JsonPatchOperationTransformer : IOpenApiOperationTransform
         if (!schemas.ContainsKey(schemaName))
             schemas[schemaName] = BuildPatchSchema(paths);
 
-        foreach (var media in content.Values)
+        foreach (var value in content.Values)
         {
+            if (value is not OpenApiMediaType media)
+                continue;
             media.Schema = new OpenApiSchemaReference(schemaName, document);
         }
     }
