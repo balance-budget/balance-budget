@@ -47,8 +47,8 @@
     <PackageVersion Include="Quartz" Version="4.7.3" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.21.0" />
     <PackageVersion Include="StronglyTypedId" Version="1.0.0-beta08" />
-    <PackageVersion Include="TUnit" Version="1.84.0" />
-    <PackageVersion Include="TUnit.AspNetCore" Version="1.84.0" />
-    <PackageVersion Include="TUnit.Mocks" Version="1.84.0" />
+    <PackageVersion Include="TUnit" Version="1.85.0" />
+    <PackageVersion Include="TUnit.AspNetCore" Version="1.85.0" />
+    <PackageVersion Include="TUnit.Mocks" Version="1.85.0" />
   </ItemGroup>
 </Project>
