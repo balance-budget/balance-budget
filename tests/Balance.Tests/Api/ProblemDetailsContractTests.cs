@@ -19,7 +19,7 @@ internal sealed class ProblemDetailsContractTests : EndpointsTestsBase
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
         await Assert
             .That(response.Content.Headers.ContentType?.MediaType)
-            .IsEqualTo("application/json");
+            .IsEqualTo("application/problem+json");
 
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetailsDto>();
         await Assert.That(problem).IsNotNull();
@@ -62,7 +62,7 @@ internal sealed class ProblemDetailsContractTests : EndpointsTestsBase
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Conflict);
         await Assert
             .That(response.Content.Headers.ContentType?.MediaType)
-            .IsEqualTo("application/json");
+            .IsEqualTo("application/problem+json");
 
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetailsDto>();
         await Assert.That(problem).IsNotNull();
@@ -99,7 +99,7 @@ internal sealed class ProblemDetailsContractTests : EndpointsTestsBase
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.UnprocessableEntity);
         await Assert
             .That(response.Content.Headers.ContentType?.MediaType)
-            .IsEqualTo("application/json");
+            .IsEqualTo("application/problem+json");
 
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetailsDto>();
         await Assert.That(problem).IsNotNull();
