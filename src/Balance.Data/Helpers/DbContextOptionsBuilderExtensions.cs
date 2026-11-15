@@ -22,31 +22,15 @@ internal static class DbContextOptionsBuilderExtensions
                         : options.ConnectionString,
                     x => x.MigrationsAssembly("Balance.Data.Sqlite")
                 )
-                .UseBulkInsertSqlite()
-                .UseSqliteExceptionProcessor(),
+                .UseBulkInsertSqlite(),
             DatabaseProvider.Postgres => builder
                 .UseNpgsql(
                     DisablePostgresGssEncryption(options.ConnectionString),
                     x => x.MigrationsAssembly("Balance.Data.PostgreSql")
                 )
-                .UseBulkInsertPostgreSql()
-                .UsePostgresExceptionProcessor(),
+                .UseBulkInsertPostgreSql(),
             _ => throw new UnreachableException($"Unknown DatabaseProvider '{options.Provider}'."),
         };
-
-    private static DbContextOptionsBuilder UseSqliteExceptionProcessor(
-        this DbContextOptionsBuilder builder
-    ) =>
-        EntityFramework.Exceptions.Sqlite.ExceptionProcessorExtensions.UseExceptionProcessor(
-            builder
-        );
-
-    private static DbContextOptionsBuilder UsePostgresExceptionProcessor(
-        this DbContextOptionsBuilder builder
-    ) =>
-        EntityFramework.Exceptions.PostgreSQL.ExceptionProcessorExtensions.UseExceptionProcessor(
-            builder
-        );
 
     /// <summary>
     /// Npgsql tries to use GSSAPI encryption. This requires libgssapi_krb5 to be installed.
