@@ -1015,7 +1015,7 @@ export interface components {
             updatedAt: string;
         };
         /** @enum {unknown} */
-        BankAccountOwnerFilter: "Mine" | "Others" | null;
+        BankAccountOwnerFilter: "Mine" | "Others";
         BankAccountSummary: {
             iban: null | string;
             accountNumber: null | string;
@@ -1057,7 +1057,7 @@ export interface components {
         /** Format: uuid */
         BankTransactionId: string;
         /** @enum {unknown} */
-        BankTransactionListFilter: "Inbox" | "Matched" | "Dismissed" | "All" | null;
+        BankTransactionListFilter: "Inbox" | "Matched" | "Dismissed" | "All";
         BankTransactionMetadataEntryOutput: {
             key: string;
             stringValue: null | string;
@@ -2208,7 +2208,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"] | components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Not Found */
@@ -2249,6 +2249,13 @@ export interface operations {
                     "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     Logout: {
@@ -2287,6 +2294,13 @@ export interface operations {
                     "application/json": components["schemas"]["CurrentUserResponse"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     UpdateUserPreferences: {
@@ -2317,6 +2331,13 @@ export interface operations {
                 content: {
                     "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -2368,7 +2389,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"] | components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -2397,7 +2418,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Not Found */
@@ -2487,6 +2508,13 @@ export interface operations {
                     "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     RevokeToken: {
@@ -2573,7 +2601,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -2582,7 +2610,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -2591,7 +2619,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -2631,7 +2659,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -2669,7 +2697,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -2678,7 +2706,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -2687,7 +2715,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -2729,7 +2757,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -2738,7 +2766,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -2747,7 +2775,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -2809,7 +2837,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -2818,7 +2846,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -2827,7 +2855,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -2867,7 +2895,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -2905,7 +2933,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -2914,7 +2942,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -2923,7 +2951,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -2965,7 +2993,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -2974,7 +3002,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -2983,7 +3011,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -3023,7 +3051,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -3072,7 +3100,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -3116,7 +3144,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -3182,7 +3210,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -3191,7 +3219,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -3200,7 +3228,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -3240,7 +3268,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -3278,7 +3306,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -3287,7 +3315,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -3296,7 +3324,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -3338,7 +3366,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -3347,7 +3375,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -3356,7 +3384,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -3396,7 +3424,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -3463,7 +3491,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -3472,7 +3500,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -3481,7 +3509,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -3541,7 +3569,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -3579,7 +3607,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -3588,7 +3616,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -3597,7 +3625,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -3639,7 +3667,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -3648,7 +3676,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -3657,7 +3685,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -3703,7 +3731,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -3712,7 +3740,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -3721,7 +3749,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -3823,7 +3851,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -3832,7 +3860,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -3841,7 +3869,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -3881,7 +3909,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -3919,7 +3947,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -3928,7 +3956,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -3937,7 +3965,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -3981,7 +4009,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -3990,7 +4018,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -3999,7 +4027,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -4039,7 +4067,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -4048,7 +4076,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -4057,7 +4085,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -4101,7 +4129,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -4110,7 +4138,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -4119,7 +4147,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -4163,7 +4191,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -4172,7 +4200,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -4181,7 +4209,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -4221,7 +4249,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -4230,7 +4258,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -4239,7 +4267,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -4281,7 +4309,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -4290,7 +4318,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -4299,7 +4327,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -4369,7 +4397,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -4378,7 +4406,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -4387,7 +4415,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -4427,7 +4455,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -4471,7 +4499,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -4480,7 +4508,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -4489,7 +4517,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -4527,7 +4555,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -4536,7 +4564,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -4545,7 +4573,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -4585,7 +4613,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -4594,7 +4622,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -4603,7 +4631,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -4665,7 +4693,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -4674,7 +4702,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -4683,7 +4711,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -4723,7 +4751,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -4761,7 +4789,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -4770,7 +4798,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -4779,7 +4807,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -4821,7 +4849,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -4830,7 +4858,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -4839,7 +4867,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -4883,7 +4911,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -4892,7 +4920,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -4901,7 +4929,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -4942,7 +4970,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -4951,7 +4979,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -4960,7 +4988,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -5005,7 +5033,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -5014,7 +5042,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -5023,7 +5051,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -5068,7 +5096,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -5077,7 +5105,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -5086,7 +5114,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -5128,7 +5156,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -5137,7 +5165,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -5146,7 +5174,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -5192,7 +5220,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -5201,7 +5229,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -5210,7 +5238,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -5252,7 +5280,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -5296,7 +5324,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -5358,7 +5386,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -5367,7 +5395,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -5376,7 +5404,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -5416,7 +5444,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -5460,7 +5488,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -5469,7 +5497,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -5478,7 +5506,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -5516,7 +5544,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -5525,7 +5553,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -5534,7 +5562,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -5595,7 +5623,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -5604,7 +5632,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -5613,7 +5641,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -5658,7 +5686,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -5667,7 +5695,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -5676,7 +5704,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -5716,7 +5744,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -5725,7 +5753,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -5734,7 +5762,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -5775,7 +5803,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -5784,7 +5812,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -5793,7 +5821,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -5834,7 +5862,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -5843,7 +5871,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -5852,7 +5880,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -5892,7 +5920,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -5901,7 +5929,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -5910,7 +5938,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -5954,7 +5982,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -5963,7 +5991,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -5972,7 +6000,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -6015,7 +6043,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Conflict */
@@ -6024,7 +6052,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -6033,7 +6061,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
