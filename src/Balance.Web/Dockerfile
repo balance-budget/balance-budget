@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine-extra AS base
+FROM mcr.microsoft.com/dotnet/aspnet:11.0-alpine-extra AS base
 RUN mkdir -p /data && chown -R $APP_UID /data && chmod -R 755 /data
 RUN apk add --no-cache curl tzdata
 USER $APP_UID
@@ -7,7 +7,7 @@ ENV DOTNET_RUNNING_IN_CONTAINER_FAST_MODE=true
 ENV ASPNETCORE_HTTP_PORTS=5248
 EXPOSE 5248
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
+FROM mcr.microsoft.com/dotnet/sdk:11.0-alpine AS build
 RUN apk add --no-cache nodejs npm
 ARG BUILD_CONFIGURATION=Release
 ARG BUILD_VERSION=v1.0.0
