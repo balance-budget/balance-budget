@@ -15,7 +15,7 @@ import type { BankAccount } from '../api/bankAccounts';
 import type { BankTransaction } from '../api/bankTransactions';
 import type { SuggestedCounterAccount } from '../api/counterparties';
 import type { components } from '../lib/api-types.gen';
-import type { AccountId, BankTransactionId, CounterpartyId } from '../lib/domain';
+import type { AccountId, BankTransactionId, CounterpartyId, JournalEntryId } from '../lib/domain';
 import { resolveOpenContext } from './bankTransactionCategorize.state';
 
 type WireCategorizeRequest = components['schemas']['CategorizeBankTransactionRequest'];
@@ -343,6 +343,51 @@ export async function runSaveAll(
     }
 
     return { categorized, dismissed, failed };
+}
+
+export type AttachMatchesSummary = { attached: number; failed: number };
+
+export type AttachMatchesDeps = {
+    attach: (id: BankTransactionId, journalEntryId: JournalEntryId) => Promise<void>;
+    onRowResult?: (id: BankTransactionId, outcome: SaveAllOutcome) => void;
+};
+
+/** The rows among `bts` that carry an Attach hint, paired with the hinted
+ *  JournalEntry. */
+export function attachableRows(
+    bts: readonly BankTransaction[],
+): { id: BankTransactionId; journalEntryId: JournalEntryId }[] {
+    const out: { id: BankTransactionId; journalEntryId: JournalEntryId }[] = [];
+    for (const bt of bts) {
+        if (bt.matchingJournalEntry !== null) {
+            out.push({ id: bt.id, journalEntryId: bt.matchingJournalEntry.id });
+        }
+    }
+    return out;
+}
+
+/**
+ * Attach each row to its hinted JournalEntry. Sequential, because two rows can
+ * hint at the same entry and only one of them may claim its Uncleared line; the
+ * server rejects the second. A failed row does not abort the remainder.
+ */
+export async function runAttachMatches(
+    rows: readonly { id: BankTransactionId; journalEntryId: JournalEntryId }[],
+    deps: AttachMatchesDeps,
+): Promise<AttachMatchesSummary> {
+    let attached = 0;
+    let failed = 0;
+    for (const row of rows) {
+        try {
+            await deps.attach(row.id, row.journalEntryId);
+            attached += 1;
+            deps.onRowResult?.(row.id, { ok: true });
+        } catch (err) {
+            failed += 1;
+            deps.onRowResult?.(row.id, { ok: false, error: errorMessage(err) });
+        }
+    }
+    return { attached, failed };
 }
 
 function errorMessage(err: unknown): string {
