@@ -798,7 +798,9 @@ function ActionBar({
     onBulkCounterpartyChange,
     onBulkAccountIdChange,
     onApply,
+    attachableCount,
     onApplySuggestions,
+    onAttachMatches,
     onBulkDismiss,
     onClearSelection,
     onSave,
@@ -886,7 +888,7 @@ function ActionBar({
                             <Trans>Apply to {selectionCount.toString()} selected</Trans>
                         </button>
                         <TooltipHint
-                            hint={t`Fill the selected rows with the IBAN-matched counterparty and the last-used account for that counterparty.`}
+                            hint={t`Fill the selected rows by IBAN. Transfers to your own accounts get that account; other rows get the matched counterparty and its last-used account.`}
                         >
                             <Button
                                 onPress={onApplySuggestions}
@@ -894,6 +896,17 @@ function ActionBar({
                                 className="h-auto px-3 py-[7px] text-fg-1 border-border-strong data-[hovered]:bg-surface-2"
                             >
                                 <Trans>Apply suggestions</Trans>
+                            </Button>
+                        </TooltipHint>
+                        <TooltipHint
+                            hint={t`Attach the selected rows to the journal entry each one matches.`}
+                        >
+                            <Button
+                                onPress={onAttachMatches}
+                                isDisabled={saving || attachableCount === 0}
+                                className="h-auto px-3 py-[7px] text-fg-1 border-border-strong data-[hovered]:bg-surface-2"
+                            >
+                                <Trans>Attach matches</Trans>
                             </Button>
                         </TooltipHint>
                         <button
