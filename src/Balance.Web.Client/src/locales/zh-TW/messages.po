@@ -1171,8 +1171,11 @@ msgstr "額外還款金額"
 msgid "Failed"
 msgstr "失敗"
 
-msgid "Fill the selected rows with the IBAN-matched counterparty and the last-used account for that counterparty."
-msgstr "以 IBAN 比對到的交易對方，及該交易對方上次使用的帳戶，填入選取的橫列項目。"
+msgid "Fill the selected rows by IBAN. Transfers to your own accounts get that account; other rows get the matched counterparty and its last-used account."
+msgstr "依 IBAN 填入選取的橫列項目。轉入你自己帳戶的轉帳會填入該帳戶；其他橫列項目會填入比對到的交易對方及其上次使用的帳戶。"
+
+#~ msgid "Fill the selected rows with the IBAN-matched counterparty and the last-used account for that counterparty."
+#~ msgstr "以 IBAN 比對到的交易對方，及該交易對方上次使用的帳戶，填入選取的橫列項目。"
 
 msgid "Filter"
 msgstr "篩選"

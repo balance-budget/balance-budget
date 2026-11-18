@@ -283,6 +283,72 @@ describe('buildSuggestionOverride', () => {
             accountId: accGroceries,
         });
     });
+
+    const ownSavingsBankAccount: BankAccount = {
+        ...externalBankAccount,
+        type: 'Savings',
+        iban: 'NL00BANK1234567890',
+        accountId: accSavings,
+        counterpartyId: null,
+    };
+
+    it('fills a self-transfer when the IBAN belongs to one of your own bank accounts', () => {
+        const accountsById = new Map<AccountId, Account>([
+            [accSavings, account(accSavings, { type: 'Asset' })],
+        ]);
+        const patch = buildSuggestionOverride(
+            bt({ counterpartyAccountNumber: 'nl00 bank 1234 5678 90' }),
+            [ownSavingsBankAccount],
+            new Map(),
+            accountsById,
+            accCurrent,
+        );
+        expect(patch).toEqual({
+            counterpartyMode: 'existing',
+            counterpartyId: null,
+            newCounterpartyName: '',
+            accountId: accSavings,
+        });
+    });
+
+    it('prefers the self-transfer over a counterparty sharing the same IBAN', () => {
+        const accountsById = new Map<AccountId, Account>([[accSavings, account(accSavings)]]);
+        const patch = buildSuggestionOverride(
+            bt(),
+            [externalBankAccount, ownSavingsBankAccount],
+            new Map(),
+            accountsById,
+            accCurrent,
+        );
+        expect(patch?.accountId).toBe(accSavings);
+        expect(patch?.counterpartyId).toBeNull();
+    });
+
+    it("skips a self-transfer onto the row's own bank-side account", () => {
+        const accountsById = new Map<AccountId, Account>([[accSavings, account(accSavings)]]);
+        const patch = buildSuggestionOverride(
+            bt(),
+            [ownSavingsBankAccount],
+            new Map(),
+            accountsById,
+            accSavings,
+        );
+        expect(patch).toBeNull();
+    });
+
+    it('skips a self-transfer whose own account uses another currency', () => {
+        const accountsById = new Map<AccountId, Account>([
+            [accSavings, account(accSavings, { currencyCode: 'USD' })],
+        ]);
+        const patch = buildSuggestionOverride(
+            bt(),
+            [ownSavingsBankAccount],
+            new Map(),
+            accountsById,
+            accCurrent,
+        );
+        expect(patch).toBeNull();
+    });
 });
 
 describe('isPristine', () => {
