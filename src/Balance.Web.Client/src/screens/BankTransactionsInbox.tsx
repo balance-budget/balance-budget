@@ -886,7 +886,7 @@ function ActionBar({
                             <Trans>Apply to {selectionCount.toString()} selected</Trans>
                         </button>
                         <TooltipHint
-                            hint={t`Fill the selected rows with the IBAN-matched counterparty and the last-used account for that counterparty.`}
+                            hint={t`Fill the selected rows by IBAN. Transfers to your own accounts get that account; other rows get the matched counterparty and its last-used account.`}
                         >
                             <Button
                                 onPress={onApplySuggestions}

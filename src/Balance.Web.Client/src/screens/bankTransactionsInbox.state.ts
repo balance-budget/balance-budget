@@ -16,6 +16,7 @@ import type { BankTransaction } from '../api/bankTransactions';
 import type { SuggestedCounterAccount } from '../api/counterparties';
 import type { components } from '../lib/api-types.gen';
 import type { AccountId, BankTransactionId, CounterpartyId } from '../lib/domain';
+import { resolveOpenContext } from './bankTransactionCategorize.state';
 
 type WireCategorizeRequest = components['schemas']['CategorizeBankTransactionRequest'];
 
@@ -87,10 +88,11 @@ export function pickSuggestedAccountId(
 }
 
 /** Build the per-row user-override patch produced by the "Apply suggestions"
- *  action — IBAN→Counterparty exact match plus the last-used-Account heuristic,
- *  combined into a single override the row gets layered on top of an empty
- *  prefill. Returns null when neither the IBAN match nor the account
- *  suggestion produced anything useful, so the caller can skip the row.
+ *  action. An IBAN that belongs to one of your own BankAccounts makes the row a
+ *  self-transfer (ADR 0013(e)): the counter-side is that own Account and the
+ *  counterparty stays null. Otherwise the IBAN→Counterparty exact match plus
+ *  the last-used-Account heuristic fill the row. Returns null when nothing
+ *  useful was found, so the caller can skip the row.
  *
  *  Per the inbox-suggestion-gating amendment to ADR 0013, this is only called
  *  on user demand — not at render time. */
@@ -101,6 +103,19 @@ export function buildSuggestionOverride(
     accountsById: ReadonlyMap<AccountId, Account>,
     ownBankSideAccountId: AccountId | null,
 ): Partial<RowDraft> | null {
+    const context = resolveOpenContext(bt.counterpartyAccountNumber, bankAccounts);
+    if (context.kind === 'self-transfer') {
+        const ownAccountId = context.prefilledAccountId;
+        if (ownAccountId === ownBankSideAccountId) return null;
+        if (accountsById.get(ownAccountId)?.currencyCode !== bt.money.currencyCode) return null;
+        return {
+            counterpartyMode: 'existing',
+            counterpartyId: null,
+            newCounterpartyName: '',
+            accountId: ownAccountId,
+        };
+    }
+
     const cpId = resolveCounterpartyByIban(bt.counterpartyAccountNumber, bankAccounts);
     const suggestions = cpId !== null ? suggestionsByCpId.get(cpId) : undefined;
     const accountId =
