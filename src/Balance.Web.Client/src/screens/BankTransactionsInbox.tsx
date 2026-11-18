@@ -798,7 +798,9 @@ function ActionBar({
     onBulkCounterpartyChange,
     onBulkAccountIdChange,
     onApply,
+    attachableCount,
     onApplySuggestions,
+    onAttachMatches,
     onBulkDismiss,
     onClearSelection,
     onSave,
@@ -894,6 +896,17 @@ function ActionBar({
                                 className="h-auto px-3 py-[7px] text-fg-1 border-border-strong data-[hovered]:bg-surface-2"
                             >
                                 <Trans>Apply suggestions</Trans>
+                            </Button>
+                        </TooltipHint>
+                        <TooltipHint
+                            hint={t`Attach the selected rows to the journal entry each one matches.`}
+                        >
+                            <Button
+                                onPress={onAttachMatches}
+                                isDisabled={saving || attachableCount === 0}
+                                className="h-auto px-3 py-[7px] text-fg-1 border-border-strong data-[hovered]:bg-surface-2"
+                            >
+                                <Trans>Attach matches</Trans>
                             </Button>
                         </TooltipHint>
                         <button

@@ -25,6 +25,7 @@ import {
 import { getJson, postJson } from '../lib/http';
 import {
     applyBulkPatchToOverride,
+    attachableRows,
     buildSuggestionOverride,
     distinctRowCurrencies,
     emptyDraft,
@@ -32,10 +33,12 @@ import {
     removeKeysFor,
     resolveCounterpartyByIban,
     rowStatus,
+    runAttachMatches,
     runSaveAll,
     setBulkDismissDrafts,
     type BulkApplyCounterparty,
     type BulkApplyInput,
+    type AttachMatchesSummary,
     type RowDraft,
     type SaveAllOutcome,
     type SaveAllSummary,
@@ -46,6 +49,7 @@ type WireCounterparty = components['schemas']['CounterpartyOutput'];
 type WireJournalEntry = components['schemas']['JournalEntryOutput'];
 type WireCategorizeRequest = components['schemas']['CategorizeBankTransactionRequest'];
 type WireSuggested = components['schemas']['SuggestedCounterAccountOutput'];
+type WireJournalEntryDetail = components['schemas']['JournalEntryDetailOutput'];
 
 /**
  * Props for the combined selection-actions + save-controls bar. Picker values
@@ -67,10 +71,13 @@ export type ActionBarProps = {
     progress: { done: number; total: number } | null;
     dirtyCount: number;
     readyCount: number;
+    /** Selected rows that carry an Attach hint. */
+    attachableCount: number;
     onBulkCounterpartyChange: (cp: BulkApplyCounterparty | null) => void;
     onBulkAccountIdChange: (id: AccountId | null) => void;
     onApply: () => void;
     onApplySuggestions: () => void;
+    onAttachMatches: () => void;
     onBulkDismiss: () => void;
     onClearSelection: () => void;
     onSave: () => void;
@@ -441,6 +448,7 @@ export function useInboxEditor({
         return s;
     }, [selectedBts, bankAccountsById]);
     const selectionCount = selectedBts.length;
+    const attachableSelection = useMemo(() => attachableRows(selectedBts), [selectedBts]);
 
     const readyIds = useMemo(
         () =>
@@ -545,6 +553,37 @@ export function useInboxEditor({
         toast.push(formatSaveAllToast(summary), summary.failed === 0 ? 'success' : 'error');
     }
 
+    async function attachMatches() {
+        if (attachableSelection.length === 0) return;
+        setSaving(true);
+        const summary = await runAttachMatches(attachableSelection, {
+            attach: async (id, journalEntryId) => {
+                await postJson<WireJournalEntryDetail>(
+                    `/api/bank-transactions/${id}/attach`,
+                    { journalEntryId },
+                    'attach bank transaction',
+                );
+            },
+            onRowResult: (id, outcome: SaveAllOutcome) => {
+                if (outcome.ok) {
+                    setSavedIds(prev => new Set(prev).add(id));
+                    setUserOverrides(prev => withoutKey(prev, id));
+                    setDismissDrafts(prev => withoutKey(prev, id));
+                    setRowErrors(prev => withoutKey(prev, id));
+                } else {
+                    setRowErrors(prev => new Map(prev).set(id, outcome.error));
+                }
+            },
+        });
+
+        await queryClient.invalidateQueries({ queryKey: bankTransactionsKeys.all });
+        await queryClient.invalidateQueries({ queryKey: journalEntriesKeys.all });
+
+        setSavedIds(new Set());
+        setSaving(false);
+        toast.push(formatAttachToast(summary), summary.failed === 0 ? 'success' : 'error');
+    }
+
     const blocker = useBlocker({
         shouldBlockFn: () => dirtyCount > 0 && !saving,
         enableBeforeUnload: () => dirtyCount > 0,
@@ -568,12 +607,14 @@ export function useInboxEditor({
         progress,
         dirtyCount,
         readyCount: readyIds.length,
+        attachableCount: attachableSelection.length,
         onBulkCounterpartyChange: setBulkCounterparty,
         onBulkAccountIdChange: setBulkAccountId,
         onApply: () => {
             applyBulk({ counterparty: bulkCounterparty, accountId: bulkAccountId });
         },
         onApplySuggestions: applyBulkSuggestions,
+        onAttachMatches: () => void attachMatches(),
         onBulkDismiss: () => {
             setBulkDismissOpen(true);
         },
@@ -632,4 +673,8 @@ function buildCounterpartyItems(
 
 function formatSaveAllToast(summary: SaveAllSummary): string {
     return t`${summary.categorized.toString()} categorized, ${summary.dismissed.toString()} dismissed, ${summary.failed.toString()} failed.`;
+}
+
+function formatAttachToast(summary: AttachMatchesSummary): string {
+    return t`${summary.attached.toString()} attached, ${summary.failed.toString()} failed.`;
 }

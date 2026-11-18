@@ -77,6 +77,11 @@ msgstr "{0} · rente op {1}"
 msgid "{0} (new)"
 msgstr "{0} (nieuw)"
 
+#. placeholder {0}: summary.attached.toString()
+#. placeholder {1}: summary.failed.toString()
+msgid "{0} attached, {1} failed."
+msgstr "{0} gekoppeld, {1} mislukt."
+
 #. placeholder {0}: summary.categorized.toString()
 #. placeholder {1}: summary.dismissed.toString()
 #. placeholder {2}: summary.failed.toString()
@@ -381,6 +386,12 @@ msgstr "Maximaal 200 tekens"
 
 msgid "Attach"
 msgstr "Koppelen"
+
+msgid "Attach matches"
+msgstr "Matches koppelen"
+
+msgid "Attach the selected rows to the journal entry each one matches."
+msgstr "Koppel de geselecteerde rijen aan de journaalpost waar elke rij bij past."
 
 #. placeholder {0}: hint.otherAccountName
 #~ msgid "Attach to {0}"

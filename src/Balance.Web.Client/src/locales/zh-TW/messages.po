@@ -77,6 +77,11 @@ msgstr "{0} · {1} 的利息"
 msgid "{0} (new)"
 msgstr "{0}（新增）"
 
+#. placeholder {0}: summary.attached.toString()
+#. placeholder {1}: summary.failed.toString()
+msgid "{0} attached, {1} failed."
+msgstr "{0} 筆已附加、{1} 筆失敗。"
+
 #. placeholder {0}: summary.categorized.toString()
 #. placeholder {1}: summary.dismissed.toString()
 #. placeholder {2}: summary.failed.toString()
@@ -381,6 +386,12 @@ msgstr "最多 200 個字元"
 
 msgid "Attach"
 msgstr "附加"
+
+msgid "Attach matches"
+msgstr "附加相符項目"
+
+msgid "Attach the selected rows to the journal entry each one matches."
+msgstr "將選取的橫列項目分別附加到與其相符的日記帳分錄。"
 
 #. placeholder {0}: hint.otherAccountName
 #~ msgid "Attach to {0}"
