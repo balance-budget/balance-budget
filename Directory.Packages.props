@@ -12,10 +12,7 @@
       Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore"
       Version="11.0.0"
     />
-    <PackageVersion
-      Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore"
-      Version="11.0.0"
-    />
+    <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="11.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.JsonPatch.SystemTextJson" Version="11.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="11.0.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="11.0.0-rc.3.26522.148" />
@@ -23,18 +20,12 @@
       Include="Microsoft.EntityFrameworkCore.Abstractions"
       Version="11.0.0-rc.3.26522.148"
     />
-    <PackageVersion
-      Include="Microsoft.EntityFrameworkCore.Design"
-      Version="11.0.0"
-    />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="11.0.0" />
     <PackageVersion
       Include="Microsoft.EntityFrameworkCore.Relational"
       Version="11.0.0-rc.3.26522.148"
     />
-    <PackageVersion
-      Include="Microsoft.EntityFrameworkCore.Sqlite"
-      Version="11.0.0"
-    />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="11.0.0" />
     <PackageVersion Include="Microsoft.Extensions.ApiDescription.Server" Version="11.0.0" />
     <PackageVersion
       Include="Microsoft.Extensions.Configuration.EnvironmentVariables"
