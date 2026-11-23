@@ -260,7 +260,8 @@ internal sealed class RabobankCreditCardTransactionExtractor : IBankTransactionE
     }
 
     // The labels Rabobank prints on rows that move money between the card and the current account:
-    // the monthly settlement, a manual top-up, and a withdrawal of a positive card balance.
+    // the monthly settlement, a manual top-up, and a withdrawal of a positive card balance (labeled
+    // differently in older and newer exports).
     private static bool IsFundingTransfer(string description) =>
         string.Equals(
             description,
@@ -271,6 +272,7 @@ internal sealed class RabobankCreditCardTransactionExtractor : IBankTransactionE
             "BIJSCHRIJVING SALDO OP UW CREDITCARD",
             StringComparison.OrdinalIgnoreCase
         )
+        || description.StartsWith("Boeking naar betaalrekening", StringComparison.OrdinalIgnoreCase)
         || description.Contains(
             "OVERBOEKING VAN CREDITCARD NAAR BETAALREKENING",
             StringComparison.OrdinalIgnoreCase
