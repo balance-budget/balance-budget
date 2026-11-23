@@ -27,9 +27,6 @@ internal abstract class RabobankAccountTransactionExtractor : IBankTransactionEx
         "gb"
     );
 
-    // A transfer between the current account and one of your Rabobank credit cards.
-    private const string CreditCardCode = "cc";
-
     private readonly IRabobankAccountStatementParser _parser;
 
     protected RabobankAccountTransactionExtractor(IRabobankAccountStatementParser parser)
@@ -192,6 +189,11 @@ internal abstract class RabobankAccountTransactionExtractor : IBankTransactionEx
         if (RabobankAnchor.Normalize(counterpartyIban) == statementIban)
             counterpartyIban = null;
 
+        // Money moving between the account and a Rabobank credit card names no counterparty IBAN,
+        // only the masked card number. That card identifier is the other side's account number,
+        // which lets the row be recognized as a Self-transfer with the card.
+        var cardIdentifier = counterpartyIban is null ? MaskedCardIdentifier(row) : null;
+
         var foreignAmount = RabobankCsv.ParseOptionalAmount(row.ForeignAmount);
 
         return new BankTransaction
@@ -202,7 +204,7 @@ internal abstract class RabobankAccountTransactionExtractor : IBankTransactionEx
             Money = new Money(RabobankCsv.ToMinorUnits(RabobankCsv.ParseAmount(row.Amount)), Eur),
             Description = description,
             CounterpartyName = counterpartyName,
-            CounterpartyAccountNumber = counterpartyIban,
+            CounterpartyAccountNumber = counterpartyIban ?? cardIdentifier,
             RawSource = RowHasher.Normalize(row.RawRecord),
             RowHash = RowHasher.Hash(row.RawRecord),
             ValueDate = row.ValueDate,
@@ -212,13 +214,14 @@ internal abstract class RabobankAccountTransactionExtractor : IBankTransactionEx
             ForeignCurrencyCode = foreignAmount is null ? null : NullIfBlank(row.ForeignCurrency),
             ExchangeRate = RabobankCsv.ParseOptionalAmount(row.ExchangeRate),
             ImporterKey = Key,
-            Metadata = BuildMetadata(row, isCardRow),
+            Metadata = BuildMetadata(row, isCardRow, cardIdentifier),
         };
     }
 
     private static List<BankTransactionMetadataValue> BuildMetadata(
         AccountStatementRow row,
-        bool isCardRow
+        bool isCardRow,
+        string? cardIdentifier
     )
     {
         var metadata = new MetadataBuilder()
@@ -230,7 +233,8 @@ internal abstract class RabobankAccountTransactionExtractor : IBankTransactionEx
             .AddString("Ultimate Party", row.UltimateParty)
             .AddString("Initiating Party", row.InitiatingParty)
             .AddString("Counterparty BIC", row.CounterpartyBic)
-            .AddString("Return Reason", row.ReturnReason);
+            .AddString("Return Reason", row.ReturnReason)
+            .AddString("Card Identifier", cardIdentifier);
 
         if (isCardRow)
         {
@@ -239,19 +243,15 @@ internal abstract class RabobankAccountTransactionExtractor : IBankTransactionEx
                 .AddString("Card Terminal", row.Description2.Trim().TrimStart('.'));
         }
 
-        if (string.Equals(row.Code.Trim(), CreditCardCode, StringComparison.OrdinalIgnoreCase))
-        {
-            var masked = RabobankPatterns.MaskedCardNumber().Match(row.Description1);
-            if (masked.Success)
-            {
-                metadata.AddString(
-                    "Card Identifier",
-                    RabobankAnchor.CardIdentifier(masked.Groups["last4"].Value)
-                );
-            }
-        }
-
         return metadata.Build();
+    }
+
+    private static string? MaskedCardIdentifier(AccountStatementRow row)
+    {
+        var masked = RabobankPatterns
+            .MaskedCardNumber()
+            .Match(string.Join(' ', row.Description1, row.Description2, row.Description3));
+        return masked.Success ? RabobankAnchor.CardIdentifier(masked.Groups["last4"].Value) : null;
     }
 
     private static string? JoinDescription(AccountStatementRow row)

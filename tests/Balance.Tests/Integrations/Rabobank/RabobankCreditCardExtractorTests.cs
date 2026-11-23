@@ -18,7 +18,7 @@ internal sealed class RabobankCreditCardExtractorTests
     {
         var rows = await ExtractAsync(OwnedCard(), cancellationToken);
 
-        await Assert.That(rows.Count).IsEqualTo(8);
+        await Assert.That(rows.Count).IsEqualTo(9);
         await Assert.That(rows.All(row => row.ImporterKey == "Rabobank.CreditCard")).IsTrue();
 
         var purchase = rows[1];
@@ -53,7 +53,7 @@ internal sealed class RabobankCreditCardExtractorTests
         var rows = await ExtractAsync(OwnedCard(), cancellationToken);
 
         var transfers = rows.Where(row => row.CounterpartyAccountNumber is not null).ToList();
-        await Assert.That(transfers.Count).IsEqualTo(3);
+        await Assert.That(transfers.Count).IsEqualTo(4);
         await Assert
             .That(transfers.All(row => row.CounterpartyAccountNumber == FundingIban))
             .IsTrue();
@@ -61,6 +61,7 @@ internal sealed class RabobankCreditCardExtractorTests
         await Assert.That(transfers[0].Description).IsEqualTo("Verrekening vorig overzicht");
         await Assert.That(transfers[1].Money.Amount).IsEqualTo(5000L);
         await Assert.That(transfers[2].Money.Amount).IsEqualTo(-2000L);
+        await Assert.That(transfers[3].Description).IsEqualTo("Boeking naar betaalrekening");
     }
 
     [Test]
