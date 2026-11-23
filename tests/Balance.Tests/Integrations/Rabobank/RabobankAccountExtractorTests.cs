@@ -20,7 +20,7 @@ internal sealed class RabobankAccountExtractorTests
     {
         var rows = await ExtractAsync(CurrentExport, OwnedAccount(CurrentIban), cancellationToken);
 
-        await Assert.That(rows.Count).IsEqualTo(7);
+        await Assert.That(rows.Count).IsEqualTo(8);
         await Assert.That(rows[0].BookingDate).IsEqualTo(new DateOnly(2026, 1, 2));
         await Assert.That(rows.All(row => row.ImporterKey == "Rabobank.CurrentAccount")).IsTrue();
 
@@ -95,13 +95,19 @@ internal sealed class RabobankAccountExtractorTests
     }
 
     [Test]
-    public async Task Records_the_card_on_a_card_settlement(CancellationToken cancellationToken)
+    public async Task Names_the_card_as_the_counterparty_of_a_card_transfer(
+        CancellationToken cancellationToken
+    )
     {
         var rows = await ExtractAsync(CurrentExport, OwnedAccount(CurrentIban), cancellationToken);
 
         var settlement = rows[5];
-        await Assert.That(settlement.CounterpartyAccountNumber).IsNull();
+        await Assert.That(settlement.CounterpartyAccountNumber).IsEqualTo("************1234");
         await Assert.That(Metadata(settlement, "Card Identifier")).IsEqualTo("************1234");
+
+        var withdrawal = rows[6];
+        await Assert.That(withdrawal.Money.Amount).IsEqualTo(3000L);
+        await Assert.That(withdrawal.CounterpartyAccountNumber).IsEqualTo("************1234");
     }
 
     [Test]
