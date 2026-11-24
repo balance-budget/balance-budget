@@ -98,6 +98,8 @@ describe('resolveOpenContext', () => {
     function bankAccount(args: {
         id: string;
         iban: string | null;
+        accountNumber?: string | null;
+        cardIdentifier?: string | null;
         accountId?: AccountId | null;
         counterpartyId?: CounterpartyId | null;
     }): BankAccount {
@@ -105,8 +107,8 @@ describe('resolveOpenContext', () => {
             id: asBankAccountId(args.id),
             type: 'Current',
             iban: args.iban,
-            accountNumber: null,
-            cardIdentifier: null,
+            accountNumber: args.accountNumber ?? null,
+            cardIdentifier: args.cardIdentifier ?? null,
             fundingBankAccountId: null,
             bic: null,
             bankName: null,
@@ -126,6 +128,32 @@ describe('resolveOpenContext', () => {
         });
         const result = resolveOpenContext('NL00BANK0000000001', [own]);
         expect(result).toEqual({ kind: 'self-transfer', prefilledAccountId: ownAccountId });
+    });
+
+    it('returns self-transfer when the number is an own card identifier', () => {
+        const card = bankAccount({
+            id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3',
+            iban: null,
+            cardIdentifier: '************1234',
+            accountId: ownAccountId,
+        });
+        expect(resolveOpenContext('************1234', [card])).toEqual({
+            kind: 'self-transfer',
+            prefilledAccountId: ownAccountId,
+        });
+    });
+
+    it('returns self-transfer when the number is an own account number', () => {
+        const savings = bankAccount({
+            id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb4',
+            iban: null,
+            accountNumber: 'D1234567',
+            accountId: ownAccountId,
+        });
+        expect(resolveOpenContext('d1234567', [savings])).toEqual({
+            kind: 'self-transfer',
+            prefilledAccountId: ownAccountId,
+        });
     });
 
     it('returns counterparty when matched BankAccount only has CounterpartyId (fall-through to step 2)', () => {

@@ -103,10 +103,10 @@ export function initialForm(args: {
 /**
  * Resolve the "open BT" projection per ADR 0013 step 1 / step 2.
  *
- *   1. If the BT's CounterpartyAccountNumber exact-matches a BankAccount whose
- *      AccountId IS NOT NULL, this is a *self-transfer in progress*: the
- *      counter-side line is pre-filled with that own-Account and the form
- *      submits with CounterpartyId = null.
+ *   1. If the BT's CounterpartyAccountNumber matches the IBAN, account number,
+ *      or card identifier of a BankAccount whose AccountId IS NOT NULL, this is
+ *      a *self-transfer in progress*: the counter-side line is pre-filled
+ *      with that own-Account and the form submits with CounterpartyId = null.
  *   2. Else if the matched BankAccount has CounterpartyId IS NOT NULL, the
  *      counterparty is identified and the suggestions effect supplies the
  *      last-used counter-side Account(s) (existing behavior).
@@ -114,19 +114,23 @@ export function initialForm(args: {
  *      set) the resolver returns `none` and the form opens empty.
  *
  * Whitespace and casing are normalized before comparison to match the import
- * paths' lenient IBAN handling.
+ * paths' lenient identifier handling.
  */
 export type OpenContext =
     | { kind: 'self-transfer'; prefilledAccountId: AccountId }
     | { kind: 'counterparty'; counterpartyId: CounterpartyId }
     | { kind: 'none' };
 
+function normalizeIdentifier(value: string): string {
+    return value.replace(/\s+/g, '').toUpperCase();
+}
+
 export function resolveOpenContext(
     counterpartyAccountNumber: string | null,
     bankAccounts: readonly BankAccount[],
 ): OpenContext {
     if (counterpartyAccountNumber === null) return { kind: 'none' };
-    const normalized = counterpartyAccountNumber.replace(/\s+/g, '').toUpperCase();
+    const normalized = normalizeIdentifier(counterpartyAccountNumber);
     if (normalized.length === 0) return { kind: 'none' };
 
     // Two passes: self-transfer wins over a same-IBAN counterparty row if both
@@ -134,11 +138,14 @@ export function resolveOpenContext(
     // we don't want the order of `bankAccounts` deciding which side wins).
     let counterpartyCandidate: CounterpartyId | null = null;
     for (const ba of bankAccounts) {
-        if (!ba.iban) continue;
-        if (ba.iban.replace(/\s+/g, '').toUpperCase() !== normalized) continue;
         if (ba.accountId !== null) {
-            return { kind: 'self-transfer', prefilledAccountId: ba.accountId };
+            const identifiers = [ba.iban, ba.accountNumber, ba.cardIdentifier];
+            if (identifiers.some(id => id !== null && normalizeIdentifier(id) === normalized)) {
+                return { kind: 'self-transfer', prefilledAccountId: ba.accountId };
+            }
+            continue;
         }
+        if (!ba.iban || normalizeIdentifier(ba.iban) !== normalized) continue;
         if (ba.counterpartyId !== null && counterpartyCandidate === null) {
             counterpartyCandidate = ba.counterpartyId;
         }

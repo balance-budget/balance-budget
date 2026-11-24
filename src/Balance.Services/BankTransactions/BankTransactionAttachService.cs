@@ -3,6 +3,7 @@ using Balance.Data.Entities;
 using Balance.Data.Entities.Enums;
 using Balance.Data.Entities.Ids;
 using Balance.Services.Contracts;
+using Balance.Services.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace Balance.Services.BankTransactions;
@@ -382,8 +383,8 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
                 }
             }
 
-            // (3) there exists L2 on the same JE whose Account has a backing BankAccount with Iban
-            // == BT.CounterpartyAccountNumber.
+            // (3) there exists L2 on the same JE whose Account has a backing BankAccount identified
+            // by BT.CounterpartyAccountNumber (its IBAN, account number, or card identifier).
             if (string.IsNullOrWhiteSpace(bankTransaction.CounterpartyAccountNumber))
             {
                 return new InvariantError(
@@ -392,11 +393,11 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
                 );
             }
 
-            var counterIban = bankTransaction.CounterpartyAccountNumber;
+            var counterAccountNumber = bankTransaction.CounterpartyAccountNumber;
             var hasCounterLine = entry.Lines.Any(l =>
                 l.Id != l1.Id
                 && bankAccountsByAccountId.TryGetValue(l.AccountId, out var ba)
-                && ba.Iban == counterIban
+                && BankAccountIdentifiers.Identifies(ba, counterAccountNumber)
             );
             if (!hasCounterLine)
             {
@@ -454,7 +455,7 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
                     bankTransaction,
                     bankSideAccountId,
                     dateWindowDays,
-                    requireCounterIbanMatch: true,
+                    requireCounterAccountMatch: true,
                     cancellationToken
                 )
             );
@@ -496,7 +497,7 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
             bankTransaction,
             bankSideAccountId,
             dateWindowDays,
-            requireCounterIbanMatch: false,
+            requireCounterAccountMatch: false,
             cancellationToken
         );
         matches = matches
@@ -536,7 +537,7 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
         BankTransaction bankTransaction,
         AccountId bankSideAccountId,
         int dateWindowDays,
-        bool requireCounterIbanMatch,
+        bool requireCounterAccountMatch,
         CancellationToken cancellationToken
     )
     {
@@ -544,7 +545,7 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
         var maxDate = bankTransaction.BookingDate.AddDays(dateWindowDays);
         var amount = bankTransaction.Money.Amount;
         var currency = bankTransaction.Money.CurrencyCode.Value;
-        var counterIban = bankTransaction.CounterpartyAccountNumber;
+        var counterAccountNumber = bankTransaction.CounterpartyAccountNumber;
 
         // Candidate entries: date in window, no counterparty, with an Uncleared line on the
         // bank-side Account of the right amount. The structural own-Account guard is refined in
@@ -561,19 +562,6 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
                     && l.Amount == amount
                 )
             );
-
-        // Strict hint only: the entry must also contain a line whose Account has a BankAccount
-        // with Iban == counterIban. The picker drops this so near-misses still surface.
-        if (requireCounterIbanMatch)
-        {
-            query = query.Where(e =>
-                e.Lines.Any(l =>
-                    _dbContext.BankAccounts.Any(b =>
-                        b.AccountId == l.AccountId && b.Iban == counterIban
-                    )
-                )
-            );
-        }
 
         var candidates = await query
             .Select(e => new
@@ -629,11 +617,15 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
             if (candidate.Lines.Any(l => !bankAccountsByAccountId.ContainsKey(l.AccountId)))
                 continue;
 
-            var counterLine = requireCounterIbanMatch
+            // Strict hint only: the counter-side line must sit on the BankAccount the BT names
+            // (by IBAN, account number, or card identifier). The picker drops this so near-misses
+            // still surface. Checked here rather than in the query because the identifiers are
+            // compared normalized.
+            var counterLine = requireCounterAccountMatch
                 ? candidate.Lines.FirstOrDefault(l =>
                     l.Id != l1.Id
                     && bankAccountsByAccountId.TryGetValue(l.AccountId, out var ba)
-                    && ba.Iban == counterIban
+                    && BankAccountIdentifiers.Identifies(ba, counterAccountNumber)
                 )
                 : candidate.Lines.FirstOrDefault(l => l.Id != l1.Id);
             if (counterLine is null)

@@ -1,6 +1,7 @@
 using Balance.Data;
 using Balance.Data.Entities;
 using Balance.Services.Contracts;
+using Balance.Services.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace Balance.Services.BankTransactions;
@@ -66,9 +67,9 @@ internal sealed class BankStatementDetectionService : IBankStatementDetectionSer
         var anchor = anchors.First();
         var matches = ownedAccounts
             .Where(account =>
-                anchors.Contains(Normalize(account.Iban))
-                || anchors.Contains(Normalize(account.AccountNumber))
-                || anchors.Contains(Normalize(account.CardIdentifier))
+                anchors.Contains(BankAccountIdentifiers.Normalize(account.Iban))
+                || anchors.Contains(BankAccountIdentifiers.Normalize(account.AccountNumber))
+                || anchors.Contains(BankAccountIdentifiers.Normalize(account.CardIdentifier))
             )
             .ToList();
 
@@ -118,8 +119,4 @@ internal sealed class BankStatementDetectionService : IBankStatementDetectionSer
     ) => new(file.FileName, status, bankAccountId, anchor, 0, 0, null);
 
     // Match the ING extractors' anchor normalization: strip spaces, upper-case.
-    private static string Normalize(string? value) =>
-        value is null
-            ? string.Empty
-            : value.Replace(" ", "", StringComparison.Ordinal).ToUpperInvariant();
 }

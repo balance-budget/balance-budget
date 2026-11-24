@@ -206,6 +206,135 @@ internal sealed class BankTransactionAttachServiceTests : EndpointsTestsBase
     }
 
     [Test]
+    public async Task AttachAsync_matches_the_counter_side_by_card_identifier(
+        CancellationToken cancellationToken
+    )
+    {
+        await using var scope = Factory.Services.CreateAsyncScope();
+        var accountService = scope.ServiceProvider.GetRequiredService<IAccountService>();
+        var bankAccountService = scope.ServiceProvider.GetRequiredService<IBankAccountService>();
+        var bankTransactionService =
+            scope.ServiceProvider.GetRequiredService<IBankTransactionService>();
+        var categorizationService =
+            scope.ServiceProvider.GetRequiredService<IBankTransactionCategorizationService>();
+        var attachService =
+            scope.ServiceProvider.GetRequiredService<IBankTransactionAttachService>();
+
+        var currentAccount = (
+            await accountService.CreateAsync(
+                $"Checking-card-{Guid.NewGuid():N}",
+                AccountType.Asset,
+                new CurrencyCode("EUR"),
+                cancellationToken
+            )
+        ).Value!;
+        var cardAccount = (
+            await accountService.CreateAsync(
+                $"Card-{Guid.NewGuid():N}",
+                AccountType.Liability,
+                new CurrencyCode("EUR"),
+                cancellationToken
+            )
+        ).Value!;
+
+        var currentIban = $"NL03ATCH{NextDigits(10)}";
+        var cardIdentifier = $"************{NextDigits(4)}";
+        var currentBank = (
+            await bankAccountService.CreateAsync(
+                new CreateBankAccountInput(
+                    Type: BankAccountType.Current,
+                    Iban: currentIban,
+                    AccountNumber: null,
+                    CardIdentifier: null,
+                    FundingBankAccountId: null,
+                    Bic: null,
+                    BankName: null,
+                    AccountHolderName: null,
+                    CurrencyCode: new CurrencyCode("EUR"),
+                    ImporterKey: null,
+                    AccountId: currentAccount.Id,
+                    CounterpartyId: null
+                ),
+                cancellationToken
+            )
+        ).Value!;
+        var cardBank = (
+            await bankAccountService.CreateAsync(
+                new CreateBankAccountInput(
+                    Type: BankAccountType.Card,
+                    Iban: null,
+                    AccountNumber: null,
+                    CardIdentifier: cardIdentifier,
+                    FundingBankAccountId: currentBank.Id,
+                    Bic: null,
+                    BankName: null,
+                    AccountHolderName: null,
+                    CurrencyCode: new CurrencyCode("EUR"),
+                    ImporterKey: null,
+                    AccountId: cardAccount.Id,
+                    CounterpartyId: null
+                ),
+                cancellationToken
+            )
+        ).Value!;
+
+        // The card statement row comes first and is categorized against the current account.
+        var cardBt = (
+            await bankTransactionService.CreateAsync(
+                new CreateBankTransactionInput(
+                    BankAccountId: cardBank.Id,
+                    BookingDate: new DateOnly(2026, 7, 7),
+                    Amount: 99837,
+                    CurrencyCode: new CurrencyCode("EUR"),
+                    Description: "Card top-up",
+                    CounterpartyName: null,
+                    CounterpartyAccountNumber: currentIban
+                ),
+                cancellationToken
+            )
+        ).Value!;
+        var entry = await categorizationService.CategorizeAsync(
+            cardBt.Id,
+            new CategorizeBankTransactionInput(
+                CounterpartyId: null,
+                NewCounterparty: null,
+                Date: new DateOnly(2026, 7, 7),
+                Description: "Card top-up",
+                Lines: [new CategorizeBankTransactionLineInput(currentAccount.Id, -99837, null)]
+            ),
+            cancellationToken
+        );
+        await Assert.That(entry.IsSuccess).IsTrue();
+
+        // The current-account row names the card only by its identifier.
+        var currentBt = (
+            await bankTransactionService.CreateAsync(
+                new CreateBankTransactionInput(
+                    BankAccountId: currentBank.Id,
+                    BookingDate: new DateOnly(2026, 7, 8),
+                    Amount: -99837,
+                    CurrencyCode: new CurrencyCode("EUR"),
+                    Description: "Card top-up",
+                    CounterpartyName: null,
+                    CounterpartyAccountNumber: cardIdentifier
+                ),
+                cancellationToken
+            )
+        ).Value!;
+
+        var hint = await attachService.ComputeHintAsync(currentBt.Id, cancellationToken);
+        await Assert.That(hint).IsNotNull();
+        await Assert.That(hint!.Id).IsEqualTo(entry.Value!.Id);
+
+        var attach = await attachService.AttachAsync(
+            currentBt.Id,
+            entry.Value!.Id,
+            cancellationToken
+        );
+        await Assert.That(attach.IsSuccess).IsTrue();
+    }
+
+    [Test]
     public async Task DetachAsync_clears_link_and_flips_line_back_to_uncleared(
         CancellationToken cancellationToken
     )
