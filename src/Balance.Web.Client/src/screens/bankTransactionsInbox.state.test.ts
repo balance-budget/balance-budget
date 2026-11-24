@@ -7,12 +7,14 @@ import {
     asBankAccountId,
     asBankTransactionId,
     asCounterpartyId,
+    asJournalEntryId,
     type AccountId,
     type BankTransactionId,
     type CounterpartyId,
 } from '../lib/domain';
 import {
     applyBulkPatchToOverride,
+    attachableRows,
     buildRowRequest,
     buildSuggestionOverride,
     collectNewCounterpartyNames,
@@ -23,6 +25,7 @@ import {
     removeKeysFor,
     resolveCounterpartyByIban,
     rowStatus,
+    runAttachMatches,
     runSaveAll,
     setBulkDismissDrafts,
     type RowDraft,
@@ -282,6 +285,72 @@ describe('buildSuggestionOverride', () => {
             newCounterpartyName: '',
             accountId: accGroceries,
         });
+    });
+
+    const ownSavingsBankAccount: BankAccount = {
+        ...externalBankAccount,
+        type: 'Savings',
+        iban: 'NL00BANK1234567890',
+        accountId: accSavings,
+        counterpartyId: null,
+    };
+
+    it('fills a self-transfer when the IBAN belongs to one of your own bank accounts', () => {
+        const accountsById = new Map<AccountId, Account>([
+            [accSavings, account(accSavings, { type: 'Asset' })],
+        ]);
+        const patch = buildSuggestionOverride(
+            bt({ counterpartyAccountNumber: 'nl00 bank 1234 5678 90' }),
+            [ownSavingsBankAccount],
+            new Map(),
+            accountsById,
+            accCurrent,
+        );
+        expect(patch).toEqual({
+            counterpartyMode: 'existing',
+            counterpartyId: null,
+            newCounterpartyName: '',
+            accountId: accSavings,
+        });
+    });
+
+    it('prefers the self-transfer over a counterparty sharing the same IBAN', () => {
+        const accountsById = new Map<AccountId, Account>([[accSavings, account(accSavings)]]);
+        const patch = buildSuggestionOverride(
+            bt(),
+            [externalBankAccount, ownSavingsBankAccount],
+            new Map(),
+            accountsById,
+            accCurrent,
+        );
+        expect(patch?.accountId).toBe(accSavings);
+        expect(patch?.counterpartyId).toBeNull();
+    });
+
+    it("skips a self-transfer onto the row's own bank-side account", () => {
+        const accountsById = new Map<AccountId, Account>([[accSavings, account(accSavings)]]);
+        const patch = buildSuggestionOverride(
+            bt(),
+            [ownSavingsBankAccount],
+            new Map(),
+            accountsById,
+            accSavings,
+        );
+        expect(patch).toBeNull();
+    });
+
+    it('skips a self-transfer whose own account uses another currency', () => {
+        const accountsById = new Map<AccountId, Account>([
+            [accSavings, account(accSavings, { currencyCode: 'USD' })],
+        ]);
+        const patch = buildSuggestionOverride(
+            bt(),
+            [ownSavingsBankAccount],
+            new Map(),
+            accountsById,
+            accCurrent,
+        );
+        expect(patch).toBeNull();
     });
 });
 
@@ -860,5 +929,73 @@ describe('bulk dismiss-draft mutual exclusion', () => {
         expect(newDrafts.has(id1)).toBe(false);
         // Other dismiss-drafts untouched.
         expect(newDrafts.get(id5)).toBe('unrelated stay');
+    });
+});
+
+describe('attachableRows', () => {
+    it('keeps only rows with an Attach hint, paired with the hinted entry', () => {
+        const je = asJournalEntryId('e0000001-0000-0000-0000-000000000000');
+        const hinted = bt({
+            id: asBankTransactionId('bt000002-0000-0000-0000-000000000000'),
+            matchingJournalEntry: {
+                id: je,
+                date: '2026-05-20',
+                description: null,
+                otherAccountId: accSavings,
+                otherAccountName: 'Savings',
+            },
+        });
+        expect(attachableRows([bt(), hinted])).toEqual([{ id: hinted.id, journalEntryId: je }]);
+    });
+});
+
+describe('runAttachMatches', () => {
+    const je = asJournalEntryId('e0000001-0000-0000-0000-000000000000');
+    const id1 = asBankTransactionId('bt000001-0000-0000-0000-000000000000');
+    const id2 = asBankTransactionId('bt000002-0000-0000-0000-000000000000');
+    const id3 = asBankTransactionId('bt000003-0000-0000-0000-000000000000');
+
+    it('attaches sequentially in row order', async () => {
+        const order: string[] = [];
+        let inFlight = 0;
+        const attach = vi.fn(async (id: BankTransactionId) => {
+            inFlight += 1;
+            expect(inFlight).toBe(1);
+            await Promise.resolve();
+            order.push(id);
+            inFlight -= 1;
+        });
+        const summary = await runAttachMatches(
+            [
+                { id: id1, journalEntryId: je },
+                { id: id2, journalEntryId: je },
+            ],
+            { attach },
+        );
+        expect(order).toEqual([id1, id2]);
+        expect(summary).toEqual({ attached: 2, failed: 0 });
+    });
+
+    it('continues past a failed attach and reports the failure per row', async () => {
+        const results = new Map<BankTransactionId, unknown>();
+        const attach = vi.fn((id: BankTransactionId) =>
+            id === id2 ? Promise.reject(new Error('Already attached')) : Promise.resolve(),
+        );
+        const summary = await runAttachMatches(
+            [
+                { id: id1, journalEntryId: je },
+                { id: id2, journalEntryId: je },
+                { id: id3, journalEntryId: je },
+            ],
+            {
+                attach,
+                onRowResult: (id, outcome) => {
+                    results.set(id, outcome);
+                },
+            },
+        );
+        expect(summary).toEqual({ attached: 2, failed: 1 });
+        expect(results.get(id2)).toEqual({ ok: false, error: 'Already attached' });
+        expect(results.get(id3)).toEqual({ ok: true });
     });
 });

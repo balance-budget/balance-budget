@@ -77,6 +77,11 @@ msgstr "{0} · rente op {1}"
 msgid "{0} (new)"
 msgstr "{0} (nieuw)"
 
+#. placeholder {0}: summary.attached.toString()
+#. placeholder {1}: summary.failed.toString()
+msgid "{0} attached, {1} failed."
+msgstr "{0} gekoppeld, {1} mislukt."
+
 #. placeholder {0}: summary.categorized.toString()
 #. placeholder {1}: summary.dismissed.toString()
 #. placeholder {2}: summary.failed.toString()
@@ -381,6 +386,12 @@ msgstr "Maximaal 200 tekens"
 
 msgid "Attach"
 msgstr "Koppelen"
+
+msgid "Attach matches"
+msgstr "Matches koppelen"
+
+msgid "Attach the selected rows to the journal entry each one matches."
+msgstr "Koppel de geselecteerde rijen aan de journaalpost waar elke rij bij past."
 
 #. placeholder {0}: hint.otherAccountName
 #~ msgid "Attach to {0}"
@@ -1171,8 +1182,11 @@ msgstr "Bedrag extra aflossing"
 msgid "Failed"
 msgstr "Mislukt"
 
-msgid "Fill the selected rows with the IBAN-matched counterparty and the last-used account for that counterparty."
-msgstr "Vul de geselecteerde rijen met de op IBAN gematchte tegenpartij en de laatst gebruikte rekening voor die tegenpartij."
+msgid "Fill the selected rows by IBAN. Transfers to your own accounts get that account; other rows get the matched counterparty and its last-used account."
+msgstr "Vul de geselecteerde rijen op basis van IBAN. Overboekingen naar je eigen rekeningen krijgen die rekening; andere rijen krijgen de gematchte tegenpartij en de laatst gebruikte rekening."
+
+#~ msgid "Fill the selected rows with the IBAN-matched counterparty and the last-used account for that counterparty."
+#~ msgstr "Vul de geselecteerde rijen met de op IBAN gematchte tegenpartij en de laatst gebruikte rekening voor die tegenpartij."
 
 msgid "Filter"
 msgstr "Filter"

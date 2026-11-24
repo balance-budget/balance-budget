@@ -77,6 +77,11 @@ msgstr "{0} · interest on {1}"
 msgid "{0} (new)"
 msgstr "{0} (new)"
 
+#. placeholder {0}: summary.attached.toString()
+#. placeholder {1}: summary.failed.toString()
+msgid "{0} attached, {1} failed."
+msgstr "{0} attached, {1} failed."
+
 #. placeholder {0}: summary.categorized.toString()
 #. placeholder {1}: summary.dismissed.toString()
 #. placeholder {2}: summary.failed.toString()
@@ -381,6 +386,12 @@ msgstr "At most 200 characters"
 
 msgid "Attach"
 msgstr "Attach"
+
+msgid "Attach matches"
+msgstr "Attach matches"
+
+msgid "Attach the selected rows to the journal entry each one matches."
+msgstr "Attach the selected rows to the journal entry each one matches."
 
 #. placeholder {0}: hint.otherAccountName
 #~ msgid "Attach to {0}"
@@ -1171,8 +1182,11 @@ msgstr "Extra repayment amount"
 msgid "Failed"
 msgstr "Failed"
 
-msgid "Fill the selected rows with the IBAN-matched counterparty and the last-used account for that counterparty."
-msgstr "Fill the selected rows with the IBAN-matched counterparty and the last-used account for that counterparty."
+msgid "Fill the selected rows by IBAN. Transfers to your own accounts get that account; other rows get the matched counterparty and its last-used account."
+msgstr "Fill the selected rows by IBAN. Transfers to your own accounts get that account; other rows get the matched counterparty and its last-used account."
+
+#~ msgid "Fill the selected rows with the IBAN-matched counterparty and the last-used account for that counterparty."
+#~ msgstr "Fill the selected rows with the IBAN-matched counterparty and the last-used account for that counterparty."
 
 msgid "Filter"
 msgstr "Filter"
