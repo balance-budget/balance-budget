@@ -617,6 +617,10 @@ internal sealed class BankTransactionAttachService : IBankTransactionAttachServi
             if (candidate.Lines.Any(l => !bankAccountsByAccountId.ContainsKey(l.AccountId)))
                 continue;
 
+            // Strict hint only: the counter-side line must sit on the BankAccount the BT names
+            // (by IBAN, account number, or card identifier). The picker drops this so near-misses
+            // still surface. Checked here rather than in the query because the identifiers are
+            // compared normalized.
             var counterLine = requireCounterAccountMatch
                 ? candidate.Lines.FirstOrDefault(l =>
                     l.Id != l1.Id
